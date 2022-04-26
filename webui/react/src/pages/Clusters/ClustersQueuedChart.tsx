@@ -1,24 +1,24 @@
 import { Radio } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import Page from 'components/Page';
-import { DURATION_DAY, secondToHour } from 'utils/datetime';
 import * as Api from 'services/api-ts-sdk';
+import { DURATION_DAY, secondToHour } from 'utils/datetime';
+
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';
 
 import css from './ClustersQueuedChart.module.scss';
-import { JobQueuedTimeChartSeries } from './utils';
 
 interface Props {
   poolStats: Api.V1RPQueueStat | undefined;
 }
 
 const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
-  
+
   // const [ queuedStats, setQueuedStats ] = useState<JobQueuedTimeChartSeries>();
   const [ viewDays, setViewDays ] = useState(7);
 
-  const queuedStats = useMemo(()=>{
+  const queuedStats = useMemo(() => {
     if(!poolStats) return;
     const { aggregates } = poolStats;
     if(aggregates) {
@@ -31,7 +31,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
         time: agg.map(item => item.periodStart),
       });
     }
-  }, [poolStats, viewDays])
+  }, [ poolStats, viewDays ]);
 
   if(!queuedStats) return <div />;
   return (

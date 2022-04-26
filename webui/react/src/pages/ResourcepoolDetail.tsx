@@ -1,5 +1,5 @@
 import { Divider, Tabs } from 'antd';
-import React, { Fragment, useCallback, useMemo, useState, useEffect } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Icon from 'components/Icon';
@@ -9,18 +9,17 @@ import { poolLogo } from 'components/ResourcePoolCard';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
+import { getJobQStats } from 'services/api';
+import * as Api from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
-import { camelCaseToSentence } from 'utils/string';
-import usePolling from 'hooks/usePolling';
-import { getJobQStats } from 'services/api';
-import * as Api from 'services/api-ts-sdk';
-
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { camelCaseToSentence } from 'utils/string';
 
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
@@ -67,7 +66,7 @@ const ResourcepoolDetail: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const [poolStats, setPoolStats] = useState<Api.V1RPQueueStat>()
+  const [ poolStats, setPoolStats ] = useState<Api.V1RPQueueStat>();
 
   const fetchStats = useCallback(async () => {
     try {
@@ -76,7 +75,7 @@ const ResourcepoolDetail: React.FC = () => {
       ] as [ Promise<Api.V1GetJobQueueStatsResponse> ];
       const [ stats ] = await Promise.all(promises);
       const pool = stats.results.find(p => p.resourcePool === poolname);
-      setPoolStats(pool)
+      setPoolStats(pool);
 
     } catch (e) {
       handleError(e, {
@@ -85,7 +84,7 @@ const ResourcepoolDetail: React.FC = () => {
         silent: false,
         type: ErrorType.Server,
       });
-    } 
+    }
   }, [ canceler.signal, poolname ]);
 
   usePolling(fetchStats);
@@ -139,10 +138,11 @@ const ResourcepoolDetail: React.FC = () => {
 
       </Section>
       <Section>
-        <RenderAllocationBarResourcePool 
-          resourcePool={pool} 
+        <RenderAllocationBarResourcePool
           poolStats={poolStats}
-          size={ShirtSize.huge} />
+          resourcePool={pool}
+          size={ShirtSize.huge}
+        />
       </Section>
       <Section>
         <Tabs

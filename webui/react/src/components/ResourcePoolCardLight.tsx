@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import awsLogo from 'assets/images/aws-logo.svg';
 import gcpLogo from 'assets/images/gcp-logo.svg';
@@ -9,6 +9,7 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -16,7 +17,6 @@ import { clone } from 'utils/data';
 
 import Json from './Json';
 import css from './ResourcePoolCardLight.module.scss';
-import * as Api from 'services/api-ts-sdk';
 
 interface Props {
   poolStats?: Api.V1RPQueueStat | undefined;
@@ -125,7 +125,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
 };
 
 export const RenderAllocationBarResourcePool: React.FC<Props> = (
-  { 
+  {
     poolStats,
     resourcePool: pool,
     size = ShirtSize.large,
