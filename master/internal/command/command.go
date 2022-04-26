@@ -51,7 +51,7 @@ func createGenericCommandActor(
 	spec tasks.GenericCommandSpec,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
-
+	spec.TaskType = taskType
 	cmd := &command{
 		db:         db,
 		taskLogger: taskLogger,
@@ -225,7 +225,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case task.BuildTaskSpec:
 		if ctx.ExpectingResponse() {
-			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys, c.taskType))
+			ctx.Respond(c.ToTaskSpec(c.GenericCommandSpec.Keys))
 			// Evict the context from memory after starting the command as it is no longer needed. We
 			// evict as soon as possible to prevent the master from hitting an OOM.
 			// TODO: Consider not storing the userFiles in memory at all.
