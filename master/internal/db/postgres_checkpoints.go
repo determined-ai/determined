@@ -6,8 +6,7 @@ import (
 )
 
 func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) ([]string, error) {
-	// do I need to convert the above to deleteCheckpoints to a list uuids? What is the best way to do that? Tried traversing and converting each element.
-	// But there's no append method for uuid
+	// do I need to convert the above to deleteCheckpoints to a list uuids? What is the best way to do that? traversing and converting each element?
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID
