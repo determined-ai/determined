@@ -67,12 +67,12 @@ def fit(train_ds, test_ds, steps, preview=0):
             # display.clear_output(wait=True)
 
             if step != 0:
-                print(f"Time taken for 1000 steps: {time.time()-start:.2f} sec\n")
+                print(f"Time taken for {preview} steps: {time.time()-start:.2f} sec\n")
 
             start = time.time()
 
             generate_images(generator, example_input, example_target)
-            print(f"Step: {step//1000}k")
+            print(f"Step: {step}")
 
         train_step(input_image, target, step)
 
@@ -86,7 +86,7 @@ def fit(train_ds, test_ds, steps, preview=0):
 
 
 def main():
-    fit(train_dataset, test_dataset, steps=2000, preview=1000)
+    fit(train_dataset, test_dataset, steps=200, preview=100)
 
 
 if __name__ == "__main__":
