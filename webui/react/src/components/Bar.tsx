@@ -29,7 +29,7 @@ const partStyle = (part: BarPart) => {
   };
 
   if (part.bordered) {
-    style = { ...style, borderStyle: 'dashed dashed dashed none' };
+    style = { ...style, borderStyle: 'dashed' };
   }
 
   return style;
