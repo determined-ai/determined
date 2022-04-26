@@ -9,7 +9,6 @@ from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
-import time
 
 
 @pytest.mark.e2e_cpu
