@@ -16,9 +16,10 @@ import { clone } from 'utils/data';
 
 import Json from './Json';
 import css from './ResourcePoolCardLight.module.scss';
-import ResourcePoolDetails from './ResourcePoolDetails';
+import * as Api from 'services/api-ts-sdk';
 
 interface Props {
+  poolStats?: Api.V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
 }
@@ -68,7 +69,6 @@ const poolAttributes = [
 type SafeRawJson = Record<string, unknown>;
 
 const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) => {
-  const [ detailVisible, setDetailVisible ] = useState(false);
 
   const descriptionClasses = [ css.description ];
 
@@ -102,8 +102,6 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
     }, {} as SafeRawJson);
   }, [ processedPool, isAux, pool ]);
 
-  const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
-
   return (
     <div className={css.base}>
       <div className={css.header}>
@@ -119,13 +117,6 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
         <RenderAllocationBarResourcePool resourcePool={pool} />
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />
-          <div>
-            <ResourcePoolDetails
-              finally={toggleModal}
-              resourcePool={processedPool}
-              visible={detailVisible}
-            />
-          </div>
         </section>
         <div />
       </div>
@@ -134,7 +125,8 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
 };
 
 export const RenderAllocationBarResourcePool: React.FC<Props> = (
-  {
+  { 
+    poolStats,
     resourcePool: pool,
     size = ShirtSize.large,
   }: Props,
@@ -146,7 +138,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
   return (
     <section>
       <SlotAllocationBar
-        footer={{ queued: pool?.stats?.queuedCount }}
+        footer={{ queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount }}
         hideHeader
         poolType={pool.type}
         resourceStates={

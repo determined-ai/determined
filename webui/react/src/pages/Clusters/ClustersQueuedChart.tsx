@@ -1,72 +1,41 @@
 import { Radio } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Page from 'components/Page';
-import usePolling from 'hooks/usePolling';
-import { getJobQStats } from 'services/api';
-import * as Api from 'services/api-ts-sdk';
 import { DURATION_DAY, secondToHour } from 'utils/datetime';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-
+import * as Api from 'services/api-ts-sdk';
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';
 
 import css from './ClustersQueuedChart.module.scss';
 import { JobQueuedTimeChartSeries } from './utils';
 
 interface Props {
-  poolName: string;
+  poolStats: Api.V1RPQueueStat | undefined;
 }
 
-const ClustersQueuedChart: React.FC<Props> = ({ poolName }:Props) => {
-  const [ canceler ] = useState(new AbortController());
-  const [ queuedStats, setQueuedStats ] = useState<JobQueuedTimeChartSeries>();
+const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
+  
+  // const [ queuedStats, setQueuedStats ] = useState<JobQueuedTimeChartSeries>();
   const [ viewDays, setViewDays ] = useState(7);
-  const [ isLoading, setIsLoading ] = useState(false);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const promises = [
-        getJobQStats({}, { signal: canceler.signal }),
-      ] as [ Promise<Api.V1GetJobQueueStatsResponse> ];
-      const [ stats ] = await Promise.all(promises);
-      const pool = stats.results.find(p => p.resourcePool === poolName);
-
-      if(!pool) return;
-      const { aggregates } = pool;
-      if(aggregates) {
-        // If aggregates only has one record of today, then do not display.
-        const agg = aggregates.length > 1 ? aggregates.filter(
-          item => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
-        ) : [];
-        setQueuedStats({
-          hoursAverage: { average: agg.map(item => secondToHour(item.seconds)) },
-          time: agg.map(item => item.periodStart),
-        });
-      }
-
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicSubject: 'Unable to fetch job queue stats.',
-        silent: false,
-        type: ErrorType.Server,
+  const queuedStats = useMemo(()=>{
+    if(!poolStats) return;
+    const { aggregates } = poolStats;
+    if(aggregates) {
+      // If aggregates only has one record of today, then do not display.
+      const agg = aggregates.length > 1 ? aggregates.filter(
+        item => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
+      ) : [];
+      return ({
+        hoursAverage: { average: agg.map(item => secondToHour(item.seconds)) },
+        time: agg.map(item => item.periodStart),
       });
-    } finally {
-      setIsLoading(false);
     }
-  }, [ canceler.signal, viewDays, poolName ]);
-
-  usePolling(fetchStats);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetchStats();
-    return () => canceler.abort();
-  }, [ canceler, fetchStats ]);
+  }, [poolStats, viewDays])
 
   if(!queuedStats) return <div />;
   return (
-    <Page loading={isLoading} title="Daily Avg Queued Time (In Hours)">
+    <Page title="Daily Avg Queued Time (In Hours)">
       <Radio.Group
         className={css.filter}
         value={viewDays}
