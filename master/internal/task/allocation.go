@@ -496,9 +496,14 @@ func (a *Allocation) ResourcesStateChanged(
 	case sproto.Terminated:
 		a.setMostProgressedModelState(model.AllocationStateTerminating)
 		a.resources[msg.ResourcesID].exit = msg.ResourcesStopped
+		logLevel := ptrs.Ptr(model.LogLevelInfo)
+		if msg.ResourcesStopped.Failure != nil {
+			logLevel = ptrs.Ptr(model.LogLevelError)
+		}
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 			ContainerID: msg.ContainerIDStr(),
 			Log:         msg.ResourcesStopped.String(),
+			Level:       logLevel,
 		}))
 		switch {
 		case msg.ResourcesStopped.Failure != nil:
