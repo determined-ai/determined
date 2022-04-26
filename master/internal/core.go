@@ -379,6 +379,9 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 		if err = writeAggType("experiment_label", entry.ByExperimentLabel); err != nil {
 			return err
 		}
+		if err = writeAggType("username", entry.ByUsername); err != nil {
+			return err
+		}
 		if err = writeAggType("user_id", entry.ByUserId); err != nil {
 			return err
 		}
