@@ -115,10 +115,10 @@ const ResourcepoolDetail: React.FC = () => {
           destroyInactiveTabPane={true}
           onChange={handleTabChange}>
           <TabPane key="active" tab={`Active ${pool.stats?.scheduledCount}`}>
-            <JobQueue jobState={JobState.SCHEDULED} selected={pool} />
+            <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selected={pool} />
           </TabPane>
           <TabPane key="queued" tab={`Queued ${pool.stats?.queuedCount}`}>
-            <JobQueue jobState={JobState.QUEUED} selected={pool} />
+            <JobQueue bodyNoPadding jobState={JobState.QUEUED} selected={pool} />
           </TabPane>
           <TabPane key="stats" tab="Stats">
             <ClustersQueuedChart poolName={pool.name} />

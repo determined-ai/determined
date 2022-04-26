@@ -22,10 +22,6 @@ export const ClusterOverallBar: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.ROCM);
   }, [ agents ]);
 
-  const cpuSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents || [], ResourceType.CPU);
-  }, [ agents ]);
-
   const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
       let index;
@@ -66,15 +62,6 @@ export const ClusterOverallBar: React.FC = () => {
           size={ShirtSize.enormous}
           title={`Compute (${ResourceType.ROCM})`}
           totalSlots={rocmTotalSlots}
-        />
-      )}
-      {overview.CPU.total > 0 && (
-        <SlotAllocationBar
-          resourceStates={cpuSlotStates}
-          showLegends
-          size={ShirtSize.enormous}
-          title={`Compute (${ResourceType.CPU})`}
-          totalSlots={overview.CPU.total}
         />
       )}
     </Section>

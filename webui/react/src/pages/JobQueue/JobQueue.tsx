@@ -32,11 +32,12 @@ import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
 
 interface Props {
+  bodyNoPadding?: boolean,
   jobState?: JobState,
   selected?: ResourcePool,
 }
 
-const JobQueue: React.FC<Props> = ({ selected, jobState }) => {
+const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   const { resourcePools } = useStore();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
@@ -311,6 +312,7 @@ const JobQueue: React.FC<Props> = ({ selected, jobState }) => {
 
   return (
     <Page
+      bodyNoPadding={bodyNoPadding}
       className={css.base}
       headerComponent={<div />}
       id="jobs"

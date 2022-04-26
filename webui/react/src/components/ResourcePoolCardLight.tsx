@@ -111,8 +111,8 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
           <div className={css.name}>{pool.name}</div>
         </div>
         <div className={css.default}>
-          {(pool.defaultAuxPool || pool.defaultComputePool) && <span>default</span>}
-          <Icon name="info" title={pool.description ? pool.description : 'No Description'} />
+          {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+          {pool.description && <Icon name="info" title={pool.description} /> }
         </div>
       </div>
       <div className={css.body}>
@@ -139,26 +139,24 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
     size = ShirtSize.large,
   }: Props,
 ) => {
-  const { pool: poolOverview, agents } = useStore();
+  const { agents } = useStore();
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [ pool ]);
   return (
     <section>
-      {poolOverview[pool.name]?.total > 0 && (
-        <SlotAllocationBar
-          footer={{ queued: pool?.stats?.queuedCount }}
-          hideHeader
-          poolType={pool.type}
-          resourceStates={
-            getSlotContainerStates(agents || [], pool.slotType, pool.name)
-          }
-          size={size}
-          slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
-          title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
-          totalSlots={pool.slotsAvailable}
-        />
-      )}
+      <SlotAllocationBar
+        footer={{ queued: pool?.stats?.queuedCount }}
+        hideHeader
+        poolType={pool.type}
+        resourceStates={
+          getSlotContainerStates(agents || [], pool.slotType, pool.name)
+        }
+        size={size}
+        slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+        title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+        totalSlots={pool.slotsAvailable}
+      />
       {isAux && (
         <SlotAllocationBar
           footer={{

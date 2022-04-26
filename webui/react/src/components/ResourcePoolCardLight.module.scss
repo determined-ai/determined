@@ -15,6 +15,9 @@ $line-height: 22px;
   padding: var(--theme-sizes-layout-medium) $padding var(--theme-sizes-layout-medium);
   text-overflow: ellipsis;
 
+  &:hover {
+    background-color: var(--theme-colors-monochrome-16);
+  }
   .body {
     display: flex;
     flex-direction: column;
@@ -40,6 +43,7 @@ $line-height: 22px;
       display: flex;
 
       span {
+        font-size: var(--theme-sizes-font-small);
         margin-right: 4px;
       }
       i {
