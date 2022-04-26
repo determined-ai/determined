@@ -34,14 +34,14 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment,
   getExperimentLabels, getProject, getProjectExperiments,
-  getWorkspace, killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
+  killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
   unarchiveExperiment } from 'services/api';
 import { Determinedexperimentv1State,
   V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import { ExperimentAction as Action, CommandTask, ExperimentItem,
-  Project, RecordKey, RunState, Workspace } from 'types';
+  Project, RecordKey, RunState } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
@@ -71,7 +71,6 @@ const ProjectDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const { projectId } = useParams<Params>();
   const [ project, setProject ] = useState<Project>();
-  const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
@@ -136,16 +135,6 @@ const ProjectDetails: React.FC = () => {
     }
     return tracker;
   }, [ experimentMap, settings.row, user ]);
-
-  const fetchWorkspace = useCallback(async () => {
-    if (!project?.workspaceId) return;
-    try {
-      const response = await getWorkspace({ id: project.workspaceId }, { signal: canceler.signal });
-      setWorkspace(response);
-    } catch (e) {
-      if (!pageError) setPageError(e as Error);
-    }
-  }, [ canceler.signal, pageError, project?.workspaceId ]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -213,8 +202,8 @@ const ProjectDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchWorkspace(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
-  }, [ fetchProject, fetchWorkspace, fetchExperiments, fetchUsers, fetchLabels ]);
+      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll);
 
@@ -880,7 +869,6 @@ const ProjectDetails: React.FC = () => {
       <ProjectDetailsTabs
         project={project}
         tabs={tabs}
-        workspace={workspace}
       />
     </Page>
   );

@@ -457,6 +457,7 @@ export interface ExperimentItem {
   notes?: string;
   numTrials: number;
   progress?: number;
+  projectId: number;
   resourcePool: string;
   searcherType: string;
   startTime: string;

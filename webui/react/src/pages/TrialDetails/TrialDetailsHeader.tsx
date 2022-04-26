@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
+import BreadcrumbBar from 'components/BreadcrumbBar';
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
@@ -86,11 +87,14 @@ const TrialDetailsHeader: React.FC<Props> = ({
   ]);
 
   return (
-    <PageHeaderFoldable
-      leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
-      options={headerOptions}
-      style={{ backgroundColor: getStateColorCssVar(trial.state) }}
-    />
+    <>
+      <BreadcrumbBar experiment={experiment} id={trial.id} trial={trial} type="trial" />
+      <PageHeaderFoldable
+        leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
+        options={headerOptions}
+        style={{ backgroundColor: getStateColorCssVar(trial.state) }}
+      />
+    </>
   );
 };
 

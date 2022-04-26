@@ -394,6 +394,7 @@ export const mapV1Experiment = (
     notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
+    projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,

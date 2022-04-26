@@ -1,11 +1,9 @@
-import { Breadcrumb, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Link from 'components/Link';
+import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
-import WorkspaceIcon from 'components/WorkspaceIcon';
-import { paths } from 'routes/utils';
-import { Project, Workspace } from 'types';
+import { Project } from 'types';
 import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsTabs.module.scss';
@@ -21,11 +19,10 @@ export interface TabInfo {
 interface Props {
   project: Project;
   tabs: TabInfo[];
-  workspace?: Workspace;
 }
 
 const ProjectDetailsTabs: React.FC<Props> = (
-  { workspace, project, tabs }: Props,
+  { project, tabs }: Props,
 ) => {
   const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
 
@@ -55,24 +52,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
 
   return (
     <div>
-      <div className={css.breadcrumbsRow}>
-        <Breadcrumb separator="">
-          <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(project.workspaceId)}>
-              <WorkspaceIcon name={workspace?.name} size={24} style={{ marginRight: 10 }} />
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link path={paths.workspaceDetails(project.workspaceId)}>
-              {workspace?.name ?? '...'}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Separator />
-          <Breadcrumb.Item>
-            {project.name}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-      </div>
+      <BreadcrumbBar id={project.id} project={project} type="project" />
       <Tabs
         defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
         tabBarExtraContent={activeTab.options}
