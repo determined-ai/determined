@@ -225,7 +225,7 @@ looks something like this:
 
    def __init__(self, context: PyTorchTrialContext):
        self.context = context
-   if args.pretrained:
+       if args.pretrained:
            print("=> using pre-trained model '{}'".format(args.arch))
            model = models.__dict__[args.arch](pretrained=True)
        else:

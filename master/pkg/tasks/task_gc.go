@@ -102,6 +102,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 			},
 		})
 	}
+	res.TaskType = model.TaskTypeCheckpointGC
 
 	return res
 }

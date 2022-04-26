@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.15-dev0
+    default: 0.17.16-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -1141,7 +1141,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
       - checkout
       - react-get-deps
@@ -1153,7 +1153,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     resource_class: large
     steps:
       - checkout
@@ -1171,7 +1171,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
         environment:
           CI: "true"
     resource_class: large
@@ -1186,7 +1186,7 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
       - checkout
       - react-get-deps
@@ -2081,6 +2081,7 @@ workflows:
               agent-version: ['0.17.10']
 
       - deploy:
+          name: deploy-latest-master-cluster
           enable-cors: true
           context: aws
           filters:
