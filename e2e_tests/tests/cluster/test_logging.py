@@ -37,6 +37,7 @@ def test_trial_logs() -> None:
     # And so should new task log APIs.
     check_logs(master_url, task_id, log_regex, api.task_logs, api.task_log_fields)
 
+
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_cpu_cross_version
