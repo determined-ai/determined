@@ -30,8 +30,21 @@ func (a *apiServer) GetCheckpoint(
 
 func (a *apiServer) DeleteCheckpoints(
 	_ context.Context, req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
-	checkpoints := req.CheckpointUuids
-	// figure otu if
+	deleteCheckpoints := req.CheckpointUuids
+	dCheckpointsInModelRegistry, _ := a.m.db.GetDeleteCheckpointsInModelRegistry(deleteCheckpoints)
+	var validCheckpoints []string
+	for _, dc := range deleteCheckpoints {
+		dc_registered := false
+		for _, r := range dCheckpointsInModelRegistry {
+			if dc == r {
+				dc_registered = true
+			}
+		}
+		if !dc_registered {
+			validCheckpoints = append(validCheckpoints, dc)
+		}
+	}
+
 	return &apiv1.DeleteCheckpointsResponse{}, nil
 }
 

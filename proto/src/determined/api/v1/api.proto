@@ -1163,7 +1163,7 @@ service Determined {
   rpc DeleteCheckpoints(DeleteCheckpointsRequest) 
       returns (DeleteCheckpointsResponse) {
         option (google.api.http) = {
-          delete: "/api/v1/checkpoints/{checkpoint_uuids}"
+          delete: "/api/v1/checkpoints"
         };  
      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"

@@ -5400,6 +5400,27 @@ def get_CurrentUser(
         return v1CurrentUserResponse.from_json(_resp.json())
     raise APIHttpError("get_CurrentUser", _resp)
 
+def delete_DeleteCheckpoints(
+    session: "client.Session",
+    *,
+    checkpointUuids: "typing.Optional[typing.Sequence[str]]" = None,
+) -> None:
+    _params = {
+        "checkpointUuids": checkpointUuids,
+    }
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/checkpoints",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteCheckpoints", _resp)
+
 def delete_DeleteExperiment(
     session: "client.Session",
     *,
