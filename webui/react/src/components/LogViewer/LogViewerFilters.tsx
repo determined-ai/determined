@@ -89,7 +89,9 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.allocationIds}
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
-            {selectOptions?.allocationIds?.map(id => <Option key={id} value={id}>{id || 'No Allocation'}</Option>)}
+            {selectOptions?.allocationIds?.map(id => (
+              <Option key={id} value={id}>{id || 'No Allocation'}</Option>
+            ))}
           </MultiSelect>
         )}
         {moreThanOne.agentIds && (
@@ -97,7 +99,9 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.agentIds}
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
-            {selectOptions?.agentIds?.map(id => <Option key={id} value={id}>{id || 'No Agent'}</Option>)}
+            {selectOptions?.agentIds?.map(id => (
+              <Option key={id} value={id}>{id || 'No Agent'}</Option>
+            ))}
           </MultiSelect>
         )}
         {moreThanOne.containerIds && (
@@ -116,7 +120,9 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.rankIds}
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
-            {selectOptions?.rankIds?.map(id => <Option key={id} value={id}>{id || 'No Rank'}</Option>)}
+            {selectOptions?.rankIds?.map(id => (
+              <Option key={id} value={id}>{id || 'No Rank'}</Option>
+            ))}
           </MultiSelect>
         )}
         <MultiSelect
