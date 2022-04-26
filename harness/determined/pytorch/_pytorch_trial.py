@@ -628,15 +628,16 @@ class PyTorchTrialController(det.TrialController):
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
-                # If the checkpointed model is DDP and we are currently running in single-slot,
-                # remove the module prefix from checkpointed data
-                print(f"loading checkpoint for model {model}, {idx}")
-
-                torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
-                    checkpoint["models_state_dict"][idx], "module."
-                )
-
-                model.load_state_dict(checkpoint["models_state_dict"][idx])
+                model_state_dict = checkpoint["models_state_dict"][idx]
+                try:
+                    model.load_state_dict(model_state_dict)
+                except Exception:
+                    # If the checkpointed model is DDP and we are currently running in single-slot,
+                    # remove the module prefix from checkpointed data
+                    torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
+                        model_state_dict, "module."
+                    )
+                    model.load_state_dict(model_state_dict)
 
         if "optimizer_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
