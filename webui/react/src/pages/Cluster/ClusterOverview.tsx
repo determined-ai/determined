@@ -17,7 +17,6 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
