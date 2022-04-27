@@ -287,6 +287,15 @@ def test_workspace_org() -> None:
         returned_notes = r5.notes
         assert len(returned_notes) == 2
 
+        # Put notes
+        r6 = bindings.put_PutProjectNotes(
+            sess,
+            body=bindings.v1PutProjectNotesRequest(notes=[note], projectId=made_project.id),
+            projectId=made_project.id
+        )
+        returned_notes = r6.notes
+        assert len(returned_notes) == 1
+
         # Create an experiment in the default project.
         test_exp_id = run_basic_test(
             conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1

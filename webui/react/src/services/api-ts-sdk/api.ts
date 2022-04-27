@@ -4714,6 +4714,40 @@ export interface V1Project {
 }
 
 /**
+ * Request for setting project notes.
+ * @export
+ * @interface V1PutProjectNotesRequest
+ */
+export interface V1PutProjectNotesRequest {
+    /**
+     * The complete list of notes.
+     * @type {Array<V1Note>}
+     * @memberof V1PutProjectNotesRequest
+     */
+    notes: Array<V1Note>;
+    /**
+     * The id of the project.
+     * @type {number}
+     * @memberof V1PutProjectNotesRequest
+     */
+    projectId: number;
+}
+
+/**
+ * Response to PutProjectNotesRequest.
+ * @export
+ * @interface V1PutProjectNotesResponse
+ */
+export interface V1PutProjectNotesResponse {
+    /**
+     * The complete list of notes on a project.
+     * @type {Array<V1Note>}
+     * @memberof V1PutProjectNotesResponse
+     */
+    notes: Array<V1Note>;
+}
+
+/**
  * Response to PutTemplateRequest.
  * @export
  * @interface V1PutTemplateResponse
@@ -16314,6 +16348,52 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Set project notes.
+         * @param {number} projectId The id of the project.
+         * @param {V1PutProjectNotesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling putProjectNotes.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putProjectNotes.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/notes`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PUT' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PutProjectNotesRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Unarchive a project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -16526,6 +16606,26 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Set project notes.
+         * @param {number} projectId The id of the project.
+         * @param {V1PutProjectNotesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).putProjectNotes(projectId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Unarchive a project.
          * @param {number} id The id of the project.
          * @param {*} [options] Override http request option.
@@ -16645,6 +16745,17 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          */
         postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
             return ProjectsApiFp(configuration).postProject(workspaceId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set project notes.
+         * @param {number} projectId The id of the project.
+         * @param {V1PutProjectNotesRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
+            return ProjectsApiFp(configuration).putProjectNotes(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -16774,6 +16885,19 @@ export class ProjectsApi extends BaseAPI {
      */
     public postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
         return ProjectsApiFp(this.configuration).postProject(workspaceId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set project notes.
+     * @param {number} projectId The id of the project.
+     * @param {V1PutProjectNotesRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).putProjectNotes(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**
