@@ -528,10 +528,12 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 		})
 	}
 	today := float32(0)
+	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").Where(
+		"resource_pool = ? AND start_time >= CURRENT_DATE", pool)
 	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
 		"avg(extract(epoch FROM end_time - start_time))",
 	).Where(
-		"event_type = ? AND end_time >= CURRENT_DATE", "QUEUED",
+		"event_type = ? AND end_time >= CURRENT_DATE AND allocation_id IN (?) ", "QUEUED", subq,
 	).Scan(context.TODO(), &today)
 	if err != nil {
 		return nil, err

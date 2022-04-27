@@ -215,7 +215,13 @@ const SlotAllocationBar: React.FC<Props> = ({
               </span>
             </Link>
           ) :
-            !isAux && <span>{`${totalSlots - resourceStates.length} Slots Free`}</span>}
+            !isAux && (
+              <span>{
+                `${totalSlots > resourceStates.length ?
+                  totalSlots - resourceStates.length : 0} Slots Free`
+              }
+              </span>
+            )}
         </div>
       )}
       {showLegends && (

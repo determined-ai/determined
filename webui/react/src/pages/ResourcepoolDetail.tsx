@@ -12,7 +12,7 @@ import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import * as Api from 'services/api-ts-sdk';
+import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 import { JobState } from 'types';
@@ -66,13 +66,13 @@ const ResourcepoolDetail: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const [ poolStats, setPoolStats ] = useState<Api.V1RPQueueStat>();
+  const [ poolStats, setPoolStats ] = useState<V1RPQueueStat>();
 
   const fetchStats = useCallback(async () => {
     try {
       const promises = [
         getJobQStats({}, { signal: canceler.signal }),
-      ] as [ Promise<Api.V1GetJobQueueStatsResponse> ];
+      ] as [ Promise<V1GetJobQueueStatsResponse> ];
       const [ stats ] = await Promise.all(promises);
       const pool = stats.results.find(p => p.resourcePool === poolname);
       setPoolStats(pool);

@@ -232,13 +232,13 @@ export const paths = {
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
+  resourcePool: (name: string): string => {
+    return `/resourcepool/${name}`;
+  },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
       : 'https://airtable.com/shrodYROolF0E1iYf';
-  },
-  resourcePool: (name: string): string => {
-    return `/resourcepool/${name}`;
   },
   taskList: (): string => {
     return '/tasks';
