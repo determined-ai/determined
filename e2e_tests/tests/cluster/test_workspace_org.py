@@ -297,6 +297,7 @@ def test_workspace_org() -> None:
         assert test_exp.projectId == default_project.id
 
         # Move the test experiment into a user-made project
+        dproj_exp = bindings.get_GetProjectExperiments(sess, id=default_project.id).experiments
         exp_count = len(bindings.get_GetProjectExperiments(sess, id=made_project.id).experiments)
         assert exp_count == 0
         mbody = bindings.v1MoveExperimentRequest(
@@ -305,8 +306,12 @@ def test_workspace_org() -> None:
         bindings.post_MoveExperiment(sess, experimentId=test_exp_id, body=mbody)
         modified_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         assert modified_exp.projectId == made_project.id
+
+        # Confirm the test experiment is in the new project, no longer in old project.
         exp_count = len(bindings.get_GetProjectExperiments(sess, id=made_project.id).experiments)
         assert exp_count == 1
+        dproj_exp2 = bindings.get_GetProjectExperiments(sess, id=default_project.id).experiments
+        assert len(dproj_exp2) == len(dproj_exp) - 1
 
         # Cannot move an experiment out of an archived project
         bindings.post_ArchiveProject(sess, id=made_project.id)
