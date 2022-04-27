@@ -228,7 +228,6 @@ const NavigationSideBar: React.FC = () => {
                   ))}
                 </ul>
               )}
-
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map(config => (
