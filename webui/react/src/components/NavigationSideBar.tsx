@@ -69,20 +69,30 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
+  const containerClasses = [ css.navItemContainer ];
 
-  if (isActive) classes.push(css.active);
-  if (status) classes.push(css.hasStatus);
+  if (isActive) {
+    containerClasses.push(css.active);
+    classes.push(css.active);
+  }
+  if (status) containerClasses.push(css.hasStatus);
 
   useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
 
   const link = (
-    <div className={css.navItemRow}>
+    <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
         <Icon name={props.icon} size="large" />
         <div className={css.label}>{props.label}</div>
-        {status && <div className={css.status}>{status}</div>}
       </Link>
-      {action && <div className={css.action}>{action}</div>}
+      <div className={css.navItemExtra}>
+        {status && (
+          <Link disabled={isActive} path={path} {...props}>
+            <div className={css.status}>{status}</div>
+          </Link>
+        )}
+        {action && <div className={css.action}>{action}</div>}
+      </div>
     </div>
   );
 
@@ -209,12 +219,16 @@ const NavigationSideBar: React.FC = () => {
               tooltip={settings.navbarCollapsed}
             />
             {pinnedWorkspaces.length === 0 ?
-              <p className={css.noWorkspaces}>No pinned workspaces</p> :
-              pinnedWorkspaces.map(workspace => (
-                <div className={css.workspaceItem} key={workspace.id}>
-                  {workspace.name}
-                </div>
-              ))}
+              <p className={css.noWorkspaces}>No pinned workspaces</p> : (
+                <ul className={css.pinnedWorkspaces} role="list">
+                  {pinnedWorkspaces.map(workspace => (
+                    <div className={css.workspaceItem} key={workspace.id}>
+                      {workspace.name}
+                    </div>
+                  ))}
+                </ul>
+              )}
+
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map(config => (
