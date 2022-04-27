@@ -868,7 +868,9 @@ const ProjectDetails: React.FC = () => {
       id="projectDetails">
       <ProjectDetailsTabs
         project={project}
+        settings={settings}
         tabs={tabs}
+        updateSettings={updateSettings}
       />
     </Page>
   );

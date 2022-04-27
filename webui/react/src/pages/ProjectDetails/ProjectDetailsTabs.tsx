@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
+import { UpdateSettings } from 'hooks/useSettings';
+import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import { Project } from 'types';
 import { sentenceToCamelCase } from 'utils/string';
 
@@ -18,21 +20,31 @@ export interface TabInfo {
 
 interface Props {
   project: Project;
+  settings: ProjectDetailsSettings;
   tabs: TabInfo[];
+  updateSettings: UpdateSettings<ProjectDetailsSettings>
 }
 
 const ProjectDetailsTabs: React.FC<Props> = (
-  { project, tabs }: Props,
+  { project, tabs, settings, updateSettings }: Props,
 ) => {
-  const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+  const [ activeTab, setActiveTab ] = useState<TabInfo>(
+    settings.tab ?
+      tabs.find(tab => sentenceToCamelCase(tab.title) === settings.tab) ?? tabs[0] :
+      tabs[0],
+  );
 
-  const handleTabSwitch = useCallback((tabKey) => {
+  const handleTabSwitch = useCallback((tabKey: string) => {
     setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
   useEffect(() => {
     handleTabSwitch(sentenceToCamelCase(activeTab.title));
-  }, [ activeTab.title, handleTabSwitch ]);
+  }, [ activeTab.title, handleTabSwitch, updateSettings ]);
+
+  useEffect(() => {
+    updateSettings({ tab: sentenceToCamelCase(activeTab.title) });
+  }, [ activeTab.title, updateSettings ]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
@@ -54,7 +66,8 @@ const ProjectDetailsTabs: React.FC<Props> = (
     <div>
       <BreadcrumbBar id={project.id} project={project} type="project" />
       <Tabs
-        defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
+        activeKey={settings.tab}
+        defaultActiveKey={settings.tab ?? sentenceToCamelCase(tabs[0].title)}
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ padding: 16, paddingBottom: 0 }}
         onChange={handleTabSwitch}>
