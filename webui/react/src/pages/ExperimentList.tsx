@@ -678,10 +678,8 @@ const ExperimentList: React.FC = () => {
 
   useEffect(() => {
     if(settings.tableOffset > total){
-      setIsLoading(true);
       const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
       updateSettings({ tableOffset: offset });
-      setIsLoading(false);
     }
   }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
