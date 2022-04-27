@@ -341,6 +341,9 @@
   .navItem {
     .label { display: none; }
   }
+  .workspaces {
+    .noWorkspaces { display: none; }
+  }
 }
 .collapsedExitActive {
   flex-basis: var(--theme-sizes-navigation-maxWidth);

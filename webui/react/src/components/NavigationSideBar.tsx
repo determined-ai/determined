@@ -19,6 +19,7 @@ import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 
 interface ItemProps extends LinkProps {
+  action?: React.ReactNode;
   badge?: number;
   icon: string;
   label: string;
@@ -64,7 +65,7 @@ const menuConfig = {
   ],
 };
 
-const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
+const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
@@ -75,11 +76,14 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
 
   const link = (
-    <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
-      <div className={css.label}>{props.label}</div>
-      {status && <div className={css.status}>{status}</div>}
-    </Link>
+    <div className={css.navItemRow}>
+      <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
+        <Icon name={props.icon} size="large" />
+        <div className={css.label}>{props.label}</div>
+        {status && <div className={css.status}>{status}</div>}
+      </Link>
+      {action && <div className={css.action}>{action}</div>}
+    </div>
   );
 
   return props.tooltip ? (
@@ -116,6 +120,10 @@ const NavigationSideBar: React.FC = () => {
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [ settings.navbarCollapsed, updateSettings ]);
+
+  const handleCreateWorkspace = useCallback(() => {
+    openWorkspaceCreateModal();
+  }, [ openWorkspaceCreateModal ]);
 
   if (!showNavigation) return null;
 
@@ -188,14 +196,18 @@ const NavigationSideBar: React.FC = () => {
             ))}
           </section>
           <section className={css.workspaces}>
-            <div className={css.workspaceTitleRow}>
-              <Link className={css.workspaceTitle} inherit path={paths.workspaceList()}>
-                Workspaces
-              </Link>
-              <Button type="text" onClick={() => openWorkspaceCreateModal()}>
-                <Icon name="add-small" size="tiny" />
-              </Button>
-            </div>
+            <NavigationItem
+              action={(
+                <Button type="text" onClick={handleCreateWorkspace}>
+                  <Icon name="add-small" size="tiny" />
+                </Button>
+              )}
+              icon="workspaces"
+              key="workspaces"
+              label="Workspaces"
+              path={paths.workspaceList()}
+              tooltip={settings.navbarCollapsed}
+            />
             {pinnedWorkspaces.length === 0 ?
               <p className={css.noWorkspaces}>No pinned workspaces</p> :
               pinnedWorkspaces.map(workspace => (
