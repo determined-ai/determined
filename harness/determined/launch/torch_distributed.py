@@ -29,7 +29,6 @@ def create_launch_cmd(
         master_addr,
         "--master_port",
         str(C10D_PORT),
-        "--module",
     ]
 
     cmd.extend(override_args)
@@ -121,6 +120,8 @@ def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:
             print("error: extra arguments to --trial:", script, file=sys.stderr)
             sys.exit(1)
         script = det.util.legacy_trial_entrypoint_to_script(parsed.trial)
+        # Add --module as an override arg
+        override_args.append("--module")
     elif not script:
         # There needs to be at least one script argument.
         parser.print_usage()
