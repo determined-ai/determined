@@ -146,6 +146,27 @@ message AddProjectNoteResponse {
   repeated determined.project.v1.Note notes = 1;
 }
 
+// Request for setting project notes.
+message PutProjectNotesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notes", "project_id" ] }
+  };
+  // The complete list of notes.
+  repeated determined.project.v1.Note notes = 1;
+  // The id of the project.
+  int32 project_id = 2;
+}
+
+// Response to PutProjectNotesRequest.
+message PutProjectNotesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notes" ] }
+  };
+
+  // The complete list of notes on a project.
+  repeated determined.project.v1.Note notes = 1;
+}
+
 // Request for updating a project.
 message PatchProjectRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
