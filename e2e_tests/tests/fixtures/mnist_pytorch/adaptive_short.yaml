@@ -40,3 +40,6 @@ max_restarts: 0
 bind_mounts:
   - host_path: /tmp
     container_path: /tmp/work_dir
+  - host_path: /tmp/determined-cp
+    container_path: /tmp/determined-cp
+
