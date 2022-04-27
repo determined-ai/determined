@@ -18,6 +18,8 @@ EXPECTED_FILES = {
     "empty_dir/": None,
 }
 
+METADATA = "This is usually metadata"
+
 
 def create_checkpoint(checkpoint_dir: pathlib.Path) -> None:
     """Create a new checkpoint."""
@@ -95,6 +97,32 @@ def run_storage_lifecycle_test(
             manager.download(storage_id, path)
         if post_delete_cb is not None:
             post_delete_cb(storage_id)
+
+    for storage_id in checkpoints:
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            metadata_path = path.joinpath("foo.txt")
+            metadata_path.parent.mkdir(parents=True, exist_ok=True)
+            with metadata_path.open("w") as f:
+                f.write(METADATA)
+
+            manager.upload_file(path, storage_id, "foo.txt")
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    for storage_id in checkpoints:
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            manager.download(storage_id, path)
+            assert path.exists()
+            files_found = storage.StorageManager._list_directory(path)
+            assert "foo.txt" in files_found, files_found
+            assert len(files_found) == 1, files_found
+            with path.joinpath("foo.txt").open() as f:
+                assert f.read() == METADATA
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+        manager.delete(storage_id)
 
 
 def run_tensorboard_fetcher_test(

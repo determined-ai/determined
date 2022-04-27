@@ -87,6 +87,10 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        pass
+
+    @abc.abstractmethod
     def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
         pass
 

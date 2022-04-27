@@ -39,6 +39,26 @@ class GCSStorageManager(storage.CloudStorageManager):
 
     @no_type_check
     @util.preserve_random_state
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        src = os.path.join(src, filename)
+        logging.info(f"Uploading to GCS: {dst}/{filename}")
+        blob_name = f"{dst}/{filename}"
+        blob = self.bucket.blob(blob_name)
+
+        from google.api_core import exceptions, retry
+
+        retry_network_errors = retry.Retry(
+            retry.if_exception_type(
+                ConnectionError,
+                exceptions.ServerError,
+                urllib3.exceptions.ProtocolError,
+                requests.exceptions.ConnectionError,
+            )
+        )
+        retry_network_errors(blob.upload_from_filename)(src)
+
+    @no_type_check
+    @util.preserve_random_state
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to GCS: {dst}")

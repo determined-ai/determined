@@ -89,6 +89,13 @@ class SharedFSStorageManager(StorageManager):
         src = os.fspath(src)
         shutil.copytree(src, os.path.join(self._base_path, dst))
 
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        src = os.path.join(src, filename)
+        dst = os.path.join(self._base_path, dst)
+        os.makedirs(dst, exist_ok=True)
+        dst = os.path.join(dst, filename)
+        shutil.copyfile(src, dst)
+
     def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
         dst = os.fspath(dst)
         try:

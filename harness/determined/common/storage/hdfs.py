@@ -29,6 +29,12 @@ class HDFSStorageManager(storage.CloudStorageManager):
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
 
     @util.preserve_random_state
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        src = os.path.join(src, filename)
+        logging.info(f"Uploading to HDFS: {dst}/{filename}")
+        self.client.upload(f"{dst}/{filename}", src)
+
+    @util.preserve_random_state
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to HDFS: {dst}")

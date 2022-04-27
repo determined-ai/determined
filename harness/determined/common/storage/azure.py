@@ -34,6 +34,14 @@ class AzureStorageManager(storage.CloudStorageManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        src = os.path.join(src, filename)
+        logging.info(f"Uploading to Azuer Blob Storage: {dst}/{filename}")
+        container_blob = posixpath.join(self.container, dst, filename)
+        blob_dir, blob_base = posixpath.split(container_blob)
+        self.client.put(blob_dir, blob_base, src)
+
+    @util.preserve_random_state
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to Azure Blob Storage: {dst}")

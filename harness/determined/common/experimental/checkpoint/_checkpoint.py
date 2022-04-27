@@ -1,14 +1,16 @@
 import enum
 import json
+import logging
 import pathlib
 import shutil
+import tempfile
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import constants, storage
 from determined.common.experimental import session
-from determined.common.storage import shared
+from determined.common.storage import StorageManager, shared
 
 
 class ModelFramework(enum.Enum):
@@ -139,22 +141,17 @@ class Checkpoint(object):
                     checkpoint_storage,
                     container_path=None,
                 )
-                if not isinstance(
-                    manager,
-                    (
-                        storage.S3StorageManager,
-                        storage.GCSStorageManager,
-                        storage.AzureStorageManager,
-                    ),
-                ):
-                    raise AssertionError(
-                        "Downloading from Azure, S3 or GCS requires the experiment to be "
-                        "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                            checkpoint_storage["type"]
-                        )
-                    )
+                self._assert_valid_storage_manager(
+                    manager, "Downloading from", checkpoint_storage["type"]
+                )
 
                 manager.download(self.uuid, str(local_ckpt_dir))
+
+        try:
+            self.metadata = self._parse_metadata(local_ckpt_dir)
+        except FileNotFoundError:
+            logging.warning("No metadata present in downloaded checkpoint")
+            pass  # in older checkpoints there can be no metadata.json
 
         return str(local_ckpt_dir)
 
@@ -167,7 +164,6 @@ class Checkpoint(object):
         use this method directly to obtain the latest metadata.
         """
         with open(path, "w") as f:
-            # YYY: only dump user metadata
             json.dump(self.metadata, f, indent=2)
 
     def load(
@@ -230,6 +226,8 @@ class Checkpoint(object):
         for key, val in metadata.items():
             self.metadata[key] = val
 
+        self._upload_metadata()
+
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
             json={"checkpoint": {"metadata": self.metadata}},
@@ -248,10 +246,48 @@ class Checkpoint(object):
             if key in self.metadata:
                 del self.metadata[key]
 
+        self._upload_metadata()
+
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
             json={"checkpoint": {"metadata": self.metadata}},
         )
+
+    @staticmethod
+    def _assert_valid_storage_manager(
+        manager: StorageManager, operation: str, storage_type: str
+    ) -> None:
+        if not isinstance(
+            manager,
+            (
+                storage.S3StorageManager,
+                storage.GCSStorageManager,
+                storage.AzureStorageManager,
+            ),
+        ):
+            raise AssertionError(
+                f"{operation} from Azure, S3 or GCS requires the experiment to be "
+                "configured with Azure, S3 or GCS checkpointing, "
+                f"{storage_type} found instead"
+            )
+
+    def _upload_metadata(self) -> None:
+        if self.training is None:
+            raise NotImplementedError("Non-training checkpoints cannot be uploaded")
+        checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
+        storage_type = checkpoint_storage["type"]
+        if storage_type == "shared_fs":
+            ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
+            with open(ckpt_dir.joinpath("metadata.json"), "w") as dest:
+                json.dump(self.metadata, dest)
+        else:
+            manager = storage.build(checkpoint_storage, container_path=None)
+            self._assert_valid_storage_manager(manager, "Uploading to", storage_type)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                metadata_path = pathlib.Path(temp_dir).joinpath("metadata.json")
+                with metadata_path.open("w") as f:
+                    json.dump(self.metadata, f, indent=2)
+                manager.upload_file(temp_dir, self.uuid, "metadata.json")
 
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:

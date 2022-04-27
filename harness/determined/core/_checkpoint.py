@@ -163,7 +163,7 @@ class CheckpointContext:
         with self._storage_manager.store_path(storage_id) as path:
             yield path, storage_id
             resources = self._storage_manager._list_directory(path)
-            self._write_metadata_file(path, metadata)
+            self._write_metadata_file(os.fspath(path), metadata)
 
         self._report_checkpoint(storage_id, resources, metadata)
 

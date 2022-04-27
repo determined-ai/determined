@@ -71,10 +71,17 @@ class S3StorageManager(storage.CloudStorageManager):
         return os.path.join(self.prefix, storage_id)
 
     @util.preserve_random_state
+    def upload_file(self, src: Union[str, os.PathLike], dst: str, filename: str) -> None:
+        src = os.path.join(src, filename)
+        prefix = self.get_storage_prefix(dst)
+        logging.info(f"Uploading {filename} to s3://{prefix}/{filename}")
+        self.bucket.upload_file(src, f"{prefix}/{filename}")
+
+    @util.preserve_random_state
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
-        logging.info(f"Uploading to s3: {prefix}/{dst}")
+        logging.info(f"Uploading to s3: {prefix}")
         for rel_path in sorted(self._list_directory(src)):
             key_name = f"{prefix}/{rel_path}"
             logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
