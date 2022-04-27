@@ -4021,6 +4021,46 @@ class v1Project:
             "immutable": self.immutable,
         }
 
+class v1PutProjectNotesRequest:
+    def __init__(
+        self,
+        notes: "typing.Sequence[v1Note]",
+        projectId: int,
+    ):
+        self.notes = notes
+        self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutProjectNotesRequest":
+        return cls(
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+            projectId=obj["projectId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "notes": [x.to_json() for x in self.notes],
+            "projectId": self.projectId,
+        }
+
+class v1PutProjectNotesResponse:
+    def __init__(
+        self,
+        notes: "typing.Sequence[v1Note]",
+    ):
+        self.notes = notes
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutProjectNotesResponse":
+        return cls(
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "notes": [x.to_json() for x in self.notes],
+        }
+
 class v1PutTemplateResponse:
     def __init__(
         self,
@@ -7879,6 +7919,26 @@ def post_PreviewHPSearch(
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
+
+def put_PutProjectNotes(
+    session: "client.Session",
+    *,
+    body: "v1PutProjectNotesRequest",
+    projectId: int,
+) -> "v1PutProjectNotesResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/projects/{projectId}/notes",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PutProjectNotesResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutProjectNotes", _resp)
 
 def put_PutTemplate(
     session: "client.Session",

@@ -61,6 +61,14 @@ SELECT jsonb_build_object(
 	'avg_experiments_per_project', (
 		(SELECT count(*) FROM experiments WHERE project_id > 1)::float
 		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
+	),
+	'notes_gt_zero', (
+		(SELECT count(*) FROM projects WHERE id > 1 AND jsonb_array_length(notes) > 0)::float
+		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
+	),
+	'notes_gt_one', (
+		(SELECT count(*) FROM projects WHERE id > 1 AND jsonb_array_length(notes) > 1)::float
+		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
 	)
 );
 `)

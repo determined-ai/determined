@@ -168,6 +168,14 @@ func (a *apiServer) AddProjectNote(
 		errors.Wrapf(err, "error adding project note")
 }
 
+func (a *apiServer) PutProjectNotes(
+	_ context.Context, req *apiv1.PutProjectNotesRequest) (*apiv1.PutProjectNotesResponse, error) {
+	newp := &projectv1.Project{}
+	err := a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, req.Notes)
+	return &apiv1.PutProjectNotesResponse{Notes: newp.Notes},
+		errors.Wrapf(err, "error putting project notes")
+}
+
 func (a *apiServer) PatchProject(
 	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
 	// Verify current project exists and can be edited.

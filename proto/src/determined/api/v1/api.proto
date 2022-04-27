@@ -1402,6 +1402,17 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Set project notes.
+  rpc PutProjectNotes(PutProjectNotesRequest)
+      returns (PutProjectNotesResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/projects/{project_id}/notes"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
   // Update a project.
   rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
     option (google.api.http) = {
