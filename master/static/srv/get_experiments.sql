@@ -66,6 +66,7 @@ WITH page_info AS (
             )
         AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
         AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
+        AND ($8 = 0 OR e.project_id = $8)
     ORDER BY %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
