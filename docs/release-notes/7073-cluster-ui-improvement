@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+- Combine sidebar options `Cluster`, `Job Queues` and `Cluster Logs` into `Cluster` page.
+- Clicking on resource pool cards will lead to a detail page, which also includes a `Stats` tab showing average queued time by day. 
