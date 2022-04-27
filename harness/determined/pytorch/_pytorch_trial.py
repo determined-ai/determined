@@ -635,10 +635,12 @@ class PyTorchTrialController(det.TrialController):
                     # If the checkpointed model is non-DDP and the current model is DDP, append module prefix
                     # to the checkpointed data
                     if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+                        logging.debug("Loading non-DDP checkpoint into a DDP model")
                         self._add_prefix_in_state_dict_if_not_present(model_state_dict, "module.")
                     else:
                         # If the checkpointed model is DDP and we are currently running in single-slot,
                         # remove the module prefix from checkpointed data
+                        logging.debug("Loading DDP checkpoint into a non-DDP model")
                         torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
                             model_state_dict, "module."
                         )
