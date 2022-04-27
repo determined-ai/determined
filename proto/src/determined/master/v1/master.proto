@@ -92,5 +92,5 @@ message ResourceAllocationAggregatedEntry {
   // label.
   map<string, float> by_agent_label = 7;
   // The seconds in the cluster used by experiments belonging to each user id.
-  map<int32, float> by_user_id = 8;
+  map<string, float> by_user_id = 8;
 }
