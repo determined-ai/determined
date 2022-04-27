@@ -9,7 +9,7 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
-import * as Api from 'services/api-ts-sdk';
+import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -19,7 +19,7 @@ import Json from './Json';
 import css from './ResourcePoolCardLight.module.scss';
 
 interface Props {
-  poolStats?: Api.V1RPQueueStat | undefined;
+  poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
   size?: ShirtSize;
 }
