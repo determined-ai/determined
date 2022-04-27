@@ -291,7 +291,7 @@ def test_workspace_org() -> None:
         r6 = bindings.put_PutProjectNotes(
             sess,
             body=bindings.v1PutProjectNotesRequest(notes=[note], projectId=made_project.id),
-            projectId=made_project.id
+            projectId=made_project.id,
         )
         returned_notes = r6.notes
         assert len(returned_notes) == 1
