@@ -224,6 +224,8 @@ class Checkpoint(object):
         the checkpoint metadata, the corresponding dictionary entries in the checkpoint are
         replaced by the passed-in dictionary values.
 
+        Warning: this metadata change is not propagated to the checkpoint storage.
+
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
@@ -239,6 +241,8 @@ class Checkpoint(object):
         """
         Removes user-defined metadata from the checkpoint. Any top-level keys that
         appear in the ``keys`` list are removed from the checkpoint.
+
+        Warning: this metadata change is not propagated to the checkpoint storage.
 
         Arguments:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
