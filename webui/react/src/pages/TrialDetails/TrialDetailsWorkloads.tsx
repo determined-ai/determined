@@ -1,20 +1,17 @@
-import { Button, Select, Tooltip } from 'antd';
+import { Select} from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo } from 'react';
-
-// import CheckpointModal from 'components/CheckpointModal';
+import CheckpointViewButton from 'components/CheckpointViewButton';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
 import {
-  CheckpointDetail, CommandTask, ExperimentBase, MetricName,
+ CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
@@ -36,34 +33,6 @@ export interface Props {
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
 }
-
-export interface CheckpointViewButtonProps {
-  checkpoint: CheckpointDetail;
-  experiment: ExperimentBase;
-  title: string;
-}
-
-const CheckpointViewButton: React.FC<CheckpointViewButtonProps> = (
-  {
-    checkpoint,
-    experiment,
-    title,
-  }: CheckpointViewButtonProps,
-) => {
-  const { modalOpen: openModalDelete } =
-  useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
-  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
-
-  return (
-    <Tooltip title="View Checkpoint">
-      <Button
-        aria-label="View Checkpoint"
-        icon={<Icon name="checkpoint" />}
-        onClick={() => handleModalCheckpointClick()}
-      />
-    </Tooltip>
-  );
-};
 
 const TrialDetailsWorkloads: React.FC<Props> = ({
   defaultMetrics,
