@@ -29,6 +29,7 @@ import { cancellableRunStates, deletableRunStates,
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
@@ -713,6 +714,18 @@ const ProjectDetails: React.FC = () => {
     } catch (e) { handleError(e); }
   }, [ fetchProject, project?.id ]);
 
+  const { modalOpen: openNoteDelete } = useModalProjectNoteDelete({
+    onClose: fetchProject,
+    project,
+  });
+
+  const handleDeleteNote = useCallback((pageNumber: number) => {
+    if (!project?.id) return;
+    try {
+      openNoteDelete({ pageNumber });
+    } catch (e) { handleError(e); }
+  }, [ openNoteDelete, project?.id ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -844,6 +857,7 @@ const ProjectDetails: React.FC = () => {
       body: (
         <PaginatedNotesCard
           notes={project?.notes ?? []}
+          onDelete={handleDeleteNote}
           onNewPage={handleNewNotesPage}
           onSave={handleSaveNotes}
         />),
@@ -856,6 +870,7 @@ const ProjectDetails: React.FC = () => {
     columns,
     experiments,
     handleBatchAction,
+    handleDeleteNote,
     handleNewNotesPage,
     handleSaveNotes,
     handleTableRowSelect,

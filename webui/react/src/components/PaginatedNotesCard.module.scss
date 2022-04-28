@@ -16,12 +16,15 @@
 
       .listItem {
         align-items: center;
+        border: 1px solid transparent;
         border-radius: 3px;
         display: flex;
-        justify-content: space-between;
         padding: var(--theme-sizes-layout-small);
         width: 100%;
 
+        & > span {
+          flex-grow: 1;
+        }
         .action {
           visibility: hidden;
         }

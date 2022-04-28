@@ -9,11 +9,12 @@ import css from './PaginatedNotesCard.module.scss';
 
 interface Props {
   notes: Note[];
+  onDelete: (pageNumber: number) => void;
   onNewPage: () => void;
   onSave: (notes: Note[]) => void;
 }
 
-const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave }:Props) => {
+const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelete }:Props) => {
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ editedContents, setEditedContents ] = useState('');
   const [ editedName, setEditedName ] = useState('');
@@ -43,11 +44,11 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave }:Props)
   }, []);
 
   const handleDeletePage = useCallback((pageNumber: number) => {
-    onSave(notes.filter((_, idx) => idx === pageNumber));
+    onDelete(pageNumber);
     if (pageNumber === currentPage){
       setCurrentPage(Math.max(currentPage - 1, 0));
     }
-  }, [ currentPage, notes, onSave ]);
+  }, [ currentPage, onDelete ]);
 
   const handleEditNote = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -55,16 +56,23 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave }:Props)
   }, []);
 
   useEffect(() => {
+    if (currentPage < 0) setCurrentPage(0);
+    if (currentPage >= notes.length) setCurrentPage(notes.length - 1);
+  }, [ currentPage, notes.length ]);
+
+  useEffect(() => {
     if (notes.length === 0) return;
-    setEditedContents(notes[currentPage].contents);
-    setEditedName(notes[currentPage].name);
+    setEditedContents(notes?.[currentPage]?.contents ?? '');
+    setEditedName(notes?.[currentPage]?.name ?? '');
   }, [ currentPage, notes ]);
 
   const ActionMenu = useCallback((pageNumber: number) => {
     return (
       <Menu>
-        <Menu.Item onClick={() => handleEditNote(pageNumber)}>Edit</Menu.Item>
-        <Menu.Item danger onClick={() => handleDeletePage(pageNumber)}>Delete...</Menu.Item>
+        <Menu.Item key="edit" onClick={() => handleEditNote(pageNumber)}>Edit</Menu.Item>
+        <Menu.Item danger key="delete" onClick={() => handleDeletePage(pageNumber)}>
+          Delete...
+        </Menu.Item>
       </Menu>
     );
   }, [ handleDeletePage, handleEditNote ]);
@@ -92,12 +100,11 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave }:Props)
                 <li
                   className={css.listItem}
                   style={{
-                    border: idx === currentPage ?
-                      '1px solid var(--theme-colors-monochrome-12)' :
+                    borderColor: idx === currentPage ?
+                      'var(--theme-colors-monochrome-12)' :
                       undefined,
-                  }}
-                  onClick={() => handleSwitchPage(idx)}>
-                  {note.name}
+                  }}>
+                  <span onClick={() => handleSwitchPage(idx)}>{note.name}</span>
                   <Dropdown
                     overlay={() => ActionMenu(idx)}
                     trigger={[ 'click' ]}>
