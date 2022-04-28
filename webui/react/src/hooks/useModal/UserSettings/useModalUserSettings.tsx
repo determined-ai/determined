@@ -1,11 +1,11 @@
 import { Button, Divider } from 'antd';
 import { ModalStaticFunctions } from 'antd/es/modal/confirm';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
-import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
-import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
+import useModalChangeName from './useModalChangeName';
+import useModalChangePassword from './useModalChangePassword';
 
 import useModal, { ModalHooks } from '../useModal';
 
@@ -29,12 +29,47 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     openChangeDisplayNameModal();
   }, [ openChangeDisplayNameModal ]);
 
+  const [previewImage, setPreviewImage] = useState("");
+  const processProfilePic = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const miniCanvas = document.createElement("canvas");
+      const squareSize = 128; // 64px with support for retina+ screens
+      miniCanvas.width = squareSize;
+      miniCanvas.height = squareSize;
+      const ctx = miniCanvas.getContext("2d");
+      if (ctx && reader.result) {
+        const img = new Image();
+        img.onload = () => {
+          let offsetX = 0, offsetY = 0, width = squareSize, height = squareSize;
+          let scale = squareSize / Math.max(img.naturalWidth, img.naturalHeight);
+          if (img.naturalWidth > img.naturalHeight) {
+            height = Math.round(scale * img.naturalHeight);
+            offsetY = (squareSize - height) / 2;
+          } else if (img.naturalHeight > img.naturalWidth) {
+            width = Math.round(scale * img.naturalWidth);
+            offsetX = (squareSize - width) / 2;
+          }
+          ctx.drawImage(img, offsetX, offsetY, width, height);
+          setPreviewImage(miniCanvas.toDataURL('image/jpeg'));
+          // modalClose();
+        };
+        img.src = String(reader.result);
+      }
+    };
+    if (event && event.target && event.target.files) {
+      reader.readAsDataURL(event.target.files[0]);
+    }
+  };
+
   return (
     <div className={css.base}>
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
           <Avatar hideTooltip large userId={auth.user?.id} />
+          <img src={previewImage} height="64" width="64" style={{border: '1px solid #000'}}/>
+          <input type="file" accept="image/png, image/jpeg" onChange={processProfilePic}/>
         </span>
         <Divider />
       </div>
