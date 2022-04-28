@@ -5,7 +5,7 @@ import uPlot, { AlignedData } from 'uplot';
 import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
 
-import { FacetedData, UPlotData } from './types';
+import { FacetedData } from './types';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
@@ -67,8 +67,12 @@ const extendOptions = (
   width?: number,
   options: Partial<uPlot.Options> = {},
   zoom: ZoomScales = {},
+  onReady?: (uPlot: uPlot) => void,
+  onDestroy?: (uPlot: uPlot) => void,
 ): uPlot.Options => uPlot.assign({
   hooks: {
+    destroy: [ onDestroy ],
+    ready: [ onReady ],
     setScale: [ (uPlot: uPlot, scaleKey: string) => {
       if (![ 'x', 'y' ].includes(scaleKey)) return;
 
@@ -99,68 +103,68 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   const optionsRef = useRef<uPlot.Options>(extendOptions(undefined, options));
   const dataRef = useRef<uPlot.AlignedData>(EMPTY_DATA);
   const [ isEmpty, setIsEmpty ] = useState(true);
+  const [ isReady, setIsReady ] = useState(false);
+  const resize = useResize(chartDivRef);
 
   /**
    * Ensure that the chart is cleaned up during unmount if applicable.
    */
   useEffect(() => {
-    console.log('mounting');
     return () => {
-      console.log('destroying');
       chartRef?.current?.destroy();
       chartRef.current = undefined;
     };
   }, []);
 
   /**
+   * Recreate chart if the new `options` prop changes require it.
+   */
+  useEffect(() => {
+    const newOptions = extendOptions(
+      chartDivRef.current?.offsetWidth,
+      options,
+      zoomRef.current,
+      () => setIsReady(true),
+      () => setIsReady(false),
+    );
+    if (chartDivRef.current && shouldRecreate(chartRef.current, optionsRef.current, newOptions)) {
+      optionsRef.current = newOptions;
+      chartRef?.current?.destroy();
+      chartRef.current = undefined;
+
+      try {
+        chartRef.current = new uPlot(optionsRef.current, dataRef.current, chartDivRef.current);
+      } catch (e) {
+        // Something happened during uPlot creation, setting as "no data" for now.
+        setIsEmpty(true);
+      }
+    }
+  }, [ options ]);
+
+  /**
    * Update `isEmpty` state and `dataRef` when source data changes.
    */
   useEffect(() => {
-    let isEmpty = true;
+    const alignedData = data as uPlot.AlignedData | undefined;
 
-    if (optionsRef.current.mode === 2) {
-      dataRef.current = data as uPlot.AlignedData;
-      isEmpty = false;
-    } else if (data && data.length >= 2) {
-      // Figure out the lowest sized series data.
-      const alignedData = data as uPlot.AlignedData;
-      const minDataLength = alignedData.reduce((acc: number, series: UPlotData[]) => {
-        return Math.min(acc, series.length);
-      }, Number.MAX_SAFE_INTEGER);
-
-      // Making sure the X series and all the other series data are the same length;
-      const trimmedData = alignedData.map((series) => series.slice(0, minDataLength));
-      dataRef.current = trimmedData as unknown as uPlot.AlignedData;
-
-      // Checking to make sure the X series has some data.
-      isEmpty = (trimmedData?.[0]?.length ?? 0) === 0;
+    if (optionsRef.current.mode === 2 && alignedData) {
+      setIsEmpty(false);
+      dataRef.current = alignedData;
+    } else if (alignedData && alignedData?.length >= 2) {
+      const xDataCount = alignedData[0]?.length ?? 0;
+      setIsEmpty(xDataCount === 0);
+      dataRef.current = alignedData;
     } else {
+      setIsEmpty(false);
       dataRef.current = EMPTY_DATA;
     }
 
     // Update chart with data changes if chart already exists.
     if (chartRef.current) {
       const isZoomed = Object.values(zoomRef.current).some(i => i.isZoomed === true);
-      console.log('setData', dataRef.current, 'isZoomed', isZoomed);
-      chartRef.current.setData(dataRef.current, !isZoomed);
+      chartRef.current?.setData(dataRef.current, !isZoomed);
     }
-
-    setIsEmpty(isEmpty);
-  }, [ data ]);
-
-  /**
-   * Recreate chart if the new `options` prop changes require it.
-   */
-  useEffect(() => {
-    const newOptions = extendOptions(chartDivRef.current?.offsetWidth, options, zoomRef.current);
-    console.log('should recreate', shouldRecreate(chartRef.current, optionsRef.current, newOptions));
-    if (chartDivRef.current && shouldRecreate(chartRef.current, optionsRef.current, newOptions)) {
-      console.log('recreating', dataRef.current);
-      optionsRef.current = newOptions;
-      chartRef?.current?.destroy();
-      chartRef.current = new uPlot(optionsRef.current, dataRef.current, chartDivRef.current);
-    }
-  }, [ options ]);
+  }, [ data, isReady ]);
 
   /**
    * When a focus index is provided, highlight applicable series.
@@ -174,11 +178,12 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   /**
    * Resize the chart when resize events happen.
    */
-  const resize = useResize(chartDivRef);
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || !resize.width || !resize.height) return;
     const [ width, height ] = [ resize.width, options?.height || chartRef.current.height ];
+
     if (chartRef.current.width === width && chartRef.current.height === height) return;
+
     chartRef.current.setSize({ height, width });
   }, [ options?.height, resize ]);
 
