@@ -127,25 +127,3 @@ class LrUpdaterCallback(det_torch.PyTorchCallback):
 
     def on_batch_start(self) -> None:
         self.hook.before_train_iter(self.runner)
-
-
-class EvalCallback(det_torch.PyTorchCallback):
-    """
-    This callback broadcasts batch norm statistics, which drift apart during distributed training,
-    from rank 0 to all other ranks before evaluation.
-    """
-
-    def __init__(self, context: det_torch.PyTorchTrialContext, model: torch.nn.Module) -> None:
-        self.context = context
-        self.model = model
-
-    def on_validation_start(self) -> None:
-        if (
-            self.context.distributed.get_size() > 1
-            and self.context._distributed_backend.use_horovod()
-        ):
-            logging.info("Broadcasting batch norm stats from chief for eval.")
-            for _, module in self.model.named_modules():
-                if isinstance(module, bn._BatchNorm) and module.track_running_stats:
-                    hvd.broadcast(module.running_var, 0)
-                    hvd.broadcast(module.running_mean, 0)
