@@ -50,8 +50,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   }, [ project.workspaceId ]);
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [ fetchWorkspaces ]);
+    if (modalRef.current) fetchWorkspaces();
+  }, [ fetchWorkspaces, modalRef ]);
 
   const handleWorkspaceSelect = useCallback((value: SelectValue) => {
     setDestinationWorkspaceId(value as number);

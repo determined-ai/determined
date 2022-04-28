@@ -10,7 +10,8 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { GenericRenderer, getFullPaginationConfig, userRenderer } from 'components/Table';
+import { checkmarkRenderer, GenericRenderer,
+  getFullPaginationConfig, userRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePolling from 'hooks/usePolling';
@@ -165,6 +166,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
+        render: checkmarkRenderer,
         title: 'Archived',
       },
       {

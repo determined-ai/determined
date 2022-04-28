@@ -63,8 +63,8 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
   }, [ selectedWorkspaceId ]);
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [ fetchWorkspaces ]);
+    if (modalRef.current) fetchWorkspaces();
+  }, [ fetchWorkspaces, modalRef ]);
 
   const handleWorkspaceSelect = useCallback((value: SelectValue) => {
     setSelectedWorkspaceId(value as number);
@@ -76,8 +76,8 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
   }, []);
 
   useEffect(() => {
-    fetchProjects();
-  }, [ fetchProjects ]);
+    if (modalRef.current) fetchProjects();
+  }, [ fetchProjects, modalRef ]);
 
   const renderRow = useCallback(({ index, style }) => {
     return (

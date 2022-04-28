@@ -11,7 +11,7 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { GenericRenderer, getFullPaginationConfig,
+import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -200,6 +200,8 @@ const WorkspaceDetails: React.FC = () => {
       {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        key: 'archived',
+        render: checkmarkRenderer,
         title: 'Archived',
       },
       {

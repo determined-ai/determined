@@ -13,13 +13,16 @@ import SelectFilter from './SelectFilter';
 const { Option } = Select;
 
 interface Props {
+  disabled?: boolean;
   notes: Note[];
   onDelete: (pageNumber: number) => void;
   onNewPage: () => void;
   onSave: (notes: Note[]) => void;
 }
 
-const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelete }:Props) => {
+const PaginatedNotesCard: React.FC<Props> = (
+  { notes, onNewPage, onSave, onDelete, disabled = false }:Props,
+) => {
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ editedContents, setEditedContents ] = useState(notes?.[currentPage]?.contents ?? '');
   const [ editedName, setEditedName ] = useState(notes?.[currentPage]?.name ?? '');
@@ -111,6 +114,7 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
           <ul className={css.listContainer} role="list">
             {(notes as Note[]).map((note, idx) => (
               <Dropdown
+                disabled={disabled}
                 key={idx}
                 overlay={() => ActionMenu(idx)}
                 trigger={[ 'contextMenu' ]}>
@@ -122,13 +126,15 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
                       undefined,
                   }}>
                   <span onClick={() => handleSwitchPage(idx)}>{note.name}</span>
-                  <Dropdown
-                    overlay={() => ActionMenu(idx)}
-                    trigger={[ 'click' ]}>
-                    <div className={css.action}>
-                      <Icon name="overflow-horizontal" />
-                    </div>
-                  </Dropdown>
+                  {!disabled && (
+                    <Dropdown
+                      overlay={() => ActionMenu(idx)}
+                      trigger={[ 'click' ]}>
+                      <div className={css.action}>
+                        <Icon name="overflow-horizontal" />
+                      </div>
+                    </Dropdown>
+                  )}
                 </li>
               </Dropdown>
             ))}
@@ -159,6 +165,7 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
       </div>
       <div className={css.notesContainer}>
         <NotesCard
+          disabled={disabled}
           extra={(
             <Dropdown
               overlay={() => ActionMenu(currentPage)}
