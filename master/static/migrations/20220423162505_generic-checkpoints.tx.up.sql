@@ -19,7 +19,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         c.id AS id,
         c.uuid AS uuid,
         t.task_id,
-        NULL as allocation_id, -- TODO, is there any trickery to deduce allocation_id?
+        t.task_id||'.'||t.run_id as allocation_id,
         c.end_time as report_time,
         c.state,
         c.resources,
@@ -30,8 +30,6 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         jsonb_build_object(
             'latest_batch', c.total_batches,
             'framework', c.framework,
-            -- XXX: we definitely need to add this to the migration, so old
-            -- tensorflow checkpoints can be loaded.
             'format', c.format,
             'determined_version', c.determined_version
         ) || COALESCE(c.metadata, '{}'::jsonb) AS metadata,
