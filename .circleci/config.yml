@@ -1263,6 +1263,7 @@ jobs:
       - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
+      - codecov/upload
 
   test-intg-master:
     machine:
