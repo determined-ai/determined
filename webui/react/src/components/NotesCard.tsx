@@ -5,6 +5,7 @@ import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError, { ErrorType } from 'utils/error';
 
+import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
 import Spinner from './Spinner';
@@ -13,11 +14,19 @@ interface Props {
   disabled?: boolean;
   notes: string;
   onSave?: (editedNotes: string) => Promise<void>;
+  onSaveTitle?: (editedTitle: string) => Promise<void>;
+  startEditing?: boolean;
   style?: React.CSSProperties;
+  title?: string;
 }
 
-const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: Props) => {
-  const [ isEditing, setIsEditing ] = useState(false);
+const NotesCard: React.FC<Props> = (
+  {
+    disabled = false, notes, onSave, onSaveTitle,
+    style, startEditing = false, title = 'Notes',
+  }: Props,
+) => {
+  const [ isEditing, setIsEditing ] = useState(startEditing);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
   const location = useLocation();
@@ -70,7 +79,7 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
-      title="Notes">
+      title={<InlineEditor disabled={!onSaveTitle} value={title} onSave={onSaveTitle} />}>
       <Spinner spinning={isLoading}>
         <Markdown
           editing={isEditing}

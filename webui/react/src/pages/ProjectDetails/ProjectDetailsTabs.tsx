@@ -63,7 +63,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
   }
 
   return (
-    <div>
+    <>
       <BreadcrumbBar id={project.id} project={project} type="project" />
       <Tabs
         activeKey={settings.tab}
@@ -73,7 +73,10 @@ const ProjectDetailsTabs: React.FC<Props> = (
         onChange={handleTabSwitch}>
         {tabs.map(tabInfo => {
           return (
-            <TabPane key={sentenceToCamelCase(tabInfo.title)} tab={tabInfo.title}>
+            <TabPane
+              className={css.tabPane}
+              key={sentenceToCamelCase(tabInfo.title)}
+              tab={tabInfo.title}>
               <div className={css.base}>
                 {tabInfo.body}
               </div>
@@ -81,7 +84,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
           );
         })}
       </Tabs>
-    </div>
+    </>
   );
 };
 

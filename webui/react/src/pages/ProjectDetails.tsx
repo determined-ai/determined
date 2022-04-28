@@ -13,6 +13,7 @@ import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import Spinner from 'components/Spinner';
 import { checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
   ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, relativeTimeRenderer,
@@ -32,7 +33,7 @@ import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment,
+import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
   getExperimentLabels, getProject, getProjectExperiments,
   killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
   unarchiveExperiment } from 'services/api';
@@ -41,7 +42,7 @@ import { Determinedexperimentv1State,
 import { encodeExperimentState } from 'services/decoder';
 import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import { ExperimentAction as Action, CommandTask, ExperimentItem,
-  Project, RecordKey, RunState } from 'types';
+  Note, Project, RecordKey, RunState } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
@@ -695,6 +696,21 @@ const ProjectDetails: React.FC = () => {
 
   }, [ settings, updateSettings ]);
 
+  const handleNewNotesPage = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      await addProjectNote({ contents: '', id: project.id, name: 'Untitled' });
+      await fetchProject();
+    } catch (e) { handleError(e); }
+  }, [ fetchProject, project?.id ]);
+
+  const handleSaveNotes = useCallback(async (notes: Note[]) => {
+    if (!project?.id) return;
+    try {
+      await fetchProject();
+    } catch (e) { handleError(e); }
+  }, [ fetchProject, project?.id ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -824,9 +840,12 @@ const ProjectDetails: React.FC = () => {
       title: 'Experiments',
     }, {
       body: (
-        <div>
-          {project?.notes}
-        </div>),
+        <PaginatedNotesCard
+          notes={project?.notes ?? []}
+          onNewPage={handleNewNotesPage}
+          onSave={handleSaveNotes}
+        />),
+      options: <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>,
       title: 'Notes',
     } ]);
   }, [ ExperimentActionDropdown,
@@ -835,6 +854,8 @@ const ProjectDetails: React.FC = () => {
     columns,
     experiments,
     handleBatchAction,
+    handleNewNotesPage,
+    handleSaveNotes,
     handleTableRowSelect,
     hasActivatable,
     hasArchivable,
