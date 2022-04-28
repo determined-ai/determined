@@ -10,14 +10,18 @@ from determined import core
 from tests import parallel
 
 
-def make_mock_storage_manager() -> Any:
+def make_mock_storage_manager(basedir: pathlib.Path) -> Any:
     @contextlib.contextmanager
     def store_path(dst: str) -> Iterator[pathlib.Path]:
-        yield pathlib.Path("/store-path")
+        path = basedir.joinpath("store-path")
+        path.mkdir(exist_ok=True)
+        yield pathlib.Path(path)
 
     @contextlib.contextmanager
     def restore_path(storage_id: str) -> Iterator[pathlib.Path]:
-        yield pathlib.Path("/restore-path")
+        path = basedir.joinpath("restore-path")
+        path.mkdir(exist_ok=True)
+        yield pathlib.Path(path)
 
     storage_manager = mock.MagicMock()
     storage_manager.store_path = mock.MagicMock(side_effect=store_path)
@@ -36,12 +40,14 @@ def make_mock_storage_manager() -> Any:
     ids=lambda x: f"mode={x.name}",
 )
 @pytest.mark.parametrize("dummy", [False, True], ids=lambda x: f"dummy:{x}")
-def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
+def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: pathlib.Path) -> None:
+    ckpt_dir = tmp_path.joinpath("ckpt-dir")
+    ckpt_dir.mkdir(exist_ok=True)
     with parallel.Execution(2) as pex:
 
         @pex.run
         def do_test() -> None:
-            storage_manager = make_mock_storage_manager()
+            storage_manager = make_mock_storage_manager(tmp_path)
             if not dummy:
                 session = mock.MagicMock()
                 response = requests.Response()
@@ -65,7 +71,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
                 RuntimeError,
                 match="upload.*non-chief",
             ):
-                checkpoint_context.upload("ckpt-dir", metadata={"latest_batch": 1})
+                checkpoint_context.upload(ckpt_dir, metadata={"latest_batch": 1})
             if pex.rank == 0:
                 storage_manager.upload.assert_called_once()
                 storage_manager.upload.reset_mock()
@@ -107,7 +113,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
             # Test download.
             unique_string = "arbitrary-string"
             if pex.distributed.rank == 0:
-                checkpoint_context.download("ckpt-uuid", "ckpt-dir", mode)
+                checkpoint_context.download("ckpt-uuid", ckpt_dir, mode)
                 if mode == core.DownloadMode.NoSharedDownload:
                     # Send broadcast after download.
                     _ = pex.distributed.broadcast_local(unique_string)
@@ -116,7 +122,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode) -> None:
                     # Receive broadcast before download, to ensure the download is not synchronized.
                     recvd = pex.distributed.broadcast_local(unique_string)
                     assert recvd == unique_string, recvd
-                checkpoint_context.download("ckpt-uuid", "ckpt-dir", mode)
+                checkpoint_context.download("ckpt-uuid", ckpt_dir, mode)
             storage_manager.download.assert_called_once()
             storage_manager.download.reset_mock()
 

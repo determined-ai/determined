@@ -156,12 +156,6 @@ class Checkpoint(object):
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
-        # XXX: this used to be the only place we write metadata but now that we've fixed our
-        # checkpoint protobuf and now that we are releasing a breaking change to the Checkpoint
-        # export api, we need to start writing a different format (the user-defined metadata only),
-        # and we need to start writing it at upload time, not download time.
-        self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
-
         return str(local_ckpt_dir)
 
     def write_metadata_file(self, path: str) -> None:
@@ -208,8 +202,8 @@ class Checkpoint(object):
 
            Please combine Checkpoint.download() with one of the following instead:
              - ``det.pytorch.load_trial_from_checkpoint()``
-             - ``det.keras.load_trial_from_checkpoint()``
-             - ``det.estimator.load_trial_from_checkpoint()``
+             - ``det.keras.load_model_from_checkpoint()``
+             - ``det.estimator.load_estimator_from_checkpoint_path()``
         """
         warnings.warn(
             "Checkpoint.load() has been deprecated and will be removed in a future version.\n"
@@ -230,6 +224,8 @@ class Checkpoint(object):
         the checkpoint metadata, the corresponding dictionary entries in the checkpoint are
         replaced by the passed-in dictionary values.
 
+        Warning: this metadata change is not propagated to the checkpoint storage.
+
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
@@ -245,6 +241,8 @@ class Checkpoint(object):
         """
         Removes user-defined metadata from the checkpoint. Any top-level keys that
         appear in the ``keys`` list are removed from the checkpoint.
+
+        Warning: this metadata change is not propagated to the checkpoint storage.
 
         Arguments:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
