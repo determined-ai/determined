@@ -121,7 +121,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
             {selectOptions?.rankIds?.map(id => (
-              <Option key={id} value={id}>{id || 'No Rank ID'}</Option>
+              <Option key={id} value={id}>{id || 'No Rank'}</Option>
             ))}
           </MultiSelect>
         )}
