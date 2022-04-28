@@ -85,11 +85,7 @@ const NavigationTabbar: React.FC = () => {
       </div>
       <ActionSheet
         actions={[
-          {
-            render: () => {
-              return <AvatarCard className={css.user} key="Avatar" user={auth.user} />;
-            },
-          },
+          { render: () => <AvatarCard className={css.user} key="avatar" user={auth.user} /> },
           {
             icon: 'settings',
             label: 'Settings',
