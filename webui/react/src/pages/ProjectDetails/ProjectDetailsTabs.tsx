@@ -68,6 +68,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
       <Tabs
         activeKey={settings.tab}
         defaultActiveKey={settings.tab ?? sentenceToCamelCase(tabs[0].title)}
+        style={{ height: 'fit-content' }}
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ padding: 16, paddingBottom: 0 }}
         onChange={handleTabSwitch}>

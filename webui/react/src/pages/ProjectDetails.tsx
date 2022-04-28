@@ -36,6 +36,7 @@ import { paths } from 'routes/utils';
 import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
   getExperimentLabels, getProject, getProjectExperiments,
   killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
+  setProjectNotes,
   unarchiveExperiment } from 'services/api';
 import { Determinedexperimentv1State,
   V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -707,6 +708,7 @@ const ProjectDetails: React.FC = () => {
   const handleSaveNotes = useCallback(async (notes: Note[]) => {
     if (!project?.id) return;
     try {
+      await setProjectNotes({ notes, projectId: project.id });
       await fetchProject();
     } catch (e) { handleError(e); }
   }, [ fetchProject, project?.id ]);
