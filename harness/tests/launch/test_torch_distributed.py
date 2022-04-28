@@ -9,7 +9,7 @@ from tests.launch import test_util
 def test_parse_args() -> None:
     positive_test_cases = {
         "--trial my_module:MyTrial": (
-            ["--module"],
+            [],
             ["python3", "-m", "determined.exec.harness", "my_module:MyTrial"],
         ),
         "script arg": ([], ["script", "arg"]),
@@ -36,7 +36,7 @@ def test_launch_single_slot(
     cluster_info = test_util.make_mock_cluster_info(["0.0.0.0"], 0, 1)
     mock_cluster_info.return_value = cluster_info
     script = ["python3", "-m", "determined.exec.harness", "my_module:MyTrial"]
-    override_args = ["--module", "--max_restarts", "1"]
+    override_args = ["--max_restarts", "1"]
 
     with test_util.set_resources_id_env_var():
         launch.torch_distributed.main(override_args, script)
@@ -55,7 +55,7 @@ def test_launch_distributed(
     cluster_info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 0, 2)
     mock_cluster_info.return_value = cluster_info
     script = ["python3", "-m", "determined.exec.harness", "my_module:MyTrial"]
-    override_args = ["--module", "--max_restarts", "1"]
+    override_args = ["--max_restarts", "1"]
 
     mock_success_code = 99
     mock_proc = mock.MagicMock()
