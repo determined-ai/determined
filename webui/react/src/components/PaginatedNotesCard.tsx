@@ -1,4 +1,6 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { CheckOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, Select } from 'antd';
+import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Note } from 'types';
@@ -6,6 +8,9 @@ import { Note } from 'types';
 import Icon from './Icon';
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
+import SelectFilter from './SelectFilter';
+
+const { Option } = Select;
 
 interface Props {
   notes: Note[];
@@ -19,8 +24,8 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
   const [ editedContents, setEditedContents ] = useState('');
   const [ editedName, setEditedName ] = useState('');
 
-  const handleSwitchPage = useCallback((pageNumber: number) => {
-    setCurrentPage(pageNumber);
+  const handleSwitchPage = useCallback((pageNumber: number | SelectValue) => {
+    setCurrentPage(pageNumber as number);
   }, []);
 
   const handleNewPage = useCallback(() => {
@@ -29,14 +34,15 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
     setCurrentPage(currentPages);
   }, [ notes.length, onNewPage ]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (editedNotes: string) => {
+    setEditedContents(editedNotes);
     await onSave(notes.map((note, idx) => {
       if (idx === currentPage) {
-        return { contents: editedContents, name: editedName } as Note;
+        return { contents: editedNotes, name: editedName } as Note;
       }
       return note;
     }));
-  }, [ currentPage, editedContents, editedName, notes, onSave ]);
+  }, [ currentPage, editedName, notes, onSave ]);
 
   const handleSaveTitle = useCallback(async (newName: string) => {
     await setEditedName(newName);
@@ -73,9 +79,11 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
   if (notes.length === 0) {
     return (
       <div className={css.emptyBase}>
-        <Icon name="document" size="mega" />
-        <p>No notes for this project</p>
-        <Button onClick={handleNewPage}>+ New Page</Button>
+        <div className={css.messageContainer}>
+          <Icon name="document" size="mega" />
+          <p>No notes for this project</p>
+          <Button onClick={handleNewPage}>+ New Page</Button>
+        </div>
       </div>
     );
   }
@@ -111,13 +119,31 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
           </ul>
         </div>
       )}
+      <div className={css.pageSelectRow}>
+        <SelectFilter className={css.pageSelect} value={currentPage} onSelect={handleSwitchPage}>
+          {notes.map((note, idx) => {
+            return (
+              <Option className={css.selectOption} key={idx} value={idx}>
+                <CheckOutlined
+                  className={css.currentPage}
+                  style={{
+                    marginRight: 'var(--theme-sizes-layout-small)',
+                    visibility: idx === currentPage ? 'visible' : 'hidden',
+                  }}
+                />
+                <span>{note.name}</span>
+              </Option>
+            );
+          })}
+        </SelectFilter>
+      </div>
       <div className={css.notesContainer}>
         <NotesCard
           extra={(
             <Dropdown
               overlay={() => ActionMenu(currentPage)}
               trigger={[ 'click' ]}>
-              <div className={css.action}>
+              <div style={{ cursor: 'pointer' }}>
                 <Icon name="overflow-horizontal" />
               </div>
             </Dropdown>

@@ -810,7 +810,7 @@ const ProjectDetails: React.FC = () => {
   const tabs: TabInfo[] = useMemo(() => {
     return ([ {
       body: (
-        <>
+        <div className={css.experimentTab}>
           <TableBatch
             actions={[
               { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
@@ -849,7 +849,7 @@ const ProjectDetails: React.FC = () => {
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
           />
-        </>
+        </div>
       ),
       options: ExperimentTabOptions,
       title: 'Experiments',

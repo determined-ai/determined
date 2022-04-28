@@ -80,7 +80,7 @@ const NotesCard: React.FC<Props> = (
           </Space>
         )
       )}
-      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
+      headStyle={{ minHeight: 'fit-content', paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title={(
         <InlineEditor

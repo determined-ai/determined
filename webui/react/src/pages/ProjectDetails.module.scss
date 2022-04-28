@@ -4,6 +4,9 @@
 .actionList {
   display: inline-flex;
 }
+.experimentTab {
+  padding: var(--theme-sizes-layout-big);
+}
 
 @media only screen and (max-width: $breakpoint-tablet) {
   .actionList {
