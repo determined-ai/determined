@@ -21,7 +21,7 @@ module.exports = {
   ],
   staticDirs: [
     '../public',
-    { from: '../src/assets', to: '/assets' }
+    { from: '../src/shared/assets', to: '/assets' }
   ],
   stories: ['../src/**/*.stories.@(ts|tsx)'],
   webpackFinal: config => {

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
-import Message, { MessageType } from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -18,6 +17,7 @@ import {
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { validateDetApiEnumList } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,

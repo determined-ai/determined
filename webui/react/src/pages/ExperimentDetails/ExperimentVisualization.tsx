@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom';
 
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -15,6 +14,7 @@ import {
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
