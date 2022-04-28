@@ -4,12 +4,9 @@ package kubernetes
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -37,12 +34,6 @@ import (
 type podMetadata struct {
 	podName     string
 	containerID string
-}
-
-type patchStringValue struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value string `json:"value"`
 }
 
 // High lever overview of the actors within the kubernetes package:
@@ -174,9 +165,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 
-	case SetPodOrder:
-		p.receiveJobQueueMsg(ctx)
-
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
 
@@ -191,6 +179,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case ChangePriority:
 		p.receivePriorityChange(ctx, msg)
+
+	case ChangePosition:
+		p.receivePositionChange(ctx, msg)
 
 	case KillTaskPod:
 		p.receiveKillPod(ctx, msg)
@@ -375,41 +366,6 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	return nil
 }
 
-func (p *pods) receiveJobQueueMsg(ctx *actor.Context) {
-	switch msg := ctx.Message().(type) {
-	case SetPodOrder:
-		if msg.QPosition > 0 {
-			podName, ok := p.containerIDToPodName[msg.PodID.String()]
-			if !ok {
-				ctx.Log().WithField("pod-id", msg.PodID).Debug(
-					"received change position command for unregistered container id")
-				return
-			}
-			// check that the pod exists
-			_, err := p.clientSet.CoreV1().Pods("default").Get(context.TODO(), podName, metaV1.GetOptions{})
-			if err != nil {
-				ctx.Log().WithField("pod-id", msg.PodID).Info(
-					"change position command failed with err: ", err)
-			}
-
-			payload := []patchStringValue{{
-				Op:    "replace",
-				Path:  "/metadata/labels/determined-queue-position",
-				Value: fmt.Sprintf("%f", msg.QPosition),
-			}}
-
-			payloadBytes, _ := json.Marshal(payload)
-
-			_, err = p.clientSet.CoreV1().Pods("default").Patch(
-				context.TODO(), podName, types.JSONPatchType, payloadBytes, metaV1.PatchOptions{},
-			)
-			if err != nil {
-				ctx.Log().Infof("Failed to set the order of pod %s: ", podName)
-			}
-		}
-	}
-}
-
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
 	if !ok {
@@ -478,21 +434,35 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg PreemptTaskPod) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
-	podName, ok := p.containerIDToPodName[msg.PodID.String()]
+func (p *pods) verifyPodAndGetRef(ctx *actor.Context, podID string) *actor.Ref {
+	podName, ok := p.containerIDToPodName[podID]
 	if !ok {
-		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+		ctx.Log().WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
-		return
+		return nil
 	}
 	ref, ok := p.podNameToPodHandler[podName]
 	if !ok {
-		ctx.Log().WithField("pod-id", msg.PodID).Debug(
+		ctx.Log().WithField("pod-id", podID).Debug(
 			"received change priority command for unregistered container id")
-		return
+		return nil
 	}
 
-	ctx.Tell(ref, msg)
+	return ref
+}
+
+func (p *pods) receivePriorityChange(ctx *actor.Context, msg ChangePriority) {
+	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+	if ref != nil {
+		ctx.Tell(ref, msg)
+	}
+}
+
+func (p *pods) receivePositionChange(ctx *actor.Context, msg ChangePosition) {
+	ref := p.verifyPodAndGetRef(ctx, msg.PodID.String())
+	if ref != nil {
+		ctx.Tell(ref, msg)
+	}
 }
 
 func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {

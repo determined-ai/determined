@@ -4,8 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/shopspring/decimal"
-
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -76,7 +74,7 @@ func NewResourcePool(
 		agents:         make(map[*actor.Ref]bool),
 		taskList:       newTaskList(),
 		groups:         make(map[*actor.Ref]*group),
-		queuePositions: initalizeJobSortState(),
+		queuePositions: initalizeJobSortState(false),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
 		IDToGroupActor: make(map[model.JobID]*actor.Ref),
 		scalingInfo:    &sproto.ScalingInfo{},
@@ -121,7 +119,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
-			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime, false)
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
 		rp.IDToGroupActor[msg.JobID] = msg.Group
@@ -418,13 +416,15 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(
-	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+	ctx *actor.Context,
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
 ) error {
 	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
 		return fmt.Errorf("unable to perform operation on resource pool with %s",
 			rp.config.Scheduler.GetType())
 	}
-
 	if anchorID == "" || jobID == "" || anchorID == jobID {
 		return nil
 	}
@@ -441,7 +441,8 @@ func (rp *ResourcePool) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
@@ -483,7 +484,7 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
@@ -491,68 +492,6 @@ func (rp *ResourcePool) moveJob(
 	ctx.Tell(groupAddr, msg)
 
 	return nil
-}
-
-func (rp *ResourcePool) findAnchor(
-	jobID model.JobID,
-	anchorID model.JobID,
-	aheadOf bool,
-) (bool, model.JobID, int) {
-	var secondAnchor model.JobID
-	targetPriority := 0
-	anchorPriority := 0
-	anchorIdx := 0
-	prioChange := false
-
-	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
-
-	for i, req := range sortedReqs {
-		if req.JobID == jobID {
-			targetPriority = *rp.groups[req.Group].priority
-		} else if req.JobID == anchorID {
-			anchorPriority = *rp.groups[req.Group].priority
-			anchorIdx = i
-		}
-	}
-
-	if aheadOf {
-		if anchorIdx == 0 {
-			secondAnchor = job.HeadAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx-1].JobID
-		}
-	} else {
-		if anchorIdx >= len(sortedReqs)-1 {
-			secondAnchor = job.TailAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx+1].JobID
-		}
-	}
-
-	if targetPriority != anchorPriority {
-		prioChange = true
-	}
-
-	return prioChange, secondAnchor, anchorPriority
-}
-
-func needMove(
-	jobPos decimal.Decimal,
-	anchorPos decimal.Decimal,
-	secondPos decimal.Decimal,
-	aheadOf bool,
-) bool {
-	if aheadOf {
-		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
-			return false
-		}
-		return true
-	}
-	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
-		return false
-	}
-
-	return true
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
@@ -564,6 +503,10 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case job.MoveJob:
+		if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+			return fmt.Errorf("unable to perform operation on resource pool with %s",
+				rp.config.Scheduler.GetType())
+		}
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
 		ctx.Respond(err)
 
@@ -603,7 +546,7 @@ func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPri
 			ctx.Log().Errorf("failed to get job submission time: %s", err)
 			return nil
 		}
-		rp.queuePositions[jobID] = initalizeQueuePosition(time)
+		rp.queuePositions[jobID] = initalizeQueuePosition(time, false)
 	}
 	return nil
 }
