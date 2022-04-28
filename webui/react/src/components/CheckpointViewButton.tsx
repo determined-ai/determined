@@ -1,13 +1,12 @@
-import { Button, Tooltip } from 'antd';
-import React, { useCallback } from 'react';
-import Icon from 'components/Icon';
+import React, { PropsWithChildren, useCallback } from 'react';
+
 import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
 import {
-  CheckpointDetail, ExperimentBase
-}  from 'types';
+  CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase,
+} from 'types';
 
 interface Props {
-  checkpoint: CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
   experiment: ExperimentBase;
   title: string;
 }
@@ -17,20 +16,17 @@ const CheckpointViewButton: React.FC<Props> = (
     checkpoint,
     experiment,
     title,
-  }: Props,
+    ...props
+  }: PropsWithChildren<Props>,
 ) => {
   const { modalOpen: openModalDelete } =
   useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
   const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   return (
-    <Tooltip title="View Checkpoint">
-      <Button
-        aria-label="View Checkpoint"
-        icon={<Icon name="checkpoint" />}
-        onClick={() => handleModalCheckpointClick()}
-      />
-    </Tooltip>
+    <span onClick={() => handleModalCheckpointClick()}>
+      {props.children}
+    </span>
   );
 };
 

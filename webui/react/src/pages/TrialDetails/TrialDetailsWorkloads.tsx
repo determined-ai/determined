@@ -1,9 +1,11 @@
-import { Select} from 'antd';
+import { Button, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo } from 'react';
+
 import CheckpointViewButton from 'components/CheckpointViewButton';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -11,7 +13,7 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import {
- CommandTask, ExperimentBase, MetricName,
+  CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
@@ -61,8 +63,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           <CheckpointViewButton
             checkpoint={checkpoint}
             experiment={experiment}
-            title={`Checkpoint for Batch ${checkpoint.batch}`}
-          />
+            title={`Checkpoint for Batch ${checkpoint.batch}`}>
+            <Tooltip title="View Checkpoint">
+              <Button
+                aria-label="View Checkpoint"
+                icon={<Icon name="checkpoint" />}
+              />
+            </Tooltip>
+          </CheckpointViewButton>
         );
       }
       return null;
