@@ -222,8 +222,8 @@ class CheckpointContext:
 
     def _write_metadata_file(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]]) -> None:
         if metadata is not None:
-            metadata_path = str(pathlib.Path(ckpt_dir).joinpath("metadata.json"))
-            with open(metadata_path, "w") as f:
+            metadata_path = pathlib.Path(ckpt_dir).joinpath("metadata.json")
+            with metadata_path.open("w") as f:
                 json.dump(metadata, f, indent=2)
 
     def _report_checkpoint(
