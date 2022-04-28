@@ -7,6 +7,7 @@ import themes, { DarkLight, globalCssVars, Theme } from 'themes';
 import { BrandingType } from 'types';
 
 type ThemeHook = {
+  mode: DarkLight,
   setBranding: Dispatch<SetStateAction<BrandingType>>,
   setMode: Dispatch<SetStateAction<DarkLight>>,
   theme: Theme,
@@ -15,9 +16,15 @@ type ThemeHook = {
 const STYLESHEET_ID = 'antd-stylesheet';
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 
-const themePaths = {
-  [DarkLight.Dark]: 'antd.dark.min.css',
-  [DarkLight.Light]: 'antd.min.css',
+const themeConfig = {
+  [DarkLight.Dark]: {
+    antd: 'antd.dark.min.css',
+    monaco: 'vs-dark',
+  },
+  [DarkLight.Light]: {
+    antd: 'antd.min.css',
+    monaco: 'vs-light',
+  },
 };
 
 const createStylesheetLink = () => {
@@ -38,7 +45,7 @@ const getIsDarkMode = (): boolean => {
   return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
 };
 
-const updateTheme = (path: string) => {
+const updateAntDesignTheme = (path: string) => {
   const link = getStylesheetLink();
   link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
 };
@@ -55,6 +62,7 @@ export const useTheme = (): ThemeHook => {
   const [ mode, setMode ] = useState(() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
 
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
+  const monaco = useMemo(() => themeConfig[mode].monaco, [ mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
@@ -85,10 +93,10 @@ export const useTheme = (): ThemeHook => {
 
   // When mode changes update theme.
   useEffect(() => {
-    updateTheme(themePaths[mode]);
+    updateAntDesignTheme(themeConfig[mode].antd);
   }, [ mode ]);
 
-  return { setBranding, setMode, theme };
+  return { mode, setBranding, setMode, theme };
 };
 
 export default useTheme;
