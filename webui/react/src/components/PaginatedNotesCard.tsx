@@ -18,7 +18,6 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ editedContents, setEditedContents ] = useState('');
   const [ editedName, setEditedName ] = useState('');
-  const [ isEditing, setIsEditing ] = useState(false);
 
   const handleSwitchPage = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -50,11 +49,6 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
     }
   }, [ currentPage, onDelete ]);
 
-  const handleEditNote = useCallback((pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    setIsEditing(true);
-  }, []);
-
   useEffect(() => {
     if (currentPage < 0) setCurrentPage(0);
     if (currentPage >= notes.length) setCurrentPage(notes.length - 1);
@@ -69,13 +63,12 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
   const ActionMenu = useCallback((pageNumber: number) => {
     return (
       <Menu>
-        <Menu.Item key="edit" onClick={() => handleEditNote(pageNumber)}>Edit</Menu.Item>
         <Menu.Item danger key="delete" onClick={() => handleDeletePage(pageNumber)}>
           Delete...
         </Menu.Item>
       </Menu>
     );
-  }, [ handleDeletePage, handleEditNote ]);
+  }, [ handleDeletePage ]);
 
   if (notes.length === 0) {
     return (
@@ -120,8 +113,16 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
       )}
       <div className={css.notesContainer}>
         <NotesCard
+          extra={(
+            <Dropdown
+              overlay={() => ActionMenu(currentPage)}
+              trigger={[ 'click' ]}>
+              <div className={css.action}>
+                <Icon name="overflow-horizontal" />
+              </div>
+            </Dropdown>
+          )}
           notes={editedContents}
-          startEditing={isEditing}
           title={editedName}
           onSave={handleSave}
           onSaveTitle={handleSaveTitle}

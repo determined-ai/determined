@@ -12,10 +12,10 @@ import Spinner from './Spinner';
 
 interface Props {
   disabled?: boolean;
+  extra?: React.ReactNode;
   notes: string;
   onSave?: (editedNotes: string) => Promise<void>;
   onSaveTitle?: (editedTitle: string) => Promise<void>;
-  startEditing?: boolean;
   style?: React.CSSProperties;
   title?: string;
 }
@@ -23,10 +23,10 @@ interface Props {
 const NotesCard: React.FC<Props> = (
   {
     disabled = false, notes, onSave, onSaveTitle,
-    style, startEditing = false, title = 'Notes',
+    style, title = 'Notes', extra,
   }: Props,
 ) => {
-  const [ isEditing, setIsEditing ] = useState(startEditing);
+  const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
   const location = useLocation();
@@ -72,9 +72,12 @@ const NotesCard: React.FC<Props> = (
         </Space>
       ) : (
         disabled || (
-          <Tooltip title="Edit">
-            <EditOutlined onClick={editNotes} />
-          </Tooltip>
+          <Space size="middle">
+            <Tooltip title="Edit">
+              <EditOutlined onClick={editNotes} />
+            </Tooltip>
+            {extra}
+          </Space>
         )
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
