@@ -1374,6 +1374,10 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml --data-file $PWD/test-unit-harness-cpu-pycov -i
+      - run: pwd
+      - run: ls
+      - codecov/upload:
+          xtra_args: "-v"
       - persist_to_workspace:
           root: .
           paths:
