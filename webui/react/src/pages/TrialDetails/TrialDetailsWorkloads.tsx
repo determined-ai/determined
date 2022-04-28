@@ -43,8 +43,15 @@ export interface CheckpointViewButtonProps {
   title: string;
 }
 
-const CheckpointViewButton: React.FC<CheckpointViewButtonProps> = ({ checkpoint, experiment, title }: CheckpointViewButtonProps) => {
-  const { modalOpen: openModalDelete } = useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
+const CheckpointViewButton: React.FC<CheckpointViewButtonProps> = (
+  {
+    checkpoint,
+    experiment,
+    title,
+  }: CheckpointViewButtonProps,
+) => {
+  const { modalOpen: openModalDelete } =
+  useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
   const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   return (
@@ -82,7 +89,11 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           trialId: trial?.id,
         };
         return (
-          <CheckpointViewButton checkpoint={checkpoint} experiment={experiment} title={`Best Checkpoint for Trial ${checkpoint.trialId}`} />
+          <CheckpointViewButton
+            checkpoint={checkpoint}
+            experiment={experiment}
+            title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
+          />
         );
       }
       return null;

@@ -92,59 +92,59 @@ const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): Mod
   }, [ launchRegisterCheckpointModal ]);
 
   const getContent = useCallback(() => {
-    if(!checkpoint?.experimentId || !checkpoint.resources){
+    if(!checkpoint?.experimentId || !checkpoint?.resources){
       return null;
     }
 
-      const totalBatchesProcessed = getBatchNumber(checkpoint);
-      const state = checkpoint.state as unknown as RunState;
-      const totalSize = humanReadableBytes(checkpointSize(checkpoint));
+    const totalBatchesProcessed = getBatchNumber(checkpoint);
+    const state = checkpoint.state as unknown as RunState;
+    const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
-      const searcherMetric = props.searcherValidation !== undefined ?
-        props.searcherValidation :
-        ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
-      const checkpointResources = checkpoint.resources;
-      const resources = Object.keys(checkpoint.resources)
-        .sort((a, b) => checkpointResources[a] - checkpointResources[b])
-        .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
-      return (
-        <div className={css.base}>
-          {renderRow(
-            'Source', (
-              <div className={css.source}>
-                <Link path={paths.experimentDetails(checkpoint.experimentId)}>
-                  Experiment {checkpoint.experimentId}
-                </Link>
-                <span className={css.sourceDivider} />
-                <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
-                  Trial {checkpoint.trialId}
-                </Link>
-                <span className={css.sourceDivider} />
-                <span>Batch {totalBatchesProcessed}</span>
-              </div>
-            ),
-          )}
-          {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
-          {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
-          {renderRow('Location', getStorageLocation(config, checkpoint))}
-          {searcherMetric && renderRow(
-            'Validation Metric',
-            <>
-              <HumanReadableNumber num={searcherMetric} /> {`(${config.searcher.metric})`}
-            </>,
-          )}
-          {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
-          {renderRow('Total Size', totalSize)}
-          {resources.length !== 0 && renderRow(
-            'Resources', (
-              <div className={css.resources}>
-                {resources.map(resource => renderResource(resource.name, resource.size))}
-              </div>
-            ),
-          )}
-        </div>
-      );
-    }, [ checkpoint, config, props.searcherValidation ]);
+    const searcherMetric = props.searcherValidation !== undefined ?
+      props.searcherValidation :
+      ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+    const checkpointResources = checkpoint.resources;
+    const resources = Object.keys(checkpoint.resources)
+      .sort((a, b) => checkpointResources[a] - checkpointResources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
+    return (
+      <div className={css.base}>
+        {renderRow(
+          'Source', (
+            <div className={css.source}>
+              <Link path={paths.experimentDetails(checkpoint.experimentId)}>
+                Experiment {checkpoint.experimentId}
+              </Link>
+              <span className={css.sourceDivider} />
+              <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
+                Trial {checkpoint.trialId}
+              </Link>
+              <span className={css.sourceDivider} />
+              <span>Batch {totalBatchesProcessed}</span>
+            </div>
+          ),
+        )}
+        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
+        {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
+        {renderRow('Location', getStorageLocation(config, checkpoint))}
+        {searcherMetric && renderRow(
+          'Validation Metric',
+          <>
+            <HumanReadableNumber num={searcherMetric} /> {`(${config.searcher.metric})`}
+          </>,
+        )}
+        {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
+        {renderRow('Total Size', totalSize)}
+        {resources.length !== 0 && renderRow(
+          'Resources', (
+            <div className={css.resources}>
+              {resources.map(resource => renderResource(resource.name, resource.size))}
+            </div>
+          ),
+        )}
+      </div>
+    );
+  }, [ checkpoint, config, props.searcherValidation ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
@@ -153,6 +153,7 @@ const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): Mod
       okText: 'Register Checkpoint',
       onOk: handleOk,
       title: title,
+      width: 768,
     };
   }, [ handleOk, getContent, title ]);
 
