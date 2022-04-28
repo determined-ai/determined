@@ -1,4 +1,4 @@
-# React WebUI
+# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined>)
 
 ## Brief Architecture
 
