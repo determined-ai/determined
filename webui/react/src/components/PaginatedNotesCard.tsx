@@ -85,20 +85,28 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave }:Props)
         <div className={css.sidebar}>
           <ul className={css.listContainer} role="list">
             {(notes as Note[]).map((note, idx) => (
-              <div className={css.listItemRow} key={idx}>
+              <Dropdown
+                key={idx}
+                overlay={() => ActionMenu(idx)}
+                trigger={[ 'contextMenu' ]}>
                 <li
                   className={css.listItem}
-
+                  style={{
+                    border: idx === currentPage ?
+                      '1px solid var(--theme-colors-monochrome-12)' :
+                      undefined,
+                  }}
                   onClick={() => handleSwitchPage(idx)}>
                   {note.name}
+                  <Dropdown
+                    overlay={() => ActionMenu(idx)}
+                    trigger={[ 'click' ]}>
+                    <div className={css.action}>
+                      <Icon name="overflow-horizontal" />
+                    </div>
+                  </Dropdown>
                 </li>
-                <Dropdown
-                  className={css.action}
-                  overlay={() => ActionMenu(idx)}
-                  trigger={[ 'click' ]}>
-                  <Icon name="overflow-horizontal" size="big" />
-                </Dropdown>
-              </div>
+              </Dropdown>
             ))}
           </ul>
         </div>

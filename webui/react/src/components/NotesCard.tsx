@@ -79,7 +79,13 @@ const NotesCard: React.FC<Props> = (
       )}
       headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
-      title={<InlineEditor disabled={!onSaveTitle} value={title} onSave={onSaveTitle} />}>
+      title={(
+        <InlineEditor
+          disabled={!onSaveTitle || !isEditing}
+          value={title}
+          onSave={onSaveTitle}
+        />
+      )}>
       <Spinner spinning={isLoading}>
         <Markdown
           editing={isEditing}

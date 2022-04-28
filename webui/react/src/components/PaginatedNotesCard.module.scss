@@ -8,11 +8,20 @@
     .listContainer {
       display: flex;
       flex-direction: column;
+      gap: var(--theme-sizes-layout-tiny);
       list-style: none;
       margin: 0;
+      margin-right: var(--theme-sizes-layout-large);
       padding: 0;
 
-      .listItemRow {
+      .listItem {
+        align-items: center;
+        border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+        padding: var(--theme-sizes-layout-small);
+        width: 100%;
+
         .action {
           visibility: hidden;
         }
@@ -23,14 +32,6 @@
             visibility: visible;
           }
         }
-      }
-      .listItem {
-        border-radius: 3px;
-        display: flex;
-        justify-content: space-between;
-        margin-right: var(--theme-sizes-layout-large);
-        padding: var(--theme-sizes-layout-small);
-        width: 100%;
       }
     }
   }
