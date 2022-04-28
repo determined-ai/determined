@@ -1,0 +1,18 @@
+name: core-api-timm-step4
+entrypoint: >-
+  python -m determined.launch.torch_distributed
+  python step4-hyperparameters.py --dataset=torch/cifar10 --dataset-download data --input-size 3 32 32
+max_restarts: 0
+hyperparameters:
+  lr:
+    type: log
+    base: 10
+    minval: -2
+    maxval: -1
+    count: 5
+resources:
+  slots_per_trial: 2
+searcher:
+  name: grid
+  max_length: 5
+  metric: val_loss

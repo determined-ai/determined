@@ -1,0 +1,7 @@
+name: core-api-timm-step0
+entrypoint: python step0-run.py --dataset=torch/cifar10 --dataset-download data --input-size 3 32 32 --epochs 5
+max_restarts: 0
+searcher:
+   name: single
+   max_length: 1
+   metric: val_loss
