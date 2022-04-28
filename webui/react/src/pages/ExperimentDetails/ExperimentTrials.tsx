@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
-import CheckpointViewButton from 'components/CheckpointViewButton';
+import CheckpointDetails from 'components/CheckpointDetails';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
@@ -116,7 +116,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         trialId: record.id,
       };
       return (
-        <CheckpointViewButton
+        <CheckpointDetails
           checkpoint={checkpoint}
           experiment={experiment}
           title={`Best Checkpoint for Trial ${checkpoint.trialId}`}>
@@ -126,7 +126,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
               icon={<Icon name="checkpoint" />}
             />
           </Tooltip>
-        </CheckpointViewButton>
+        </CheckpointDetails>
       );
     };
 

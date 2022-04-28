@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo } from 'react';
 
-import CheckpointViewButton from 'components/CheckpointViewButton';
+import CheckpointDetails from 'components/CheckpointDetails';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -60,7 +60,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           trialId: trial?.id,
         };
         return (
-          <CheckpointViewButton
+          <CheckpointDetails
             checkpoint={checkpoint}
             experiment={experiment}
             title={`Checkpoint for Batch ${checkpoint.batch}`}>
@@ -70,7 +70,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
                 icon={<Icon name="checkpoint" />}
               />
             </Tooltip>
-          </CheckpointViewButton>
+          </CheckpointDetails>
         );
       }
       return null;
