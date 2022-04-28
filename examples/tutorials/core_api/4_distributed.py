@@ -64,7 +64,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                     op.report_progress(batch)
                     checkpoint_metadata = {"latest_batch": batch}
                     with core_context.checkpoint.store_path(checkpoint_metadata) as (checkpoint_directory, uuid):
-                        save_state(x, batch, trial_id, path)
+                        save_state(x, batch, trial_id, checkpoint_directory)
                     last_checkpoint_batch = batch
                 if core_context.preempt.should_preempt():
                     return
