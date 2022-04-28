@@ -517,9 +517,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if self.distributed.size > 1 and self._distributed_backend.use_torch():
             # If Torch DDP is in use, re-wrap the models
-            self.models = [
-                self._PyTorchDistributedDataParallel(model) for model in self.models
-            ]
+            self.models = [self._PyTorchDistributedDataParallel(model) for model in self.models]
 
         if not isinstance(optimizers, list):
             self.optimizers = [optimizers]

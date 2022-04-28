@@ -158,9 +158,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def build_callbacks(self) -> Dict[str, det_torch.PyTorchCallback]:
         self.lr_updater = None
-        hooks = {
-            "eval_callback": callbacks.EvalCallback(self.context, self.model)
-        }  # type: Dict[str, det_torch.PyTorchCallback]
+        hooks = {}  # type: Dict[str, det_torch.PyTorchCallback]
         if "lr_config" in self.cfg:
             logging.info("Adding lr updater callback.")
             self.lr_updater = callbacks.LrUpdaterCallback(
