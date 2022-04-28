@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import CheckpointModal from 'components/CheckpointModal';
+// import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -12,6 +12,7 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
 import {
   CheckpointDetail, CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
@@ -45,13 +46,19 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   updateSettings,
 }: Props) => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-
+  const { modalOpen: openModalDelete } = useModalCheckpoint({ checkpoint: activeCheckpoint, config: experiment.config, title: 'huh' });
+  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [ defaultMetrics, metrics, settings.filter ]);
+
+  const handleCheckpointShow = useCallback( (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+    event.stopPropagation();
+    setActiveCheckpoint(checkpoint);
+    handleModalCheckpointClick();
+  }, [handleModalCheckpointClick])
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -111,7 +118,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [ experiment?.config, metrics, settings, trial ]);
+  }, [ experiment?.config, metrics, settings, trial, handleCheckpointShow ]);
 
   const workloadSteps = useMemo(() => {
     const data = trial?.workloads || [];
@@ -129,13 +136,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         return false;
       });
   }, [ settings.filter, trial?.workloads ]);
-
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-  const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
   const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
     const newFilter = value as TrialWorkloadFilter;
@@ -190,15 +190,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           onChange={handleTableChange}
         />
       </Section>
-      {activeCheckpoint && experiment?.config && (
-        <CheckpointModal
-          checkpoint={activeCheckpoint}
-          config={experiment?.config}
-          show={showCheckpoint}
-          title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
-          onHide={handleCheckpointDismiss}
-        />
-      )}
     </>
   );
 };
