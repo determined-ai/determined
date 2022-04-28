@@ -25,7 +25,7 @@ func TestRendezvous(t *testing.T) {
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
 			// "task" with ranks is started.
-			t1 := model.NewAllocationID(uuid.New().String())
+			t1 := model.AllocationID(uuid.New().String())
 			c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 			r := newRendezvous(nil, t1, resourcesList{
 				c1: &resourcesWithState{rank: 0},
@@ -89,7 +89,7 @@ func TestRendezvous(t *testing.T) {
 }
 
 func TestRendezvousValidation(t *testing.T) {
-	t1 := model.NewAllocationID(uuid.New().String())
+	t1 := model.AllocationID(uuid.New().String())
 	c1 := sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
 		c1: &resourcesWithState{rank: 0},
@@ -106,7 +106,7 @@ func TestRendezvousValidation(t *testing.T) {
 }
 
 func TestTerminationInRendezvous(t *testing.T) {
-	t1 := model.NewAllocationID(uuid.New().String())
+	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
 		c1: &resourcesWithState{rank: 0},
@@ -132,7 +132,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 }
 
 func TestUnwatchInRendezvous(t *testing.T) {
-	t1 := model.NewAllocationID(uuid.New().String())
+	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
 		c1: &resourcesWithState{rank: 0},
@@ -156,7 +156,7 @@ func TestUnwatchInRendezvous(t *testing.T) {
 func TestRendezvousTimeout(t *testing.T) {
 	rendezvousTimeoutDuration = 0
 
-	t1 := model.NewAllocationID(uuid.New().String())
+	t1 := model.AllocationID(uuid.New().String())
 	c1, c2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
 	r := newRendezvous(nil, t1, resourcesList{
 		c1: &resourcesWithState{rank: 0},

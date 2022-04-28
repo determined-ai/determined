@@ -235,7 +235,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	ctx.AddLabel("trial-run-id", t.runID)
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
-		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
 		JobSubmissionTime: t.jobSubmissionTime,

@@ -34,7 +34,7 @@ func TestProtoGetTrial(t *testing.T) {
 	startTime := time.Now().UTC()
 	for i := 0; i < 3; i++ {
 		a := &model.Allocation{
-			AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
 			TaskID:       tr.TaskID,
 			StartTime:    ptrs.Ptr(startTime.Add(time.Duration(i) * time.Second)),
 			EndTime:      ptrs.Ptr(startTime.Add(time.Duration(i+1) * time.Second)),

@@ -52,7 +52,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return errors.Wrapf(err, "persisting GC task %s", t.taskID)
 		}
 
-		t.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
+		t.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, 1))
 
 		allocation := task.NewAllocation(t.logCtx, sproto.AllocateRequest{
 			TaskID:            t.taskID,
