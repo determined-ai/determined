@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata, RecordKey } from 'types';
+import { DetailedUser, Job, Metadata, Note, RecordKey } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -267,6 +267,11 @@ export interface AddProjectNoteParams {
   contents: string;
   id: number;
   name: string;
+}
+
+export interface SetProjectNotesParams {
+  notes: Note[];
+  projectId: number;
 }
 
 export interface GetWorkspacesParams extends PaginationParams {

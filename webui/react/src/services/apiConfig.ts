@@ -809,6 +809,22 @@ export const addProjectNote: Service.DetApi<
   ),
 };
 
+export const setProjectNotes: Service.DetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+> = {
+  name: 'setProjectNotes',
+  postProcess: (response) => {
+    return response.notes as Type.Note[];
+  },
+  request: (params) => detApi.Projects.putProjectNotes(
+    params.projectId,
+    {
+      notes: params.notes,
+      projectId: params.projectId,
+    },
+  ),
+};
+
 export const createProject: Service.DetApi<
   Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
 > = {

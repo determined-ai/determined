@@ -281,6 +281,10 @@ export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
 
+export const setProjectNotes = generateDetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+>(Config.setProjectNotes);
+
 export const createProject = generateDetApi<
   Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
 >(Config.createProject);
