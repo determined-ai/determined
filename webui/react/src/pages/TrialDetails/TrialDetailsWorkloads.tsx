@@ -92,7 +92,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           <CheckpointViewButton
             checkpoint={checkpoint}
             experiment={experiment}
-            title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
+            title={`Checkpoint for Batch ${checkpoint.batch}`}
           />
         );
       }
