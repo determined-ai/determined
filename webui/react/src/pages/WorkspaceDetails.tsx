@@ -128,7 +128,11 @@ const WorkspaceDetails: React.FC = () => {
   }, []);
 
   const handleSortSelect = useCallback((value) => {
-    updateSettings({ sortKey: value });
+    updateSettings({
+      sortDesc: (value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
+        value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME) ? false : true,
+      sortKey: value,
+    });
   }, [ updateSettings ]);
 
   const handleViewChange = useCallback((value: GridListView) => {
@@ -158,6 +162,7 @@ const WorkspaceDetails: React.FC = () => {
       <ProjectActionDropdown
         curUser={user}
         project={record}
+        onComplete={fetchProjects}
       />
     );
 
@@ -215,7 +220,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ user ]);
+  }, [ fetchProjects, user ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
@@ -254,8 +259,8 @@ const WorkspaceDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <ProjectActionDropdown
         curUser={user}
-        fetchProjects={fetchProjects}
         project={record}
+        onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>

@@ -107,8 +107,9 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setDestinationWorkspaceId(undefined);
+    fetchWorkspaces();
     openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
 
   /*
    * When modal props changes are detected, such as modal content

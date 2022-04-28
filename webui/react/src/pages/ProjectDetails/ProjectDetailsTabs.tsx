@@ -2,10 +2,12 @@ import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import Icon from 'components/Icon';
 import PageHeader from 'components/PageHeader';
 import { UpdateSettings } from 'hooks/useSettings';
 import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
-import { Project } from 'types';
+import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
+import { DetailedUser, Project } from 'types';
 import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsTabs.module.scss';
@@ -19,6 +21,8 @@ export interface TabInfo {
 }
 
 interface Props {
+  curUser?: DetailedUser;
+  fetchProject: () => void;
   project: Project;
   settings: ProjectDetailsSettings;
   tabs: TabInfo[];
@@ -26,7 +30,7 @@ interface Props {
 }
 
 const ProjectDetailsTabs: React.FC<Props> = (
-  { project, tabs, settings, updateSettings }: Props,
+  { project, tabs, settings, updateSettings, fetchProject, curUser }: Props,
 ) => {
   const [ activeTab, setActiveTab ] = useState<TabInfo>(
     settings.tab ?
@@ -64,7 +68,18 @@ const ProjectDetailsTabs: React.FC<Props> = (
 
   return (
     <>
-      <BreadcrumbBar id={project.id} project={project} type="project" />
+      <BreadcrumbBar
+        extra={(
+          <ProjectActionDropdown curUser={curUser} project={project} onComplete={fetchProject}>
+            <div style={{ cursor: 'pointer' }}>
+              <Icon name="arrow-down" size="tiny" />
+            </div>
+          </ProjectActionDropdown>
+        )}
+        id={project.id}
+        project={project}
+        type="project"
+      />
       <Tabs
         activeKey={settings.tab}
         defaultActiveKey={settings.tab ?? sentenceToCamelCase(tabs[0].title)}

@@ -14,7 +14,7 @@ interface Props {
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
-  fetchProjects?: () => void;
+  onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
 }
@@ -22,15 +22,15 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange, className, direction = 'vertical', fetchProjects }
+  { project, children, curUser, onVisibleChange, className, direction = 'vertical', onComplete }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: fetchProjects, project });
+  const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: onComplete, project });
   const { modalOpen: openProjectDelete } = useModalProjectDelete({
-    onClose: fetchProjects,
+    onClose: onComplete,
     project,
   });
-  const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: fetchProjects, project });
+  const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: onComplete, project });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.username === project.username;
@@ -48,19 +48,19 @@ const ProjectActionDropdown: React.FC<Props> = (
     if (project.archived) {
       try {
         unarchiveProject({ id: project.id });
-        fetchProjects?.();
+        onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
         archiveProject({ id: project.id });
-        fetchProjects?.();
+        onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive project.' });
       }
     }
-  }, [ fetchProjects, project.archived, project.id ]);
+  }, [ onComplete, project.archived, project.id ]);
 
   const handleDeleteClick = useCallback(() => {
     openProjectDelete();
@@ -103,7 +103,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     <Dropdown
       overlay={ProjectActionMenu}
       placement="bottomLeft"
-      trigger={[ 'contextMenu' ]}
+      trigger={[ 'contextMenu', 'click' ]}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>

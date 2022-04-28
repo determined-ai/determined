@@ -14,6 +14,7 @@ import WorkspaceIcon from './WorkspaceIcon';
 
 interface Props {
   experiment?: ExperimentBase;
+  extra?: React.ReactNode;
   id: number;
   project?: Project;
   trial?: TrialDetails;
@@ -24,7 +25,7 @@ interface Props {
 const BreadcrumbBar: React.FC<Props> = (
   {
     id, type, workspace: workspaceIn, project: projectIn,
-    experiment: experimentIn, trial: trialIn,
+    experiment: experimentIn, trial: trialIn, extra,
   }: Props,
 ) => {
   const [ workspace, setWorkspace ] = useState<Workspace | undefined>(workspaceIn);
@@ -153,6 +154,7 @@ const BreadcrumbBar: React.FC<Props> = (
           </>
         )}
       </Breadcrumb>
+      {extra}
     </div>
   );
 };

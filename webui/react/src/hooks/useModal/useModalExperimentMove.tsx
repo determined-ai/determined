@@ -1,4 +1,4 @@
-import { Empty, Select } from 'antd';
+import { Empty, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -33,7 +33,7 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await getWorkspaces({ limit: 0 });
+      const response = await getWorkspaces({ archived: false, limit: 0 });
       setWorkspaces(response.workspaces);
     } catch (e) {
       handleError(e, {
@@ -49,7 +49,11 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
   const fetchProjects = useCallback(async () => {
     if (!selectedWorkspaceId) return;
     try {
-      const response = await getWorkspaceProjects({ id: selectedWorkspaceId, limit: 0 });
+      const response = await getWorkspaceProjects({
+        archived: false,
+        id: selectedWorkspaceId,
+        limit: 0,
+      });
       setProjects(response.projects);
     } catch (e) {
       handleError(e, {
@@ -81,11 +85,18 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
 
   const renderRow = useCallback(({ index, style }) => {
     return (
-      <li style={style} onClick={() => handleProjectSelect(projects[index].id)}>
-        {projects[index].name}
+      <li
+        style={{
+          ...style,
+          backgroundColor: projects[index].id === destinationProjectId ?
+            'var(--theme-colors-monochrome-16)' :
+            undefined,
+        }}
+        onClick={() => handleProjectSelect(projects[index].id)}>
+        <Typography.Text ellipsis={true}>{projects[index].name}</Typography.Text>
       </li>
     );
-  }, [ handleProjectSelect, projects ]);
+  }, [ destinationProjectId, handleProjectSelect, projects ]);
 
   const modalContent = useMemo(() => {
     return (
@@ -157,9 +168,9 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
       content: modalContent,
       icon: null,
       okButtonProps: { disabled: !destinationProjectId },
-      okText: 'Move Project',
+      okText: 'Move Experiment',
       onOk: handleOk,
-      title: 'Move Project',
+      title: 'Move Experiment',
     };
   }, [ handleOk, modalContent ]);
 
@@ -167,8 +178,9 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
     setSelectedWorkspaceId(undefined);
     setDestinationProjectId(undefined);
     setProjects([]);
+    fetchWorkspaces();
     openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
 
   /*
    * When modal props changes are detected, such as modal content

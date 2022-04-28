@@ -106,7 +106,10 @@ const WorkspaceList: React.FC = () => {
   }, []);
 
   const handleSortSelect = useCallback((value) => {
-    updateSettings({ sortKey: value });
+    updateSettings({
+      sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
+      sortKey: value,
+    });
   }, [ updateSettings ]);
 
   const handleViewChange = useCallback((value: GridListView) => {

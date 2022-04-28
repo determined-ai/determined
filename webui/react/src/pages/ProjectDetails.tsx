@@ -907,6 +907,8 @@ const ProjectDetails: React.FC = () => {
       docTitle="Project Details"
       id="projectDetails">
       <ProjectDetailsTabs
+        curUser={user}
+        fetchProject={fetchProject}
         project={project}
         settings={settings}
         tabs={tabs}
