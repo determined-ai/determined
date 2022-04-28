@@ -5110,6 +5110,7 @@ class v1User:
         username: str,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
         displayName: "typing.Optional[str]" = None,
+        modifiedAt: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.username = username
@@ -5117,6 +5118,7 @@ class v1User:
         self.active = active
         self.agentUserGroup = agentUserGroup
         self.displayName = displayName
+        self.modifiedAt = modifiedAt
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1User":
@@ -5127,6 +5129,7 @@ class v1User:
             active=obj["active"],
             agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
             displayName=obj.get("displayName", None),
+            modifiedAt=obj.get("modifiedAt", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -5137,6 +5140,7 @@ class v1User:
             "active": self.active,
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "modifiedAt": self.modifiedAt if self.modifiedAt is not None else None,
         }
 
 class v1ValidateAfterOperation:
