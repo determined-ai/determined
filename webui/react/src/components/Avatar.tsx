@@ -41,7 +41,8 @@ const getColor = (name = ''): string => {
 
 const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) => {
   const [ displayName, setDisplayName ] = useState('');
-  const [ modifiedAt, setModifiedAt ] = useState('');
+  const [ modifiedAt, setModifiedAt ] = useState(0);
+  const [ userID, setUserID ] = useState(0);
   const { users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
 
@@ -52,7 +53,8 @@ const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) =>
       }
       const user = users.find(user => user.id === userId);
       setDisplayName(getDisplayName(user));
-      setModifiedAt(user.modifiedAt);
+      setModifiedAt(user?.modifiedAt || 0);
+      setUserID(user?.id || 0);
     } else if (name) {
       setDisplayName(name);
     }
@@ -60,7 +62,8 @@ const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) =>
 
   const style = {
     backgroundColor: getColor(displayName),
-    backgroundImage: `/users/${username}/image?t=${modifiedAt}`,
+    backgroundImage: `url('/users/${userID}/image?${modifiedAt}')`,
+    backgroundSize: 'cover',
   };
   const classes = [ css.base ];
   if (large) classes.push(css.large);

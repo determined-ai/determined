@@ -50,6 +50,15 @@ message SetUserPasswordResponse {
   // The updated user.
   determined.user.v1.User user = 1;
 }
+// Content for the requested user's profile image.
+message SetUserImageRequest {
+  // The id of the user.
+  int32 user_id = 1;
+  // A base64-encoded string for the image.
+  bytes image = 2;
+}
+// Response to SetUserImageRequest.
+message SetUserImageResponse {}
 
 // Edit fields for a user.
 message PatchUserRequest {

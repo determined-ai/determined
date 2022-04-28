@@ -6,6 +6,7 @@ import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
 import useModalChangeName from './useModalChangeName';
 import useModalChangePassword from './useModalChangePassword';
+import { setUserImage } from 'services/api';
 
 import useModal, { ModalHooks } from '../useModal';
 
@@ -62,14 +63,34 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     }
   };
 
+  const handleIconUploadClick = useCallback(async () => {
+    if (!previewImage.length || !auth.user || !auth.user?.id) {
+      return;
+    }
+    try {
+      await setUserImage({
+        image: previewImage.substring(previewImage.indexOf(",") + 1),
+        userId: auth.user?.id,
+      });
+      setPreviewImage('');
+    } catch (e) {
+
+    }
+  }, [ auth.user, previewImage ]);
+
   return (
     <div className={css.base}>
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
-          <Avatar hideTooltip large userId={auth.user?.id} />
-          <img src={previewImage} height="64" width="64" style={{border: '1px solid #000'}}/>
+          {previewImage.length
+            ? <img src={previewImage} height="64" width="64" style={{border: '1px solid #000'}}/>
+            : <Avatar hideTooltip large userId={auth.user?.id} />
+          }
           <input type="file" accept="image/png, image/jpeg" onChange={processProfilePic}/>
+          <Button onClick={handleIconUploadClick}>
+            Upload
+          </Button>
         </span>
         <Divider />
       </div>

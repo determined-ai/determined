@@ -7322,6 +7322,26 @@ def post_SetTensorboardPriority(
         return v1SetTensorboardPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetTensorboardPriority", _resp)
 
+def put_SetUserImage(
+    session: "client.Session",
+    *,
+    body: str,
+    userId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/users/{userId}/image",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_SetUserImage", _resp)
+
 def post_SetUserPassword(
     session: "client.Session",
     *,

@@ -113,6 +113,17 @@ export const setUserPassword: Service.DetApi<
   ),
 };
 
+export const setUserImage: Service.DetApi<
+  Service.SetUserImageParams, Api.V1SetUserImageResponse, Api.V1SetUserImageResponse
+> = {
+  name: 'setUserImage',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.setUserImage(
+    params.userId,
+    params.image,
+  ),
+};
+
 export const patchUser: Service.DetApi<
   Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 > = {

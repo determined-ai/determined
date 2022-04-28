@@ -175,3 +175,20 @@ func (a *apiServer) PatchUser(
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
+
+func (a *apiServer) SetUserImage(
+	ctx context.Context, req *apiv1.SetUserImageRequest) (*apiv1.SetUserImageResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+		return nil, grpcutil.ErrPermissionDenied
+	}
+
+	type userResp struct {
+		id int32
+	}
+	err = a.m.db.QueryProto("set_user_image", userResp{}, req.UserId, req.Image);
+	return &apiv1.SetUserImageResponse{}, err
+}

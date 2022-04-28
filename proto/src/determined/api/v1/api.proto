@@ -141,6 +141,17 @@ service Determined {
       tags: "Users"
     };
   }
+  // Set the requested user's image.
+  rpc SetUserImage(SetUserImageRequest)
+      returns (SetUserImageResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/users/{user_id}/image"
+      body: "image"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Patch a user's fields.
   rpc PatchUser(PatchUserRequest) returns (PatchUserResponse) {
     option (google.api.http) = {

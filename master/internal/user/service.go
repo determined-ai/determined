@@ -458,12 +458,12 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 
 func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	args := struct {
-		Username string `path:"username"`
+		UserID string `path:"user_id"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
 	c.Response().Header().Set("cache-control", "public, max-age=3600")
 
-	return s.db.UserImage(args.Username)
+	return s.db.UserImage(args.UserID)
 }

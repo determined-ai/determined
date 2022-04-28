@@ -5208,6 +5208,14 @@ export interface V1SetTensorboardPriorityResponse {
 }
 
 /**
+ * Response to SetUserImageRequest.
+ * @export
+ * @interface V1SetUserImageResponse
+ */
+export interface V1SetUserImageResponse {
+}
+
+/**
  * Response to SetUserPasswordRequest.
  * @export
  * @interface V1SetUserPasswordResponse
@@ -17900,6 +17908,52 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Set the requested user's image.
+         * @param {number} userId The id of the user.
+         * @param {string} body A base64-encoded string for the image.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserImage(userId: number, body: string, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserImage.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setUserImage.');
+            }
+            const localVarPath = `/api/v1/users/{userId}/image`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PUT' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"string" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -18031,6 +18085,26 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Set the requested user's image.
+         * @param {number} userId The id of the user.
+         * @param {string} body A base64-encoded string for the image.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserImage(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserImageResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserImage(userId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -18100,6 +18174,17 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Set the requested user's image.
+         * @param {number} userId The id of the user.
+         * @param {string} body A base64-encoded string for the image.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setUserImage(userId: number, body: string, options?: any) {
+            return UsersApiFp(configuration).setUserImage(userId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -18165,6 +18250,19 @@ export class UsersApi extends BaseAPI {
      */
     public postUser(body: V1PostUserRequest, options?: any) {
         return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the requested user's image.
+     * @param {number} userId The id of the user.
+     * @param {string} body A base64-encoded string for the image.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public setUserImage(userId: number, body: string, options?: any) {
+        return UsersApiFp(this.configuration).setUserImage(userId, body, options)(this.fetch, this.basePath);
     }
 
     /**

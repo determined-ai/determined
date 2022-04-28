@@ -246,6 +246,11 @@ export interface SetUserPasswordParams {
   userId: number;
 }
 
+export interface SetUserImageParams {
+  image: string;
+  userId: number;
+}
+
 export interface PatchUserParams {
   userId: number;
   userParams: {
