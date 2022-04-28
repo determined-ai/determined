@@ -4,6 +4,7 @@
   overflow: auto;
 
   .pageSelectRow {
+    background-color: var(--theme-colors-monochrome-17);
     display: none;
 
     .pageSelect {
@@ -92,10 +93,15 @@
 
 @media only screen and (max-width: $breakpoint-tablet) {
   .base {
-    flex-direction: column;
+    flex-direction: column-reverse;
 
+    .notesContainer {
+      min-height: 90%;
+    }
     .pageSelectRow {
+      bottom: 0;
       display: block;
+      position: sticky;
     }
     .sidebar {
       display: none;

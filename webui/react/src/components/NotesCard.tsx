@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError, { ErrorType } from 'utils/error';
@@ -14,6 +14,7 @@ interface Props {
   disabled?: boolean;
   extra?: React.ReactNode;
   notes: string;
+  onChange?: (editedNotes: string) => void;
   onSave?: (editedNotes: string) => Promise<void>;
   onSaveTitle?: (editedTitle: string) => Promise<void>;
   style?: React.CSSProperties;
@@ -23,7 +24,7 @@ interface Props {
 const NotesCard: React.FC<Props> = (
   {
     disabled = false, notes, onSave, onSaveTitle,
-    style, title = 'Notes', extra,
+    style, title = 'Notes', extra, onChange,
   }: Props,
 ) => {
   const [ isEditing, setIsEditing ] = useState(false);
@@ -55,6 +56,16 @@ const NotesCard: React.FC<Props> = (
     }
     setIsLoading(false);
   }, [ editedNotes, onSave ]);
+
+  const handleEditedNotes = useCallback((newNotes: string) => {
+    setEditedNotes(newNotes);
+    onChange?.(newNotes);
+  }, [ onChange ]);
+
+  useEffect(() => {
+    setEditedNotes(notes);
+    setIsEditing(false);
+  }, [ notes ]);
 
   return (
     <Card
@@ -93,7 +104,7 @@ const NotesCard: React.FC<Props> = (
         <Markdown
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
-          onChange={setEditedNotes}
+          onChange={handleEditedNotes}
           onClick={() => { if (notes === '') editNotes(); }}
         />
       </Spinner>

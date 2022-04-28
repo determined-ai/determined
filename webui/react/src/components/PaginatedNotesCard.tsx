@@ -1,5 +1,5 @@
 import { CheckOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Select } from 'antd';
+import { Button, Dropdown, Menu, Modal, Select } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -21,12 +21,25 @@ interface Props {
 
 const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelete }:Props) => {
   const [ currentPage, setCurrentPage ] = useState(0);
-  const [ editedContents, setEditedContents ] = useState('');
-  const [ editedName, setEditedName ] = useState('');
+  const [ editedContents, setEditedContents ] = useState(notes?.[currentPage]?.contents ?? '');
+  const [ editedName, setEditedName ] = useState(notes?.[currentPage]?.name ?? '');
+  const [ modal, contextHolder ] = Modal.useModal();
 
   const handleSwitchPage = useCallback((pageNumber: number | SelectValue) => {
-    setCurrentPage(pageNumber as number);
-  }, []);
+    if (editedContents !== notes?.[currentPage]?.contents) {
+      modal.confirm({
+        content: (
+          <p>
+            You have unsaved notes, are you sure you want to switch pages?
+            Unsaved notes will be lost.
+          </p>),
+        onOk: () => setCurrentPage(pageNumber as number),
+        title: 'Unsaved content',
+      });
+    } else {
+      setCurrentPage(pageNumber as number);
+    }
+  }, [ currentPage, editedContents, modal, notes ]);
 
   const handleNewPage = useCallback(() => {
     const currentPages = notes.length;
@@ -55,13 +68,16 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
     }
   }, [ currentPage, onDelete ]);
 
+  const handleEditedNotes = useCallback((newContents: string) => {
+    setEditedContents(newContents);
+  }, []);
+
   useEffect(() => {
     if (currentPage < 0) setCurrentPage(0);
     if (currentPage >= notes.length) setCurrentPage(notes.length - 1);
   }, [ currentPage, notes.length ]);
 
   useEffect(() => {
-    if (notes.length === 0) return;
     setEditedContents(notes?.[currentPage]?.contents ?? '');
     setEditedName(notes?.[currentPage]?.name ?? '');
   }, [ currentPage, notes ]);
@@ -120,7 +136,11 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
         </div>
       )}
       <div className={css.pageSelectRow}>
-        <SelectFilter className={css.pageSelect} value={currentPage} onSelect={handleSwitchPage}>
+        <SelectFilter
+          className={css.pageSelect}
+          size="large"
+          value={currentPage}
+          onSelect={handleSwitchPage}>
           {notes.map((note, idx) => {
             return (
               <Option className={css.selectOption} key={idx} value={idx}>
@@ -148,12 +168,15 @@ const PaginatedNotesCard: React.FC<Props> = ({ notes, onNewPage, onSave, onDelet
               </div>
             </Dropdown>
           )}
-          notes={editedContents}
-          title={editedName}
+          notes={notes?.[currentPage]?.contents ?? ''}
+          style={{ border: 0 }}
+          title={notes?.[currentPage]?.name ?? ''}
+          onChange={handleEditedNotes}
           onSave={handleSave}
           onSaveTitle={handleSaveTitle}
         />
       </div>
+      {contextHolder}
     </div>
   );
 };
