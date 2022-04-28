@@ -6,16 +6,13 @@ build_fp16_loss_scaler is large derived from the original mmcv code at
 https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/optimizer.py
 mmcv is covered by the Apache 2.0 License.  Copyright (c) OpenMMLab. All rights reserved.
 """
-import logging
 import os
 from typing import Any, Dict, Tuple
 
 import mmcv
-import mmdet.core.utils
 import torch
 
 import model_hub.utils
-from determined.horovod import hvd
 
 
 def get_config_pretrained_url_mapping() -> Dict[str, str]:
@@ -69,15 +66,6 @@ def get_pretrained_ckpt_path(download_directory: str, config_file: str) -> Tuple
         )
         return ckpt_path, torch.load(ckpt_path)  # type: ignore
     return None, None
-
-
-def reduce_mean(tensor: torch.Tensor) -> torch.Tensor:
-    if hvd._poly_hvd_type is None:
-        return tensor
-    tensor = tensor.clone()
-    logging.debug("Calling reduce_mean (hvd).")
-    hvd.allreduce_(tensor)
-    return tensor
 
 
 def build_fp16_loss_scaler(loss_scale: mmcv.Config) -> Any:
