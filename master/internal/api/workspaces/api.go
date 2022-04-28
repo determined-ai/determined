@@ -67,6 +67,7 @@ func (s *WorkspaceServer) GetWorkspaces(
 	}
 
 	var pageInfo db.PageInfo
+	// need user to determined pinned
 	cs, err := WorkspaceList(ctx, func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 		if req.Archived != nil {
 			q = q.Where("archived = ?", req.Archived.Value)
