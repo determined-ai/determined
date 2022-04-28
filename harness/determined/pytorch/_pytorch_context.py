@@ -177,21 +177,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
             if self.distributed.size > 1 and self._distributed_backend.use_torch():
 
-                class PyTorchDistributedDataParallel(
-                    torch.nn.parallel.DistributedDataParallel  # type: ignore
-                ):
-                    """
-                    Pass-through Model Wrapper to enable access to inner module attributes
-                    when using PyTorch DDP
-                    """
-
-                    def __getattr__(self, name: str) -> Any:
-                        try:
-                            return super().__getattr__(name)
-                        except AttributeError:
-                            return getattr(self.module, name)
-
-                wrapped_model = PyTorchDistributedDataParallel(model)
+                wrapped_model = self._PyTorchDistributedDataParallel(model)
             else:
                 wrapped_model = model
 
@@ -531,22 +517,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         if self.distributed.size > 1 and self._distributed_backend.use_torch():
             # If Torch DDP is in use, re-wrap the models
-            class PyTorchDistributedDataParallel(
-                torch.nn.parallel.DistributedDataParallel  # type: ignore
-            ):
-                """
-                Pass-through Model Wrapper to enable access to inner module attributes
-                when using PyTorch DDP
-                """
-
-                def __getattr__(self, name: str) -> Any:
-                    try:
-                        return super().__getattr__(name)
-                    except AttributeError:
-                        return getattr(self.module, name)
-
             self.models = [
-                PyTorchDistributedDataParallel(model) for model in self.models
+                self._PyTorchDistributedDataParallel(model) for model in self.models
             ]
 
         if not isinstance(optimizers, list):
@@ -817,3 +789,17 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
+
+    class _PyTorchDistributedDataParallel(
+        torch.nn.parallel.DistributedDataParallel  # type: ignore
+    ):
+        """
+        Pass-through Model Wrapper to enable access to inner module attributes
+        when using PyTorch DDP
+        """
+
+        def __getattr__(self, name: str) -> Any:
+            try:
+                return super().__getattr__(name)
+            except AttributeError:
+                return getattr(self.module, name)
