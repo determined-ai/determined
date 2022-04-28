@@ -1,7 +1,7 @@
 import { Button, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 // import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -37,6 +37,27 @@ export interface Props {
   updateSettings: (newSettings: Partial<Settings>) => void;
 }
 
+export interface CheckpointViewButtonProps {
+  checkpoint: CheckpointDetail;
+  experiment: ExperimentBase;
+  title: string;
+}
+
+const CheckpointViewButton: React.FC<CheckpointViewButtonProps> = ({ checkpoint, experiment, title }: CheckpointViewButtonProps) => {
+  const { modalOpen: openModalDelete } = useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
+  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+
+  return (
+    <Tooltip title="View Checkpoint">
+      <Button
+        aria-label="View Checkpoint"
+        icon={<Icon name="checkpoint" />}
+        onClick={() => handleModalCheckpointClick()}
+      />
+    </Tooltip>
+  );
+};
+
 const TrialDetailsWorkloads: React.FC<Props> = ({
   defaultMetrics,
   experiment,
@@ -45,20 +66,11 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const { modalOpen: openModalDelete } = useModalCheckpoint({ checkpoint: activeCheckpoint, config: experiment.config, title: 'huh' });
-  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [ defaultMetrics, metrics, settings.filter ]);
-
-  const handleCheckpointShow = useCallback( (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    handleModalCheckpointClick();
-  }, [handleModalCheckpointClick])
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -70,13 +82,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           trialId: trial?.id,
         };
         return (
-          <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-              onClick={e => handleCheckpointShow(e, checkpoint)}
-            />
-          </Tooltip>
+          <CheckpointViewButton checkpoint={checkpoint} experiment={experiment} title={`Best Checkpoint for Trial ${checkpoint.trialId}`} />
         );
       }
       return null;
@@ -118,7 +124,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [ experiment?.config, metrics, settings, trial, handleCheckpointShow ]);
+  }, [ metrics, settings, trial, experiment ]);
 
   const workloadSteps = useMemo(() => {
     const data = trial?.workloads || [];

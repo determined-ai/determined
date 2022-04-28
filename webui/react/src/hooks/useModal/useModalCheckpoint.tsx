@@ -5,12 +5,12 @@ import React, { useCallback, useMemo } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
-import { paths, routeToReactUrl } from 'routes/utils';
-import { deleteExperiment } from 'services/api';
+import useCreateModelModal from 'hooks/useCreateModelModal';
+import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
+import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/datetime';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/workload';
 
@@ -18,7 +18,7 @@ import useModal, { ModalHooks } from './useModal';
 import css from './useModalCheckpoint.module.scss';
 
 interface Props {
-  checkpoint?: CheckpointWorkloadExtended | CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
   config: ExperimentConfig;
   searcherValidation?: number;
   title: string;
@@ -69,27 +69,33 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const useModalCheckpoint = ({ checkpoint, config, title = 'checkpoint', ...props }: Props): ModalHooks => {
+const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
 
-  const handleOk = useCallback(async () => {
-    try {
-      await deleteExperiment({ experimentId: 1 });
-      routeToReactUrl(paths.experimentList());
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to delete experiment.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
+  const { showModal: showCreateModelModal } = useCreateModelModal();
+
+  const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
+    if (checkpointUuid) showCreateModelModal({ checkpointUuid });
+  }, [ showCreateModelModal ]);
+
+  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal(
+    handleRegisterCheckpointClose,
+  );
+
+  const launchRegisterCheckpointModal = useCallback(() => {
+    if (!checkpoint.uuid) return;
+    showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
+  }, [ checkpoint.uuid, showRegisterCheckpointModal ]);
+
+  const handleOk = useCallback(() => {
+    launchRegisterCheckpointModal();
+  }, [ launchRegisterCheckpointModal ]);
 
   const getContent = useCallback(() => {
-    let content: any = <div>"no exp"</div>;
-    if(checkpoint && checkpoint?.experimentId !== undefined && checkpoint?.resources !== undefined){
+    if(!checkpoint?.experimentId || !checkpoint.resources){
+      return null;
+    }
+
       const totalBatchesProcessed = getBatchNumber(checkpoint);
       const state = checkpoint.state as unknown as RunState;
       const totalSize = humanReadableBytes(checkpointSize(checkpoint));
@@ -101,7 +107,7 @@ const useModalCheckpoint = ({ checkpoint, config, title = 'checkpoint', ...props
       const resources = Object.keys(checkpoint.resources)
         .sort((a, b) => checkpointResources[a] - checkpointResources[b])
         .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
-      content = (
+      return (
         <div className={css.base}>
           {renderRow(
             'Source', (
@@ -138,19 +144,17 @@ const useModalCheckpoint = ({ checkpoint, config, title = 'checkpoint', ...props
           )}
         </div>
       );
-    }
-    return content;
-  }, [ checkpoint, config, props.searcherValidation ]);
+    }, [ checkpoint, config, props.searcherValidation ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
       content: getContent(),
       icon: <ExclamationCircleOutlined />,
-      okText: 'Delete',
+      okText: 'Register Checkpoint',
       onOk: handleOk,
-      title: 'Confirm Experiment Deletion',
+      title: title,
     };
-  }, [ handleOk, getContent ]);
+  }, [ handleOk, getContent, title ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
