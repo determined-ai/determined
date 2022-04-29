@@ -39,6 +39,19 @@ example:
    For example, if your experiment loads data from Amazon S3, the ``data`` field might contain the
    S3 bucket name, object prefix, and AWS authentication credentials.
 
+``workspace``
+   The name of the pre-existing workspace where you want to create the experiment. The
+   ``workspace`` and ``project`` fields must either both be present or both be absent. If they are
+   absent, the experiment is placed in the ``Uncategorized`` project in the ``Uncategorized``
+   workspace. You can manage workspaces using the CLI ``det workspace help`` command or the WebUI.
+
+``project``
+   The name of the pre-existing project inside ``workspace`` where you want to create the
+   experiment. The ``workspace`` and ``project`` fields must either both be
+   present or both be absent. If they are absent, the experiment is placed in the ``Uncategorized``
+   project in the ``Uncategorized`` workspace. You can manage projects using the CLI ``det
+   project help`` command or the WebUI.
+
 ************
  Entrypoint
 ************
