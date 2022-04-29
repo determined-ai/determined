@@ -186,9 +186,11 @@ func (a *apiServer) SetUserImage(
 		return nil, grpcutil.ErrPermissionDenied
 	}
 
-	type userResp struct {
-		id int32
+	resp := apiv1.SetUserImageResponse{}
+	if len(req.Image) == 0 {
+		err = a.m.db.QueryProto("clear_user_image", &resp, req.UserId)
+	} else {
+		err = a.m.db.QueryProto("set_user_image", &resp, req.UserId, req.Image)
 	}
-	err = a.m.db.QueryProto("set_user_image", userResp{}, req.UserId, req.Image);
-	return &apiv1.SetUserImageResponse{}, err
+	return &resp, err
 }

@@ -74,7 +74,7 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
       });
       setPreviewImage('');
     } catch (e) {
-
+      console.error(e);
     }
   }, [ auth.user, previewImage ]);
 

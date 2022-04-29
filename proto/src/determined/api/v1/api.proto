@@ -142,8 +142,7 @@ service Determined {
     };
   }
   // Set the requested user's image.
-  rpc SetUserImage(SetUserImageRequest)
-      returns (SetUserImageResponse) {
+  rpc SetUserImage(SetUserImageRequest) returns (SetUserImageResponse) {
     option (google.api.http) = {
       put: "/api/v1/users/{user_id}/image"
       body: "image"

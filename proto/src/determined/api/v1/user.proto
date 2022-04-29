@@ -58,7 +58,10 @@ message SetUserImageRequest {
   bytes image = 2;
 }
 // Response to SetUserImageRequest.
-message SetUserImageResponse {}
+message SetUserImageResponse {
+  // The id of the saved image.
+  int32 id = 1;
+}
 
 // Edit fields for a user.
 message PatchUserRequest {

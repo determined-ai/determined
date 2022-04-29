@@ -5213,6 +5213,12 @@ export interface V1SetTensorboardPriorityResponse {
  * @interface V1SetUserImageResponse
  */
 export interface V1SetUserImageResponse {
+    /**
+     * The id of the saved image.
+     * @type {number}
+     * @memberof V1SetUserImageResponse
+     */
+    id?: number;
 }
 
 /**

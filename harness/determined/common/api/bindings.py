@@ -4441,6 +4441,24 @@ class v1SetTensorboardPriorityResponse:
             "tensorboard": self.tensorboard.to_json() if self.tensorboard is not None else None,
         }
 
+class v1SetUserImageResponse:
+    def __init__(
+        self,
+        id: "typing.Optional[int]" = None,
+    ):
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetUserImageResponse":
+        return cls(
+            id=obj.get("id", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+        }
+
 class v1SetUserPasswordResponse:
     def __init__(
         self,
@@ -7327,7 +7345,7 @@ def put_SetUserImage(
     *,
     body: str,
     userId: int,
-) -> None:
+) -> "v1SetUserImageResponse":
     _params = None
     _resp = session._do_request(
         method="PUT",
@@ -7339,7 +7357,7 @@ def put_SetUserImage(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1SetUserImageResponse.from_json(_resp.json())
     raise APIHttpError("put_SetUserImage", _resp)
 
 def post_SetUserPassword(
