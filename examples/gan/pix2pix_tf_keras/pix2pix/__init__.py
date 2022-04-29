@@ -6,12 +6,12 @@ import tensorflow as tf
 from .discriminator import (
     make_discriminator_model,
     loss as discriminator_loss,
-    optimizer as discriminator_optimizer,
+    make_optimizer as make_discriminator_optimizer,
 )
 from .generator import (
     make_generator_model,
     loss as generator_loss,
-    optimizer as generator_optimizer,
+    make_optimizer as make_generator_optimizer,
 )
 
 
@@ -25,22 +25,25 @@ class Pix2Pix(tf.keras.Model):
         self.discriminator = make_discriminator_model()
         self.discriminator_loss = discriminator_loss
 
-    def compile(self, discriminator_optimizer, generator_optimizer):
+    def compile(self, discriminator_optimizer=None, generator_optimizer=None):
         super(Pix2Pix, self).compile()
-        self.discriminator_optimizer = discriminator_optimizer
-        self.generator_optimizer = generator_optimizer
+        self.discriminator_optimizer = (
+            discriminator_optimizer or make_discriminator_optimizer()
+        )
+        self.generator_optimizer = generator_optimizer or make_generator_optimizer()
 
     def call(self, inputs, training=None, mask=None):
         pass
 
-    def train_step(self, input_image, target):
+    def train_step(self, data):
+        input_image, real_image = data
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             gen_output = self.generator(input_image, training=True)
 
-            disc_real = self.discriminator([input_image, target], training=True)
+            disc_real = self.discriminator([input_image, real_image], training=True)
             disc_fake = self.discriminator([input_image, gen_output], training=True)
 
-            g_loss, _, _ = self.generator_loss(disc_fake, gen_output, target)
+            g_loss, _, _ = self.generator_loss(disc_fake, gen_output, real_image)
             d_loss = self.discriminator_loss(disc_real, disc_fake)
 
         generator_gradients = gen_tape.gradient(
@@ -50,16 +53,17 @@ class Pix2Pix(tf.keras.Model):
             d_loss, self.discriminator.trainable_variables
         )
 
-        generator_optimizer.apply_gradients(
+        self.generator_optimizer.apply_gradients(
             zip(generator_gradients, self.generator.trainable_variables)
         )
-        discriminator_optimizer.apply_gradients(
+        self.discriminator_optimizer.apply_gradients(
             zip(discriminator_gradients, self.discriminator.trainable_variables)
         )
 
         return {"d_loss": d_loss, "g_loss": g_loss}
 
-    def test_step(self, input_image, target):
+    def test_step(self, data):
+        input_image, target = data
         gen_output = self.generator(input_image, training=False)
         disc_real = self.discriminator([input_image, target], training=False)
         disc_fake = self.discriminator([gen_output, target], training=False)

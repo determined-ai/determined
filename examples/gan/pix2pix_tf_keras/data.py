@@ -1,22 +1,30 @@
 import pathlib
 
+from typing import Union
+
 import tensorflow as tf
 
-
-dataset_name = "facades"
-
-_URL = f"http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/{dataset_name}.tar.gz"
-
-path_to_zip = tf.keras.utils.get_file(
-    fname=f"{dataset_name}.tar.gz", origin=_URL, extract=True
-)
-
-path_to_zip = pathlib.Path(path_to_zip)
-
-PATH = path_to_zip.parent / dataset_name
+DATASET_NAME = "facades"
+HEIGHT, WIDTH = 256, 256
+# The facade training set consists of 400 images
+BUFFER_SIZE = 400
 
 
-def load(image_file):
+def download(worker_rank: Union[None, int] = None):
+    URL = f"http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/{DATASET_NAME}.tar.gz"
+
+    fname = f"{DATASET_NAME}-{worker_rank}.tar.gz" if worker_rank is not None else f"{DATASET_NAME}.tzr.gz"
+    path_to_zip = tf.keras.utils.get_file(
+        fname, origin=URL, extract=True
+    )
+
+    path_to_zip = pathlib.Path(path_to_zip)
+
+    PATH = path_to_zip.parent / DATASET_NAME
+    return PATH
+
+
+def _load(image_file):
     # Read and decode an image file to a uint8 tensor
     image = tf.io.read_file(image_file)
     image = tf.io.decode_jpeg(image)
@@ -36,16 +44,7 @@ def load(image_file):
     return input_image, real_image
 
 
-# The facade training set consist of 400 images
-BUFFER_SIZE = 400
-# The batch size of 1 produced better results for the U-Net in the original pix2pix experiment
-BATCH_SIZE = 1
-# Each image is 256x256 in size
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
-
-
-def resize(input_image, real_image, height, width):
+def _resize(input_image, real_image, height, width):
     input_image = tf.image.resize(
         input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
@@ -56,17 +55,15 @@ def resize(input_image, real_image, height, width):
     return input_image, real_image
 
 
-def random_crop(input_image, real_image):
+def _random_crop(input_image, real_image, height, width):
     stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(
-        stacked_image, size=[2, IMG_HEIGHT, IMG_WIDTH, 3]
-    )
+    cropped_image = tf.image.random_crop(stacked_image, size=[2, height, width, 3])
 
     return cropped_image[0], cropped_image[1]
 
 
 # Normalizing the images to [-1, 1]
-def normalize(input_image, real_image):
+def _normalize(input_image, real_image):
     input_image = (input_image / 127.5) - 1
     real_image = (real_image / 127.5) - 1
 
@@ -74,12 +71,15 @@ def normalize(input_image, real_image):
 
 
 @tf.function()
-def random_jitter(input_image, real_image):
-    # Resizing to 286x286
-    input_image, real_image = resize(input_image, real_image, 286, 286)
+def _random_jitter(input_image, real_image, height, width, jitter=30):
+    if jitter > 0:
+        # Resizing to 286x286
+        input_image, real_image = _resize(
+            input_image, real_image, height + jitter, width + jitter
+        )
 
-    # Random cropping back to 256x256
-    input_image, real_image = random_crop(input_image, real_image)
+        # Random cropping back to 256x256
+        input_image, real_image = _random_crop(input_image, real_image, height, width)
 
     if tf.random.uniform(()) > 0.5:
         # Random mirroring
@@ -89,42 +89,57 @@ def random_jitter(input_image, real_image):
     return input_image, real_image
 
 
-def load_image_train(image_file):
-    input_image, real_image = load(image_file)
-    input_image, real_image = random_jitter(input_image, real_image)
-    input_image, real_image = normalize(input_image, real_image)
+def _load_train_images(image_file, height=HEIGHT, width=WIDTH, jitter=30):
+    input_image, real_image = _load(image_file)
+    input_image, real_image = _random_jitter(
+        input_image, real_image, height, width, jitter
+    )
+    input_image, real_image = _normalize(input_image, real_image)
 
     return input_image, real_image
 
 
-def load_image_test(image_file):
-    input_image, real_image = load(image_file)
-    input_image, real_image = resize(input_image, real_image, IMG_HEIGHT, IMG_WIDTH)
-    input_image, real_image = normalize(input_image, real_image)
+def _load_test_images(image_file, height=HEIGHT, width=WIDTH):
+    input_image, real_image = _load(image_file)
+    input_image, real_image = _resize(input_image, real_image, height, width)
+    input_image, real_image = _normalize(input_image, real_image)
 
     return input_image, real_image
 
 
-train_dataset = tf.data.Dataset.list_files(str(PATH / "train/*.jpg"))
-train_dataset = train_dataset.map(load_image_train, num_parallel_calls=tf.data.AUTOTUNE)
-train_dataset = train_dataset.shuffle(BUFFER_SIZE)
-train_dataset = train_dataset.batch(BATCH_SIZE)
+def get_train_dataset(path, batch_size=0):
+    train_dataset = tf.data.Dataset.list_files(str(path / "train/*.jpg"))
+    train_dataset = train_dataset.map(
+        _load_train_images, num_parallel_calls=tf.data.AUTOTUNE
+    )
+    train_dataset = train_dataset.shuffle(BUFFER_SIZE)
+    if batch_size:
+        train_dataset = train_dataset.batch(batch_size)
+    #    train_dataset = tf.data.Dataset.from_tensor_slices(train_dataset).shuffle(50000)
+    return train_dataset
 
-try:
-    test_dataset = tf.data.Dataset.list_files(str(PATH / "test/*.jpg"))
-except tf.errors.InvalidArgumentError:
-    test_dataset = tf.data.Dataset.list_files(str(PATH / "val/*.jpg"))
-test_dataset = test_dataset.map(load_image_test)
-test_dataset = test_dataset.batch(BATCH_SIZE)
+
+def get_validation_dataset(path, batch_size=0):
+    try:
+        test_dataset = tf.data.Dataset.list_files(str(path / "test/*.jpg"))
+    except tf.errors.InvalidArgumentError:
+        test_dataset = tf.data.Dataset.list_files(str(path / "val/*.jpg"))
+    test_dataset = test_dataset.map(_load_test_images)
+    if batch_size:
+        test_dataset = test_dataset.batch(batch_size)
+    #    test_dataset = tf.data.Dataset.from_tensor_slices(test_dataset).shuffle(50000)
+    return test_dataset
 
 
 def main():
     import matplotlib.pyplot as plt
 
-    inp, re = load(str(PATH / "train/100.jpg"))
+    PATH = download()
+
+    inp, re = _load(str(PATH / "train/100.jpg"))
     plt.figure(figsize=(6, 6))
     for i in range(4):
-        rj_inp, rj_re = random_jitter(inp, re)
+        rj_inp, _ = _random_jitter(inp, re)
         plt.subplot(2, 2, i + 1)
         plt.imshow(rj_inp / 255.0)
         plt.axis("off")

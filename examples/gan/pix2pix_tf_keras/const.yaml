@@ -1,0 +1,15 @@
+name: pix2pix
+hyperparameters:
+  global_batch_size: 256
+  discriminator_lr: 2e-4
+  discriminator_beta_1: 0.5
+  generator_lr: 2e-4
+  generator_beta_1: 0.5
+records_per_epoch: 5000
+searcher:
+  name: single
+  metric: "val_d_loss"
+  smaller_is_better: true
+  max_length:
+    epochs: 50
+entrypoint: model_def:Pix2PixTrial

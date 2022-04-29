@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 import tensorflow as tf
 
-from data import load, PATH
+from data import _load, _PATH
 from pix2pix import (
     downsample,
     upsample,
@@ -12,7 +12,7 @@ from pix2pix import (
 
 
 def main():
-    inp, _ = load(str(PATH / "train/100.jpg"))
+    inp, _ = _load(str(_PATH / "train/100.jpg"))
 
     down_model = downsample(3, 4)
     down_result = down_model(tf.expand_dims(inp, 0))

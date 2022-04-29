@@ -46,4 +46,5 @@ def loss(real_output, fake_output):
     return total_loss
 
 
-optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
+def make_optimizer(lr=2e-4, beta_1=0.5):
+    return tf.keras.optimizers.Adam(lr, beta_1)
