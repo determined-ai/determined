@@ -1,3 +1,6 @@
+"""
+Implement Pix2Pix generator model based on: https://www.tensorflow.org/tutorials/generative/pix2pix
+"""
 import tensorflow as tf
 
 from .sampling import downsample, upsample
@@ -6,7 +9,7 @@ from .sampling import downsample, upsample
 OUTPUT_CHANNELS = 3
 
 
-def Generator():
+def make_generator_model():
     inputs = tf.keras.layers.Input(shape=[256, 256, 3])
 
     down_stack = [
@@ -60,17 +63,14 @@ def Generator():
     return tf.keras.Model(inputs=inputs, outputs=x)
 
 
-LAMBDA = 100
-
-
-def loss(disc_generated_output, gen_output, target):
+def loss(fake_output, gen_output, target, lambda_=100):
     cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-    gan_loss = cross_entropy(tf.ones_like(disc_generated_output), disc_generated_output)
+    gan_loss = cross_entropy(tf.ones_like(fake_output), fake_output)
 
     # Mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
 
-    total_gen_loss = gan_loss + (LAMBDA * l1_loss)
+    total_gen_loss = gan_loss + (lambda_ * l1_loss)
 
     return total_gen_loss, gan_loss, l1_loss
 

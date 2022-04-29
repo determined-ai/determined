@@ -1,9 +1,12 @@
+"""
+Implement Pix2Pix discriminator model based on: https://www.tensorflow.org/tutorials/generative/pix2pix
+"""
 import tensorflow as tf
 
 from .sampling import downsample
 
 
-def Discriminator():
+def make_discriminator_model():
     initializer = tf.random_normal_initializer(0.0, 0.02)
 
     inp = tf.keras.layers.Input(shape=[256, 256, 3], name="input_image")
@@ -35,17 +38,12 @@ def Discriminator():
     return tf.keras.Model(inputs=[inp, tar], outputs=last)
 
 
-def loss(disc_real_output, disc_generated_output):
+def loss(real_output, fake_output):
     cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-    real_loss = cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
-
-    generated_loss = cross_entropy(
-        tf.zeros_like(disc_generated_output), disc_generated_output
-    )
-
-    total_disc_loss = real_loss + generated_loss
-
-    return total_disc_loss
+    real_loss = cross_entropy(tf.ones_like(real_output), real_output)
+    fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)
+    total_loss = real_loss + fake_loss
+    return total_loss
 
 
 optimizer = tf.keras.optimizers.Adam(2e-4, beta_1=0.5)
