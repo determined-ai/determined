@@ -19,7 +19,12 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         c.id AS id,
         c.uuid AS uuid,
         t.task_id,
-        t.task_id||'.'||t.run_id as allocation_id,
+        CASE
+        WHEN t.task_id is NULL THEN
+            NULL
+        ELSE
+            t.task_id || '.' || c.trial_run_id
+        END allocation_id,
         c.end_time as report_time,
         c.state,
         c.resources,
