@@ -259,11 +259,10 @@ def is_terminal_state(state: determinedexperimentv1State) -> bool:
 
 
 class Step:
-    def __init__(self, type: str, state: str, batches: int, avg_metrics: Dict[str, Any]):
+    def __init__(self, state: str, batches: int, avg_metrics: Dict[str, Any]):
         self.state = state
         self.batches = batches
         self.avg_metrics = avg_metrics
-        self.type = type
 
 
 def trial_metrics(trial_id: int) -> List[Step]:
@@ -271,11 +270,10 @@ def trial_metrics(trial_id: int) -> List[Step]:
     steps: List[Step] = []
     for wl in wls:
         if wl.training:
-            type = "training"
             state = wl.training.state
             metrics = wl.training.metrics
             batches = wl.training.totalBatches
-            steps.append(Step(type=type, state=state, batches=batches, avg_metrics=metrics))
+            steps.append(Step(state=state, batches=batches, avg_metrics=metrics))
     return steps
 
 
@@ -284,11 +282,10 @@ def trial_validation_metrics(trial_id: int) -> List[Step]:
     steps: List[Step] = []
     for wl in wls:
         if wl.validation:
-            type = "validation"
             state = wl.validation.state
             metrics = wl.validation.metrics
             batches = wl.validation.totalBatches
-            steps.append(Step(type=type, state=state, batches=batches, avg_metrics=metrics))
+            steps.append(Step(state=state, batches=batches, avg_metrics=metrics))
     return steps
 
 
