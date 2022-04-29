@@ -7,6 +7,7 @@ import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
@@ -224,12 +225,18 @@ const NavigationSideBar: React.FC = () => {
               <p className={css.noWorkspaces}>No pinned workspaces</p> : (
                 <ul className={css.pinnedWorkspaces} role="list">
                   {pinnedWorkspaces.map(workspace => (
-                    <NavigationItem
-                      icon={<WorkspaceIcon name={workspace.name} size={24} />}
+                    <WorkspaceActionDropdown
+                      curUser={auth.user}
                       key={workspace.id}
-                      label={workspace.name}
-                      path={paths.workspaceDetails(workspace.id)}
-                    />
+                      workspace={workspace}>
+                      <li>
+                        <NavigationItem
+                          icon={<WorkspaceIcon name={workspace.name} size={24} />}
+                          label={workspace.name}
+                          path={paths.workspaceDetails(workspace.id)}
+                        />
+                      </li>
+                    </WorkspaceActionDropdown>
                   ))}
                 </ul>
               )}
