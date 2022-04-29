@@ -59,7 +59,9 @@ const TaskActionDropdown: React.FC<Props> = ({
   const isMovable = isExperimentTask(task) && curUser &&
     (curUser.isAdmin || curUser.username === task.username);
 
-  const { modalOpen: openExperimentMove } = useModalExperimentMove({ experimentId: id });
+  const { modalOpen: openExperimentMove } = useModalExperimentMove(
+    { experiment: isMovable ? (task as ExperimentTask) : undefined },
+  );
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove();

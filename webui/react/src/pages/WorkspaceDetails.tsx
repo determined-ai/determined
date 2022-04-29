@@ -194,7 +194,7 @@ const WorkspaceDetails: React.FC = () => {
           record.lastExperimentStartedAt ?
             relativeTimeRenderer(new Date(record.lastExperimentStartedAt)) :
             null,
-        title: 'Last Updated',
+        title: 'Last Experiment Started',
       },
       {
         dataIndex: 'user',

@@ -7,7 +7,8 @@ import { FixedSizeList as List } from 'react-window';
 import SelectFilter from 'components/SelectFilter';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
-import { Project, Workspace } from 'types';
+import { ExperimentTask, Project, Workspace } from 'types';
+import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import css from './useModalExperimentMove.module.scss';
@@ -15,11 +16,11 @@ import css from './useModalExperimentMove.module.scss';
 const { Option } = Select;
 
 interface Props {
-  experimentId: number;
+  experiment?: ExperimentTask;
   onClose?: () => void;
 }
 
-const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks => {
+const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
   const [ selectedWorkspaceId, setSelectedWorkspaceId ] = useState<number>();
   const [ destinationProjectId, setDestinationProjectId ] = useState<number>();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
@@ -54,17 +55,22 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
         id: selectedWorkspaceId,
         limit: 0,
       });
-      setProjects(response.projects);
+      setProjects(prev => {
+        const withoutCurrent = response.projects.filter(p =>
+          p.id !== experiment?.projectId);
+        if (isEqual(prev, withoutCurrent)) return prev;
+        return withoutCurrent;
+      });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to fetch workspaces.',
+        publicSubject: 'Unable to fetch projects.',
         silent: false,
         type: ErrorType.Server,
       });
     }
-  }, [ selectedWorkspaceId ]);
+  }, [ experiment?.projectId, selectedWorkspaceId ]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
@@ -150,7 +156,7 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
   const handleOk = useCallback(async () => {
     if (!destinationProjectId) return;
     try {
-      await moveExperiment({ destinationProjectId, experimentId });
+      await moveExperiment({ destinationProjectId, experimentId: parseInt(experiment?.id ?? '0') });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -160,7 +166,7 @@ const useModalExperimentMove = ({ onClose, experimentId }: Props): ModalHooks =>
         type: ErrorType.Server,
       });
     }
-  }, [ destinationProjectId, experimentId ]);
+  }, [ destinationProjectId, experiment?.id ]);
 
   const getModalProps = useCallback((destinationProjectId?: number): ModalFuncProps => {
     return {
