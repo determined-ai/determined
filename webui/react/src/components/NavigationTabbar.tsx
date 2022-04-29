@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
-import { handlePath, paths } from 'routes/utils';
+import { handlePath, paths, routeToReactUrl } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
@@ -14,6 +14,7 @@ import Icon from './Icon';
 import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
+import WorkspaceIcon from './WorkspaceIcon';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -40,8 +41,9 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
+  const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
@@ -59,7 +61,17 @@ const NavigationTabbar: React.FC = () => {
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
-  const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
+  const handleWorkspacesOpen = useCallback(() => {
+    if (pinnedWorkspaces.length === 0) {
+      routeToReactUrl(paths.workspaceList());
+      return;
+    }
+    setIsShowingPinnedWorkspaces(true);
+  }, [ pinnedWorkspaces.length ]);
+  const handleActionSheetCancel = useCallback(() => {
+    setIsShowingOverflow(false);
+    setIsShowingPinnedWorkspaces(false);
+  }, []);
   const handleLaunchJupyterLab = useCallback(() => {
     setShowJupyterLabModal(true);
     setIsShowingOverflow(false);
@@ -68,6 +80,7 @@ const NavigationTabbar: React.FC = () => {
   const handlePathUpdate = useCallback((e, path) => {
     handlePath(e, { path });
     setIsShowingOverflow(false);
+    setIsShowingPinnedWorkspaces(false);
   }, []);
 
   if (!showNavigation) return null;
@@ -76,11 +89,11 @@ const NavigationTabbar: React.FC = () => {
     <nav className={css.base}>
       {contextHolder}
       <div className={css.toolbar}>
-        <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
-        <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
+        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.projectDetails(1)} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
+        <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet
@@ -129,6 +142,23 @@ const NavigationTabbar: React.FC = () => {
           },
         ]}
         show={isShowingOverflow}
+        onCancel={handleActionSheetCancel}
+      />
+      <ActionSheet
+        actions={[
+          {
+            icon: 'workspaces',
+            label: 'Workspaces',
+            path: paths.workspaceList(),
+          },
+          ...pinnedWorkspaces.map(workspace => (
+            {
+              icon: <WorkspaceIcon name={workspace.name} size={24} />,
+              label: workspace.name,
+              path: paths.workspaceDetails(workspace.id),
+            })),
+        ]}
+        show={isShowingPinnedWorkspaces}
         onCancel={handleActionSheetCancel}
       />
       <JupyterLabModal

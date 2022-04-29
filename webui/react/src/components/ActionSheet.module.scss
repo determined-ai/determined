@@ -13,16 +13,25 @@
     bottom: 0;
     display: flex;
     flex-direction: column;
+    max-height: 90%;
     position: absolute;
     width: 100%;
+
+    .actionList {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: auto;
+    }
   }
   .item {
     align-items: center;
     color: var(--theme-colors-monochrome-17);
     display: flex;
+    flex-shrink: 0;
     height: var(--theme-sizes-navigation-toolbarHeight);
 
-    [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
+    .icon { padding: 0 var(--theme-sizes-layout-big); }
     .label { font-size: var(--theme-sizes-font-medium); }
     .spacer {
       width: calc(var(--theme-sizes-icon-large) + 2 * var(--theme-sizes-layout-big));

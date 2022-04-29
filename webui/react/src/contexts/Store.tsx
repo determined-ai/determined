@@ -3,7 +3,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 import { globalStorage } from 'globalStorage';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
+  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
@@ -29,7 +29,8 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
-  pool: PoolOverview
+  pinnedWorkspaces: Workspace[];
+  pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: UI;
   users: DetailedUser[];
@@ -68,6 +69,9 @@ export enum StoreAction {
 
   // ResourcePools
   SetResourcePools,
+
+  // PinnedWorkspaces
+  SetPinnedWorkspaces,
 }
 
 export type Action =
@@ -87,6 +91,7 @@ export type Action =
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
 | { type: StoreAction.SetCurrentUser; value: DetailedUser }
 | { type: StoreAction.SetResourcePools; value: ResourcePool[] }
+| { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
 
@@ -125,6 +130,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
   ui: initUI,
@@ -243,6 +249,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetResourcePools:
       if (isEqual(state.resourcePools, action.value)) return state;
       return { ...state, resourcePools: action.value };
+    case StoreAction.SetPinnedWorkspaces:
+      if (isEqual(state.pinnedWorkspaces, action.value)) return state;
+      return { ...state, pinnedWorkspaces: action.value };
     case StoreAction.HideOmnibar:
       if (!state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };

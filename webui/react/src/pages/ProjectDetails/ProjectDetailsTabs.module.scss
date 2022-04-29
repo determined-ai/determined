@@ -2,13 +2,6 @@
   flex: 1 1 auto;
   flex-grow: 1;
   height: 100%;
-
-  .noPadding {
-    padding: 0;
-  }
-  .body {
-    padding-top: var(--theme-sizes-layout-big);
-  }
 }
 .tabPane {
   display: flex;
