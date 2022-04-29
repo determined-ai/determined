@@ -45,7 +45,7 @@ Base AMI (Ubuntu)".
 Start by cloning the Determined repo:
 
 ```sh
-git clone git@github.com:determined-ai/determined.git
+git clone --recursive git@github.com:determined-ai/determined.git
 ```
 
 #### Prerequisites
