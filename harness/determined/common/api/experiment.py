@@ -74,22 +74,23 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
 
         # Wait for experiment to start and initialize a trial.
-        if len(trials) < 1:
-            t = {}
-        else:
+        t: Optional[bindings.trialv1Trial] = None
+        if len(trials) > 0:
             trial_id = trials[0].id
-            t = api.get(master_url, f"trials/{trial_id}").json()
+            t = bindings.get_GetTrial(sess, trialId=trial_id).trial
 
         # Update the active_stage by examining the result from master
         # /api/v1/experiments/<experiment-id> endpoint.
         exp_state = r.state.value.replace("STATE_", "")
         if exp_state == constants.COMPLETED:
             active_stage = 4
-        elif t.get("runner_state") == "checkpointing":
+        elif not t:
+            active_stage = 0
+        elif t.runnerState == "checkpointing":
             active_stage = 3
-        elif t.get("runner_state") == "validating":
+        elif t.runnerState == "validating":
             active_stage = 2
-        elif t.get("runner_state") in ("UNSPECIFIED", "training"):
+        elif t.runnerState in ("UNSPECIFIED", "training"):
             active_stage = 1
         else:
             active_stage = 0

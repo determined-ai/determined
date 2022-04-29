@@ -1,6 +1,5 @@
 from .experiment import (
     activate_experiment,
-    assert_equivalent_trials,
     assert_performed_final_checkpoint,
     assert_performed_initial_validation,
     cancel_single,

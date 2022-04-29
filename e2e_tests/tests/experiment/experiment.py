@@ -384,25 +384,6 @@ def assert_patterns_in_trial_logs(trial_id: int, patterns: List[str]) -> None:
     )
 
 
-def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
-    full_trial_metrics1 = trial_metrics(A)
-    full_trial_metrics2 = trial_metrics(B)
-
-    assert len(full_trial_metrics1) == len(full_trial_metrics2)
-    for step1, step2 in zip(full_trial_metrics1, full_trial_metrics2):
-        assert batch1.batches == batch2.batches == 2
-        assert batch1.avg_metrics["loss"] == pytest.approx(batch2.avg_metrics["loss"])
-
-        if step1["validation"] is not None or step2["validation"] is not None:
-            assert step1["validation"] is not None
-            assert step2["validation"] is not None
-
-            for metric in validation_metrics:
-                val1 = step1.get("validation").get("metrics").get("validation_metrics").get(metric)
-                val2 = step2.get("validation").get("metrics").get("validation_metrics").get(metric)
-                assert val1 == pytest.approx(val2)
-
-
 def assert_performed_initial_validation(exp_id: int) -> None:
     trials = experiment_trials(exp_id)
 
