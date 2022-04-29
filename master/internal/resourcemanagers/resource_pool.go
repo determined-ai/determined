@@ -782,19 +782,26 @@ func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
 	})
 }
 
+// Single asserts there's a single element in the map and take it.
+func Single[K comparable, V any](m map[K]V) (kr K, vr V, ok bool) {
+	// TODO(ilia): move it into a shared utilities package when
+	// it'll be used elsewhere.
+	if len(m) != 1 {
+		return kr, vr, false
+	}
+	for k, v := range m {
+		kr = k
+		vr = v
+	}
+	return kr, vr, true
+}
+
 func (c containerResources) Persist() error {
 	summary := c.Summary()
 
-	var agentID aproto.ID
-
-	switch agentCount := len(summary.AgentDevices); agentCount {
-	case 1:
-		for key := range summary.AgentDevices {
-			agentID = key
-			break
-		}
-	default:
-		return errors.New(fmt.Sprintf("%d agents in containerResources summary", agentCount))
+	agentID, _, ok := Single(summary.AgentDevices)
+	if !ok {
+		return fmt.Errorf("%d agents in containerResources summary", len(summary.AgentDevices))
 	}
 
 	snapshot := agent.ContainerSnapshot{
