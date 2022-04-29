@@ -2,8 +2,11 @@ import time
 
 from data import test_dataset, train_dataset
 
-from pix2pix import generator, train_step
+from pix2pix import Pix2Pix
 from plotting import generate_images
+
+
+pix2pix = Pix2Pix()
 
 
 def fit(train_ds, test_ds, steps, preview=0):
@@ -19,10 +22,10 @@ def fit(train_ds, test_ds, steps, preview=0):
 
             start = time.time()
 
-            generate_images(generator, example_input, example_target)
+            generate_images(pix2pix.generator, example_input, example_target)
             print(f"Step: {step}")
 
-        train_step(input_image, target)
+        pix2pix.train_step(input_image, target)
 
         # Training step
         if (step + 1) % 10 == 0:
