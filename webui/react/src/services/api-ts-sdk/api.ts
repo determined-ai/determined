@@ -1032,13 +1032,13 @@ export interface V1Checkpoint {
      * @type {string}
      * @memberof V1Checkpoint
      */
-    taskId: string;
+    taskId?: string;
     /**
      * ID of the allocation which generated this checkpoint.
      * @type {string}
      * @memberof V1Checkpoint
      */
-    allocationId: string;
+    allocationId?: string;
     /**
      * UUID of the checkpoint.
      * @type {string}

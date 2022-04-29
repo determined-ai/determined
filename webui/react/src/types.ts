@@ -411,7 +411,7 @@ export interface Metrics extends Api.V1Metrics {
 export type Metadata = Record<RecordKey, string>;
 
 export interface CoreApiGenericCheckpoint {
-  allocationId: string;
+  allocationId?: string;
   experimentConfig?: ExperimentConfig;
   experimentId?: number;
   hparams?: TrialHyperparameters;
@@ -420,7 +420,7 @@ export interface CoreApiGenericCheckpoint {
   resources: Record<string, number>;
   searcherMetric?: number;
   state: CheckpointState;
-  taskId: string;
+  taskId?: string;
   totalBatches: number;
   trainingMetrics?: Metrics;
   trialId?: number;

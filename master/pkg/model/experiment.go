@@ -469,13 +469,13 @@ type CheckpointTrainingMetadata struct {
 type Checkpoint struct {
 	ID int `db:"id"`
 
-	UUID         *uuid.UUID   `db:"uuid"`
-	TaskID       TaskID       `db:"task_id"`
-	AllocationID AllocationID `db:"allocation_id"`
-	ReportTime   time.Time    `db:"report_time"`
-	State        State        `db:"state"`
-	Resources    JSONObj      `db:"resources"`
-	Metadata     JSONObj      `db:"metadata"`
+	UUID         *uuid.UUID    `db:"uuid"`
+	TaskID       *TaskID       `db:"task_id"`
+	AllocationID *AllocationID `db:"allocation_id"`
+	ReportTime   time.Time     `db:"report_time"`
+	State        State         `db:"state"`
+	Resources    JSONObj       `db:"resources"`
+	Metadata     JSONObj       `db:"metadata"`
 
 	CheckpointTrainingMetadata
 
