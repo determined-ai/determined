@@ -1,12 +1,35 @@
 import math
 import pathlib
 import pickle
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 
 import determined as det
 from determined import layers, util, workload
+
+
+def avg(all_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Given a list of multiple metric results, return all metrics
+    averaged.
+    """
+    op: Dict[str, Any] = {}
+    metric_names = list(all_metrics[0].keys())
+    for record in all_metrics:
+        for m in metric_names:
+            if type(record[m]) == str:
+                # NaN and Infinity
+                op[m] = record[m]
+            elif type(record[m]) == list:
+                # NaN list
+                op[m] = record[m][0]
+            else:
+                op[m] = op.get(m, 0) + record[m]
+    for m in metric_names:
+        if type(op[m]) not in [str, list]:
+            op[m] /= len(all_metrics)
+    return op
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:

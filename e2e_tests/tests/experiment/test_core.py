@@ -7,7 +7,7 @@ import pytest
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
-from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
+from tests.fixtures.metric_maker.metric_maker import avg, structure_equal, structure_to_metrics
 
 
 @pytest.mark.e2e_cpu
@@ -52,17 +52,14 @@ def test_metric_gathering() -> None:
     # Check training metrics.
     full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
     batches_trained = 0
-    for step in full_trial_metrics["steps"]:
-        metrics = step["metrics"]
-
-        actual = metrics["batch_metrics"]
-        assert len(actual) == scheduling_unit
+    for step in full_trial_metrics:
+        assert step.batches == batches_trained + scheduling_unit
 
         first_base_value = base_value + batches_trained
         batch_values = first_base_value + gain_per_batch * np.arange(scheduling_unit)
         expected = [structure_to_metrics(value, training_structure) for value in batch_values]
-        assert structure_equal(expected, actual)
-        batches_trained = step["total_batches"]
+        assert structure_equal(avg(expected), step.avg_metrics)
+        batches_trained = step.batches
 
     # Check validation metrics.
     validation_workloads = exp.workloads_with_validation(trials[0].workloads)
@@ -100,14 +97,12 @@ def test_nan_metrics() -> None:
     # Check training metrics.
     full_trial_metrics = exp.trial_metrics(trials[0].trial.id)
     batches_trained = 0
-    for step in full_trial_metrics["steps"]:
-        metrics = step["metrics"]
-        actual = metrics["batch_metrics"]
+    for step in full_trial_metrics:
         first_base_value = base_value + batches_trained
         batch_values = first_base_value + gain_per_batch * np.arange(5)
         expected = [structure_to_metrics(value, training_structure) for value in batch_values]
-        assert structure_equal(expected, actual)
-        batches_trained = step["total_batches"]
+        assert structure_equal(avg(expected), step.avg_metrics)
+        batches_trained = step.batches
 
     # Check validation metrics.
     validation_workloads = exp.workloads_with_validation(trials[0].workloads)

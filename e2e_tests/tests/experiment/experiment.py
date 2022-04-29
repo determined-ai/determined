@@ -258,12 +258,38 @@ def is_terminal_state(state: determinedexperimentv1State) -> bool:
     )
 
 
-def trial_metrics(trial_id: int) -> Dict[str, Any]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
-    json = r.json()  # type: Dict[str, Any]
-    return json
+class Step:
+    def __init__(self, type: str, state: str, batches: int, avg_metrics: Dict[str, Any]):
+        self.state = state
+        self.batches = batches
+        self.avg_metrics = avg_metrics
+        self.type = type
+
+
+def trial_metrics(trial_id: int) -> List[Step]:
+    wls = bindings.get_GetTrial(test_session(), trialId=trial_id).workloads
+    steps: List[Step] = []
+    for wl in wls:
+        if wl.training:
+            type = "training"
+            state = wl.training.state
+            metrics = wl.training.metrics
+            batches = wl.training.totalBatches
+            steps.append(Step(type=type, state=state, batches=batches, avg_metrics=metrics))
+    return steps
+
+
+def trial_validation_metrics(trial_id: int) -> List[Step]:
+    wls = bindings.get_GetTrial(test_session(), trialId=trial_id).workloads
+    steps: List[Step] = []
+    for wl in wls:
+        if wl.validation:
+            type = "validation"
+            state = wl.validation.state
+            metrics = wl.validation.metrics
+            batches = wl.validation.totalBatches
+            steps.append(Step(type=type, state=state, batches=batches, avg_metrics=metrics))
+    return steps
 
 
 def num_trials(experiment_id: int) -> int:
@@ -362,13 +388,10 @@ def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> N
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)
 
-    assert len(full_trial_metrics1["workloads"]) == len(full_trial_metrics2["workloads"])
-    for step1, step2 in zip(full_trial_metrics1["workloads"], full_trial_metrics2["workloads"]):
-        metric1 = step1["metrics"]["batch_metrics"]
-        metric2 = step2["metrics"]["batch_metrics"]
-        for batch1, batch2 in zip(metric1, metric2):
-            assert len(batch1) == len(batch2) == 2
-            assert batch1["loss"] == pytest.approx(batch2["loss"])
+    assert len(full_trial_metrics1) == len(full_trial_metrics2)
+    for step1, step2 in zip(full_trial_metrics1, full_trial_metrics2):
+        assert batch1.batches == batch2.batches == 2
+        assert batch1.avg_metrics["loss"] == pytest.approx(batch2.avg_metrics["loss"])
 
         if step1["validation"] is not None or step2["validation"] is not None:
             assert step1["validation"] is not None

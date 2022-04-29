@@ -28,6 +28,7 @@ from .experiment import (
     shared_fs_checkpoint_config,
     trial_logs,
     trial_metrics,
+    trial_validation_metrics,
     wait_for_experiment_state,
     workloads_with_checkpoint,
     workloads_with_training,

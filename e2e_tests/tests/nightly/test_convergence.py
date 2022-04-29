@@ -12,19 +12,15 @@ def test_mnist_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["accuracy"], trial_metrics))
 
     target_accuracy = 0.97
     assert max(validation_accuracies) > target_accuracy, (
         "mnist_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -38,19 +34,15 @@ def test_fashion_mnist_tf_keras() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["val_accuracy"], trial_metrics))
 
     target_accuracy = 0.85
     assert max(validation_accuracies) > target_accuracy, (
         "fashion_mnist_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -63,19 +55,15 @@ def test_imagenet_pytorch() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_loss = [
-        step["validation"]["metrics"]["validation_metrics"]["val_loss"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_loss = list(map(lambda step: step.avg_metrics["val_loss"], trial_metrics))
 
     target_loss = 1.55
     assert max(validation_loss) < target_loss, (
         "imagenet_pytorch did not reach minimum target loss {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_loss, len(trial_metrics["steps"]), validation_loss
+            target_loss, len(trial_metrics), validation_loss
         )
     )
 
@@ -88,19 +76,17 @@ def test_cifar10_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["validation_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(
+        map(lambda step: step.avg_metrics["validation_accuracy"], trial_metrics)
+    )
 
     target_accuracy = 0.73
     assert max(validation_accuracies) > target_accuracy, (
         "cifar10_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -114,19 +100,15 @@ def test_fasterrcnn_coco_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_iou = [
-        step["validation"]["metrics"]["validation_metrics"]["val_avg_iou"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_iou = list(map(lambda step: step.avg_metrics["val_avg_iou"], trial_metrics))
 
     target_iou = 0.42
     assert max(validation_iou) > target_iou, (
         "fasterrcnn_coco_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation avg_iou history: {}".format(
-            target_iou, len(trial_metrics["steps"]), validation_iou
+            target_iou, len(trial_metrics), validation_iou
         )
     )
 
@@ -139,19 +121,15 @@ def test_mnist_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["accuracy"], trial_metrics))
 
     target_accuracy = 0.95
     assert max(validation_accuracies) > target_accuracy, (
         "mnist_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -164,19 +142,15 @@ def test_mnist_tf_layers_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_errors = [
-        step["validation"]["metrics"]["validation_metrics"]["error"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_errors = list(map(lambda step: step.avg_metrics["error"], trial_metrics))
 
     target_error = 0.04
     assert min(validation_errors) < target_error, (
         "mnist_estimator did not reach minimum target error {} in {} steps."
         " full validation error history: {}".format(
-            target_error, len(trial_metrics["steps"]), validation_errors
+            target_error, len(trial_metrics), validation_errors
         )
     )
 
@@ -189,19 +163,17 @@ def test_cifar10_tf_keras_accuracy() -> None:
         config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 6000
     )
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_categorical_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(
+        map(lambda step: step.avg_metrics["val_categorical_accuracy"], trial_metrics)
+    )
 
     target_accuracy = 0.73
     assert max(validation_accuracies) > target_accuracy, (
         "cifar10_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -215,19 +187,17 @@ def test_iris_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_categorical_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(
+        map(lambda step: step.avg_metrics["val_categorical_accuracy"], trial_metrics)
+    )
 
     target_accuracy = 0.95
     assert max(validation_accuracies) > target_accuracy, (
         "iris_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -241,19 +211,15 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["val_accuracy"], trial_metrics))
 
     target_accuracy = 0.85
     assert max(validation_accuracies) > target_accuracy, (
         "unets_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -266,19 +232,15 @@ def test_gbt_titanic_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["accuracy"], trial_metrics))
 
     target_accuracy = 0.74
     assert max(validation_accuracies) > target_accuracy, (
         "gbt_titanic_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -291,19 +253,15 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["accuracy"], trial_metrics))
 
     target_accuracy = 0.92
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -316,19 +274,20 @@ def test_data_layer_mnist_tf_keras_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_sparse_categorical_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(
+        map(
+            lambda step: step.avg_metrics["val_sparse_categorical_accuracy"],
+            trial_metrics,
+        )
+    )
 
     target_accuracy = 0.97
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
 
@@ -345,19 +304,15 @@ def test_cifar10_byol_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
+    trial_metrics = exp.trial_validation_metrics(trials[0].trial.id)
 
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["test_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
+    validation_accuracies = list(map(lambda step: step.avg_metrics["test_accuracy"], trial_metrics))
 
     # Accuracy reachable within limited convergence time -- goes higher given full training.
     target_accuracy = 0.40
     assert max(validation_accuracies) > target_accuracy, (
         "cifar10_byol_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
+            target_accuracy, len(trial_metrics), validation_accuracies
         )
     )
