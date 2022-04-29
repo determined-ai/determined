@@ -233,6 +233,9 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabel("trial-run-id", t.runID)
+	if err := t.addTask(); err != nil {
+		return err
+	}
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
@@ -273,6 +276,16 @@ func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEa
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+}
+
+func (t *trial) addTask() error {
+	return t.db.AddTask(&model.Task{
+		TaskID:     t.taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  t.jobSubmissionTime,
+		JobID:      &t.jobID,
+		LogVersion: model.CurrentTaskLogVersion,
+	})
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
