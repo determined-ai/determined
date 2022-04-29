@@ -616,14 +616,14 @@ class v1AwsCustomTag:
 class v1Checkpoint:
     def __init__(
         self,
-        allocationId: str,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
-        taskId: str,
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
+        allocationId: "typing.Optional[str]" = None,
         reportTime: "typing.Optional[str]" = None,
         state: "typing.Optional[determinedcheckpointv1State]" = None,
+        taskId: "typing.Optional[str]" = None,
     ):
         self.taskId = taskId
         self.allocationId = allocationId
@@ -637,8 +637,8 @@ class v1Checkpoint:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Checkpoint":
         return cls(
-            taskId=obj["taskId"],
-            allocationId=obj["allocationId"],
+            taskId=obj.get("taskId", None),
+            allocationId=obj.get("allocationId", None),
             uuid=obj["uuid"],
             reportTime=obj.get("reportTime", None),
             resources=obj["resources"],
@@ -649,8 +649,8 @@ class v1Checkpoint:
 
     def to_json(self) -> typing.Any:
         return {
-            "taskId": self.taskId,
-            "allocationId": self.allocationId,
+            "taskId": self.taskId if self.taskId is not None else None,
+            "allocationId": self.allocationId if self.allocationId is not None else None,
             "uuid": self.uuid,
             "reportTime": self.reportTime if self.reportTime is not None else None,
             "resources": self.resources,
