@@ -8,7 +8,7 @@ import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettin
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { ResourceType, Workspace } from 'types';
+import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
@@ -21,7 +21,7 @@ import css from './NavigationSideBar.module.scss';
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
-  icon: string;
+  icon: string | React.ReactNode;
   label: string;
   status?: string;
   tooltip?: boolean;
@@ -82,7 +82,9 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
   const link = (
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
-        <Icon name={props.icon} size="large" />
+        {typeof props.icon === 'string' ?
+          <Icon name={props.icon} size="large" /> :
+          props.icon}
         <div className={css.label}>{props.label}</div>
       </Link>
       <div className={css.navItemExtra}>
@@ -104,13 +106,12 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, pinnedWorkspaces } = useStore();
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
   const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
-  const [ pinnedWorkspaces, setPinnedWorkspaces ] = useState<Workspace[]>([]);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -222,9 +223,12 @@ const NavigationSideBar: React.FC = () => {
               <p className={css.noWorkspaces}>No pinned workspaces</p> : (
                 <ul className={css.pinnedWorkspaces} role="list">
                   {pinnedWorkspaces.map(workspace => (
-                    <div className={css.workspaceItem} key={workspace.id}>
-                      {workspace.name}
-                    </div>
+                    <NavigationItem
+                      icon="workspaces" //TODO: make this into squircle
+                      key={workspace.id}
+                      label={workspace.name}
+                      path={paths.workspaceDetails(workspace.id)}
+                    />
                   ))}
                 </ul>
               )}

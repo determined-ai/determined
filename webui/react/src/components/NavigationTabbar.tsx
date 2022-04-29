@@ -4,8 +4,8 @@ import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
-import { handlePath, paths } from 'routes/utils';
-import { ResourceType, Workspace } from 'types';
+import { handlePath, paths, routeToReactUrl } from 'routes/utils';
+import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 
 import ActionSheet from './ActionSheet';
@@ -40,13 +40,12 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const [ pinnedWorkspaces, setPinnedWorkspaces ] = useState<Workspace[]>([]);
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -62,7 +61,10 @@ const NavigationTabbar: React.FC = () => {
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
-    if (pinnedWorkspaces.length === 0) return;
+    if (pinnedWorkspaces.length === 0) {
+      routeToReactUrl(paths.workspaceList());
+      return;
+    }
     setIsShowingPinnedWorkspaces(true);
   }, [ pinnedWorkspaces.length ]);
   const handleActionSheetCancel = useCallback(() => {
@@ -90,19 +92,14 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
-        <ToolbarItem
-          icon="workspaces"
-          label="Workspaces"
-          path={pinnedWorkspaces.length === 0 ? paths.workspaceList() : undefined}
-          onClick={handleWorkspacesOpen}
-        />
+        <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet
         actions={[
           {
             render: () => {
-              return <AvatarCard className={css.user} user={auth.user} />;
+              return <AvatarCard className={css.user} key="avatar" user={auth.user} />;
             },
           },
           {
@@ -144,15 +141,15 @@ const NavigationTabbar: React.FC = () => {
       <ActionSheet
         actions={[
           {
-            render: () => {
-              return <Link path={paths.workspaceList()} />;
-            },
+            icon: 'workspaces',
+            label: 'Workspaces',
+            path: paths.workspaceList(),
           },
           ...pinnedWorkspaces.map(workspace => (
             {
-              render: () => {
-                return <Link path={paths.workspaceDetails(workspace.id)}>{workspace.name}</Link>;
-              },
+              icon: 'workspaces', //TODO: make this into squircle
+              label: workspace.name,
+              path: paths.workspaceDetails(workspace.id),
             })),
         ]}
         show={isShowingPinnedWorkspaces}
