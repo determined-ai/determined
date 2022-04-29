@@ -11,7 +11,7 @@ import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
@@ -102,7 +102,7 @@ const TaskLogs: React.FC = () => {
   useEffect(() => {
     const canceler = new AbortController();
 
-    consumeStream(
+    readStream(
       detApi.StreamingJobs.taskLogsFields(
         taskId,
         true,

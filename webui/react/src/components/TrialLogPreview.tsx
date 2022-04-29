@@ -8,7 +8,7 @@ import LogViewerEntry, {
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
 import { formatDatetime } from 'utils/datetime';
 
@@ -37,7 +37,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
   if (hidePreview || !logEntry) classes.push(css.hidePreview);
 
   const fetchTrialLogs = useCallback((trialId: number, time: string, canceler: AbortController) => {
-    consumeStream(
+    readStream(
       detApi.StreamingExperiments.trialLogs(
         trialId,
         undefined,
@@ -69,7 +69,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
     trialState: RunState,
     canceler: AbortController,
   ) => {
-    consumeStream(
+    readStream(
       detApi.StreamingExperiments.trialLogs(
         trialId,
         100,
