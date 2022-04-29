@@ -3,11 +3,12 @@ import { isNumber } from 'util';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 
 import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
+import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
@@ -55,6 +56,16 @@ const TaskActionDropdown: React.FC<Props> = ({
   const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
   ) ? deletableRunStates.has(task.state) : false;
+  const isMovable = isExperimentTask(task) && curUser &&
+    (curUser.isAdmin || curUser.username === task.username);
+
+  const { modalOpen: openExperimentMove } = useModalExperimentMove(
+    { experiment: isMovable ? (task as ExperimentTask) : undefined },
+  );
+
+  const handleExperimentMove = useCallback(() => {
+    openExperimentMove();
+  }, [ openExperimentMove ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -134,6 +145,11 @@ const TaskActionDropdown: React.FC<Props> = ({
             },
             title: 'Confirm Experiment Deletion',
           });
+          break;
+        case Action.Move:
+          if (!isExperiment) break;
+          handleExperimentMove();
+          break;
       }
     } catch (e) {
       handleError(e, {
@@ -156,7 +172,8 @@ const TaskActionDropdown: React.FC<Props> = ({
   if (isUnarchivable) menuItems.push(<Menu.Item key={Action.Unarchive}>Unarchive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key={Action.Cancel}>Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
-  if (isDeletable) menuItems.push(<Menu.Item key={Action.Delete}>Delete</Menu.Item>);
+  if (isDeletable) menuItems.push(<Menu.Item danger key={Action.Delete}>Delete</Menu.Item>);
+  if (isMovable) menuItems.push(<Menu.Item key={Action.Move}>Move...</Menu.Item>);
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
   } else {

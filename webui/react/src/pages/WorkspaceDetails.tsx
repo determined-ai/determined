@@ -11,7 +11,7 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { GenericRenderer, getFullPaginationConfig,
+import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -128,7 +128,11 @@ const WorkspaceDetails: React.FC = () => {
   }, []);
 
   const handleSortSelect = useCallback((value) => {
-    updateSettings({ sortKey: value });
+    updateSettings({
+      sortDesc: (value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
+        value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME) ? false : true,
+      sortKey: value,
+    });
   }, [ updateSettings ]);
 
   const handleViewChange = useCallback((value: GridListView) => {
@@ -158,6 +162,7 @@ const WorkspaceDetails: React.FC = () => {
       <ProjectActionDropdown
         curUser={user}
         project={record}
+        onComplete={fetchProjects}
       />
     );
 
@@ -189,7 +194,7 @@ const WorkspaceDetails: React.FC = () => {
           record.lastExperimentStartedAt ?
             relativeTimeRenderer(new Date(record.lastExperimentStartedAt)) :
             null,
-        title: 'Last Updated',
+        title: 'Last Experiment Started',
       },
       {
         dataIndex: 'user',
@@ -200,6 +205,8 @@ const WorkspaceDetails: React.FC = () => {
       {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        key: 'archived',
+        render: checkmarkRenderer,
         title: 'Archived',
       },
       {
@@ -213,7 +220,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ user ]);
+  }, [ fetchProjects, user ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
@@ -252,8 +259,8 @@ const WorkspaceDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <ProjectActionDropdown
         curUser={user}
-        fetchProjects={fetchProjects}
         project={record}
+        onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
@@ -331,7 +338,13 @@ const WorkspaceDetails: React.FC = () => {
     <Page
       className={css.base}
       containerRef={pageRef}
-      headerComponent={<WorkspaceDetailsHeader fetchWorkspace={fetchAll} workspace={workspace} />}
+      headerComponent={(
+        <WorkspaceDetailsHeader
+          curUser={user}
+          fetchWorkspace={fetchAll}
+          workspace={workspace}
+        />
+      )}
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter

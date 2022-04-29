@@ -1,67 +1,33 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import { DownOutlined, PushpinOutlined } from '@ant-design/icons';
+import { Button, Space, Tooltip } from 'antd';
+import React, { useCallback } from 'react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
+import WorkspaceIcon from 'components/WorkspaceIcon';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
-import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
-import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
-import { Workspace } from 'types';
-import handleError from 'utils/error';
+import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
+import { DetailedUser, Workspace } from 'types';
 
 import css from './WorkspaceDetailsHeader.module.scss';
 
 interface Props {
-  fetchWorkspace?: () => void;
+  curUser?: DetailedUser;
+  fetchWorkspace: () => void;
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
+const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWorkspace }: Props) => {
   const { modalOpen: openProjectCreate } = useModalProjectCreate({ workspaceId: workspace.id });
-  const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({ workspace });
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
   }, [ openProjectCreate ]);
 
-  const handleArchiveClick = useCallback(() => {
-    if (workspace.archived) {
-      try {
-        unarchiveWorkspace({ id: workspace.id });
-        fetchWorkspace?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
-      }
-    } else {
-      try {
-        archiveWorkspace({ id: workspace.id });
-        fetchWorkspace?.();
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
-      }
-    }
-  }, [ fetchWorkspace, workspace.archived, workspace.id ]);
-
-  const handleDeleteClick = useCallback(() => {
-    openWorkspaceDelete();
-  }, [ openWorkspaceDelete ]);
-
-  const ActionMenu = useMemo(() => {
-    return (
-      <Menu>
-        <Menu.Item onClick={handleArchiveClick}>
-          {workspace.archived ? 'Unarchive' : 'Archive'}
-        </Menu.Item>
-        <Menu.Item danger onClick={handleDeleteClick}>Delete...</Menu.Item>
-      </Menu>
-    );
-  }, [ handleArchiveClick, handleDeleteClick, workspace.archived ]);
-
   return (
     <div className={css.base}>
       <Space align="center">
-        <div className={css.icon}>{workspace.name[0]}</div>
+        <WorkspaceIcon name={workspace.name} size={32} />
         <div className={css.nameRow}>
           <h1 className={css.name}>
             <InlineEditor disabled={workspace.immutable} maxLength={80} value={workspace.name} />
@@ -73,11 +39,19 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
               </div>
             </Tooltip>
           )}
+          {workspace.pinned && (
+            <Tooltip title="Pinned to sidebar">
+              <PushpinOutlined className={css.pinned} />
+            </Tooltip>
+          )}
         </div>
         {!workspace.immutable && (
-          <Dropdown arrow overlay={ActionMenu} trigger={[ 'click' ]}>
+          <WorkspaceActionDropdown
+            curUser={curUser}
+            workspace={workspace}
+            onComplete={fetchWorkspace}>
             <DownOutlined style={{ fontSize: 12 }} />
-          </Dropdown>
+          </WorkspaceActionDropdown>
         )}
       </Space>
       {!workspace.immutable &&

@@ -394,6 +394,7 @@ export const mapV1Experiment = (
     notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
+    projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
@@ -571,6 +572,7 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
     immutable: data.immutable,
     name: data.name,
     numProjects: data.numProjects,
+    pinned: data.pinned,
     username: data.username,
   };
 };

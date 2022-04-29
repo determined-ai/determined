@@ -6,6 +6,13 @@
   .label {
     color: var(--theme-colors-monochrome-7)
   }
+  .emptyContainer {
+    border: 1px solid var(--theme-colors-monochrome-10);
+    border-radius: var(--theme-sizes-border-radius);
+    display: grid;
+    height: 200px;
+    place-content: center;
+  }
   .listContainer {
     border: 1px solid var(--theme-colors-monochrome-10);
     border-radius: var(--theme-sizes-border-radius);

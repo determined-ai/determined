@@ -257,6 +257,14 @@ export const unarchiveWorkspace = generateDetApi<
   Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
 >(Config.unarchiveWorkspace);
 
+export const pinWorkspace = generateDetApi<
+  Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void
+>(Config.pinWorkspace);
+
+export const unpinWorkspace = generateDetApi<
+  Service.UnpinWorkspaceParams, Api.V1UnpinWorkspaceResponse, void
+>(Config.unpinWorkspace);
+
 /* Projects */
 
 export const getProject = generateDetApi<
@@ -272,6 +280,10 @@ export const getProjectExperiments = generateDetApi<
 export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
+
+export const setProjectNotes = generateDetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+>(Config.setProjectNotes);
 
 export const createProject = generateDetApi<
   Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project

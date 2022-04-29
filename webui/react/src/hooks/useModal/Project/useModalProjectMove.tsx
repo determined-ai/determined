@@ -50,8 +50,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   }, [ project.workspaceId ]);
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [ fetchWorkspaces ]);
+    if (modalRef.current) fetchWorkspaces();
+  }, [ fetchWorkspaces, modalRef ]);
 
   const handleWorkspaceSelect = useCallback((value: SelectValue) => {
     setDestinationWorkspaceId(value as number);
@@ -107,8 +107,9 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setDestinationWorkspaceId(undefined);
+    fetchWorkspaces();
     openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
 
   /*
    * When modal props changes are detected, such as modal content

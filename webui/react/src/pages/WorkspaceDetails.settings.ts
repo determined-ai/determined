@@ -24,7 +24,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   action: 46,
   archived: 75,
   description: 147,
-  lastUpdated: 100,
+  lastUpdated: 120,
   name: 150,
   numExperiments: 74,
   user: 85,

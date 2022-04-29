@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import BreadcrumbBar from 'components/BreadcrumbBar';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
@@ -275,6 +276,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   return (
     <>
+      <BreadcrumbBar
+        experiment={experiment}
+        id={experiment.id}
+        trial={trial}
+        type={trial ? 'trial' : 'experiment'}
+      />
       <PageHeaderFoldable
         foldableContent={(
           <div className={css.foldableSection}>
