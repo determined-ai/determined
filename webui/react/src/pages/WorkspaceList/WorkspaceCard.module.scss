@@ -71,6 +71,10 @@
 @media only screen and (max-width: $breakpoint-mobile) {
   .base {
     grid-template-columns: 74px auto 50px;
-    width: 165px;
+    max-width: 100%;
+
+    .info {
+      margin-left: var(--theme-sizes-layout-huge);
+    }
   }
 }

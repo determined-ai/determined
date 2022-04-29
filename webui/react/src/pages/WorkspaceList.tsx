@@ -308,7 +308,7 @@ const WorkspaceList: React.FC = () => {
           <Option value={WorkspaceFilters.Mine}>My workspaces</Option>
           <Option value={WorkspaceFilters.Others}>Others&apos; workspaces</Option>
         </SelectFilter>
-        <Space>
+        <Space wrap>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <SelectFilter
