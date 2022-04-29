@@ -4,7 +4,6 @@ import {
   ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
 } from 'react-window';
 import screenfull from 'screenfull';
-import Message, { MessageType } from 'shared/components/message';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
@@ -14,6 +13,7 @@ import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { Log, LogLevel, RecordKey } from 'types';
 import { clone } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';

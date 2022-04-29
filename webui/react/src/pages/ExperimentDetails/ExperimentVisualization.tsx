@@ -1,7 +1,6 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import Message, { MessageType } from 'shared/components/message';
 
 import Link from 'components/Link';
 import Spinner from 'components/Spinner';
@@ -15,6 +14,7 @@ import {
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,

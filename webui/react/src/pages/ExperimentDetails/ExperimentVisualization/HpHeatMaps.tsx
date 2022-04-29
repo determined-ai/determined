@@ -1,6 +1,5 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Message, { MessageType } from 'shared/components/message';
 
 import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
@@ -16,6 +15,7 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
   metricTypeParamMap, Primitive, Range,
