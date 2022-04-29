@@ -125,7 +125,7 @@
       flex-grow: 1;
       height: 48px;
 
-      [class*=Icon_base_] {
+      .icon {
         padding-inline: var(--theme-sizes-layout-big);
       }
       .label {

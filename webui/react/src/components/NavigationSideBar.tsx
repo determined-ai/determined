@@ -17,6 +17,7 @@ import Icon from './Icon';
 import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
+import WorkspaceIcon from './WorkspaceIcon';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -83,8 +84,8 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
     <div className={containerClasses.join(' ')}>
       <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
         {typeof props.icon === 'string' ?
-          <Icon name={props.icon} size="large" /> :
-          props.icon}
+          <div className={css.icon}><Icon name={props.icon} size="large" /></div> :
+          <div className={css.icon}>{props.icon}</div>}
         <div className={css.label}>{props.label}</div>
       </Link>
       <div className={css.navItemExtra}>
@@ -224,7 +225,7 @@ const NavigationSideBar: React.FC = () => {
                 <ul className={css.pinnedWorkspaces} role="list">
                   {pinnedWorkspaces.map(workspace => (
                     <NavigationItem
-                      icon="workspaces" //TODO: make this into squircle
+                      icon={<WorkspaceIcon name={workspace.name} size={24} />}
                       key={workspace.id}
                       label={workspace.name}
                       path={paths.workspaceDetails(workspace.id)}

@@ -14,6 +14,7 @@ import Icon from './Icon';
 import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
+import WorkspaceIcon from './WorkspaceIcon';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -147,7 +148,7 @@ const NavigationTabbar: React.FC = () => {
           },
           ...pinnedWorkspaces.map(workspace => (
             {
-              icon: 'workspaces', //TODO: make this into squircle
+              icon: <WorkspaceIcon name={workspace.name} size={24} />,
               label: workspace.name,
               path: paths.workspaceDetails(workspace.id),
             })),
