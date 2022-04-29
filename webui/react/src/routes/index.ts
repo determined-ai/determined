@@ -3,9 +3,7 @@ import { FC } from 'react';
 import Cluster from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
-import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
-import ExperimentList from 'pages/ExperimentList';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
@@ -28,9 +26,7 @@ const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
-  dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
-  experimentList: ExperimentList,
   jobs: JobQueue,
   modelDetails: ModelDetails,
   models: ModelRegistry,
@@ -42,12 +38,13 @@ const routeComponentMap: Record<string, FC> = {
   taskList: TaskList,
   taskLogs: TaskLogs,
   trialDetails: TrialDetails,
+  uncategorized: ProjectDetails,
   wait: Wait,
   workspaceDetails: WorkspaceDetails,
   workspaceList: WorkspaceList,
 };
 
-const defaultRouteId = 'dashboard';
+const defaultRouteId = 'uncategorized';
 
 const appRoutes: RouteConfig[] = Routes.map(route => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);

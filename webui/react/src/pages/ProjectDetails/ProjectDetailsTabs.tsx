@@ -55,13 +55,10 @@ const ProjectDetailsTabs: React.FC<Props> = (
     return (
       <div className={css.base}>
         <PageHeader
-          className={css.noPadding}
           options={experimentsTab?.options}
           title="Uncategorized"
         />
-        <div className={css.body}>
-          {experimentsTab?.body}
-        </div>
+        {experimentsTab?.body}
       </div>
     );
   }
