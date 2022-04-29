@@ -4,12 +4,13 @@ import React, { useCallback, useState } from 'react';
 
 import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
-import useModalChangeName from './useModalChangeName';
-import useModalChangePassword from './useModalChangePassword';
 import { setUserImage } from 'services/api';
+import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
 
+import useModalChangeName from './useModalChangeName';
+import useModalChangePassword from './useModalChangePassword';
 import css from './useModalUserSettings.module.scss';
 
 interface Props {
@@ -30,20 +31,20 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     openChangeDisplayNameModal();
   }, [ openChangeDisplayNameModal ]);
 
-  const [previewImage, setPreviewImage] = useState("");
+  const [ previewImage, setPreviewImage ] = useState('');
   const processProfilePic = (event: React.ChangeEvent<HTMLInputElement>) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      const miniCanvas = document.createElement("canvas");
+      const miniCanvas = document.createElement('canvas');
       const squareSize = 128; // 64px with support for retina+ screens
       miniCanvas.width = squareSize;
       miniCanvas.height = squareSize;
-      const ctx = miniCanvas.getContext("2d");
+      const ctx = miniCanvas.getContext('2d');
       if (ctx && reader.result) {
         const img = new Image();
         img.onload = () => {
           let offsetX = 0, offsetY = 0, width = squareSize, height = squareSize;
-          let scale = squareSize / Math.max(img.naturalWidth, img.naturalHeight);
+          const scale = squareSize / Math.max(img.naturalWidth, img.naturalHeight);
           if (img.naturalWidth > img.naturalHeight) {
             height = Math.round(scale * img.naturalHeight);
             offsetY = (squareSize - height) / 2;
@@ -58,7 +59,7 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
         img.src = String(reader.result);
       }
     };
-    if (event && event.target && event.target.files) {
+    if (event?.target?.files) {
       reader.readAsDataURL(event.target.files[0]);
     }
   };
@@ -69,12 +70,12 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     }
     try {
       await setUserImage({
-        image: previewImage.substring(previewImage.indexOf(",") + 1),
+        image: previewImage.substring(previewImage.indexOf(',') + 1),
         userId: auth.user?.id,
       });
       setPreviewImage('');
     } catch (e) {
-      console.error(e);
+      handleError(e);
     }
   }, [ auth.user, previewImage ]);
 
@@ -87,7 +88,11 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
             ? <img src={previewImage} height="64" width="64" style={{border: '1px solid #000'}}/>
             : <Avatar hideTooltip large userId={auth.user?.id} />
           }
-          <input type="file" accept="image/png, image/jpeg" onChange={processProfilePic}/>
+          <input
+            accept="image/png, image/jpeg"
+            type="file"
+            onChange={processProfilePic}
+          />
           <Button onClick={handleIconUploadClick}>
             Upload
           </Button>
