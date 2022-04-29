@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
+import { DEFAULT_COLUMNS } from 'pages/ProjectDetails.settings';
 import { camelCaseToSentence, generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
 
 import useModalCustomizeColumns from './useModalCustomizeColumns';
@@ -17,7 +17,7 @@ const camelCaseToListItem = (columnName: string) => {
 
 const ColumnsButton: React.FC = () => {
   const columns = useMemo(() => {
-    const arr = [ ...DEFAULT_COLUMNS ];
+    const arr: string[] = [ ...DEFAULT_COLUMNS ];
     for (let i = 0; i < NUM_GENERATED_COLUMNS; i++) {
       arr.push(generateAlphaNumeric());
     }
