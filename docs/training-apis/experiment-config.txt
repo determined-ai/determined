@@ -40,17 +40,17 @@ example:
    S3 bucket name, object prefix, and AWS authentication credentials.
 
 ``workspace``
-   The name of the (pre-existing) workspace that you want the experiment to be created within. The
+   The name of the pre-existing workspace where you want to create the experiment. The
    ``workspace`` and ``project`` fields must either both be present or both be absent. If they are
-   absent, the experiment will be placed in the Uncategorized project in the Uncategorized
-   workspace. You can manage workspaces using either the CLI (``det workspace help``) or the WebUI.
+   absent, the experiment is placed in the ``Uncategorized`` project in the ``Uncategorized``
+   workspace. You can manage workspaces using the CLI ``det workspace help`` command or the WebUI.
 
 ``project``
-   The name of the (pre-existing) project inside the workspace named above that you want the
-   experiment to be created within. The ``workspace`` and ``project`` fields must either both be
-   present or both be absent. If they are absent, the experiment will be placed in the Uncategorized
-   project in the Uncategorized workspace. You can manage projects using either the CLI (``det
-   project help``) or the WebUI.
+   The name of the pre-existing project inside ``workspace`` where you want to create the
+   experiment. The ``workspace`` and ``project`` fields must either both be
+   present or both be absent. If they are absent, the experiment is placed in the ``Uncategorized``
+   project in the ``Uncategorized`` workspace. You can manage projects using the CLI ``det
+   project help`` command or the WebUI.
 
 ************
  Entrypoint
