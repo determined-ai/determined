@@ -134,11 +134,12 @@ export const readStream = async <T = unknown>(
         const ndjson = JSON.parse(line);
         onEvent(ndjson.result);
       } catch {
-        // JSON parsing occurred, no-op.
+        // JSON parsing error occurred, no-op.
       }
     };
     const handleStreamRead = (result: ReadableStreamDefaultReadResult<ArrayBuffer>): unknown => {
-      if (result.done || isCancelled) {
+      if (isCancelled) return;
+      if (result.done) {
         // Process any data buffer remainder.
         buffer = buffer.trim();
         if (buffer.length !== 0) handleStreamLine(buffer);
