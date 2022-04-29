@@ -186,13 +186,13 @@ hyperparameters on a single slot.
 #. To view the uncategorized experiments, enter your username and password. If you deployed locally,
    accept the default determined username with no password and click **Sign In**:
 
-   .. image:: /assets/images/qs01b.png
+   .. image:: /assets/images/qs01c.png
       :width: 704px
       :align: center
       :alt: Dashboard
 
    The screenshot shows that two experiments have been run, demonstrating the experiment progress
-   notification. Notice that experiment 3 is in the COMPLETED state and experiment 4 is in the
+   notification. Notice that experiment 11 is in the COMPLETED state and experiment 12 is in the
    ACTIVE state.
 
    While an experiment is in the ACTIVE, training state, click an experiment name to see the Metrics
