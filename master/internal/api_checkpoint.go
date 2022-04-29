@@ -2,7 +2,11 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -10,6 +14,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
@@ -33,16 +41,38 @@ func (a *apiServer) DeleteCheckpoints(
 	deleteCheckpoints := req.CheckpointUuids
 	dCheckpointsInModelRegistry, _ := a.m.db.GetDeleteCheckpointsInModelRegistry(deleteCheckpoints)
 	var validCheckpoints []string
+	// return 400 if model registry checkpoints and include all the model registry checkpoints
+
 	for _, dc := range deleteCheckpoints {
 		dc_registered := false
-		for _, r := range dCheckpointsInModelRegistry {
-			if dc == r {
-				dc_registered = true
-			}
+		if _, ok := dCheckpointsInModelRegistry[dc]; ok {
+			dc_registered = true
 		}
 		if !dc_registered {
 			validCheckpoints = append(validCheckpoints, dc)
 		}
+	}
+
+	json_vCheckpoints, _ := json.Marshal(validCheckpoints)
+	taskSpec := *a.m.taskSpec
+
+	addr := actor.Addr(fmt.Sprintf("delete-checkpoints-list-gc-%s", uuid.New().String()))
+	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
+		taskID:            model.NewTaskID(),
+		jobID:             model.NewJobID(),
+		jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
+		GCCkptSpec: tasks.GCCkptSpec{
+			Base:         taskSpec,
+			ExperimentID: 0,
+			LegacyConfig: expconf.LegacyConfig{},
+			ToDelete:     json_vCheckpoints,
+		},
+		rm: a.m.rm,
+		db: a.m.db,
+
+		taskLogger: a.m.taskLogger,
+	}).AwaitTermination(); gcErr != nil {
+		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints requested by user")
 	}
 
 	return &apiv1.DeleteCheckpointsResponse{}, nil

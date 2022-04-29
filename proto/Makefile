@@ -43,7 +43,7 @@ build/proto.stamp: $(source_files)
 	# Protobuf generation.
 	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto ; done
 	# GRPC generation.
-	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto
+	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
 	mv $(build_path) pkg
 	touch $@
 
@@ -59,7 +59,7 @@ build/swagger:
 	mkdir -p build/swagger
 
 $(swagger_out): $(source_files) build/swagger $(echo_swagger_patch)
-	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,json_names_for_fields=true:build/swagger
+	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,allow_delete_body=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 	python3 scripts/swagger.py $@ $(echo_swagger_patch)
 

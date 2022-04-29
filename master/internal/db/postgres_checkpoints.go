@@ -1,27 +1,27 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
-func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) ([]string, error) {
-	// do I need to convert the above to deleteCheckpoints to a list uuids? What is the best way to do that? traversing and converting each element?
-
+func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) (map[string]int, error) {
 	var checkpointIDRows []struct {
-		ID uuid.UUID
+		ID string
 	}
+
 	if err := db.queryRows(`
-	SELECT uuid
-    FROM checkpoints c JOIN 
-	model_versions mv ON mv.checkpoint_uuid = c.uuid
-	WHERE c.uuid IN unnest(deleteCheckpoints); 
-`, &checkpointIDRows); err != nil {
-		return nil, errors.Wrap(err, "querying for all checkpoints registered in model registry")
+	SELECT DISTINCT(c.uuid::text) AS ID FROM checkpoints AS c 
+	JOIN model_versions AS mv ON mv.checkpoint_uuid = c.uuid
+	WHERE c.uuid::text IN (SELECT UNNEST($1::text[])); 
+`, &checkpointIDRows, deleteCheckpoints); err != nil {
+		return nil, errors.Wrap(err, "querying for all requested delete checkpoints registered in model registry")
 	}
-	var checkpointIDs []string
-	for _, r := range checkpointIDRows {
-		checkpointIDs = append(checkpointIDs, r.ID.String())
+
+	checkpointIDs := make(map[string]int)
+
+	for _, cRow := range checkpointIDRows {
+		checkpointIDs[cRow.ID] = 1
 	}
+
 	return checkpointIDs, nil
 }

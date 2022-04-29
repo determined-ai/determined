@@ -1164,6 +1164,7 @@ service Determined {
       returns (DeleteCheckpointsResponse) {
         option (google.api.http) = {
           delete: "/api/v1/checkpoints"
+          body: "*"
         };  
      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
