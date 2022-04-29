@@ -1,22 +1,32 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError, { ErrorType } from 'utils/error';
 
+import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
 import Spinner from './Spinner';
 
 interface Props {
   disabled?: boolean;
+  extra?: React.ReactNode;
   notes: string;
+  onChange?: (editedNotes: string) => void;
   onSave?: (editedNotes: string) => Promise<void>;
+  onSaveTitle?: (editedTitle: string) => Promise<void>;
   style?: React.CSSProperties;
+  title?: string;
 }
 
-const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: Props) => {
+const NotesCard: React.FC<Props> = (
+  {
+    disabled = false, notes, onSave, onSaveTitle,
+    style, title = 'Notes', extra, onChange,
+  }: Props,
+) => {
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
@@ -47,6 +57,16 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
     setIsLoading(false);
   }, [ editedNotes, onSave ]);
 
+  const handleEditedNotes = useCallback((newNotes: string) => {
+    setEditedNotes(newNotes);
+    onChange?.(newNotes);
+  }, [ onChange ]);
+
+  useEffect(() => {
+    setEditedNotes(notes);
+    setIsEditing(false);
+  }, [ notes ]);
+
   return (
     <Card
       bodyStyle={{
@@ -63,19 +83,28 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
         </Space>
       ) : (
         disabled || (
-          <Tooltip title="Edit">
-            <EditOutlined onClick={editNotes} />
-          </Tooltip>
+          <Space size="middle">
+            <Tooltip title="Edit">
+              <EditOutlined onClick={editNotes} />
+            </Tooltip>
+            {extra}
+          </Space>
         )
       )}
-      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
+      headStyle={{ minHeight: 'fit-content', paddingInline: 'var(--theme-sizes-layout-big)' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
-      title="Notes">
+      title={(
+        <InlineEditor
+          disabled={!onSaveTitle || !isEditing}
+          value={title}
+          onSave={onSaveTitle}
+        />
+      )}>
       <Spinner spinning={isLoading}>
         <Markdown
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
-          onChange={setEditedNotes}
+          onChange={handleEditedNotes}
           onClick={() => { if (notes === '') editNotes(); }}
         />
       </Spinner>

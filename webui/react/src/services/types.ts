@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata, RecordKey } from 'types';
+import { DetailedUser, Job, Metadata, Note, RecordKey } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -272,6 +272,11 @@ export interface AddProjectNoteParams {
   name: string;
 }
 
+export interface SetProjectNotesParams {
+  notes: Note[];
+  projectId: number;
+}
+
 export interface GetWorkspacesParams extends PaginationParams {
   archived?: boolean;
   name?: string;
@@ -320,3 +325,9 @@ export interface ArchiveWorkspaceParams {
 }
 
 export type UnarchiveWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface PinWorkspaceParams {
+  id: number;
+}
+
+export type UnpinWorkspaceParams = ArchiveWorkspaceParams;

@@ -4,7 +4,8 @@ import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 import css from 'components/ActionDropdown.module.scss';
 import Icon from 'components/Icon';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
-import { archiveWorkspace, unarchiveWorkspace } from 'services/api';
+import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
+import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -12,7 +13,7 @@ interface Props {
   className?: string;
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
-  fetchWorkspaces?: () => void;
+  onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspace: Workspace;
 }
@@ -22,12 +23,16 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 const WorkspaceActionDropdown: React.FC<Props> = (
   {
     workspace, children, curUser, onVisibleChange,
-    className, direction = 'vertical', fetchWorkspaces,
+    className, direction = 'vertical', onComplete,
   }
   : PropsWithChildren<Props>,
 ) => {
   const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({
-    onClose: fetchWorkspaces,
+    onClose: onComplete,
+    workspace,
+  });
+  const { modalOpen: openWorkspaceEdit } = useModalWorkspaceEdit({
+    onClose: onComplete,
     workspace,
   });
 
@@ -39,19 +44,41 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     if (workspace.archived) {
       try {
         unarchiveWorkspace({ id: workspace.id });
-        fetchWorkspaces?.();
+        onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
       }
     } else {
       try {
         archiveWorkspace({ id: workspace.id });
-        fetchWorkspaces?.();
+        onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ fetchWorkspaces, workspace.archived, workspace.id ]);
+  }, [ onComplete, workspace.archived, workspace.id ]);
+
+  const handlePinClick = useCallback(() => {
+    if (workspace.pinned) {
+      try {
+        unpinWorkspace({ id: workspace.id });
+        onComplete?.();
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
+      }
+    } else {
+      try {
+        pinWorkspace({ id: workspace.id });
+        onComplete?.();
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to archive workspace.' });
+      }
+    }
+  }, [ onComplete, workspace.id, workspace.pinned ]);
+
+  const handleEditClick = useCallback(() => {
+    openWorkspaceEdit();
+  }, [ openWorkspaceEdit ]);
 
   const handleDeleteClick = useCallback(() => {
     openWorkspaceDelete();
@@ -60,16 +87,34 @@ const WorkspaceActionDropdown: React.FC<Props> = (
   const WorkspaceActionMenu = useMemo(() => {
     return (
       <Menu>
+        <Menu.Item key="switchPin" onClick={handlePinClick}>
+          {workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
+        </Menu.Item>
+        {(userHasPermissions && !workspace.archived) && (
+          <Menu.Item key="edit" onClick={handleEditClick}>
+            Edit...
+          </Menu.Item>
+        )}
         {userHasPermissions && (
           <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
             {workspace.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
-        {userHasPermissions && !workspace.archived &&
-        <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
+        {(userHasPermissions && !workspace.archived) && (
+          <>
+            <Menu.Divider />
+            <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>
+          </>
+        )}
       </Menu>
     );
-  }, [ handleArchiveClick, handleDeleteClick, workspace.archived, userHasPermissions ]);
+  }, [ handlePinClick,
+    workspace.pinned,
+    workspace.archived,
+    userHasPermissions,
+    handleEditClick,
+    handleArchiveClick,
+    handleDeleteClick ]);
 
   if (!userHasPermissions) {
     return (children as JSX.Element) ?? (
@@ -85,7 +130,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     <Dropdown
       overlay={WorkspaceActionMenu}
       placement="bottomLeft"
-      trigger={[ 'contextMenu' ]}
+      trigger={[ 'contextMenu', 'click' ]}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>

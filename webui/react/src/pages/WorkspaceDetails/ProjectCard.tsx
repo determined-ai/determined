@@ -20,7 +20,7 @@ interface Props {
 const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props) => {
 
   return (
-    <ProjectActionDropdown curUser={curUser} fetchProjects={fetchProjects} project={project}>
+    <ProjectActionDropdown curUser={curUser} project={project} onComplete={fetchProjects}>
       <div className={css.base}>
         <div className={css.nameRow}>
           <h6 className={css.name}>
@@ -43,8 +43,8 @@ const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props
             className={css.action}
             curUser={curUser}
             direction="horizontal"
-            fetchProjects={fetchProjects}
             project={project}
+            onComplete={fetchProjects}
           />
         )}
         <Typography.Paragraph className={css.description} ellipsis={{ rows: 2, tooltip: true }}>

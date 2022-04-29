@@ -1,0 +1,9 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-sizes-layout-big);
+
+  :global(p) {
+    margin: 0;
+  }
+}

@@ -10,7 +10,8 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { GenericRenderer, getFullPaginationConfig, userRenderer } from 'components/Table';
+import { checkmarkRenderer, GenericRenderer,
+  getFullPaginationConfig, userRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePolling from 'hooks/usePolling';
@@ -105,7 +106,10 @@ const WorkspaceList: React.FC = () => {
   }, []);
 
   const handleSortSelect = useCallback((value) => {
-    updateSettings({ sortKey: value });
+    updateSettings({
+      sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
+      sortKey: value,
+    });
   }, [ updateSettings ]);
 
   const handleViewChange = useCallback((value: GridListView) => {
@@ -134,8 +138,8 @@ const WorkspaceList: React.FC = () => {
     const actionRenderer: GenericRenderer<Workspace> = (_, record) => (
       <WorkspaceActionDropdown
         curUser={user}
-        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
+        onComplete={fetchWorkspaces}
       />
     );
 
@@ -165,6 +169,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
+        render: checkmarkRenderer,
         title: 'Archived',
       },
       {
@@ -217,8 +222,8 @@ const WorkspaceList: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <WorkspaceActionDropdown
         curUser={user}
-        fetchWorkspaces={fetchWorkspaces}
         workspace={record}
+        onComplete={fetchWorkspaces}
         onVisibleChange={onVisibleChange}>
         {children}
       </WorkspaceActionDropdown>
@@ -303,7 +308,7 @@ const WorkspaceList: React.FC = () => {
           <Option value={WorkspaceFilters.Mine}>My workspaces</Option>
           <Option value={WorkspaceFilters.Others}>Others&apos; workspaces</Option>
         </SelectFilter>
-        <Space>
+        <Space wrap>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <SelectFilter

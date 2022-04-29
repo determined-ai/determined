@@ -310,6 +310,7 @@ export enum ExperimentAction {
   Delete = 'Delete',
   Fork = 'Fork',
   Kill = 'Kill',
+  Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
   Unarchive = 'Unarchive',
@@ -456,6 +457,7 @@ export interface ExperimentItem {
   notes?: string;
   numTrials: number;
   progress?: number;
+  projectId: number;
   resourcePool: string;
   searcherType: string;
   startTime: string;
@@ -546,6 +548,7 @@ export type CompoundRunState = RunState | JobState
 export interface ExperimentTask extends Task {
   archived: boolean;
   progress?: number;
+  projectId: number;
   resourcePool: string;
   state: CompoundRunState;
   userId?: number;
@@ -764,6 +767,7 @@ export interface Workspace {
   immutable: boolean;
   name: string;
   numProjects: number;
+  pinned: boolean;
   username: string;
 }
 

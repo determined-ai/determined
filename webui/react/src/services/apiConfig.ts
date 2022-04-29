@@ -735,6 +735,22 @@ export const unarchiveWorkspace: Service.DetApi<
   request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
 };
 
+export const pinWorkspace: Service.DetApi<
+  Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void
+> = {
+  name: 'pinWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.pinWorkspace(params.id),
+};
+
+export const unpinWorkspace: Service.DetApi<
+  Service.UnpinWorkspaceParams, Api.V1UnpinWorkspaceResponse, void
+> = {
+  name: 'unpinWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
+};
+
 /* Projects */
 
 export const getProject: Service.DetApi<
@@ -791,6 +807,22 @@ export const addProjectNote: Service.DetApi<
     {
       contents: params.contents,
       name: params.name,
+    },
+  ),
+};
+
+export const setProjectNotes: Service.DetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+> = {
+  name: 'setProjectNotes',
+  postProcess: (response) => {
+    return response.notes as Type.Note[];
+  },
+  request: (params) => detApi.Projects.putProjectNotes(
+    params.projectId,
+    {
+      notes: params.notes,
+      projectId: params.projectId,
     },
   ),
 };

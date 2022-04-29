@@ -1,10 +1,12 @@
+import { PushpinOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
-import { paths } from 'routes/utils';
+import WorkspaceIcon from 'components/WorkspaceIcon';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { DetailedUser, Workspace } from 'types';
 
 import WorkspaceActionDropdown from './WorkspaceActionDropdown';
@@ -18,21 +20,17 @@ interface Props {
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }: Props) => {
 
-  const nameAcronym = useMemo(() => {
-    return workspace.name
-      .split(/\s/).reduce((response, word) => response += word.slice(0, 1), '')
-      .slice(0, 3);
-  }, [ workspace.name ]);
+  const handleCardClick = useCallback(() => {
+    routeToReactUrl(paths.workspaceDetails(workspace.id));
+  }, [ workspace.id ]);
 
   return (
     <WorkspaceActionDropdown
       curUser={curUser}
-      fetchWorkspaces={fetchWorkspaces}
-      workspace={workspace}>
-      <div className={css.base}>
-        <div className={css.icon}>
-          <span>{nameAcronym}</span>
-        </div>
+      workspace={workspace}
+      onComplete={fetchWorkspaces}>
+      <div className={css.base} onClick={handleCardClick}>
+        <WorkspaceIcon name={workspace.name} size={70} />
         <div className={css.info}>
           <div className={css.nameRow}>
             <h6 className={css.name}>
@@ -55,13 +53,14 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           </p>
           <div className={css.avatar}><Avatar username={workspace.username} /></div>
         </div>
+        {workspace.pinned && <PushpinOutlined className={css.pinned} />}
         {!workspace.immutable && (
           <WorkspaceActionDropdown
             className={css.action}
             curUser={curUser}
             direction="horizontal"
-            fetchWorkspaces={fetchWorkspaces}
             workspace={workspace}
+            onComplete={fetchWorkspaces}
           />
         )}
       </div>
