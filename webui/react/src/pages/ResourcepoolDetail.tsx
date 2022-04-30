@@ -128,20 +128,19 @@ const ResourcepoolDetail: React.FC = () => {
 
   if(!pool) return <div />;
   return (
-    <Page>
+    <Page className={css.poolDetailPage}>
       <Section>
         <div className={css.nav} onClick={() => history.goBack()}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>{poolLogo(pool.type)}</div>
           <div>{`${pool.name} ${usage ? `- ${(usage * 100).toFixed()}%` : '' } `}</div>
         </div>
-
       </Section>
       <Section>
         <RenderAllocationBarResourcePool
           poolStats={poolStats}
           resourcePool={pool}
-          size={ShirtSize.huge}
+          size={ShirtSize.giant}
         />
       </Section>
       <Section>

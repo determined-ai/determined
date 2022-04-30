@@ -34,7 +34,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
 
   if(!queuedStats) return <div />;
   return (
-    <Page title="Daily Avg Queued Time (In Hours)">
+    <Page title="Avg Queue Time">
       <Radio.Group
         className={css.filter}
         value={viewDays}

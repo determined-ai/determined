@@ -43,7 +43,7 @@ const ClusterOverview: React.FC = () => {
       <ClusterOverallBar />
       <Section
         title={'Resource Pools'}>
-        <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
               <ResourcePoolCardLight

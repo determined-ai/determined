@@ -1,9 +1,17 @@
-.nav {
-  align-items: center;
-  cursor: pointer;
-  display: flex;
-
-  .icon {
-    margin: 0 var(--theme-sizes-layout-enormous);
+.poolDetailPage {
+  .nav {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+  
+    .icon {
+      margin: 0 var(--theme-sizes-layout-enormous);
+    }
+  }
+  :global {
+    .ant-tabs-nav {
+      margin-bottom: var(--theme-sizes-layout-medium) !important;
+      padding: 0 !important;
+    }
   }
 }

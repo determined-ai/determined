@@ -114,7 +114,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
         </div>
       </div>
       <div className={css.body}>
-        <RenderAllocationBarResourcePool resourcePool={pool} />
+        <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.big} />
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />
         </section>
