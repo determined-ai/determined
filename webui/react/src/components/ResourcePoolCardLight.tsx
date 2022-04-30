@@ -140,6 +140,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
       <SlotAllocationBar
         footer={{ queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount }}
         hideHeader
+        poolName={pool.name}
         poolType={pool.type}
         resourceStates={
           getSlotContainerStates(agents || [], pool.slotType, pool.name)

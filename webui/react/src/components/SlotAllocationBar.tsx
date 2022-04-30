@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Link from 'components/Link';
 import { resourceStateToLabel } from 'constants/states';
+import history from 'routes/history';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { getStateColorCssVar, ShirtSize } from 'themes';
@@ -21,6 +21,7 @@ export interface Props {
   footer?: AllocationBarFooterProps;
   hideHeader?: boolean;
   isAux?: boolean;
+  poolName?: string,
   poolType?: V1ResourcePoolType;
   resourceStates: ResourceState[];
   showLegends?: boolean;
@@ -74,6 +75,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   footer,
   isAux,
   title,
+  poolName,
   poolType,
   slotsPotential,
   ...barProps
@@ -168,6 +170,12 @@ const SlotAllocationBar: React.FC<Props> = ({
   const classes = [ css.base ];
   if (className) classes.push(className);
 
+  const onClickQueued = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    poolName && history.push(`${paths.resourcePool(poolName)}/queued`);
+  };
+
   return (
     <div className={classes.join(' ')}>
       {!hideHeader && (
@@ -208,12 +216,12 @@ const SlotAllocationBar: React.FC<Props> = ({
               </header>
             )}
           {footer.queued ? (
-            <Link path={paths.jobs()}>
+            <div onClick={onClickQueued}>
               <span className={css.queued}>{`${footer.queued > 100 ?
                 '100+' :
                 footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
               </span>
-            </Link>
+            </div>
           ) :
             !isAux && (
               <span>{
@@ -226,19 +234,17 @@ const SlotAllocationBar: React.FC<Props> = ({
       )}
       {showLegends && (
         <div className={css.overallLegends}>
-          <Popover content={stateDetails} placement="bottom">
-            <ol>
-              <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
-                <Badge state={SlotState.Running} type={BadgeType.State} />
-              </Legend>
-              <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
-                <Badge state={SlotState.Pending} type={BadgeType.State} />
-              </Legend>
-              <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
-                <Badge state={SlotState.Free} type={BadgeType.State} />
-              </Legend>
-            </ol>
-          </Popover>
+          <ol>
+            <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
+              <Badge state={SlotState.Running} type={BadgeType.State} />
+            </Legend>
+            <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
+              <Badge state={SlotState.Pending} type={BadgeType.State} />
+            </Legend>
+            <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
+              <Badge state={SlotState.Free} type={BadgeType.State} />
+            </Legend>
+          </ol>
         </div>
       )}
     </div>
