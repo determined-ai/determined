@@ -11,7 +11,6 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import Spinner from 'components/Spinner';
@@ -43,6 +42,7 @@ import { Determinedexperimentv1State,
   V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ExperimentAction as Action, CommandTask, ExperimentItem,
   Note, Project, RecordKey, RunState } from 'types';
 import { isEqual } from 'utils/data';
@@ -725,6 +725,13 @@ const ProjectDetails: React.FC = () => {
       openNoteDelete({ pageNumber });
     } catch (e) { handleError(e); }
   }, [ openNoteDelete, project?.id ]);
+
+  useEffect(() => {
+    if(settings.tableOffset > total){
+      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
+      updateSettings({ tableOffset: offset });
+    }
+  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
   /*
    * Get new experiments based on changes to the

@@ -7,7 +7,6 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
@@ -22,6 +21,7 @@ import { paths } from 'routes/utils';
 import { getWorkspace, getWorkspaceProjects, isNotFound } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import { isEqual } from 'utils/data';

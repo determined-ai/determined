@@ -46,27 +46,6 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const menuConfig = {
-  bottom: [
-    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
-    {
-      external: true,
-      icon: 'cloud',
-      label: 'API (Beta)',
-      path: paths.docs('/rest-api/'),
-      popout: true,
-    },
-  ],
-  top: [
-    { icon: 'experiment', label: 'Uncategorized', path: paths.projectDetails(1) },
-    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
-    { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-    { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-    { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-    { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
-  ],
-};
-
 const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
@@ -149,8 +128,7 @@ const NavigationSideBar: React.FC = () => {
       },
     ],
     top: [
-      { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-      { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+      { icon: 'experiment', label: 'Uncategorized', path: paths.projectDetails(1) },
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
