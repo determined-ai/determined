@@ -67,7 +67,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     onClose: handleModalClose,
   });
 
-  const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
+  const { modalOpen: openModalDelete } = useModalExperimentDelete({ experiment: experiment });
 
   const { modalOpen: openModalCreate } = useModalExperimentCreate();
 

@@ -89,7 +89,7 @@ const NavigationTabbar: React.FC = () => {
     <nav className={css.base}>
       {contextHolder}
       <div className={css.toolbar}>
-        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.projectDetails(1)} />
+        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
@@ -153,7 +153,7 @@ const NavigationTabbar: React.FC = () => {
           },
           ...pinnedWorkspaces.map(workspace => (
             {
-              icon: <WorkspaceIcon name={workspace.name} size={24} />,
+              icon: <WorkspaceIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
               label: workspace.name,
               path: paths.workspaceDetails(workspace.id),
             })),

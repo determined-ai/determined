@@ -66,6 +66,8 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.TensorBoards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
   detApi.Templates = new Api.TemplatesApi(config);
+  detApi.Workspaces = new Api.WorkspacesApi(config);
+  detApi.Projects = new Api.ProjectsApi(config);
 };
 
 /* Helpers */

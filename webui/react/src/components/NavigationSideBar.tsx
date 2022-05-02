@@ -128,7 +128,7 @@ const NavigationSideBar: React.FC = () => {
       },
     ],
     top: [
-      { icon: 'experiment', label: 'Uncategorized', path: paths.projectDetails(1) },
+      { icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() },
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -238,7 +238,13 @@ const NavigationSideBar: React.FC = () => {
                       workspace={workspace}>
                       <li>
                         <NavigationItem
-                          icon={<WorkspaceIcon name={workspace.name} size={24} />}
+                          icon={(
+                            <WorkspaceIcon
+                              name={workspace.name}
+                              size={24}
+                              style={{ color: 'black' }}
+                            />
+                          )}
                           label={workspace.name}
                           path={paths.workspaceDetails(workspace.id)}
                         />

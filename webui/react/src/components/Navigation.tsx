@@ -24,11 +24,11 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchAuthOnly = useCallback(async () => {
     if (auth.isAuthenticated) {
       await fetchAgents();
+      await fetchPinnedWorkspaces();
     }
-  }, [ auth.isAuthenticated, fetchAgents ]);
+  }, [ auth.isAuthenticated, fetchAgents, fetchPinnedWorkspaces ]);
 
   usePolling(fetchAuthOnly);
-  usePolling(fetchPinnedWorkspaces);
 
   useEffect(() => {
     fetchResourcePools();

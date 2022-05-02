@@ -22,7 +22,7 @@ export const serverAddress = (path = ''): string => {
   return (customServer || reactHostAddress()) + path;
 };
 
-// checks to see if the provided address resolves to a live Determeind server or not.
+// checks to see if the provided address resolves to a live Determined server or not.
 export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {
@@ -196,17 +196,11 @@ export const paths = {
   clusters: (): string => {
     return '/clusters';
   },
-  dashboard: (): string => {
-    return '/dashboard';
-  },
   docs: (suffix?: string): string => {
     return `/docs${suffix || ''}`;
   },
   experimentDetails: (experimentId: number | string): string => {
     return `/experiments/${experimentId}`;
-  },
-  experimentList: (): string => {
-    return '/experiments';
   },
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
@@ -254,6 +248,9 @@ export const paths = {
   },
   trialLogs: (trialId: number | string, experimentId: number | string): string => {
     return `/experiments/${experimentId}/trials/${trialId}/logs`;
+  },
+  uncategorized: (): string => {
+    return '/projects/1';
   },
   users: (): string => {
     return '/users';

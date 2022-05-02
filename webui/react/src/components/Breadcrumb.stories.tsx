@@ -15,7 +15,7 @@ export const Default = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path={paths.experimentList()}>Experiments</Link>
+        {/* <Link path={paths.experimentList()}>Experiments</Link> */}
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
@@ -28,7 +28,7 @@ export const TrialDetail = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path={paths.experimentList()}>Experiments</Link>
+        {/* <Link path={paths.experimentList()}>Experiments</Link> */}
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
