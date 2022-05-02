@@ -1,4 +1,3 @@
-import { Button, Tooltip } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -6,7 +5,6 @@ import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointDetails from 'components/CheckpointDetails';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -119,8 +117,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         <CheckpointDetails
           checkpoint={checkpoint}
           experiment={experiment}
-          title={`Best Checkpoint for Trial ${checkpoint.trialId}`}>
-        </CheckpointDetails>
+          title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
+        />
       );
     };
 

@@ -1,11 +1,10 @@
-import { Button, Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo } from 'react';
 
 import CheckpointDetails from 'components/CheckpointDetails';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -63,8 +62,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           <CheckpointDetails
             checkpoint={checkpoint}
             experiment={experiment}
-            title={`Checkpoint for Batch ${checkpoint.batch}`}>
-          </CheckpointDetails>
+            title={`Checkpoint for Batch ${checkpoint.batch}`}
+          />
         );
       }
       return null;
