@@ -1,6 +1,6 @@
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import React, { useMemo } from 'react';
 
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';

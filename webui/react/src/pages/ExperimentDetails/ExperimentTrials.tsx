@@ -1,9 +1,9 @@
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
