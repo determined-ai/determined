@@ -101,7 +101,6 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     id: id,
     name: experimentTask.name,
     userId: user.id,
-    username: user.username,
   } as Type.ExperimentOld;
 };
 
@@ -127,7 +126,6 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
         searcherType: 'single',
         userId: user.id,
-        username: user.username,
       } as Type.ExperimentItem;
     });
 };

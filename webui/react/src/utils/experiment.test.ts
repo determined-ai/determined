@@ -16,7 +16,6 @@ describe('Experiment Utilities', () => {
         startTime: '2021-11-29T00:00:00Z',
         state: Type.RunState.Active,
         userId: 1,
-        username: 'Kenzo',
       };
       expect(utils.isExperiment(experimentTask)).toBe(true);
     });
@@ -30,7 +29,6 @@ describe('Experiment Utilities', () => {
         state: Type.CommandState.Assigned,
         type: Type.CommandType.Command,
         userId: 1,
-        username: 'Kenzo',
       };
       expect(utils.isExperiment(commandTask)).toBe(false);
     });
