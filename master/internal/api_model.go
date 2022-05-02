@@ -80,7 +80,6 @@ func (a *apiServer) GetModels(
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
-	userFilterExpr := strings.Join(req.Users, ",")
 	userIds := make([]string, 0)
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
@@ -119,7 +118,6 @@ func (a *apiServer) GetModels(
 		&resp.Models,
 		idFilterExpr,
 		archFilterExpr,
-		userFilterExpr,
 		userIDFilterExpr,
 		labelFilterExpr,
 		nameFilter,
@@ -159,7 +157,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "")
+		&getResp.Models, 0, "", "", "", modelName, "")
 	if err != nil {
 		return err
 	}

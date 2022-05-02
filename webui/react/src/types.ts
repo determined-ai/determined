@@ -559,7 +559,6 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId?: number;
-  username: string;
 }
 
 export type RecentEvent = {

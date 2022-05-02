@@ -221,7 +221,6 @@ export const getExperiments: Service.DetApi<
       params.labels,
       params.archived,
       params.states,
-      undefined,
       params.users?.map(u => parseInt(u)),
       options,
     );
@@ -451,7 +450,6 @@ export const getModels: Service.DetApi<
     params.description,
     params.labels,
     params.archived,
-    undefined,
     params.users?.map(u => parseInt(u)),
   ),
 };
@@ -616,7 +614,6 @@ export const getCommands: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
-    undefined,
     params.users?.map(u => parseInt(u)),
   ),
 };
@@ -632,7 +629,6 @@ export const getJupyterLabs: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
-    undefined,
     params.users?.map(u => parseInt(u)),
   ),
 };

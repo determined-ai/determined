@@ -32,8 +32,6 @@ message GetShellsRequest {
   int32 offset = 3;
   // Limit the number of shells. A value of 0 denotes no limit.
   int32 limit = 4;
-  // Limit shells to those that are owned by users with the specified usernames.
-  repeated string users = 5;
   // Limit shells to those that are owned by users with the specified userIds.
   repeated int32 user_ids = 6;
 }

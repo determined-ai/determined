@@ -136,7 +136,6 @@ const mapCommonV1Task = (
     state: mapV1TaskState(task.state),
     type,
     userId: task.userId,
-    username: task.username,
   };
 };
 
