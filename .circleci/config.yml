@@ -1188,6 +1188,8 @@ jobs:
       - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
+      - codecov/upload:
+          xtra_args: "-v"
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
@@ -1260,6 +1262,8 @@ jobs:
       - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
+      - codecov/upload:
+          xtra_args: "-v"
 
   test-intg-master:
     machine:
@@ -1373,8 +1377,6 @@ jobs:
       - run: coverage xml --data-file $PWD/test-unit-harness-cpu-pycov -i
       - run: pwd
       - run: ls
-      - codecov/upload:
-          xtra_args: "-v"
       - persist_to_workspace:
           root: .
           paths:
@@ -1467,7 +1469,8 @@ jobs:
       - run: coverage report --include 'model_hub/model_hub/*' --skip-covered
       - run: coverage html --include 'harness/determined/*' --skip-covered -d cov-html/harness
       - run: coverage html --include 'model_hub/model_hub/*' --skip-covered -d cov-html/model_hub
-      - codecov/upload
+      - codecov/upload:
+          xtra_args: "-v"
       - store_artifacts:
           path: cov-html
           destination: cov-html
