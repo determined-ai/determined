@@ -48,6 +48,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         {!workspace.immutable && (
           <WorkspaceActionDropdown
             curUser={curUser}
+            trigger={[ 'click' ]}
             workspace={workspace}
             onComplete={fetchWorkspace}>
             <DownOutlined style={{ fontSize: 12 }} />

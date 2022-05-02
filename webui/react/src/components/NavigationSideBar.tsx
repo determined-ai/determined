@@ -235,6 +235,7 @@ const NavigationSideBar: React.FC = () => {
                     <WorkspaceActionDropdown
                       curUser={auth.user}
                       key={workspace.id}
+                      trigger={[ 'contextMenu' ]}
                       workspace={workspace}>
                       <li>
                         <NavigationItem

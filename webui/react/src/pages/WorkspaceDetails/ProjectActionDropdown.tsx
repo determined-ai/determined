@@ -17,12 +17,16 @@ interface Props {
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
+  trigger?: ('click' | 'hover' | 'contextMenu')[];
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
-  { project, children, curUser, onVisibleChange, className, direction = 'vertical', onComplete }
+  {
+    project, children, curUser, onVisibleChange,
+    className, direction = 'vertical', onComplete, trigger,
+  }
   : PropsWithChildren<Props>,
 ) => {
   const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: onComplete, project });
@@ -103,7 +107,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     <Dropdown
       overlay={ProjectActionMenu}
       placement="bottomLeft"
-      trigger={[ 'contextMenu', 'click' ]}
+      trigger={trigger ?? [ 'contextMenu', 'click' ]}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>
@@ -112,7 +116,10 @@ const ProjectActionDropdown: React.FC<Props> = (
       className={[ css.base, className ].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
-      <Dropdown overlay={ProjectActionMenu} placement="bottomRight" trigger={[ 'click' ]}>
+      <Dropdown
+        overlay={ProjectActionMenu}
+        placement="bottomRight"
+        trigger={trigger ?? [ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

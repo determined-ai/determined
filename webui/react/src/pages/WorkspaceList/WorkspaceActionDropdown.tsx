@@ -15,6 +15,7 @@ interface Props {
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
+  trigger?: ('click' | 'hover' | 'contextMenu')[];
   workspace: Workspace;
 }
 
@@ -23,7 +24,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 const WorkspaceActionDropdown: React.FC<Props> = (
   {
     workspace, children, curUser, onVisibleChange,
-    className, direction = 'vertical', onComplete,
+    className, direction = 'vertical', onComplete, trigger,
   }
   : PropsWithChildren<Props>,
 ) => {
@@ -130,7 +131,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     <Dropdown
       overlay={WorkspaceActionMenu}
       placement="bottomLeft"
-      trigger={[ 'contextMenu', 'click' ]}
+      trigger={trigger ?? [ 'contextMenu', 'click' ]}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>
@@ -139,7 +140,10 @@ const WorkspaceActionDropdown: React.FC<Props> = (
       className={[ css.base, className ].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
-      <Dropdown overlay={WorkspaceActionMenu} placement="bottomRight" trigger={[ 'click' ]}>
+      <Dropdown
+        overlay={WorkspaceActionMenu}
+        placement="bottomRight"
+        trigger={trigger ?? [ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

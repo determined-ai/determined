@@ -67,7 +67,11 @@ const ProjectDetailsTabs: React.FC<Props> = (
     <>
       <BreadcrumbBar
         extra={(
-          <ProjectActionDropdown curUser={curUser} project={project} onComplete={fetchProject}>
+          <ProjectActionDropdown
+            curUser={curUser}
+            project={project}
+            trigger={[ 'click' ]}
+            onComplete={fetchProject}>
             <div style={{ cursor: 'pointer' }}>
               <Icon name="arrow-down" size="tiny" />
             </div>
