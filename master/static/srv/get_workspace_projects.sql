@@ -1,6 +1,7 @@
 WITH pe AS (
   SELECT project_id, state, start_time
   FROM experiments
+  UNION SELECT null, null, null
 ),
 w AS (
   SELECT archived
