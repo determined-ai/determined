@@ -1,8 +1,10 @@
-import { Modal } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { ModalFuncProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Link from 'components/Link';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
@@ -12,15 +14,13 @@ import { formatDatetime } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/workload';
 
-import css from './CheckpointModal.module.scss';
-import Link from './Link';
+import useModal, { ModalHooks } from './useModal';
+import css from './useModalCheckpoint.module.scss';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
   config: ExperimentConfig;
-  onHide?: () => void;
   searcherValidation?: number;
-  show?: boolean;
   title: string;
 }
 
@@ -69,23 +69,10 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = (
-  { config, checkpoint, onHide, show, title, ...props }: Props,
-) => {
+const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+
   const { showModal: showCreateModelModal } = useCreateModelModal();
-  const state = checkpoint.state as unknown as RunState;
-
-  const totalSize = useMemo(() => {
-    return humanReadableBytes(checkpointSize(checkpoint));
-  }, [ checkpoint ]);
-
-  const resources = useMemo(() => {
-    if (checkpoint.resources === undefined) return [];
-    const checkpointResources = checkpoint.resources;
-    return Object.keys(checkpoint.resources)
-      .sort((a, b) => checkpointResources[a] - checkpointResources[b])
-      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
-  }, [ checkpoint.resources ]);
 
   const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
     if (checkpointUuid) showCreateModelModal({ checkpointUuid });
@@ -97,29 +84,30 @@ const CheckpointModal: React.FC<Props> = (
 
   const launchRegisterCheckpointModal = useCallback(() => {
     if (!checkpoint.uuid) return;
-    onHide?.();
     showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
-  }, [ checkpoint.uuid, onHide, showRegisterCheckpointModal ]);
+  }, [ checkpoint.uuid, showRegisterCheckpointModal ]);
 
-  const totalBatchesProcessed = getBatchNumber(checkpoint);
+  const handleOk = useCallback(() => {
+    launchRegisterCheckpointModal();
+  }, [ launchRegisterCheckpointModal ]);
 
-  const searcherMetric = props.searcherValidation !== undefined ?
-    props.searcherValidation :
-    ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+  const getContent = useCallback(() => {
+    if(!checkpoint?.experimentId || !checkpoint?.resources){
+      return null;
+    }
 
-  if (!checkpoint.experimentId || !checkpoint.trialId) {
-    return null;
-  }
+    const totalBatchesProcessed = getBatchNumber(checkpoint);
+    const state = checkpoint.state as unknown as RunState;
+    const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
-  return (
-    <Modal
-      footer={checkpoint.uuid ? undefined : null}
-      okButtonProps={{ onClick: launchRegisterCheckpointModal }}
-      okText="Register Checkpoint"
-      title={title}
-      visible={show}
-      width={768}
-      onCancel={onHide}>
+    const searcherMetric = props.searcherValidation !== undefined ?
+      props.searcherValidation :
+      ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+    const checkpointResources = checkpoint.resources;
+    const resources = Object.keys(checkpoint.resources)
+      .sort((a, b) => checkpointResources[a] - checkpointResources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
+    return (
       <div className={css.base}>
         {renderRow(
           'Source', (
@@ -155,8 +143,25 @@ const CheckpointModal: React.FC<Props> = (
           ),
         )}
       </div>
-    </Modal>
-  );
+    );
+  }, [ checkpoint, config, props.searcherValidation ]);
+
+  const modalProps: ModalFuncProps = useMemo(() => {
+    return {
+      content: getContent(),
+      icon: <ExclamationCircleOutlined />,
+      okText: 'Register Checkpoint',
+      onOk: handleOk,
+      title: title,
+      width: 768,
+    };
+  }, [ handleOk, getContent, title ]);
+
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    openOrUpdate({ ...modalProps, ...initialModalProps });
+  }, [ modalProps, openOrUpdate ]);
+
+  return { modalClose, modalOpen, modalRef };
 };
 
-export default CheckpointModal;
+export default useModalCheckpoint;

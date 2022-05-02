@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import CheckpointModal from 'components/CheckpointModal';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
@@ -18,7 +18,6 @@ interface Props {
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
-  const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
     if (!trial) return;
@@ -43,9 +42,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [ trial?.workloads ]);
 
-  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
-  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-
   return (
     <Section>
       <Grid gap={ShirtSize.medium} minItemWidth={180} mode={GridMode.AutoFill}>
@@ -65,20 +61,16 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         {bestCheckpoint && (
-          <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
-            Batch {bestCheckpoint.batch}
-          </OverviewStats>
+          <CheckpointModalTrigger
+            checkpoint={bestCheckpoint}
+            experiment={experiment}
+            title="Best Checkpoint">
+            <OverviewStats clickable title="Best Checkpoint">
+              Batch {bestCheckpoint.batch}
+            </OverviewStats>
+          </CheckpointModalTrigger>
         )}
       </Grid>
-      {bestCheckpoint && trial && (
-        <CheckpointModal
-          checkpoint={bestCheckpoint}
-          config={experiment.config}
-          show={showBestCheckpoint}
-          title={`Best Checkpoint for Trial ${trial.id}`}
-          onHide={handleHideBestCheckpoint}
-        />
-      )}
     </Section>
   );
 };
