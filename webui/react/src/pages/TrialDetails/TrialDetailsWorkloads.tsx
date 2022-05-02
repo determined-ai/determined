@@ -64,12 +64,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
             checkpoint={checkpoint}
             experiment={experiment}
             title={`Checkpoint for Batch ${checkpoint.batch}`}>
-            <Tooltip title="View Checkpoint">
-              <Button
-                aria-label="View Checkpoint"
-                icon={<Icon name="checkpoint" />}
-              />
-            </Tooltip>
           </CheckpointDetails>
         );
       }

@@ -120,12 +120,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           checkpoint={checkpoint}
           experiment={experiment}
           title={`Best Checkpoint for Trial ${checkpoint.trialId}`}>
-          <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-            />
-          </Tooltip>
         </CheckpointDetails>
       );
     };
