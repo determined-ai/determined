@@ -1,8 +1,9 @@
 import { Dropdown, Menu } from 'antd';
-import React, { PropsWithChildren, useCallback, useMemo } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import css from 'components/ActionDropdown.module.scss';
 import Icon from 'components/Icon';
+import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
@@ -28,6 +29,8 @@ const WorkspaceActionDropdown: React.FC<Props> = (
   }
   : PropsWithChildren<Props>,
 ) => {
+  const [ canceler ] = useState(new AbortController());
+  const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({
     onClose: onComplete,
     workspace,
@@ -63,6 +66,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     if (workspace.pinned) {
       try {
         unpinWorkspace({ id: workspace.id });
+        fetchPinnedWorkspaces();
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
@@ -70,12 +74,13 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     } else {
       try {
         pinWorkspace({ id: workspace.id });
+        fetchPinnedWorkspaces();
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ onComplete, workspace.id, workspace.pinned ]);
+  }, [ fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned ]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();
