@@ -316,6 +316,10 @@ const WorkspaceDetails: React.FC = () => {
     user ]);
 
   useEffect(() => {
+    fetchWorkspace();
+  }, [ fetchWorkspace ]);
+
+  useEffect(() => {
     fetchProjects();
   }, [ fetchProjects ]);
 
