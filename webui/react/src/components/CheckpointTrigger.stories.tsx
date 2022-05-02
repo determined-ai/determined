@@ -1,4 +1,3 @@
-import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import { CheckpointDetail,
@@ -11,16 +10,16 @@ import { generateExperiments } from 'utils/task';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 
-import useModalCheckpoint from './useModalCheckpoint';
+import CheckpointTrigger from 'components/CheckpointTrigger';
 import StoreDecorator from 'storybook/StoreDecorator';
 
 export default {
-  component: useModalCheckpoint,
+  component: CheckpointTrigger,
   decorators: [StoreDecorator],
-  title: 'useModalCheckpoint',
+  title: 'CheckpointTrigger',
 };
 
-const UseCheckpointModalContainer = () => {
+const CheckpointTriggerContainer = () => {
 
   const exp = generateExperiments(1)[0];
   const experiment: ExperimentBase = {
@@ -229,21 +228,19 @@ const UseCheckpointModalContainer = () => {
     trialId: 3,
   };
 
-  const { modalOpen } = useModalCheckpoint({
-    checkpoint: checkpoint,
-    config: experiment.config,
-    title: "Use Checkpoint Modal"
-  });
-
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
-  return <Button onClick={() => modalOpen()}>View Checkpoint</Button>
+  return <CheckpointTrigger
+    checkpoint={checkpoint}
+    experiment={experiment}
+    title="CheckpointTrigger"
+    />
 };
 
 export const Default = (): React.ReactNode => {
-  return <UseCheckpointModalContainer/>;
+  return <CheckpointTriggerContainer/>;
 };
