@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 
-import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { useStore } from 'contexts/Store';
+import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
 import {
   ResourceType,

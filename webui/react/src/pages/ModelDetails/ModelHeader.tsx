@@ -7,6 +7,7 @@ import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
@@ -135,9 +136,9 @@ const ModelHeader: React.FC<Props> = (
                   </Menu.Item>
                   <Menu.Item
                     danger
-                    disabled={!isDeletable}
                     key="delete-model"
-                    onClick={() => showConfirmDelete(model)}>
+                    onClick={() => isDeletable ?
+                      showConfirmDelete(model) : showModalItemCannotDelete()}>
                     Delete
                   </Menu.Item>
                 </Menu>

@@ -1,12 +1,11 @@
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
-import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from 'utils/error';
+import handleError, {
+  DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError,
+} from 'utils/error';
 
 import { DetApi, FetchOptions } from './types';
-
-/* eslint-disable @typescript-eslint/no-var-requires */
-const ndjsonStream = require('can-ndjson-stream');
 
 /* Response Helpers */
 
@@ -97,17 +96,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
 
 /* gRPC Helpers */
 
-/*
-  consumeStream is used to consume streams from the generated TS client.
-  We use the provided fetchParamCreator to create fetch arguments and use that
-  to make a request and handle events one by one.
-  Example:
-  consumeStream<Api.V1TrialLogsResponse>(
-    Api.ExperimentsApiFetchParamCreator().trialLogs(1, undefined, undefined, true),
-    console.log,
-  ).then(() => console.log('finished'));
-*/
-export const consumeStream = async <T = unknown>(
+export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
   onEvent: (event: T) => void,
 ): Promise<void> => {
@@ -121,31 +110,63 @@ export const consumeStream = async <T = unknown>(
     if (process.env.IS_DEV) options.credentials = 'include';
 
     const response = await fetch(serverAddress(fetchArgs.url), options);
-    const reader = ndjsonStream(response.body).getReader();
+    if (!response.body) throw new DetError(`Unable to fetch stream from ${fetchArgs.url}.`);
+
+    const decoder = new TextDecoder();
+    const reader = response.body.getReader();
+    let buffer = '';
+    let isCancelled = false;
 
     // Cancel reader if an abort signal is received.
     if (options?.signal) {
       const signal: AbortSignal = options.signal;
       const abortHandler = () => {
-        reader.cancel();
         signal.removeEventListener('abort', abortHandler);
+        isCancelled = true;
       };
       signal.addEventListener('abort', abortHandler);
     }
 
-    let result;
-    while (!result || !result.done) {
-      result = await reader.read();
-      if (result.done) return;
-      if (result.value.error) {
-        throw result.value.error;
-      } else {
-        onEvent(result.value.result);
+    const handleStreamError = (e: unknown) => handleError(e, { silent: true });
+    const handleStreamLine = (line: string) => {
+      if (isCancelled) return;
+      try {
+        const ndjson = JSON.parse(line);
+        onEvent(ndjson.result);
+      } catch {
+        // JSON parsing error occurred, no-op.
       }
-    }
+    };
+    const handleStreamRead = (result: ReadableStreamDefaultReadResult<ArrayBuffer>): unknown => {
+      if (isCancelled) return;
+      if (result.done) {
+        // Process any data buffer remainder.
+        buffer = buffer.trim();
+        if (buffer.length !== 0) handleStreamLine(buffer);
+        return;
+      }
+
+      // Append incoming streaming data to buffer.
+      buffer += decoder.decode(result.value, { stream: true });
+
+      // Process only newline delimited data buffer.
+      const lines = buffer.split('\n');
+      for(let i = 0; i < lines.length - 1; ++i) {
+        const line = lines[i].trim();
+        if (line.length === 0) continue;
+        handleStreamLine(line);
+      }
+
+      // Keep the unprocessed buffer data.
+      buffer = lines[lines.length - 1];
+
+      // Keep reading.
+      return reader.read().then(handleStreamRead).catch(handleStreamError);
+    };
+
+    reader.read().then(handleStreamRead).catch(handleStreamError);
   } catch (e) {
-    const err = await processApiError(fetchArgs.url, e);
-    if (!isAborted(e)) throw err;
+    handleError(await processApiError(fetchArgs.url, e));
   }
 };
 

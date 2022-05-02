@@ -18,7 +18,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-// Initialize creates a new global agent actor.
+// Initialize creates a new global agents actor.
 func Initialize(
 	system *actor.System, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
 ) {

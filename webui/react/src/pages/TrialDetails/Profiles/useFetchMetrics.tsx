@@ -4,7 +4,7 @@ import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerMetricsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import { RunState } from 'types';
 import { clone, hasObjectKeys } from 'utils/data';
 
@@ -36,7 +36,7 @@ export const useFetchMetrics = (
     const canceler = new AbortController();
     const follow = !terminalRunStates.has(trialState);
 
-    consumeStream(
+    readStream(
       detApi.StreamingProfiler.getTrialProfilerMetrics(
         trialId,
         labelsName,

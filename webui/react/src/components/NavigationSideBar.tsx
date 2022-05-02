@@ -42,28 +42,6 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const menuConfig = {
-  bottom: [
-    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
-    {
-      external: true,
-      icon: 'cloud',
-      label: 'API (Beta)',
-      path: paths.docs('/rest-api/'),
-      popout: true,
-    },
-  ],
-  top: [
-    { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-    { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
-    { icon: 'model', label: 'Model Registry', path: paths.modelList() },
-    { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
-    { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-    { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-    { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
-  ],
-};
-
 const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
@@ -90,7 +68,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
@@ -110,6 +88,35 @@ const NavigationSideBar: React.FC = () => {
     return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
       / totalSlots)}%`;
   }, [ overview, resourcePools ]);
+
+  const menuConfig = useMemo(() => ({
+    bottom: [
+      { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+      {
+        external: true,
+        icon: 'cloud',
+        label: 'API (Beta)',
+        path: paths.docs('/rest-api/'),
+        popout: true,
+      },
+      {
+        external: true,
+        icon: 'pencil',
+        label: 'Share Feedback',
+        path: paths.submitProductFeedback(info.branding),
+        popout: true,
+      },
+    ],
+    top: [
+      { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
+      { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+      { icon: 'model', label: 'Model Registry', path: paths.modelList() },
+      { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
+      { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+      { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
+      { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
+    ],
+  }), [ info.branding ]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

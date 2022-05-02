@@ -384,8 +384,9 @@ def test_image_pull_after_remove() -> None:
 @pytest.mark.e2e_cpu
 def test_killed_pending_command_terminates() -> None:
     # Specify an outrageous number of slots to be sure that it can't be scheduled.
+    # NB: slot # higher than postgres smallint (i.e. 32k) is rejected outright.
     with cmd.interactive_command(
-        "cmd", "run", "--config", "resources.slots=1048576", "sleep infinity"
+        "cmd", "run", "--config", "resources.slots=10485", "sleep infinity"
     ) as command:
         for _ in range(10):
             assert cmd.get_command(command.task_id)["state"] == "STATE_PENDING"

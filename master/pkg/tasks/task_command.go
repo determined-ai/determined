@@ -26,12 +26,12 @@ type GenericCommandSpec struct {
 
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
+
+	TaskType model.TaskType
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s GenericCommandSpec) ToTaskSpec(
-	keys *ssh.PrivateAndPublicKeys,
-) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
 	res.Environment = s.Config.Environment.ToExpconf()
@@ -81,6 +81,6 @@ func (s GenericCommandSpec) ToTaskSpec(
 	}
 
 	res.UseFluentLogging = true
-
+	res.TaskType = s.TaskType
 	return res
 }

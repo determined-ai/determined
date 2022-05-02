@@ -697,6 +697,13 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  useEffect(() => {
+    if(settings.tableOffset > total){
+      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
+      updateSettings({ tableOffset: offset });
+    }
+  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
+
   const ExperimentActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (
       <TaskActionDropdown

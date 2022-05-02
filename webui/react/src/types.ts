@@ -20,11 +20,11 @@ export type PropsWithStoragePath<T> = T & { storagePath?: string };
 export interface User {
   displayName?: string;
   id: number;
+  modifiedAt?: number;
   username: string;
 }
 
 export interface DetailedUser extends User {
-  displayName?: string;
   id: number;
   isActive: boolean;
   isAdmin: boolean;

@@ -286,7 +286,8 @@ func TestMoveMessagesPromote(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job3 above job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job3", "job2", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job3", "job2", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job1"))
@@ -297,7 +298,8 @@ func TestMoveMessagesPromoteHead(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job3 ahead of job1, the first job
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job3", "job1", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job3", "job1", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, job.HeadAnchor)
@@ -308,7 +310,8 @@ func TestMoveMessagesDemote(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job1 behind job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job2", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job2", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job3"))
@@ -319,7 +322,8 @@ func TestMoveMessagesDemoteTail(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job1 behind job3, the last job
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job3", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job3", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, job.TailAnchor)
@@ -382,7 +386,8 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 	})
 
 	// move job2 ahead of job1
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job2", "job1", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job2", "job1", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, prioChange)
 	assert.Equal(t, secondAnchor, job.HeadAnchor)
@@ -445,7 +450,8 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 	})
 
 	// move job1 behind job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job2", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job2", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job3"))

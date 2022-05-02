@@ -84,6 +84,20 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	return r0
 }
 
+// AddTask provides a mock function with given fields: t
+func (_m *DB) AddTask(t *model.Task) error {
+	ret := _m.Called(t)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Task) error); ok {
+		r0 = rf(t)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddTrainingMetrics provides a mock function with given fields: ctx, m
 func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)

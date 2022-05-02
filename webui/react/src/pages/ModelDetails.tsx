@@ -7,8 +7,8 @@ import { useHistory, useParams } from 'react-router-dom';
 import DownloadModelModal from 'components/DownloadModelModal';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -24,6 +24,7 @@ import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchMo
   patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound, validateDetApiEnum } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
@@ -159,9 +160,10 @@ const ModelDetails: React.FC = () => {
               {useActionRenderer(_, record)}
               <Menu.Item
                 danger
-                disabled={!isDeletable}
+
                 key="delete-version"
-                onClick={() => showConfirmDelete(record)}>
+                onClick={() => isDeletable ?
+                  showConfirmDelete(record) : showModalItemCannotDelete()}>
                 Delete Version
               </Menu.Item>
             </Menu>

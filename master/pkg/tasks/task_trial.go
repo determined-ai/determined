@@ -155,6 +155,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		}
 	}
 	res.Mounts = mounts
+	res.TaskType = model.TaskTypeTrial
 
 	return res
 }

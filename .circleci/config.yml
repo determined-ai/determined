@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.15-dev0
+    default: 0.17.16-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -79,6 +79,14 @@ commands:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
+
+  # circleci's checkout does not fetch submodules by default
+  # https://circleci.com/docs/2.0/configuration-reference/#checkout
+  checkout-with-sm:
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
 
   set-slack-user-id:
     steps:
@@ -1141,9 +1149,9 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1153,10 +1161,10 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: |
             if <<parameters.dev-mode>>; then
@@ -1171,14 +1179,17 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
         environment:
           CI: "true"
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
+      - run: curl -Os https://uploader.codecov.io/latest/linux/codecov
+      - run: chmod +x codecov
+      - run: ./codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
@@ -1186,9 +1197,9 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react build-storybook
       - store_artifacts:
@@ -2081,6 +2092,7 @@ workflows:
               agent-version: ['0.17.10']
 
       - deploy:
+          name: deploy-latest-master-cluster
           enable-cors: true
           context: aws
           filters:

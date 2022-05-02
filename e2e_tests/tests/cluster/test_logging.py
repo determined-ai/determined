@@ -16,7 +16,7 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_cpu_cross_version
 @pytest.mark.e2e_gpu
-@pytest.mark.timeout(5 * 60)
+@pytest.mark.timeout(10 * 60)
 def test_trial_logs() -> None:
     # TODO: refactor tests to not use cli singleton auth.
     master_url = conf.make_master_url()

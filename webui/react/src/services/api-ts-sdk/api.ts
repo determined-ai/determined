@@ -5993,6 +5993,12 @@ export interface V1User {
      * @memberof V1User
      */
     displayName?: string;
+    /**
+     * The version of the user object for caching purposes.
+     * @type {Date}
+     * @memberof V1User
+     */
+    modifiedAt?: Date;
 }
 
 /**

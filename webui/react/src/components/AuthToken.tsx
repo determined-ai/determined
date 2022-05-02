@@ -19,7 +19,7 @@ const AuthToken: React.FC = () => {
       });
     } catch (e) {
       notification.warn({
-        description: e.message,
+        description: (e as Error)?.message,
         message: 'Unable to Copy to Clipboard',
       });
     }

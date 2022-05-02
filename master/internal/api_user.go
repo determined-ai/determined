@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -33,6 +34,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		Active:         user.Active,
 		AgentUserGroup: agentUserGroup,
 		DisplayName:    displayNameString,
+		ModifiedAt:     timestamppb.New(user.ModifiedAt),
 	}
 }
 

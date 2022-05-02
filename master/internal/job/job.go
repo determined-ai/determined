@@ -18,6 +18,10 @@ import (
 // DecimalExp is a constant used by decimal.Decimal objects to denote its exponent.
 const DecimalExp = 1000
 
+// K8sExp is a constant used by decimal.Decimal objects to denote the exponent for Kubernetes
+// labels as k8s labels are limited to 63 characters.
+const K8sExp = 30
+
 var (
 	// JobsActorAddr is the address of the jobs actor.
 	JobsActorAddr = actor.Addr("jobs")

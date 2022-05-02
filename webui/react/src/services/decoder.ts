@@ -13,6 +13,7 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     id: data.id,
     isActive: data.active,
     isAdmin: data.admin,
+    modifiedAt: (new Date(data.modifiedAt || 1)).getTime(),
     username: data.username,
   };
 };
