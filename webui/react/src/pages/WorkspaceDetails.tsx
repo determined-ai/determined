@@ -4,6 +4,7 @@ import { useParams } from 'react-router';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
@@ -18,14 +19,14 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getWorkspace, getWorkspaceProjects, isNotFound } from 'services/api';
+import { getWorkspace, getWorkspaceProjects, isNotFound, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import { isEqual } from 'utils/data';
-import handleError from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
@@ -153,6 +154,20 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [ projectFilter, updateSettings, user, users ]);
 
+  const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
+    try {
+      await patchProject({ description: newDescription, id: projectId });
+    } catch (e) {
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to edit project.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, []);
+
   const columns = useMemo(() => {
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
@@ -163,6 +178,15 @@ const WorkspaceDetails: React.FC = () => {
         curUser={user}
         project={record}
         onComplete={fetchProjects}
+      />
+    );
+
+    const descriptionRenderer = (value:string, record: Project) => (
+      <InlineEditor
+        disabled={record.archived}
+        placeholder="Add description..."
+        value={value}
+        onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
       />
     );
 
@@ -180,6 +204,7 @@ const WorkspaceDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         key: V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION,
         onCell: onRightClickableCell,
+        render: descriptionRenderer,
         title: 'Description',
       },
       {
@@ -220,7 +245,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ fetchProjects, user ]);
+  }, [ fetchProjects, saveProjectDescription, user ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
@@ -260,6 +285,7 @@ const WorkspaceDetails: React.FC = () => {
       <ProjectActionDropdown
         curUser={user}
         project={record}
+        trigger={[ 'contextMenu' ]}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
@@ -314,6 +340,10 @@ const WorkspaceDetails: React.FC = () => {
     total,
     updateSettings,
     user ]);
+
+  useEffect(() => {
+    fetchWorkspace();
+  }, [ fetchWorkspace ]);
 
   useEffect(() => {
     fetchProjects();
