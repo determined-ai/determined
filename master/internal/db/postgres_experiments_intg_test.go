@@ -246,6 +246,7 @@ func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) mo
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		Archived:             false,
+		ProjectID:            1,
 	}
 }
 
