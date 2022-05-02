@@ -5,8 +5,7 @@ WITH page_info AS (
         FROM experiments e
         JOIN users u ON e.owner_id = u.id
         WHERE
-            ($7 = 0 OR e.project_id = $7)
-            AND ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
+            ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
             AND ($2 = '' OR e.archived = $2::BOOL)
             AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
             AND ($4 = '' OR e.owner_id IN (SELECT unnest(string_to_array($4, ',')::int [])))
@@ -22,7 +21,8 @@ WITH page_info AS (
                 )
             AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
             AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
-    ), $8, $9) AS page_info
+            AND ($8 = 0 OR e.project_id = $8)
+    ), $9, $10) AS page_info
 ), exps AS (
     SELECT
         e.id AS id,

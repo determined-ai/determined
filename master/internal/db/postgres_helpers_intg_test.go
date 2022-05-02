@@ -78,6 +78,7 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
+		ProjectID:            1,
 	}
 	err := db.AddExperiment(&exp)
 	require.NoError(t, err, "failed to add experiment")
