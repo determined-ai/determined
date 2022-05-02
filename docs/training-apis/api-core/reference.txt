@@ -1,0 +1,6 @@
+.. _core-reference:
+
+###############
+ API Reference
+###############
+
