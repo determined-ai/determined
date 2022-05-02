@@ -173,10 +173,12 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		return t.allocationExited(ctx, msg)
+		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
+			return t.allocationExited(ctx, msg)
+		}
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
-			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
+			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
 			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {
@@ -231,9 +233,12 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabel("trial-run-id", t.runID)
+	if err := t.addTask(); err != nil {
+		return err
+	}
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
-		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
 		JobSubmissionTime: t.jobSubmissionTime,
@@ -271,6 +276,16 @@ func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEa
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+}
+
+func (t *trial) addTask() error {
+	return t.db.AddTask(&model.Task{
+		TaskID:     t.taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  t.jobSubmissionTime,
+		JobID:      &t.jobID,
+		LogVersion: model.CurrentTaskLogVersion,
+	})
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
@@ -363,7 +378,16 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.ErrorState)
 		}
 		return t.transition(ctx, model.CompletedState)
-	case exit.Err != nil && !sproto.IsRestartableSystemError(exit.Err):
+	case exit.Err != nil && sproto.IsUnrecoverableSystemError(exit.Err):
+		ctx.Log().
+			WithError(exit.Err).
+			Errorf("trial encountered unrecoverable failure")
+		return t.transition(ctx, model.ErrorState)
+	case exit.Err != nil && sproto.IsTransientSystemError(exit.Err):
+		ctx.Log().
+			WithError(exit.Err).
+			Errorf("trial encountered transient system error")
+	case exit.Err != nil && !sproto.IsTransientSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
@@ -472,16 +496,16 @@ func (t *trial) enrichTaskLog(log model.TaskLog) (model.TaskLog, error) {
 	log.TaskID = string(t.taskID)
 
 	if log.Timestamp == nil {
-		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
+		log.Timestamp = ptrs.Ptr(time.Now().UTC())
 	}
 	if log.Level == nil {
-		log.Level = ptrs.StringPtr("INFO")
+		log.Level = ptrs.Ptr("INFO")
 	}
 	if log.Source == nil {
-		log.Source = ptrs.StringPtr("master")
+		log.Source = ptrs.Ptr("master")
 	}
 	if log.StdType == nil {
-		log.StdType = ptrs.StringPtr("stdout")
+		log.StdType = ptrs.Ptr("stdout")
 	}
 
 	log.Log += "\n"

@@ -487,6 +487,11 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
     for name, schema in swagger_definitions.items():
         if "enum" in schema:
             members = schema["enum"]
+            if enums.get(json.dumps(members)) is not None:
+                print(
+                    "ambiguous enum parameter:", name, members,
+                    file=sys.stderr,
+                )
             enums[json.dumps(members)] = name
     return enums
 

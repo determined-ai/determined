@@ -41,7 +41,7 @@ func TestClusterAPI(t *testing.T) {
 	tID := model.NewTaskID()
 	tIn := &model.Task{
 		TaskID:    tID,
-		JobID:     jID,
+		JobID:     &jID,
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
@@ -50,14 +50,14 @@ func TestClusterAPI(t *testing.T) {
 	require.NoError(t, err, "failed to add task")
 
 	// Add an allocation
-	aID := model.NewAllocationID(string(tID) + "-1")
+	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        8,
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
-		StartTime:    ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond)),
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
 
 	err = db.AddAllocation(aIn)

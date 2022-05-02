@@ -5,6 +5,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/shopspring/decimal"
+
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -22,8 +25,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+// KubernetesDummyResourcePool is the name of the dummy resource pool for kubernetes.
+const KubernetesDummyResourcePool = "kubernetes"
 const kubernetesScheduler = "kubernetes"
-const kubernetesDummyResourcePool = "kubernetes"
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -33,6 +37,10 @@ type kubernetesResourceManager struct {
 	groups            map[*actor.Ref]*group
 	addrToContainerID map[*actor.Ref]cproto.ID
 	containerIDtoAddr map[string]*actor.Ref
+	jobIDtoAddr       map[model.JobID]*actor.Ref
+	addrToJobID       map[*actor.Ref]model.JobID
+	groupActorToID    map[*actor.Ref]model.JobID
+	IDToGroupActor    map[model.JobID]*actor.Ref
 	slotsUsedPerGroup map[*group]int
 
 	podsActor *actor.Ref
@@ -58,8 +66,12 @@ func newKubernetesResourceManager(
 		groups:            make(map[*actor.Ref]*group),
 		addrToContainerID: make(map[*actor.Ref]cproto.ID),
 		containerIDtoAddr: make(map[string]*actor.Ref),
+		jobIDtoAddr:       make(map[model.JobID]*actor.Ref),
+		addrToJobID:       make(map[*actor.Ref]model.JobID),
+		groupActorToID:    make(map[*actor.Ref]model.JobID),
+		IDToGroupActor:    make(map[model.JobID]*actor.Ref),
 		slotsUsedPerGroup: make(map[*group]int),
-		queuePositions:    initalizeJobSortState(),
+		queuePositions:    initalizeJobSortState(true),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
@@ -105,11 +117,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case
 		job.GetJobQ,
-		job.GetJobSummary,
 		job.GetJobQStats,
 		job.SetGroupWeight,
 		job.SetGroupPriority,
 		job.MoveJob,
+		job.DeleteJob,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -183,7 +195,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	// that this RP does support the aux containers.
 
 	return &resourcepoolv1.ResourcePool{
-		Name:                         kubernetesDummyResourcePool,
+		Name:                         KubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    int32(pods.NumAgents),
@@ -227,6 +239,13 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case groupActorStopped:
 		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
 		delete(k.groups, msg.Ref)
+		if jobID, ok := k.groupActorToID[msg.Ref]; ok {
+			delete(k.queuePositions, jobID)
+			delete(k.addrToJobID, k.jobIDtoAddr[jobID])
+			delete(k.jobIDtoAddr, jobID)
+			delete(k.groupActorToID, msg.Ref)
+			delete(k.IDToGroupActor, jobID)
+		}
 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
@@ -277,6 +296,15 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		"resources are requested by %s (Allocation ID: %s)",
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
+	if msg.IsUserVisible {
+		if _, ok := k.queuePositions[msg.JobID]; !ok {
+			k.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime, true)
+		}
+		k.jobIDtoAddr[msg.JobID] = msg.TaskActor
+		k.addrToJobID[msg.TaskActor] = msg.JobID
+		k.groupActorToID[msg.Group] = msg.JobID
+		k.IDToGroupActor[msg.JobID] = msg.Group
+	}
 	k.reqList.AddTask(&msg)
 }
 
@@ -291,12 +319,16 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		}
 		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
 			Stats:        jobStats(k.reqList),
-			ResourcePool: kubernetesDummyResourcePool},
+			ResourcePool: KubernetesDummyResourcePool},
 		)
 		ctx.Respond(resp)
 
 	case job.GetJobQStats:
 		ctx.Respond(jobStats(k.reqList))
+
+	case job.MoveJob:
+		err := k.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
+		ctx.Respond(err)
 
 	case job.SetGroupWeight:
 		// setting weights in kubernetes is not supported
@@ -315,8 +347,12 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 			}
 		}
 
-	case job.MoveJob:
-		ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in Kubernetes"))
+	case job.RecoverJobPosition:
+		k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in k8s.
+		ctx.Respond(job.EmptyDeleteJobResponse())
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -324,9 +360,76 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	return nil
 }
 
+func (k *kubernetesResourceManager) moveJob(
+	ctx *actor.Context,
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+) error {
+	if anchorID == "" || jobID == "" || anchorID == jobID {
+		return nil
+	}
+
+	if _, ok := k.queuePositions[jobID]; !ok {
+		return nil
+	}
+
+	groupAddr, ok := k.IDToGroupActor[jobID]
+	if !ok {
+		return job.ErrJobNotFound(jobID)
+	}
+
+	if _, ok = k.queuePositions[anchorID]; !ok {
+		return job.ErrJobNotFound(anchorID)
+	}
+
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, k.reqList,
+		k.groups, k.queuePositions, true)
+
+	if secondAnchor == "" {
+		return fmt.Errorf("unable to move job with ID %s", jobID)
+	}
+
+	if secondAnchor == jobID {
+		return nil
+	}
+
+	if prioChange {
+		g := k.getOrCreateGroup(ctx, k.IDToGroupActor[jobID])
+		oldPriority := g.priority
+		g.priority = &anchorPriority
+		resp := ctx.Ask(k.IDToGroupActor[jobID], sproto.NotifyRMPriorityChange{
+			Priority: anchorPriority,
+		})
+		if resp.Error() != nil {
+			g.priority = oldPriority
+			return resp.Error()
+		}
+	}
+
+	msg, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
+	if err != nil {
+		return err
+	}
+	ctx.Tell(groupAddr, msg)
+
+	addr, ok := k.jobIDtoAddr[jobID]
+	if !ok {
+		return fmt.Errorf("job with ID %s has no valid task address", jobID)
+	}
+	containerID, ok := k.addrToContainerID[addr]
+	if !ok {
+		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
+	}
+
+	ctx.Tell(k.podsActor, kubernetes.ChangePosition{PodID: containerID})
+
+	return nil
+}
+
 func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
-	jobQinfo, _ := reduceToJobQInfo(reqs)
+	jobQinfo := reduceToJobQInfo(reqs)
 
 	return jobQinfo
 }
@@ -369,22 +472,20 @@ func (k *kubernetesResourceManager) assignResources(
 
 	allocations := make([]sproto.Resources, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		container := newContainer(req, slotsPerPod)
+		containerID := cproto.NewID()
 		allocations = append(allocations, &k8sPodResources{
-			req:       req,
-			podsActor: k.podsActor,
-			container: container,
-			group:     k.groups[req.Group],
+			req:             req,
+			podsActor:       k.podsActor,
+			containerID:     containerID,
+			slots:           slotsPerPod,
+			group:           k.groups[req.Group],
+			initialPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
 		})
 
-		k.addrToContainerID[req.TaskActor] = container.id
-		ctx.Tell(k.podsActor, kubernetes.SetPodOrder{
-			QPosition: -1,
-			PodID:     container.id,
-		})
+		k.addrToContainerID[req.TaskActor] = containerID
 
-		k.addrToContainerID[req.TaskActor] = container.id
-		k.containerIDtoAddr[container.id.String()] = req.TaskActor
+		k.addrToContainerID[req.TaskActor] = containerID
+		k.containerIDtoAddr[containerID.String()] = req.TaskActor
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
@@ -400,6 +501,7 @@ func (k *kubernetesResourceManager) assignResources(
 func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	k.reqList.RemoveTaskByHandler(handler)
+	delete(k.addrToContainerID, handler)
 
 	deleteID := ""
 	for id, addr := range k.containerIDtoAddr {
@@ -456,33 +558,36 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type k8sPodResources struct {
-	req       *sproto.AllocateRequest
-	container *container
-	podsActor *actor.Ref
-	group     *group
+	req             *sproto.AllocateRequest
+	podsActor       *actor.Ref
+	group           *group
+	containerID     cproto.ID
+	slots           int
+	initialPosition decimal.Decimal
 }
 
 // Summary summarizes a container allocation.
 func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 	return sproto.ResourcesSummary{
 		AllocationID:  p.req.AllocationID,
-		ResourcesID:   sproto.ResourcesID(p.container.id),
+		ResourcesID:   sproto.ResourcesID(p.containerID),
 		ResourcesType: sproto.ResourcesTypeK8sPod,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
 			aproto.ID(p.podsActor.Address().Local()): nil,
 		},
 
-		ContainerID: &p.container.id,
+		ContainerID: &p.containerID,
 	}
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p k8sPodResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
-) {
-	spec.ContainerID = string(p.container.id)
-	spec.ResourcesID = string(p.container.id)
+) error {
+	p.setPosition(&spec)
+	spec.ContainerID = string(p.containerID)
+	spec.ResourcesID = string(p.containerID)
 	spec.AllocationID = string(p.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
@@ -494,18 +599,31 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
-	ctx.Tell(p.podsActor, kubernetes.StartTaskPod{
+	return ctx.Ask(p.podsActor, kubernetes.StartTaskPod{
 		TaskActor:  p.req.TaskActor,
 		Spec:       spec,
-		Slots:      p.container.slots,
+		Slots:      p.slots,
 		Rank:       rri.AgentRank,
 		LogContext: logCtx,
-	})
+	}).Error()
+}
+
+func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
+	newSpec := spec.Environment.PodSpec()
+	if newSpec == nil {
+		newSpec = &expconf.PodSpec{}
+	}
+	if newSpec.Labels == nil {
+		newSpec.Labels = make(map[string]string)
+	}
+	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
+	fmt.Println(newSpec.Labels["determined-queue-position"])
+	spec.Environment.SetPodSpec(newSpec)
 }
 
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
-		PodID: p.container.id,
+		PodID: p.containerID,
 	})
 }

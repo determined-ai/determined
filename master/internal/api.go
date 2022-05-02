@@ -188,7 +188,7 @@ func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) erro
 	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
 		return status.Errorf(
 			codes.NotFound,
-			"actor %s did not respond", addr,
+			"actor %s %s", addr, actorDidNotRespond,
 		)
 	case resp.Error() != nil:
 		if ok, err := api.EchoErrToGRPC(resp.Error()); ok {
@@ -208,3 +208,7 @@ func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) erro
 		return nil
 	}
 }
+
+const (
+	actorDidNotRespond = "did not respond"
+)

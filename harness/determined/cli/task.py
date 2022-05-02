@@ -1,8 +1,8 @@
 import json
 from argparse import Namespace
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, cast
 
-from determined.cli import render
+from determined.cli import command, render
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -62,9 +62,10 @@ def list_tasks(args: Namespace) -> None:
 
 @authentication.required
 def logs(args: Namespace) -> None:
+    task_id = cast(str, command.expand_uuid_prefixes(args, args.task_id))
     api.pprint_task_logs(
         args.master,
-        args.task_id,
+        task_id,
         head=args.head,
         tail=args.tail,
         follow=args.follow,

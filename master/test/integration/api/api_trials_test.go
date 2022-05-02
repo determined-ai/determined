@@ -64,7 +64,7 @@ func TestTrialProfilerMetricsAvailableSeries(t *testing.T) {
 }
 
 func trialDetailAPITests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
 	type testCase struct {
 		name    string
@@ -101,14 +101,7 @@ func trialDetailAPITests(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			experiment := model.ExperimentModel()
-			err := db.AddExperiment(experiment)
-			assert.NilError(t, err, "failed to insert experiment")
-
-			trial := model.TrialModel(
-				experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-			err = db.AddTrial(trial)
-			assert.NilError(t, err, "failed to insert trial")
+			experiment, trial := setupTrial(t, pgDB)
 
 			metrics := trialv1.TrialMetrics{
 				TrialId:     int32(trial.ID),
@@ -122,7 +115,7 @@ func trialDetailAPITests(
 			assert.NilError(t, err, "failed to unmarshal metrics")
 			metrics.Metrics = &m
 
-			err = db.AddTrainingMetrics(context.Background(), &metrics)
+			err = pgDB.AddTrainingMetrics(context.Background(), &metrics)
 			assert.NilError(t, err, "failed to insert step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)
@@ -141,18 +134,9 @@ func trialDetailAPITests(
 }
 
 func trialProfilerMetricsTests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	// Given an experiment.
-	experiment := model.ExperimentModel()
-	err := db.AddExperiment(experiment)
-	assert.NilError(t, err, "failed to insert experiment")
-
-	// With a trial.
-	trial := model.TrialModel(
-		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-	err = db.AddTrial(trial)
-	assert.NilError(t, err, "failed to insert trial")
+	_, trial := setupTrial(t, pgDB)
 
 	// If we begin to stream for metrics.
 	ctx, _ := context.WithTimeout(creds, time.Minute)
@@ -217,16 +201,9 @@ func trialProfilerMetricsTests(
 }
 
 func trialProfilerMetricsAvailableSeriesTests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	experiment := model.ExperimentModel()
-	err := db.AddExperiment(experiment)
-	assert.NilError(t, err, "failed to insert experiment")
-
-	trial := model.TrialModel(
-		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-	err = db.AddTrial(trial)
-	assert.NilError(t, err, "failed to insert trial")
+	_, trial := setupTrial(t, pgDB)
 
 	ctx, _ := context.WithTimeout(creds, time.Minute)
 	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
@@ -345,4 +322,23 @@ func randTrialProfilerSystemMetrics(
 			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 		},
 	}
+}
+
+func setupTrial(t *testing.T, pgDB *db.PgDB) (*model.Experiment, *model.Trial) {
+	experiment := model.ExperimentModel()
+	err := pgDB.AddExperiment(experiment)
+	assert.NilError(t, err, "failed to insert experiment")
+
+	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
+	trial := &model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        experiment.JobID,
+		ExperimentID: experiment.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+
+	err = pgDB.AddTrial(trial)
+	assert.NilError(t, err, "failed to insert trial")
+	return experiment, trial
 }

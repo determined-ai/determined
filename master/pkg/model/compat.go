@@ -11,7 +11,7 @@ func (d DeviceConfig) ToExpconf() expconf.Device {
 	return schemas.WithDefaults(expconf.Device{
 		RawHostPath:      d.HostPath,
 		RawContainerPath: d.ContainerPath,
-		RawMode:          ptrs.StringPtr(d.Mode),
+		RawMode:          ptrs.Ptr(d.Mode),
 	}).(expconf.Device)
 }
 
@@ -27,14 +27,14 @@ func (d DevicesConfig) ToExpconf() expconf.DevicesConfig {
 // ToExpconf translates old model objects into an expconf object.
 func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 	return schemas.WithDefaults(expconf.ResourcesConfig{
-		RawSlots:          ptrs.IntPtr(r.Slots),
+		RawSlots:          ptrs.Ptr(r.Slots),
 		RawMaxSlots:       r.MaxSlots,
-		RawSlotsPerTrial:  ptrs.IntPtr(1),
-		RawWeight:         ptrs.Float64Ptr(r.Weight),
-		RawNativeParallel: ptrs.BoolPtr(r.NativeParallel),
+		RawSlotsPerTrial:  ptrs.Ptr(1),
+		RawWeight:         ptrs.Ptr(r.Weight),
+		RawNativeParallel: ptrs.Ptr(r.NativeParallel),
 		RawShmSize:        r.ShmSize,
-		RawAgentLabel:     ptrs.StringPtr(r.AgentLabel),
-		RawResourcePool:   ptrs.StringPtr(r.ResourcePool),
+		RawAgentLabel:     ptrs.Ptr(r.AgentLabel),
+		RawResourcePool:   ptrs.Ptr(r.ResourcePool),
 		RawPriority:       r.Priority,
 		RawDevices:        r.Devices.ToExpconf(),
 	}).(expconf.ResourcesConfig)
@@ -45,8 +45,8 @@ func (b BindMount) ToExpconf() expconf.BindMount {
 	return schemas.WithDefaults(expconf.BindMount{
 		RawHostPath:      b.HostPath,
 		RawContainerPath: b.ContainerPath,
-		RawReadOnly:      ptrs.BoolPtr(b.ReadOnly),
-		RawPropagation:   ptrs.StringPtr(b.Propagation),
+		RawReadOnly:      ptrs.Ptr(b.ReadOnly),
+		RawPropagation:   ptrs.Ptr(b.Propagation),
 	}).(expconf.BindMount)
 }
 
@@ -81,9 +81,9 @@ func (r RuntimeItems) ToExpconf() expconf.EnvironmentVariablesMap {
 // ToExpconf translates old model objects into an expconf object.
 func (r RuntimeItem) ToExpconf() expconf.EnvironmentImageMap {
 	return schemas.WithDefaults(expconf.EnvironmentImageMap{
-		RawCPU:  ptrs.StringPtr(r.CPU),
-		RawCUDA: ptrs.StringPtr(r.CUDA),
-		RawROCM: ptrs.StringPtr(r.ROCM),
+		RawCPU:  ptrs.Ptr(r.CPU),
+		RawCUDA: ptrs.Ptr(r.CUDA),
+		RawROCM: ptrs.Ptr(r.ROCM),
 	}).(expconf.EnvironmentImageMap)
 }
 
@@ -97,8 +97,9 @@ func (e Environment) ToExpconf() expconf.EnvironmentConfig {
 		RawEnvironmentVariables: &vars,
 		RawPorts:                e.Ports,
 		RawRegistryAuth:         e.RegistryAuth,
-		RawForcePullImage:       ptrs.BoolPtr(e.ForcePullImage),
+		RawForcePullImage:       ptrs.Ptr(e.ForcePullImage),
 		RawPodSpec:              (*expconf.PodSpec)(e.PodSpec),
+		RawSlurm:                e.Slurm,
 		RawAddCapabilities:      e.AddCapabilities,
 		RawDropCapabilities:     e.DropCapabilities,
 	}).(expconf.EnvironmentConfig)

@@ -44,7 +44,7 @@ args_description = [
         ], is_default=True),
         Cmd("config", command.config,
             "display command config", [
-                Arg("id", type=str, help="command ID"),
+                Arg("command_id", type=str, help="command ID"),
             ]),
         Cmd("run", run_command, "create command", [
             Arg("entrypoint", type=str, nargs=REMAINDER,

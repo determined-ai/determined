@@ -90,6 +90,7 @@ func DefaultConfig() *Config {
 		Root:        "/usr/share/determined/master",
 		Telemetry: config.TelemetryConfig{
 			Enabled:          true,
+			OtelEnabled:      false,
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
@@ -166,6 +167,11 @@ func (c Config) Printable() ([]byte, error) {
 	}
 	if c.Telemetry.SegmentWebUIKey != "" {
 		c.Telemetry.SegmentWebUIKey = hiddenValue
+	}
+	if c.TaskContainerDefaults.RegistryAuth != nil {
+		if c.TaskContainerDefaults.RegistryAuth.Password != "" {
+			c.TaskContainerDefaults.RegistryAuth.Password = hiddenValue
+		}
 	}
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
@@ -369,4 +375,10 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
+}
+
+// IsUsingKubernetesRM returns whether the master is configured with Kubernetes.
+func IsUsingKubernetesRM() bool {
+	config := GetMasterConfig()
+	return config.ResourceManager.KubernetesRM != nil
 }

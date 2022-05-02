@@ -176,11 +176,11 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
       Defaults to:
-      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12``.
+      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12``.
+      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 
@@ -208,4 +208,5 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
    supports the ``coscheduler`` option, which enables the `lightweight coscheduling plugin
    <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
    the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
-   as ``coscheduler``, Determined will use the default Kubernetes scheduler.
+   as ``coscheduler``, Determined will use the default Kubernetes scheduler. See
+   :ref:`scheduling-on-kubernetes` for more details.

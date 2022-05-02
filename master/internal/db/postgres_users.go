@@ -344,6 +344,16 @@ func (db *PgDB) UserList() (values []model.FullUser, err error) {
 	return values, err
 }
 
+// UserImage returns the profile picture associated with the user.
+func (db *PgDB) UserImage(username string) (photo []byte, err error) {
+	type photoRow struct {
+		Photo []byte
+	}
+	var userPhoto photoRow
+	err = db.Query("get_user_image", &userPhoto, username)
+	return userPhoto.Photo, err
+}
+
 // UserByID returns the full user for a given ID.
 func (db *PgDB) UserByID(userID model.UserID) (*model.FullUser, error) {
 	var fu model.FullUser

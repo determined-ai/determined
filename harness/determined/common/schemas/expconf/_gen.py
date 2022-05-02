@@ -987,6 +987,16 @@ schemas = {
                     }
                 }
             }
+        },
+        "slurm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

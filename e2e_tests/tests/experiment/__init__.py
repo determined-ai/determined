@@ -29,7 +29,10 @@ from .experiment import (
     trial_logs,
     trial_metrics,
     wait_for_experiment_state,
-    workloads_for_mode,
+    workloads_with_checkpoint,
+    workloads_with_training,
+    workloads_with_validation,
+    experiment_first_trial,
 )
 
 from .record_profiling import (

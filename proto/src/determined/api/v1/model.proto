@@ -58,9 +58,9 @@ message GetModelsRequest {
   // Limit the number of models. A value of 0 denotes no limit.
   int32 limit = 4;
 
-  // Limit the models to those matching the name.
+  // Limit the models to those matching or partially-matching the name.
   string name = 5;
-  // Limit the models to those matching the description.
+  // Limit the models to those matching or partially-matching the description.
   string description = 6;
 
   // Limit the models to those with the following labels.
@@ -69,14 +69,14 @@ message GetModelsRequest {
   // Limit to unarchived models only.
   google.protobuf.BoolValue archived = 8;
 
-  // Limit the models to those made by the following users.
+  // Limit the models to those made by the users with the following usernames.
   repeated string users = 9;
+
+  // Limit the models to those made by the users with the following userIds.
+  repeated int32 user_ids = 11;
 
   // Limit the models to this model id.
   int32 id = 10;
-
-  // Modify the name filter to be case-insensitive.
-  bool name_case_insensitive = 11;
 }
 
 // Response to GetModelsRequest.

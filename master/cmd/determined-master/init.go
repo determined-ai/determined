@@ -129,4 +129,8 @@ func registerConfig() {
 		defaults.Telemetry.SegmentMasterKey, "the Segment write key for the master")
 	registerString(flags, name("telemetry", "segment-webui-key"),
 		defaults.Telemetry.SegmentWebUIKey, "the Segment write key for the WebUI")
+	registerBool(flags, name("telemetry", "otel-enabled"),
+		defaults.Telemetry.OtelEnabled, "enable otel")
+	registerString(flags, name("telemetry", "otel-endpoint"),
+		defaults.Telemetry.OtelExportedOtlpEndpoint, "set otel endpoint")
 }

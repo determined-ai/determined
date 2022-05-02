@@ -78,11 +78,10 @@ def test_pytorch_const_warm_start() -> None:
     first_trial = trials[0]
     first_trial_id = first_trial.trial.id
 
-    assert len(first_trial.workloads or []) == 4
-    checkpoints = exp.workloads_for_mode(first_trial.workloads, "checkpoint")
+    assert len(first_trial.workloads) == 4
+    checkpoints = exp.workloads_with_checkpoint(first_trial.workloads)
     first_checkpoint = checkpoints[-1]
-    assert first_checkpoint and first_checkpoint.checkpoint
-    first_checkpoint_uuid = first_checkpoint.checkpoint.uuid
+    first_checkpoint_uuid = first_checkpoint.uuid
 
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
 
@@ -176,11 +175,11 @@ def test_pytorch_gradient_aggregation() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
-    workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    workloads = exp.workloads_with_validation(trials[0].workloads)
     actual_weights = []
     for wl in workloads:
-        if wl.validation and wl.validation.metrics:
-            actual_weights.append(wl.validation.metrics["weight"])
+        if wl.metrics:
+            actual_weights.append(wl.metrics["weight"])
 
     # independently compute expected metrics
     batch_size = 4

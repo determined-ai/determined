@@ -57,7 +57,8 @@ def start_notebook(args: Namespace) -> None:
 
 @authentication.required
 def open_notebook(args: Namespace) -> None:
-    resp = api.get(args.master, "api/v1/notebooks/{}".format(args.notebook_id)).json()["notebook"]
+    notebook_id = command.expand_uuid_prefixes(args)
+    resp = api.get(args.master, "api/v1/notebooks/{}".format(notebook_id)).json()["notebook"]
     check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")
     api.browser_open(args.master, resp["serviceAddress"])
 
@@ -74,7 +75,7 @@ args_description = [
         ], is_default=True),
         Cmd("config", command.config,
             "display notebook config", [
-                Arg("id", type=str, help="notebook ID"),
+                Arg("notebook_id", type=str, help="notebook ID"),
             ]),
         Cmd("start", start_notebook, "start a new notebook", [
             Arg("--config-file", default=None, type=FileType("r"),

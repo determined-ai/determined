@@ -23,16 +23,16 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.13-dev0
+    default: 0.17.16-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
   machine-image:
     type: string
-    default: ubuntu-2004:202101-01
+    default: ubuntu-2004:202201-02
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01 
+    default: ubuntu-2004-cuda-11.2:202103-01
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -80,6 +80,14 @@ commands:
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
+  # circleci's checkout does not fetch submodules by default
+  # https://circleci.com/docs/2.0/configuration-reference/#checkout
+  checkout-with-sm:
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
+
   set-slack-user-id:
     steps:
       - run:
@@ -114,11 +122,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-83dbcaa
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ed66d8a
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-83dbcaa
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-ed66d8a
 
   login-docker:
     parameters:
@@ -695,7 +703,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
         type: string
     steps:
       - set-cluster-id:
@@ -1141,9 +1149,9 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1153,10 +1161,10 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: |
             if <<parameters.dev-mode>>; then
@@ -1171,14 +1179,17 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
         environment:
           CI: "true"
     resource_class: large
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
+      - run: curl -Os https://uploader.codecov.io/latest/linux/codecov
+      - run: chmod +x codecov
+      - run: ./codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
@@ -1186,9 +1197,9 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:14.16
+      - image: cimg/node:16.14.2
     steps:
-      - checkout
+      - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react build-storybook
       - store_artifacts:
@@ -1809,7 +1820,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
         type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1940,7 +1951,7 @@ workflows:
       - test-unit-react
       - test-unit-harness-cpu
       # Exclude gpu tests for now since we do not have access to those instance types on circleci.
-      #- test-unit-harness-gpu 
+      #- test-unit-harness-gpu
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2081,6 +2092,7 @@ workflows:
               agent-version: ['0.17.10']
 
       - deploy:
+          name: deploy-latest-master-cluster
           enable-cors: true
           context: aws
           filters:
@@ -2254,7 +2266,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p3.16xlarge"]
+              compute-agent-instance-type: ["p3.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
@@ -2391,7 +2403,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2410,7 +2422,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2426,10 +2438,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2448,10 +2460,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.15
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2514,7 +2526,7 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.8xlarge"] # k80 not supported for deepspeed
+              compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
 
@@ -2581,9 +2593,9 @@ workflows:
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["transformers"]
+              cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              compute-agent-instance-type: ["p3.16xlarge"]
+              compute-agent-instance-type: ["p3.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
@@ -2617,7 +2629,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2632,7 +2644,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+                - determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2644,10 +2656,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.15
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2662,10 +2674,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.12
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.12
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.5-tf-2.4-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.15
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.15
 
   weekly-vuln-scan:
     triggers:

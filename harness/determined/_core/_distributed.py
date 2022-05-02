@@ -1,11 +1,11 @@
-import contextlib
-import functools
 import logging
+import os
 import shutil
 import socket
 import tempfile
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
+import determined as det
 from determined import constants, ipc
 
 
@@ -21,8 +21,15 @@ class DistributedContext:
      - cross_rank: the index of this machine in the entire job
      - cross_size: the number of this machines in the entire job
 
-    Additionally, any time that cross_size > 0, you must also provide:
+    Additionally, any time that cross_size > 1, you must also provide:
      - chief_ip: the ip address to reach the chief worker (where rank==0)
+
+    .. note::
+
+       DistributedContext has .allgather(), .gather(), and .broadcast() methods, which are easy to
+       use and which can be useful for coordinating work across workers, but it is not a replacement
+       for the allgather/gather/broadcast operations in your particular distributed training
+       framework.
     """
 
     def __init__(
@@ -133,12 +140,12 @@ class DistributedContext:
 
             # Do a global allgather to initialize local clients on every node.
             local_chief = (self.cross_rank, pub_url, pull_url)
-            _ = self._zmq_allgather(local_chief)
+            _ = self.allgather(local_chief)
             self._local_chief_zmq.safe_start(lambda: None)
 
         else:
             # Start with the global allgather.
-            all_local_chiefs = self._zmq_allgather(None)
+            all_local_chiefs = self.allgather(None)
             my_local_chief = [
                 x for x in all_local_chiefs if x is not None and x[0] == self.cross_rank
             ]
@@ -154,6 +161,55 @@ class DistributedContext:
             logging.debug(f"Local Worker setting up server with urls {pub_url}/{pull_url}.")
             self._local_worker_zmq = ipc.ZMQBroadcastClient(pub_url, pull_url)
             self._local_worker_zmq.safe_start()
+
+    @classmethod
+    def from_horovod(cls, hvd: Any, chief_ip: Optional[str] = None) -> "DistributedContext":
+        """
+        Create a DistributedContext using the provided hvd module to determine rank information.
+
+        Example:
+
+        .. code:: python
+
+           import horovod.torch as hvd
+           hvd.init()
+           distributed = DistributedContext.from_horovod(hvd)
+
+        The IP address for the chief worker is required whenver hvd.cross_size() > 1.  The value may
+        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        """
+
+        return cls(
+            rank=hvd.rank(),
+            size=hvd.size(),
+            local_rank=hvd.local_rank(),
+            local_size=hvd.local_size(),
+            cross_rank=hvd.cross_rank(),
+            cross_size=hvd.cross_size(),
+            chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
+            port_offset=_get_training_port_offset(),
+        )
+
+    @classmethod
+    def from_deepspeed(cls, chief_ip: Optional[str] = None) -> "DistributedContext":
+        """
+        Create a DistributedContext using the standard deepspeed environment variables to determine
+        rank information.
+
+        The IP address for the chief worker is required whenver CROSS_SIZE > 1.  The value may
+        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        """
+
+        return cls(
+            rank=int(os.environ["RANK"]),
+            size=int(os.environ["WORLD_SIZE"]),
+            local_rank=int(os.environ["LOCAL_RANK"]),
+            local_size=int(os.environ["LOCAL_SIZE"]),
+            cross_rank=int(os.environ["CROSS_RANK"]),
+            cross_size=int(os.environ["CROSS_SIZE"]),
+            chief_ip=chief_ip or os.environ.get("DET_CHIEF_IP"),
+            port_offset=_get_training_port_offset(),
+        )
 
     def close(self) -> None:
         # if statements in close() mirror the if statements of _init_ipc().
@@ -207,9 +263,12 @@ class DistributedContext:
         """
         return self.cross_size
 
-    def _zmq_gather(self, stuff: Any) -> Optional[List]:
+    def gather(self, stuff: Any) -> Optional[List]:
         """
         Gather stuff to the chief.  The chief returns a list of all stuff, and workers return None.
+
+        gather() is not a replacement for the gather functionality of your distributed training
+        framework.
         """
         if self.size < 2:
             return [stuff]
@@ -228,10 +287,13 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} finished zmq gather.")
         return out
 
-    def _zmq_gather_local(self, stuff: Any) -> Optional[List]:
+    def gather_local(self, stuff: Any) -> Optional[List]:
         """
         Gather stuff to the local chief.  The local chief returns a list of all stuff, and local
         workers return None.
+
+        gather_local() is not a replacement for the gather functionality of your distributed
+        training framework.
         """
         if self.local_size < 2:
             return [stuff]
@@ -250,9 +312,12 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} finished zmq gather local.")
         return out
 
-    def _zmq_allgather(self, stuff: Any) -> List:
+    def allgather(self, stuff: Any) -> List:
         """
         Gather stuff to the chief and broadcast all of it back to the workers.
+
+        allgather() is not a replacement for the allgather functionality of your distributed
+        training framework.
         """
         if self.size < 2:
             return [stuff]
@@ -268,9 +333,12 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
         return all_stuff
 
-    def _zmq_allgather_local(self, stuff: Any) -> List:
+    def allgather_local(self, stuff: Any) -> List:
         """
         Gather stuff to the local chief and broadcast all of it back to the local workers.
+
+        allgather_local() is not a replacement for the allgather functionality of your distributed
+        training framework.
         """
         if self.local_size < 2:
             return [stuff]
@@ -286,9 +354,12 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} finished zmq local allgather.")
         return all_stuff
 
-    def _zmq_broadcast(self, stuff: Any) -> Any:
+    def broadcast(self, stuff: Any) -> Any:
         """
         Every worker gets the value sent by the chief.
+
+        broadcast() is not a replacement for the broadcast functionality of your distributed
+        training framework.
         """
         if self.size < 2:
             return stuff
@@ -298,9 +369,12 @@ class DistributedContext:
             stuff = self._worker_zmq.recv()
         return stuff
 
-    def _zmq_broadcast_local(self, stuff: Any = None) -> Any:
+    def broadcast_local(self, stuff: Any = None) -> Any:
         """
         Every worker gets the value sent by the local chief.
+
+        broadcast_local() is not a replacement for the broadcast functionality of your distributed
+        training framework.
         """
         if self.local_size < 2:
             return stuff
@@ -310,42 +384,8 @@ class DistributedContext:
             stuff = self._local_worker_zmq.recv()
         return stuff
 
-    def _local_chief_contextmanager(self, fn: Callable) -> Callable:
-        """
-        Wrap a contextmanager such that the real context manager only runs on the chief, but the
-        results are distributed to all the local workers.
-        """
-        if self._is_local_chief:
 
-            @functools.wraps(fn)
-            @contextlib.contextmanager
-            def _fn(*args: Any, **kwargs: Any) -> Any:
-                with fn(*args, **kwargs) as out:
-                    # broadcast to local workers
-                    _ = self._zmq_broadcast_local(out)
-                    try:
-                        yield out
-                    finally:
-                        # wait for local workers
-                        _ = self._zmq_gather_local(None)
-
-        else:
-
-            @functools.wraps(fn)
-            @contextlib.contextmanager
-            def _fn(*__: Any, **___: Any) -> Any:
-                # wait for local chief
-                out = self._zmq_broadcast_local(None)
-                try:
-                    yield out
-                finally:
-                    # wait for local workers
-                    _ = self._zmq_gather_local(None)
-
-        return _fn
-
-
-class DummyDistributed(DistributedContext):
+class DummyDistributedContext(DistributedContext):
     def __init__(self) -> None:
         super().__init__(
             rank=0,
@@ -355,3 +395,10 @@ class DummyDistributed(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
+
+
+def _get_training_port_offset() -> int:
+    info = det.get_cluster_info()
+    if info and info.task_type == "TRIAL":
+        return info.trial._unique_port_offset
+    return 0

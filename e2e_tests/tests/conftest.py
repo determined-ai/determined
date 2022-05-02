@@ -12,6 +12,7 @@ from botocore import exceptions as boto_exc
 
 from tests import config
 from tests.experiment import profile_test
+from tests.nightly.compute_stats import compare_stats
 
 from .cluster_log_manager import ClusterLogManager
 
@@ -78,6 +79,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Docker compose project name",
     )
     parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
+    parser.addoption("--no-compare-stats", action="store_true", help="Disable usage stats check")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def instantiate_gpu() -> None:
+    command = ["det", "cmd", "--config", "resources.slots=1", "'sleep 30'"]
+
+    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -90,6 +99,7 @@ def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogMana
     det_version = request.config.getoption("--det-version")
     follow_local_logs = request.config.getoption("--follow-local-logs")
     compose_file = request.config.getoption("--compose-file")
+    compare_stats_enabled = not request.config.getoption("--no-compare-stats")
 
     config.MASTER_SCHEME = master_scheme
     config.MASTER_IP = master_host
@@ -108,6 +118,9 @@ def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogMana
     else:
         # Yield `None` so that pytest handles the no log manager case correctly.
         yield None
+
+    if compare_stats_enabled:
+        compare_stats()
 
 
 def pytest_itemcollected(item: Any) -> None:

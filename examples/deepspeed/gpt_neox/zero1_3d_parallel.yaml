@@ -22,6 +22,10 @@ hyperparameters:
   user_script: null
   eval_tasks: null
 environment:
+    environment_variables:
+        - NCCL_DEBUG=INFO
+        # You may need to modify this to match your network configuration.
+        - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
       gpu: liamdetermined/gpt-neox
@@ -36,8 +40,9 @@ searcher:
 min_validation_period:
     batches: 5000
 max_restarts: 0
-entrypoint: 
+entrypoint:
   - python3
   - -m
-  - determined.launch.autodeepspeed
+  - determined.launch.deepspeed
+  - --trial
   - gpt2_trial:GPT2Trial

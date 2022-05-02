@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -51,34 +52,26 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	defer f.updateJobs(rp)
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (f *fairShare) createJobQInfo(
 	taskList *taskList,
-) (job.AQueue, map[model.JobID]*actor.Ref) {
+) job.AQueue {
 	reqs := make(AllocReqs, 0)
 	for _, req := range taskList.taskByID {
 		reqs = append(reqs, req)
 	}
-	jobQ, jobActors := reduceToJobQInfo(reqs)
+	jobQ := reduceToJobQInfo(reqs)
 	for _, j := range jobQ {
 		j.JobsAhead = -1 // unsupported.
 	}
-	return jobQ, jobActors
-}
-
-func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
-	jobQ, _ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
 
-func (f *fairShare) updateJobs(rp *ResourcePool) {
-	jobQ, jobActors := f.createJobQInfo(rp.taskList)
-	for jobID, jobActor := range jobActors {
-		jobActor.System().Tell(jobActor, jobQ[jobID])
-	}
+func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	jobQ := f.createJobQInfo(rp.taskList)
+	return jobQ
 }
 
 func fairshareSchedule(
@@ -176,7 +169,7 @@ func calculateGroupStates(
 				}
 			}
 			if state.maxSlots != nil {
-				state.slotDemand = min(state.slotDemand, *state.maxSlots)
+				state.slotDemand = mathx.Min(state.slotDemand, *state.maxSlots)
 			}
 		}
 	}
@@ -265,10 +258,10 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 			if state.disabled || state.offered == state.slotDemand {
 				continue
 			}
-			calculatedFairShare := max(1, int(float64(startCapacity)*state.weight/totalWeight))
+			calculatedFairShare := mathx.Max(1, int(float64(startCapacity)*state.weight/totalWeight))
 
 			progressMade = true
-			offer := min(calculatedFairShare, capacity, state.slotDemand-state.offered)
+			offer := mathx.Min(calculatedFairShare, capacity, state.slotDemand-state.offered)
 			preoffers[state], offer = accountForPreoffers(preoffers[state], offer)
 			state.offered += offer
 			capacity -= offer

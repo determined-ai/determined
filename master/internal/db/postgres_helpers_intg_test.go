@@ -46,16 +46,16 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.StringPtr("/home/ckpts"),
+				RawHostPath: ptrs.Ptr("/home/ckpts"),
 			},
 		},
 		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.StringPtr("model.Classifier"),
+			RawEntrypoint: ptrs.Ptr("model.Classifier"),
 		},
 		RawHyperparameters: map[string]expconf.HyperparameterV0{
 			"global_batch_size": {
 				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.IntPtr(1),
+					RawVal: ptrs.Ptr(1),
 				},
 			},
 		},
@@ -66,7 +66,7 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 					Units: 1,
 				},
 			},
-			RawMetric: ptrs.StringPtr(defaultSearcherMetric),
+			RawMetric: ptrs.Ptr(defaultSearcherMetric),
 		},
 	}).(expconf.ExperimentConfigV0)
 
@@ -85,9 +85,10 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 }
 
 func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+	task := RequireMockTask(t, db, exp.OwnerID)
 	rqID := model.NewRequestID(rand.Reader)
 	tr := model.Trial{
-		TaskID:       model.NewTaskID(),
+		TaskID:       task.TaskID,
 		RequestID:    &rqID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,

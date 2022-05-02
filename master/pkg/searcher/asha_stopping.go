@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -32,7 +33,7 @@ func newAsyncHalvingStoppingSearch(
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor(), float64(config.NumRungs()-id-1))
-		unitsNeeded += u64max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
+		unitsNeeded += mathx.Max(uint64(float64(config.MaxLength().Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
 				UnitsNeeded:       unitsNeeded,
@@ -65,12 +66,12 @@ func (s *asyncHalvingStoppingSearch) Restore(state json.RawMessage) error {
 // training the current trial.
 func (r *rung) continueTraining(requestID model.RequestID, metric float64, divisor float64) bool {
 	// Compute cutoff for promotion to next rung to continue training.
-	numPromote := max(int(float64(len(r.Metrics)+1)/divisor), 1)
+	numPromote := mathx.Max(int(float64(len(r.Metrics)+1)/divisor), 1)
 
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.Metrics),
-		func(i int) bool { return r.Metrics[i].Metric >= metric },
+		func(i int) bool { return float64(r.Metrics[i].Metric) >= metric },
 	)
 	// We will continue training if trial ranked in top 1/divisor for the rung or
 	// if there are fewere than divisor trials in the rung.
@@ -80,7 +81,7 @@ func (r *rung) continueTraining(requestID model.RequestID, metric float64, divis
 	copy(r.Metrics[insertIndex+1:], r.Metrics[insertIndex:])
 	r.Metrics[insertIndex] = trialMetric{
 		RequestID: requestID,
-		Metric:    metric,
+		Metric:    model.ExtendedFloat64(metric),
 		Promoted:  promoteNow,
 	}
 
@@ -99,11 +100,13 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 	var maxConcurrentTrials int
 
 	if s.MaxConcurrentTrials() > 0 {
-		maxConcurrentTrials = min(s.MaxConcurrentTrials(), s.MaxTrials())
+		maxConcurrentTrials = mathx.Min(s.MaxConcurrentTrials(), s.MaxTrials())
 	} else {
-		maxConcurrentTrials = max(
-			min(int(math.Pow(s.Divisor(), float64(s.NumRungs()-1))), s.MaxTrials()),
-			1)
+		maxConcurrentTrials = mathx.Clamp(
+			1,
+			int(math.Pow(s.Divisor(), float64(s.NumRungs()-1))),
+			s.MaxTrials(),
+		)
 	}
 
 	for trial := 0; trial < maxConcurrentTrials; trial++ {
@@ -155,7 +158,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 		rung.Metrics = append(rung.Metrics,
 			trialMetric{
 				RequestID: requestID,
-				Metric:    metric,
+				Metric:    model.ExtendedFloat64(metric),
 			},
 		)
 
@@ -180,7 +183,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 			if promoteTrial {
 				s.TrialRungs[requestID] = rungIndex + 1
 				nextRung.OutstandingTrials++
-				unitsNeeded := u64max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
+				unitsNeeded := mathx.Max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
 				ops = append(ops, NewValidateAfter(requestID, unitsNeeded))
 				addedTrainWorkload = true
 			} else {

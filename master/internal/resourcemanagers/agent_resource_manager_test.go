@@ -33,11 +33,11 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		},
 	}
 	_, cpuPoolRef := setupResourcePool(
-		t, system, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+		t, nil, system, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
 		nil, nil, []*mockAgent{{id: "agent1", slots: 0}},
 	)
 	_, gpuPoolRef := setupResourcePool(
-		t, system, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
+		t, nil, system, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
 		nil, nil, []*mockAgent{{id: "agent2", slots: 4}},
 	)
 	agentRM := &agentResourceManager{

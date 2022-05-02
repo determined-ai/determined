@@ -97,7 +97,13 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 		if _, err := db.sql.Exec(
 			db.queries.getOrLoad("update_aggregated_allocation"), periodStart,
 		); err != nil {
-			return errors.Wrap(err, "failed to add aggregate")
+			return errors.Wrap(err, "failed to add aggregate allocation")
+		}
+
+		if _, err := db.sql.Exec(
+			db.queries.getOrLoad("update_aggregated_queued_time"), periodStart,
+		); err != nil {
+			return errors.Wrap(err, "failed to add aggregate queued time")
 		}
 
 		log.Infof(
@@ -105,6 +111,5 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 			periodStart, time.Since(t0),
 		)
 	}
-
 	return nil
 }

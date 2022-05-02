@@ -58,6 +58,8 @@ import (
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 const (
@@ -783,6 +785,11 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(auditLogMiddleware())
 	}
 
+	if m.config.Telemetry.OtelEnabled {
+		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint)
+		m.echo.Use(otelecho.Middleware("determined-master"))
+	}
+
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
@@ -792,7 +799,7 @@ func (m *Master) Run(ctx context.Context) error {
 		MasterInfo:     m.Info(),
 		LoggingOptions: m.config.Logging,
 	}
-	m.rm = resourcemanagers.Setup(m.system, m.echo, m.config.ResourceConfig, agentOpts, cert)
+	m.rm = resourcemanagers.Setup(m.system, m.db, m.echo, m.config.ResourceConfig, agentOpts, cert)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
@@ -815,10 +822,27 @@ func (m *Master) Run(ctx context.Context) error {
 	for _, exp := range toRestore {
 		go m.tryRestoreExperiment(sema, exp)
 	}
+
+	// End stats for dangling agents/instances in case of master crushed
+	err = m.db.EndAllAgentStats()
+	if err != nil {
+		return errors.Wrap(err, "could not update end stats for agents")
+	}
+	err = m.db.EndAllInstanceStats()
+	if err != nil {
+		return errors.Wrap(err, "could not update end stats for instances")
+	}
+
 	if err = m.db.FailDeletingExperiment(); err != nil {
 		return err
 	}
 	if err = m.db.CloseOpenAllocations(); err != nil {
+		return err
+	}
+	if err = m.db.EndAllTaskStats(); err != nil {
+		return err
+	}
+	if err = task.WipeResourcesState(); err != nil {
 		return err
 	}
 
@@ -900,6 +924,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
+	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
+	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 

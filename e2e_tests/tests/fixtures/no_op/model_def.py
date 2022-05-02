@@ -89,7 +89,7 @@ class NoOpTrialController(det.TrialController):
         self.latest_batch = self.env.latest_batch
 
         if self.env.latest_checkpoint is not None:
-            with self.context._core.checkpointing.restore_path(
+            with self.context._core.checkpoint.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self.load(pathlib.Path(load_path))
@@ -113,11 +113,11 @@ class NoOpTrialController(det.TrialController):
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 metadata = {"latest_batch": self.latest_batch}
                 if self.is_chief:
-                    with self.context._core.checkpointing.store_path(metadata) as (
-                        storage_id,
+                    with self.context._core.checkpoint.store_path(metadata) as (
                         path,
+                        storage_id,
                     ):
-                        self.save(pathlib.Path(path))
+                        self.save(path)
                     response = {"uuid": storage_id}
                 else:
                     response = {}
@@ -189,8 +189,6 @@ class NoOpTrialController(det.TrialController):
             raise Exception(self.fail_on_chechpoint_save)
         self.chaos_failure(self.chaos_probability_checkpoint)
         time.sleep(self.save_secs)
-        if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
         fpath = path.joinpath(self.CHECKPOINT_FILENAME)
         logging.info("Saving checkpoint {}, steps_trained {}".format(fpath, self.steps_trained()))
         with fpath.open("w") as f:

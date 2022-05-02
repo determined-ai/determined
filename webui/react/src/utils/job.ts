@@ -7,9 +7,7 @@ import { capitalize } from './string';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
-export const unsupportedQPosSchedulers = new Set([
-  Api.V1SchedulerType.FAIRSHARE, Api.V1SchedulerType.KUBERNETES,
-]);
+export const unsupportedQPosSchedulers = new Set([ Api.V1SchedulerType.FAIRSHARE ]);
 
 export const jobTypeIconName = (jobType: JobType): string => {
   const type = jobTypeToCommandType(jobType);

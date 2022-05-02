@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -294,9 +295,9 @@ const ModelRegistry: React.FC = () => {
               </Menu.Item>
               <Menu.Item
                 danger
-                disabled={!isDeletable}
                 key="delete-model"
-                onClick={() => showConfirmDelete(record)}>
+                onClick={() => isDeletable ?
+                  showConfirmDelete(record) : showModalItemCannotDelete()}>
                 Delete Model
               </Menu.Item>
             </Menu>
@@ -378,9 +379,8 @@ const ModelRegistry: React.FC = () => {
         width: 120,
       },
       {
-        dataIndex: 'username',
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
         onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         title: 'User',
@@ -436,12 +436,19 @@ const ModelRegistry: React.FC = () => {
     showModal({});
   }, [ showModal ]);
 
+  // archive === false is a filter
+  const filtered = (settings.archived != null
+  || settings.description
+  || settings.tags
+  || settings.name
+  || settings.users);
+
   return (
     <Page docTitle="Model Registry" id="models" loading={isLoading}>
       <Section
         options={<Button onClick={showCreateModelModal}>New Model</Button>}
         title="Model Registry">
-        {(models.length === 0 && !isLoading) ?
+        {(models.length === 0 && !isLoading && !filtered) ?
           (
             <div className={css.emptyBase}>
               <div className={css.icon}>

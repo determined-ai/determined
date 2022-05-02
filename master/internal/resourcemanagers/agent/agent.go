@@ -7,10 +7,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -34,6 +34,7 @@ type (
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
 		started bool
+		version string
 
 		maxZeroSlotContainers int
 		agentReconnectWait    time.Duration
@@ -58,11 +59,6 @@ type (
 		// pop back to our previous state.
 		preDisconnectEnabled  bool
 		preDisconnectDraining bool
-
-		// uuid is an anonymous ID that is used when reporting telemetry
-		// information to allow agent connection and disconnection events
-		// to be correlated.
-		uuid uuid.UUID
 
 		// opts are additional agent options the master sends to the agent.
 		opts *aproto.MasterSetAgentOptions
@@ -109,7 +105,6 @@ func (a *agent) Receive(ctx *actor.Context) error {
 func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	switch msg := msg.(type) {
 	case actor.PreStart:
-		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
@@ -118,6 +113,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
 		check.Panic(check.True(ok, "failed to accept websocket connection"))
 		a.socket = socket
+		a.version = msg.Ctx.QueryParam("version")
 
 		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
 		if lastColonIndex == -1 {
@@ -161,12 +157,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 				Drain:   &a.agentState.draining,
 			})
 
-			for msg := range a.reconnectBacklog {
+			for _, msg := range a.reconnectBacklog {
 				if err := a.receive(ctx, msg); err != nil {
 					return errors.Wrapf(err, "replaying backlog")
 				}
 			}
 			a.reconnectBacklog = nil
+
+			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
@@ -211,6 +209,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
 			log.WithError(err).Error("failed to write start container message")
+			ctx.Respond(sproto.NewResourcesFailure(sproto.AgentError, err.Error(), nil))
 		}
 
 		if err := a.agentState.startContainer(ctx, msg); err != nil {
@@ -244,6 +243,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Drain:   &a.agentState.draining,
 		})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case *proto.DisableAgentRequest:
 		if a.awaitingReconnect {
 			ctx.Respond(errRecovering)
@@ -269,6 +269,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
@@ -280,6 +281,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+
 		a.socket = nil
 		a.awaitingReconnect = true
 
@@ -296,6 +298,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			Enabled: &a.agentState.enabled,
 			Drain:   &a.agentState.draining,
 		})
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
@@ -417,9 +420,26 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,
 		})
+	case msg.ContainerStatsRecord != nil:
+		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
+			var err error
+			if msg.ContainerStatsRecord.EndStats {
+				err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
+			} else {
+				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
+			}
+			if err != nil {
+				ctx.Log().Errorf("Error record task stats %s", err)
+			}
+		}
+
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}
+}
+
+func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
+	return record.TaskType == model.TaskTypeTrial
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
@@ -427,7 +447,10 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.agentStarted(ctx, agentStarted)
-	ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label})
+	ctx.Tell(a.resourcePool, sproto.AddAgent{
+		Agent: ctx.Self(),
+		Label: agentStarted.Label,
+		Slots: a.agentState.NumSlots()})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)
@@ -465,6 +488,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		Enabled:       true,
 		Draining:      false,
 		NumContainers: 0,
+		Version:       a.version,
 	}
 
 	if a.agentState != nil {

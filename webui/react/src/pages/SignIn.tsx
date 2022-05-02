@@ -3,8 +3,6 @@ import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import LogoGoogle from 'assets/images/logo-sso-google-white.svg';
-import LogoOkta from 'assets/images/logo-sso-okta-white.svg';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoType } from 'components/Logo';
@@ -16,6 +14,8 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
 import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
+import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
+import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
 import { RecordKey } from 'types';
 import { getPath } from 'utils/data';
 import { capitalize } from 'utils/string';

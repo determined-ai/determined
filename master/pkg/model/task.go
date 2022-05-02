@@ -63,7 +63,7 @@ const (
 // Task is the model for a task in the database.
 type Task struct {
 	TaskID    TaskID     `db:"task_id"`
-	JobID     JobID      `db:"job_id"`
+	JobID     *JobID     `db:"job_id"`
 	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
@@ -75,11 +75,6 @@ type Task struct {
 // TaskID.allocation_number, maybe with some other metadata if different types of
 // allocations run.
 type AllocationID string
-
-// NewAllocationID returns a new unique task id.
-func NewAllocationID(name string) AllocationID {
-	return AllocationID(name)
-}
 
 func (a AllocationID) String() string {
 	return string(a)
@@ -100,6 +95,14 @@ type Allocation struct {
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState int
+
+// TaskStats is the model for task stats in the database.
+type TaskStats struct {
+	AllocationID AllocationID
+	EventType    string
+	StartTime    *time.Time
+	EndTime      *time.Time
+}
 
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
@@ -191,8 +194,8 @@ const (
 	LogLevelDebug = "DEBUG"
 	// LogLevelInfo is the info task log level.
 	LogLevelInfo = "INFO"
-	// LogLevelWarn is the warn task log level.
-	LogLevelWarn = "WARN"
+	// LogLevelWarning is the warn task log level.
+	LogLevelWarning = "WARNING"
 	// LogLevelError is the error task log level.
 	LogLevelError = "ERROR"
 	// LogLevelCritical is the critical task log level.
@@ -213,7 +216,7 @@ func TaskLogLevelFromProto(l logv1.LogLevel) string {
 	case logv1.LogLevel_LOG_LEVEL_INFO:
 		return LogLevelInfo
 	case logv1.LogLevel_LOG_LEVEL_WARNING:
-		return LogLevelWarn
+		return LogLevelWarning
 	case logv1.LogLevel_LOG_LEVEL_ERROR:
 		return LogLevelError
 	case logv1.LogLevel_LOG_LEVEL_CRITICAL:
@@ -232,7 +235,7 @@ func TaskLogLevelToProto(l string) logv1.LogLevel {
 		return logv1.LogLevel_LOG_LEVEL_DEBUG
 	case LogLevelInfo:
 		return logv1.LogLevel_LOG_LEVEL_INFO
-	case LogLevelWarn:
+	case LogLevelWarning:
 		return logv1.LogLevel_LOG_LEVEL_WARNING
 	case LogLevelError:
 		return logv1.LogLevel_LOG_LEVEL_ERROR

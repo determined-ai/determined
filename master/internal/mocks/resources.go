@@ -24,8 +24,17 @@ func (_m *Resources) Kill(_a0 *actor.Context, _a1 logger.Context) {
 }
 
 // Start provides a mock function with given fields: _a0, _a1, _a2, _a3
-func (_m *Resources) Start(_a0 *actor.Context, _a1 logger.Context, _a2 tasks.TaskSpec, _a3 sproto.ResourcesRuntimeInfo) {
-	_m.Called(_a0, _a1, _a2, _a3)
+func (_m *Resources) Start(_a0 *actor.Context, _a1 logger.Context, _a2 tasks.TaskSpec, _a3 sproto.ResourcesRuntimeInfo) error {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*actor.Context, logger.Context, tasks.TaskSpec, sproto.ResourcesRuntimeInfo) error); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Summary provides a mock function with given fields:

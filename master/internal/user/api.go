@@ -16,4 +16,5 @@ func RegisterAPIHandler(echo *echo.Echo, m *Service, middleware ...echo.Middlewa
 	usersGroup.GET("/me", api.Route(m.getMe))
 	usersGroup.PATCH("/:username", api.Route(m.patchUser))
 	usersGroup.PATCH("/:username/username", api.Route(m.patchUsername))
+	usersGroup.GET("/:username/image", api.Route(m.getUserImage))
 }

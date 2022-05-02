@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 
 import { AvailableSeries } from './types';
 
@@ -16,7 +16,7 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
 
     const canceler = new AbortController();
 
-    consumeStream(
+    readStream(
       detApi.StreamingProfiler.getTrialProfilerAvailableSeries(
         trialId,
         true,

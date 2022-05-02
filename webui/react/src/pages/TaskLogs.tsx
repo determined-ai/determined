@@ -10,8 +10,8 @@ import { commandTypeToLabel } from 'constants/states';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
-import { jsonToTaskLog } from 'services/decoder';
-import { consumeStream } from 'services/utils';
+import { mapV1LogsResponse } from 'services/decoder';
+import { readStream } from 'services/utils';
 import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
@@ -102,7 +102,7 @@ const TaskLogs: React.FC = () => {
   useEffect(() => {
     const canceler = new AbortController();
 
-    consumeStream(
+    readStream(
       detApi.StreamingJobs.taskLogsFields(
         taskId,
         true,
@@ -135,7 +135,7 @@ const TaskLogs: React.FC = () => {
       id="task-logs"
       title={title}>
       <LogViewer
-        decoder={jsonToTaskLog}
+        decoder={mapV1LogsResponse}
         title={logFilters}
         onFetch={handleFetch}
       />

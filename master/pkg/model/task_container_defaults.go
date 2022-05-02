@@ -151,7 +151,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	env := expconf.EnvironmentConfig{
 		RawAddCapabilities:  c.AddCapabilities,
 		RawDropCapabilities: c.DropCapabilities,
-		RawForcePullImage:   ptrs.BoolPtr(c.ForcePullImage),
+		RawForcePullImage:   ptrs.Ptr(c.ForcePullImage),
 		RawImage:            image,
 		RawPodSpec:          (*expconf.PodSpec)(podSpec),
 		RawRegistryAuth:     c.RegistryAuth,

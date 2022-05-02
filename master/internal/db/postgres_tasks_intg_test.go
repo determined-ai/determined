@@ -53,7 +53,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	tID := model.NewTaskID()
 	tIn := &model.Task{
 		TaskID:    tID,
-		JobID:     jID,
+		JobID:     &jID,
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
@@ -66,7 +66,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// Complete it.
-	tIn.EndTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
+	tIn.EndTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
 	err = db.CompleteTask(tID, *tIn.EndTime)
 	require.NoError(t, err, "failed to mark task completed")
 
@@ -76,14 +76,14 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(tIn, tOut), pprintedExpect(tIn, tOut))
 
 	// And an allocation.
-	aID := model.NewAllocationID(string(tID) + "-1")
+	aID := model.AllocationID(string(tID) + "-1")
 	aIn := &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        8,
 		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
-		StartTime:    ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond)),
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
 	err = db.AddAllocation(aIn)
 	require.NoError(t, err, "failed to add allocation")
@@ -94,7 +94,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
 
 	// Complete it.
-	aIn.EndTime = ptrs.TimePtr(time.Now().UTC().Truncate(time.Millisecond))
+	aIn.EndTime = ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond))
 	err = db.CompleteAllocation(aIn)
 	require.NoError(t, err, "failed to mark allocation completed")
 

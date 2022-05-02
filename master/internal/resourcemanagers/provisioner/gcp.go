@@ -16,13 +16,15 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 )
 
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
 // 1. A specific key/value pair label.
 // 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
-	*GCPClusterConfig
+	*provconfig.GCPClusterConfig
 	resourcePool string
 	masterURL    url.URL
 	metadata     []*compute.MetadataItems
@@ -31,9 +33,9 @@ type gcpCluster struct {
 }
 
 func newGCPCluster(
-	resourcePool string, config *Config, cert *tls.Certificate,
+	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*gcpCluster, error) {
-	if err := config.GCP.initDefaultValues(); err != nil {
+	if err := config.GCP.InitDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
 	// This following GCP service is created using GCP Credentials without explicitly configuration
@@ -87,7 +89,7 @@ func newGCPCluster(
 		AgentID: `$(curl "http://metadata.google.internal/computeMetadata/v1/instance/` +
 			`name" -H "Metadata-Flavor: Google")`,
 		ResourcePool: resourcePool,
-		LogOptions:   config.GCP.buildDockerLogString(),
+		LogOptions:   config.GCP.BuildDockerLogString(),
 	}))
 
 	cluster := &gcpCluster{
@@ -194,7 +196,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 	for i := 0; i < instanceNum; i++ {
 		clientCtx := context.Background()
 
-		rb := c.merge()
+		rb := c.Merge()
 		rb.Name = c.generateInstanceName()
 		if rb.Labels == nil {
 			rb.Labels = make(map[string]string)
@@ -207,7 +209,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 		}
 		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
 
-		rb.MinCpuPlatform = getCPUPlatform(rb.MachineType)
+		rb.MinCpuPlatform = provconfig.GetCPUPlatform(rb.MachineType)
 
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {

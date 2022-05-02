@@ -13,6 +13,8 @@ import {
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
+import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
+
 import css from './ClustersOverview.module.scss';
 
 const ClusterOverview: React.FC = () => {
@@ -37,6 +39,7 @@ const ClusterOverview: React.FC = () => {
 
   return (
     <div className={css.base}>
+      <ClusterOverallBar />
       <Section
         title={'Resource Pools'}>
         <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>

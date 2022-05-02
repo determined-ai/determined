@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -46,13 +47,12 @@ EXISTS(
 
 // AddTask persists the existence of a task.
 func (db *PgDB) AddTask(t *model.Task) error {
-	return addTask(db.sql, t)
-}
-
-func addTask(q queryHandler, t *model.Task) error {
-	if _, err := q.NamedExec(`
+	if _, err := db.sql.NamedExec(`
 INSERT INTO tasks (task_id, task_type, start_time, job_id, log_version)
 VALUES (:task_id, :task_type, :start_time, :job_id, :log_version)
+ON CONFLICT (task_id) DO UPDATE SET
+task_type=EXCLUDED.task_type, start_time=EXCLUDED.start_time,
+job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
 `, t); err != nil {
 		return errors.Wrap(err, "adding task")
 	}
@@ -91,8 +91,10 @@ WHERE task_id = $1
 // AddAllocation persists the existence of an allocation.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
-INSERT INTO allocations (task_id, allocation_id, slots, resource_pool, agent_label, start_time)
-VALUES (:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time)
+INSERT INTO allocations
+(task_id, allocation_id, slots, resource_pool, agent_label, start_time, state)
+VALUES
+(:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time, :state)
 `, a)
 }
 
@@ -104,7 +106,7 @@ func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 
 	_, err := db.sql.Exec(`
 UPDATE allocations
-SET start_time = $2, end_time = $3 
+SET start_time = $2, end_time = $3
 WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
 
 	return err
@@ -344,6 +346,38 @@ WHERE task_id = $1
 		return 0, err
 	}
 	return count, nil
+}
+
+// RecordTaskStats record stats for tasks.
+func (db *PgDB) RecordTaskStats(stats *model.TaskStats) error {
+	return RecordTaskStatsBun(stats)
+}
+
+// RecordTaskStatsBun record stats for tasks with bun.
+func RecordTaskStatsBun(stats *model.TaskStats) error {
+	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
+	return err
+}
+
+// RecordTaskEndStats record end stats for tasks.
+func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
+	return RecordTaskEndStatsBun(stats)
+}
+
+// RecordTaskEndStatsBun record end stats for tasks with bun.
+func RecordTaskEndStatsBun(stats *model.TaskStats) error {
+	_, err := Bun().NewUpdate().Model(stats).Column("end_time").Where(
+		"allocation_id = ? AND event_type = ? AND end_time IS NULL", stats.AllocationID, stats.EventType,
+	).Exec(context.TODO())
+	return err
+}
+
+// EndAllTaskStats called at master starts, in case master previously crushed.
+func (db *PgDB) EndAllTaskStats() error {
+	_, err := db.sql.Exec(`
+UPDATE task_stats SET end_time = greatest(cluster_heartbeat, start_time) FROM cluster_id
+WHERE end_time IS NULL`)
+	return err
 }
 
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.

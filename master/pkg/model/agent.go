@@ -20,6 +20,7 @@ type AgentSummary struct {
 	Addresses      []string     `json:"addresses"`
 	Enabled        bool         `json:"enabled"`
 	Draining       bool         `json:"draining"`
+	Version        string       `json:"version"`
 }
 
 // ToProto converts an agent summary to a proto struct.
@@ -38,6 +39,7 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		Addresses:      a.Addresses,
 		Enabled:        a.Enabled,
 		Draining:       a.Draining,
+		Version:        a.Version,
 	}
 }
 
@@ -65,4 +67,11 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 		Container: s.Container.Proto(),
 		Draining:  s.Draining,
 	}
+}
+
+// AgentStats stores the start/end status of instance.
+type AgentStats struct {
+	ResourcePool string `db:"resource_pool"`
+	AgentID      string `db:"agent_id"`
+	Slots        int    `db:"slots"`
 }

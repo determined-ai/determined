@@ -90,10 +90,10 @@ message TaskLogsFieldsRequest {
   bool follow = 2;
 }
 
-// Response to TaskLogFieldsRequest.
+// Response to TaskLogsFieldsRequest.
 message TaskLogsFieldsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "message" ] }
+    json_schema: { required: [] }
   };
   // The distint allocation IDs present in the logs.
   repeated string allocation_ids = 1;

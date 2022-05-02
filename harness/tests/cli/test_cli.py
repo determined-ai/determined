@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uuid
 from pathlib import Path
 
 import pytest
@@ -61,6 +62,45 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
         cli.main(
             ["experiment", "create", "--paused", str(tree.joinpath("config.yaml")), str(tmp_path)]
         )
+
+
+def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
+    # Create two UUIDs that are different at a known index.
+    fake_uuid1 = str(uuid.uuid4())
+    replace_ind = 4
+    fake_uuid2 = (
+        fake_uuid1[:replace_ind]
+        + ("1" if fake_uuid1[replace_ind] == "0" else "0")
+        + fake_uuid1[replace_ind + 1 :]
+    )
+
+    requests_mock.get("/info", status_code=200, json={"version": "1.0"})
+    requests_mock.get(
+        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+    )
+
+    requests_mock.get(
+        "/api/v1/shells",
+        status_code=requests.codes.ok,
+        json={"shells": [{"id": fake_uuid1}, {"id": fake_uuid2}]},
+    )
+
+    requests_mock.get(
+        f"/api/v1/shells/{fake_uuid1}",
+        status_code=requests.codes.ok,
+        json={"config": None},
+    )
+
+    # Succeed with a full UUID.
+    cli.main(["shell", "config", fake_uuid1])
+    # Succeed with a partial unique prefix.
+    cli.main(["shell", "config", fake_uuid1[: replace_ind + 1]])
+    # Fail with an existing but nonunique prefix.
+    with pytest.raises(SystemExit):
+        cli.main(["shell", "config", fake_uuid1[:replace_ind]])
+    # Fail with a nonexistent prefix.
+    with pytest.raises(SystemExit):
+        cli.main(["shell", "config", "x"])
 
 
 @pytest.mark.slow

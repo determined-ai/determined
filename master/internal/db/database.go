@@ -64,6 +64,7 @@ type DB interface {
 		experimentBest, trialBest, trialLatest int,
 		delete bool,
 	) ([]byte, error)
+	AddTask(t *model.Task) error
 	AddTrial(trial *model.Trial) error
 	TrialByID(id int) (*model.Trial, error)
 	TrialByExperimentAndRequestID(
@@ -164,6 +165,15 @@ type DB interface {
 	DeleteTrialLogs(ids []int) error
 	TrialLogsCount(trialID int, fs []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
+	RecordAgentStats(a *model.AgentStats) error
+	EndAgentStats(a *model.AgentStats) error
+	EndAllAgentStats() error
+	RecordInstanceStats(a *model.InstanceStats) error
+	EndInstanceStats(a *model.InstanceStats) error
+	EndAllInstanceStats() error
+	EndAllTaskStats() error
+	RecordTaskEndStats(stats *model.TaskStats) error
+	RecordTaskStats(stats *model.TaskStats) error
 }
 
 // ErrNotFound is returned if nothing is found.

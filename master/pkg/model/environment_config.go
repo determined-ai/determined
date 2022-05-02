@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	k8sV1 "k8s.io/api/core/v1"
 
@@ -31,6 +32,7 @@ type Environment struct {
 	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage bool              `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
+	Slurm          []string          `json:"slurm"`
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`
@@ -146,7 +148,12 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 
 // Validate implements the check.Validatable interface.
 func (e Environment) Validate() []error {
-	return validatePodSpec(e.PodSpec)
+	err := validatePodSpec(e.PodSpec)
+	// Slurm and PodSpec are different targets, so no need to merge results
+	if err != nil {
+		return err
+	}
+	return ValidateSlurm(e.Slurm)
 }
 
 func validatePodSpec(podSpec *k8sV1.Pod) []error {
@@ -198,4 +205,34 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 		return podSpecErrors
 	}
 	return nil
+}
+
+// ValidateSlurm checks that the specified slurm options are allowed.
+// If any are not messages are returned in an array of errors.
+func ValidateSlurm(slurm []string) []error {
+	slurmErrors := []error{}
+	var forbiddenArgs = []string{
+		"--ntasks-per-node",
+		"--gpus", "-G",
+		"--gres",
+		"--nodes", "-N",
+		"--ntasks", "-n",
+		"--chdir", "-D",
+		"--error", "-e",
+		"--output", "-o",
+		"--partition", "-p",
+	}
+
+	for _, arg := range slurm {
+		for _, forbidden := range forbiddenArgs {
+			// If an arg starts with a forbidden option, add an error.
+			err := check.TrueSilent(!strings.HasPrefix(strings.TrimSpace(arg), forbidden),
+				"slurm option "+forbidden+" is not configurable")
+			if err != nil {
+				slurmErrors = append(slurmErrors, err)
+			}
+		}
+	}
+
+	return slurmErrors
 }

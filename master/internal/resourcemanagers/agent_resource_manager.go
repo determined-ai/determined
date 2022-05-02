@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -29,16 +30,18 @@ type agentResourceManager struct {
 	config      *config.AgentResourceManagerConfig
 	poolsConfig []config.ResourcePoolConfig
 	cert        *tls.Certificate
+	db          *db.PgDB
 
 	pools map[string]*actor.Ref
 }
 
-func newAgentResourceManager(config *config.ResourceConfig,
+func newAgentResourceManager(db *db.PgDB, config *config.ResourceConfig,
 	cert *tls.Certificate) *agentResourceManager {
 	return &agentResourceManager{
 		config:      config.ResourceManager.AgentRM,
 		poolsConfig: config.ResourcePools,
 		cert:        cert,
+		db:          db,
 		pools:       make(map[string]*actor.Ref),
 	}
 }
@@ -47,7 +50,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		for ix, config := range a.poolsConfig {
-			rpRef := a.createResourcePool(ctx, a.poolsConfig[ix], a.cert)
+			rpRef := a.createResourcePool(ctx, a.db, a.poolsConfig[ix], a.cert)
 			if rpRef != nil {
 				a.pools[config.PoolName] = rpRef
 			}
@@ -75,6 +78,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.SetGroupMaxSlots, job.SetGroupWeight, job.SetGroupPriority,
 		job.MoveJob:
 		a.forwardToAllPools(ctx, msg)
+
+	case job.DeleteJob:
+		// For now, there is nothing to cleanup in determined-agents world.
+		ctx.Respond(job.EmptyDeleteJobResponse())
 
 	case job.RecoverJobPosition:
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
@@ -187,7 +194,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, config config.ResourcePoolConfig, cert *tls.Certificate,
+	ctx *actor.Context, db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
 
@@ -203,6 +210,7 @@ func (a *agentResourceManager) createResourcePool(
 
 	rp := NewResourcePool(
 		&config,
+		db,
 		cert,
 		MakeScheduler(config.Scheduler),
 		MakeFitFunction(config.Scheduler.FittingPolicy),

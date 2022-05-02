@@ -69,7 +69,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 			if !ok {
 				return nil
 			}
-			lastActivity = ptrs.TimePtr(service.LastRequested)
+			lastActivity = ptrs.Ptr(service.LastRequested)
 		}
 
 		if p.UseRunnerState {
@@ -99,7 +99,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, p.TickInterval, IdleTimeoutWatcherTick{})
 
 	case IdleWatcherNoteActivity:
-		p.lastExplicitActivity = ptrs.TimePtr(msg.LastActivity)
+		p.lastExplicitActivity = ptrs.Ptr(msg.LastActivity)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

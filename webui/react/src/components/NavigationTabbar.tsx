@@ -40,7 +40,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
@@ -85,16 +85,14 @@ const NavigationTabbar: React.FC = () => {
       </div>
       <ActionSheet
         actions={[
+          { render: () => <AvatarCard className={css.user} key="avatar" user={auth.user} /> },
           {
-            render: () => {
-              return <AvatarCard className={css.user} user={auth.user} />;
-            },
-          },
-          {
+            icon: 'settings',
             label: 'Settings',
             onClick: () => openUserSettingsModal(),
           },
           {
+            icon: 'user',
             label: 'Sign out',
             onClick: e => handlePathUpdate(e, paths.logout()),
           },
@@ -120,6 +118,13 @@ const NavigationTabbar: React.FC = () => {
             icon: 'cloud',
             label: 'API (Beta)',
             path: paths.docs('/rest-api/'),
+            popout: true,
+          },
+          {
+            external: true,
+            icon: 'pencil',
+            label: 'Share Feedback',
+            path: paths.submitProductFeedback(info.branding),
             popout: true,
           },
         ]}

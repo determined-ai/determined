@@ -12,6 +12,8 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // TelemetryInfo contains the telemetry settings for the master.
@@ -34,6 +36,7 @@ type MasterMessage struct {
 	AgentStarted          *AgentStarted
 	ContainerStateChanged *ContainerStateChanged
 	ContainerLog          *ContainerLog
+	ContainerStatsRecord  *ContainerStatsRecord
 }
 
 // ContainerReattach is a struct describing containers that can be reattached.
@@ -70,6 +73,14 @@ type ContainerStateChanged struct {
 type ContainerStarted struct {
 	ProxyAddress  string
 	ContainerInfo types.ContainerJSON
+}
+
+// ContainerStatsRecord notifies the master that about the container stats of docker.
+// For now this carries stats of docker image pull.
+type ContainerStatsRecord struct {
+	EndStats bool
+	Stats    *model.TaskStats
+	TaskType model.TaskType
 }
 
 // Addresses calculates the address of containers and hosts based on the container

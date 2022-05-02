@@ -66,7 +66,7 @@ def _combine_metrics_across_processes(
     ), "_combine_metrics_across_processes should only be called if context.distributed > 1"
 
     # all_args is a list of [(metrics, num_batches), ...] for each worker.
-    all_args = context._zmq_gather((metrics, num_batches))
+    all_args = context.gather((metrics, num_batches))
 
     if not context.rank == 0:
         return None, None

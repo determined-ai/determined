@@ -8,11 +8,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -22,7 +24,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -45,7 +47,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -68,7 +70,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -90,7 +92,7 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	agents := []*mockAgent{{id: "agent", slots: 1}}
 	tasks := []*mockTask{{id: "task", slotsNeeded: 1}}
-	rp, ref := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, ref := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
@@ -117,7 +119,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		{id: "unallocated-gpu-task4", slotsNeeded: 1},
 		{id: "unallocated-gpu-task5", slotsNeeded: 5},
 	}
-	rp, _ := setupResourcePool(t, system, nil, tasks, nil, agents)
+	rp, _ := setupResourcePool(t, nil, system, nil, tasks, nil, agents)
 	rp.slotsPerInstance = 4
 
 	// Test basic.
@@ -195,7 +197,7 @@ func TestSettingGroupPriority(t *testing.T) {
 		},
 	}
 
-	rp, ref := setupResourcePool(t, system, &config, nil, nil, nil)
+	rp, ref := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	// Test setting a non-default priority for a group.
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
@@ -211,6 +213,20 @@ func TestSettingGroupPriority(t *testing.T) {
 	assert.Equal(t, *rp.groups[groupRefOne].priority, updatedPriority)
 }
 
+func TestAddRemoveAgent(t *testing.T) {
+	system := actor.NewSystem(t.Name())
+	db := &mocks.DB{}
+	_, ref := setupResourcePool(t, db, system, nil, nil, nil, nil)
+	agentRef, created := system.ActorOf(actor.Addr("agent"), &mockAgent{id: "agent", slots: 2})
+	assert.Assert(t, created)
+
+	system.Tell(ref, sproto.AddAgent{Agent: agentRef})
+	db.On("RecordAgentStats", mock.Anything).Return(nil)
+
+	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
+	db.On("EndAgentStats", mock.Anything).Return(nil)
+}
+
 func setupRPSamePriority(t *testing.T) *ResourcePool {
 	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
@@ -223,7 +239,7 @@ func setupRPSamePriority(t *testing.T) *ResourcePool {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, system, &config, nil, nil, nil)
+	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
@@ -270,7 +286,8 @@ func TestMoveMessagesPromote(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job3 above job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job3", "job2", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job3", "job2", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job1"))
@@ -281,7 +298,8 @@ func TestMoveMessagesPromoteHead(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job3 ahead of job1, the first job
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job3", "job1", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job3", "job1", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, job.HeadAnchor)
@@ -292,7 +310,8 @@ func TestMoveMessagesDemote(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job1 behind job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job2", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job2", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job3"))
@@ -303,7 +322,8 @@ func TestMoveMessagesDemoteTail(t *testing.T) {
 	rp := setupRPSamePriority(t)
 
 	// move job1 behind job3, the last job
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job3", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job3", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, !prioChange)
 	assert.Equal(t, secondAnchor, job.TailAnchor)
@@ -322,7 +342,7 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, system, &config, nil, nil, nil)
+	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
@@ -366,7 +386,8 @@ func TestMoveMessagesAcrossPrioLanes(t *testing.T) {
 	})
 
 	// move job2 ahead of job1
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job2", "job1", true)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job2", "job1", true, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, prioChange)
 	assert.Equal(t, secondAnchor, job.HeadAnchor)
@@ -385,7 +406,7 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 		},
 	}
 
-	rp, _ := setupResourcePool(t, system, &config, nil, nil, nil)
+	rp, _ := setupResourcePool(t, nil, system, &config, nil, nil, nil)
 
 	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
 	assert.Assert(t, created)
@@ -429,7 +450,8 @@ func TestMoveMessagesAcrossPrioLanesBehind(t *testing.T) {
 	})
 
 	// move job1 behind job2
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor("job1", "job2", false)
+	prioChange, secondAnchor, anchorPriority := findAnchor("job1", "job2", false, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	assert.Assert(t, prioChange)
 	assert.Equal(t, secondAnchor, model.JobID("job3"))

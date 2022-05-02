@@ -5,6 +5,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -123,7 +125,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 3,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetDescription(ptrs.StringPtr(adesc))
+				cfg.SetDescription(ptrs.Ptr(adesc))
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -141,7 +143,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 3,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname)})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname)})
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -160,7 +162,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 2,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname + "1")})
 
 				var exps []model.Experiment
 				for i := 0; i < 3; i++ {
@@ -180,7 +182,7 @@ func TestGetExperiments(t *testing.T) {
 			numResults: 2,
 			exps: func() []model.Experiment {
 				cfg := mockExpconf()
-				cfg.SetName(expconf.Name{RawString: ptrs.StringPtr(aname + "1")})
+				cfg.SetName(expconf.Name{RawString: ptrs.Ptr(aname + "1")})
 
 				var exps []model.Experiment
 				for i := 0; i < 6; i++ {
@@ -203,7 +205,10 @@ func TestGetExperiments(t *testing.T) {
 				err := db.AddExperiment(&exp)
 				require.NoError(t, err, "failed to add experiment")
 			}
-
+			userIDFilterExpr := strings.Trim(
+				strings.Join(strings.Split(fmt.Sprint([]int32{int32(user.ID)}), " "), ","),
+				"[]",
+			)
 			resp := &apiv1.GetExperimentsResponse{}
 			err := db.QueryProtof(
 				"get_experiments",
@@ -212,6 +217,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.stateFilter,
 				tt.archivedFilter,
 				user.Username, // Always filter by a random user so the state is inconsequential.
+				userIDFilterExpr,
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,
@@ -246,16 +252,16 @@ func mockExpconf() expconf.ExperimentConfig {
 	return schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.StringPtr("/home/ckpts"),
+				RawHostPath: ptrs.Ptr("/home/ckpts"),
 			},
 		},
 		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.StringPtr("model.Classifier"),
+			RawEntrypoint: ptrs.Ptr("model.Classifier"),
 		},
 		RawHyperparameters: map[string]expconf.HyperparameterV0{
 			"global_batch_size": {
 				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.IntPtr(1),
+					RawVal: ptrs.Ptr(1),
 				},
 			},
 		},
@@ -266,7 +272,7 @@ func mockExpconf() expconf.ExperimentConfig {
 					Units: 1,
 				},
 			},
-			RawMetric: ptrs.StringPtr(defaultSearcherMetric),
+			RawMetric: ptrs.Ptr(defaultSearcherMetric),
 		},
 	}).(expconf.ExperimentConfigV0)
 }

@@ -221,7 +221,8 @@ export const getExperiments: Service.DetApi<
       params.labels,
       params.archived,
       params.states,
-      params.users,
+      undefined,
+      params.users?.map(u => parseInt(u)),
       options,
     );
   },
@@ -378,7 +379,10 @@ export const getExpTrials: Service.DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+      trials: response.trials.map(trial => ({
+        workloads: [],
+        ...decoder.decodeV1TrialToTrialItem(trial),
+      })),
     };
   },
   request: (params, options) => {
@@ -447,7 +451,8 @@ export const getModels: Service.DetApi<
     params.description,
     params.labels,
     params.archived,
-    params.users,
+    undefined,
+    params.users?.map(u => parseInt(u)),
   ),
 };
 
@@ -611,6 +616,8 @@ export const getCommands: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
+    undefined,
+    params.users?.map(u => parseInt(u)),
   ),
 };
 
@@ -625,6 +632,8 @@ export const getJupyterLabs: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
+    undefined,
+    params.users?.map(u => parseInt(u)),
   ),
 };
 
@@ -639,6 +648,8 @@ export const getShells: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
+    undefined,
+    params.users?.map(u => parseInt(u)),
   ),
 };
 
@@ -653,6 +664,8 @@ export const getTensorBoards: Service.DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
+    undefined,
+    params.users?.map(u => parseInt(u)),
   ),
 };
 

@@ -3,7 +3,3 @@
 /master/internal/sproto/ @ioga
 /proto/src/determined/ @ioga
 /agent/ @ioga
-
-# Gene is interested in reviewing release notes.
-/docs/release-notes.txt @gh-determined-ai
-/docs/release-notes/ @gh-determined-ai

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -78,7 +79,7 @@ func (a *apiServer) GetExperiment(
 ) (*apiv1.GetExperimentResponse, error) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "fetching experiment from db")
 	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
@@ -96,17 +97,35 @@ func (a *apiServer) GetExperiment(
 	resp := apiv1.GetExperimentResponse{
 		Experiment: exp,
 		Config:     protoutils.ToStruct(conf),
-		JobSummary: &jobv1.JobSummary{},
 	}
 
-	if model.TerminalStates[model.StateFromProto(exp.State)] {
+	if model.StateFromProto(exp.State) != model.ActiveState {
 		return &resp, nil
 	}
 
-	err = a.ask(actor.Addr("experiments").Child(exp.Id),
-		job.GetJobSummary{}, &resp.JobSummary)
+	jobID := model.JobID(exp.JobId)
+
+	jobSummary := &jobv1.JobSummary{}
+	err = a.ask(job.JobsActorAddr, job.GetJobSummary{
+		JobID:        jobID,
+		ResourcePool: exp.ResourcePool,
+	}, &jobSummary)
 	if err != nil {
-		return nil, err
+		// An error here either is real or just that the experiment was not yet terminal in the DB
+		// when we first queried it but was by the time it got around to handling out ask. We can't
+		// just refresh our DB state to see which it was, since there is a time between an actor
+		// closing and PostStop (where the DB state is set) being received where the actor may not
+		// respond but still is not terminal -- more clearly, there is a time where the actor is
+		// truly non-terminal and not reachable. We _could_ await its stop and recheck, but it's not
+		// easy deducible how long that would block. So the best we can really do is return without
+		// an error if we're in this case and log. This is a debug log because of how often the
+		// happens when polling for an experiment to end.
+		if !strings.Contains(err.Error(), job.ErrJobNotFound(jobID).Error()) {
+			return nil, err
+		}
+		logrus.WithError(err).Debugf("asking for job summary")
+	} else {
+		resp.JobSummary = jobSummary
 	}
 
 	return &resp, nil
@@ -208,9 +227,20 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		rm: a.m.rm,
 		db: a.m.db,
 
-		logCtx: logger.Context{"experiment-id": exp.ID},
+		taskLogger: a.m.taskLogger,
+		logCtx:     logger.Context{"experiment-id": exp.ID},
 	}).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+	}
+
+	var resp job.DeleteJobResponse
+	if err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), job.DeleteJob{
+		JobID: exp.JobID,
+	}, &resp); err != nil {
+		return fmt.Errorf("requesting cleanup of resource mananger resources: %w", err)
+	}
+	if err = <-resp.Err; err != nil {
+		return fmt.Errorf("cleaning up resource mananger resources: %w", err)
 	}
 
 	trialIDs, taskIDs, err := a.m.db.ExperimentTrialAndTaskIDs(exp.ID)
@@ -241,6 +271,11 @@ func (a *apiServer) GetExperiments(
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0)
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	archivedExpr := ""
 	if req.Archived != nil {
@@ -288,6 +323,7 @@ func (a *apiServer) GetExperiments(
 		stateFilterExpr,
 		archivedExpr,
 		userFilterExpr,
+		userIDFilterExpr,
 		labelFilterExpr,
 		req.Description,
 		req.Name,

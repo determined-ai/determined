@@ -84,8 +84,12 @@ message GetExperimentsRequest {
   google.protobuf.BoolValue archived = 7;
   // Limit experiments to those that match the provided state.
   repeated determined.experiment.v1.State states = 8;
-  // Limit experiments to those that are owned by the specified users.
+  // Limit experiments to those that are owned by users with the specified
+  // usernames.
   repeated string users = 9;
+  // Limit experiments to those that are owned by users with the specified
+  // userIds.
+  repeated int32 user_ids = 11;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
@@ -244,6 +248,10 @@ message GetExperimentCheckpointsRequest {
 
 // Response to GetExperimentCheckpointsRequest.
 message GetExperimentCheckpointsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoints", "pagination" ] }
+  };
+
   // The list of returned checkpoints.
   repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
   // Pagination information of the full dataset.

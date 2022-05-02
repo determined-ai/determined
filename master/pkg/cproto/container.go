@@ -17,11 +17,6 @@ type Container struct {
 	Devices []device.Device `json:"devices"`
 }
 
-// New returns a new pending container.
-func New(parent actor.Address, devices []device.Device, recoverable bool) Container {
-	return Container{Parent: parent, ID: NewID(), State: Assigned, Devices: devices}
-}
-
 // Transition transitions the container state to the new state. An illegal transition will panic.
 func (c Container) Transition(new State) Container {
 	check.Panic(c.State.checkTransition(new))

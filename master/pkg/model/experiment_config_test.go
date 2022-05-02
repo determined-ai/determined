@@ -6,6 +6,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"gotest.tools/assert"
 )
 
@@ -112,4 +114,36 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	}
 
 	assert.DeepEqual(t, actual, expected)
+}
+
+// Helper function to setup and verify slurm option test cases.
+func testEnvironmentSlurm(t *testing.T, slurm []string, expected ...string) {
+	env := Environment{
+		Slurm: slurm,
+	}
+	err := check.Validate(env)
+
+	if len(expected) == 0 {
+		assert.Equal(t, err, nil)
+	} else {
+		for _, msg := range expected {
+			assert.ErrorContains(t, err, msg)
+		}
+	}
+}
+
+func TestValidateSlurmOptions(t *testing.T) {
+	// No slurm args, not error
+	testEnvironmentSlurm(t, []string{})
+	// Forbidden -G option
+	testEnvironmentSlurm(t, []string{"-G1"}, "slurm option -G is not configurable")
+	// OK option containing letters of forbidden option (-n)
+	testEnvironmentSlurm(t, []string{"--nice=3"})
+	// Forbidden -n option intermixed with OK options
+	testEnvironmentSlurm(t, []string{"--nice=7", "-n3", "-lname"},
+		"slurm option -n is not configurable")
+	// Multiple failures
+	testEnvironmentSlurm(t, []string{"--nice=7", " -N2", "-Dmydir", "--partion=pname"},
+		"slurm option -N is not configurable",
+		"slurm option -D is not configurable")
 }

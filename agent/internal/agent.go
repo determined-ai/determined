@@ -99,6 +99,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
 		}
 
+	case aproto.ContainerStatsRecord:
+		if a.socket != nil {
+			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStatsRecord: &msg}})
+		}
+
 	case model.TaskLog:
 		return a.postTaskLog(msg)
 
@@ -315,8 +320,8 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s&reconnect=%t",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool, a.reconnecting)
+	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%t",
+		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.Version, a.ResourcePool, a.reconnecting)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
 	if resp != nil {

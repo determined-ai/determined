@@ -7,18 +7,19 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
+	. "github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type TestInstanceType struct {
-	Name     string
-	NumSlots int
+	NameString string
+	NumSlots   int
 }
 
-func (t TestInstanceType) name() string {
-	return t.Name
+func (t TestInstanceType) Name() string {
+	return t.NameString
 }
 func (t TestInstanceType) Slots() int {
 	return t.NumSlots
@@ -52,11 +53,13 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
+			"default",
 			time.Duration(setup.MaxIdleAgentPeriod),
 			time.Duration(setup.MaxAgentStartingPeriod),
 			setup.maxDisconnectPeriod,
 			setup.MinInstances,
 			setup.MaxInstances,
+			nil,
 		),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -149,8 +152,8 @@ func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxInstances: 100,
@@ -164,8 +167,8 @@ func TestProvisionerScaleUp(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		}, 4),
 	})
 }
@@ -174,8 +177,8 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxInstances: 1,
@@ -189,8 +192,8 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
 		newMockFuncCall("launch", TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		}, 1),
 	})
 }
@@ -199,8 +202,8 @@ func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
@@ -249,8 +252,8 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			// If startup period is too short, we might try to re-launch agents.
@@ -321,8 +324,8 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxDisconnectPeriod: 50 * time.Millisecond,
 		instanceType: TestInstanceType{
-			Name:     "test.instanceType",
-			NumSlots: 4,
+			NameString: "test.instanceType",
+			NumSlots:   4,
 		},
 		Config: &Config{
 			MaxAgentStartingPeriod: model.Duration(3 * time.Minute),

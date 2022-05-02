@@ -84,6 +84,20 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	return r0
 }
 
+// AddTask provides a mock function with given fields: t
+func (_m *DB) AddTask(t *model.Task) error {
+	ret := _m.Called(t)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Task) error); ok {
+		r0 = rf(t)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddTrainingMetrics provides a mock function with given fields: ctx, m
 func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)
@@ -453,6 +467,76 @@ func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(userSessionToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAgentStats provides a mock function with given fields: a
+func (_m *DB) EndAgentStats(a *model.AgentStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllAgentStats provides a mock function with given fields:
+func (_m *DB) EndAllAgentStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllInstanceStats provides a mock function with given fields:
+func (_m *DB) EndAllInstanceStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndAllTaskStats provides a mock function with given fields:
+func (_m *DB) EndAllTaskStats() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// EndInstanceStats provides a mock function with given fields: a
+func (_m *DB) EndInstanceStats(a *model.InstanceStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
+		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1257,6 +1341,62 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 	}
 
 	return r0, r1
+}
+
+// RecordAgentStats provides a mock function with given fields: a
+func (_m *DB) RecordAgentStats(a *model.AgentStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RecordInstanceStats provides a mock function with given fields: a
+func (_m *DB) RecordInstanceStats(a *model.InstanceStats) error {
+	ret := _m.Called(a)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.InstanceStats) error); ok {
+		r0 = rf(a)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RecordTaskEndStats provides a mock function with given fields: stats
+func (_m *DB) RecordTaskEndStats(stats *model.TaskStats) error {
+	ret := _m.Called(stats)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.TaskStats) error); ok {
+		r0 = rf(stats)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RecordTaskStats provides a mock function with given fields: stats
+func (_m *DB) RecordTaskStats(stats *model.TaskStats) error {
+	ret := _m.Called(stats)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.TaskStats) error); ok {
+		r0 = rf(stats)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SaveExperimentArchiveStatus provides a mock function with given fields: experiment

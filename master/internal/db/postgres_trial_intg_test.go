@@ -27,17 +27,24 @@ func TestProtoGetTrial(t *testing.T) {
 	err := db.AddExperiment(exp)
 	require.NoError(t, err, "failed to add experiment")
 
-	tr := model.TrialModel(exp.ID, exp.JobID)
-	err = db.AddTrial(tr)
+	task := RequireMockTask(t, db, exp.OwnerID)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        exp.JobID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+	err = db.AddTrial(&tr)
 	require.NoError(t, err, "failed to add trial")
 
 	startTime := time.Now().UTC()
 	for i := 0; i < 3; i++ {
 		a := &model.Allocation{
-			AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
+			AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", tr.TaskID, i)),
 			TaskID:       tr.TaskID,
-			StartTime:    ptrs.TimePtr(startTime.Add(time.Duration(i) * time.Second)),
-			EndTime:      ptrs.TimePtr(startTime.Add(time.Duration(i+1) * time.Second)),
+			StartTime:    ptrs.Ptr(startTime.Add(time.Duration(i) * time.Second)),
+			EndTime:      ptrs.Ptr(startTime.Add(time.Duration(i+1) * time.Second)),
 		}
 		err = db.AddAllocation(a)
 		require.NoError(t, err, "failed to add allocation")

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": "^14.16.0"
+    "node": ">=16.13",
+    "npm": ">=8.0.0"
   },
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
@@ -22,7 +23,6 @@
   "dependencies": {
     "ansi-to-html": "^0.7.1",
     "antd": "^4.16.13",
-    "can-ndjson-stream": "^1.0.2",
     "dayjs": "^1.10.7",
     "fp-ts": "^2.11.2",
     "fuse.js": "^6.4.6",
@@ -38,7 +38,10 @@
     "pretty-bytes": "^5.6.0",
     "query-string": "^7.0.1",
     "react": "^17.0.2",
+    "react-dnd": "^15.1.1",
+    "react-dnd-html5-backend": "^15.1.2",
     "react-dom": "^17.0.2",
+    "react-draggable": "^4.4.4",
     "react-helmet-async": "^1.1.2",
     "react-monaco-editor": "^0.44.0",
     "react-router-dom": "^5.3.0",
@@ -80,7 +83,6 @@
     "@types/express": "^4.17.11",
     "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
-    "@types/moment-timezone": "^0.5.13",
     "@types/morgan": "^1.9.2",
     "@types/node": "^15.0.1",
     "@types/react": "^17.0.4",

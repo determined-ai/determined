@@ -249,7 +249,8 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				rm: m.rm,
 				db: m.db,
 
-				logCtx: logger.Context{"experiment-id": dbExp.ID},
+				taskLogger: m.taskLogger,
+				logCtx:     logger.Context{"experiment-id": dbExp.ID},
 			})
 	}
 

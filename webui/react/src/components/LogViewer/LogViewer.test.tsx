@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { FetchArgs } from 'services/api-ts-sdk';
-import { jsonToTaskLog } from 'services/decoder';
+import { mapV1LogsResponse } from 'services/decoder';
 import { LogLevelFromApi } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -75,7 +75,7 @@ const setup = (props: src.Props) => render(<src.default {...props} />);
 /**
  * canceler -        AbortController to manually stop ongoing API calls.
  * logsReference -   Allows tests to pass in an array to reflect the current state of loaded logs.
- * skipStreaming -   Disables the streaming portion of the mocked `consumeStream` function.
+ * skipStreaming -   Disables the streaming portion of the mocked `readStream` function.
  * streamingRounds - How many rounds of stream chunks to simulate.
  */
 const mockOnFetch = (mockOptions: {
@@ -135,7 +135,7 @@ jest.mock('hooks/useGetCharMeasureInContainer', () => ({
 jest.mock('services/utils', () => ({
   __esModule: true,
   ...jest.requireActual('services/utils'),
-  consumeStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
+  readStream: ({ options }: FetchArgs, onEvent: (event: unknown) => void): void => {
     // Default mocking options.
     const existingLogs = options.existingLogs ?? [];
     const skipStreaming = options.skipStreaming ?? true;
@@ -183,7 +183,7 @@ jest.mock('services/utils', () => ({
 }));
 
 describe('LogViewer', () => {
-  const decoder = jsonToTaskLog;
+  const decoder = mapV1LogsResponse;
 
   describe('static logs', () => {
     it('should render logs with initial logs and show partial logs', async () => {

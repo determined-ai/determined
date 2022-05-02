@@ -206,7 +206,8 @@ const ManageJob: React.FC<Props> = (
           <Input addonAfter="out of 99" max={99} min={1} type="number" />
         </Form.Item>
         <Form.Item
-          extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority."
+          extra="Priority is a whole number from 1 to 99 with 1 being the lowest priority.
+          Adjusting the priority will cancel and resubmit the job to update its priority."
           hidden={schedulerType !== api.V1SchedulerType.KUBERNETES}
           label="Priority"
           name="priority">
@@ -231,6 +232,7 @@ const ManageJob: React.FC<Props> = (
         </Form.Item>
         <Form.Item
           extra={poolDetails}
+          hidden={schedulerType === api.V1SchedulerType.KUBERNETES}
           label="Resource Pool"
           name="resourcePool">
           <Select disabled={job.type !== JobType.EXPERIMENT}>

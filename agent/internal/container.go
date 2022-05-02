@@ -43,11 +43,14 @@ type (
 )
 
 func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
-	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
+	return &containerActor{
+		Container: msg.Container, spec: &msg.Spec, client: client}
 }
 
-func reattachContainerActor(container cproto.Container, client *client.Client) actor.Actor {
-	return &containerActor{Container: container, client: client, reattached: true}
+func reattachContainerActor(
+	container cproto.Container, client *client.Client) actor.Actor {
+	return &containerActor{
+		Container: container, client: client, reattached: true}
 }
 
 // getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent
@@ -71,7 +74,7 @@ func getBaseTaskLog(spec *cproto.Spec) model.TaskLog {
 		case taskIDEnvVar:
 			log.TaskID = value
 		case allocationIDEnvVar:
-			log.AllocationID = ptrs.StringPtr(value)
+			log.AllocationID = ptrs.Ptr(value)
 		}
 	}
 	return log
@@ -82,10 +85,16 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
 		if !c.reattached {
+			taskLog := getBaseTaskLog(c.spec)
 			c.transition(ctx, cproto.Pulling)
-			pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
+			pull := pullImage{
+				PullSpec:     c.spec.PullSpec,
+				Name:         c.spec.RunSpec.ContainerConfig.Image,
+				TaskType:     c.spec.TaskType,
+				AllocationID: model.AllocationID(*taskLog.AllocationID),
+			}
 			ctx.Tell(c.docker, pull)
-			c.baseTaskLog = getBaseTaskLog(c.spec)
+			c.baseTaskLog = taskLog
 		} else {
 			ctx.Tell(c.docker, reattachContainer{ID: c.Container.ID})
 		}
@@ -119,6 +128,9 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case containerTerminated:
 		c.containerStopped(ctx, aproto.ContainerExited(msg.ExitCode))
 		ctx.Self().Stop()
+
+	case aproto.ContainerStatsRecord:
+		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.SignalContainer:
 		switch c.State {

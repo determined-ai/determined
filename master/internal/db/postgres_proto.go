@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
@@ -44,6 +46,8 @@ func protoParser(rows *sqlx.Rows, val interface{}) error {
 	}
 	for key, value := range dest {
 		switch parsed := value.(type) {
+		case float64:
+			dest[key] = model.ExtendedFloat64(parsed)
 		case []byte:
 			var marshaled interface{}
 			if err := json.Unmarshal(parsed, &marshaled); err != nil {

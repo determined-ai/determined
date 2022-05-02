@@ -115,8 +115,8 @@ To install the Determined library and start a cluster locally, enter:
 
 .. code:: bash
 
-   pip install determined det
-   deploy local cluster-up
+   pip install determined
+   det deploy local cluster-up
 
 If your local machine does not have a supported Nvidia GPU, include the no-gpu option to start a
 cluster:

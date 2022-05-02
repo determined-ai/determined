@@ -32,7 +32,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 	maxLength := expconf.NewLengthInBatches(100)
 	eConf := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
-			RawMetric: ptrs.StringPtr("loss"),
+			RawMetric: ptrs.Ptr("loss"),
 			RawSingleConfig: &expconf.SingleConfig{
 				RawMaxLength: &maxLength,
 			},
@@ -41,7 +41,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 		RawHyperparameters: expconf.Hyperparameters{},
 		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 			RawSharedFSConfig: &expconf.SharedFSConfig{
-				RawHostPath: ptrs.StringPtr("/"),
+				RawHostPath: ptrs.Ptr("/"),
 			},
 		},
 	}
@@ -61,38 +61,4 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 		o.apply(e)
 	}
 	return e
-}
-
-// TrialModelOption is an option that can be applied to a trial.
-type TrialModelOption interface {
-	apply(*Trial)
-}
-
-// TrialModelOptionFunc is a type that implements TrialModelOption.
-type TrialModelOptionFunc func(*Trial)
-
-func (f TrialModelOptionFunc) apply(trial *Trial) {
-	f(trial)
-}
-
-// WithTrialState is a TrialModeOption that sets a trials state.
-func WithTrialState(state State) TrialModelOption {
-	return TrialModelOptionFunc(func(trial *Trial) {
-		trial.State = state
-	})
-}
-
-// TrialModel returns a new trial with the specified options.
-func TrialModel(eID int, jobID JobID, opts ...TrialModelOption) *Trial {
-	t := &Trial{
-		TaskID:       NewTaskID(),
-		JobID:        jobID,
-		ExperimentID: eID,
-		State:        ActiveState,
-		StartTime:    time.Now(),
-	}
-	for _, o := range opts {
-		o.apply(t)
-	}
-	return t
 }

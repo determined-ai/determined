@@ -8,6 +8,96 @@
  Version 0.17
 **************
 
+Version 0.17.15
+===============
+
+**Release Date:** April 22, 2022
+
+**Breaking Changes**
+
+-  API: Endpoints for getting or updating a user now accept a ``userId`` instead of ``username`` as
+   the path parameter.
+
+**Bug Fixes**
+
+-  Fix an issue where deleted experiments would get stuck in a ``DELETING`` state indefinitely due
+   to their checkpoint GC tasks not completing.
+
+-  API: Fix an issue where a reported job state could be stale due to a faulty caching mechanism.
+   This could have resulted in an experiment showing in `queued` or `scheduled` state, either in CLI
+   or WebUI, when it was in the other state.
+
+**New Features**
+
+-  Add a translation of DeepSpeed's DCGAN example using the new DeepSpeedTrial API.
+
+----
+
+Version 0.17.14
+===============
+
+**Release Date:** April 13, 2022
+
+**Bug Fixes**
+
+-  Resource Pool: Fix a bug that causes the resource pool and resource manager to crash after
+   submitting a command with a non-default priority. We recommend that all users on 0.17.12 and
+   0.17.13 update to 0.17.14 or later.
+
+Version 0.17.13
+===============
+
+**Release Date:** April 07, 2022
+
+**New Features**
+
+-  Support DeepSpeed with a new DeepSpeedTrial API.
+
+   -  `DeepSpeed <https://www.deepspeed.ai/>`_ is a powerful library for training large scale models.
+         With the new ``DeepSpeedTrial`` you can combine all the benefits of Determined with the
+         features available in DeepSpeed like the Zero Redundancy Optimizer and pipeline parallel
+         training. We also provide an example based on Eleuther AI's `GPT-NeoX
+         <https://github.com/EleutherAI/gpt-neox/>`_ repo to help you get started training
+         state-of-the-art language models.
+
+-  CLI: Allow the CLI to accept any unique prefix of a task UUID to refer to the task, rather than
+   requiring the entire UUID. In some places, Determined only displays the first few characters of a
+   UUID.
+
+**Improvements**
+
+-  Model Hub: add support for panoptic segmentation.
+
+   -  Model Hub mmdetection now supports panoptic segmentation task in addition to object detection.
+      Previously, the associated docker image lacked dependencies for panoptic segmentation. Users
+      can now use mmdetection configs under ``panoptic_fpn`` and also the ``coco_panoptic`` dataset
+      base config.
+
+-  Collect data for agent/instance start time and end time in order to track unused GPUs. Two new
+   ``kinds`` (``agent`` and ``instance``) added to CSV report at Cluster page.
+
+**API Changes**
+
+-  The model registry API now accepts either the ID or model name in ``/api/v1/models/:id`` or
+   ``/api/v1/models/:name``. This applies to all API routes for models and model versions.
+-  The ID can be used in the API and the WebUI (``/det/models/:id``) as a permanent link to the
+   model.
+
+**Breaking Changes**
+
+-  Changed the message body of PatchModelRequest and PatchModelVersionRequest such that the POST-ed
+   body is the PatchModel or PatchModelVersion object, instead of being wrapped in ``{ "model":
+   PatchModel }``.
+
+-  Updated typing hints on other Model Registry API endpoints to make it clear which fields will be
+   returned in API responses.
+
+**Bug Fixes**
+
+-  Fix an issue where the originally requested page to redirect to after a previously successful
+   authentication flow was not remembered.
+-  Fix an issue where trial logs may display timestamps twice.
+
 Version 0.17.12
 ===============
 

@@ -1,9 +1,10 @@
 import base64
 import json
+import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, List, Optional, Tuple
+from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
 
@@ -36,6 +37,10 @@ the command container.
 _CONFIG_PATHS_COERCE_TO_LIST = {
     "bind_mounts",
 }
+
+UUID_REGEX = re.compile(
+    "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
 
 CommandTableHeader = OrderedDict(
     [
@@ -125,6 +130,44 @@ Command = namedtuple(
 )
 
 
+def expand_uuid_prefixes(
+    args: Namespace, prefixes: Optional[Union[str, List[str]]] = None
+) -> Union[str, List[str]]:
+    if prefixes is None:
+        prefixes = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+
+    was_single = False
+    if isinstance(prefixes, str):
+        was_single = True
+        prefixes = [prefixes]
+
+    # Avoid making a network request if everything is already a full UUID.
+    if not all(UUID_REGEX.match(p) for p in prefixes):
+        api_path = RemoteTaskNewAPIs[args._command]
+        api_full_path = "api/v1/{}".format(api_path)
+        res = api.get(args.master, api_full_path).json()[api_path]
+        all_ids: List[str] = [x["id"] for x in res]
+
+        def expand(prefix: str) -> str:
+            if UUID_REGEX.match(prefix):
+                return prefix
+
+            # Could do better algorithmically than repeated linear scans, but let's not complicate
+            # the code unless it becomes an issue in practice.
+            ids = [x for x in all_ids if x.startswith(prefix)]
+            if len(ids) > 1:
+                raise api.errors.BadRequestException(f"partial UUID '{prefix}' not unique")
+            elif len(ids) == 0:
+                raise api.errors.BadRequestException(f"partial UUID '{prefix}' not found")
+            return ids[0]
+
+        prefixes = [expand(p) for p in prefixes]
+
+    if was_single:
+        prefixes = prefixes[0]
+    return prefixes
+
+
 @authentication.required
 def list_tasks(args: Namespace) -> None:
     api_path = RemoteTaskNewAPIs[args._command]
@@ -158,7 +201,7 @@ def list_tasks(args: Namespace) -> None:
 
 @authentication.required
 def kill(args: Namespace) -> None:
-    task_ids = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+    task_ids = expand_uuid_prefixes(args)
     name = RemoteTaskName[args._command]
 
     for i, task_id in enumerate(task_ids):
@@ -180,7 +223,7 @@ def _kill(master_url: str, taskType: str, taskID: str) -> None:
 
 @authentication.required
 def set_priority(args: Namespace) -> None:
-    task_id = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+    task_id = expand_uuid_prefixes(args)
     name = RemoteTaskName[args._command]
 
     try:
@@ -195,7 +238,8 @@ def set_priority(args: Namespace) -> None:
 
 @authentication.required
 def config(args: Namespace) -> None:
-    api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], args.id)
+    task_id = expand_uuid_prefixes(args)
+    api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], task_id)
     res_json = api.get(args.master, api_full_path).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
@@ -259,7 +303,7 @@ def parse_config(
         bind_mounts = config.setdefault("bind_mounts", [])
         bind_mounts.append({"host_path": host_path, "container_path": container_path})
 
-    # Use the entrypoint command line argument if an entrypoint has not already
+    # Use the entrypoint command line argument if an entrypoint has not already been
     # defined by previous settings.
     if not config.get("entrypoint") and entrypoint:
         config["entrypoint"] = entrypoint

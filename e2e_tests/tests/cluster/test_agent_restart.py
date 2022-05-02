@@ -376,7 +376,7 @@ def test_agent_restart_recover_experiment(managed_cluster: ManagedCluster, downt
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
-        train_wls = exp.workloads_for_mode(trials[0].workloads, "training")
+        train_wls = exp.workloads_with_training(trials[0].workloads)
         assert len(train_wls) == 5
     except Exception:
         managed_cluster.restart_agent()
@@ -403,7 +403,7 @@ def test_agent_reconnect_keep_experiment(managed_cluster: ManagedCluster) -> Non
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
-        train_wls = exp.workloads_for_mode(trials[0].workloads, "training")
+        train_wls = exp.workloads_with_training(trials[0].workloads)
         assert len(train_wls) == 5
     except Exception:
         managed_cluster.restart_proxy(wait_for_reconnect=False)
@@ -424,6 +424,27 @@ def test_agent_reconnect_keep_cmd(managed_cluster: ManagedCluster) -> None:
         managed_cluster.restart_proxy()
 
         wait_for_command_state(command_id, "TERMINATED", 30)
+
+        assert "success" in get_command_info(command_id)["exitStatus"]
+    except Exception:
+        managed_cluster.restart_proxy(wait_for_reconnect=False)
+        managed_cluster.restart_agent()
+        raise
+
+
+@pytest.mark.managed_devcluster
+@pytest.mark.parametrize("slots", [0, 1])
+def test_agent_reconnect_trigger_schedule(managed_cluster: ManagedCluster, slots: int) -> None:
+    if managed_cluster.reattach:
+        pytest.skip()
+
+    managed_cluster.ensure_agent_ok()
+
+    try:
+        managed_cluster.kill_proxy()
+        command_id = run_command(5, slots=slots)
+        managed_cluster.restart_proxy()
+        wait_for_command_state(command_id, "TERMINATED", 10)
 
         assert "success" in get_command_info(command_id)["exitStatus"]
     except Exception:

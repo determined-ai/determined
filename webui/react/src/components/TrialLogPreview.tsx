@@ -7,8 +7,8 @@ import LogViewerEntry, {
 } from 'components/LogViewer/LogViewerEntry';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
-import { jsonToTrialLog } from 'services/decoder';
-import { consumeStream } from 'services/utils';
+import { mapV1LogsResponse } from 'services/decoder';
+import { readStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
 import { formatDatetime } from 'utils/datetime';
 
@@ -37,7 +37,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
   if (hidePreview || !logEntry) classes.push(css.hidePreview);
 
   const fetchTrialLogs = useCallback((trialId: number, time: string, canceler: AbortController) => {
-    consumeStream(
+    readStream(
       detApi.StreamingExperiments.trialLogs(
         trialId,
         undefined,
@@ -54,7 +54,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         { signal: canceler.signal },
       ),
       event => {
-        const entry = jsonToTrialLog(event);
+        const entry = mapV1LogsResponse(event);
         setLogEntry({
           formattedTime: formatDatetime(entry.time, { format: DATETIME_FORMAT }),
           level: entry.level || LogLevel.Info,
@@ -69,7 +69,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
     trialState: RunState,
     canceler: AbortController,
   ) => {
-    consumeStream(
+    readStream(
       detApi.StreamingExperiments.trialLogs(
         trialId,
         100,
@@ -86,7 +86,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         { signal: canceler.signal },
       ),
       event => {
-        const entry = jsonToTrialLog(event);
+        const entry = mapV1LogsResponse(event);
 
         /*
          * Hoping within the 100 log lines we are able to find a log

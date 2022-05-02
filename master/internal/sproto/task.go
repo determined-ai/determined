@@ -122,9 +122,10 @@ type (
 	}
 	// ResourcesAllocated notifies the task actor of assigned resources.
 	ResourcesAllocated struct {
-		ID           model.AllocationID
-		ResourcePool string
-		Resources    []Resources
+		ID                model.AllocationID
+		ResourcePool      string
+		Resources         []Resources
+		JobSubmissionTime time.Time
 	}
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
@@ -141,10 +142,15 @@ type (
 const (
 	// ResourcesTypeEnvVar is the name of the env var indicating the resource type to a task.
 	ResourcesTypeEnvVar = "DET_RESOURCES_TYPE"
+	// SlurmRendezvousIfaceEnvVar is the name of the env var for indicating the net iface on which
+	// to rendezvous (horovodrun will use the IPs of the nodes on this interface to launch).
+	SlurmRendezvousIfaceEnvVar = "DET_SLURM_RENDEZVOUS_IFACE"
 	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
 	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
 	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.
 	ResourcesTypeDockerContainer ResourcesType = "docker-container"
+	// ResourcesTypeSlurmJob indicates the resources are a handle for a slurm job.
+	ResourcesTypeSlurmJob ResourcesType = "slurm-job"
 )
 
 // ResourcesSummary provides a summary of the resources comprising what we know at the time the
@@ -164,7 +170,7 @@ type ResourcesSummary struct {
 // to start tasks on assigned resources.
 type Resources interface {
 	Summary() ResourcesSummary
-	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo)
+	Start(*actor.Context, logger.Context, tasks.TaskSpec, ResourcesRuntimeInfo) error
 	Kill(*actor.Context, logger.Context)
 }
 
@@ -223,7 +229,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	}
 
 	return model.TaskLog{
-		Level:       ptrs.StringPtr(model.LogLevelInfo),
+		Level:       ptrs.Ptr(model.LogLevelInfo),
 		ContainerID: &ev.ContainerID,
 		Timestamp:   &ev.Time,
 		Log:         message,

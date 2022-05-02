@@ -36,22 +36,9 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 		rp.agentStatesCache, rp.fittingMethod)
 }
 
-func (p *priorityScheduler) reportJobQInfo(taskList *taskList, groups map[*actor.Ref]*group,
-	jobPositions jobSortState) {
-	reqs := sortTasksWithPosition(taskList, groups, jobPositions, false)
-	jobQInfo, jobActors := reduceToJobQInfo(reqs)
-	for jobID, jobActor := range jobActors {
-		rmJobInfo, ok := jobQInfo[jobID]
-		if jobActor == nil || !ok || rmJobInfo == nil {
-			continue
-		}
-		jobActor.System().Tell(jobActor, rmJobInfo)
-	}
-}
-
 func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
 	reqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
-	jobQInfo, _ := reduceToJobQInfo(reqs)
+	jobQInfo := reduceToJobQInfo(reqs)
 	return jobQInfo
 }
 
@@ -78,8 +65,6 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
-
-	p.reportJobQInfo(taskList, groups, jobPositions)
 
 	return toAllocate, toRelease
 }
@@ -370,7 +355,7 @@ func removeTaskFromAgents(
 		allocation := allocation.(*containerResources)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
-			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.container.id)
+			delete(agents[allocation.agent.Handler].ZeroSlotContainers, allocation.containerID)
 		}
 
 		for _, allocatedDevice := range allocation.devices {

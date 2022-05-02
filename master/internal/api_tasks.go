@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 
@@ -69,7 +68,7 @@ func (a *apiServer) AllocationAllGather(
 	if err = a.ask(handler.Address(), task.WatchAllGather{
 		WatcherID: wID,
 		NumPeers:  int(req.NumPeers),
-		Data:      &structpb.Struct{},
+		Data:      req.Data,
 	}, &w); err != nil {
 		return nil, err
 	}

@@ -114,39 +114,39 @@ func makeLogTestCase(taskID model.TaskID, agentID string) ([]model.TaskLog, stri
 			TaskID:       taskID.String(),
 			AllocationID: taskToAllocationID(taskID.String()),
 			AgentID:      &agentID,
-			ContainerID:  ptrs.StringPtr("goodcontainer"),
-			RankID:       ptrs.IntPtr(4),
+			ContainerID:  ptrs.Ptr("goodcontainer"),
+			RankID:       ptrs.Ptr(4),
 			Log:          "\n",
-			StdType:      ptrs.StringPtr("stdout"),
+			StdType:      ptrs.Ptr("stdout"),
 		},
 		{
 			TaskID:       taskID.String(),
 			AllocationID: taskToAllocationID(taskID.String()),
 			AgentID:      &agentID,
-			ContainerID:  ptrs.StringPtr("goodcontainer"),
-			RankID:       ptrs.IntPtr(1),
-			Level:        ptrs.StringPtr("INFO"),
+			ContainerID:  ptrs.Ptr("goodcontainer"),
+			RankID:       ptrs.Ptr(1),
+			Level:        ptrs.Ptr("INFO"),
 			Log:          "Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)\n", //nolint:lll // Anything to make these lines shorter would look worse.
-			StdType:      ptrs.StringPtr("stdout"),
+			StdType:      ptrs.Ptr("stdout"),
 		},
 		{
 			TaskID:       taskID.String(),
 			AllocationID: taskToAllocationID(taskID.String()),
 			AgentID:      &agentID,
-			ContainerID:  ptrs.StringPtr("goodcontainer"),
-			RankID:       ptrs.IntPtr(2),
-			Level:        ptrs.StringPtr("ERROR"),
+			ContainerID:  ptrs.Ptr("goodcontainer"),
+			RankID:       ptrs.Ptr(2),
+			Level:        ptrs.Ptr("ERROR"),
 			Log:          "Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)\n", // nolint:lll
-			StdType:      ptrs.StringPtr("stdout"),
+			StdType:      ptrs.Ptr("stdout"),
 		},
 		{
 			TaskID:       taskID.String(),
 			AllocationID: taskToAllocationID(taskID.String()),
 			AgentID:      &agentID,
-			ContainerID:  ptrs.StringPtr("goodcontainer"),
-			RankID:       ptrs.IntPtr(3),
+			ContainerID:  ptrs.Ptr("goodcontainer"),
+			RankID:       ptrs.Ptr(3),
 			Log:          "urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]\n", // nolint:lll
-			StdType:      ptrs.StringPtr("stdout"),
+			StdType:      ptrs.Ptr("stdout"),
 		},
 	}
 	actual := `[rank=4] 
@@ -276,5 +276,5 @@ func assertLogEquals(t *testing.T, actual, expected model.TaskLog) {
 }
 
 func taskToAllocationID(taskID string) *string {
-	return ptrs.StringPtr(taskID + ".0")
+	return ptrs.Ptr(taskID + ".0")
 }

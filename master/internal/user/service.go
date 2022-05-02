@@ -427,3 +427,15 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		message: fmt.Sprintf("successfully created user: %s", params.Username),
 	}, nil
 }
+
+func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
+	args := struct {
+		Username string `path:"username"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	c.Response().Header().Set("cache-control", "public, max-age=3600")
+
+	return s.db.UserImage(args.Username)
+}
