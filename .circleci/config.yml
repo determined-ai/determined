@@ -1262,6 +1262,7 @@ jobs:
       - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
+      - run: echo $CODECOV_TOKEN
       - codecov/upload:
           xtra_args: "-v"
 
@@ -1370,13 +1371,13 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
-      - run: coverage xml --data-file $PWD/test-unit-harness-cpu-pycov -i
-      - run: pwd
-      - run: ls
+      - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
+      - run: cat coverage.xml
+      - run: codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - persist_to_workspace:
           root: .
           paths:
@@ -1390,11 +1391,13 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml --data-file $PWD/test-unit-harness-gpu-pycov -i
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: cat coverage.xml
+      - run: codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - persist_to_workspace:
           root: .
           paths:
@@ -1407,11 +1410,13 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
-      - run: coverage xml --data-file $PWD/test-unit-harness-tf2-pycov -i
+      - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
+      - run: cat coverage.xml
+      - run: codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - persist_to_workspace:
           root: .
           paths:
@@ -1424,11 +1429,13 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
-      - run: coverage xml --data-file $PWD/test-unit-storage-pycov -i
+      - run: coverage xml -i --data-file=./test-unit-storage-pycov
+      - run: cat coverage.xml
+      - run: codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - persist_to_workspace:
           root: .
           paths:
@@ -1442,11 +1449,13 @@ jobs:
       - setup-python-venv:
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
-      - run: coverage xml --data-file $PWD/test-model-hub-pycov -i
+      - run: coverage xml -i --data-file=./test-model-hub-pycov
+      - run: cat coverage.xml
+      - run: codecov -t fd979617-a8d7-4fc5-900e-6999db718fea
       - persist_to_workspace:
           root: .
           paths:
