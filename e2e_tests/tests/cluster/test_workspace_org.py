@@ -104,19 +104,19 @@ def test_workspace_org() -> None:
             sess,
             pinned=True,
         ).workspaces
-        assert len(pinned) == 3
+        assert len(pinned) == 2
         bindings.post_UnpinWorkspace(sess, id=made_workspace.id)
         pinned = bindings.get_GetWorkspaces(
             sess,
             pinned=True,
         ).workspaces
-        assert len(pinned) == 2
+        assert len(pinned) == 1
         bindings.post_PinWorkspace(sess, id=made_workspace.id)
         pinned = bindings.get_GetWorkspaces(
             sess,
             pinned=True,
         ).workspaces
-        assert len(pinned) == 3
+        assert len(pinned) == 2
 
         # Add a test project to a workspace.
         r4 = bindings.post_PostProject(
