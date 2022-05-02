@@ -50,17 +50,26 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   });
 
   const fetchModels = useCallback(async () => {
-    const response = await getModels({
-      orderBy: 'ORDER_BY_DESC',
-      sortBy: validateDetApiEnum(
-        V1GetModelsRequestSortBy,
-        V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-      ),
-    }, { signal: canceler.signal });
-    setModels(prev => {
-      if (isEqual(prev, response.models)) return prev;
-      return response.models;
-    });
+    try {
+      const response = await getModels({
+        archived: false,
+        orderBy: 'ORDER_BY_DESC',
+        sortBy: validateDetApiEnum(
+          V1GetModelsRequestSortBy,
+          V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+        ),
+      }, { signal: canceler.signal });
+      setModels(prev => {
+        if (isEqual(prev, response.models)) return prev;
+        return response.models;
+      });
+    } catch(e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
   }, [ canceler.signal ]);
 
   useEffect(() => {
