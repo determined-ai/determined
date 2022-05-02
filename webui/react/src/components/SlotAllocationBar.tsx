@@ -146,10 +146,10 @@ const SlotAllocationBar: React.FC<Props> = ({
 
   const stateDetails = useMemo(() => {
     const states = [
+      ResourceState.Warm,
       ResourceState.Assigned,
       ResourceState.Pulling,
       ResourceState.Starting,
-      ResourceState.Warm,
       ResourceState.Running,
     ];
     return (
@@ -157,7 +157,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         {states.map((state) => (
           <Legend count={stateTallies[state]} key={state} totalSlots={totalSlots}>
             <Badge
-              state={state === ResourceState.Running ? SlotState.Running : SlotState.Pending}
+              state={state}
               type={BadgeType.State}>
               {resourceStateToLabel[state]}
             </Badge>
@@ -184,7 +184,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           {totalSlots === 0 ? <span>0/0</span> : (
             <span>
               {resourceStates.length}/{totalSlots}
-              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length / totalSlots, 0)})` : ''}
+              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length / totalSlots, 2)})` : ''}
             </span>
           )}
         </div>
@@ -212,7 +212,9 @@ const SlotAllocationBar: React.FC<Props> = ({
               <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
-                `${stateTallies.RUNNING}/${totalSlots} ${title || 'Compute'} Slots Allocated`}`}
+                `${stateTallies.RUNNING}/${
+                  slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots
+                } ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
           {footer.queued ? (

@@ -21,13 +21,14 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
     if(!poolStats) return;
     const { aggregates } = poolStats;
     if(aggregates) {
-      // If aggregates only has one record of today, then do not display.
-      const agg = aggregates.length > 1 ? aggregates.filter(
+      const agg = aggregates.filter(
         item => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
-      ) : [];
+      );
+      // If aggregates only has one record of today, then do not display.
+      const aggd = agg.length > 1 ? agg : [];
       return ({
-        hoursAverage: { average: agg.map(item => secondToHour(item.seconds)) },
-        time: agg.map(item => item.periodStart),
+        hoursAverage: { average: aggd.map(item => secondToHour(item.seconds)) },
+        time: aggd.map(item => item.periodStart),
       });
     }
   }, [ poolStats, viewDays ]);
