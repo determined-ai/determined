@@ -14,11 +14,20 @@ logger = logging.getLogger("determined.core")
 
 class Context:
     """
-    core.Context is a simple composition of several component APIs.
+    ``core.Context`` is a simple composition of several component APIs, with the following public
+    members:
 
-    core.Context is a tool for integrating arbitrary distributed tasks into a Determined cluster.
+    -  ``.checkpoint``, a :class:`~CheckpointContext`
+    -  ``.distributed``, a :class:`~DistributedContext`
+    -  ``.preempt``, a :class:`~PreemptContext`
+    -  ``.searcher``, a :class:`~SearcherContext`
+    -  ``.train``, a :class:`~TrainContext`
 
-    You should always use core.init() instead of creating a core.Context manually.
+    ``core.Context`` is a tool for integrating arbitrary distributed tasks into a Determined
+    cluster.
+
+    You should always use :meth:`core.init() <determined.core.init>` instead of creating a
+    core.Context manually.
     """
 
     def __init__(
@@ -94,18 +103,25 @@ def init(
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
-    core.init() builds a core.Context for use with the Core API.
+    ``core.init()`` builds a :class:`core.Context <determined.core.Context>` for use with the Core
+    API.
 
-    Always use core.init() instead of instantiating a core.Context directly.  Certain components of
-    the Core API may be configured directly by passing arguments to core.init().  The only arg that
-    is required is a DistributedContext, and even that is only required for for multi-slot tasks.
+    Always use ``with core.init() as context`` instead of instantiating a ``core.Context`` directly.
+    Certain components of the Core API may be configured by passing arguments to ``core.init()``.
+    The only arg that is required is a ``DistributedContext``, and even that is only required for
+    for multi-slot tasks.
+
+    All of your training must occur within the scope of the ``with core.init() as core_context``, as
+    there are resources necessary for training which start in the ``core.Context``'s ``__enter__``
+    method and must be cleaned up in its ``__exit__()`` method.
 
     Arguments:
-        distributed (``core.DistributedContext``, default: ``None``): Passing a DistributedContext
-            is required for multi-slot training, but unnecessary for single-slot training.
-        preempt_mode (``core.PreemptMode``, default: ``WorkersAskChief``): Configure the calling
-            pattern for the core_context.preempt.should_preempt() method.  See
-            :class:`~determined.core.PremptMode` for more detail.
+        distributed (``core.DistributedContext``, optional): Passing a ``DistributedContext`` is
+            required for multi-slot training, but unnecessary for single-slot training.  Defaults to
+            ``None``.
+        preempt_mode (``core.PreemptMode``, optional): Configure the calling pattern for the
+            ``core_context.preempt.should_preempt()`` method.  See
+            :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
         storage_manager: Internal use only.
     """
     info = det.get_cluster_info()

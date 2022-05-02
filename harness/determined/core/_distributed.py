@@ -26,10 +26,10 @@ class DistributedContext:
 
     .. note::
 
-       DistributedContext has .allgather(), .gather(), and .broadcast() methods, which are easy to
-       use and which can be useful for coordinating work across workers, but it is not a replacement
-       for the allgather/gather/broadcast operations in your particular distributed training
-       framework.
+       DistributedContext has ``.allgather()``, ``.gather()``, and ``.broadcast()`` methods, which
+       are easy to use and which can be useful for coordinating work across workers, but it is not a
+       replacement for the allgather/gather/broadcast operations in your particular distributed
+       training framework.
     """
 
     def __init__(
@@ -165,7 +165,8 @@ class DistributedContext:
     @classmethod
     def from_horovod(cls, hvd: Any, chief_ip: Optional[str] = None) -> "DistributedContext":
         """
-        Create a DistributedContext using the provided hvd module to determine rank information.
+        Create a ``DistributedContext`` using the provided ``hvd`` module to determine rank
+        information.
 
         Example:
 
@@ -175,8 +176,9 @@ class DistributedContext:
            hvd.init()
            distributed = DistributedContext.from_horovod(hvd)
 
-        The IP address for the chief worker is required whenver hvd.cross_size() > 1.  The value may
-        be provided via the chief_ip arugment or the DET_CHIEF_IP environment variable.
+        The IP address for the chief worker is required whenver ``hvd.cross_size() > 1``.  The value
+        may be provided using the ``chief_ip`` arugment or the ``DET_CHIEF_IP`` environment
+        variable.
         """
 
         return cls(
@@ -193,11 +195,11 @@ class DistributedContext:
     @classmethod
     def from_deepspeed(cls, chief_ip: Optional[str] = None) -> "DistributedContext":
         """
-        Create a DistributedContext using the standard deepspeed environment variables to determine
-        rank information.
+        Create a ``DistributedContext`` using the standard deepspeed environment variables to
+        determine rank information.
 
         The IP address for the chief worker is required whenever CROSS_SIZE > 1.  The value may
-        be provided via the chief_ip argument or the DET_CHIEF_IP environment variable.
+        be provided using the chief_ip argument or the DET_CHIEF_IP environment variable.
         """
 
         return cls(
@@ -258,8 +260,8 @@ class DistributedContext:
     def get_rank(self) -> int:
         """
         Return the rank of the process in the trial. The rank of a process is a
-        unique ID within the trial; that is, no two processes in the same trial
-        will be assigned the same rank.
+        unique ID within the trial.  That is, no two processes in the same trial
+        are assigned the same rank.
         """
         return self.rank
 
@@ -267,8 +269,8 @@ class DistributedContext:
         """
         Return the rank of the process on the agent. The local rank of a process
         is a unique ID within a given agent and trial; that is, no two processes
-        in the same trial that are executing on the same agent will be assigned
-        the same rank.
+        in the same trial that are executing on the same agent are assigned the
+        same rank.
         """
         return self.local_rank
 
@@ -286,9 +288,10 @@ class DistributedContext:
 
     def gather(self, stuff: Any) -> Optional[List]:
         """
-        Gather stuff to the chief.  The chief returns a list of all stuff, and workers return None.
+        Gather ``stuff`` to the chief.  The chief returns a list of all stuff, and workers return
+        ``None``.
 
-        gather() is not a replacement for the gather functionality of your distributed training
+        ``gather()`` is not a replacement for the gather functionality of your distributed training
         framework.
         """
         if self.size < 2:
@@ -310,10 +313,10 @@ class DistributedContext:
 
     def gather_local(self, stuff: Any) -> Optional[List]:
         """
-        Gather stuff to the local chief.  The local chief returns a list of all stuff, and local
-        workers return None.
+        Gather ``stuff`` to the local chief.  The local chief returns a list of all stuff, and local
+        workers return ``None``.
 
-        gather_local() is not a replacement for the gather functionality of your distributed
+        ``gather_local()`` is not a replacement for the gather functionality of your distributed
         training framework.
         """
         if self.local_size < 2:
@@ -335,9 +338,9 @@ class DistributedContext:
 
     def allgather(self, stuff: Any) -> List:
         """
-        Gather stuff to the chief and broadcast all of it back to the workers.
+        Gather ``stuff`` to the chief and broadcast all of it back to the workers.
 
-        allgather() is not a replacement for the allgather functionality of your distributed
+        ``allgather()`` is not a replacement for the allgather functionality of your distributed
         training framework.
         """
         if self.size < 2:
@@ -356,10 +359,10 @@ class DistributedContext:
 
     def allgather_local(self, stuff: Any) -> List:
         """
-        Gather stuff to the local chief and broadcast all of it back to the local workers.
+        Gather ``stuff`` to the local chief and broadcast all of it back to the local workers.
 
-        allgather_local() is not a replacement for the allgather functionality of your distributed
-        training framework.
+        ``allgather_local()`` is not a replacement for the allgather functionality of your
+        distributed training framework.
         """
         if self.local_size < 2:
             return [stuff]
@@ -377,9 +380,9 @@ class DistributedContext:
 
     def broadcast(self, stuff: Any) -> Any:
         """
-        Every worker gets the value sent by the chief.
+        Every worker gets the ``stuff`` sent by the chief.
 
-        broadcast() is not a replacement for the broadcast functionality of your distributed
+        ``broadcast()`` is not a replacement for the broadcast functionality of your distributed
         training framework.
         """
         if self.size < 2:
@@ -392,10 +395,10 @@ class DistributedContext:
 
     def broadcast_local(self, stuff: Any = None) -> Any:
         """
-        Every worker gets the value sent by the local chief.
+        Every worker gets the ``stuff`` sent by the local chief.
 
-        broadcast_local() is not a replacement for the broadcast functionality of your distributed
-        training framework.
+        ``broadcast_local()`` is not a replacement for the broadcast functionality of your
+        distributed training framework.
         """
         if self.local_size < 2:
             return stuff

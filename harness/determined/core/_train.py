@@ -19,7 +19,7 @@ class EarlyExitReason(enum.Enum):
 
 class TrainContext:
     """
-    TrainContext gives access to report training and validation metrics to the Determined master
+    ``TrainContext`` gives access to report training and validation metrics to the Determined master
     during trial tasks.
     """
 
@@ -71,8 +71,8 @@ class TrainContext:
         """
         Report training metrics to the master.
 
-        You can include a list of *batch_metrics*.  Batch metrics are not be shown in the WebUI but
-        may be accessed from the master via the CLI for post-processing.
+        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
+        but may be accessed from the master using the CLI for post-processing.
         """
 
         body = {
@@ -138,7 +138,7 @@ class TrainContext:
         Report validation metrics to the master.
 
         Note that for hyperparameter search, this is independent of the need to report the searcher
-        metric via ``SearcherOperation.report_completed()`` in the Searcher API.
+        metric using ``SearcherOperation.report_completed()`` in the Searcher API.
         """
 
         serializable_metrics = self._get_serializable_metrics(metrics)
@@ -184,9 +184,9 @@ class TrainContext:
         """
         Get the best reported validation metric reported so far, across the whole experiment.
 
-        The value returned will be the highest or lowest reported validation metric value, using
-        the searcher.metric field of the experiment config as the key and searcher.smaller_is_better
-        for the comparison.
+        The returned value is the highest or lowest reported validation metric value, using the
+        ``searcher.metric`` field of the experiment config as the key and
+        ``searcher.smaller_is_better`` for the comparison.
         """
 
         logger.debug("get_experiment_best_validation()")
