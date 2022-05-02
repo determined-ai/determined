@@ -37,7 +37,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		}
 		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
 			typed := notebook.(*notebookv1.Notebook)
-			if len(users) == 0 || userIds[typed.UserId] {
+			if len(userIds) == 0 || userIds[typed.UserId] {
 				resp.Notebooks = append(resp.Notebooks, typed)
 			}
 		}
