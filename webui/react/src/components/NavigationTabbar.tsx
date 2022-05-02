@@ -7,7 +7,7 @@ import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettin
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
-
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
 import Icon from './Icon';
@@ -45,6 +45,10 @@ const NavigationTabbar: React.FC = () => {
   const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(
+    
+    {}
+  );
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -99,7 +103,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'jupyter-lab',
             label: 'Launch JupyterLab',
-            onClick: () => handleLaunchJupyterLab(),
+            onClick: () => openJupyterLabModal,
           },
           {
             icon: 'logs',
