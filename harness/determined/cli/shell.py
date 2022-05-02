@@ -13,7 +13,7 @@ from termcolor import colored
 from determined.cli import command, task
 from determined.common import api
 from determined.common.api import authentication, certs
-from determined.common.check import check_eq, check_len
+from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .command import (
@@ -126,9 +126,6 @@ def _open_shell(
         keyfile.write(shell["privateKey"])
         keyfile.flush()
 
-        check_len(shell["addresses"], 1, "Cannot find address for shell")
-        _, port = shell["addresses"][0]["host_ip"], shell["addresses"][0]["host_port"]
-
         # Use determined.cli.tunnel as a portable script for using the HTTP CONNECT mechanism,
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
         python = sys.executable
@@ -156,8 +153,6 @@ def _open_shell(
             "IdentitiesOnly=yes",
             "-i",
             str(keyfile.name),
-            "-p",
-            str(port),
             "{}@{}".format(username, shell["id"]),
             *additional_opts,
         ]
