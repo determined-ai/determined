@@ -357,7 +357,8 @@ def test_auth_inside_shell() -> None:
         child = det_spawn(["shell", "start"])
         child.setecho(True)
         # shells take time to start; use the default timeout which is longer
-        child.expect(r".*Permanently added \'\[(.*)\]:\d+.+known hosts\.")
+        child.expect(r".*Permanently added.+([0-9a-f-]{36}).+known hosts\.")
+
         shell_id = child.match.group(1).decode("utf-8")
 
         def check_whoami(expected_username: str) -> None:
