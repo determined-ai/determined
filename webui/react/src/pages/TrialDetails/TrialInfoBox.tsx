@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import CheckpointDetails from 'components/CheckpointDetails';
+import CheckpointTrigger from 'components/CheckpointTrigger';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
@@ -61,14 +61,14 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         {bestCheckpoint && (
-          <CheckpointDetails
+          <CheckpointTrigger
             checkpoint={bestCheckpoint}
             experiment={experiment}
             title="Best Checkpoint">
             <OverviewStats clickable title="Best Checkpoint">
               Batch {bestCheckpoint.batch}
             </OverviewStats>
-          </CheckpointDetails>
+          </CheckpointTrigger>
         )}
       </Grid>
     </Section>

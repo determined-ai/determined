@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
-import CheckpointDetails from 'components/CheckpointDetails';
+import CheckpointTrigger from 'components/CheckpointTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -114,7 +114,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         trialId: record.id,
       };
       return (
-        <CheckpointDetails
+        <CheckpointTrigger
           checkpoint={checkpoint}
           experiment={experiment}
           title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
