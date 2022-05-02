@@ -6,7 +6,7 @@ import StoreProvider from 'contexts/Store';
 
 import Avatar from './Avatar';
 
-const testUser = { displayName: 'Bugs Bunny', initials: 'BB', username: 'elmerFudd01' };
+const testUser = { displayName: 'Bugs Bunny', id: 44, initials: 'BB', username: 'elmerFudd01' };
 const mockUsers = [ testUser ];
 
 jest.mock('antd', () => {
@@ -41,7 +41,7 @@ jest.mock('services/api', () => ({
 const TestApp: React.FC = () => {
   return (
     <div>
-      <Avatar hideTooltip={false} username={testUser.username} />
+      <Avatar hideTooltip={false} userId={testUser.id} />
     </div>
   );
 };

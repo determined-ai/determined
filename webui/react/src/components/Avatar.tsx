@@ -13,7 +13,10 @@ interface Props {
   hideTooltip?: boolean;
   large?: boolean;
   name?: string;
-  username?: string;
+  // TODO: separate components for
+  // 1) displaying an abbreviated string as an Avatar and
+  // 2) finding user by userId in the store and displaying string Avatar or profile image
+  userId?: number;
 }
 
 const getInitials = (name = ''): string => {
@@ -36,22 +39,22 @@ const getColor = (name = ''): string => {
   return hsl2str({ ...hslColor, l: 50 });
 };
 
-const Avatar: React.FC<Props> = ({ hideTooltip, name, large, username }: Props) => {
+const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) => {
   const [ displayName, setDisplayName ] = useState('');
   const { users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
 
   useEffect(() => {
-    if (!name && username) {
+    if (!name && userId) {
       if (!users.length) {
         fetchUsers();
       }
-      const user = users.find(user => user.username === username);
+      const user = users.find(user => user.id === userId);
       setDisplayName(getDisplayName(user));
     } else if (name) {
       setDisplayName(name);
     }
-  }, [ fetchUsers, username, name, users ]);
+  }, [ fetchUsers, userId, name, users ]);
 
   const style = { backgroundColor: getColor(displayName) };
   const classes = [ css.base ];
