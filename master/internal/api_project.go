@@ -65,6 +65,11 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0)
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	archivedExpr := ""
 	if req.Archived != nil {
@@ -112,6 +117,7 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 		stateFilterExpr,
 		archivedExpr,
 		userFilterExpr,
+		userIDFilterExpr,
 		labelFilterExpr,
 		req.Description,
 		req.Name,

@@ -76,6 +76,7 @@ export interface GetExperimentsParams extends PaginationParams {
   states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
   | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+  userIds?: Array<number>;
   users?: Array<string>;
 }
 

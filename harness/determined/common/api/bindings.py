@@ -6831,6 +6831,7 @@ def get_GetProjectExperiments(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetProjectExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetProjectExperimentsResponse":
     _params = {
@@ -6843,6 +6844,7 @@ def get_GetProjectExperiments(
         "orderBy": orderBy.value if orderBy else None,
         "sortBy": sortBy.value if sortBy else None,
         "states": [x.value for x in states] if states else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
