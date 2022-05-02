@@ -136,7 +136,6 @@ const mapCommonV1Task = (
     state: mapV1TaskState(task.state),
     type,
     userId: task.userId ?? 0,
-    username: task.username,
   };
 };
 
@@ -207,7 +206,6 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     notes: model.notes,
     numVersions: model.numVersions,
     userId: model.userId ?? 0,
-    username: model.username,
   };
 };
 
@@ -226,7 +224,6 @@ export const mapV1ModelVersion = (
     name: modelVersion.name,
     notes: modelVersion.notes,
     userId: modelVersion.userId ?? 0,
-    username: modelVersion.username,
     version: modelVersion.version,
   };
 };
@@ -404,7 +401,6 @@ export const mapV1Experiment = (
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
-    username: data.username,
   };
 };
 

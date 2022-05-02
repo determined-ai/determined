@@ -463,7 +463,6 @@ export interface ExperimentItem {
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
-  username: string;
 }
 
 export interface ExperimentBase extends ExperimentItem {
@@ -506,7 +505,6 @@ export interface ModelItem {
   notes?: string;
   numVersions: number;
   userId: number;
-  username: string;
 }
 
 export interface ModelVersion {
@@ -521,7 +519,6 @@ export interface ModelVersion {
   name?: string;
   notes?: string;
   userId: number;
-  username: string;
   version: number;
 }
 
@@ -552,7 +549,6 @@ export interface ExperimentTask extends Task {
   resourcePool: string;
   state: CompoundRunState;
   userId: number;
-  username: string;
 }
 
 export interface CommandTask extends Task {
@@ -562,7 +558,6 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
-  username: string;
 }
 
 export type RecentEvent = {

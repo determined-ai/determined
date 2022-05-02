@@ -13,6 +13,9 @@ interface Props {
   hideTooltip?: boolean;
   large?: boolean;
   name?: string;
+  // TODO: separate components for
+  // 1) displaying an abbreviated string as an Avatar and
+  // 2) finding user by userId in the store and displaying string Avatar or profile image
   userId?: number;
 }
 

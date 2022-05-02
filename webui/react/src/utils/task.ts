@@ -52,7 +52,6 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
     state: state as Type.RunState,
     url: '#',
     userId: user.id,
-    username: user.username,
   };
 }
 
@@ -66,7 +65,6 @@ export function generateCommandTask(idx: number): Type.RecentCommandTask {
     state: state as Type.CommandState,
     type: getRandomElementOfEnum(Type.CommandType),
     userId: user.id,
-    username: user.username,
   };
 }
 
@@ -228,7 +226,6 @@ export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.Recent
     state: experiment.state,
     url: paths.experimentDetails(experiment.id),
     userId: experiment.userId,
-    username: experiment.username,
   };
   return task;
 };
