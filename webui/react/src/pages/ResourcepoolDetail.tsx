@@ -20,6 +20,7 @@ import { getSlotContainerStates } from 'utils/cluster';
 import { clone } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { camelCaseToSentence } from 'utils/string';
+import { floatToPercent } from 'utils/string';
 
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
@@ -50,7 +51,6 @@ const ResourcepoolDetail: React.FC = () => {
 
   const usage = useMemo(() => {
     if(!pool) return 0;
-    // const isAux = pool.auxContainerCapacityPerAgent > 0;
     const totalSlots = pool.maxAgents * (pool.slotsPerAgent ?? 0);
     const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
     const runningState = resourceStates.filter(s => s === ResourceState.Running).length;
@@ -133,7 +133,7 @@ const ResourcepoolDetail: React.FC = () => {
         <div className={css.nav} onClick={() => history.goBack()}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>{poolLogo(pool.type)}</div>
-          <div>{`${pool.name} ${usage ? `- ${(usage * 100).toFixed()}%` : '' } `}</div>
+          <div>{`${pool.name} ${usage ? `- ${floatToPercent(usage)}` : '' } `}</div>
         </div>
       </Section>
       <Section>

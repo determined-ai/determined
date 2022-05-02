@@ -192,9 +192,11 @@ const SlotAllocationBar: React.FC<Props> = ({
       <ConditionalWrapper
         condition={!showLegends}
         wrapper={(ch) => (
-          <Popover content={stateDetails} placement="bottom">
-            {ch}
-          </Popover>
+          !isAux ? (
+            <Popover content={stateDetails} placement="bottom">
+              {ch}
+            </Popover>
+          ) : <div>{ch}</div>
         )}>
         <div className={css.bar}>
           <Bar {...barProps} parts={barParts} />
