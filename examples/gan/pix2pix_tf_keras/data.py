@@ -13,10 +13,12 @@ BUFFER_SIZE = 400
 def download(worker_rank: Union[None, int] = None):
     URL = f"http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/{DATASET_NAME}.tar.gz"
 
-    fname = f"{DATASET_NAME}-{worker_rank}.tar.gz" if worker_rank is not None else f"{DATASET_NAME}.tzr.gz"
-    path_to_zip = tf.keras.utils.get_file(
-        fname, origin=URL, extract=True
+    fname = (
+        f"{DATASET_NAME}-{worker_rank}.tar.gz"
+        if worker_rank is not None
+        else f"{DATASET_NAME}.tzr.gz"
     )
+    path_to_zip = tf.keras.utils.get_file(fname, origin=URL, extract=True)
 
     path_to_zip = pathlib.Path(path_to_zip)
 

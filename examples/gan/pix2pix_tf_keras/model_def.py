@@ -39,15 +39,19 @@ class Pix2PixTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self) -> InputData:
-        ds = get_dataset(self.path, batch_size=1)#self.context.get_per_slot_batch_size())
+        ds = get_dataset(
+            self.path, batch_size=1
+        )  # self.context.get_per_slot_batch_size())
         # Wrap the training dataset.
         ds = self.context.wrap_dataset(ds)
-#        ds = ds.batch(self.context.get_per_slot_batch_size())
+        # ds = ds.batch(self.context.get_per_slot_batch_size())
         return ds
 
     def build_validation_data_loader(self) -> InputData:
-        ds = get_dataset(self.path, "val", batch_size=1)#self.context.get_per_slot_batch_size())
+        ds = get_dataset(
+            self.path, "val", batch_size=1
+        )  # self.context.get_per_slot_batch_size())
         # Wrap the validation dataset.
         ds = self.context.wrap_dataset(ds)
-#        ds = ds.batch(self.context.get_per_slot_batch_size())
+        # ds = ds.batch(self.context.get_per_slot_batch_size())
         return ds
