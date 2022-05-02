@@ -107,28 +107,15 @@ def _load_test_images(image_file, height=HEIGHT, width=WIDTH):
     return input_image, real_image
 
 
-def get_train_dataset(path, batch_size=0):
-    train_dataset = tf.data.Dataset.list_files(str(path / "train/*.jpg"))
-    train_dataset = train_dataset.map(
-        _load_train_images, num_parallel_calls=tf.data.AUTOTUNE
-    )
-    train_dataset = train_dataset.shuffle(BUFFER_SIZE)
+def get_dataset(path, set_="train", batch_size=0):
+    ds = tf.data.Dataset.list_files(str(path / f"{set_}/*.jpg"))
+    ds = ds.map(_load_train_images if set_ == "train" else _load_test_images)
+    if set_ == "train":
+        ds = ds.shuffle(BUFFER_SIZE)
     if batch_size:
-        train_dataset = train_dataset.batch(batch_size)
-    #    train_dataset = tf.data.Dataset.from_tensor_slices(train_dataset).shuffle(50000)
-    return train_dataset
-
-
-def get_validation_dataset(path, batch_size=0):
-    try:
-        test_dataset = tf.data.Dataset.list_files(str(path / "test/*.jpg"))
-    except tf.errors.InvalidArgumentError:
-        test_dataset = tf.data.Dataset.list_files(str(path / "val/*.jpg"))
-    test_dataset = test_dataset.map(_load_test_images)
-    if batch_size:
-        test_dataset = test_dataset.batch(batch_size)
+        ds = ds.batch(batch_size)
     #    test_dataset = tf.data.Dataset.from_tensor_slices(test_dataset).shuffle(50000)
-    return test_dataset
+    return ds
 
 
 def main():
