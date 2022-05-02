@@ -1,4 +1,5 @@
-import { Tabs } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -67,15 +68,22 @@ const ProjectDetailsTabs: React.FC<Props> = (
     <>
       <BreadcrumbBar
         extra={(
-          <ProjectActionDropdown
-            curUser={curUser}
-            project={project}
-            trigger={[ 'click' ]}
-            onComplete={fetchProject}>
-            <div style={{ cursor: 'pointer' }}>
-              <Icon name="arrow-down" size="tiny" />
-            </div>
-          </ProjectActionDropdown>
+          <Space>
+            {project.description && (
+              <Tooltip title={project.description}>
+                <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
+              </Tooltip>
+            )}
+            <ProjectActionDropdown
+              curUser={curUser}
+              project={project}
+              trigger={[ 'click' ]}
+              onComplete={fetchProject}>
+              <div style={{ cursor: 'pointer' }}>
+                <Icon name="arrow-down" size="tiny" />
+              </div>
+            </ProjectActionDropdown>
+          </Space>
         )}
         id={project.id}
         project={project}

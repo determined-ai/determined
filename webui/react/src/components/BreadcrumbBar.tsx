@@ -119,7 +119,11 @@ const BreadcrumbBar: React.FC<Props> = (
           <>
             <Breadcrumb.Item>
               <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
-                <WorkspaceIcon name={workspace?.name} size={24} style={{ marginRight: 10 }} />
+                <WorkspaceIcon
+                  name={workspace?.name}
+                  size={24}
+                  style={{ color: 'black', marginRight: 10 }}
+                />
               </Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
