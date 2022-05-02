@@ -58,7 +58,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   ) ? deletableRunStates.has(task.state) : false;
 
   const { modalOpen: openModalDelete } = useModalExperimentDelete(
-    { experimentId: id, onClose: () => onComplete && onComplete(Action.Delete) },
+    { experimentId: id, onClose: () => onComplete?.(Action.Delete) },
   );
   const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 

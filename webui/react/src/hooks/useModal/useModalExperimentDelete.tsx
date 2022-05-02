@@ -39,7 +39,7 @@ const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks 
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk ]);
+  }, [ handleOk, experimentId ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
