@@ -1,5 +1,8 @@
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import React, { useEffect } from 'react';
 
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreDecorator from 'storybook/StoreDecorator';
 import { CheckpointDetail,
   CheckpointState,
   CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
@@ -7,19 +10,13 @@ import { CheckpointDetail,
   RunState } from 'types';
 import { generateExperiments } from 'utils/task';
 
-
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
-
-import CheckpointTrigger from 'components/CheckpointTrigger';
-import StoreDecorator from 'storybook/StoreDecorator';
-
 export default {
-  component: CheckpointTrigger,
-  decorators: [StoreDecorator],
-  title: 'CheckpointTrigger',
+  component: CheckpointModalTrigger,
+  decorators: [ StoreDecorator ],
+  title: 'CheckpointModalTrigger',
 };
 
-const CheckpointTriggerContainer = () => {
+const CheckpointModalTriggerContainer = () => {
 
   const exp = generateExperiments(1)[0];
   const experiment: ExperimentBase = {
@@ -234,13 +231,15 @@ const CheckpointTriggerContainer = () => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
-  return <CheckpointTrigger
-    checkpoint={checkpoint}
-    experiment={experiment}
-    title="CheckpointTrigger"
+  return (
+    <CheckpointModalTrigger
+      checkpoint={checkpoint}
+      experiment={experiment}
+      title="CheckpointModalTrigger"
     />
+  );
 };
 
 export const Default = (): React.ReactNode => {
-  return <CheckpointTriggerContainer/>;
+  return <CheckpointModalTriggerContainer />;
 };

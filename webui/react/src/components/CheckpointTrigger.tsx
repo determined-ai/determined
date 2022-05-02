@@ -14,7 +14,7 @@ interface Props {
   title: string;
 }
 
-const CheckpointTrigger: React.FC<Props> = (
+const CheckpointModalTrigger: React.FC<Props> = (
   {
     checkpoint,
     experiment,
@@ -42,4 +42,4 @@ const CheckpointTrigger: React.FC<Props> = (
   );
 };
 
-export default CheckpointTrigger;
+export default CheckpointModalTrigger;

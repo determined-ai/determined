@@ -1,6 +1,8 @@
 import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreDecorator from 'storybook/StoreDecorator';
 import { CheckpointDetail,
   CheckpointState,
   CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
@@ -8,15 +10,11 @@ import { CheckpointDetail,
   RunState } from 'types';
 import { generateExperiments } from 'utils/task';
 
-
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
-
 import useModalCheckpoint from './useModalCheckpoint';
-import StoreDecorator from 'storybook/StoreDecorator';
 
 export default {
   component: useModalCheckpoint,
-  decorators: [StoreDecorator],
+  decorators: [ StoreDecorator ],
   title: 'useModalCheckpoint',
 };
 
@@ -232,7 +230,7 @@ const UseCheckpointModalContainer = () => {
   const { modalOpen } = useModalCheckpoint({
     checkpoint: checkpoint,
     config: experiment.config,
-    title: "Use Checkpoint Modal"
+    title: 'Use Checkpoint Modal',
   });
 
   const storeDispatch = useStoreDispatch();
@@ -241,9 +239,9 @@ const UseCheckpointModalContainer = () => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
-  return <Button onClick={() => modalOpen()}>View Checkpoint</Button>
+  return <Button onClick={() => modalOpen()}>View Checkpoint</Button>;
 };
 
 export const Default = (): React.ReactNode => {
-  return <UseCheckpointModalContainer/>;
+  return <UseCheckpointModalContainer />;
 };
