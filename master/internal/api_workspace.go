@@ -162,6 +162,11 @@ func (a *apiServer) PostWorkspace(
 	w := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("insert_workspace", w, req.Name, user.User.Id)
 
+	if err == nil && w.Id > 0 {
+		holder := &workspacev1.Workspace{}
+		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, user.User.Id)
+	}
+
 	return &apiv1.PostWorkspaceResponse{Workspace: w},
 		errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 }
