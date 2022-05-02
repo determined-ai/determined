@@ -33,6 +33,7 @@ from .experiment import (
     workloads_with_training,
     workloads_with_validation,
     experiment_first_trial,
+    test_session,
 )
 
 from .record_profiling import (
