@@ -40,20 +40,14 @@ func (a *apiServer) DeleteCheckpoints(
 	_ context.Context, req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
 	deleteCheckpoints := req.CheckpointUuids
 	dCheckpointsInModelRegistry, _ := a.m.db.GetDeleteCheckpointsInModelRegistry(deleteCheckpoints)
-	var validCheckpoints []string
 	// return 400 if model registry checkpoints and include all the model registry checkpoints
 
-	for _, dc := range deleteCheckpoints {
-		dc_registered := false
-		if _, ok := dCheckpointsInModelRegistry[dc]; ok {
-			dc_registered = true
-		}
-		if !dc_registered {
-			validCheckpoints = append(validCheckpoints, dc)
-		}
+	if len(dCheckpointsInModelRegistry) > 0 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"This subset of list of checkpoints provided are registered in the model registry: %v. They cannot be deleted.", dCheckpointsInModelRegistry)
 	}
 
-	json_vCheckpoints, _ := json.Marshal(validCheckpoints)
+	json_vCheckpoints, _ := json.Marshal(deleteCheckpoints)
 	taskSpec := *a.m.taskSpec
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoints-list-gc-%s", uuid.New().String()))

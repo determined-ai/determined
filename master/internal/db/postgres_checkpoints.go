@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) (map[string]int, error) {
+func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) ([]string, error) {
 	var checkpointIDRows []struct {
 		ID string
 	}
@@ -17,10 +17,10 @@ func (db *PgDB) GetDeleteCheckpointsInModelRegistry(deleteCheckpoints []string) 
 		return nil, errors.Wrap(err, "querying for all requested delete checkpoints registered in model registry")
 	}
 
-	checkpointIDs := make(map[string]int)
+	var checkpointIDs []string
 
 	for _, cRow := range checkpointIDRows {
-		checkpointIDs[cRow.ID] = 1
+		checkpointIDs = append(checkpointIDs, cRow.ID)
 	}
 
 	return checkpointIDs, nil

@@ -75,15 +75,15 @@ func TestGetDeleteCheckpointsInModelRegistry(t *testing.T) {
 		Comment:    "empty",
 	}
 	err = db.QueryProto(
-		"insert_model_version", &mv, pmdl.Id, retCkpt1.Uuid, addmv.Name, addmv.Comment,
+		"insert_model_version", &mv, pmdl.Id, retCkpt2.Uuid, addmv.Name, addmv.Comment,
 		emptyMetadata, strings.Join(addmv.Labels, ","), addmv.Notes, user.ID,
 	)
 	require.NoError(t, err)
 
 	// Send a list of delete checkpoints uuids the user wants to delete and check if it's in model registry.
 	requestedDeleteCheckpoints := []string{checkpoint1.Uuid, checkpoint3.Uuid}
-	expectedDeleteInModelRegistryCheckpoints := make(map[string]int)
-	expectedDeleteInModelRegistryCheckpoints[checkpoint1.Uuid] = 1
+	var expectedDeleteInModelRegistryCheckpoints []string
+	expectedDeleteInModelRegistryCheckpoints = append(expectedDeleteInModelRegistryCheckpoints, checkpoint1.Uuid)
 	dCheckpointsInRegistry, err := db.GetDeleteCheckpointsInModelRegistry(requestedDeleteCheckpoints)
 	require.NoError(t, err)
 	require.Equal(t, expectedDeleteInModelRegistryCheckpoints, dCheckpointsInRegistry)

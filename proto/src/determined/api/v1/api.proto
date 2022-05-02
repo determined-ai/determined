@@ -1158,7 +1158,7 @@ service Determined {
       tags: "Checkpoints"
     };
   }
-
+  
   // Delete Checkpoints. 
   rpc DeleteCheckpoints(DeleteCheckpointsRequest) 
       returns (DeleteCheckpointsResponse) {
