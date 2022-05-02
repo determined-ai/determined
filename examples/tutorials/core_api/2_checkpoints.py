@@ -59,9 +59,9 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
 
             # NEW: write checkpoints at regular intervals to limit lost progress in case of a crash
             # during training.
-            checkpoint_metadata = {"latest_batch": batch}
+            checkpoint_metadata = {"latest_batch": batch + 1}
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                save_state(x, batch, trial_id, path)
+                save_state(x, batch + 1, trial_id, path)
 
             # NEW: check for a preemption signal.  This could originate from a higher-priority task
             # bumping us off the cluster, or for a user pausing the experiment via the WebUI or CLI.
