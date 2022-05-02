@@ -1188,9 +1188,6 @@ jobs:
       - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
-      - run: curl -Os https://uploader.codecov.io/latest/linux/codecov
-      - run: chmod +x codecov
-      - run: ./codecov -t $CODECOV_TOKEN
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
