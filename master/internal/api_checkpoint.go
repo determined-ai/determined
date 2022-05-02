@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -37,7 +38,7 @@ func (a *apiServer) GetCheckpoint(
 }
 
 func (a *apiServer) DeleteCheckpoints(
-	_ context.Context, req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
+	ctx context.Context, req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
 	deleteCheckpoints := req.CheckpointUuids
 	dCheckpointsInModelRegistry, _ := a.m.db.GetDeleteCheckpointsInModelRegistry(deleteCheckpoints)
 	// return 400 if model registry checkpoints and include all the model registry checkpoints
@@ -51,9 +52,24 @@ func (a *apiServer) DeleteCheckpoints(
 	taskSpec := *a.m.taskSpec
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoints-list-gc-%s", uuid.New().String()))
+
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
+	job_id := model.NewJobID()
+	if err := a.m.db.AddJob(&model.Job{
+		JobID:   job_id,
+		JobType: model.JobTypeExperiment,
+		OwnerID: &curUser.ID,
+	}); err != nil {
+		return nil, errors.Wrapf(err, "persisting new job")
+	}
+
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
 		taskID:            model.NewTaskID(),
-		jobID:             model.NewJobID(),
+		jobID:             job_id,
 		jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
 		GCCkptSpec: tasks.GCCkptSpec{
 			Base:         taskSpec,
