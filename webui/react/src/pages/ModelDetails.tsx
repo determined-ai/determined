@@ -213,7 +213,7 @@ const ModelDetails: React.FC = () => {
         width: 140,
       },
       {
-        dataIndex: 'user',
+        key: 'user',
         render: userRenderer,
         title: 'User',
         width: 1,

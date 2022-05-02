@@ -148,7 +148,6 @@ export const columns: ColumnType<Job>[] = [
     title: 'Status',
   },
   {
-    dataIndex: 'user',
     key: 'user',
     render: (_: unknown, record: Job): ReactNode => {
       const cell = <Avatar userId={record.userId} />;
