@@ -56,18 +56,19 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             # NEW: some logs are easier to read if we only print diagnostics from the chief.
             if core_context.distributed.rank == 0:
                 print("x is now", x)
-            batch += 1
-            if batch % 10 == 0:
+            if batch % 10 == 9:
                 # NEW: only the chief reports training metrics and progress, and uploads checkpoints.
                 if core_context.distributed.rank == 0:
-                    core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
+                    core_context.train.report_training_metrics(latest_batch=batch+1, metrics={"x": x})
                     op.report_progress(batch)
-                    checkpoint_metadata = {"latest_batch": batch}
+                    checkpoint_metadata = {"latest_batch": batch + 1}
                     with core_context.checkpoint.store_path(checkpoint_metadata) as (checkpoint_directory, uuid):
-                        save_state(x, batch, trial_id, checkpoint_directory)
-                    last_checkpoint_batch = batch
+                        save_state(x, batch + 1, trial_id, checkpoint_directory)
+                    last_checkpoint_batch = batch + 1
                 if core_context.preempt.should_preempt():
                     return
+            batch += 1
+
         # NEW: only the chief is able to report_validation_metrics and report_completed.
         if core_context.distributed.rank == 0:
             core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})

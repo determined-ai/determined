@@ -55,7 +55,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         time.sleep(.1)
         print("x is now", x)
         if batch % 10 == 9:
-            core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
+            core_context.train.report_training_metrics(latest_batch=batch+1, metrics={"x": x})
 
             # NEW: write checkpoints at regular intervals to limit lost progress in case of a crash
             # during training.
@@ -70,7 +70,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 # pick up training again when we are reactivated.
                 return
 
-    core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+    core_context.train.report_validation_metrics(latest_batch=batch+1, metrics={"x": x})
 
 
 if __name__ == "__main__":

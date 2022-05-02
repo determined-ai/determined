@@ -44,19 +44,19 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             x += increment_by
             time.sleep(.1)
             print("x is now", x)
-            batch += 1
             if batch % 10 == 9:
-                core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
+                core_context.train.report_training_metrics(latest_batch=batch+1, metrics={"x": x})
 
                 # NEW: report progress once in a while.
                 op.report_progress(batch)
 
-                checkpoint_metadata = {"latest_batch": batch}
+                checkpoint_metadata = {"latest_batch": batch + 1}
                 with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                    save_state(x, batch, trial_id, path)
-                last_checkpoint_batch = batch
+                    save_state(x, batch + 1, trial_id, path)
+                last_checkpoint_batch = batch + 1
                 if core_context.preempt.should_preempt():
                     return
+            batch += 1
         # NEW: After training for each op, we would normally validate and report the searcher metric
         # to the master.
         core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
