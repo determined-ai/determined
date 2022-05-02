@@ -284,6 +284,7 @@ type Experiment struct {
 	GitCommitDate        *time.Time `db:"git_commit_date"`
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
+	ProjectID            int        `db:"project_id"`
 }
 
 // ExperimentDescriptor is a minimal description of an experiment.
