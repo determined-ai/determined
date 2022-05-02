@@ -245,7 +245,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ fetchProjects, user ]);
+  }, [ fetchProjects, saveProjectDescription, user ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
