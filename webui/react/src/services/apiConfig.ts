@@ -792,6 +792,7 @@ export const getProjectExperiments: Service.DetApi<
       params.archived,
       params.states,
       params.users,
+      params.userIds,
       options,
     );
   },
