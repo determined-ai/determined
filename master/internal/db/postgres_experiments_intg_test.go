@@ -293,7 +293,6 @@ func TestGetExperiments(t *testing.T) {
 				resp,
 				tt.stateFilter,
 				tt.archivedFilter,
-				user.Username, // Always filter by a random user so the state is inconsequential.
 				userIDFilterExpr,
 				tt.labelFilter,
 				tt.descFilter,

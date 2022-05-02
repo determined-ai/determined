@@ -243,7 +243,6 @@ export const getExperiments: DetApi<
       params.labels,
       params.archived,
       params.states,
-      undefined,
       getUserIds(params.users),
       options,
     );
@@ -506,7 +505,6 @@ export const getModels: DetApi<
     params.description,
     params.labels,
     params.archived,
-    undefined,
     getUserIds(params.users),
   ),
 };
@@ -954,7 +952,6 @@ export const getCommands: DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
-    undefined,
     getUserIds(params.users),
   ),
 };
@@ -970,7 +967,6 @@ export const getJupyterLabs: DetApi<
     params.orderBy,
     params.offset,
     params.limit ?? TASK_LIMIT,
-    undefined,
     getUserIds(params.users),
   ),
 };

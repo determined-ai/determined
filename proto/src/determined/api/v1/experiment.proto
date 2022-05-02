@@ -98,9 +98,6 @@ message GetExperimentsRequest {
   // Limit experiments to those that match the provided state.
   repeated determined.experiment.v1.State states = 8;
   // Limit experiments to those that are owned by users with the specified
-  // usernames.
-  repeated string users = 9;
-  // Limit experiments to those that are owned by users with the specified
   // userIds.
   repeated int32 user_ids = 11;
 }

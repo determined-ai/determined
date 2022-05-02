@@ -31,17 +31,13 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}
-		users := make(map[string]bool)
-		for _, user := range msg.Users {
-			users[user] = true
-		}
 		userIds := make(map[int32]bool)
 		for _, user := range msg.UserIds {
 			userIds[user] = true
 		}
 		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
 			typed := tensorboard.(*tensorboardv1.Tensorboard)
-			if len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
+			if len(users) == 0 || userIds[typed.UserId] {
 				resp.Tensorboards = append(resp.Tensorboards, typed)
 			}
 		}
