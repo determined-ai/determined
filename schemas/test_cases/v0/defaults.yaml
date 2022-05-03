@@ -179,37 +179,3 @@
     source_trial_id: null
     source_checkpoint_uuid: null
     stop_once: false
-
-- name: pbt searcher defaults
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-pbt.json
-  default_as:
-    http://determined.ai/schemas/expconf/v0/searcher.json
-  case:
-    name: pbt
-    population_size: 25
-    num_rounds: 25
-    length_per_round:
-      batches: 1000
-    replace_function:
-      truncate_fraction: 0.5
-    explore_function:
-      resample_probability: 0.5
-      perturb_factor: 0.5
-    metric: loss
-  defaulted:
-    name: pbt
-    population_size: 25
-    num_rounds: 25
-    length_per_round:
-      batches: 1000
-    replace_function:
-      truncate_fraction: 0.5
-    explore_function:
-      resample_probability: 0.5
-      perturb_factor: 0.5
-    metric: loss
-    smaller_is_better: true
-    source_trial_id: null
-    source_checkpoint_uuid: null
