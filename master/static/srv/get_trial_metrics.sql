@@ -24,7 +24,7 @@ FROM
             FROM
               (SELECT c.id,
                       c.trial_id,
-                      c.latest_batch AS total_batches,
+                      c.steps_completed AS total_batches,
                       c.state,
                       c.report_time AS end_time,
                       c.uuid,
@@ -32,7 +32,7 @@ FROM
                       c.metadata
                FROM checkpoints_view c
                WHERE c.trial_id = t.id
-                 AND c.latest_batch = s.total_batches ) r3) AS CHECKPOINT,
+                 AND c.steps_completed = s.total_batches ) r3) AS CHECKPOINT,
 
            (SELECT row_to_json(r4)
             FROM

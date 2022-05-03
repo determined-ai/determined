@@ -18,13 +18,14 @@ def main(core_context, increment_by):
     x = 0
     for batch in range(100):
         x += increment_by
+        steps_completed = batch + 1
         time.sleep(.1)
         print("x is now", x)
         # NEW: report training metrics to Determined.
-        if batch % 10 == 9:
-            core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
+        if steps_completed % 10 == 0:
+            core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
     # NEW: report a "validation" metric at the end.
-    core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":

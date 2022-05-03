@@ -110,7 +110,7 @@ def _make_local_execution_env(
         experiment_config=config,
         hparams=hparams,
         latest_checkpoint=None,
-        latest_batch=0,
+        steps_completed=0,
         use_gpu=use_gpu,
         container_gpus=container_gpus,
         slot_ids=slot_ids,

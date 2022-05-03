@@ -46,7 +46,7 @@ def main(train_entrypoint: str) -> int:
         experiment_config=info.trial._config,
         hparams=info.trial.hparams,
         latest_checkpoint=info.latest_checkpoint,
-        latest_batch=info.trial._latest_batch,
+        steps_completed=info.trial._steps_completed,
         use_gpu=bool(info.gpu_uuids),
         container_gpus=info.gpu_uuids,
         slot_ids=info.slot_ids,

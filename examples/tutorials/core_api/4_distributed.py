@@ -20,17 +20,17 @@ import multiprocessing
 import determined as det
 
 
-def save_state(x, latest_batch, trial_id, checkpoint_directory):
+def save_state(x, steps_completed, trial_id, checkpoint_directory):
     with checkpoint_directory.joinpath("state").open("w") as f:
-        f.write(f"{x},{latest_batch},{trial_id}")
+        f.write(f"{x},{steps_completed},{trial_id}")
 
 
 def load_state(trial_id, checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("state").open("r") as f:
-        x, latest_batch, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+        x, steps_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
     if ckpt_trial_id == trial_id:
-        return x, latest_batch
+        return x, steps_completed
     else:
         return x, 0
 
@@ -52,32 +52,34 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             # can use the communication primitives.
             all_increment_bys = core_context.distributed.allgather(increment_by)
             x += sum(all_increment_bys)
+            steps_completed = batch + 1
             time.sleep(.1)
             # NEW: some logs are easier to read if we only print diagnostics from the chief.
             if core_context.distributed.rank == 0:
                 print("x is now", x)
-            batch += 1
-            if batch % 10 == 0:
+            if steps_completed % 10 == 0:
                 # NEW: only the chief reports training metrics and progress, and uploads checkpoints.
                 if core_context.distributed.rank == 0:
-                    core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
-                    op.report_progress(batch)
-                    checkpoint_metadata = {"latest_batch": batch}
+                    core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
+                    op.report_progress(steps_completed)
+                    checkpoint_metadata = {"steps_completed": steps_completed}
                     with core_context.checkpoint.store_path(checkpoint_metadata) as (checkpoint_directory, uuid):
-                        save_state(x, batch, trial_id, checkpoint_directory)
-                    last_checkpoint_batch = batch
+                        save_state(x, steps_completed, trial_id, checkpoint_directory)
+                    last_checkpoint_batch = steps_completed
                 if core_context.preempt.should_preempt():
                     return
+            batch += 1
+
         # NEW: only the chief is able to report_validation_metrics and report_completed.
         if core_context.distributed.rank == 0:
-            core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+            core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
             op.report_completed(x)
 
     # NEW: again, only the chief uploads checkpoints.
-    if core_context.distributed.rank == 0 and last_checkpoint_batch != batch:
-        checkpoint_metadata = {"latest_batch": batch}
+    if core_context.distributed.rank == 0 and last_checkpoint_batch != steps_completed:
+        checkpoint_metadata = {"steps_completed": steps_completed}
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-            save_state(x, batch, trial_id, path)
+            save_state(x, steps_completed, trial_id, path)
 
 
 if __name__ == "__main__":

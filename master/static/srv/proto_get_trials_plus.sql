@@ -75,7 +75,7 @@ latest_validation AS (
 best_checkpoint AS (
   SELECT
     c.uuid::text AS uuid,
-    c.latest_batch AS total_batches,
+    c.steps_completed AS total_batches,
     c.trial_id,
     c.report_time AS end_time,
     c.resources,
@@ -88,7 +88,7 @@ best_checkpoint AS (
         ) AS rank
       FROM trial_validations v
       INNER JOIN checkpoints_view c ON (
-        c.latest_batch = v.total_batches
+        c.steps_completed = v.total_batches
         AND c.trial_id = v.trial_id
       )
       WHERE c.state = 'COMPLETED'

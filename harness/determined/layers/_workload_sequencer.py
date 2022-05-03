@@ -74,14 +74,14 @@ class WorkloadSequencer(workload.Source):
             self,
             trial_id: int,
             last_ckpt: int = 0,
-            latest_batch: int = 0,
+            steps_completed: int = 0,
             step_id: int = 0,
             last_val: int = 0,
         ) -> None:
             # Store TrialID to distinguish between e.g. pause/restart and continue training.
             self.trial_id = trial_id
             self.last_ckpt = last_ckpt
-            self.latest_batch = latest_batch
+            self.steps_completed = steps_completed
             self.step_id = step_id
             self.last_val = last_val
 
@@ -148,8 +148,8 @@ class WorkloadSequencer(workload.Source):
         # checkpoint state.  If the validation was before the last checkpoint, the checkpoint state
         # is already correct, while any validations after the last checkpoint aren't valid anymore
         # and can be safely ignored.
-        if self.state.latest_batch == self.val_from_previous_run:
-            self.state.last_val = self.state.latest_batch
+        if self.state.steps_completed == self.val_from_previous_run:
+            self.state.last_val = self.state.steps_completed
 
     def as_batches(
         self,
@@ -186,7 +186,7 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id + 1,
             num_batches=num_batches,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
 
         response = yield from yield_and_await_response(wkld)
@@ -201,21 +201,21 @@ class WorkloadSequencer(workload.Source):
         metrics = response.get("metrics", {}).get("avg_metrics", {})
         batch_metrics = response.get("metrics", {}).get("batch_metrics", [])
 
-        self.state.latest_batch += num_batches
+        self.state.steps_completed += num_batches
         self.state.step_id += 1
         self.core_context.train.report_training_metrics(
-            latest_batch=self.state.latest_batch,
+            steps_completed=self.state.steps_completed,
             metrics=metrics,
             batch_metrics=batch_metrics,
         )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
         if self._unit == core.Unit.BATCHES:
-            op.report_progress(self.state.latest_batch)
+            op.report_progress(self.state.steps_completed)
         elif self._unit == core.Unit.RECORDS:
-            op.report_progress(self.global_batch_size * self.state.latest_batch)
+            op.report_progress(self.global_batch_size * self.state.steps_completed)
         elif self._unit == core.Unit.EPOCHS:
-            op.report_progress(self.state.latest_batch / self.as_batches(epochs=1))
+            op.report_progress(self.state.steps_completed / self.as_batches(epochs=1))
         else:
             raise ValueError(f"unrecognized searcher op unit: {self._unit}")
 
@@ -241,7 +241,7 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id,
             num_batches=0,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
 
         response = yield from yield_and_await_response(wkld)
@@ -299,9 +299,9 @@ class WorkloadSequencer(workload.Source):
             # without it.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
-        self.state.last_val = self.state.latest_batch
+        self.state.last_val = self.state.steps_completed
         self.core_context.train.report_validation_metrics(
-            latest_batch=self.state.latest_batch,
+            steps_completed=self.state.steps_completed,
             metrics=metrics,
         )
 
@@ -321,7 +321,7 @@ class WorkloadSequencer(workload.Source):
         self.core_context.train.set_status("checkpointing")
 
         # Update the last_ckpt now so it can be captured by get_state() after we yield.
-        self.state.last_ckpt = self.state.latest_batch
+        self.state.last_ckpt = self.state.steps_completed
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.CHECKPOINT_MODEL,
@@ -329,7 +329,7 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id,
             num_batches=0,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
         response = yield from yield_and_await_response(wkld)
 
@@ -348,10 +348,10 @@ class WorkloadSequencer(workload.Source):
         self.check_for_preemption()
 
     def batches_until_val(self) -> int:
-        return self.state.last_val + self.min_val_period_batches - self.state.latest_batch
+        return self.state.last_val + self.min_val_period_batches - self.state.steps_completed
 
     def batches_until_ckpt(self) -> int:
-        return self.state.last_ckpt + self.min_ckpt_period_batches - self.state.latest_batch
+        return self.state.last_ckpt + self.min_ckpt_period_batches - self.state.steps_completed
 
     def batches_until_op_complete(self, op: core.SearcherOperation) -> int:
         return (
@@ -360,14 +360,14 @@ class WorkloadSequencer(workload.Source):
                 records=op.length if self._unit == core.Unit.RECORDS else None,
                 epochs=op.length if self._unit == core.Unit.EPOCHS else None,
             )
-            - self.state.latest_batch
+            - self.state.steps_completed
         )
 
     def checkpoint_is_current(self) -> bool:
-        return self.state.last_ckpt == self.state.latest_batch
+        return self.state.last_ckpt == self.state.steps_completed
 
     def validation_is_current(self) -> bool:
-        return self.state.last_val == self.state.latest_batch
+        return self.state.last_val == self.state.steps_completed
 
     def __iter__(self) -> workload.Stream:
         try:
@@ -375,7 +375,7 @@ class WorkloadSequencer(workload.Source):
             if (
                 self.want_initial_val
                 and self.val_from_previous_run is None
-                and self.state.latest_batch == 0
+                and self.state.steps_completed == 0
             ):
                 yield from self.validate(None)
 

@@ -167,7 +167,7 @@ UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches >= $3;
-`, m.TrialId, m.TrialRunId, m.LatestBatch); err != nil {
+`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
 
@@ -176,7 +176,7 @@ UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches > $3;
-`, m.TrialId, m.TrialRunId, m.LatestBatch); err != nil {
+`, m.TrialId, m.TrialRunId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
 
@@ -195,7 +195,7 @@ VALUES
 				"avg_metrics":   m.Metrics,
 				"batch_metrics": m.BatchMetrics,
 			},
-			TotalBatches: int(m.LatestBatch),
+			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
 			return errors.Wrap(err, "inserting training metrics")
 		}
@@ -219,12 +219,12 @@ UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches >= $2;
-`, m.TrialId, m.LatestBatch); err != nil {
+`, m.TrialId, m.StepsCompleted); err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
 
 		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch),
+			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.StepsCompleted),
 		); err != nil {
 			return err
 		}
@@ -243,7 +243,7 @@ VALUES
 			Metrics: map[string]interface{}{
 				"validation_metrics": m.Metrics,
 			},
-			TotalBatches: int(m.LatestBatch),
+			TotalBatches: int(m.StepsCompleted),
 		}); err != nil {
 			return errors.Wrap(err, "inserting validation metrics")
 		}
@@ -260,7 +260,7 @@ VALUES
 // This is used to make sure there is at least a dummy step for each validation or checkpoint,
 // in the event one comes without (e.g. perform_initial_validation).
 func (db *PgDB) ensureStep(
-	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, latestBatch int,
+	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
 ) error {
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
@@ -280,7 +280,7 @@ DO NOTHING
 			"avg_metrics":   struct{}{},
 			"batch_metrics": []struct{}{},
 		},
-		TotalBatches: latestBatch,
+		TotalBatches: stepsCompleted,
 	}); err != nil {
 		return errors.Wrap(err, "inserting training metrics")
 	}
@@ -359,7 +359,7 @@ func (db *PgDB) CheckpointByTotalBatches(trialID, totalBatches int) (*model.Chec
 	if err := db.query(`
 SELECT *
 FROM checkpoints_view c
-WHERE c.trial_id = $1 AND c.latest_batch = $2`, &checkpoint, trialID, totalBatches,
+WHERE c.trial_id = $1 AND c.steps_completed = $2`, &checkpoint, trialID, totalBatches,
 	); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
@@ -391,7 +391,7 @@ func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
 SELECT *
 FROM checkpoints_view c
 WHERE c.trial_id = $1 AND c.state = 'COMPLETED'
-ORDER BY c.latest_batch DESC
+ORDER BY c.steps_completed DESC
 LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {

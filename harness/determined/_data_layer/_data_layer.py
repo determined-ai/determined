@@ -60,7 +60,7 @@ class _CacheableDecorator:
             return
 
         batch_size = self._per_slot_batch_size
-        self._offset = self._env.latest_batch * batch_size
+        self._offset = self._env.steps_completed * batch_size
 
     def _init_shard(self) -> None:
         if self._distributed_context.size == 0:

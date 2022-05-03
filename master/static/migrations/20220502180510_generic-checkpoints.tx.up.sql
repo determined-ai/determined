@@ -33,7 +33,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         -- but since the release of Core API, the TrialControllers are no longer part of the system
         -- proper but are considered userspace tools.
         jsonb_build_object(
-            'latest_batch', c.total_batches,
+            'steps_completed', c.total_batches,
             'framework', c.framework,
             'format', c.format,
             'determined_version', c.determined_version
@@ -45,7 +45,7 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         s.metrics AS training_metrics,
         v.metrics->'validation_metrics' AS validation_metrics,
         (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
-        c.total_batches as latest_batch,
+        c.total_batches as steps_completed,
         1 as checkpoint_version
     FROM raw_checkpoints AS c
     LEFT JOIN trials AS t on c.trial_id = t.id
@@ -71,14 +71,14 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
         s.metrics AS training_metrics,
         v.metrics->'validation_metrics' AS validation_metrics,
         (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
-        CAST(c.metadata->>'latest_batch' AS int) as latest_batch,
+        CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
         2 AS checkpoint_version
     FROM checkpoints_v2 AS c
     LEFT JOIN trials AS t on c.task_id = t.task_id
     LEFT JOIN experiments AS e on t.experiment_id = e.id
-    LEFT JOIN validations AS v on CAST(c.metadata->>'latest_batch' AS int) = v.total_batches and t.id = v.trial_id
+    LEFT JOIN validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
     -- avoiding the steps view causes Postgres to not "Materialize" in this join.
-    LEFT JOIN raw_steps AS s on CAST(c.metadata->>'latest_batch' AS int) = s.total_batches and t.id = s.trial_id
+    LEFT JOIN raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
     WHERE s.archived IS NULL OR s.archived = false;
 
 -- checkpoints_view returns all checkpoints in the current format, rendered for protobuf to consume.

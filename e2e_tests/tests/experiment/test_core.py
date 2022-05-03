@@ -299,7 +299,7 @@ def test_end_to_end_adaptive() -> None:
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
     # Beginning with 0.18 the system contributes a few items to the dict
     assert checkpoint.metadata.get("testing") == "metadata"
-    assert checkpoint.metadata.keys() == {"format", "framework", "latest_batch", "testing"}
+    assert checkpoint.metadata.keys() == {"format", "framework", "steps_completed", "testing"}
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"some_key": "some_value"})
@@ -308,7 +308,7 @@ def test_end_to_end_adaptive() -> None:
     assert checkpoint.metadata.keys() == {
         "format",
         "framework",
-        "latest_batch",
+        "steps_completed",
         "testing",
         "some_key",
     }
