@@ -101,9 +101,9 @@ const getExtendedOptions = (
              * still would need to manually provide a scale with min and max
              * centered around the point when- and only when- their component has one point
              */
-            if (![ 'x', 'y' ].includes(scaleKey)) return;
+            if (scaleKey !== 'x') return;
 
-            // the previous max/min extent of the data
+            // prevMax/Min indicate the previous max/min extent of the data.
             const prevMax = boundsRef.current[scaleKey]?.max;
             const prevMin = boundsRef.current[scaleKey]?.min;
 
@@ -153,10 +153,6 @@ const UPlotChart: React.FC<Props> = ({
   const [ isReady, setIsReady ] = useState(false);
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
-
-  // window.data = data;
-  // window.chart = chartRef.current;
-  // window.options = options;
 
   const extendedOptions = useMemo(
     () =>
@@ -234,11 +230,7 @@ const UPlotChart: React.FC<Props> = ({
       try {
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, resetScales);
-          if (onlyOneXValue) chartRef.current.redraw();
-          /**
-           * this messes up learning curve for in progress experiment
-           */
-          // chartRef.current.redraw(true, true);
+          if (onlyOneXValue) chartRef.current.redraw(true);
         }
 
       } catch(e) {

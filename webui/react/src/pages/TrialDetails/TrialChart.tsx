@@ -78,7 +78,6 @@ const TrialChart: React.FC<Props> = ({
           time: false,
         }
         : { time: false };
-    // const xScale = { time: false };
 
     const yScale =
       chartData[1]?.length === 1
@@ -88,7 +87,6 @@ const TrialChart: React.FC<Props> = ({
           min: (chartData?.[1][0] ?? 0) - A_REASONABLY_SMALL_NUMBER,
         }
         : { distr: scale === Scale.Log ? 3 : 1 };
-    // const yScale = { distr: scale === Scale.Log ? 3 : 1 };
     return {
       axes: [
         { label: 'Batches' },
