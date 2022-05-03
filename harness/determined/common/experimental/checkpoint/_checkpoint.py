@@ -156,6 +156,15 @@ class Checkpoint(object):
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
+        # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
+        # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than
+        # 0.17.7 depended on this file existing in order to be loaded.  Therefore, when we detect
+        # that the metadata.json file is not present, we write it to make sure those checkpoints can
+        # still load.
+        metadata_path = local_ckpt_dir.joinpath("metadata.json")
+        if not metadata_path.exists():
+            self.write_metadata_file(str(metadata_path))
+
         return str(local_ckpt_dir)
 
     def write_metadata_file(self, path: str) -> None:
