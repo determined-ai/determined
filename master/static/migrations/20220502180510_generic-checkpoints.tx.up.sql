@@ -36,7 +36,9 @@ CREATE OR REPLACE VIEW public.checkpoints_view AS
             'steps_completed', c.total_batches,
             'framework', c.framework,
             'format', c.format,
-            'determined_version', c.determined_version
+            'determined_version', c.determined_version,
+            'experiment_config', e.config,
+            'hparams', t.hparams
         ) || COALESCE(c.metadata, '{}'::jsonb) AS metadata,
         t.id AS trial_id,
         e.id AS experiment_id,
