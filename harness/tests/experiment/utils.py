@@ -1,6 +1,5 @@
 import os
 import pathlib
-import tempfile
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -9,8 +8,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import _core, experimental, gpu, keras, workload
-from determined.common import check
+from determined import _core, gpu, keras, workload
 
 
 class TrainAndValidate:
@@ -414,22 +412,6 @@ def checkpointing_and_restoring_test(
 
 def list_all_files(directory: str) -> List[str]:
     return [f for _, _, files in os.walk(directory) for f in files]
-
-
-def create_trial_instance(trial_def: Type[det.Trial]) -> None:
-    with tempfile.TemporaryDirectory() as td:
-        trial_instance = experimental.create_trial_instance(
-            trial_def=trial_def,
-            config={
-                "hyperparameters": {
-                    "global_batch_size": det.Constant(16),
-                    "hidden_size": 4,
-                    "learning_rate": 0.01,
-                }
-            },
-            checkpoint_dir=td,
-        )
-    check.check_isinstance(trial_instance, det.Trial)
 
 
 def ensure_requires_global_batch_size(
