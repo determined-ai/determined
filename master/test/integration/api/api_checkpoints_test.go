@@ -346,28 +346,35 @@ func testGetTrialCheckpoints(
 
 }
 
-func createPrereqs(t *testing.T, db *db.PgDB) (
+func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	*model.Experiment, *model.Trial, *model.Allocation) {
 	experiment := model.ExperimentModel()
-	err := db.AddExperiment(experiment)
+	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
-	trial := model.TrialModel(
-		experiment.ID, experiment.JobID, model.WithTrialState(model.ActiveState))
-	err = db.AddTrial(trial)
+	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
+	trial := &model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        experiment.JobID,
+		ExperimentID: experiment.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+
+	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 	t.Logf("Created trial=%v", trial)
 
 	startTime := time.Now().UTC()
 	a := &model.Allocation{
-		AllocationID: model.NewAllocationID(fmt.Sprintf("%s-%d", trial.TaskID, 1)),
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", trial.TaskID, 1)),
 		TaskID:       trial.TaskID,
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
 	}
-	err = db.AddAllocation(a)
+	err = pgDB.AddAllocation(a)
 	assert.NilError(t, err, "failed to add allocation")
-	err = db.CompleteAllocation(a)
+	err = pgDB.CompleteAllocation(a)
 	assert.NilError(t, err, "failed to complete allocation")
 
 	return experiment, trial, a
