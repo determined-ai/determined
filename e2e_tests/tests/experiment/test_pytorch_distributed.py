@@ -13,11 +13,11 @@ def test_gradient_aggregation() -> None:
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
     trials = exp.experiment_trials(exp_id)
     assert len(trials) == 1
-    workloads = exp.workloads_for_mode(trials[0].workloads, "validation")
+    workloads = exp.workloads_with_validation(trials[0].workloads)
     actual_weights = []
     for wl in workloads:
-        if wl.validation and wl.validation.metrics:
-            actual_weights.append(wl.validation.metrics["weight"])
+        if wl.metrics:
+            actual_weights.append(wl.metrics["weight"])
 
     # independently compute expected metrics
     batch_size = 4
