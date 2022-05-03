@@ -24,18 +24,18 @@ import determined as det
 # NEW: given a checkpoint_directory of type pathlib.Path, save our state to a file.
 # You can save multiple files, and use any file names or directory structures.
 # All files nested under `checkpoint_directory` path will be included into the checkpoint.
-def save_state(x, latest_batch, trial_id, checkpoint_directory):
+def save_state(x, steps_completed, trial_id, checkpoint_directory):
     with checkpoint_directory.joinpath("state").open("w") as f:
-        f.write(f"{x},{latest_batch},{trial_id}")
+        f.write(f"{x},{steps_completed},{trial_id}")
 
 
 # NEW: given a checkpoint_directory, load our state from a file.
 def load_state(trial_id, checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("state").open("r") as f:
-        x, latest_batch, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+        x, steps_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
     if ckpt_trial_id == trial_id:
-        return x, latest_batch
+        return x, steps_completed
     else:
         # This is a new trial; load the "model weight" but not the batch count.
         return x, 0

@@ -156,7 +156,7 @@ class NoOpTrialController(det.TrialController):
             ),
             "stop_requested": self.context.get_stop_requested(),
         }
-        self.latest_batch += num_batches
+        self.steps_completed += num_batches
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:

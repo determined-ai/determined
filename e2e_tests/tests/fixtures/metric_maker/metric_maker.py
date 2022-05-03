@@ -104,7 +104,7 @@ class MetricMaker(det.TrialController):
                 self.context._core, self.env, self.context.get_global_batch_size()
             )
 
-        self.latest_batch = self.env.latest_batch
+        self.steps_completed = self.env.steps_completed
 
         if self.env.latest_checkpoint is not None:
             with self.context._core.checkpoint.restore_path(
@@ -127,7 +127,7 @@ class MetricMaker(det.TrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = self.compute_validation_metrics(w.step_id)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                metadata = {"steps_completed": self.latest_batch}
+                metadata = {"steps_completed": self.steps_completed}
                 if self.is_chief:
                     with self.context._core.checkpoint.store_path(metadata) as (
                         path,
@@ -152,7 +152,7 @@ class MetricMaker(det.TrialController):
         # Update the overall base value for the trial.
         self.value += self.gain_per_batch * num_batches
 
-        self.latest_batch += num_batches
+        self.steps_completed += num_batches
 
         return {
             "metrics": det.util.make_metrics(num_batches, batch_metrics),

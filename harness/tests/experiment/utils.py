@@ -57,7 +57,7 @@ class TrainAndValidate:
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
             self._steps_completed += scheduling_unit
             if metrics.get("stop_requested"):
-                assert step_id == self.request_stop_step_id
+                assert step_id == self.request_stop_step_id, (step_id, self)
                 stop_requested = True
 
             if step_id % validation_freq == 0:
