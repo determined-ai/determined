@@ -1,23 +1,17 @@
-import React, { useEffect } from 'react';
-
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import StoreDecorator from 'storybook/StoreDecorator';
-import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+import { CheckpointDetail,
+  CheckpointState,
+  CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
-  RunState, TrialDetails } from 'types';
+  RunState } from 'types';
 import { generateExperiments } from 'utils/task';
 
-import TrialRangeHyperparameters from './TrialRangeHyperparameters';
-
-export default {
-  component: TrialRangeHyperparameters,
-  decorators: [ StoreDecorator ],
-  title: 'TrialRangeHyperparameters',
-};
-
-const TrialRangeHyperparametersContainer = () => {
+export const generateTestExperimentData = ():
+{
+  checkpoint:CheckpointDetail,
+  experiment: ExperimentBase,
+} => {
   const exp = generateExperiments(1)[0];
-  const sampleExp: ExperimentBase = {
+  const experiment: ExperimentBase = {
     ...exp,
     archived: false,
     config: {
@@ -213,68 +207,15 @@ const TrialRangeHyperparametersContainer = () => {
     state: RunState.Completed,
     userId: 2,
   };
-  const sampleTrial: TrialDetails = {
-    endTime: '2021-06-09T15:35:27.464642Z',
-    experimentId: 1,
-    hyperparameters: {
-      categorical: 16,
-      constant: 64,
-      double: 0.675007115766233,
-      log: 0.5138800609919691,
-    },
-    id: 1,
-    startTime: '2021-06-09T15:26:58.003220Z',
-    state: RunState.Completed,
-    totalBatchesProcessed: 58,
-    workloads: [
-      {
-        validation: {
-          endTime: '2021-06-09T15:28:20.278182Z',
-          metrics: {
-            accuracy: 0.9087380573248408,
-            validation_loss: 0.29681510450970977,
-          },
-          totalBatches: 58,
-        },
-      },
-      {
-        checkpoint: {
-          endTime: '2021-06-09T15:28:16.314554Z',
-          resources: {
-            'code/': 0,
-            'code/adaptive.yaml': 678,
-            'code/const.yaml': 434,
-            'code/data.py': 1444,
-            'code/distributed.yaml': 499,
-            'code/layers.py': 568,
-            'code/model_def.py': 3789,
-            'code/README.md': 1407,
-            'state_dict.pth': 13691537,
-          },
-          state: CheckpointState.Completed,
-          totalBatches: 58,
-          uuid: '08b7345e-1dd8-4ec2-a49c-054814d8929e',
-        },
-      },
-      {
-        training: {
-          endTime: '2021-06-09T15:28:16.099435Z',
-          metrics: { loss: 0.9266772866249084 },
-          totalBatches: 58,
-        },
-      },
-    ],
+
+  const checkpoint: CheckpointDetail = {
+    batch: 1,
+    experimentId: 2,
+    metadata: { 'Value Name': '0' },
+    metrics: { numInputs: 1 },
+    state: CheckpointState.Completed,
+    trialId: 3,
   };
 
-  const storeDispatch = useStoreDispatch();
-
-  useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
-
-  return <TrialRangeHyperparameters experiment={sampleExp} trial={sampleTrial} />;
-};
-
-export const Default = (): React.ReactNode => {
-  return <TrialRangeHyperparametersContainer />;
+  return { checkpoint, experiment };
 };

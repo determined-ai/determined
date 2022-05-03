@@ -9,31 +9,6 @@ import * as Type from 'types';
 
 import { identity, noOp } from './utils';
 
-const ApiConfig = new Api.Configuration({
-  apiKey: `Bearer ${globalStorage.authToken}`,
-  basePath: serverAddress(),
-});
-
-export const detApi = {
-  Auth: new Api.AuthenticationApi(ApiConfig),
-  Cluster: new Api.ClusterApi(ApiConfig),
-  Commands: new Api.CommandsApi(ApiConfig),
-  Experiments: new Api.ExperimentsApi(ApiConfig),
-  Internal: new Api.InternalApi(ApiConfig),
-  Models: new Api.ModelsApi(ApiConfig),
-  Notebooks: new Api.NotebooksApi(ApiConfig),
-  Shells: new Api.ShellsApi(ApiConfig),
-  StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
-  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
-  StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
-  StreamingJobs: Api.JobsApiFetchParamCreator(ApiConfig),
-  StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),
-  Tasks: new Api.TasksApi(ApiConfig),
-  Templates: new Api.TemplatesApi(ApiConfig),
-  TensorBoards: new Api.TensorboardsApi(ApiConfig),
-  Users: new Api.UsersApi(ApiConfig),
-};
-
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {
@@ -44,26 +19,34 @@ const updatedApiConfigParams = (
   };
 };
 
+const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
+  const config = updatedApiConfigParams(apiConfig);
+  return {
+    Auth: new Api.AuthenticationApi(config),
+    Cluster: new Api.ClusterApi(config),
+    Commands: new Api.CommandsApi(config),
+    Experiments: new Api.ExperimentsApi(config),
+    Internal: new Api.InternalApi(config),
+    Models: new Api.ModelsApi(config),
+    Notebooks: new Api.NotebooksApi(config),
+    Shells: new Api.ShellsApi(config),
+    StreamingCluster: Api.ClusterApiFetchParamCreator(config),
+    StreamingExperiments: Api.ExperimentsApiFetchParamCreator(config),
+    StreamingInternal: Api.InternalApiFetchParamCreator(config),
+    StreamingJobs: Api.JobsApiFetchParamCreator(config),
+    StreamingProfiler: Api.ProfilerApiFetchParamCreator(config),
+    Tasks: new Api.TasksApi(config),
+    Templates: new Api.TemplatesApi(config),
+    TensorBoards: new Api.TensorboardsApi(config),
+    Users: new Api.UsersApi(config),
+  };
+};
+
+export let detApi = generateApiConfig();
+
 // Update references to generated API code with new configuration.
 export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
-  const config = updatedApiConfigParams(apiConfig);
-  detApi.Auth = new Api.AuthenticationApi(config);
-  detApi.Cluster = new Api.ClusterApi(config);
-  detApi.Commands = new Api.CommandsApi(config);
-  detApi.Experiments = new Api.ExperimentsApi(config);
-  detApi.Internal = new Api.InternalApi(config);
-  detApi.Models = new Api.ModelsApi(config);
-  detApi.Notebooks = new Api.NotebooksApi(config);
-  detApi.Shells = new Api.ShellsApi(config);
-  detApi.StreamingCluster = Api.ClusterApiFetchParamCreator(config);
-  detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
-  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
-  detApi.StreamingJobs = Api.JobsApiFetchParamCreator(ApiConfig),
-  detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
-  detApi.Tasks = new Api.TasksApi(config);
-  detApi.TensorBoards = new Api.TensorboardsApi(config);
-  detApi.Users = new Api.UsersApi(config);
-  detApi.Templates = new Api.TemplatesApi(config);
+  detApi = generateApiConfig(apiConfig);
 };
 
 /* Helpers */

@@ -2,7 +2,7 @@ import { DetailedUser, User } from 'types';
 
 interface UserNameFields {
   displayName?: string;
-  username: string;
+  username?: string;
 }
 
 export function getDisplayName (user: DetailedUser | User | UserNameFields | undefined): string {
