@@ -3169,10 +3169,6 @@ schemas = {
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                     },
                     {
-                        "unionKey": "const:name=pbt",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-                    },
-                    {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
                     },
@@ -3203,18 +3199,13 @@ schemas = {
     "properties": {
         "bracket_rungs": true,
         "divisor": true,
-        "explore_function": true,
-        "length_per_round": true,
         "max_concurrent_trials": true,
         "max_length": true,
         "max_rungs": true,
         "max_trials": true,
         "mode": true,
         "name": true,
-        "num_rounds": true,
         "num_rungs": true,
-        "population_size": true,
-        "replace_function": true,
         "stop_once": true,
         "metric": {
             "type": [

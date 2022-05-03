@@ -156,7 +156,6 @@ that are stopped early are considered to be "completed", whereas trials that fai
    hp-adaptive-asha
    hp-constraints-det
    hp-grid
-   hp-pbt
    hp-random
    hp-single
    hp-tuning-defined
