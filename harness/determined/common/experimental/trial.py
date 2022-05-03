@@ -119,7 +119,9 @@ class TrialReference:
 
         if not sort_by:
             sort_by = checkpoints[0]["training"]["experimentConfig"]["searcher"]["metric"]
-            smaller_is_better = checkpoints[0]["training"]["experimentConfig"]["searcher"]["smaller_is_better"]
+            smaller_is_better = checkpoints[0]["training"]["experimentConfig"]["searcher"][
+                "smaller_is_better"
+            ]
 
         def has_metric(c: Dict[str, Any]) -> bool:
             return sort_by in c["training"].get("validationMetrics", {}).get("avgMetrics", {})
@@ -130,7 +132,9 @@ class TrialReference:
             raise AssertionError(f"No checkpoint for trial {self.id} has metric {sort_by}")
 
         best_checkpoint_func = min if smaller_is_better else max
-        key: Callable[[Dict], Any] = lambda x: x["training"]["validationMetrics"]["avgMetrics"][sort_by]
+        key: Callable[[Dict], Any] = lambda x: x["training"]["validationMetrics"]["avgMetrics"][
+            sort_by
+        ]
         return checkpoint.Checkpoint._from_json(
             best_checkpoint_func(
                 checkpoints_with_metric,
