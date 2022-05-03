@@ -1,11 +1,10 @@
-import { Button, Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
-import CheckpointModal from 'components/CheckpointModal';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -13,7 +12,7 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import {
-  CheckpointDetail, CommandTask, ExperimentBase, MetricName,
+  CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
@@ -44,9 +43,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
@@ -63,13 +59,11 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           trialId: trial?.id,
         };
         return (
-          <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-              onClick={e => handleCheckpointShow(e, checkpoint)}
-            />
-          </Tooltip>
+          <CheckpointModalTrigger
+            checkpoint={checkpoint}
+            experiment={experiment}
+            title={`Checkpoint for Batch ${checkpoint.batch}`}
+          />
         );
       }
       return null;
@@ -111,7 +105,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [ experiment?.config, metrics, settings, trial ]);
+  }, [ metrics, settings, trial, experiment ]);
 
   const workloadSteps = useMemo(() => {
     const data = trial?.workloads || [];
@@ -129,13 +123,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         return false;
       });
   }, [ settings.filter, trial?.workloads ]);
-
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-  const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
   const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
     const newFilter = value as TrialWorkloadFilter;
@@ -190,15 +177,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           onChange={handleTableChange}
         />
       </Section>
-      {activeCheckpoint && experiment?.config && (
-        <CheckpointModal
-          checkpoint={activeCheckpoint}
-          config={experiment?.config}
-          show={showCheckpoint}
-          title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
-          onHide={handleCheckpointDismiss}
-        />
-      )}
     </>
   );
 };
