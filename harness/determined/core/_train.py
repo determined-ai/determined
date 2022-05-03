@@ -227,7 +227,8 @@ class DummyTrainContext(TrainContext):
         serializable_metrics = self._get_serializable_metrics(metrics)
         metrics = {k: metrics[k] for k in serializable_metrics}
         logger.info(
-            f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
+            f"report_validation_metrics(steps_completed={steps_completed},"
+            f" metrics={metrics})"
         )
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
