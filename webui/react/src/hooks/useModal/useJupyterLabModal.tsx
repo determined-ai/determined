@@ -124,8 +124,8 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
   const footer = (
-    <>
-      <Button
+    <div className={css.buttons}>
+        <Button
         onClick={handleSecondary}>
         {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
       </Button>
@@ -134,25 +134,30 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
         type="primary"
         onClick={handleCreateEnvironment}>Launch
       </Button>
-    </>
+    </div>
   )
   const content = showFullConfig ? (
+    <>
         <JupyterLabFullConfig
           config={config}
           setButtonDisabled={setButtonDisabled}
           onChange={handleConfigChange}
         />
+        {footer}
+        </>
       ) : (
+        <>
         <JupyterLabForm fields={fields} onChange={dispatch} />
+        {footer}
+        </>
       )
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
+      className: css.noFooter,
       content: content,
-      okText: 'Delete',
       title: 'Launch JupyterLab',
       width:540,
-      footer: footer
     };
   }, []);
 
