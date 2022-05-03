@@ -155,10 +155,10 @@ inside and outside of docker containers (since the Fluentbit container will alwa
 networking).
 
 Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
-``fluent/fluent-bit:1.9`` Docker image at runtime. It will attempt to pull the image automatically;
-if the agent machines in the cluster are not able to connect to Docker Hub, the image must be
-manually placed on them before Determined can run. In order to specify a different image to use for
-running Fluent Bit (generally to make use of a custom Docker registry---the image should not
+``fluent/fluent-bit:1.9.3`` Docker image at runtime. It will attempt to pull the image
+automatically; if the agent machines in the cluster are not able to connect to Docker Hub, the image
+must be manually placed on them before Determined can run. In order to specify a different image to
+use for running Fluent Bit (generally to make use of a custom Docker registry---the image should not
 normally need to be changed otherwise), use the agent's ``--fluent-logging-image`` command-line
 option or ``fluent_logging_image`` config file option.
 

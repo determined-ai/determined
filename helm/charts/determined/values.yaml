@@ -202,5 +202,5 @@ telemetry:
 
 ## Configure settings about how Determined launches the Fluentbit sidecar.
 # fluent:
-#   image: fluent/fluent-bit:1.9
+#   image: fluent/fluent-bit:1.9.3
 

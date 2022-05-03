@@ -28,8 +28,8 @@ are satisfied:
    using `kubectl create secret
    <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>`_.
 
--  The nodes in the cluster already have or can pull the ``fluent/fluent-bit:1.9`` Docker image from
-   Docker Hub.
+-  The nodes in the cluster already have or can pull the ``fluent/fluent-bit:1.9.3`` Docker image
+   from Docker Hub.
 
 -  Optional: for GPU-based training, the Kubernetes cluster should have `GPU support
    <https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/>`_ enabled.
