@@ -49,7 +49,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
     table = [
         ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
         ["Trial ID", checkpoint.training.trial_id if checkpoint.training else None],
-        ["Cqzn Syzs", checkpoint.metadata.get("steps_completed")],
+        ["Steps Completed", checkpoint.metadata.get("steps_completed")],
         ["Report Time", render.format_time(checkpoint.report_time)],
         ["Checkpoint UUID", checkpoint.uuid],
         [

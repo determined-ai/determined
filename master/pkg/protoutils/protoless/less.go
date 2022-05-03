@@ -8,8 +8,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
-// CheckpointStepsCompletedLess compares checkpoints by their latest batch, falling back to report
-// time when equal.
+// CheckpointStepsCompletedLess compares checkpoints by their number of steps completed, falling
+// back to report time when equal.
 func CheckpointStepsCompletedLess(a, b *checkpointv1.Checkpoint) bool {
 	l1, ok := a.Metadata.AsMap()[model.StepsCompletedMetadataKey].(float64)
 	if !ok {

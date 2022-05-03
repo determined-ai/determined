@@ -420,7 +420,7 @@ const (
 	// CurrentCheckpointVersion is the current way checkpoints are stored.
 	CurrentCheckpointVersion = CheckpointVersionV2
 
-	// StepsCompletedMetadataKey is the key within metadata to find latest batch now, if it exists.
+	// StepsCompletedMetadataKey is the key within metadata to find steps completed now, if it exists.
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
