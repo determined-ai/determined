@@ -30,6 +30,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 const (
@@ -528,6 +529,7 @@ func runAPIServer(options Options, system *actor.System) error {
 	server.HideBanner = true
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
+	server.Use(otelecho.Middleware("determined-agent"))
 
 	server.Any("/*", api.Route(system, nil))
 	server.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
