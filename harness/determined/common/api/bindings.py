@@ -4808,7 +4808,7 @@ class v1TrialLogsResponse:
 class v1TrialMetrics:
     def __init__(
         self,
-        latestBatch: int,
+        stepsCompleted: int,
         metrics: "typing.Dict[str, typing.Any]",
         trialId: int,
         trialRunId: int,
@@ -4816,7 +4816,7 @@ class v1TrialMetrics:
     ):
         self.trialId = trialId
         self.trialRunId = trialRunId
-        self.latestBatch = latestBatch
+        self.stepsCompleted = stepsCompleted
         self.metrics = metrics
         self.batchMetrics = batchMetrics
 
@@ -4825,7 +4825,7 @@ class v1TrialMetrics:
         return cls(
             trialId=obj["trialId"],
             trialRunId=obj["trialRunId"],
-            latestBatch=obj["latestBatch"],
+            stepsCompleted=obj["stepsCompleted"],
             metrics=obj["metrics"],
             batchMetrics=obj.get("batchMetrics", None),
         )
@@ -4834,7 +4834,7 @@ class v1TrialMetrics:
         return {
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
-            "latestBatch": self.latestBatch,
+            "stepsCompleted": self.stepsCompleted,
             "metrics": self.metrics,
             "batchMetrics": self.batchMetrics if self.batchMetrics is not None else None,
         }

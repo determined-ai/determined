@@ -86,7 +86,7 @@ class NoOpTrialController(det.TrialController):
                 self.context._core, self.env, self.context.get_global_batch_size()
             )
 
-        self.latest_batch = self.env.latest_batch
+        self.steps_completed = self.env.steps_completed
 
         if self.env.latest_checkpoint is not None:
             with self.context._core.checkpoint.restore_path(
@@ -111,7 +111,7 @@ class NoOpTrialController(det.TrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = self.compute_validation_metrics(w.step_id)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                metadata = {"latest_batch": self.latest_batch}
+                metadata = {"steps_completed": self.steps_completed}
                 if self.is_chief:
                     with self.context._core.checkpoint.store_path(metadata) as (
                         path,

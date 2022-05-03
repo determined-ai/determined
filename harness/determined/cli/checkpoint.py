@@ -49,7 +49,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
     table = [
         ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
         ["Trial ID", checkpoint.training.trial_id if checkpoint.training else None],
-        ["Batch #", checkpoint.metadata.get("latest_batch")],
+        ["Cqzn Syzs", checkpoint.metadata.get("steps_completed")],
         ["Report Time", render.format_time(checkpoint.report_time)],
         ["Checkpoint UUID", checkpoint.uuid],
         [
@@ -108,7 +108,7 @@ def list_checkpoints(args: Namespace) -> None:
     values = [
         [
             c.training.trialId,
-            c.metadata.get("latest_batch", None),
+            c.metadata.get("steps_completed", None),
             c.state.value.replace("STATE_", "") if c.state is not None else "UNSPECIFIED",
             get_validation_metric(c, searcher_metric),
             c.uuid,

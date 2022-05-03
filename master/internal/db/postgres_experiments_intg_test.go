@@ -305,7 +305,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			a := requireMockAllocation(t, db, tr.TaskID)
 
 			ckptUuid := uuid.New()
-			latestBatch := int32(10)
+			stepsCompleted := int32(10)
 			ckpt := model.CheckpointV2{
 				UUID:         ckptUuid,
 				TaskID:       tr.TaskID,
@@ -318,7 +318,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"framework":          "some framework",
 					"determined_version": "1.0.0",
-					"latest_batch":       float64(latestBatch),
+					"steps_completed":          float64(stepsCompleted),
 				},
 			}
 			err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
@@ -328,8 +328,8 @@ func TestCheckpointMetadata(t *testing.T) {
 			const metricValue = 1.0
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
-					TrialId:     int32(tr.ID),
-					LatestBatch: latestBatch,
+					TrialId:  int32(tr.ID),
+					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							defaultSearcherMetric: {

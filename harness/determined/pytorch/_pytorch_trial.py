@@ -59,7 +59,7 @@ class PyTorchTrialController(det.TrialController):
                 self.context.get_global_batch_size(),
             )
 
-        self.latest_batch = self.env.latest_batch
+        self.steps_completed = self.env.steps_completed
 
         # Currently only horovod backend is supported if distributed training
         if self.context.distributed.size > 1:
@@ -127,7 +127,7 @@ class PyTorchTrialController(det.TrialController):
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.env.latest_batch
+        skip_batches = self.env.steps_completed
 
         nreplicas = self.context.distributed.size
         rank = self.context.distributed.rank
@@ -200,7 +200,7 @@ class PyTorchTrialController(det.TrialController):
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_trial_startup"
                 ):
-                    callback.on_trial_startup(self.latest_batch, self.env.latest_checkpoint)
+                    callback.on_trial_startup(self.steps_completed, self.env.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -269,7 +269,7 @@ class PyTorchTrialController(det.TrialController):
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
-                            "latest_batch": self.latest_batch,
+                            "steps_completed": self.steps_completed,
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
                         }
@@ -348,7 +348,7 @@ class PyTorchTrialController(det.TrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
-            self.latest_batch += 1
+            self.steps_completed += 1
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next", requires_sync=False):

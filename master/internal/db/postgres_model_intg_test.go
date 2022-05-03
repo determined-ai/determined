@@ -67,7 +67,7 @@ func TestModels(t *testing.T) {
 			require.NoError(t, err)
 
 			// Insert a checkpoint.
-			const latestBatch = 10
+			const stepsCompleted = 10
 			ckpt := &model.CheckpointV2{
 				UUID:         uuid.New(),
 				TaskID:       tr.TaskID,
@@ -81,7 +81,7 @@ func TestModels(t *testing.T) {
 					"framework":          "some framework",
 					"format":             "some format",
 					"determined_version": "1.0.0",
-					"latest_batch":       latestBatch,
+					"steps_completed":          stepsCompleted,
 				},
 			}
 			err = db.AddCheckpointMetadata(context.TODO(), ckpt)
@@ -92,8 +92,8 @@ func TestModels(t *testing.T) {
 			const metricValue = 1.0
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
-					TrialId:     int32(tr.ID),
-					LatestBatch: latestBatch,
+					TrialId:  int32(tr.ID),
+					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							defaultSearcherMetric: {

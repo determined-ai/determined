@@ -78,12 +78,12 @@ func testGetCheckpoint(
 		t.Run(tc.name, func(t *testing.T) {
 			experiment, trial, allocation := createPrereqs(t, db)
 
-			latestBatch := int32(10)
+			stepsCompleted := int32(10)
 			if tc.validate {
 				trialMetrics := trialv1.TrialMetrics{
-					TrialId:     int32(trial.ID),
-					TrialRunId:  int32(0),
-					LatestBatch: latestBatch,
+					TrialId:    int32(trial.ID),
+					TrialRunId: int32(0),
+					StepsCompleted:   stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							"okness": {
@@ -108,7 +108,7 @@ func testGetCheckpoint(
 				State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 				Resources:    map[string]int64{"ok": 1.0},
 				Metadata: map[string]interface{}{
-					"latest_batch":       latestBatch,
+					"steps_completed":          stepsCompleted,
 					"framework":          "some framework",
 					"determined_version": "1.0.0",
 				},
@@ -161,7 +161,7 @@ func testGetExperimentCheckpoints(
 	for i := 0; i < 5; i++ {
 		checkpointUuid := uuid.NewString()
 		uuids = append(uuids, checkpointUuid)
-		latestBatch := 10 * i
+		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUuid),
 			TaskID:       trial.TaskID,
@@ -170,7 +170,7 @@ func testGetExperimentCheckpoints(
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
 			Metadata: map[string]interface{}{
-				"latest_batch":       latestBatch,
+				"steps_completed":          stepsCompleted,
 				"framework":          "some framework",
 				"determined_version": "1.0.0",
 			},
@@ -180,9 +180,9 @@ func testGetExperimentCheckpoints(
 		assert.NilError(t, err, "failed to add checkpoint meta")
 
 		trialMetrics := trialv1.TrialMetrics{
-			TrialId:     int32(trial.ID),
-			TrialRunId:  int32(0),
-			LatestBatch: int32(latestBatch),
+			TrialId:    int32(trial.ID),
+			TrialRunId: int32(0),
+			StepsCompleted:   int32(stepsCompleted),
 			Metrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"loss": {
@@ -275,7 +275,7 @@ func testGetTrialCheckpoints(
 	for i := 0; i < 5; i++ {
 		checkpointUuid := uuid.NewString()
 		uuids = append(uuids, checkpointUuid)
-		latestBatch := 10 * i
+		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
 			UUID:         conv.ToUUID(checkpointUuid),
 			TaskID:       trial.TaskID,
@@ -284,7 +284,7 @@ func testGetTrialCheckpoints(
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
 			Metadata: map[string]interface{}{
-				"latest_batch":       latestBatch,
+				"steps_completed":          stepsCompleted,
 				"framework":          "some framework",
 				"determined_version": "1.0.0",
 			},

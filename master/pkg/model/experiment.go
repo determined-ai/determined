@@ -420,8 +420,8 @@ const (
 	// CurrentCheckpointVersion is the current way checkpoints are stored.
 	CurrentCheckpointVersion = CheckpointVersionV2
 
-	// LatestBatchMetadataKey is the key within metadata to find latest batch now, if it exists.
-	LatestBatchMetadataKey = "latest_batch"
+	// StepsCompletedMetadataKey is the key within metadata to find latest batch now, if it exists.
+	StepsCompletedMetadataKey = "steps_completed"
 )
 
 // CheckpointV1 represents a row from the `checkpoints` table.
@@ -462,7 +462,7 @@ type CheckpointTrainingMetadata struct {
 	TrainingMetrics   JSONObj  `db:"training_metrics"`
 	ValidationMetrics JSONObj  `db:"validation_metrics"`
 	SearcherMetric    *float64 `db:"searcher_metric"`
-	LatestBatch       int      `db:"latest_batch"`
+	StepsCompleted          int      `db:"steps_completed"`
 }
 
 // Checkpoint represents a row from the `checkpoints_view` view.

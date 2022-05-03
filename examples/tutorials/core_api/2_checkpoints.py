@@ -52,16 +52,17 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
 
     for batch in range(starting_batch, 100):
         x += increment_by
+        steps_completed = batch + 1
         time.sleep(.1)
         print("x is now", x)
-        if batch % 10 == 9:
-            core_context.train.report_training_metrics(latest_batch=batch+1, metrics={"x": x})
+        if steps_completed % 10 == 0:
+            core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
 
             # NEW: write checkpoints at regular intervals to limit lost progress in case of a crash
             # during training.
-            checkpoint_metadata = {"latest_batch": batch + 1}
+            checkpoint_metadata = {"steps_completed": steps_completed}
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                save_state(x, batch + 1, trial_id, path)
+                save_state(x, steps_completed, trial_id, path)
 
             # NEW: check for a preemption signal.  This could originate from a higher-priority task
             # bumping us off the cluster, or for a user pausing the experiment via the WebUI or CLI.
@@ -70,7 +71,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 # pick up training again when we are reactivated.
                 return
 
-    core_context.train.report_validation_metrics(latest_batch=batch+1, metrics={"x": x})
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":

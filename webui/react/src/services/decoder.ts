@@ -484,7 +484,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
     searcherMetric: data.training.searcherMetric,
     state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
     taskId: data.taskId,
-    totalBatches: data.metadata['latest_batch'] ?? 0,
+    totalBatches: data.metadata['steps_completed'] ?? 0,
     trainingMetrics: data.training.trainingMetrics && decodeMetrics(data.training.trainingMetrics),
     trialId: data.training.trialId,
     uuid: data.uuid,

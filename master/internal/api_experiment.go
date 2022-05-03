@@ -727,7 +727,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 		switch req.SortBy {
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
-			return protoless.CheckpointLatestBatchLess(ai, aj)
+			return protoless.CheckpointStepsCompletedLess(ai, aj)
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
 			return ai.Uuid < aj.Uuid
 		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:

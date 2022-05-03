@@ -137,4 +137,4 @@ class TrialContext(metaclass=abc.ABCMeta):
         self._stop_requested = stop_requested
 
     def get_initial_batch(self) -> int:
-        return self.env.latest_batch
+        return self.env.steps_completed

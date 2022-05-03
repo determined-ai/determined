@@ -127,7 +127,7 @@ class MetricMaker(det.TrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = self.compute_validation_metrics(w.step_id)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                metadata = {"latest_batch": self.latest_batch}
+                metadata = {"steps_completed": self.latest_batch}
                 if self.is_chief:
                     with self.context._core.checkpoint.store_path(metadata) as (
                         path,

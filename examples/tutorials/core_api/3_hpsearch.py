@@ -42,31 +42,32 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         # NEW: we will use a while loop for easier accounting of absolute lengths.
         while batch < op.length:
             x += increment_by
+            steps_completed = batch + 1
             time.sleep(.1)
             print("x is now", x)
-            if batch % 10 == 9:
-                core_context.train.report_training_metrics(latest_batch=batch+1, metrics={"x": x})
+            if steps_completed % 10 == 0:
+                core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
 
                 # NEW: report progress once in a while.
                 op.report_progress(batch)
 
-                checkpoint_metadata = {"latest_batch": batch + 1}
+                checkpoint_metadata = {"steps_completed": steps_completed}
                 with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                    save_state(x, batch + 1, trial_id, path)
-                last_checkpoint_batch = batch + 1
+                    save_state(x, steps_completed, trial_id, path)
+                last_checkpoint_batch = steps_completed
                 if core_context.preempt.should_preempt():
                     return
             batch += 1
         # NEW: After training for each op, we would normally validate and report the searcher metric
         # to the master.
-        core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+        core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
         op.report_completed(x)
 
     # NEW: after searching, save a checkpoint if our last one is not up-to-date.
-    if last_checkpoint_batch != batch:
-        checkpoint_metadata = {"latest_batch": batch}
+    if last_checkpoint_batch != steps_completed:
+        checkpoint_metadata = {"steps_completed": steps_completed}
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-            save_state(x, batch, trial_id, path)
+            save_state(x, steps_completed, trial_id, path)
 
 
 if __name__ == "__main__":

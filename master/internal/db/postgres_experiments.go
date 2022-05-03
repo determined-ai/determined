@@ -1185,7 +1185,7 @@ WITH const AS (
                    ORDER BY total_batches DESC
                ) AS trial_order_rank
         FROM (
-            SELECT c.id, c.trial_id, c.latest_batch as total_batches, c.state,
+            SELECT c.id, c.trial_id, c.steps_completed as total_batches, c.state,
                    c.report_time as end_time, c.uuid, c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
@@ -1200,7 +1200,7 @@ WITH const AS (
                                 ) v
                                ) AS validation
                         FROM steps s
-                        WHERE s.total_batches = c.latest_batch AND s.trial_id = c.trial_id
+                        WHERE s.total_batches = c.steps_completed AND s.trial_id = c.trial_id
                     ) s
                    ) AS step,
                    -- We later filter out any checkpoints with any corresponding warm start

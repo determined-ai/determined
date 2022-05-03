@@ -58,13 +58,13 @@ class TrainContext:
         # because of the workload sequencer's very specific use of this function.
         r = self._session.get(f"/api/v1/trials/{self._trial_id}")
         val = r.json()["trial"].get("latestValidation") or {}
-        latest_batch = val.get("totalBatches")
-        logger.debug(f"_get_last_validation() -> {latest_batch}")
-        return latest_batch
+        steps_completed = val.get("totalBatches")
+        logger.debug(f"_get_last_validation() -> {steps_completed}")
+        return steps_completed
 
     def report_training_metrics(
         self,
-        latest_batch: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
@@ -77,12 +77,12 @@ class TrainContext:
 
         body = {
             "trial_run_id": self._run_id,
-            "latest_batch": latest_batch,
+            "steps_completed": steps_completed,
             "metrics": metrics,
         }
         if batch_metrics is not None:
             body["batch_metrics"] = batch_metrics
-        logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.info(f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
             data=det.util.json_encode(body),
@@ -90,7 +90,7 @@ class TrainContext:
 
         # Also sync tensorboard.
         if self._tbd_writer and self._tbd_mgr:
-            self._tbd_writer.on_train_step_end(latest_batch, metrics, batch_metrics)
+            self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
             self._tbd_mgr.sync()
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
@@ -129,7 +129,7 @@ class TrainContext:
 
     def report_validation_metrics(
         self,
-        latest_batch: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
     ) -> None:
         """
@@ -144,10 +144,10 @@ class TrainContext:
 
         body = {
             "trial_run_id": self._run_id,
-            "latest_batch": latest_batch,
+            "steps_completed": steps_completed,
             "metrics": reportable_metrics,
         }
-        logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.info(f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/validation_metrics",
             data=det.util.json_encode(body),
@@ -155,7 +155,7 @@ class TrainContext:
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tbd_writer and self._tbd_mgr:
-            self._tbd_writer.on_validation_step_end(latest_batch, metrics)
+            self._tbd_writer.on_validation_step_end(steps_completed, metrics)
             self._tbd_mgr.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
@@ -208,19 +208,19 @@ class DummyTrainContext(TrainContext):
 
     def report_training_metrics(
         self,
-        latest_batch: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.info(f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})")
         logger.debug(
-            f"report_training_metrics(latest_batch={latest_batch}, batch_metrics={batch_metrics})"
+            f"report_training_metrics(steps_completed={steps_completed}, batch_metrics={batch_metrics})"
         )
 
-    def report_validation_metrics(self, latest_batch: int, metrics: Dict[str, Any]) -> None:
+    def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         serializable_metrics = self._get_serializable_metrics(metrics)
         metrics = {k: metrics[k] for k in serializable_metrics}
-        logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.info(f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})")
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")

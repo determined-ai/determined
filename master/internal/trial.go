@@ -334,7 +334,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
 	}
 
-	var latestBatch int
+	var stepsCompleted int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
@@ -342,7 +342,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
-		latestBatch = latestCheckpoint.LatestBatch
+		stepsCompleted = latestCheckpoint.StepsCompleted
 	}
 
 	return tasks.TrialSpec{
@@ -354,7 +354,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
-		LatestBatch:      latestBatch,
+		StepsCompleted:         stepsCompleted,
 		LatestCheckpoint: latestCheckpoint,
 	}.ToTaskSpec(t.generatedKeys), nil
 }

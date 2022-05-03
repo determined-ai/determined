@@ -46,7 +46,7 @@ def render_model_version(model_version: ModelVersion) -> None:
         [
             model_version.model_version,
             checkpoint.training.trial_id if checkpoint.training else None,
-            checkpoint.metadata["latest_batch"],
+            checkpoint.metadata["steps_completed"],
             checkpoint.uuid,
             (
                 json.dumps(checkpoint.training.validation_metrics, indent=2)
@@ -117,7 +117,7 @@ def list_versions(args: Namespace) -> None:
             [
                 version.model_version,
                 version.checkpoint.training.trial_id if version.checkpoint.training else None,
-                version.checkpoint.metadata["latest_batch"],
+                version.checkpoint.metadata["steps_completed"],
                 version.checkpoint.uuid,
                 (
                     json.dumps(version.checkpoint.training.validation_metrics, indent=2)
