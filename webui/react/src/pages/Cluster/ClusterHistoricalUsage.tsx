@@ -2,8 +2,8 @@ import { Button, Col, Row } from 'antd';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import Section from 'components/Section';
+import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import useSettings from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';

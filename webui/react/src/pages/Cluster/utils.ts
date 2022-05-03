@@ -1,10 +1,10 @@
 import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
+import { DetailedUser } from 'types';
 import { sumArrays } from 'utils/array';
 import { secondToHour } from 'utils/datetime';
+import { getDisplayName } from 'utils/user';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
-import { DetailedUser } from 'types';
-import { getDisplayName } from 'utils/user';
 
 export interface ResourceAllocationChartSeries {
   groupedBy: GroupBy,
