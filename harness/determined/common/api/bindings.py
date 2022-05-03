@@ -4808,8 +4808,8 @@ class v1TrialLogsResponse:
 class v1TrialMetrics:
     def __init__(
         self,
-        stepsCompleted: int,
         metrics: "typing.Dict[str, typing.Any]",
+        stepsCompleted: int,
         trialId: int,
         trialRunId: int,
         batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None,
