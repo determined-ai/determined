@@ -17,6 +17,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 const (
@@ -25,6 +27,24 @@ const (
 	max  = "max"
 	min  = "min"
 )
+
+// ProjectFromNames returns a project's ID if it exists in the given workspace.
+func (db *PgDB) ProjectFromNames(workspaceName string, projectName string) (int, error) {
+	w := workspacev1.Workspace{}
+	err := db.Query("get_workspace_from_name", &w, workspaceName)
+	if err != nil {
+		return 1, err
+	}
+	p := projectv1.Project{}
+	err = db.Query("get_project_from_name", &p, w.Id, projectName)
+	if err != nil {
+		return 1, err
+	}
+	if p.Id < 1 {
+		return 1, fmt.Errorf("workspace and project names did not match any known project")
+	}
+	return int(p.Id), nil
+}
 
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
 // labels in use across all experiments.
@@ -699,10 +719,11 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
+ 	project_id)
 	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
 					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes, :job_id)
+					:notes, :job_id, :project_id)
 	RETURNING id`, experiment)
 		if err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
