@@ -2,16 +2,12 @@
 Convert the LRUpdaterHook in mmcv to a PyTorchCallback.
 See: https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/lr_updater.py.
 """
-import logging
 from typing import Any, Dict, Optional, cast
 
 import mmcv
 import mmcv.runner.hooks as mmcv_hooks
-import torch
-import torch.nn.modules.batchnorm as bn
 
 import determined.pytorch as det_torch
-from determined.horovod import hvd
 
 
 class DummyDataloader:

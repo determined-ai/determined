@@ -33,7 +33,6 @@ import mmdet.datasets
 import mmdet.models
 import numpy as np
 import torch
-import torch.distributed as dist
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
