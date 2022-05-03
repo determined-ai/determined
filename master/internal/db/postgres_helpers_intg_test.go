@@ -137,7 +137,7 @@ func requireMockMetrics(
 	t *testing.T, db *PgDB, tr *model.Trial, stepsCompleted int, metricValue float64,
 ) *trialv1.TrialMetrics {
 	m := trialv1.TrialMetrics{
-		TrialId:  int32(tr.ID),
+		TrialId:        int32(tr.ID),
 		StepsCompleted: int32(stepsCompleted),
 		Metrics: &structpb.Struct{
 			Fields: map[string]*structpb.Value{

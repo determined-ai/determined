@@ -354,7 +354,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
-		StepsCompleted:         stepsCompleted,
+		StepsCompleted:   stepsCompleted,
 		LatestCheckpoint: latestCheckpoint,
 	}.ToTaskSpec(t.generatedKeys), nil
 }

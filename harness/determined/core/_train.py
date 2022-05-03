@@ -82,7 +82,9 @@ class TrainContext:
         }
         if batch_metrics is not None:
             body["batch_metrics"] = batch_metrics
-        logger.info(f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})")
+        logger.info(
+            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
             data=det.util.json_encode(body),
@@ -147,7 +149,9 @@ class TrainContext:
             "steps_completed": steps_completed,
             "metrics": reportable_metrics,
         }
-        logger.info(f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})")
+        logger.info(
+            f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/validation_metrics",
             data=det.util.json_encode(body),
@@ -212,7 +216,9 @@ class DummyTrainContext(TrainContext):
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        logger.info(f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})")
+        logger.info(
+            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
         logger.debug(
             f"report_training_metrics(steps_completed={steps_completed}, batch_metrics={batch_metrics})"
         )
@@ -220,7 +226,9 @@ class DummyTrainContext(TrainContext):
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         serializable_metrics = self._get_serializable_metrics(metrics)
         metrics = {k: metrics[k] for k in serializable_metrics}
-        logger.info(f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})")
+        logger.info(
+            f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
+        )
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")

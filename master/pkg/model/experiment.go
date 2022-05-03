@@ -462,7 +462,7 @@ type CheckpointTrainingMetadata struct {
 	TrainingMetrics   JSONObj  `db:"training_metrics"`
 	ValidationMetrics JSONObj  `db:"validation_metrics"`
 	SearcherMetric    *float64 `db:"searcher_metric"`
-	StepsCompleted          int      `db:"steps_completed"`
+	StepsCompleted    int      `db:"steps_completed"`
 }
 
 // Checkpoint represents a row from the `checkpoints_view` view.

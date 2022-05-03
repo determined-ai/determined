@@ -29,7 +29,7 @@ checkpoints_vt AS (
         'STATE_' || c.state AS state,
         c.report_time as end_time,
         c.uuid,
-        c.latest_batch as total_batches,
+        c.steps_completed as total_batches,
         c.resources
       FROM checkpoints_view c
       WHERE c.trial_id = $1

@@ -81,7 +81,7 @@ func TestModels(t *testing.T) {
 					"framework":          "some framework",
 					"format":             "some format",
 					"determined_version": "1.0.0",
-					"steps_completed":          stepsCompleted,
+					"steps_completed":    stepsCompleted,
 				},
 			}
 			err = db.AddCheckpointMetadata(context.TODO(), ckpt)
@@ -92,7 +92,7 @@ func TestModels(t *testing.T) {
 			const metricValue = 1.0
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
-					TrialId:  int32(tr.ID),
+					TrialId:        int32(tr.ID),
 					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{

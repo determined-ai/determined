@@ -81,9 +81,9 @@ func testGetCheckpoint(
 			stepsCompleted := int32(10)
 			if tc.validate {
 				trialMetrics := trialv1.TrialMetrics{
-					TrialId:    int32(trial.ID),
-					TrialRunId: int32(0),
-					StepsCompleted:   stepsCompleted,
+					TrialId:        int32(trial.ID),
+					TrialRunId:     int32(0),
+					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							"okness": {
@@ -108,7 +108,7 @@ func testGetCheckpoint(
 				State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 				Resources:    map[string]int64{"ok": 1.0},
 				Metadata: map[string]interface{}{
-					"steps_completed":          stepsCompleted,
+					"steps_completed":    stepsCompleted,
 					"framework":          "some framework",
 					"determined_version": "1.0.0",
 				},
@@ -170,7 +170,7 @@ func testGetExperimentCheckpoints(
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
 			Metadata: map[string]interface{}{
-				"steps_completed":          stepsCompleted,
+				"steps_completed":    stepsCompleted,
 				"framework":          "some framework",
 				"determined_version": "1.0.0",
 			},
@@ -180,9 +180,9 @@ func testGetExperimentCheckpoints(
 		assert.NilError(t, err, "failed to add checkpoint meta")
 
 		trialMetrics := trialv1.TrialMetrics{
-			TrialId:    int32(trial.ID),
-			TrialRunId: int32(0),
-			StepsCompleted:   int32(stepsCompleted),
+			TrialId:        int32(trial.ID),
+			TrialRunId:     int32(0),
+			StepsCompleted: int32(stepsCompleted),
 			Metrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"loss": {
@@ -284,7 +284,7 @@ func testGetTrialCheckpoints(
 			State:        conv.ToCheckpointState(checkpointv1.State_STATE_COMPLETED),
 			Resources:    map[string]int64{"ok": 1.0},
 			Metadata: map[string]interface{}{
-				"steps_completed":          stepsCompleted,
+				"steps_completed":    stepsCompleted,
 				"framework":          "some framework",
 				"determined_version": "1.0.0",
 			},

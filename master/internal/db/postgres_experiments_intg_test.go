@@ -318,7 +318,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				Metadata: map[string]interface{}{
 					"framework":          "some framework",
 					"determined_version": "1.0.0",
-					"steps_completed":          float64(stepsCompleted),
+					"steps_completed":    float64(stepsCompleted),
 				},
 			}
 			err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
@@ -328,7 +328,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			const metricValue = 1.0
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
-					TrialId:  int32(tr.ID),
+					TrialId:        int32(tr.ID),
 					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
