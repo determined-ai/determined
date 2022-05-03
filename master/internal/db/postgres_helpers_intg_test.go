@@ -154,3 +154,20 @@ func requireMockMetrics(
 	require.NoError(t, err)
 	return &m
 }
+
+func requireMockCheckpoint(
+	t *testing.T, db *PgDB, tr *model.Trial, latestBatch int,
+) *trialv1.CheckpointMetadata {
+	ckpt := trialv1.CheckpointMetadata{
+		TrialId:           int32(tr.ID),
+		Uuid:              uuid.NewString(),
+		Resources:         map[string]int64{"ok": 1.0},
+		Framework:         "some framework",
+		Format:            "some format",
+		DeterminedVersion: "1.0.0",
+		LatestBatch:       int32(latestBatch),
+	}
+	err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+	require.NoError(t, err)
+	return &ckpt
+}
