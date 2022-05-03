@@ -220,7 +220,8 @@ class DummyTrainContext(TrainContext):
             f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
         logger.debug(
-            f"report_training_metrics(steps_completed={steps_completed}, batch_metrics={batch_metrics})"
+            f"report_training_metrics(steps_completed={steps_completed},"
+            f" batch_metrics={batch_metrics})"
         )
 
     def report_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
