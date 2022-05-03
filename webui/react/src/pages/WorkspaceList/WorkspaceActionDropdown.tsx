@@ -122,18 +122,9 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     handleArchiveClick,
     handleDeleteClick ]);
 
-  if (!userHasPermissions) {
-    return (children as JSX.Element) ?? (
-      <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <button disabled>
-          <Icon name={`overflow-${direction}`} />
-        </button>
-      </div>
-    );
-  }
-
   return children ? (
     <Dropdown
+      disabled={!userHasPermissions}
       overlay={WorkspaceActionMenu}
       placement="bottomLeft"
       trigger={trigger ?? [ 'contextMenu', 'click' ]}
@@ -146,6 +137,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
+        disabled={!userHasPermissions}
         overlay={WorkspaceActionMenu}
         placement="bottomRight"
         trigger={trigger ?? [ 'click' ]}>
