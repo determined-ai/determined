@@ -1472,8 +1472,6 @@ jobs:
       - run: coverage report --include 'model_hub/model_hub/*' --skip-covered
       - run: coverage html --include 'harness/determined/*' --skip-covered -d cov-html/harness
       - run: coverage html --include 'model_hub/model_hub/*' --skip-covered -d cov-html/model_hub
-      - codecov/upload:
-          xtra_args: "-v"
       - store_artifacts:
           path: cov-html
           destination: cov-html
