@@ -135,8 +135,7 @@ const mapCommonV1Task = (
     startTime: task.startTime as unknown as string,
     state: mapV1TaskState(task.state),
     type,
-    userId: task.userId,
-    username: task.username,
+    userId: task.userId ?? 0,
   };
 };
 
@@ -206,7 +205,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     name: model.name,
     notes: model.notes,
     numVersions: model.numVersions,
-    username: model.username,
+    userId: model.userId ?? 0,
   };
 };
 
@@ -224,7 +223,7 @@ export const mapV1ModelVersion = (
     model: mapV1Model(modelVersion.model),
     name: modelVersion.name,
     notes: modelVersion.notes,
-    username: modelVersion.username,
+    userId: modelVersion.userId ?? 0,
     version: modelVersion.version,
   };
 };
@@ -401,7 +400,7 @@ export const mapV1Experiment = (
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
-    username: data.username,
+    userId: data.userId ?? 0,
   };
 };
 

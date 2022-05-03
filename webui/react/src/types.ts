@@ -19,6 +19,7 @@ export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
   displayName?: string;
+  id: number;
   modifiedAt?: number;
   username: string;
 }
@@ -461,8 +462,7 @@ export interface ExperimentItem {
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export interface ExperimentBase extends ExperimentItem {
@@ -504,7 +504,7 @@ export interface ModelItem {
   name: string;
   notes?: string;
   numVersions: number;
-  username: string;
+  userId: number;
 }
 
 export interface ModelVersion {
@@ -518,7 +518,7 @@ export interface ModelVersion {
   model: ModelItem;
   name?: string;
   notes?: string;
-  username: string;
+  userId: number;
   version: number;
 }
 
@@ -548,18 +548,16 @@ export interface ExperimentTask extends Task {
   progress?: number;
   resourcePool: string;
   state: CompoundRunState;
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export interface CommandTask extends Task {
-  displayName: string;
+  displayName?: string;
   misc?: CommandMisc;
   resourcePool: string;
   state: CommandState;
   type: CommandType;
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export type RecentEvent = {

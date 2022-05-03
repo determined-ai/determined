@@ -154,7 +154,6 @@ export interface PostModelParams {
   labels?: string[];
   metadata?: Metadata;
   name: string;
-  username?: string;
 }
 
 export interface PostModelVersionParams {

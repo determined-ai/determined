@@ -39,8 +39,8 @@ const ModelHeader: React.FC<Props> = (
     return [ {
       content: (
         <Space>
-          <Avatar username={model.username} />
-          {`${getDisplayName(users.find(user => user.username === model.username))} on 
+          <Avatar userId={model.userId} />
+          {`${getDisplayName(users.find(user => user.id === model.userId))} on 
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
@@ -71,7 +71,7 @@ const ModelHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags, users ]);
 
-  const isDeletable = user?.isAdmin || user?.username === model.username;
+  const isDeletable = user?.isAdmin || user?.id === model.userId;
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
