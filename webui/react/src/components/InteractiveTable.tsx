@@ -19,6 +19,10 @@ import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
+import { getCssVar } from 'themes';
+
+import css from './InteractiveTable.module.scss';
+import Spinner from './Spinner';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
@@ -35,15 +39,9 @@ export interface InteractiveTableSettings {
   tableOffset: number;
 }
 
-import { getCssVar } from 'themes';
-
-import css from './InteractiveTable.module.scss';
-import Spinner from './Spinner';
-
 export const WIDGET_COLUMN_WIDTH = 46;
 const DEFAULT_RESIZE_THROTTLE_TIME = 30;
-
-const type = 'DraggableColumn';
+const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
   index?: number;
@@ -196,11 +194,11 @@ const HeaderCell = ({
   const [ , drag ] = useDrag({
     canDrag: () => !isResizing,
     item: { index },
-    type,
+    type: SOURCE_TYPE,
   });
 
   const [ { isOver }, drop ] = useDrop({
-    accept: type,
+    accept: SOURCE_TYPE,
     canDrop: (_, monitor) => {
       const dragItem = (monitor.getItem() || {});
       const dragIndex = dragItem?.index;

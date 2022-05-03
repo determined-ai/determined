@@ -17,14 +17,8 @@ const STYLESHEET_ID = 'antd-stylesheet';
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 
 const themeConfig = {
-  [DarkLight.Dark]: {
-    antd: 'antd.dark.min.css',
-    monaco: 'vs-dark',
-  },
-  [DarkLight.Light]: {
-    antd: 'antd.min.css',
-    monaco: 'vs-light',
-  },
+  [DarkLight.Dark]: { antd: 'antd.dark.min.css' },
+  [DarkLight.Light]: { antd: 'antd.min.css' },
 };
 
 const createStylesheetLink = () => {
@@ -62,7 +56,6 @@ export const useTheme = (): ThemeHook => {
   const [ mode, setMode ] = useState(() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
 
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
-  const monaco = useMemo(() => themeConfig[mode].monaco, [ mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
