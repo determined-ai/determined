@@ -71,7 +71,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                 RuntimeError,
                 match="upload.*non-chief",
             ):
-                checkpoint_context.upload(ckpt_dir, metadata={"latest_batch": 1})
+                checkpoint_context.upload(ckpt_dir, metadata={"steps_completed": 1})
             if pex.rank == 0:
                 storage_manager.upload.assert_called_once()
                 storage_manager.upload.reset_mock()
@@ -93,7 +93,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                 RuntimeError,
                 match=r"\.store_path.*non-chief",
             ):
-                with checkpoint_context.store_path(metadata={"latest_batch": 1}) as _:
+                with checkpoint_context.store_path(metadata={"steps_completed": 1}) as _:
                     pass
             if pex.rank == 0:
                 storage_manager.store_path.assert_called_once()

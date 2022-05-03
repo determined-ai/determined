@@ -166,7 +166,7 @@ message TrialEarlyExit {
 message TrialMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "trial_id", "trial_run_id", "latest_batch", "metrics" ]
+      required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
     }
   };
   // The trial associated with these metrics.
@@ -174,7 +174,7 @@ message TrialMetrics {
   // The trial run associated with these metrics.
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
-  int32 latest_batch = 3;
+  int32 steps_completed = 3;
   // The metrics for this bit of training (reduced over the reporting period).
   google.protobuf.Struct metrics = 7;
   // The batch metrics for this bit of training.

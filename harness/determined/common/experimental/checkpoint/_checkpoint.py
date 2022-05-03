@@ -1,9 +1,9 @@
+import dataclasses
 import enum
 import json
 import pathlib
 import shutil
 import warnings
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, cast
 
 from determined.common import constants, storage
@@ -24,7 +24,7 @@ class CheckpointState(enum.Enum):
     DELETED = 4
 
 
-@dataclass
+@dataclasses.dataclass
 class CheckpointTrainingMetadata:
     experiment_config: Dict[str, Any]
     experiment_id: str
@@ -167,7 +167,6 @@ class Checkpoint(object):
         use this method directly to obtain the latest metadata.
         """
         with open(path, "w") as f:
-            # YYY: only dump user metadata
             json.dump(self.metadata, f, indent=2)
 
     def load(
