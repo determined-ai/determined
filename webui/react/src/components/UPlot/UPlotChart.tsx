@@ -190,8 +190,11 @@ const UPlotChart: React.FC<Props> = ({
       chartRef.current = undefined;
 
       const isZoomed = Object.values(boundsRef.current).some((i) => i.isZoomed === true);
+      boundsRef.current = {};
       if (!isZoomed) {
-        boundsRef.current = {};
+        /**
+         * reset of zoom
+         */
       } else {
         /**
          * TODO: preserve zoom when new series is selected?
@@ -205,7 +208,9 @@ const UPlotChart: React.FC<Props> = ({
          */
       }
       try {
-        chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
+        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
+          chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
+        }
       } catch(e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
@@ -229,6 +234,7 @@ const UPlotChart: React.FC<Props> = ({
       try {
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, resetScales);
+          if (onlyOneXValue) chartRef.current.redraw();
           /**
            * this messes up learning curve for in progress experiment
            */
