@@ -155,7 +155,7 @@ inside and outside of docker containers (since the Fluentbit container will alwa
 networking).
 
 Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
-``fluent/fluent-bit:1.5`` Docker image at runtime. It will attempt to pull the image automatically;
+``fluent/fluent-bit:1.9`` Docker image at runtime. It will attempt to pull the image automatically;
 if the agent machines in the cluster are not able to connect to Docker Hub, the image must be
 manually placed on them before Determined can run. In order to specify a different image to use for
 running Fluent Bit (generally to make use of a custom Docker registry---the image should not
