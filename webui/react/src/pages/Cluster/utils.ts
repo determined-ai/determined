@@ -3,7 +3,7 @@ import { sumArrays } from 'utils/array';
 import { secondToHour } from 'utils/datetime';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
-import { DetailedUser, User } from 'types';
+import { DetailedUser } from 'types';
 import { getDisplayName } from 'utils/user';
 
 export interface ResourceAllocationChartSeries {
@@ -19,7 +19,7 @@ export interface ResourceAllocationChartSeries {
 export const mapResourceAllocationApiToChartSeries = (
   apiRes: Array<V1ResourceAllocationAggregatedEntry>,
   grouping: GroupBy,
-  users: DetailedUser[] | User[],
+  users: DetailedUser[],
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
@@ -36,7 +36,7 @@ export const mapResourceAllocationApiToChartSeries = (
 
 const mapPeriodToDisplayNames = (
   period: Record<string, number>,
-  users: DetailedUser[] | User[],
+  users: DetailedUser[],
 ): Record<string, number> => {
   const result:Record<string, number> = {};
   Object.keys(period).forEach(key => {
