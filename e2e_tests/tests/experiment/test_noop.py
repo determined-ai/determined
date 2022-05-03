@@ -9,6 +9,7 @@ import pytest
 
 from determined.common import check, yaml
 from determined.common.api import bindings
+from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
 
@@ -55,6 +56,19 @@ def test_noop_pause() -> None:
     exp.wait_for_experiment_state(
         experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
     )
+
+
+@pytest.mark.e2e_cpu
+def test_noop_load() -> None:
+    """
+    Load a checkpoint
+    """
+    experiment_id = exp.run_basic_test(
+        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+    )
+    trials = exp.experiment_trials(experiment_id)
+    checkpoint = Determined(conf.make_master_url()).get_trial(trials[0].trial.id).top_checkpoint()
+    assert checkpoint.task_id == trials[0].task_id
 
 
 @pytest.mark.e2e_cpu
