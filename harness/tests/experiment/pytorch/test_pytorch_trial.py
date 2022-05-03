@@ -584,8 +584,19 @@ class TestPyTorchTrial:
         controller.run()
 
 
-@pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
-def test_checkpoint_loading(ckpt_ver):
-    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-pytorch")
+@pytest.mark.parametrize(
+    "ckpt,istrial",
+    [
+        ("0.13.13-pytorch-old", False),
+        ("0.13.13-pytorch-flex", True),
+        ("0.17.6-pytorch", True),
+        ("0.17.7-pytorch", True),
+    ],
+)
+def test_checkpoint_loading(ckpt: str, istrial: bool):
+    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt}")
     trial = pytorch.load_trial_from_checkpoint_path(checkpoint_dir)
-    assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
+    if istrial:
+        assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
+    else:
+        assert isinstance(trial, torch.nn.Module), type(trial)
