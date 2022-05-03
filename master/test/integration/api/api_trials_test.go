@@ -104,8 +104,8 @@ func trialDetailAPITests(
 			experiment, trial := setupTrial(t, pgDB)
 
 			metrics := trialv1.TrialMetrics{
-				TrialId:     int32(trial.ID),
-				LatestBatch: int32(id * experiment.Config.SchedulingUnit()),
+				TrialId:        int32(trial.ID),
+				StepsCompleted: int32(id * experiment.Config.SchedulingUnit()),
 			}
 
 			m := structpb.Struct{}

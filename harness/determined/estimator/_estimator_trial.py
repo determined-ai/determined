@@ -76,7 +76,7 @@ class DeterminedControlHook(estimator.RunHook):
 
         self.prof = estimator_trial_controller.prof
 
-        self.latest_batch = estimator_trial_controller.env.latest_batch
+        self.steps_completed = estimator_trial_controller.env.steps_completed
 
     def begin(self) -> None:
         # For performance reasons, we collect per batch metrics
@@ -104,7 +104,7 @@ class DeterminedControlHook(estimator.RunHook):
     ) -> tf.estimator.SessionRunArgs:
         # On resuming from checkpoint, _current_global_step is None for one batch
         if self._current_global_step is None:
-            self.prof.update_batch_idx(self.estimator_trial_controller.env.latest_batch)
+            self.prof.update_batch_idx(self.estimator_trial_controller.env.steps_completed)
         else:
             self.prof.update_batch_idx(self._current_global_step)
         return tf.estimator.SessionRunArgs(
@@ -138,7 +138,7 @@ class DeterminedControlHook(estimator.RunHook):
         )
         self._session = run_context.session
         self._current_global_step = int(run_values.results["global_step"])
-        self.latest_batch += 1
+        self.steps_completed += 1
 
         self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
@@ -311,7 +311,7 @@ class DeterminedControlHook(estimator.RunHook):
                     self._save_model()
                     if self.estimator_trial_controller.is_chief:
                         metadata = {
-                            "latest_batch": self.latest_batch,
+                            "steps_completed": self.steps_completed,
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
                         }

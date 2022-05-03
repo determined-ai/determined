@@ -388,7 +388,7 @@ class TFKerasTrialController(det.TrialController):
         self.train_workload_len = 0
         self.test_inputs = 0
 
-        self.latest_batch = self.env.latest_batch
+        self.steps_completed = self.env.steps_completed
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
@@ -692,7 +692,7 @@ class TFKerasTrialController(det.TrialController):
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
-                prior_batches_trained=self.env.latest_batch,
+                prior_batches_trained=self.env.steps_completed,
             )
             enqueuer.start()
             self.enqueuers.append(enqueuer)
@@ -824,7 +824,7 @@ class TFKerasTrialController(det.TrialController):
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
-                            "latest_batch": self.latest_batch,
+                            "steps_completed": self.steps_completed,
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_weights",
                         }
@@ -895,7 +895,7 @@ class TFKerasTrialController(det.TrialController):
                 if k not in {"batch", "size"}
             }
         )
-        self.latest_batch += 1
+        self.steps_completed += 1
         self.train_workload_inputs += num_inputs
         self.train_workload_batches += 1
         if self.train_workload_batches != self.train_workload_len:

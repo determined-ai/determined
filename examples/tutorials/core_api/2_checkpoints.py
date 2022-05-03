@@ -24,18 +24,18 @@ import determined as det
 # NEW: given a checkpoint_directory of type pathlib.Path, save our state to a file.
 # You can save multiple files, and use any file names or directory structures.
 # All files nested under `checkpoint_directory` path will be included into the checkpoint.
-def save_state(x, latest_batch, trial_id, checkpoint_directory):
+def save_state(x, steps_completed, trial_id, checkpoint_directory):
     with checkpoint_directory.joinpath("state").open("w") as f:
-        f.write(f"{x},{latest_batch},{trial_id}")
+        f.write(f"{x},{steps_completed},{trial_id}")
 
 
 # NEW: given a checkpoint_directory, load our state from a file.
 def load_state(trial_id, checkpoint_directory):
     checkpoint_directory = pathlib.Path(checkpoint_directory)
     with checkpoint_directory.joinpath("state").open("r") as f:
-        x, latest_batch, ckpt_trial_id = [int(field) for field in f.read().split(",")]
+        x, steps_completed, ckpt_trial_id = [int(field) for field in f.read().split(",")]
     if ckpt_trial_id == trial_id:
-        return x, latest_batch
+        return x, steps_completed
     else:
         # This is a new trial; load the "model weight" but not the batch count.
         return x, 0
@@ -52,16 +52,17 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
 
     for batch in range(starting_batch, 100):
         x += increment_by
+        steps_completed = batch + 1
         time.sleep(.1)
         print("x is now", x)
-        if batch % 10 == 9:
-            core_context.train.report_training_metrics(latest_batch=batch, metrics={"x": x})
+        if steps_completed % 10 == 0:
+            core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
 
             # NEW: write checkpoints at regular intervals to limit lost progress in case of a crash
             # during training.
-            checkpoint_metadata = {"latest_batch": batch}
+            checkpoint_metadata = {"steps_completed": steps_completed}
             with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                save_state(x, batch, trial_id, path)
+                save_state(x, steps_completed, trial_id, path)
 
             # NEW: check for a preemption signal.  This could originate from a higher-priority task
             # bumping us off the cluster, or for a user pausing the experiment via the WebUI or CLI.
@@ -70,7 +71,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 # pick up training again when we are reactivated.
                 return
 
-    core_context.train.report_validation_metrics(latest_batch=batch, metrics={"x": x})
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":

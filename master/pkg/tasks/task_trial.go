@@ -26,7 +26,7 @@ type TrialSpec struct {
 	HParams          map[string]interface{}
 	TrialSeed        uint32
 	LatestCheckpoint *model.Checkpoint
-	LatestBatch      int
+	StepsCompleted   int
 }
 
 // ToTaskSpec generates a TaskSpec.
@@ -106,7 +106,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"DET_TRIAL_SEED":         strconv.FormatUint(uint64(s.TrialSeed), 10),
 		"DET_EXPERIMENT_CONFIG":  jsonify(s.ExperimentConfig),
 		"DET_HPARAMS":            jsonify(s.HParams),
-		"DET_LATEST_BATCH":       strconv.Itoa(s.LatestBatch),
+		"DET_STEPS_COMPLETED":    strconv.Itoa(s.StepsCompleted),
 		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
 		"DET_TASK_TYPE":          string(model.TaskTypeTrial),
 	}

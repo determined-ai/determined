@@ -82,8 +82,7 @@ class CheckpointContext:
         resources = self._storage_manager._list_directory(ckpt_dir)
 
         # add metadata pre-upload but without counting it among resources
-        if metadata is not None:
-            self._write_metadata_file(ckpt_dir, metadata)
+        self._write_metadata_file(ckpt_dir, metadata or {})
 
         self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         self._report_checkpoint(storage_id, resources, metadata)
@@ -163,7 +162,7 @@ class CheckpointContext:
         with self._storage_manager.store_path(storage_id) as path:
             yield path, storage_id
             resources = self._storage_manager._list_directory(path)
-            self._write_metadata_file(os.fspath(path), metadata)
+            self._write_metadata_file(os.fspath(path), metadata or {})
 
         self._report_checkpoint(storage_id, resources, metadata)
 
@@ -220,11 +219,10 @@ class CheckpointContext:
         """
         self._storage_manager.delete(storage_id)
 
-    def _write_metadata_file(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]]) -> None:
-        if metadata is not None:
-            metadata_path = pathlib.Path(ckpt_dir).joinpath("metadata.json")
-            with metadata_path.open("w") as f:
-                json.dump(metadata, f, indent=2)
+    def _write_metadata_file(self, ckpt_dir: str, metadata: Dict[str, Any]) -> None:
+        metadata_path = pathlib.Path(ckpt_dir).joinpath("metadata.json")
+        with metadata_path.open("w") as f:
+            json.dump(metadata, f, indent=2)
 
     def _report_checkpoint(
         self,
@@ -238,10 +236,10 @@ class CheckpointContext:
         resources = resources or {}
         metadata = metadata or {}
 
-        if "latest_batch" not in metadata:
+        if "steps_completed" not in metadata:
             raise ValueError(
                 "metadata for reported checkpoints, in the current implementation, requires a "
-                "'latest_batch' item, which has not been provided"
+                "'steps_completed' item, which has not been provided"
             )
 
         ckpt = bindings.v1Checkpoint(

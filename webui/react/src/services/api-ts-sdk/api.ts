@@ -1108,19 +1108,19 @@ export interface V1CheckpointTrainingMetadata {
      */
     hparams?: any;
     /**
-     * Training metrics reported at the same latest_batch as the checkpoint.
+     * Training metrics reported at the same steps_completed as the checkpoint.
      * @type {V1Metrics}
      * @memberof V1CheckpointTrainingMetadata
      */
     trainingMetrics?: V1Metrics;
     /**
-     * Validation metrics reported at the same latest_batch as the checkpoint.
+     * Validation metrics reported at the same steps_completed as the checkpoint.
      * @type {V1Metrics}
      * @memberof V1CheckpointTrainingMetadata
      */
     validationMetrics?: V1Metrics;
     /**
-     * Searcher metric (as specified by the expconf) at the same latest_batch of the checkpoint.
+     * Searcher metric (as specified by the expconf) at the same steps_completed of the checkpoint.
      * @type {number}
      * @memberof V1CheckpointTrainingMetadata
      */
@@ -5638,7 +5638,7 @@ export interface V1TrialMetrics {
      * @type {number}
      * @memberof V1TrialMetrics
      */
-    latestBatch: number;
+    stepsCompleted: number;
     /**
      * The metrics for this bit of training (reduced over the reporting period).
      * @type {any}
