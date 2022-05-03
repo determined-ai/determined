@@ -41,7 +41,7 @@ func (db *PgDB) ProjectFromNames(workspaceName string, projectName string) (int,
 		return 1, err
 	}
 	if p.Id < 1 {
-		return 1, fmt.Errorf("Workspace and Project names did not match any known project.")
+		return 1, fmt.Errorf("workspace and project names did not match any known project")
 	}
 	return int(p.Id), nil
 }

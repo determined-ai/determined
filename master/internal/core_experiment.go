@@ -352,8 +352,13 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
-	if (config.Workspace() == "" && config.Project() != "") || (config.Workspace() != "" && config.Project() == "") {
-		return nil, false, nil, errors.New("Workspace and Project must both be included in config if one is provided")
+	if config.Workspace() == "" && config.Project() != "" {
+		return nil, false, nil,
+			errors.New("workspace and project must both be included in config if one is provided")
+	}
+	if config.Workspace() != "" && config.Project() == "" {
+		return nil, false, nil,
+			errors.New("workspace and project must both be included in config if one is provided")
 	}
 	projectID := 1
 	if config.Workspace() != "" && config.Project() != "" {
