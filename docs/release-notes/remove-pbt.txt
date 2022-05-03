@@ -1,0 +1,5 @@
+:orphan:
+
+**Breaking Changes**
+
+- HP Search: Remove the PBT searcher.
