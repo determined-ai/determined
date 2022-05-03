@@ -219,32 +219,6 @@ export interface GetHPImportanceResponseMetricHPImportance {
 }
 
 /**
- * WorkloadContainer is a wrapper for Determined workloads to allow repeated oneof types.
- * @export
- * @interface GetTrialResponseWorkloadContainer
- */
-export interface GetTrialResponseWorkloadContainer {
-    /**
-     * Training workload.
-     * @type {V1MetricsWorkload}
-     * @memberof GetTrialResponseWorkloadContainer
-     */
-    training?: V1MetricsWorkload;
-    /**
-     * Validation workload.
-     * @type {V1MetricsWorkload}
-     * @memberof GetTrialResponseWorkloadContainer
-     */
-    validation?: V1MetricsWorkload;
-    /**
-     * Checkpoint workload.
-     * @type {V1CheckpointWorkload}
-     * @memberof GetTrialResponseWorkloadContainer
-     */
-    checkpoint?: V1CheckpointWorkload;
-}
-
-/**
  * `Any` contains an arbitrary serialized protocol buffer message along with a URL that describes the type of the serialized message.  Protobuf library provides support to pack/unpack Any values in the form of utility functions or additional generated methods of the Any type.  Example 1: Pack and unpack a message in C++.      Foo foo = ...;     Any any;     any.PackFrom(foo);     ...     if (any.UnpackTo(&foo)) {       ...     }  Example 2: Pack and unpack a message in Java.      Foo foo = ...;     Any any = Any.pack(foo);     ...     if (any.is(Foo.class)) {       foo = any.unpack(Foo.class);     }   Example 3: Pack and unpack a message in Python.      foo = Foo(...)     any = Any()     any.Pack(foo)     ...     if any.Is(Foo.DESCRIPTOR):       any.Unpack(foo)       ...   Example 4: Pack and unpack a message in Go       foo := &pb.Foo{...}      any, err := anypb.New(foo)      if err != nil {        ...      }      ...      foo := &pb.Foo{}      if err := any.UnmarshalTo(foo); err != nil {        ...      }  The pack methods provided by protobuf library will by default use 'type.googleapis.com/full.type.name' as the type URL and the unpack methods only use the fully qualified type name after the last '/' in the type URL, for example \"foo.bar.com/x/y.z\" will yield type name \"y.z\".   JSON ==== The JSON representation of an `Any` value uses the regular representation of the deserialized, embedded message, with an additional field `@type` which contains the type URL. Example:      package google.profile;     message Person {       string first_name = 1;       string last_name = 2;     }      {       \"@type\": \"type.googleapis.com/google.profile.Person\",       \"firstName\": <string>,       \"lastName\": <string>     }  If the embedded message type is well-known and has a custom JSON representation, that representation will be embedded adding a field `value` which holds the custom JSON in addition to the `@type` field. Example (for message [google.protobuf.Duration][]):      {       \"@type\": \"type.googleapis.com/google.protobuf.Duration\",       \"value\": \"1.212s\"     }
  * @export
  * @interface ProtobufAny
@@ -694,6 +668,12 @@ export interface Trialv1Trial {
      */
     bestCheckpoint?: V1CheckpointWorkload;
     /**
+     * Latest training step.
+     * @type {V1MetricsWorkload}
+     * @memberof Trialv1Trial
+     */
+    latestTraining?: V1MetricsWorkload;
+    /**
      * The last reported state of the trial runner (harness code).
      * @type {string}
      * @memberof Trialv1Trial
@@ -717,6 +697,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     taskId?: string;
+    /**
+     * The sum of sizes of all resources in all checkpoints for the trial.
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    totalCheckpointSize?: string;
 }
 
 /**
@@ -2654,10 +2640,30 @@ export interface V1GetTrialResponse {
     trial: Trialv1Trial;
     /**
      * Trial workloads.
-     * @type {Array<GetTrialResponseWorkloadContainer>}
+     * @type {Array<V1WorkloadContainer>}
      * @memberof V1GetTrialResponse
      */
-    workloads: Array<GetTrialResponseWorkloadContainer>;
+    workloads: Array<V1WorkloadContainer>;
+}
+
+/**
+ * Response to GetTrialWorkloadsRequest.
+ * @export
+ * @interface V1GetTrialWorkloadsResponse
+ */
+export interface V1GetTrialWorkloadsResponse {
+    /**
+     * The list of returned workloads.
+     * @type {Array<V1WorkloadContainer>}
+     * @memberof V1GetTrialWorkloadsResponse
+     */
+    workloads: Array<V1WorkloadContainer>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetTrialWorkloadsResponse
+     */
+    pagination: V1Pagination;
 }
 
 /**
@@ -5981,6 +5987,32 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
+}
+
+/**
+ * WorkloadContainer is a wrapper for Determined workloads to allow repeated oneof types.
+ * @export
+ * @interface V1WorkloadContainer
+ */
+export interface V1WorkloadContainer {
+    /**
+     * Training workload.
+     * @type {V1MetricsWorkload}
+     * @memberof V1WorkloadContainer
+     */
+    training?: V1MetricsWorkload;
+    /**
+     * Validation workload.
+     * @type {V1MetricsWorkload}
+     * @memberof V1WorkloadContainer
+     */
+    validation?: V1MetricsWorkload;
+    /**
+     * Checkpoint workload.
+     * @type {V1CheckpointWorkload}
+     * @memberof V1WorkloadContainer
+     */
+    checkpoint?: V1CheckpointWorkload;
 }
 
 
@@ -10840,6 +10872,58 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/workloads`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
          * @param {V1IdleNotebookRequest} body 
@@ -11848,6 +11932,28 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
          * @param {V1IdleNotebookRequest} body 
@@ -12307,6 +12413,19 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Send notebook idle data to master
          * @param {string} notebookId The id of the notebook.
          * @param {V1IdleNotebookRequest} body 
@@ -12667,6 +12786,21 @@ export class InternalApi extends BaseAPI {
      */
     public getTelemetry(options?: any) {
         return InternalApiFp(this.configuration).getTelemetry(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the list of workloads for a trial.
+     * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -16929,6 +17063,58 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/workloads`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -17152,6 +17338,28 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -17255,6 +17463,19 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Get the list of workloads for a trial.
+         * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Kill a trial.
          * @param {number} id The trial id
          * @param {*} [options] Override http request option.
@@ -17332,6 +17553,21 @@ export class TrialsApi extends BaseAPI {
      */
     public getTrial(trialId: number, options?: any) {
         return TrialsApiFp(this.configuration).getTrial(trialId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the list of workloads for a trial.
+     * @param {number} trialId Limit workloads to those that are owned by the specified trial.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**

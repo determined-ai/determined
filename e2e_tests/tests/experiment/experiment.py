@@ -284,7 +284,7 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
 
 
 def workloads_with_training(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1MetricsWorkload]:
     ret: List[bindings.v1MetricsWorkload] = []
     for w in workloads:
@@ -294,7 +294,7 @@ def workloads_with_training(
 
 
 def workloads_with_validation(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1MetricsWorkload]:
     ret: List[bindings.v1MetricsWorkload] = []
     for w in workloads:
@@ -304,7 +304,7 @@ def workloads_with_validation(
 
 
 def workloads_with_checkpoint(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1CheckpointWorkload]:
     ret: List[bindings.v1CheckpointWorkload] = []
     for w in workloads:
@@ -380,7 +380,7 @@ def assert_performed_initial_validation(exp_id: int) -> None:
 
 
 def last_workload_matches_last_checkpoint(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> None:
     assert len(workloads) > 0
 
