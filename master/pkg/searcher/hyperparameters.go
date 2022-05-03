@@ -46,25 +46,3 @@ func sampleOne(h expconf.Hyperparameter, rand *nprand.State) interface{} {
 		panic(fmt.Sprintf("unexpected hyperparameter type: %+v", h))
 	}
 }
-
-func intClamp(val, minval, maxval int) int {
-	switch {
-	case val < minval:
-		return minval
-	case val > maxval:
-		return maxval
-	default:
-		return val
-	}
-}
-
-func doubleClamp(val, minval, maxval float64) float64 {
-	switch {
-	case val < minval:
-		return minval
-	case val > maxval:
-		return maxval
-	default:
-		return val
-	}
-}

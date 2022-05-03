@@ -99,11 +99,3 @@ func (defaultSearchMethod) trialExitedEarly(
 	context, model.RequestID, model.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }
-
-func sumTrialLengths(us map[model.RequestID]PartialUnits) PartialUnits {
-	var sum PartialUnits = 0
-	for _, u := range us {
-		sum += u
-	}
-	return sum
-}
