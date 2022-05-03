@@ -270,6 +270,8 @@ type CreateExperimentParams struct {
 	GitCommitter  *string         `json:"git_committer"`
 	GitCommitDate *time.Time      `json:"git_commit_date"`
 	ValidateOnly  bool            `json:"validate_only"`
+	Project       *string         `json:"project"`
+	Workspace     *string         `json:"workspace"`
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
@@ -350,9 +352,23 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
+	if (config.Workspace() == "" && config.Project() != "") || (config.Workspace() != "" && config.Project() == "") {
+		return nil, false, nil, errors.New("Workspace and Project must both be included in config if one is provided")
+	}
+	projectID := 1
+	if config.Workspace() != "" && config.Project() != "" {
+		projectID, err = m.db.ProjectFromNames(config.Workspace(), config.Project())
+		if err != nil {
+			return nil, false, nil, errors.Wrapf(
+				err, "unable to find parent workspace and project")
+		}
+	}
+
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
-		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
+		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,
+		projectID,
+	)
 	if user != nil {
 		dbExp.OwnerID = &user.ID
 		dbExp.Username = user.Username

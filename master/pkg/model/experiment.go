@@ -305,6 +305,7 @@ func NewExperiment(
 	archived bool,
 	gitRemote, gitCommit, gitCommitter *string,
 	gitCommitDate *time.Time,
+	projectID int,
 ) (*Experiment, error) {
 	if len(modelDefinitionBytes) == 0 {
 		return nil, errors.New("empty model definition")
@@ -327,6 +328,7 @@ func NewExperiment(
 		GitCommit:            gitCommit,
 		GitCommitter:         gitCommitter,
 		GitCommitDate:        gitCommitDate,
+		ProjectID:            projectID,
 	}, nil
 }
 
