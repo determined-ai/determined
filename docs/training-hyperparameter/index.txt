@@ -79,10 +79,6 @@ Determined also supports other common hyperparameter search algorithms:
 #. :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
    configurations chosen at random and returns the best.
 
-#. :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search
-   but periodically replaces low-performing hyperparameter configurations with ones *near* the
-   high-performing points in the hyperparameter space.
-
 ***********************************
  Configuring Hyperparameter Ranges
 ***********************************
@@ -140,8 +136,7 @@ When a trial encounters an error or fails unexpectedly, Determined will restart 
 checkpoint unless we have done so :ref:`max_restarts <max-restarts>` times, which is configured in
 the experiment configuration. Once we have reached ``max_restarts``, any further trials that fail
 will be marked as errored and will not be restarted. For search methods that adapt to validation
-metric values (:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`, and
-:ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>`), we do not continue
+metric values (:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`), we do not continue
 training errored trials, even if the search method would typically call for us to continue training.
 This behavior is useful when some parts of the hyperparameter space result in models that cannot be
 trained successfully (e.g., the search explores a range of batch sizes and some of those batch sizes

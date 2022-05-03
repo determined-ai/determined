@@ -159,7 +159,6 @@ redirects = {
     "topic-guides/hp-tuning-det/hp-constraints-det": "../../training-hyperparameter/hp-constraints-det.html",
     "topic-guides/hp-constraints-det": "../training-hyperparameter/hp-constraints-det.html",
     "topic-guides/hp-tuning-det/hp-grid": "../../training-hyperparameter/hp-grid.html",
-    "topic-guides/hp-tuning-det/hp-pbt": "../../training-hyperparameter/hp-pbt.html",
     "topic-guides/hp-tuning-det/hp-random": "../../training-hyperparameter/hp-random.html",
     "topic-guides/hp-tuning-det/hp-single": "../../training-hyperparameter/hp-single.html",
     "topic-guides/hp-tuning-det/hp-tuning-defined": "../../training-hyperparameter/hp-tuning-defined.html",

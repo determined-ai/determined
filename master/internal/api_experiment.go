@@ -1002,8 +1002,6 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByTrainingLength
 	case expconf.SingleConfig:
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
-	case expconf.PBTConfig:
-		return nil, errors.New("population-based training not supported for trial sampling")
 	// EOL searcher configs:
 	case expconf.AdaptiveConfig:
 		ranking = ByTrainingLength

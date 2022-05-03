@@ -17,7 +17,6 @@ type SearcherConfigV0 struct {
 	RawGridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
 	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
-	RawPBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
 
 	// These searchers are allowed only to help parse old experiment configs.
 	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
@@ -62,16 +61,12 @@ func (s SearcherConfigV0) Unit() Unit {
 		return s.RawAsyncHalvingConfig.Unit()
 	case s.RawAdaptiveASHAConfig != nil:
 		return s.RawAdaptiveASHAConfig.Unit()
-	case s.RawPBTConfig != nil:
-		return s.RawPBTConfig.Unit()
-
 	case s.RawSyncHalvingConfig != nil:
 		panic("cannot get unit of EOL searcher class")
 	case s.RawAdaptiveConfig != nil:
 		panic("cannot get unit of EOL searcher class")
 	case s.RawAdaptiveSimpleConfig != nil:
 		panic("cannot get unit of EOL searcher class")
-
 	default:
 		panic("no searcher type specified")
 	}
@@ -165,33 +160,6 @@ type AdaptiveASHAConfigV0 struct {
 // Unit implements the model.InUnits interface.
 func (a AdaptiveASHAConfigV0) Unit() Unit {
 	return a.RawMaxLength.Unit
-}
-
-// PBTReplaceConfig configures replacement for a PBT search.
-type PBTReplaceConfig struct {
-	TruncateFraction float64 `json:"truncate_fraction"`
-}
-
-// PBTExploreConfig configures exploration for a PBT search.
-type PBTExploreConfig struct {
-	ResampleProbability float64 `json:"resample_probability"`
-	PerturbFactor       float64 `json:"perturb_factor"`
-}
-
-//go:generate ../gen.sh
-// PBTConfigV0 configures a PBT search.
-type PBTConfigV0 struct {
-	RawPopulationSize *int      `json:"population_size"`
-	RawNumRounds      *int      `json:"num_rounds"`
-	RawLengthPerRound *LengthV0 `json:"length_per_round"`
-
-	RawReplaceFunction *PBTReplaceConfig `json:"replace_function"`
-	RawExploreFunction *PBTExploreConfig `json:"explore_function"`
-}
-
-// Unit implements the model.InUnits interface.
-func (p PBTConfigV0) Unit() Unit {
-	return p.RawLengthPerRound.Unit
 }
 
 //go:generate ../gen.sh

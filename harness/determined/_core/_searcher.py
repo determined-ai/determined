@@ -18,8 +18,7 @@ class Unit(enum.Enum):
 
 def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
     searcher = experiment_config.get("searcher", {})
-    # All searchers have max_length, except pbt which has a length_per_round.
-    length_example = searcher.get("max_length") or searcher.get("length_per_round")
+    length_example = searcher.get("max_length")
     if isinstance(length_example, dict) and len(length_example) == 1:
         key = next(iter(length_example.keys()))
         return {"records": Unit.RECORDS, "epochs": Unit.EPOCHS, "batches": Unit.BATCHES}.get(key)
