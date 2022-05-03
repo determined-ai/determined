@@ -4,11 +4,11 @@ import React, { PropsWithChildren, useCallback } from 'react';
 import Icon from 'components/Icon';
 import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
 import {
-  CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase,
+  CheckpointWorkloadExtended, ExperimentBase,
 } from 'types';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended;
   chidren?: JSX.Element
   experiment: ExperimentBase;
   title: string;
