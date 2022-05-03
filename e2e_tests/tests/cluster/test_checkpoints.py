@@ -79,7 +79,10 @@ def test_delete_checkpoints() -> None:
     d_checkpoint = bindings.get_GetCheckpoint(
         session=t_s, checkpointUuid=d_CheckpointUuid
     ).checkpoint
-    assert d_checkpoint.state == determinedcheckpointv1State.STATE_DELETED
+    if d_checkpoint is not None:
+        assert d_checkpoint.state == determinedcheckpointv1State.STATE_DELETED
+    else:
+        raise Exception("Failed to get checkpoint to validate correct deletion")
 
     checkpoint_config = config["checkpoint_storage"]
     storage_manager = storage.build(checkpoint_config, container_path=None)
