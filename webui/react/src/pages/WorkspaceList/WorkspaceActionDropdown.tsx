@@ -124,7 +124,6 @@ const WorkspaceActionDropdown: React.FC<Props> = (
 
   return children ? (
     <Dropdown
-      disabled={!userHasPermissions}
       overlay={WorkspaceActionMenu}
       placement="bottomLeft"
       trigger={trigger ?? [ 'contextMenu', 'click' ]}
@@ -137,7 +136,6 @@ const WorkspaceActionDropdown: React.FC<Props> = (
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
-        disabled={!userHasPermissions}
         overlay={WorkspaceActionMenu}
         placement="bottomRight"
         trigger={trigger ?? [ 'click' ]}>
