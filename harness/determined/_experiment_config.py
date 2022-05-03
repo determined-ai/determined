@@ -8,9 +8,6 @@ class ExperimentConfig(dict):
     def scheduling_unit(self) -> int:
         return int(self.get("scheduling_unit", 100))
 
-    def native_enabled(self) -> bool:
-        return "internal" in self and self["internal"] is not None and "native" in self["internal"]
-
     def native_parallel_enabled(self) -> bool:
         return bool(self["resources"]["native_parallel"])
 
@@ -69,5 +66,10 @@ class ExperimentConfig(dict):
     def get_checkpoint_storage(self) -> Dict[str, Any]:
         return self.get("checkpoint_storage", {})
 
-    def get_entrypoint(self) -> Optional[Union[str, List[str]]]:
-        return self.get("entrypoint", None)
+    def get_entrypoint(self) -> Union[str, List[str]]:
+        entrypoint = self["entrypoint"]
+        if not isinstance(entrypoint, (str, list)):
+            raise ValueError("invalid entrypoint in experiment config: {entrypoint}")
+        if isinstance(entrypoint, list) and any(not isinstance(e, str) for e in entrypoint):
+            raise ValueError("invalid entrypoint in experiment config: {entrypoint}")
+        return entrypoint

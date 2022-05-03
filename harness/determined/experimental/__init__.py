@@ -9,8 +9,4 @@ from determined.common.experimental import (
     TrialOrderBy,
     TrialSortBy,
 )
-from determined.experimental._native import (
-    create,
-    create_trial_instance,
-    test_one_batch,
-)
+from determined.experimental._native import test_one_batch

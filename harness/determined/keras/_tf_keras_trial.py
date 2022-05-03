@@ -182,11 +182,6 @@ class TFKerasTrialController(det.TrialController):
 
         cls._set_random_seeds(env.trial_seed)
 
-        # For the Native API we must configure the Session before running user code.
-        if env.experiment_config.native_enabled():
-            session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            cls._configure_session(env, session_config, distributed_backend.use_horovod())
-
     @classmethod
     def _set_random_seeds(cls: Type["TFKerasTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes. When using horovod, each worker will

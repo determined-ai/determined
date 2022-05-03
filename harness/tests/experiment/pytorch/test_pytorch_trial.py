@@ -1,8 +1,6 @@
 # type: ignore
 import os
 import pathlib
-import subprocess
-import sys
 import typing
 
 import pytest
@@ -591,19 +589,3 @@ def test_checkpoint_loading(ckpt_ver):
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-pytorch")
     trial = pytorch.load_trial_from_checkpoint_path(checkpoint_dir)
     assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
-
-
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(pytorch_xor_model.XORTrial)
-
-
-def test_native_api_local_test() -> None:
-    subprocess.check_call(
-        args=[sys.executable, "pytorch_onevar_model.py"],
-        cwd=utils.fixtures_path(""),
-        env={
-            "PYTHONUNBUFFERED": "1",
-            "PYTHONPATH": f"$PYTHONPATH:{utils.repo_path('harness')}",
-            **os.environ,
-        },
-    )

@@ -1,9 +1,7 @@
-import sys
 from typing import Callable, List
 
 import pytest
 
-from determined.common.api.bindings import determinedexperimentv1State
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -160,14 +158,6 @@ def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> 
     collect_trial_profiles(trials[0].trial.id)
 
 
-@pytest.mark.e2e_cpu
-def test_pytorch_native_api() -> None:
-    exp_id = exp.create_native_experiment(
-        conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
-    )
-    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
-
-
 @pytest.mark.parallel
 def test_pytorch_gradient_aggregation() -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
@@ -263,12 +253,3 @@ def test_distributed_logging() -> None:
         assert exp.check_if_string_present_in_trial_logs(
             t_id, "finished train_batch for rank {}".format(i)
         )
-
-
-@pytest.mark.parallel
-def test_pytorch_native_api_parallel() -> None:
-    exp_id = exp.create_native_experiment(
-        conf.fixtures_path("pytorch_no_op"),
-        [sys.executable, "model_def.py", "--slots-per-trial", "8"],
-    )
-    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)

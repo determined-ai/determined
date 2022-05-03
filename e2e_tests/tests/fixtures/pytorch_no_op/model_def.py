@@ -3,10 +3,9 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 import torch
-import yaml
 from torch import nn
 
-from determined import experimental, pytorch
+from determined import pytorch
 
 
 class OnesDataset(torch.utils.data.Dataset):
@@ -65,36 +64,3 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
 
     def build_validation_data_loader(self):
         return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--slots-per-trial", default="1")
-    args = parser.parse_args()
-
-    conf = yaml.safe_load(
-        f"""
-    description: noop-pytorch-native-api
-    data:
-      model_type: single_output
-    hyperparameters:
-      global_batch_size: 32
-    scheduling_unit: 1
-    searcher:
-      name: single
-      metric: validation_error
-      max_length:
-        batches: 3
-      smaller_is_better: true
-    max_restarts: 0
-    min_checkpoint_period:
-      batches: 1
-    min_validation_period:
-      batches: 1
-    resources:
-      slots_per_trial: {args.slots_per_trial}
-    """
-    )
-    experimental.create(NoopPyTorchTrial, conf, context_dir=".")

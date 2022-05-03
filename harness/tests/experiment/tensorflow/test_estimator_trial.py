@@ -357,7 +357,3 @@ def test_checkpoint_loading(ckpt_ver):
     )
     estm = estimator.load_estimator_from_checkpoint_path(checkpoint_dir)
     assert isinstance(estm, tracking.AutoTrackable), type(estm)
-
-
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(estimator_xor_model.XORTrial)
