@@ -68,7 +68,7 @@ def test_noop_load() -> None:
     )
     trials = exp.experiment_trials(experiment_id)
     checkpoint = Determined(conf.make_master_url()).get_trial(trials[0].trial.id).top_checkpoint()
-    assert checkpoint.task_id == trials[0].task_id
+    assert checkpoint.task_id == trials[0].trial.taskId
 
 
 @pytest.mark.e2e_cpu
