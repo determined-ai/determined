@@ -284,56 +284,6 @@ def test_gbt_titanic_estimator_accuracy() -> None:
 
 
 @pytest.mark.nightly
-def test_data_layer_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.features_examples_path("data_layer_mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
-
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
-
-    target_accuracy = 0.92
-    assert max(validation_accuracies) > target_accuracy, (
-        "data_layer_mnist_estimator did not reach minimum target accuracy {} in {} steps."
-        " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
-        )
-    )
-
-
-@pytest.mark.nightly
-def test_data_layer_mnist_tf_keras_accuracy() -> None:
-    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
-
-    validation_accuracies = [
-        step["validation"]["metrics"]["validation_metrics"]["val_sparse_categorical_accuracy"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
-
-    target_accuracy = 0.97
-    assert max(validation_accuracies) > target_accuracy, (
-        "data_layer_mnist_tf_keras did not reach minimum target accuracy {} in {} steps."
-        " full validation accuracy history: {}".format(
-            target_accuracy, len(trial_metrics["steps"]), validation_accuracies
-        )
-    )
-
-
-@pytest.mark.nightly
 def test_cifar10_byol_pytorch_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("byol_pytorch/const-cifar10.yaml"))
     # Limit convergence time, since was running over 30 minute limit.

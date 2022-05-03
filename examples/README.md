@@ -9,6 +9,5 @@
 | Meta Learning | [protonet_omniglot_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch |
 | Generative Adversarial Networks (GAN) | <p>[dc_gan_tf_keras](gan/dcgan_tf_keras)<br>[gan_mnist_pytorch](gan/gan_mnist_pytorch)<br>[deepspeed_dcgan](deepspeed/deepspeed_dcgan)</p> | <p>MNIST<br>MNIST<br>MNIST / CIFAR-10</p> | <p>TensorFlow (tf.keras)<br>PyTorch<br>PyTorch (DeepSpeed)</p> |
 | Decision Trees  | [gbt_titanic_estimator](decision_trees/gbt_titanic_estimator) | Titanic | TensorFlow (Estimator API) |
-| Data Layer | <p>[data_layer_mnist_estimator](features/data_layer_mnist_estimator)<br>[data_layer_mnist_tf_keras](features/data_layer_mnist_tf_keras)</p> | <p>MNIST<br>MNIST</p> | <p>TensorFlow (Estimator API)<br>TensorFlow (tf.keras)</p> |
 | Custom Reducers | <p>[custom_reducers_mnist_pytorch](features/custom_reducers_mnist_pytorch)</p> | <p>MNIST</p> | <p>PyTorch</p> |
 | HP Search Constraints | <p>[hp_constraints_mnist_pytorch](features/hp_constraints_mnist_pytorch)</p> | <p>MNIST</p> | <p>PyTorch</p> |

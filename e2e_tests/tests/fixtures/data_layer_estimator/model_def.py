@@ -5,10 +5,9 @@ import os
 from typing import Callable, Dict, List, Tuple
 
 import tensorflow as tf
+import util
 
 from determined.estimator import EstimatorTrial, EstimatorTrialContext
-
-import util
 
 IMAGE_SIZE = 28
 NUM_CLASSES = 10

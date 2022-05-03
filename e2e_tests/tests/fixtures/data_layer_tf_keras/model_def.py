@@ -22,8 +22,8 @@ def categorical_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return 1.0 - categorical_accuracy(y_true, y_pred)  # type: ignore
 
 
-@tfds.decode.make_decoder(output_dtype=tf.float32)
-def decode_image(example, feature) -> Any:
+@tfds.decode.make_decoder(output_dtype=tf.float32)  # type: ignore
+def decode_image(example: Any, feature: Any) -> Any:
     return tf.cast(feature.decode_example(example), dtype=tf.float32) / 255
 
 
@@ -77,7 +77,9 @@ class MnistTrial(TFKerasTrial):
             mnist_builder = tfds.builder("mnist")
             mnist_builder.download_and_prepare(download_dir="/cifar")
             mnist_train = mnist_builder.as_dataset(
-                split="train", decoders={"image": decode_image()}, as_supervised=True,
+                split="train",
+                decoders={"image": decode_image()},
+                as_supervised=True,
             )
             return mnist_train
 
@@ -91,7 +93,9 @@ class MnistTrial(TFKerasTrial):
             mnist_builder = tfds.builder("mnist")
             mnist_builder.download_and_prepare(download_dir="/cifar")
             mnist_val = mnist_builder.as_dataset(
-                split="test", decoders={"image": decode_image()}, as_supervised=True,
+                split="test",
+                decoders={"image": decode_image()},
+                as_supervised=True,
             )
             return mnist_val
 

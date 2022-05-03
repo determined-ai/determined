@@ -94,6 +94,5 @@ Known limitations:
    deepspeed/index
    api-keras
    api-estimator
-   data-layer
    experiment-config
    best-practices
