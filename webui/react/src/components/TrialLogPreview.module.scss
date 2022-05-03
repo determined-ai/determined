@@ -7,8 +7,8 @@ $preview-transition-out: height 0s;
   transition: $preview-transition-in;
 
   .preview {
-    background-color: var(--theme-colors-monochrome-17);
-    border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-11);
+    background-color: var(--theme-surface);
+    border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
     cursor: pointer;
     height: $preview-height;
     overflow: hidden;
@@ -18,7 +18,7 @@ $preview-transition-out: height 0s;
     width: 100%;
   }
   .preview:hover {
-    background-color: var(--theme-colors-monochrome-15);
+    background-color: var(--theme-surface-strong);
   }
   .container {
     flex-grow: 1;
