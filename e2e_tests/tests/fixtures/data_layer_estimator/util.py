@@ -11,7 +11,7 @@ MNIST_TF_RECORDS_URL = (
 )
 
 
-def download_data(download_directory) -> str:
+def download_data(download_directory: str) -> str:
     """
     Return the path of a directory with the MNIST dataset in TFRecord format.
     The dataset will be downloaded into download_directory, if it is not already

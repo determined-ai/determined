@@ -204,7 +204,7 @@ def test_tf_keras_mnist_data_layer_s3(
 
 
 def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
-    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.fixtures_path("data_layer_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -215,9 +215,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
     else:
         config = conf.set_s3_data_layer(config)
 
-    return exp.run_basic_test_with_temp_config(
-        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
-    )
+    return exp.run_basic_test_with_temp_config(config, conf.fixtures_path("data_layer_tf_keras"), 1)
 
 
 @pytest.mark.parallel
@@ -230,7 +228,7 @@ def test_tf_keras_mnist_data_layer_parallel(
     secrets: Dict[str, str],
     collect_trial_profiles: Callable[[int], None],
 ) -> None:
-    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.fixtures_path("data_layer_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -242,7 +240,7 @@ def test_tf_keras_mnist_data_layer_parallel(
         config = conf.set_s3_data_layer(config)
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
+        config, conf.fixtures_path("data_layer_tf_keras"), 1
     )
 
     trial_id = exp.experiment_trials(exp_id)[0].trial.id

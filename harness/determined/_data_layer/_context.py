@@ -1,3 +1,4 @@
+import warnings
 from typing import Callable
 
 import determined as det
@@ -70,7 +71,15 @@ class DataLayerContext:
             ``dataset.batch()`` and runtime augmentation should be done after caching.
             Additionally, users should never need to call ``dataset.repeat()``.
 
+        .. warning::
+            cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future
+            version
         """
+        warnings.warn(
+            "cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future "
+            "version",
+            FutureWarning,
+        )
 
         return self._training_cacheable.cache_dataset(
             dataset_id=dataset_id,
@@ -101,7 +110,15 @@ class DataLayerContext:
                 be performed with the trial's random seed which can be set in
                 :ref:`experiment-configuration`.
 
+        .. warning::
+            cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future
+            version
         """
+        warnings.warn(
+            "cache_validation_dataset was deprecated in Determined 0.18 and will be removed in a "
+            "future version",
+            FutureWarning,
+        )
 
         return self._validation_cacheable.cache_dataset(
             dataset_id=dataset_id,
