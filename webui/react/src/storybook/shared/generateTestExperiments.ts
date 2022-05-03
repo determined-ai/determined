@@ -205,7 +205,7 @@ export const generateTestExperimentData = ():
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
-    username: 'determined',
+    userId: 2,
   };
 
   const checkpoint: CheckpointDetail = {
