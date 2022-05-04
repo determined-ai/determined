@@ -28,6 +28,9 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
     load_data_path = ckpt_dir.joinpath("load_data.json")
     metadata_path = ckpt_dir.joinpath("metadata.json")
     if load_data_path.exists():
+        # PyTorchTrial.build_model() was an old api that was disallowed after 0.14.0, and
+        # load_data.json indicates the checkpoint is much newer than that.
+        detect_build_model = False
         with load_data_path.open() as f:
             load_data = json.load(f)
         if load_data["trial_type"] != "PyTorchTrial":
@@ -39,6 +42,9 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
         hparams = load_data["hparams"]
         trial_cls_spec = load_data["trial_cls_spec"]
     elif metadata_path.exists():
+        # PyTorchTrial.build_model() was an old api that was disallowed after 0.14.0.  There's a
+        # small chance that this model is that old.
+        detect_build_model = True
         # Old checkpoints (<=0.17.7) used to depend on metadata coming from the master in
         # Checkpoint.download().
         with metadata_path.open() as f:
@@ -79,23 +85,28 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
 
     trial_context = cast(pytorch.PyTorchTrialContext, trial_context)
     trial = cast(pytorch.PyTorchTrial, trial_cls(trial_context))
-    if "model_state_dict" in checkpoint:
-        # Backward compatible with older checkpoint.
+
+    # We are still backwards compatible with checkpoints saved in the pre-0.12.13 PyTorchTrial API,
+    # but when we can guarantee that the pre-0.12.13 API was not in use, we avoid checking for a
+    # .build_model() method, so that users who choose to use that name for their own purposes are
+    # unaffected.
+    if detect_build_model:
         model_func = util.get_member_func(trial, "build_model")
+        if "model_state_dict" in checkpoint:
+            # Backward compatible with older checkpoint.
+            if model_func is not None:
+                model = cast(torch.nn.Module, model_func())
+                model.load_state_dict(checkpoint["model_state_dict"])
+                # Note, with the very old checkpoints, we actually return the bare model.
+                return model  # type: ignore
+            raise errors.InvalidCheckpointException()
+
+        # Backward compatible with older checkpoint.
         if model_func is not None:
             model = cast(torch.nn.Module, model_func())
-            model.load_state_dict(checkpoint["model_state_dict"])
+            model.load_state_dict(checkpoint["models_state_dict"][0])
             # Note, with the very old checkpoints, we actually return the bare model.
             return model  # type: ignore
-        raise errors.InvalidCheckpointException()
-
-    # Backward compatible with older checkpoint.
-    model_func = util.get_member_func(trial, "build_model")
-    if model_func is not None:
-        model = cast(torch.nn.Module, model_func())
-        model.load_state_dict(checkpoint["models_state_dict"][0])
-        # Note, with the very old checkpoints, we actually return the bare model.
-        return model  # type: ignore
 
     # Latest model format.
     for idx, model in enumerate(trial_context.models):
