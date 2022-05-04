@@ -6,6 +6,7 @@ import argparse
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+from determined import keras
 from determined.experimental import client
 
 from data import download, get_dataset
@@ -32,8 +33,12 @@ def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
 
 
 def export_model(experiment_id: int) -> tf.keras.Model:
-    checkpoint = client.get_experiment(experiment_id).top_checkpoint()
-    model = checkpoint.load()  # FIXME: deprecated
+    checkpoint: client.Checkpoint = client.get_experiment(experiment_id).top_checkpoint()
+    print(f"Checkpoint {checkpoint.uuid}")
+    print(f"Trial {checkpoint.trial_id}")
+    print(f"Batch {checkpoint.batch_number}")
+    path = checkpoint.download()
+    model = keras.load_model_from_checkpoint_path(path)
     return model
 
 
