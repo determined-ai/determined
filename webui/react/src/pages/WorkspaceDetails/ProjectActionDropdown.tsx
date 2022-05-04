@@ -98,9 +98,8 @@ const ProjectActionDropdown: React.FC<Props> = (
     userHasPermissions,
     workspaceArchived ]);
 
-  if (menuItems.length === 0) {
-    if (showChildrenIfEmpty) return (children as JSX.Element);
-    return <></>;
+  if (menuItems.length === 0 && !showChildrenIfEmpty) {
+    return null;
   }
 
   return children ? (

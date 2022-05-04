@@ -60,7 +60,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           </WorkspaceActionDropdown>
         )}
       </Space>
-      {!workspace.immutable &&
+      {(!workspace.immutable && !workspace.archived) &&
         <Button onClick={handleProjectCreateClick}>New Project</Button>}
     </div>
   );
