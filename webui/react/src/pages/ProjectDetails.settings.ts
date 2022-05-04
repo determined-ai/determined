@@ -58,7 +58,6 @@ export interface ProjectDetailsSettings extends InteractiveTableSettings {
   search?: string;
   sortKey: V1GetProjectExperimentsRequestSortBy;
   state?: RunState[];
-  tab?: string;
   user?: string[];
 }
 
@@ -125,11 +124,6 @@ const config: SettingsConfig = {
         baseType: BaseType.String,
         isArray: true,
       },
-    },
-    {
-      key: 'tab',
-      storageKey: 'tab',
-      type: { baseType: BaseType.String },
     },
     {
       defaultValue: MINIMUM_PAGE_SIZE,

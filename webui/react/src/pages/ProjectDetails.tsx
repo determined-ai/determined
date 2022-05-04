@@ -917,9 +917,7 @@ const ProjectDetails: React.FC = () => {
         curUser={user}
         fetchProject={fetchProject}
         project={project}
-        settings={settings}
         tabs={tabs}
-        updateSettings={updateSettings}
       />
     </Page>
   );
