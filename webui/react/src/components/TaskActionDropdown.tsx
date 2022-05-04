@@ -3,14 +3,15 @@ import { isNumber } from 'util';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 
 import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
+import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
 import { paths } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import {
@@ -55,6 +56,11 @@ const TaskActionDropdown: React.FC<Props> = ({
   const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.id === task.userId)
   ) ? deletableRunStates.has(task.state) : false;
+
+  const { modalOpen: openModalDelete } = useModalExperimentDelete(
+    { experimentId: id, onClose: () => onComplete?.(Action.Delete) },
+  );
+  const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -121,19 +127,7 @@ const TaskActionDropdown: React.FC<Props> = ({
           break;
         case Action.Delete:
           if (!isExperiment) break;
-          Modal.confirm({
-            content: `
-            Are you sure you want to delete
-            experiment ${id}?
-          `,
-            icon: <ExclamationCircleOutlined />,
-            okText: 'Delete',
-            onOk: async () => {
-              await deleteExperiment({ experimentId: id });
-              if (onComplete) onComplete(action);
-            },
-            title: 'Confirm Experiment Deletion',
-          });
+          handleDeleteClick();
       }
     } catch (e) {
       handleError(e, {
