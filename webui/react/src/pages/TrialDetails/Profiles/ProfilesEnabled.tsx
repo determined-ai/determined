@@ -1,12 +1,9 @@
-import { Alert } from 'antd';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import useScroll from 'hooks/useScroll';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
@@ -69,21 +66,8 @@ const ProfilesEnabled: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
-  const scroll = useScroll(containerRef);
-  const scrollTop = useRef(0);
 
-  const isLoading = (
-    metrics[MetricType.System].isLoading ||
-    metrics[MetricType.Throughput].isLoading ||
-    metrics[MetricType.Timing].isLoading
-  );
-  const isEmpty = (
-    metrics[MetricType.System].isEmpty &&
-    metrics[MetricType.Throughput].isEmpty &&
-    metrics[MetricType.Timing].isEmpty
-  );
-
-  const chartInfo = useMemo(() => {
+  const chartOptions = useMemo(() => {
     // Define shared options between all charts.
     const sharedOptions: Partial<Options> = {
       cursor: {
@@ -102,22 +86,50 @@ const ProfilesEnabled: React.FC = () => {
 
     // Convert metrics into uPlot-friendly data and define chart specific configs.
     const config = {
+      [MetricType.System]: { axes: [ timeAxis, metricAxis(settings.name) ] },
+      [MetricType.Throughput]: { axes: [ timeAxis, metricAxis('samples_per_second') ] },
+      [MetricType.Timing]: { axes: [ timeAxis, { label: 'Seconds', scale: 'y' } ] },
+    };
+
+    // Finalize uPlot data and options for all charts.
+    const metricKeys = [ MetricType.System, MetricType.Throughput, MetricType.Timing ];
+    const uPlotData = metricKeys.reduce((acc, key) => {
+      const series = metricKeys.reduce((acc, seriesKey) => {
+        const metricNames = metrics[seriesKey].names.slice(1);
+        if (seriesKey === key) {
+          const series = metricNames.map(seriesMapping);
+          acc.push(...series);
+        } else {
+          const filler = metricNames.map(fillerMapping);
+          acc.push(...filler);
+        }
+        return acc;
+      }, [ timeSeries, batchSeries ]);
+
+      const options = { ...sharedOptions, axes: config[key].axes, series } as Options;
+
+      return { ...acc, [key]: options };
+    }, {} as Record<MetricType, Options>);
+
+    return uPlotData;
+  }, [ settings.name, metrics ]);
+
+  const chartData = useMemo(() => {
+    // Convert metrics into uPlot-friendly data and define chart specific configs.
+    const metricData = {
       [MetricType.System]: {
-        axes: [ timeAxis, metricAxis(settings.name) ],
         data: convertMetricsToUplotData(
           metrics[MetricType.System].dataByTime,
           metrics[MetricType.System].names,
         ),
       },
       [MetricType.Throughput]: {
-        axes: [ timeAxis, metricAxis('samples_per_second') ],
         data: convertMetricsToUplotData(
           metrics[MetricType.Throughput].dataByTime,
           metrics[MetricType.Throughput].names,
         ),
       },
       [MetricType.Timing]: {
-        axes: [ timeAxis, { label: 'Seconds', scale: 'y' } ],
         data: convertMetricsToUplotData(
           metrics[MetricType.Timing].dataByTime,
           metrics[MetricType.Timing].names,
@@ -128,11 +140,11 @@ const ProfilesEnabled: React.FC = () => {
     // Finalize uPlot data and options for all charts.
     const metricKeys = Object.keys(metrics) as MetricType[];
     const uPlotData = metricKeys.reduce((acc, key) => {
-      const [ times, batches ] = config[key].data;
+      const [ times, batches ] = metricData[key].data;
 
       // Pad the series data with empty series data.
       const data = metricKeys.reduce((acc, seriesKey) => {
-        const seriesData = config[seriesKey].data.slice(2);
+        const seriesData = metricData[seriesKey].data.slice(2);
         if (seriesKey === key) {
           acc.push(...seriesData);
         } else {
@@ -144,84 +156,44 @@ const ProfilesEnabled: React.FC = () => {
       }, [ times || [], batches || [] ]);
 
       // Pad the series config with blank series where applicable.
-      const series = metricKeys.reduce((acc, seriesKey) => {
-        const metricNames = metrics[seriesKey].names.slice(1);
-        if (seriesKey === key) {
-          const series = metricNames.map(seriesMapping);
-          acc.push(...series);
-        } else {
-          const filler = new Array(metricNames.length).fill(null).map(fillerMapping);
-          acc.push(...filler);
-        }
-        return acc;
-      }, [ timeSeries, batchSeries ]);
 
-      const options = { ...sharedOptions, axes: config[key].axes, series } as Options;
-
-      return { ...acc, [key]: { data, options } };
-    }, {} as Record<MetricType, { data: AlignedData, options: Options }>);
+      return { ...acc, [key]: data };
+    }, {} as Record<MetricType, AlignedData>);
 
     return uPlotData;
-  }, [ metrics, settings.name ]);
-
-  /*
-   * Preserve and restore scroll position upon re-render.
-   */
-  useEffect(() => {
-    if (containerRef.current && scroll.scrollTop === 0 && scrollTop.current !== 0) {
-      containerRef.current.scrollTop = scrollTop.current;
-    } else {
-      scrollTop.current = scroll.scrollTop;
-    }
-  }, [ scroll ]);
-
-  if (isLoading) {
-    return <Spinner spinning tip="Waiting for profiler data..." />;
-  } else if (isEmpty) {
-    return <Alert message="No data available." type="warning" />;
-  }
+  }, [ metrics ]);
 
   return (
     <div ref={containerRef}>
       <Section
         bodyBorder
         bodyNoPadding
-        loading={metrics[MetricType.Throughput].isLoading}
         title="Throughput">
         <UPlotChart
-          data={chartInfo[MetricType.Throughput].data}
-          options={chartInfo[MetricType.Throughput].options}
+          data={chartData[MetricType.Throughput]}
+          options={chartOptions[MetricType.Throughput]}
           style={CHART_STYLE}
         />
       </Section>
       <Section
-        bodyBorder={!metrics[MetricType.Timing].isEmpty}
+        bodyBorder
         bodyNoPadding
-        loading={metrics[MetricType.Timing].isLoading}
         title="Timing Metrics">
-        {metrics[MetricType.Timing].isEmpty ? (
-          <Alert
-            description="Timing metrics may not be available for your framework."
-            message="No data found."
-            type="warning"
-          />
-        ) : (
-          <UPlotChart
-            data={chartInfo[MetricType.Timing].data}
-            options={chartInfo[MetricType.Timing].options}
-            style={CHART_STYLE}
-          />
-        )}
+        <UPlotChart
+          data={chartData[MetricType.Timing]}
+          noDataMessage="No data found. Timing metrics may not be available for your framework."
+          options={chartOptions[MetricType.Timing]}
+          style={CHART_STYLE}
+        />
       </Section>
       <Section
         bodyBorder
         bodyNoPadding
         filters={<SystemMetricFilter />}
-        loading={metrics[MetricType.System].isLoading}
         title="System Metrics">
         <UPlotChart
-          data={chartInfo[MetricType.System].data}
-          options={chartInfo[MetricType.System].options}
+          data={chartData[MetricType.System]}
+          options={chartOptions[MetricType.System]}
           style={CHART_STYLE}
         />
       </Section>

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { TrialDetails } from 'types';
 
@@ -83,16 +84,36 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
   }, [ settings.agentId, settings.name, systemSeries, updateSettings ]);
 
-  const context = useMemo<ProfilesFiltersContextInterface>(() => ({
-    metrics: {
-      [MetricType.System]: systemMetrics,
-      [MetricType.Throughput]: throughputMetrics,
-      [MetricType.Timing]: timingMetrics,
-    },
-    settings,
-    systemSeries,
-    updateSettings,
-  }), [ settings, systemMetrics, systemSeries, throughputMetrics, timingMetrics, updateSettings ]);
+  const [ pollSignal, setPollSignal ] = useState(false);
+  usePolling(() => {
+    setPollSignal(prevPollSignal => !prevPollSignal);
+  }, { interval: 2000 });
+
+  const context = useMemo<ProfilesFiltersContextInterface>(
+    () =>
+      ({
+        metrics: {
+          [MetricType.System]: systemMetrics,
+          [MetricType.Throughput]: throughputMetrics,
+          [MetricType.Timing]: timingMetrics,
+        },
+        settings,
+        systemSeries,
+        updateSettings,
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    , [ pollSignal,
+      settings.name,
+      settings.agentId,
+      settings.gpuUuid,
+      systemMetrics.isLoading,
+      throughputMetrics.isLoading,
+      timingMetrics.isLoading,
+      systemMetrics.isEmpty,
+      throughputMetrics.isEmpty,
+      timingMetrics.isEmpty,
+    ],
+  );
 
   return (
     <ProfilesFiltersContext.Provider value={context}>
