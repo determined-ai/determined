@@ -1189,6 +1189,7 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
+          flags: "web"
           xtra_args: "-v"
       - store_test_results:
           path: webui/react/coverage
@@ -1263,6 +1264,7 @@ jobs:
       - run: make -C master test
       - run: make -C agent test
       - codecov/upload:
+          flags: "backend"
           xtra_args: "-v"
 
   test-intg-master:
@@ -1375,7 +1377,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
-      - run: codecov -v
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1394,7 +1396,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
-      - run: codecov -v
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1412,7 +1414,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
-      - run: codecov -v
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1430,7 +1432,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
-      - run: codecov -v
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1449,7 +1451,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
-      - run: codecov -v
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
