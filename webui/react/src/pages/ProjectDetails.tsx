@@ -772,7 +772,7 @@ const ProjectDetails: React.FC = () => {
 
   const ExperimentTabOptions = useMemo(() => {
     return (
-      <>
+      <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
@@ -805,7 +805,7 @@ const ProjectDetails: React.FC = () => {
             </div>
           </Dropdown>
         </div>
-      </>
+      </div>
     );
   }, [ filterCount,
     handleCustomizeColumnsClick,
@@ -869,7 +869,10 @@ const ProjectDetails: React.FC = () => {
           onNewPage={handleNewNotesPage}
           onSave={handleSaveNotes}
         />),
-      options: <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>,
+      options: (
+        <div className={css.tabOptions}>
+          <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+        </div>),
       title: 'Notes',
     } ]);
   }, [ ExperimentActionDropdown,
