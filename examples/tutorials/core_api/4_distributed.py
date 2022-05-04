@@ -92,8 +92,8 @@ if __name__ == "__main__":
     hparams = info.trial.hparams
 
     # NEW: we are going to launch one process per slot.  In many distributed training frameworks,
-    # like horovod, torch.distributed, or deepspeed, there is a launch script of some sort.  But in
-    # our case, we'll just use multiprocessing.Process.
+    # like horovod, torch.distributed, or deepspeed, there is a separate launcher of some sort
+    # provided by the framework.  But in our case, we'll just use multiprocessing.Process.
     #
     # Ultimately, we'll need to create a DistributedContext on each worker to pass into core.init().
     # In the absence of a distributed training framework that might decide

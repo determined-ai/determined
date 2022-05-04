@@ -28,18 +28,18 @@ def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
 
 class SearcherOperation:
     """
-    A SearcherOperation is a request from the hyperparameter-search logic for the training script
-    to execute one train-validate-report cycle.
+    A ``SearcherOperation`` is a request from the hyperparameter-search logic for the training
+    script to execute one train-validate-report cycle.
 
-    Some searchers, such as single, random, or grid, pass only a single SearcherOperation to each
-    trial, while others may pass many SearcherOperations.
+    Some searchers, such as single, random, or grid, pass only a single ``SearcherOperation`` to
+    each trial, while others may pass many ``SearcherOperations``.
 
-    Each SearcherOperation has a length attribute representing the cumulative training that should
-    be completed before the validate-report steps of the cycle.  The length attribute is absolute,
-    not incremental, meaning that if the searcher wants you to train for 10 units and validate, then
-    train for 10 more units and validate, it emits one SearcherOperation with .length=10 followed by
-    a second SearcherOperation with .length=20.  Using absolute lengths instead of incremental
-    lengths makes restarting after crashes simple and robust.
+    Each ``SearcherOperation`` has a length attribute representing the cumulative training that
+    should be completed before the validate-report steps of the cycle.  The length attribute is
+    absolute, not incremental, meaning that if the searcher wants you to train for 10 units and
+    validate, then train for 10 more units and validate, it emits one ``SearcherOperation`` with
+    ``.length=10`` followed by a second ``SearcherOperation`` with ``.length=20``.  Using absolute
+    lengths instead of incremental lengths makes restarting after crashes simple and robust.
     """
 
     def __init__(
@@ -58,20 +58,20 @@ class SearcherOperation:
     @property
     def length(self) -> int:
         """
-        length represents the total amount of training which should be reached by the train step
+        ``length`` represents the total amount of training which should be reached by the train step
         before the validate-report steps.
         """
         return self._length
 
     def report_progress(self, length: float) -> None:
         """
-        report_progress() reports the training progress to the Determined master so the WebUI can
-        show accurate progress to users.
+        ``report_progress()`` reports the training progress to the Determined master so the WebUI
+        can show accurate progress to users.
 
-        The unit of the length value passed to report_progress must match the unit of the .length
-        attribute.  The unit of the .length attribute is user-defined.  When treating .length as
-        batches, report_progress should report batches.  When treating .length as epochs,
-        report_progress must also be in epochs.
+        The unit of the length value passed to ``report_progress()`` must match the unit of the
+        ``.length`` attribute.  The unit of the ``.length`` attribute is user-defined.  When
+        treating ``.length`` as batches, ``report_progress()`` should report batches.  When treating
+        .length as epochs, ``report_progress()`` must also be in epochs.
         """
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_progress() from the chief worker")
@@ -85,10 +85,10 @@ class SearcherOperation:
 
     def report_completed(self, searcher_metric: float) -> None:
         """
-        report_completed() is the final step of a train-validate-report cycle.
+        ``report_completed()`` is the final step of a train-validate-report cycle.
 
-        report_completed() requires the value of the metric you are searching over.  This value is
-        typically the output of the "validate" step of the train-validate-report cycle.
+        ``report_completed()`` requires the value of the metric you are searching over.  This value
+        is typically the output of the "validate" step of the train-validate-report cycle.
         """
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
@@ -107,15 +107,15 @@ class SearcherOperation:
 
 class SearcherMode(enum.Enum):
     """
-    SearcherMode defines the calling behavior of the SearcherContext.operations() call.
+    ``SearcherMode`` defines the calling behavior of the ``SearcherContext.operations()`` call.
 
-    When mode=WorkersAskChief (the default), all workers must call SearcherContext.operations() in
-    step with each other.  The chief will iterate through searcher operations from the master, and
-    then propagate the operations to each worker, introducing a synchronization point between
-    workers.
+    When mode is ``WorkersAskChief`` (the default), all workers must call
+    ``SearcherContext.operations()`` in step with each other.  The chief iterates through
+    searcher operations from the master and then propagates the operations to each worker,
+    introducing a synchronization point between workers.
 
-    When mode=ChiefOnly, only the chief may call SearcherContext.operations().  Usually this implies
-    you must manually inform the workers of what work to do next.
+    When mode is ``ChiefOnly``, only the chief may call ``SearcherContext.operations()``.  Usually
+    this implies you must manually inform the workers of what work to do next.
     """
 
     WorkersAskChief = "WORKERS_ASK_CHIEF"
@@ -124,12 +124,12 @@ class SearcherMode(enum.Enum):
 
 class SearcherContext:
     """
-    SearcherContext gives direct access to operations emitted by the search algorithm in the master.
-    Each SearcherOperation emitted has a (unitless) length that you should train for, then you
-    complete the op by reporting the validation metric you are searching over.
+    ``SearcherContext`` gives direct access to operations emitted by the search algorithm in the
+    master.  Each ``SearcherOperation`` emitted has a (unitless) length that you should train for,
+    then you complete the op by reporting the validation metric you are searching over.
 
-    It is the user's responsibility to execute the required training.  Since the user configured the
-    length of the searcher in the experiment configuration, the user should know if the unitless
+    It is the user's responsibility to execute the required training.  Because the user configured
+    the length of the searcher in the experiment configuration, the user should know if the unitless
     length represents epochs, batches, records, etc.
 
     It is also the user's responsibility to evaluate the model after training and report the correct
@@ -143,8 +143,8 @@ class SearcherContext:
 
     .. code:: python
 
-       # We'll pretend we configured the searcher in terms of batches,
-       # so we will interpet the the op.length as a count of batches.
+       # Assuming you configured the searcher in terms of batches,
+       # the op.length is also interpeted as a batch count.
        # Note that you'll have to load your starting point from a
        # checkpoint if you want to support pausing/continuing training.
        batches_trained = 0
@@ -167,7 +167,7 @@ class SearcherContext:
            val_metrics = my_validate()
            op.report_completed(val_metrics["my_searcher_metric"])
 
-    Note that reporting metrics is completely independent of the SearcherContext API, via
+    Note that reporting metrics is completely independent of the SearcherContext API, using
     ``core_context.train.report_training_metrics()`` or
     ``core_context.train.report_validation_metrics()``.
     """
@@ -208,19 +208,13 @@ class SearcherContext:
         """
         Iterate through all the operations this searcher has to offer.
 
-        During a multi-worker task, when searcher_mode=WorkersAskChief (the default), the chief will
-        fetch operations from the Determined master and communicate each op to the other workers,
-        which makes calling next() on the iterator of operations a synchronization point across
-        workers.
+        See :class:`~determined.core.SearcherMode` for details about calling requirements in
+        distributed training scenarios.
 
-        The other supported mode is ChiefOnly, where there is no synchronization point, but workers
-        are not allowed to call .operations() at all.  This is probably only useful if you have
-        another mechanism for the chief to communicate the training plan to workers.
-
-        After training to the point specified by each SearcherOperation, The chief, and only the
-        chief, must call op.report_completed() on each operation.  This is true regardless of the
-        searcher_mode setting, since the Determined master needs a clear, unambiguous report of when
-        an operation is completed.
+        After training to the point specified by each ``SearcherOperation``, the chief, and only the
+        chief, must call ``op.report_completed(``) on each operation.  This is true regardless of
+        the ``searcher_mode`` setting because the Determined master needs a clear, unambiguous
+        report of when an operation is completed.
         """
         searcher_mode = SearcherMode(searcher_mode)
 
@@ -274,7 +268,7 @@ class SearcherContext:
         get_configured_units() reports what units were used in the searcher field of the experiment
         config.  If no units were configured, None is returned.
 
-        An experiment configured like this would cause ``get_configured_units()`` to return EPOCHS:
+        An experiment configured like this causes ``get_configured_units()`` to return EPOCHS:
 
         .. code:: yaml
 
@@ -283,7 +277,7 @@ class SearcherContext:
              max_length:
                epochs: 50
 
-        An experiment configured like this would cause ``get_configured_units()`` to return None:
+        An experiment configured like this causes ``get_configured_units()`` to return None:
 
         .. code:: yaml
 

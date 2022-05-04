@@ -35,11 +35,11 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             x, starting_batch = load_state(trial_id, path)
 
-    # NEW: iterate through the core_context.searcher.operations() to decide how long to train for.
+    # NEW: Iterate through the core_context.searcher.operations() to decide how long to train for.
     batch = starting_batch
     last_checkpoint_batch = None
     for op in core_context.searcher.operations():
-        # NEW: we will use a while loop for easier accounting of absolute lengths.
+        # NEW: Use a while loop for easier accounting of absolute lengths.
         while batch < op.length:
             x += increment_by
             steps_completed = batch + 1
@@ -58,7 +58,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 if core_context.preempt.should_preempt():
                     return
             batch += 1
-        # NEW: After training for each op, we would normally validate and report the searcher metric
+        # NEW: After training for each op, you typically validate and report the searcher metric
         # to the master.
         core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
         op.report_completed(x)
@@ -86,6 +86,6 @@ if __name__ == "__main__":
             core_context=core_context,
             latest_checkpoint=latest_checkpoint,
             trial_id=trial_id,
-            # NEW: configure the "model" via hparams.
+            # NEW: configure the "model" using hparams.
             increment_by=hparams["increment_by"],
         )

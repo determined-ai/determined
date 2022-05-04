@@ -123,17 +123,19 @@ class _PreemptionWatcher(threading.Thread):
 
 class PreemptMode(enum.Enum):
     """
-    PreemptMode defines the calling behavior of the PreemptContext.should_preempt() call.
+    ``PreemptMode`` defines the calling behavior of the ``PreemptContext.should_preempt()`` call.
 
-    When mode=WorkersAskChief (the default), all workers must call should_preempt() in-step.  Only
-    the chief will actually communicate with the master, then the chief will broadcast its decision
-    to all workers.  This guarantees that all workers will decide to preempt at the exact same time.
+    When mode is ``WorkersAskChief`` (the default), all workers must call ``should_preempt()``
+    in step.  Only the chief actually communicates with the master, then the chief broadcasts its
+    decision to all workers.  This guarantees that all workers decide to preempt at the exact same
+    time.
 
-    When mode=ChiefOnly, only the chief is allowed to call PreemptContext.should_preempt().  Usually
-    this implies you must manually inform the workers if they should preempt or not.
+    When mode is ``ChiefOnly``, only the chief is allowed to call
+    ``PreemptContext.should_preempt()``.  Usually this implies you must manually inform the workers
+    if they should preempt or not.
 
-    When mode=WorkersAskMaster, each worker will contact the master independently in order to decide
-    to preempt or not.  Each worker will receive the preemption signal at roughly the same time,
+    When mode is ``WorkersAskMaster``, each worker contacts the master independently in order to
+    decide to preempt or not.  Each worker receives the preemption signal at roughly the same time,
     but it becomes your responsibility to tolerate situations where some workers have exited due to
     preemption and others have not.
     """
@@ -145,7 +147,7 @@ class PreemptMode(enum.Enum):
 
 class PreemptContext:
     """
-    PreemptContext gives access to preemption signals that originate from a user action, such as
+    ``PreemptContext`` gives access to preemption signals that originate from a user action, such as
     pausing an experiment using the WebUI or the CLI, from in the Determined scheduler.
     """
 
@@ -186,23 +188,29 @@ class PreemptContext:
 
     def should_preempt(self, auto_ack: bool = True) -> bool:
         """
-        Currently, we only support blocking behavior when checking should_preempt(), so it is not
-        performant enough to call every batch.
+        ``should_preempt()`` returns ``True`` if the task should shut itself down, or ``False``
+        otherwise.
 
         The requirements on the the caller and the synchronization between workers during a call
-        to should_preempt() are defined by the preempt_mode argument passed to the PreemptContext
-        constructor.
+        to ``should_preempt()`` are defined by the ``preempt_mode`` argument passed to the
+        ``PreemptContext`` constructor.
 
         Arguments:
-            auto_ack (``bool``, default ``True``): In order for the task to be restarted by the
+            auto_ack (``bool``, optional): In order for the task to be restarted by the
                 Determined master after shutting down due to preemption, the task must acknowledge
-                the preemption signal to the Determined master.  When auto_ack is True (the default
-                case) this acknowledgement is automatically sent the first time that
-                should_preempt() returns True.  If you might choose not to exit after receiving the
-                preemption signal (but you still want to check the signal for some purpose), then
-                you should set auto_ack to False.  Then if you later do decide to comply with the
-                preemption signal, it will be your responsibility to call
-                acknowledge_preemption_signal() manually any time before exiting.
+                the preemption signal to the Determined master.  When ``auto_ack`` is ``True`` this
+                acknowledgement is automatically sent the first time that ``should_preempt()``
+                returns ``True``.  If you might choose not to exit after receiving the preemption
+                signal (but you still want to check the signal for some purpose), then you should
+                set ``auto_ack`` to ``False``.  Then if you later do decide to comply with the
+                preemption signal, it is your responsibility to call
+                ``acknowledge_preemption_signal()`` manually any time before exiting.  Defaults to
+                ``True``.
+
+        .. note::
+
+            Currently, only blocking behavior is supported when checking ``should_preempt()``, so it
+            is not performant enough to call every batch.
         """
         if not self._started:
             # Calling should_preempt on the watcher without starting the watcher would hang.
@@ -234,15 +242,16 @@ class PreemptContext:
 
     def acknowledge_preemption_signal(self) -> None:
         """
-        acknowledge_preemption_signal() tells the Determined master that you are shutting down, but
-        you have not finished your work and you expect to be restarted later to complete it.
+        ``acknowledge_preemption_signal()`` tells the Determined master that you are shutting down,
+        but you have not finished your work and you expect to be restarted later to complete it.
 
-        This is important to tell the master explicitly, since normally if the python process exits
-        with a zero exit code, the master would interpret that as a completed task, and it
-        would not get rescheduled at a later time.
+        This is important to tell the master explicitly because otherwise if the python process
+        exits with a zero exit code, the master interprets that as a completed task, and the task
+        does not get rescheduled.
 
-        acknowledge_preemption_signal() is normally called automatically the first time that
-        should_preempt() returns True, unless should_preempt() is called with auto_ack=False.
+        By default, ``acknowledge_preemption_signal()`` is called automatically the first time that
+        ``should_preempt()`` returns ``True``, unless ``should_preempt()`` is called with
+        ``auto_ack=False``.
         """
         logger.debug("acknowledge_preemption_signal()")
         self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")

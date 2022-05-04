@@ -18,15 +18,15 @@ logger = logging.getLogger("determined.core")
 
 class DownloadMode(enum.Enum):
     """
-    DownloadMode defines the calling behavior of the .download() and the .restore_path() methods of
-    CheckpointContext. Frequently in Determined,
+    ``DownloadMode`` defines the calling behavior of the .download() and the .restore_path() methods
+    of ``CheckpointContext``.
 
-    When mode=LocalWorkersShareDownload (the default), workers on the same physical node (the same
-    distributed.cross_rank) will share a single downloaded version of the checkpoint.  On an 8-GPU
-    node, this will frequently result in 8x bandwidth savings.  In this mode, all workers must call
-    .download() or .restore_path() in-step.
+    When mode is ``LocalWorkersShareDownload`` (the default), workers on the same physical node (the
+    same ``distributed.cross_rank``) will share a single downloaded version of the checkpoint.  On
+    an 8-GPU node, this will frequently result in 8x bandwidth savings.  In this mode, all workers
+    must call ``.download()`` or ``.restore_path()`` in step.
 
-    When mode=NoSharedDownload, no coordination is done.  This is useful if you either have
+    When mode is ``NoSharedDownload``, no coordination is done.  This is useful if you either have
     configured your own coordination, or if only a single worker needs a particular checkpoint.
     There is no in-step calling requirement.
     """
@@ -37,7 +37,7 @@ class DownloadMode(enum.Enum):
 
 class CheckpointContext:
     """
-    CheckpointContext gives access to checkpoint-related features of a Determined cluster.
+    ``CheckpointContext`` gives access to checkpoint-related features of a Determined cluster.
     """
 
     def __init__(
@@ -60,14 +60,14 @@ class CheckpointContext:
         self, ckpt_dir: Union[str, os.PathLike], metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         """
-        upload() chooses a random storage_id, then uploads the contents of ckpt_dir to checkpoint
-        storage into a directory by the name of the storage_id.  The name of the ckpt_dir will not
-        be preserved.
+        ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
+        checkpoint storage into a directory by the name of the ``storage_id``.  The name of the
+        ``ckpt_dir`` is not preserved.
 
-        Note that with multiple workers, only the chief worker (distributed.rank==0) is allowed to
-        call upload.
+        Note that with multiple workers, only the chief worker (``distributed.rank==0``) is allowed
+        to call ``upload()``.
 
-        Returns:  The storage_id for this checkpoint.
+        Returns:  The ``storage_id`` for this checkpoint.
         """
 
         if self._dist.rank != 0:
@@ -96,13 +96,13 @@ class CheckpointContext:
     ) -> None:
         """
         Download the contents of a checkpoint from checkpoint storage into a directory specified by
-        ckpt_dir, which will be created if it does not exist.
+        ``ckpt_dir``, which is created if it does not exist.
 
         .. note::
 
-            This .download() method is similar to but less flexible than the .download() method of
-            the :class:`~determined.experiment.common.Checkpoint` class in the Determined Python
-            SDK.  This .download() is here as a convenience.
+            This ``.download()`` method is similar to but less flexible than the ``.download()``
+            method of the :class:`~determined.experiment.common.Checkpoint` class in the Determined
+            Python SDK.  This ``.download()`` is here as a convenience.
         """
         ckpt_dir = os.fspath(ckpt_dir)
         download_mode = DownloadMode(download_mode)
@@ -135,12 +135,12 @@ class CheckpointContext:
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
         """
-        store_path is a context manager which chooses a random path and prepares a directory you
-        should save your model to.  When the context manager exits, the model will be automatically
+        ``store_path()`` is a context manager which chooses a random path and prepares a directory
+        you should save your model to.  When the context manager exits, the model is automatically
         uploaded (at least, for cloud-backed checkpoint storage backends).
 
-        Note that with multiple workers, only the chief worker (distributed.rank==0) is allowed to
-        call store_path.
+        Note that with multiple workers, only the chief worker (``distributed.rank==0``) is allowed
+        to call ``store_path()``.
 
         Example:
 
@@ -173,12 +173,12 @@ class CheckpointContext:
         download_mode: DownloadMode = DownloadMode.LocalWorkersShareDownload,
     ) -> Iterator[pathlib.Path]:
         """
-        restore_path is a context manager which downloads a checkpoint (if required by the storage
-        backend) and cleans up the temporary files afterwards (if applicable).
+        ``restore_path()`` is a context manager which downloads a checkpoint (if required by the
+        storage backend) and cleans up the temporary files afterwards (if applicable).
 
-        In multi-worker scenarios, with the default download_mode (LocalWorkersShareDownload),
-        all workers must call restore_path, but only the local chief worker on each node
-        (distributed.local_rank==0) will actually download data.
+        In multi-worker scenarios, with the default ``download_mode``
+        (``LocalWorkersShareDownload``), all workers must call ``restore_path()`` but only the local
+        chief worker on each node (``distributed.local_rank==0``) actually downloads data.
 
         Example:
 
