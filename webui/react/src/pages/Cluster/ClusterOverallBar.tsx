@@ -5,9 +5,7 @@ import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { useStore } from 'contexts/Store';
 import { ShirtSize } from 'themes';
-import {
-  ResourceType,
-} from 'types';
+import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 export const ClusterOverallBar: React.FC = () => {

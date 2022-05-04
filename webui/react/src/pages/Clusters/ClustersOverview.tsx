@@ -15,6 +15,7 @@ import {
 } from 'types';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
+import { ClusterOverallStats } from '../Cluster/ClusterOverallStats'
 
 import css from './ClustersOverview.module.scss';
 
@@ -40,6 +41,7 @@ const ClusterOverview: React.FC = () => {
 
   return (
     <div className={css.base}>
+      <ClusterOverallStats />
       <ClusterOverallBar />
       <Section
         title={'Resource Pools'}>

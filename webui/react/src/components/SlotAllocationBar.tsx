@@ -223,14 +223,14 @@ const SlotAllocationBar: React.FC<Props> = ({
             <div onClick={onClickQueued}>
               <span className={css.queued}>{`${footer.queued > 100 ?
                 '100+' :
-                footer.queued} ${footer.queued === 1 ? 'Job' : 'Jobs'} Queued`}
+                footer.queued} Queued`}
               </span>
             </div>
           ) :
             !isAux && (
               <span>{
-                `${totalSlots > resourceStates.length ?
-                  totalSlots - resourceStates.length : 0} Slots Free`
+                `${totalSlots > stateTallies.RUNNING ?
+                  totalSlots - stateTallies.RUNNING : 0} Slots Free`
               }
               </span>
             )}

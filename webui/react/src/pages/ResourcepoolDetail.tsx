@@ -149,10 +149,10 @@ const ResourcepoolDetail: React.FC = () => {
           defaultActiveKey={tabKey}
           destroyInactiveTabPane={true}
           onChange={handleTabChange}>
-          <TabPane key="active" tab={`Active ${poolStats?.stats.scheduledCount}`}>
+          <TabPane key="active" tab={`${poolStats?.stats.scheduledCount} Active`}>
             <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selected={pool} />
           </TabPane>
-          <TabPane key="queued" tab={`Queued ${poolStats?.stats.queuedCount}`}>
+          <TabPane key="queued" tab={`${poolStats?.stats.queuedCount} Queued`}>
             <JobQueue bodyNoPadding jobState={JobState.QUEUED} selected={pool} />
           </TabPane>
           <TabPane key="stats" tab="Stats">
