@@ -1,28 +1,3 @@
-import { AlignedData } from 'uplot';
-
-export const convertMetricsToUplotData = (
-  data: Record<number, Record<string, number>>,
-  nameList: string[],
-): AlignedData => {
-  const series: (number | null)[][] = [];
-  const timeSerie: number[] = [];
-
-  // Sort time keys are not guaranteed to arrive in order so we sort them first.
-  const timeKeys = Object.keys(data).map(k => parseFloat(k)).sort();
-
-  for (const key of timeKeys) {
-    const list = data[key];
-
-    timeSerie.push(key);
-    nameList.forEach((name, nameIndex) => {
-      if (!series[nameIndex]) { series[nameIndex] = []; }
-      series[nameIndex].push(name in list ? list[name] : null);
-    });
-  }
-
-  return [ timeSerie, ...series ];
-};
-
 export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'cpu_util_simple') return '%';
   if (metricName === 'disk_throughput_read') return 'bytes/second';
