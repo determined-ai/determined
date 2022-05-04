@@ -1,21 +1,19 @@
-import { Alert, Button, InputNumber, Modal } from 'antd';
+import { Alert, Button, InputNumber } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalFuncProps } from 'antd';
-import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
+import Link from 'components/Link';
+import Spinner from 'components/Spinner';
 import useJupyterLab from 'hooks/useJupyterLab';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 
-import useModal, { ModalHooks } from './useModal';
-
 import css from './useJupyterLabModal.module.scss';
-import Link from 'components/Link';
-import Spinner from 'components/Spinner';
+import useModal, { ModalHooks } from './useModal';
 
 const { Option } = Select;
 const { Item } = Form;
@@ -54,11 +52,6 @@ const useJupyterLabForm = (): [ JupyterLabConfig, DispatchFunction ] => {
 
   return [ state, dispatch ];
 };
-
-interface JupyterLabModalProps extends ModalProps {
-  onLaunch?: () => void;
-}
-
 interface FormProps {
   fields: JupyterLabConfig;
   onChange?: DispatchFunction;
@@ -122,65 +115,66 @@ const useJupyterLabModal = (): ModalHooks => {
       });
       modalClose();
     }
-  }, [ config, fields, launchJupyterLab, showFullConfig ]);
+  }, [ config, fields, launchJupyterLab, showFullConfig, modalClose ]);
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
-  const footer = (
-    <div className={css.buttons}>
-        <Button
-        onClick={handleSecondary}>
-        {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
-      </Button>
-      <Button
-        disabled={buttonDisabled}
-        type="primary"
-        onClick={handleCreateEnvironment}>Launch
-      </Button>
-    </div>
-  )
-  const content = showFullConfig ? (
+  const formContent = useMemo(() => showFullConfig ? (
     <>
-        <JupyterLabFullConfig
-          config={config}
-          setButtonDisabled={setButtonDisabled}
-          onChange={handleConfigChange}
-        />
-        {footer}
-        </>
-      ) : (
-        <>
-        <JupyterLabForm fields={fields} onChange={dispatch} />
-        {footer}
-        </>
-      )
-      
-      const modalProps: ModalFuncProps = useMemo(() => {
-        return {
-          className: css.noFooter,
-          content: content,
-          title: 'Launch JupyterLab',
-          width:540,
-        };
-      }, [content]);
+      <JupyterLabFullConfig
+        config={config}
+        setButtonDisabled={setButtonDisabled}
+        onChange={handleConfigChange}
+      />
+    </>
+  ) : (
+    <>
+      <JupyterLabForm fields={fields} onChange={dispatch} />
+    </>
+  ), [ config, dispatch, fields, handleConfigChange, showFullConfig ]);
 
-      useEffect(() => {
-        if(config != previousConfig){
-          setPreviousConfig(config);
-          openOrUpdate(modalProps)
-        }
-      }, [config])
+  const content = useMemo(() => (
+    <>
+      {formContent}
+      <div className={css.buttons}>
+        <Button
+          onClick={handleSecondary}>
+          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+        </Button>
+        <Button
+          disabled={buttonDisabled}
+          type="primary"
+          onClick={handleCreateEnvironment}>Launch
+        </Button>
+      </div>
+    </>
+  ), [ formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig ]);
 
+  const modalProps: ModalFuncProps = useMemo(() => {
+    return {
+      className: css.noFooter,
+      content: content,
+      title: 'Launch JupyterLab',
+      width: 540,
+    };
+  }, [ content ]);
 
   useEffect(() => {
-    if(showFullConfig != previousShowConfig){
-      setPreviousShowConfig(showFullConfig)
-          openOrUpdate(
-            modalProps
-          )
-      
+    if(config !== previousConfig){
+      setPreviousConfig(config);
+      openOrUpdate(modalProps);
     }
-  }, [ showFullConfig]);
-  
+  }, [ config, modalProps, openOrUpdate, previousConfig, previousShowConfig ]);
+
+  useEffect(() => {
+    if(showFullConfig !== previousShowConfig){
+      setPreviousShowConfig(showFullConfig);
+      openOrUpdate(
+        modalProps,
+      );
+
+    }
+  }, [ showFullConfig, modalProps, openOrUpdate, previousShowConfig ]);
+
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
@@ -355,7 +349,7 @@ const JupyterLabForm: React.FC<FormProps> = (
       })}
     </div>
   );
-  
+
 };
 
 export default useJupyterLabModal;

@@ -3,11 +3,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
 import Icon from './Icon';
@@ -43,7 +44,7 @@ const NavigationTabbar: React.FC = () => {
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal} = useJupyterLabModal();
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
 
   const cluster = useMemo(() => {
     if (overview[ResourceType.ALL].allocation === 0) return undefined;
@@ -61,8 +62,8 @@ const NavigationTabbar: React.FC = () => {
   const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
   const handleLaunchJupyterLab = useCallback(() => {
     setIsShowingOverflow(false);
-    openJupyterLabModal()
-  }, []);
+    openJupyterLabModal();
+  }, [ openJupyterLabModal ]);
 
   const handlePathUpdate = useCallback((e, path) => {
     handlePath(e, { path });

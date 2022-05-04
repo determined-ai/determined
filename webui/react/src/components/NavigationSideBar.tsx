@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStore } from 'contexts/Store';
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -15,7 +16,6 @@ import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -72,7 +72,7 @@ const NavigationSideBar: React.FC = () => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal} = useJupyterLabModal();
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -164,7 +164,7 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => openJupyterLabModal()}>Launch JupyterLabss
+                onClick={() => openJupyterLabModal()}>Launch JupyterLab
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
