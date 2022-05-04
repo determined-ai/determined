@@ -119,7 +119,7 @@ const ResourcepoolDetail: React.FC = () => {
           <Fragment key={key}>
             <Divider />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
-            <Json json={details[key]} translateLabel={camelCaseToSentence} />
+            <Json alternateBackground json={details[key]} translateLabel={camelCaseToSentence} />
           </Fragment>
         ))}
       </Page>
