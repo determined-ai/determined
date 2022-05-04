@@ -3,6 +3,7 @@
   border: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-13);
   border-radius: 12px;
   color: var(--theme-colors-monochrome-7);
+  cursor: pointer;
   display: grid;
   font-size: 11px;
   grid-template-columns: 100px auto 25px;
