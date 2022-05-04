@@ -64,7 +64,7 @@ class PLMTrial(hf.BaseTransformerTrial):
                 )
             )
 
-        self.reducer = self.context.experimental.wrap_reducer(
+        self.reducer = self.context.wrap_reducer(
             lambda losses: np.exp(np.mean(losses)), name="perplexity", for_training=False
         )
 
