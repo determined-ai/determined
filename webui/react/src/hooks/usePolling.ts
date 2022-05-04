@@ -81,7 +81,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
   useEffect(() => {
     startPolling();
     return () => stopPolling();
-  }, [ startPolling, stopPolling ]);
+  }, [ startPolling, stopPolling, pollingFn ]);
 
   useEffect(() => {
     if (ui.isPageHidden) {
