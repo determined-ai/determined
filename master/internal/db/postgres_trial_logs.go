@@ -78,7 +78,7 @@ FROM trial_logs l
 WHERE l.trial_id = $1
 %s
 ORDER BY l.id %s LIMIT $2
-`, fragment, orderByToSQL(order))
+`, fragment, OrderByToSQL(order))
 
 	var b []*model.TrialLog
 	if err := db.queryRows(query, &b, params...); err != nil {
