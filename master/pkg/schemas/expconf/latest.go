@@ -30,7 +30,6 @@ type Labels = LabelsV0
 type Length = LengthV0
 type LogHyperparameter = LogHyperparameterV0
 type OptimizationsConfig = OptimizationsConfigV0
-type PBTConfig = PBTConfigV0
 type ProfilingConfig = ProfilingConfigV0
 type RandomConfig = RandomConfigV0
 type ReproducibilityConfig = ReproducibilityConfigV0

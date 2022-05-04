@@ -2677,153 +2677,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/searcher-pbt.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
-    "title": "PBTConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name"
-    ],
-    "eventuallyRequired": [
-        "metric",
-        "population_size",
-        "length_per_round",
-        "num_rounds",
-        "replace_function",
-        "explore_function"
-    ],
-    "properties": {
-        "name": {
-            "const": "pbt"
-        },
-        "population_size": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "length_per_round": {
-            "type": [
-                "object",
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
-        },
-        "num_rounds": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "replace_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "unionKey": "singleproperty",
-            "conditional": {
-                "unless": {
-                    "const": null
-                },
-                "enforce": {
-                    "union": {
-                        "items": [
-                            {
-                                "unionKey": "always",
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "truncate_fraction"
-                                ],
-                                "properties": {
-                                    "truncate_fraction": {
-                                        "type": "number",
-                                        "minimum": 0.0,
-                                        "maximum": 0.5
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "explore_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "additionalProperties": false,
-            "eventuallyRequired": [
-                "resample_probability",
-                "perturb_factor"
-            ],
-            "properties": {
-                "resample_probability": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                },
-                "perturb_factor": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                }
-            }
-        },
-        "metric": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/searcher-random.json": json.loads(
         r"""
 {
@@ -3091,10 +2944,6 @@ schemas = {
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                     },
                     {
-                        "unionKey": "const:name=pbt",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-                    },
-                    {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
                     },
@@ -3125,18 +2974,13 @@ schemas = {
     "properties": {
         "bracket_rungs": true,
         "divisor": true,
-        "explore_function": true,
-        "length_per_round": true,
         "max_concurrent_trials": true,
         "max_length": true,
         "max_rungs": true,
         "max_trials": true,
         "mode": true,
         "name": true,
-        "num_rounds": true,
         "num_rungs": true,
-        "population_size": true,
-        "replace_function": true,
         "stop_once": true,
         "metric": {
             "type": [
