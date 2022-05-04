@@ -84,7 +84,7 @@ class XNLITrial(hf.BaseTransformerTrial):
             preds = np.argmax(preds, axis=1)
             return metric.compute(predictions=preds, references=labels)
 
-        self.reducer = context.experimental.wrap_reducer(compute_metrics, for_training=False)
+        self.reducer = context.wrap_reducer(compute_metrics, for_training=False)
 
     def build_datasets(self) -> Dict[str, Union[datasets.Dataset, datasets.DatasetDict]]:
         if self.data_config.pad_to_max_length:
