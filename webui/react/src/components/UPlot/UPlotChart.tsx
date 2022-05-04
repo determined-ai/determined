@@ -230,7 +230,7 @@ const UPlotChart: React.FC<Props> = ({
       try {
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, resetScales);
-          if (onlyOneXValue) chartRef.current.redraw(true);
+          if (onlyOneXValue) chartRef.current.redraw(true, false);
         }
 
       } catch(e) {

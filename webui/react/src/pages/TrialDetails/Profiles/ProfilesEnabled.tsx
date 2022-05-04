@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';

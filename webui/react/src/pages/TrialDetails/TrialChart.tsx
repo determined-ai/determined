@@ -70,23 +70,23 @@ const TrialChart: React.FC<Props> = ({
 
   const chartOptions: Options = useMemo(() => {
 
-    const xScale =
-      chartData[0].length === 1
-        ? {
+    const onlyOneXValue = chartData[0]?.length === 1;
+
+    const scales = onlyOneXValue
+      ? {
+        x: {
           max: chartData[0][0] + A_REASONABLY_SMALL_NUMBER,
           min: chartData[0][0] - A_REASONABLY_SMALL_NUMBER,
           time: false,
-        }
-        : { time: false };
-
-    const yScale =
-      chartData[1]?.length === 1
-        ? {
+        },
+        y: {
           distr: scale === Scale.Log ? 3 : 1,
           max: (chartData?.[1][0] ?? 0) + A_REASONABLY_SMALL_NUMBER,
           min: (chartData?.[1][0] ?? 0) - A_REASONABLY_SMALL_NUMBER,
-        }
-        : { distr: scale === Scale.Log ? 3 : 1 };
+        },
+      }
+      : { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } };
+
     return {
       axes: [
         { label: 'Batches' },
@@ -96,10 +96,7 @@ const TrialChart: React.FC<Props> = ({
       key: trialId,
       legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales: {
-        x: xScale,
-        y: yScale,
-      },
+      scales,
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
