@@ -18,7 +18,7 @@ def make_mock_cluster_info(
         trial_seed=0,
         hparams={},
         config=config,
-        latest_batch=0,
+        steps_completed=0,
         trial_run_id=0,
         debug=False,
         unique_port_offset=0,
