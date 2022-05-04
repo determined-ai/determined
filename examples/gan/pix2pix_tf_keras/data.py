@@ -1,28 +1,17 @@
 import pathlib
 
-from typing import Union
-
 import tensorflow as tf
 
-DATASET_NAME = "facades"
-HEIGHT, WIDTH = 256, 256
-# The facade training set consists of 400 images
-BUFFER_SIZE = 400
+BUFFER_SIZE = 400  # Used for shuffling
 
 
-def download(worker_rank: Union[None, int] = None):
-    URL = f"http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/{DATASET_NAME}.tar.gz"
-
-    fname = (
-        f"{DATASET_NAME}-{worker_rank}.tar.gz"
-        if worker_rank is not None
-        else f"{DATASET_NAME}.tzr.gz"
-    )
-    path_to_zip = tf.keras.utils.get_file(fname, origin=URL, extract=True)
-
+def download(base, dataset):
+    filename = f"{dataset}.tar.gz"
+    url = f"{base}/{filename}"
+    path_to_zip = tf.keras.utils.get_file(filename, origin=url, extract=True)
     path_to_zip = pathlib.Path(path_to_zip)
 
-    PATH = path_to_zip.parent / DATASET_NAME
+    PATH = path_to_zip.parent / dataset
     return PATH
 
 
@@ -73,7 +62,7 @@ def _normalize(input_image, real_image):
 
 
 @tf.function()
-def _random_jitter(input_image, real_image, height, width, jitter=30):
+def _random_jitter(input_image, real_image, height, width, jitter=0, mirror=False):
     if jitter > 0:
         # Resizing to 286x286
         input_image, real_image = _resize(
@@ -82,8 +71,9 @@ def _random_jitter(input_image, real_image, height, width, jitter=30):
 
         # Random cropping back to 256x256
         input_image, real_image = _random_crop(input_image, real_image, height, width)
-
-    if tf.random.uniform(()) > 0.5:
+    else:
+        input_image, real_image = _resize(input_image, real_image, height, width)
+    if mirror and (tf.random.uniform(()) > 0.5):
         # Random mirroring
         input_image = tf.image.flip_left_right(input_image)
         real_image = tf.image.flip_left_right(real_image)
@@ -91,32 +81,28 @@ def _random_jitter(input_image, real_image, height, width, jitter=30):
     return input_image, real_image
 
 
-def _load_train_images(image_file, height=HEIGHT, width=WIDTH, jitter=30):
+def _preprocess_images(image_file, height, width, jitter=0, mirror=False):
     input_image, real_image = _load(image_file)
     input_image, real_image = _random_jitter(
-        input_image, real_image, height, width, jitter
+        input_image, real_image,
+        height, width,
+        jitter, mirror,
     )
     input_image, real_image = _normalize(input_image, real_image)
 
     return input_image, real_image
 
-
-def _load_test_images(image_file, height=HEIGHT, width=WIDTH):
-    input_image, real_image = _load(image_file)
-    input_image, real_image = _resize(input_image, real_image, height, width)
-    input_image, real_image = _normalize(input_image, real_image)
-
-    return input_image, real_image
-
-
-def get_dataset(path, set_="train", batch_size=0):
+def get_dataset(path, height, width, set_="train", jitter=0, mirror=False, batch_size=1):
+    """Load the images into memory; preprocess, shuffle, and batch them."""
     ds = tf.data.Dataset.list_files(str(path / f"{set_}/*.jpg"))
-    ds = ds.map(_load_train_images if set_ == "train" else _load_test_images)
+    if set_ != "train":
+        jitter = 0
+        mirror = False
+    ds = ds.map(lambda i: _preprocess_images(i, height, width, jitter, mirror))
     if set_ == "train":
         ds = ds.shuffle(BUFFER_SIZE)
     if batch_size:
         ds = ds.batch(batch_size)
-    #    test_dataset = tf.data.Dataset.from_tensor_slices(test_dataset).shuffle(50000)
     return ds
 
 

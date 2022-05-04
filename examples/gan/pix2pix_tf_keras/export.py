@@ -12,8 +12,8 @@ from data import download, get_dataset
 
 
 def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
-    path = download()
-    test_ds = get_dataset(path, set_="test")
+    path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
+    test_ds = get_dataset(path, 256, 256, set_="test", batch_size=0)
     example_input, example_target = next(iter(test_ds.take(1)))
     prediction = generator(tf.expand_dims(example_input, 0), training=False)
 

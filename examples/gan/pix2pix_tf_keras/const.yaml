@@ -1,15 +1,26 @@
-name: pix2pix
+name: pix2pix_facades_const
+data:
+  base: "http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/"
+  dataset: "facades"
+  height: 256
+  width: 256
 hyperparameters:
-  global_batch_size: 256
+  global_batch_size: 1
   discriminator_lr: 2e-4
   discriminator_beta_1: 0.5
   generator_lr: 2e-4
   generator_beta_1: 0.5
-records_per_epoch: 5000
+  jitter: 30
+  mirror: true
+records_per_epoch: 400  # There are 400 images in the facades training set
+min_validation_period:
+  batches: 100
+min_checkpoint_period:
+  batches: 400
 searcher:
   name: single
   metric: "val_d_loss"
   smaller_is_better: true
   max_length:
-    epochs: 50
+    batches: 40000
 entrypoint: model_def:Pix2PixTrial

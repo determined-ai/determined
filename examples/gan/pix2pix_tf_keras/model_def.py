@@ -9,7 +9,10 @@ from data import download, get_dataset
 class Pix2PixTrial(TFKerasTrial):
     def __init__(self, context: TFKerasTrialContext) -> None:
         self.context = context
-        self.path = download(self.context.distributed.get_rank())
+        self.path = download(
+            self.context.get_data_config()["base"],
+            self.context.get_data_config()["dataset"],
+        )
 
     def build_model(self) -> tf.keras.models.Model:
         model = Pix2Pix()
@@ -38,20 +41,21 @@ class Pix2PixTrial(TFKerasTrial):
 
         return model
 
-    def build_training_data_loader(self) -> InputData:
+    def _get_wrapped_dataset(self, set_) -> InputData:
         ds = get_dataset(
-            self.path, batch_size=1
-        )  # self.context.get_per_slot_batch_size())
-        # Wrap the training dataset.
+            self.path,
+            self.context.get_data_config()["height"],
+            self.context.get_data_config()["width"],
+            set_,
+            self.context.get_hparam("jitter"),
+            self.context.get_hparam("mirror"),
+            #self.context.get_per_slot_batch_size(),
+        )
         ds = self.context.wrap_dataset(ds)
-        # ds = ds.batch(self.context.get_per_slot_batch_size())
         return ds
 
+    def build_training_data_loader(self) -> InputData:
+        return self._get_wrapped_dataset("train")
+
     def build_validation_data_loader(self) -> InputData:
-        ds = get_dataset(
-            self.path, "val", batch_size=1
-        )  # self.context.get_per_slot_batch_size())
-        # Wrap the validation dataset.
-        ds = self.context.wrap_dataset(ds)
-        # ds = ds.batch(self.context.get_per_slot_batch_size())
-        return ds
+        return self._get_wrapped_dataset("val")

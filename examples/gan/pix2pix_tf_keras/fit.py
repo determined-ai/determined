@@ -31,27 +31,21 @@ def fit(train_ds, test_ds, steps, preview=0):
 
     for step, data in train_ds.repeat().take(steps).enumerate():
         if preview and ((step) % preview == 0):
-            # display.clear_output(wait=True)
-
             if step != 0:
                 print(f"Time taken for {preview} steps: {time.time()-start:.2f} sec\n")
-
             start = time.time()
-
             generate_images(pix2pix.generator, example_input, example_target)
             print(f"Step: {step}")
-
-        pix2pix.train_step(data)
-
         # Training step
+        pix2pix.train_step(data)
         if (step + 1) % 10 == 0:
             print(".", end="", flush=True)
 
 
 def main():
-    path = download(0)
-    train_dataset = get_dataset(path, batch_size=1)
-    test_dataset = get_dataset(path, "test", batch_size=1)
+    path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
+    train_dataset = get_dataset(path, 256, 256, "train", jitter=30, mirror=True, batch_size=1)
+    test_dataset = get_dataset(path, 256, 256, "test", batch_size=1)
     fit(train_dataset, test_dataset, steps=200, preview=100)
 
 
