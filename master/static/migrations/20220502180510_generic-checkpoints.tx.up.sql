@@ -99,7 +99,12 @@ CREATE OR REPLACE VIEW public.proto_checkpoints_view AS
             'experiment_id', c.experiment_id,
             'experiment_config', c.experiment_config,
             'hparams', c.hparams,
-            'training_metrics', c.training_metrics,
+            -- construct training metrics from the untyped jsonb deterministically, since older
+            -- versions may have old keys (e.g., num_inputs) and our unmarshaling is strict.
+            'training_metrics', jsonb_build_object(
+                'avg_metrics', c.training_metrics->'avg_metrics',
+                'batch_metrics', c.training_metrics->'batch_metrics'
+            ),
             'validation_metrics', json_build_object('avg_metrics', c.validation_metrics),
             'searcher_metric', c.searcher_metric
         ) AS training
