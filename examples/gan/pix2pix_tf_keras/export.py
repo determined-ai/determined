@@ -32,8 +32,9 @@ def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
     plt.show()
 
 
-def export_model(experiment_id: int) -> tf.keras.Model:
-    checkpoint: client.Checkpoint = client.get_experiment(experiment_id).top_checkpoint()
+def export_model(trial_id: int, latest=False) -> tf.keras.Model:
+    trial = client.get_trial(trial_id)
+    checkpoint: client.Checkpoint = trial.select_checkpoint(latest=True) if latest else trial.top_checkpoint()
     print(f"Checkpoint {checkpoint.uuid}")
     print(f"Trial {checkpoint.trial_id}")
     print(f"Batch {checkpoint.batch_number}")
@@ -45,15 +46,18 @@ def export_model(experiment_id: int) -> tf.keras.Model:
 def main():
     parser = argparse.ArgumentParser(description="Pix2Pix model export")
     parser.add_argument(
-        "--experiment-id", type=int, required=True, help="Experiment ID to export."
+        "--trial-id", type=int, required=True, help="Trial ID to export."
     )
     parser.add_argument(
         "--master-url", type=str, default="", help="URL of the Determined master."
     )
+    parser.add_argument(
+        "--latest", action="store_true", help="Use the latest checkpoint. If omitted, the best checkpoint will be used."
+    )
     args = parser.parse_args()
 
     client.login(args.master_url)
-    model = export_model(args.experiment_id)
+    model = export_model(args.trial_id, args.latest)
     generate_and_plot_images(model.generator)
 
 
