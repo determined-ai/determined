@@ -349,7 +349,6 @@ const JupyterLabForm: React.FC<FormProps> = (
       })}
     </div>
   );
-
 };
 
 export default useJupyterLabModal;

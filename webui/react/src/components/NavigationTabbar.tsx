@@ -99,7 +99,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'jupyter-lab',
             label: 'Launch JupyterLab',
-            onClick: () => handleLaunchJupyterLab,
+            onClick: () => handleLaunchJupyterLab(),
           },
           {
             icon: 'logs',
