@@ -3,6 +3,7 @@ import React, { PropsWithChildren } from 'react';
 import css from './OverviewStats.module.scss';
 
 interface Props {
+  clickable?: boolean
   focused?: boolean;
   onClick?: () => void;
   title: string;
@@ -10,7 +11,7 @@ interface Props {
 
 const OverviewStats: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
-  if (props.onClick) classes.push(css.clickable);
+  if (props.onClick || props.clickable) classes.push(css.clickable);
   if (props.focused) classes.push(css.focused);
 
   return (

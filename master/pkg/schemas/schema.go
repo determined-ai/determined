@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/santhosh-tekuri/jsonschema/v2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/schemas/extensions"
 )
@@ -64,6 +65,7 @@ func newCompiler() *jsonschema.Compiler {
 
 	for url, byts := range schemaBytesMap() {
 		if err := compiler.AddResource(url, bytes.NewReader(byts)); err != nil {
+			logrus.WithError(err).Error("Invalid schema")
 			panic("invalid schema: " + url)
 		}
 	}
@@ -99,6 +101,7 @@ func GetSanityValidator(url string) *jsonschema.Schema {
 
 	validator, err := compiler.Compile(url)
 	if err != nil {
+		logrus.WithError(err).Error("Uncompilable schema")
 		panic("uncompilable schema: " + url)
 	}
 

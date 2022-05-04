@@ -167,6 +167,7 @@
       pod_spec:
       ports: {}
       registry_auth: null
+      slurm: []
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}

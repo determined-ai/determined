@@ -9,6 +9,7 @@ import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
@@ -39,8 +40,7 @@ const ModelVersionHeader: React.FC<Props> = (
   const [ showDownloadModel, setShowDownloadModel ] = useState(false);
 
   const isDeletable = user?.isAdmin
-        || user?.username === modelVersion.model.username
-        || user?.username === modelVersion.username;
+        || user?.id === modelVersion.userId;
 
   const showConfirmDelete = useCallback(() => {
     Modal.confirm({
@@ -60,10 +60,8 @@ const ModelVersionHeader: React.FC<Props> = (
     return [ {
       content: (
         <Space>
-          <Avatar username={modelVersion.username || modelVersion.model.username} />
-          {getDisplayName(modelVersion.username ?
-            users.find(user => user.username === modelVersion.username) :
-            users.find(user => user.username === modelVersion.model.username))}
+          <Avatar userId={modelVersion.userId} />
+          {getDisplayName(users.find(user => user.id === modelVersion.userId))}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),
@@ -117,9 +115,9 @@ const ModelVersionHeader: React.FC<Props> = (
       },
       {
         danger: true,
-        disabled: !isDeletable,
         key: 'deregister-version',
-        onClick: showConfirmDelete,
+        onClick: () => isDeletable ?
+          showConfirmDelete() : showModalItemCannotDelete(),
         text: 'Deregister Version',
       },
     ];

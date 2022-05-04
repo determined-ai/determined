@@ -2,7 +2,8 @@ import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'r
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
-import Message, { MessageType } from 'components/Message';
+
+import Message, { MessageType } from 'shared/components/message';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';

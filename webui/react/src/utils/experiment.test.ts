@@ -15,7 +15,7 @@ describe('Experiment Utilities', () => {
         resourcePool: 'gpu-pool',
         startTime: '2021-11-29T00:00:00Z',
         state: Type.RunState.Active,
-        username: 'Kenzo',
+        userId: 345,
       };
       expect(utils.isExperiment(experimentTask)).toBe(true);
     });
@@ -28,7 +28,7 @@ describe('Experiment Utilities', () => {
         startTime: '2021-11-29T00:00:00Z',
         state: Type.CommandState.Assigned,
         type: Type.CommandType.Command,
-        username: 'Kenzo',
+        userId: 345,
       };
       expect(utils.isExperiment(commandTask)).toBe(false);
     });

@@ -13,6 +13,7 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     id: data.id,
     isActive: data.active,
     isAdmin: data.admin,
+    modifiedAt: (new Date(data.modifiedAt || 1)).getTime(),
     username: data.username,
   };
 };
@@ -134,8 +135,7 @@ const mapCommonV1Task = (
     startTime: task.startTime as unknown as string,
     state: mapV1TaskState(task.state),
     type,
-    userId: task.userId,
-    username: task.username,
+    userId: task.userId ?? 0,
   };
 };
 
@@ -205,7 +205,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     name: model.name,
     notes: model.notes,
     numVersions: model.numVersions,
-    username: model.username,
+    userId: model.userId ?? 0,
   };
 };
 
@@ -223,7 +223,7 @@ export const mapV1ModelVersion = (
     model: mapV1Model(modelVersion.model),
     name: modelVersion.name,
     notes: modelVersion.notes,
-    username: modelVersion.username,
+    userId: modelVersion.userId ?? 0,
     version: modelVersion.version,
   };
 };
@@ -400,7 +400,7 @@ export const mapV1Experiment = (
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
-    username: data.username,
+    userId: data.userId ?? 0,
   };
 };
 
@@ -531,8 +531,9 @@ const messageRegex = new RegExp(
     '^',
     '\\[([^\\]]+)\\]\\s',                             // timestamp
     '([0-9a-f]{8})?\\s?',                             // container id
-    '\\|\\|',                                         // divider ||
-    '(\\s(CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',  // log level
+    '(\\[rank=(\\d+)\\])?\\s?',                       // rank id
+    '(\\|\\|\\s)?',                                   // divider ||
+    '((CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',     // log level
     '(\\[(\\d+)\\]\\s)?',                             // process id
     '([\\s\\S]*)',                                    // message
     '$',
@@ -544,10 +545,17 @@ const formatLogMessage = (message: string): string => {
   let filteredMessage = message.replace(newlineRegex, '');
 
   const matches = filteredMessage.match(messageRegex) ?? [];
-  if (matches.length === 8) {
-    filteredMessage = matches[7] ?? '';
-    if (matches[6] != null) filteredMessage = `[${matches[6]}] ${filteredMessage}`;
-    if (matches[2] != null) filteredMessage = `${matches[2]} ${filteredMessage}`;
+  if (matches.length === 11) {
+    filteredMessage = matches[10] ?? '';
+
+    // process id
+    if (matches[9] != null) filteredMessage = `[${matches[9]}] ${filteredMessage}`;
+
+    // rank id
+    if (matches[4] != null) filteredMessage = `[rank=${matches[4]}] ${filteredMessage}`;
+
+    // container id
+    if (matches[2] != null) filteredMessage = `[${matches[2]}] ${filteredMessage}`;
   }
 
   return filteredMessage.trim();

@@ -337,6 +337,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
+    slurm: Optional[List[str]] = None
 
     @schemas.auto_init
     def __init__(
@@ -349,6 +350,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
+        slurm: Optional[List[str]] = None,
     ) -> None:
         pass
 
@@ -912,9 +914,8 @@ schemas.register_custom_parser(Union[str, List[str]], _parse_entrypoint)
 class ExperimentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/experiment.json"
 
-    # Note that the fields internal, security, and tensorboard_storage are omitted entirely
-    # as internal is totally non-user-facing and security and tensorboard_storage are completely
-    # ignored byt the system.  These fields are allowed during validation but will be ignored by
+    # Note that the fields security and tensorboard_storage are omitted entirely both are completely
+    # ignored by the system.  These fields are allowed during validation but will be ignored by
     # .from_dict().
 
     # Fields which must be defined by the user.
@@ -931,7 +932,6 @@ class ExperimentConfigV0(schemas.SchemaBase):
     description: Optional[str] = None
     entrypoint: Optional[Union[str, List[str]]] = None
     environment: Optional[EnvironmentConfigV0] = None
-    # internal: Optional[InternalConfigV0] = None
     labels: Optional[str] = None
     max_restarts: Optional[int] = None
     min_checkpoint_period: Optional[LengthV0] = None
@@ -961,7 +961,6 @@ class ExperimentConfigV0(schemas.SchemaBase):
         description: Optional[str] = None,
         entrypoint: Optional[Union[str, List[str]]] = None,
         environment: Optional[EnvironmentConfigV0] = None,
-        # internal: Optional[InternalConfigV0] = None,
         labels: Optional[str] = None,
         max_restarts: Optional[int] = None,
         min_checkpoint_period: Optional[LengthV0] = None,

@@ -987,6 +987,16 @@ schemas = {
                     }
                 }
             }
+        },
+        "slurm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }
@@ -1003,6 +1013,7 @@ schemas = {
     "additionalProperties": false,
     "eventuallyRequired": [
         "checkpoint_storage",
+        "entrypoint",
         "name",
         "hyperparameters",
         "reproducibility",
@@ -1091,14 +1102,6 @@ schemas = {
             ],
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
-        },
-        "internal": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json"
         },
         "labels": {
             "type": [
@@ -1275,34 +1278,7 @@ schemas = {
                 }
             }
         }
-    ],
-    "checks": {
-        "must specify an entrypoint that references the trial class": {
-            "conditional": {
-                "$comment": "when internal.native is null, expect an entrypoint",
-                "when": {
-                    "properties": {
-                        "internal": {
-                            "properties": {
-                                "native": {
-                                    "type": "null"
-                                }
-                            }
-                        }
-                    }
-                },
-                "enforce": {
-                    "not": {
-                        "properties": {
-                            "entrypoint": {
-                                "type": "null"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    ]
 }
 
 """
@@ -1678,27 +1654,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/internal.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/internal.json",
-    "title": "InternalConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "native"
-    ],
-    "properties": {
-        "native": {
-            "type": "object",
-            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
-        }
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/kerberos.json": json.loads(
         r"""
 {
@@ -1772,29 +1727,6 @@ schemas = {
                 }
             }
         ]
-    }
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/native.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/native.json",
-    "title": "NativeConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "command"
-    ],
-    "properties": {
-        "command": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        }
     }
 }
 

@@ -64,7 +64,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
             renderActionItem(action)
           ))}
           {!props.hideCancel && (
-            <Link className={css.item} onClick={handleCancelClick}>
+            <Link className={css.item} key="cancel" onClick={handleCancelClick}>
               <Icon name="error" size="large" />
               <div className={css.label}>Cancel</div>
             </Link>

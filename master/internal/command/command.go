@@ -51,7 +51,7 @@ func createGenericCommandActor(
 	spec tasks.GenericCommandSpec,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
-
+	spec.TaskType = taskType
 	cmd := &command{
 		db:         db,
 		taskLogger: taskLogger,
@@ -110,7 +110,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabels(c.logCtx)
-		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
+		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddJob(&model.Job{
 			JobID:   c.jobID,

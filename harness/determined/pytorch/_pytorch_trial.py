@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, c
 
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import determined as det
 from determined import layers, pytorch, util, workload
@@ -61,9 +62,11 @@ class PyTorchTrialController(det.TrialController):
 
         self.latest_batch = self.env.latest_batch
 
-        # Currently only horovod backend is supported if distributed training
+        # Currently only horovod and torch backends are supported for distributed training
         if self.context.distributed.size > 1:
-            assert self.use_horovod, "Must use horovod for distributed training"
+            assert (
+                self.use_horovod or self.use_torch
+            ), "Must use horovod or torch for distributed training"
 
     @classmethod
     def pre_execute_hook(
@@ -75,6 +78,11 @@ class PyTorchTrialController(det.TrialController):
         if distributed_backend.use_horovod():
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
+        if distributed_backend.use_torch():
+            if torch.cuda.is_available():
+                dist.init_process_group(backend="nccl")  # type: ignore
+            else:
+                dist.init_process_group(backend="gloo")  # type: ignore
 
         cls._set_random_seeds(env.trial_seed)
 
@@ -230,7 +238,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(load_path)
 
-            if self.context.distributed.size > 1:
+            if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -620,7 +628,23 @@ class PyTorchTrialController(det.TrialController):
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
-                model.load_state_dict(checkpoint["models_state_dict"][idx])
+                model_state_dict = checkpoint["models_state_dict"][idx]
+                try:
+                    model.load_state_dict(model_state_dict)
+                except Exception:
+                    # If the checkpointed model is non-DDP and the current model is DDP, append
+                    # module prefix to the checkpointed data
+                    if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+                        logging.debug("Loading non-DDP checkpoint into a DDP model")
+                        self._add_prefix_in_state_dict_if_not_present(model_state_dict, "module.")
+                    else:
+                        # If the checkpointed model is DDP and we are currently running in
+                        # single-slot mode, remove the module prefix from checkpointed data
+                        logging.debug("Loading DDP checkpoint into a non-DDP model")
+                        torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
+                            model_state_dict, "module."
+                        )
+                    model.load_state_dict(model_state_dict)
 
         if "optimizer_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
@@ -773,6 +797,31 @@ class PyTorchTrialController(det.TrialController):
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
+
+    @staticmethod
+    def _add_prefix_in_state_dict_if_not_present(state_dict: Dict[str, Any], prefix: str) -> None:
+        """Adds the prefix in state_dict in place, if does not exist.
+        ..note::
+            Given a `state_dict` from a non-DDP model, a DDP model can load it by applying
+            `_add_prefix_in_state_dict_if_present(state_dict, "module.")` before calling
+            :meth:`torch.nn.Module.load_state_dict`.
+        Args:
+            state_dict (OrderedDict): a state-dict to be loaded to the model.
+            prefix (str): prefix.
+        """
+        keys = sorted(state_dict.keys())
+        for key in keys:
+            if not key.startswith(prefix):
+                newkey = prefix + key
+                state_dict[newkey] = state_dict.pop(key)
+
+        # also add the prefix to metadata if not exists.
+        if "_metadata" in state_dict:
+            metadata = state_dict["_metadata"]
+            for key in list(metadata.keys()):
+                if not key.startswith(prefix):
+                    newkey = prefix + key
+                    metadata[newkey] = metadata.pop(key)
 
 
 class PyTorchTrial(det.Trial):

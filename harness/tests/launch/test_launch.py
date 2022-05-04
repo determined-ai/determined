@@ -14,14 +14,6 @@ def do_test_launch(config: Dict[str, Any], cmd: List[str], mock_popen: mock.Magi
     mock_popen.assert_called_once_with(cmd)
 
 
-def test_launch_native() -> None:
-    config = {
-        "internal": {"native": {"command": ["script.py"]}},
-    }
-    cmd = ["python3", "-m", "determined.launch.horovod", "--autohorovod", "--trial", "__NATIVE__"]
-    do_test_launch(config, cmd)
-
-
 def test_launch_trial() -> None:
     entrypoint = "model_def:TrialClass"
     config = {"entrypoint": entrypoint}

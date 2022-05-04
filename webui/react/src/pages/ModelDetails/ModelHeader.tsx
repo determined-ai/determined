@@ -7,6 +7,7 @@ import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
+import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
@@ -38,8 +39,8 @@ const ModelHeader: React.FC<Props> = (
     return [ {
       content: (
         <Space>
-          <Avatar username={model.username} />
-          {`${getDisplayName(users.find(user => user.username === model.username))} on 
+          <Avatar userId={model.userId} />
+          {`${getDisplayName(users.find(user => user.id === model.userId))} on 
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
@@ -70,7 +71,7 @@ const ModelHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags, users ]);
 
-  const isDeletable = user?.isAdmin || user?.username === model.username;
+  const isDeletable = user?.isAdmin || user?.id === model.userId;
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
@@ -135,9 +136,9 @@ const ModelHeader: React.FC<Props> = (
                   </Menu.Item>
                   <Menu.Item
                     danger
-                    disabled={!isDeletable}
                     key="delete-model"
-                    onClick={() => showConfirmDelete(model)}>
+                    onClick={() => isDeletable ?
+                      showConfirmDelete(model) : showModalItemCannotDelete()}>
                     Delete
                   </Menu.Item>
                 </Menu>

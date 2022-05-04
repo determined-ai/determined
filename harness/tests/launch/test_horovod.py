@@ -1,18 +1,13 @@
-import contextlib
-import io
 import os
-import sys
 import time
-from typing import Iterator, List
 from unittest import mock
 
 import pytest
 
-import determined as det
-import determined.launch.horovod
+import determined.launch.horovod  # noqa: F401
 from determined import constants, horovod, launch
 from determined.common.api import certs
-from tests.experiment import utils  # noqa: I100
+from tests.launch import test_util
 
 
 def test_parse_args() -> None:
@@ -32,30 +27,13 @@ def test_parse_args() -> None:
         "-- script -- arg": ([], ["script", "--", "arg"], False),
         "-- --autohorovod script -- arg": ([], ["script", "--", "arg"], True),
     }
-    for args, exp in positive_test_cases.items():
-        assert exp == launch.horovod.parse_args(args.split()), f"test case failed, args = {args}"
-
     negative_test_cases = {
         "--trial my_module:MyTrial script": "extra arguments",
         "": "empty script",
         "--asdf 1 script ": "unrecognized arguments",
     }
 
-    for args, msg in negative_test_cases.items():
-        old = sys.stderr
-        fake = io.StringIO()
-        sys.stderr = fake
-        try:
-            try:
-                launch.horovod.parse_args(args.split())
-            except SystemExit:
-                # This is expected.
-                err = fake.getvalue()
-                assert msg in err, f"test case failed, args='{args}' msg='{msg}', stderr='{err}'"
-                continue
-            raise AssertionError(f"negative test case did not fail: args='{args}'")
-        finally:
-            sys.stderr = old
+    test_util.parse_args_check(positive_test_cases, negative_test_cases, launch.horovod.parse_args)
 
 
 @pytest.mark.parametrize("autohorovod", [True, False])
@@ -74,7 +52,9 @@ def test_horovod_chief(
     nnodes: int,
     autohorovod: bool,
 ) -> None:
-    info = make_mock_cluster_info(["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots)
+    info = test_util.make_mock_cluster_info(
+        ["0.0.0.{i}" for i in range(nnodes)], 0, num_slots=nslots
+    )
     experiment_config = info.trial._config
     mock_cluster_info.return_value = info
     mock_start_time = time.time()
@@ -104,7 +84,7 @@ def test_horovod_chief(
 
     mock_popen.return_value = mock_proc
 
-    with set_resources_id_env_var():
+    with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, autohorovod) == 99
 
     if autohorovod and nnodes == 1 and nslots == 1:
@@ -138,7 +118,7 @@ def test_sshd_worker(
     mock_cluster_info: mock.MagicMock,
     mock_popen: mock.MagicMock,
 ) -> None:
-    info = make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
+    info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
     mock_cluster_info.return_value = info
     hvd_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
@@ -155,7 +135,7 @@ def test_sshd_worker(
 
     mock_popen.return_value = mock_proc
 
-    with set_resources_id_env_var():
+    with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, True) == 99
 
     mock_cluster_info.assert_called_once()
@@ -175,46 +155,3 @@ def test_sshd_worker(
     )
 
     mock_proc.wait.assert_called_once()
-
-
-def make_mock_cluster_info(
-    container_addrs: List[str], container_rank: int, num_slots: int
-) -> det.ClusterInfo:
-    config = utils.make_default_exp_config({}, 100, "loss", None)
-    trial_info_mock = det.TrialInfo(
-        trial_id=1,
-        experiment_id=1,
-        trial_seed=0,
-        hparams={},
-        config=config,
-        latest_batch=0,
-        trial_run_id=0,
-        debug=False,
-        unique_port_offset=0,
-        inter_node_network_interface=None,
-    )
-    rendezvous_info_mock = det.RendezvousInfo(
-        container_addrs=container_addrs, container_rank=container_rank
-    )
-    cluster_info_mock = det.ClusterInfo(
-        master_url="localhost",
-        cluster_id="clusterId",
-        agent_id="agentId",
-        slot_ids=list(range(num_slots)),
-        task_id="taskId",
-        allocation_id="allocationId",
-        session_token="sessionToken",
-        task_type="TRIAL",
-        rendezvous_info=rendezvous_info_mock,
-        trial_info=trial_info_mock,
-    )
-    return cluster_info_mock
-
-
-@contextlib.contextmanager
-def set_resources_id_env_var() -> Iterator[None]:
-    try:
-        os.environ["DET_RESOURCES_ID"] = "resourcesId"
-        yield
-    finally:
-        del os.environ["DET_RESOURCES_ID"]

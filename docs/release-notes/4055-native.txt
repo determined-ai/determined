@@ -1,0 +1,7 @@
+:orphan:
+
+**Removed Features**
+
+-  Remove the remaining parts of the Native API (deprecated in 0.13.5, September 2020). The only
+   Native API functions which still remained were ``det.experimental.create()`` and
+   ``det.expeimental.create_trial_instance()``.

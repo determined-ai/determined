@@ -90,6 +90,36 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
 
 
 @pytest.mark.e2e_cpu
+def test_disable_agent_experiment_resume() -> None:
+    """
+    Start an experiment with max_restarts=0 and ensure that being killed due to an explicit agent
+    disable/enable (without draining) does not count toward the number of restarts.
+    """
+    slots = _fetch_slots()
+    assert len(slots) == 1
+    agent_id = slots[0]["agent_id"]
+
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--config", "max_restarts=0"],
+    )
+    exp.wait_for_experiment_workload_progress(exp_id)
+
+    with _disable_agent(agent_id):
+        # Wait for the allocation to go away.
+        for _ in range(20):
+            slots = _fetch_slots()
+            print(slots)
+            if not any(s["allocation_id"] != "FREE" for s in slots):
+                break
+            time.sleep(1)
+        else:
+            pytest.fail("Experiment stayed scheduled after agent was disabled")
+    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+
+
+@pytest.mark.e2e_cpu
 def test_disable_agent_zero_slots() -> None:
     """
     Start a command, disable the agent it's running on. The command should

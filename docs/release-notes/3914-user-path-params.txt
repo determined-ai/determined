@@ -1,6 +1,0 @@
-:orphan:
-
-**Breaking Changes**
-
--  API endpoints for getting or updating a user now accept a ``userId`` instead of ``username`` as
-   the path parameter.

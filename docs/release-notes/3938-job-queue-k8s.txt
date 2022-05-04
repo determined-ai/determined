@@ -1,0 +1,9 @@
+:orphan:
+
+**New Features**
+
+-  Job queue: Add support for dynamic job modification on Kubernetes using the job queue. Users can
+   now use the WebUI or CLI to change the priority and queue position of jobs in k8s. To update jobs
+   through the WebUI, go to the Job Queue section, find the target job, and click on the Manage Job
+   option. To update jobs in the CLI, use the det job update command. Run det job update --help for
+   more information.

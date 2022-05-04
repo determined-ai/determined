@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Add a translation of DeepSpeed's DCGAN example using the new DeepSpeedTrial API.

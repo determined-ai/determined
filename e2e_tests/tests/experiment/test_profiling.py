@@ -13,7 +13,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu
-@pytest.mark.timeout(5 * 60)
+@pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize(
     "framework_base_experiment,framework_timings_enabled",
     [

@@ -1,6 +1,5 @@
 # type: ignore
 import os
-import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -14,6 +13,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import (  # noqa: I100
     ancient_keras_ckpt,
     tf_keras_one_var_model,
+    tf_keras_runtime_error,
     tf_keras_xor_model,
 )
 
@@ -370,23 +370,17 @@ def test_checkpoint_loading(ckpt_ver):
 
 
 def test_surface_native_error():
-    cmd = ["python3", utils.fixtures_path("tf_keras_runtime_error.py")]
-    with subprocess.Popen(cmd, stderr=subprocess.PIPE) as p:
-        err = p.stderr.read()
-        assert p.wait() != 0
-        if tf.executing_eagerly():
-            assert (
-                b"ValueError: Shapes (None, 10) and (None, 1) are incompatible" in err
-                or b"ValueError: Input 0 of layer sequential is incompatible with the "
-                b"layer: : expected min_ndim=2, found ndim=1. Full shape received: [1]" in err
-                or b"ValueError: Input 0 of layer sequential is incompatible with the "
-                b"layer: : expected min_ndim=2, found ndim=1. Full shape received: (1,)" in err
-            ), err.decode("utf8")
-        else:
-            assert (
-                b"ValueError: Input 0 of layer sequential is incompatible with the layer" in err
-            ), err.decode("utf8")
+    def make_workloads() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
 
+        yield from trainer.send(steps=10, validation_freq=10)
+        training_metrics, validation_metrics = trainer.result()
 
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(tf_keras_xor_model.XORTrial)
+    controller = utils.make_trial_controller_from_trial_implementation(
+        tf_keras_runtime_error.RuntimeErrorTrial,
+        {"global_batch_size": 1},
+        make_workloads(),
+        trial_seed=0,
+    )
+    with pytest.raises(ValueError, match="incompatible"):
+        controller.run()

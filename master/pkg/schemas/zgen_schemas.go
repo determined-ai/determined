@@ -918,6 +918,16 @@ var (
                     }
                 }
             }
+        },
+        "slurm": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         }
     }
 }
@@ -930,6 +940,7 @@ var (
     "additionalProperties": false,
     "eventuallyRequired": [
         "checkpoint_storage",
+        "entrypoint",
         "name",
         "hyperparameters",
         "reproducibility",
@@ -1018,14 +1029,6 @@ var (
             ],
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
-        },
-        "internal": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json"
         },
         "labels": {
             "type": [
@@ -1202,34 +1205,7 @@ var (
                 }
             }
         }
-    ],
-    "checks": {
-        "must specify an entrypoint that references the trial class": {
-            "conditional": {
-                "$comment": "when internal.native is null, expect an entrypoint",
-                "when": {
-                    "properties": {
-                        "internal": {
-                            "properties": {
-                                "native": {
-                                    "type": "null"
-                                }
-                            }
-                        }
-                    }
-                },
-                "enforce": {
-                    "not": {
-                        "properties": {
-                            "entrypoint": {
-                                "type": "null"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    ]
 }
 `)
 	textGCSConfigV0 = []byte(`{
@@ -1567,23 +1543,6 @@ var (
     }
 }
 `)
-	textInternalConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/internal.json",
-    "title": "InternalConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "native"
-    ],
-    "properties": {
-        "native": {
-            "type": "object",
-            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
-        }
-    }
-}
-`)
 	textKerberosConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/kerberos.json",
@@ -1651,25 +1610,6 @@ var (
                 }
             }
         ]
-    }
-}
-`)
-	textNativeConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/native.json",
-    "title": "NativeConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "command"
-    ],
-    "properties": {
-        "command": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        }
     }
 }
 `)
@@ -3400,13 +3340,9 @@ var (
 
 	schemaHyperparametersV0 interface{}
 
-	schemaInternalConfigV0 interface{}
-
 	schemaKerberosConfigV0 interface{}
 
 	schemaLengthV0 interface{}
-
-	schemaNativeConfigV0 interface{}
 
 	schemaOptimizationsConfigV0 interface{}
 
@@ -4045,26 +3981,6 @@ func ParsedHyperparametersV0() interface{} {
 	return schemaHyperparametersV0
 }
 
-func ParsedInternalConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaInternalConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaInternalConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaInternalConfigV0 != nil {
-		return schemaInternalConfigV0
-	}
-	err := json.Unmarshal(textInternalConfigV0, &schemaInternalConfigV0)
-	if err != nil {
-		panic("invalid embedded json for InternalConfigV0")
-	}
-	return schemaInternalConfigV0
-}
-
 func ParsedKerberosConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaKerberosConfigV0 != nil {
@@ -4103,26 +4019,6 @@ func ParsedLengthV0() interface{} {
 		panic("invalid embedded json for LengthV0")
 	}
 	return schemaLengthV0
-}
-
-func ParsedNativeConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaNativeConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaNativeConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaNativeConfigV0 != nil {
-		return schemaNativeConfigV0
-	}
-	err := json.Unmarshal(textNativeConfigV0, &schemaNativeConfigV0)
-	if err != nil {
-		panic("invalid embedded json for NativeConfigV0")
-	}
-	return schemaNativeConfigV0
 }
 
 func ParsedOptimizationsConfigV0() interface{} {
@@ -4698,14 +4594,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
 	cachedSchemaBytesMap[url] = textHyperparametersV0
-	url = "http://determined.ai/schemas/expconf/v0/internal.json"
-	cachedSchemaBytesMap[url] = textInternalConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/kerberos.json"
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
 	cachedSchemaBytesMap[url] = textLengthV0
-	url = "http://determined.ai/schemas/expconf/v0/native.json"
-	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"

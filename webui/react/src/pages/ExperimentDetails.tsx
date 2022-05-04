@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
-import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
@@ -12,6 +11,7 @@ import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
 import { isAborted } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';

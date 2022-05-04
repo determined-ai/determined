@@ -842,6 +842,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if err = m.db.EndAllTaskStats(); err != nil {
 		return err
 	}
+	if err = task.WipeResourcesState(); err != nil {
+		return err
+	}
 
 	// The below function call is intentionally made after the call to CloseOpenAllocations.
 	// This ensures that in the scenario where a cluster fails all open allocations are
@@ -921,6 +924,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
+	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
+	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 

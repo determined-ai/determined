@@ -4,7 +4,6 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -13,6 +12,7 @@ import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';

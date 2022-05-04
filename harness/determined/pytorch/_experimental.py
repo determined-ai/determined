@@ -1,7 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, Optional, Union, cast
-
-from determined import pytorch, util
+from typing import Any
 
 # AMP is only available in PyTorch 1.6+
 try:
@@ -80,36 +78,3 @@ class PyTorchExperimentalContext:
         """
         self._auto_to_device = False
         logging.info("disabled automatically moving data to device")
-
-    @util.deprecated(
-        "context.experimental.reset_reducers() is deprecated since 0.15.2 and will be removed in a "
-        "future version; use context.reset_reducers() directly."
-    )
-    def reset_reducers(self) -> None:
-        self._parent.reset_reducers()
-
-    @util.deprecated(
-        "context.experimental.wrap_reducer() is deprecated since 0.15.2 and will be removed in a "
-        "future version; use context.wrap_reducer() directly."
-    )
-    def wrap_reducer(
-        self,
-        reducer: Union[Callable, pytorch.MetricReducer],
-        name: Optional[str] = None,
-        for_training: bool = True,
-        for_validation: bool = True,
-    ) -> pytorch.MetricReducer:
-        return cast(
-            pytorch.MetricReducer,
-            self._parent.wrap_reducer(reducer, name, for_training, for_validation),
-        )
-
-    @util.deprecated(
-        "context.experimental.reduce_metrics() is deprecated since 0.15.2 and will be removed in a "
-        "future version; use context.reduce_metrics() directly."
-    )
-    def reduce_metrics(self, for_training: bool) -> Dict[str, Any]:
-        return cast(
-            dict,
-            self._parent.reduce_metrics(for_training),
-        )

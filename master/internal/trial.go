@@ -173,7 +173,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 	case *task.AllocationExited:
-		return t.allocationExited(ctx, msg)
+		if t.allocation != nil && t.runID == mustParseTrialRunID(ctx.Sender()) {
+			return t.allocationExited(ctx, msg)
+		}
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
 			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
@@ -231,9 +233,12 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabel("trial-run-id", t.runID)
+	if err := t.addTask(); err != nil {
+		return err
+	}
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
-		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
 		JobSubmissionTime: t.jobSubmissionTime,
@@ -271,6 +276,16 @@ func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEa
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+}
+
+func (t *trial) addTask() error {
+	return t.db.AddTask(&model.Task{
+		TaskID:     t.taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  t.jobSubmissionTime,
+		JobID:      &t.jobID,
+		LogVersion: model.CurrentTaskLogVersion,
+	})
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {

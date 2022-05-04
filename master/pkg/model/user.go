@@ -24,6 +24,7 @@ type User struct {
 	DisplayName  null.String `db:"display_name" json:"display_name"`
 	Admin        bool        `db:"admin" json:"admin"`
 	Active       bool        `db:"active" json:"active"`
+	ModifiedAt   time.Time   `db:"modified_at" json:"modified_at"`
 }
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
@@ -40,6 +41,7 @@ type FullUser struct {
 	Username    string      `db:"username" json:"username"`
 	Admin       bool        `db:"admin" json:"admin"`
 	Active      bool        `db:"active" json:"active"`
+	ModifiedAt  time.Time   `db:"modified_at" json:"modified_at"`
 
 	AgentUID   null.Int    `db:"agent_uid" json:"agent_uid"`
 	AgentGID   null.Int    `db:"agent_gid" json:"agent_gid"`

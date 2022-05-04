@@ -7,7 +7,6 @@ from .experiment import (
     check_if_string_present_in_trial_logs,
     assert_patterns_in_trial_logs,
     create_experiment,
-    create_native_experiment,
     experiment_has_active_workload,
     experiment_has_completed_workload,
     wait_for_experiment_active_workload,
@@ -16,7 +15,6 @@ from .experiment import (
     experiment_state,
     experiment_trials,
     maybe_create_experiment,
-    maybe_create_native_experiment,
     pause_experiment,
     root_user_home_bind_mount,
     run_basic_test,
@@ -32,6 +30,7 @@ from .experiment import (
     workloads_with_checkpoint,
     workloads_with_training,
     workloads_with_validation,
+    experiment_first_trial,
 )
 
 from .record_profiling import (

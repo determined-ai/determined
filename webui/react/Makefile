@@ -10,9 +10,7 @@ default: get-deps
 
 .PHONY: get-deps-npm
 get-deps-npm:
-	for i in `seq 3`; do \
-		npm ci --no-audit && break ; \
-	done
+	npm ci --no-audit
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
