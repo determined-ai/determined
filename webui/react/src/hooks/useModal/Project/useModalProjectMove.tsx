@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -65,11 +65,14 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
           id="workspace"
           placeholder="Select a destination workspace."
           style={{ width: '100%' }}
-          onChange={handleWorkspaceSelect}>
+          onSelect={handleWorkspaceSelect}>
           {workspaces.map(workspace => {
             return (
               <Option key={workspace.id} value={workspace.id}>
-                {workspace.name}
+                <Typography.Text
+                  ellipsis={true}>
+                  {workspace.name}
+                </Typography.Text>
               </Option>
             );
           })}
