@@ -1,12 +1,14 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Space, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import Icon from 'components/Icon';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
-import { DetailedUser, Project } from 'types';
+import { getWorkspace } from 'services/api';
+import { DetailedUser, Project, Workspace } from 'types';
+import handleError from 'utils/error';
 import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsTabs.module.scss';
@@ -29,11 +31,25 @@ interface Props {
 const ProjectDetailsTabs: React.FC<Props> = (
   { project, tabs, fetchProject, curUser }: Props,
 ) => {
+  const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+
+  const fetchWorkspace = useCallback(async () => {
+    try {
+      const response = await getWorkspace({ id: project.workspaceId });
+      setWorkspace(response);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch workspace.' });
+    }
+  }, [ project.workspaceId ]);
 
   const handleTabSwitch = useCallback((tabKey: string) => {
     setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
+
+  useEffect(() => {
+    fetchWorkspace();
+  }, [ fetchWorkspace ]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
@@ -61,7 +77,9 @@ const ProjectDetailsTabs: React.FC<Props> = (
             <ProjectActionDropdown
               curUser={curUser}
               project={project}
+              showChildrenIfEmpty={false}
               trigger={[ 'click' ]}
+              workspaceArchived={workspace?.archived}
               onComplete={fetchProject}>
               <div style={{ cursor: 'pointer' }}>
                 <Icon name="arrow-down" size="tiny" />

@@ -177,6 +177,7 @@ const WorkspaceDetails: React.FC = () => {
       <ProjectActionDropdown
         curUser={user}
         project={record}
+        workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
       />
     );
@@ -245,7 +246,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ fetchProjects, saveProjectDescription, user ]);
+  }, [ fetchProjects, saveProjectDescription, user, workspace?.archived ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
@@ -286,12 +287,13 @@ const WorkspaceDetails: React.FC = () => {
         curUser={user}
         project={record}
         trigger={[ 'contextMenu' ]}
+        workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
     ),
-    [ fetchProjects, user ],
+    [ fetchProjects, user, workspace?.archived ],
   );
 
   const projectsList = useMemo(() => {
