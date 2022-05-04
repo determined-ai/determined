@@ -230,7 +230,8 @@ const SlotAllocationBar: React.FC<Props> = ({
             !isAux && (
               <span>{
                 `${totalSlots > stateTallies.RUNNING ?
-                  totalSlots - stateTallies.RUNNING : 0} Slots Free`
+                  totalSlots - stateTallies.RUNNING : 0} ${
+                  totalSlots - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
               }
               </span>
             )}

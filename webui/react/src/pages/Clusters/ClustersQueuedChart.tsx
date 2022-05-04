@@ -2,6 +2,7 @@ import { Radio } from 'antd';
 import React, { useMemo, useState } from 'react';
 
 import Page from 'components/Page';
+import Section from 'components/Section';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, secondToHour } from 'utils/datetime';
 
@@ -36,18 +37,20 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
   if(!queuedStats) return <div />;
   return (
     <Page title="Avg Queue Time">
-      <Radio.Group
-        className={css.filter}
-        value={viewDays}
-        onChange={e => setViewDays(e.target.value)}>
-        <Radio.Button value={7}>7 days</Radio.Button>
-        <Radio.Button value={30}>30 days</Radio.Button>
-      </Radio.Group>
-      <ClusterHistoricalUsageChart
-        hoursByLabel={queuedStats.hoursAverage}
-        label="Queued Hours"
-        time={queuedStats.time}
-      />
+      <Section bodyBorder>
+        <Radio.Group
+          className={css.filter}
+          value={viewDays}
+          onChange={e => setViewDays(e.target.value)}>
+          <Radio.Button value={7}>7 days</Radio.Button>
+          <Radio.Button value={30}>30 days</Radio.Button>
+        </Radio.Group>
+        <ClusterHistoricalUsageChart
+          hoursByLabel={queuedStats.hoursAverage}
+          label="Queued Hours"
+          time={queuedStats.time}
+        />
+      </Section>
     </Page>
   );
 };
