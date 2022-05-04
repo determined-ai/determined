@@ -1,10 +1,10 @@
 import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
-import Message, { MessageType } from 'shared/components/message';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
+import Message, { MessageType } from 'shared/components/message';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import { FacetedData } from './types';
