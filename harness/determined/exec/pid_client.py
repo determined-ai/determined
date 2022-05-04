@@ -7,7 +7,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("addr")
     parser.add_argument("cmd")
-    parser.add_argument("cmd_args", nargs="*")
+    parser.add_argument("cmd_args", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     addr = ipc.read_pid_server_addr(args.addr)
