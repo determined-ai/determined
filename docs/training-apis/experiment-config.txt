@@ -94,8 +94,8 @@ example:
 
 ``records_per_epoch``
    The number of records in the training data set. It must be configured if you want to specify
-   ``min_validation_period``, ``min_checkpoint_period``, ``searcher.max_length``, and
-   ``searcher.length_per_round`` in units of ``epochs``.
+   ``min_validation_period``, ``min_checkpoint_period``, and ``searcher.max_length`` in units of
+   ``epochs``.
 
    -  The system does not attempt to determine the size of an epoch automatically, because the size
       of the training set might vary based on data augmentation, changes to external storage, or

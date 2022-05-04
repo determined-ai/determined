@@ -2580,149 +2580,6 @@ var (
     }
 }
 `)
-	textPBTConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
-    "title": "PBTConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name"
-    ],
-    "eventuallyRequired": [
-        "metric",
-        "population_size",
-        "length_per_round",
-        "num_rounds",
-        "replace_function",
-        "explore_function"
-    ],
-    "properties": {
-        "name": {
-            "const": "pbt"
-        },
-        "population_size": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "length_per_round": {
-            "type": [
-                "object",
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
-        },
-        "num_rounds": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "replace_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "unionKey": "singleproperty",
-            "conditional": {
-                "unless": {
-                    "const": null
-                },
-                "enforce": {
-                    "union": {
-                        "items": [
-                            {
-                                "unionKey": "always",
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "truncate_fraction"
-                                ],
-                                "properties": {
-                                    "truncate_fraction": {
-                                        "type": "number",
-                                        "minimum": 0.0,
-                                        "maximum": 0.5
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "explore_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "additionalProperties": false,
-            "eventuallyRequired": [
-                "resample_probability",
-                "perturb_factor"
-            ],
-            "properties": {
-                "resample_probability": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                },
-                "perturb_factor": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                }
-            }
-        },
-        "metric": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-`)
 	textRandomConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-random.json",
@@ -3432,8 +3289,6 @@ var (
 	schemaGridConfigV0 interface{}
 
 	schemaSearcherLengthV0 interface{}
-
-	schemaPBTConfigV0 interface{}
 
 	schemaRandomConfigV0 interface{}
 
@@ -4366,26 +4221,6 @@ func ParsedSearcherLengthV0() interface{} {
 	return schemaSearcherLengthV0
 }
 
-func ParsedPBTConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaPBTConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaPBTConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaPBTConfigV0 != nil {
-		return schemaPBTConfigV0
-	}
-	err := json.Unmarshal(textPBTConfigV0, &schemaPBTConfigV0)
-	if err != nil {
-		panic("invalid embedded json for PBTConfigV0")
-	}
-	return schemaPBTConfigV0
-}
-
 func ParsedRandomConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaRandomConfigV0 != nil {
@@ -4731,8 +4566,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textGridConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-length.json"
 	cachedSchemaBytesMap[url] = textSearcherLengthV0
-	url = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-	cachedSchemaBytesMap[url] = textPBTConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-random.json"
 	cachedSchemaBytesMap[url] = textRandomConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-single.json"
