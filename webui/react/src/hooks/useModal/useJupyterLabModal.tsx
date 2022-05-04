@@ -73,7 +73,7 @@ interface FullConfigProps {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalHooks => {
+const useJupyterLabModal = (): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
@@ -120,9 +120,9 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
         slots: fields.slots,
         templateName: fields.template,
       });
+      modalClose();
     }
-    if (onLaunch) onLaunch();
-  }, [ config, fields, launchJupyterLab, onLaunch, showFullConfig ]);
+  }, [ config, fields, launchJupyterLab, showFullConfig ]);
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
   const footer = (
@@ -160,7 +160,6 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
           content: content,
           title: 'Launch JupyterLab',
           width:540,
-          ...props
         };
       }, [content]);
 

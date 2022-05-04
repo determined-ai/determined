@@ -13,7 +13,6 @@ import { percent } from 'utils/number';
 import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
-import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
@@ -73,7 +72,7 @@ const NavigationSideBar: React.FC = () => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal} = useJupyterLabModal({});
+  const { modalOpen: openJupyterLabModal} = useJupyterLabModal();
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -165,7 +164,7 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => openJupyterLabModal()}>Launch JupyterLab
+                onClick={() => openJupyterLabModal()}>Launch JupyterLabss
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
