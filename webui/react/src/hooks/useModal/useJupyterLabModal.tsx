@@ -78,6 +78,8 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ config, setConfig ] = useState<string | undefined>();
+  const [ previousConfig, setPreviousConfig ] = useState<string | undefined>();
+  const [ previousShowConfig, setPreviousShowConfig ] = useState<boolean>(false);
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
   const [ fields, dispatch ] = useJupyterLabForm();
@@ -151,16 +153,35 @@ const useJupyterLabModal = ({onLaunch, ...props }: JupyterLabModalProps): ModalH
         {footer}
         </>
       )
+      
+      const modalProps: ModalFuncProps = useMemo(() => {
+        return {
+          className: css.noFooter,
+          content: content,
+          title: 'Launch JupyterLab',
+          width:540,
+          ...props
+        };
+      }, [content]);
 
-  const modalProps: ModalFuncProps = useMemo(() => {
-    return {
-      className: css.noFooter,
-      content: content,
-      title: 'Launch JupyterLab',
-      width:540,
-    };
-  }, []);
+      useEffect(() => {
+        if(config != previousConfig){
+          setPreviousConfig(config);
+          openOrUpdate(modalProps)
+        }
+      }, [config])
 
+
+  useEffect(() => {
+    if(showFullConfig != previousShowConfig){
+      setPreviousShowConfig(showFullConfig)
+          openOrUpdate(
+            modalProps
+          )
+      
+    }
+  }, [ showFullConfig]);
+  
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
