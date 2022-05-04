@@ -5,16 +5,16 @@
   color: var(--theme-colors-monochrome-7);
   display: grid;
   font-size: 11px;
-  grid-template-columns: 100px auto 50px;
+  grid-template-columns: 100px auto 25px;
   height: 100px;
   max-width: 325px;
-  min-width: min-content;
   padding: var(--theme-sizes-layout-big);
 
   .info {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    overflow: hidden;
 
     .nameRow {
       align-items: center;
