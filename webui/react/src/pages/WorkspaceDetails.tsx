@@ -415,10 +415,18 @@ const WorkspaceDetails: React.FC = () => {
         {projects.length !== 0 ? (
           projectsList
         ) : (
-          <Message
-            title="No projects matching the current filters"
-            type={MessageType.Empty}
-          />
+          workspace.numProjects === 0 ? (
+            <Message
+              message='Create a project with the "New Project" button or in the CLI.'
+              title="Workspace contains no projects. "
+              type={MessageType.Empty}
+            />
+          ) : (
+            <Message
+              title="No projects matching the current filters"
+              type={MessageType.Empty}
+            />
+          )
         )}
       </Spinner>
     </Page>
