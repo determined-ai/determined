@@ -43,7 +43,7 @@ class Pix2Pix(tf.keras.Model):
             disc_real = self.discriminator([input_image, real_image], training=True)
             disc_fake = self.discriminator([input_image, gen_output], training=True)
 
-            g_loss, _, _ = self.generator_loss(disc_fake, gen_output, real_image)
+            g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fake, gen_output, real_image)
             d_loss = self.discriminator_loss(disc_real, disc_fake)
 
         generator_gradients = gen_tape.gradient(
@@ -59,14 +59,13 @@ class Pix2Pix(tf.keras.Model):
         self.discriminator_optimizer.apply_gradients(
             zip(discriminator_gradients, self.discriminator.trainable_variables)
         )
-
-        return {"d_loss": d_loss, "g_loss": g_loss}
+        return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}
 
     def test_step(self, data):
         input_image, target = data
         gen_output = self.generator(input_image, training=False)
         disc_real = self.discriminator([input_image, target], training=False)
         disc_fake = self.discriminator([gen_output, target], training=False)
-        g_loss, _, _ = self.generator_loss(disc_fake, gen_output, target)
+        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fake, gen_output, target)
         d_loss = self.discriminator_loss(disc_real, disc_fake)
-        return {"d_loss": d_loss, "g_loss": g_loss}
+        return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}

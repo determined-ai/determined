@@ -19,7 +19,7 @@ min_checkpoint_period:
   batches: 400
 searcher:
   name: single
-  metric: "val_d_loss"
+  metric: "val_total_loss"
   smaller_is_better: true
   max_length:
     batches: 40000
