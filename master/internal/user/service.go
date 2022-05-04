@@ -107,6 +107,30 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 	}
 }
 
+// ProcessProxyAuthentication is a middleware processing function that attempts
+// to authenticate incoming HTTP requests coming through proxies.
+func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err error) {
+	token, err := s.extractToken(c)
+	if err != nil {
+		return true, c.Redirect(
+			http.StatusSeeOther,
+			fmt.Sprintf("/det/login?redirect=%s", c.Request().URL.Path),
+		)
+	}
+
+	switch user, _, err := s.db.UserByToken(token, s.extConfig); err {
+	case nil:
+		if !user.Active {
+			return true, echo.NewHTTPError(http.StatusForbidden, "user not active")
+		}
+		return false, nil
+	case db.ErrNotFound:
+		return true, echo.NewHTTPError(http.StatusUnauthorized)
+	default:
+		return true, err
+	}
+}
+
 func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 	// Delete the cookie if one is set.
 	if cookie, err := c.Cookie("auth"); err == nil {

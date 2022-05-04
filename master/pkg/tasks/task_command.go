@@ -21,8 +21,9 @@ type GenericCommandSpec struct {
 
 	Keys *ssh.PrivateAndPublicKeys
 
-	Port     *int
-	ProxyTCP bool
+	Port        *int
+	ProxyTCP    bool
+	UseHTTPAuth bool
 
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool

@@ -113,6 +113,7 @@ func (a *apiServer) LaunchNotebook(
 		"DET_TASK_TYPE":      string(model.TaskTypeNotebook),
 	}
 	spec.Port = &port
+	spec.UseHTTPAuth = true
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}
 
 	spec.Config.Entrypoint = []string{jupyterEntrypoint}
