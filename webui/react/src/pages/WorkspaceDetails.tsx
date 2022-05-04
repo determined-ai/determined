@@ -381,6 +381,7 @@ const WorkspaceDetails: React.FC = () => {
           bordered={false}
           dropdownMatchSelectWidth={140}
           label="View:"
+          showSearch={false}
           value={projectFilter}
           onSelect={handleViewSelect}>
           <Option value={ProjectFilters.All}>All projects</Option>
@@ -398,6 +399,7 @@ const WorkspaceDetails: React.FC = () => {
             bordered={false}
             dropdownMatchSelectWidth={150}
             label="Sort:"
+            showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>

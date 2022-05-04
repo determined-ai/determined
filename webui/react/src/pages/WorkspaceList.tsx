@@ -302,6 +302,7 @@ const WorkspaceList: React.FC = () => {
           bordered={false}
           dropdownMatchSelectWidth={140}
           label="View:"
+          showSearch={false}
           value={workspaceFilter}
           onSelect={handleViewSelect}>
           <Option value={WorkspaceFilters.All}>All workspaces</Option>
@@ -315,6 +316,7 @@ const WorkspaceList: React.FC = () => {
             bordered={false}
             dropdownMatchSelectWidth={150}
             label="Sort:"
+            showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
