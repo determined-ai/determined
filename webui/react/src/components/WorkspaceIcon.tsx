@@ -16,7 +16,7 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     if (!name) return '-';
     return name
       .split(/\s/).reduce((response, word) => response += word.slice(0, 1), '')
-      .slice(0, 3);
+      .slice(0, 2);
   }, [ name ]);
 
   const color = useMemo(() => {
