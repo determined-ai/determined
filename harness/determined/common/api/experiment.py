@@ -24,7 +24,12 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     print("Waiting for first trial to begin...")
     certs.cli_cert = certs.default_load(master_url)
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = session.Session(
+        master_url,
+        authentication.cli_auth.session.username,
+        authentication.cli_auth,
+        certs.cli_cert,
+    )
     while True:
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
         if len(trials) > 0:
@@ -68,7 +73,12 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
 
     certs.cli_cert = certs.default_load(master_url)
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = session.Session(
+        master_url,
+        authentication.cli_auth.session.username,
+        authentication.cli_auth,
+        certs.cli_cert,
+    )
     while True:
         r = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
@@ -157,7 +167,12 @@ def create_experiment(
     if activate:
         certs.cli_cert = certs.default_load(master_url)
         authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-        sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+        sess = session.Session(
+            master_url,
+            authentication.cli_auth.session.username,
+            authentication.cli_auth,
+            certs.cli_cert,
+        )
         bindings.post_ActivateExperiment(sess, id=experiment_id)
 
     return experiment_id
