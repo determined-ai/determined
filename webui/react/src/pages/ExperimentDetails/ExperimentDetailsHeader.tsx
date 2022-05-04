@@ -279,8 +279,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       <BreadcrumbBar
         experiment={experiment}
         id={experiment.id}
-        trial={trial}
-        type={trial ? 'trial' : 'experiment'}
+        type="experiment"
       />
       <PageHeaderFoldable
         foldableContent={(
@@ -291,7 +290,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 allowNewline
                 isOnDark
                 maxLength={500}
-                placeholder="Add description"
+                placeholder="Add description..."
+                style={{ minWidth: 120 }}
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate}
               />

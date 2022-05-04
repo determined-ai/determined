@@ -9,4 +9,13 @@
   top: 0;
   width: 100%;
   z-index: 2;
+
+  .link {
+    display: flex;
+    gap: var(--theme-sizes-layout-small);
+
+    & i {
+      color: var(--theme-colors-monochrome-9)
+    }
+  }
 }
