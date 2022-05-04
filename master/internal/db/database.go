@@ -64,6 +64,7 @@ type DB interface {
 		experimentBest, trialBest, trialLatest int,
 		delete bool,
 	) ([]byte, error)
+	AddTask(t *model.Task) error
 	AddTrial(trial *model.Trial) error
 	TrialByID(id int) (*model.Trial, error)
 	TrialByExperimentAndRequestID(
@@ -72,7 +73,6 @@ type DB interface {
 	UpdateTrial(id int, newState model.State) error
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
-	TrialDetailsRaw(id int) ([]byte, error)
 	AddAllocation(a *model.Allocation) error
 	CompleteAllocation(a *model.Allocation) error
 	CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error)
@@ -84,13 +84,12 @@ type DB interface {
 		ctx context.Context, m *trialv1.TrialMetrics,
 	) error
 	AddCheckpointMetadata(
-		ctx context.Context, m *trialv1.CheckpointMetadata,
+		ctx context.Context, m *model.CheckpointV2,
 	) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
 	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
-	UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error
 	PeriodicTelemetryInfo() ([]byte, error)
 	AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error
 	AuthTokenKeypair() (*model.AuthTokenKeypair, error)

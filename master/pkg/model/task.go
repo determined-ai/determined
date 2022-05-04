@@ -76,11 +76,6 @@ type Task struct {
 // allocations run.
 type AllocationID string
 
-// NewAllocationID returns a new unique task id.
-func NewAllocationID(name string) AllocationID {
-	return AllocationID(name)
-}
-
 func (a AllocationID) String() string {
 	return string(a)
 }

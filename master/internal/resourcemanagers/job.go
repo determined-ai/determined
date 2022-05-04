@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -74,6 +75,7 @@ func (j jobSortState) SetJobPosition(
 	anchor1 model.JobID,
 	anchor2 model.JobID,
 	aheadOf bool,
+	isK8s bool,
 ) (job.RegisterJobPosition, error) {
 	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
 	if err != nil {
@@ -82,13 +84,17 @@ func (j jobSortState) SetJobPosition(
 
 	// if the calculated position results in the wrong order
 	// we subtract a minimal decimal amount instead.
+	minDecimal := decimal.New(1, job.DecimalExp)
+	if isK8s {
+		minDecimal = decimal.New(1, job.K8sExp)
+	}
 	if aheadOf && newPos.GreaterThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Sub(decimal.New(1, job.DecimalExp))
+		newPos = j[anchor1].Sub(minDecimal)
 	} else if !aheadOf && newPos.LessThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Add(decimal.New(1, job.DecimalExp))
+		newPos = j[anchor1].Add(minDecimal)
 	}
 
-	j[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	j[job.TailAnchor] = initalizeQueuePosition(time.Now(), isK8s)
 	j[jobID] = newPos
 
 	return job.RegisterJobPosition{
@@ -101,10 +107,14 @@ func (j jobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Dec
 	j[jobID] = position
 }
 
-func initalizeJobSortState() jobSortState {
+func initalizeJobSortState(isK8s bool) jobSortState {
 	state := make(jobSortState)
-	state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
-	state[job.TailAnchor] = initalizeQueuePosition(time.Now())
+	if isK8s {
+		state[job.HeadAnchor] = decimal.New(1, job.K8sExp)
+	} else {
+		state[job.HeadAnchor] = decimal.New(1, job.DecimalExp)
+	}
+	state[job.TailAnchor] = initalizeQueuePosition(time.Now(), isK8s)
 	return state
 }
 
@@ -150,8 +160,11 @@ func computeNewJobPos(
 	return newPos, nil
 }
 
-func initalizeQueuePosition(aTime time.Time) decimal.Decimal {
+func initalizeQueuePosition(aTime time.Time, isK8s bool) decimal.Decimal {
 	// we could add exponent to give us more insertions if needed.
+	if isK8s {
+		return decimal.New(aTime.UnixMicro(), job.K8sExp)
+	}
 	return decimal.New(aTime.UnixMicro(), job.DecimalExp)
 }
 
@@ -164,4 +177,70 @@ func getJobSubmissionTime(taskList *taskList, jobID model.JobID) (time.Time, err
 		}
 	}
 	return time.Time{}, fmt.Errorf("could not find an active job with id %s", jobID)
+}
+
+func findAnchor(
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	queuePositions jobSortState,
+	k8s bool,
+) (bool, model.JobID, int) {
+	var secondAnchor model.JobID
+	targetPriority := 0
+	anchorPriority := 0
+	anchorIdx := 0
+	prioChange := false
+
+	sortedReqs := sortTasksWithPosition(taskList, groups, queuePositions, k8s)
+
+	for i, req := range sortedReqs {
+		if req.JobID == jobID {
+			targetPriority = *groups[req.Group].priority
+		} else if req.JobID == anchorID {
+			anchorPriority = *groups[req.Group].priority
+			anchorIdx = i
+		}
+	}
+
+	if aheadOf {
+		if anchorIdx == 0 {
+			secondAnchor = job.HeadAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx-1].JobID
+		}
+	} else {
+		if anchorIdx >= len(sortedReqs)-1 {
+			secondAnchor = job.TailAnchor
+		} else {
+			secondAnchor = sortedReqs[anchorIdx+1].JobID
+		}
+	}
+
+	if targetPriority != anchorPriority {
+		prioChange = true
+	}
+
+	return prioChange, secondAnchor, anchorPriority
+}
+
+func needMove(
+	jobPos decimal.Decimal,
+	anchorPos decimal.Decimal,
+	secondPos decimal.Decimal,
+	aheadOf bool,
+) bool {
+	if aheadOf {
+		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
+			return false
+		}
+		return true
+	}
+	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
+		return false
+	}
+
+	return true
 }

@@ -33,13 +33,13 @@ const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks 
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
-      content: 'Are you sure you want to delete\nthis experiment?',
+      content: `Are you sure you want to delete\n experiment ${experimentId}?`,
       icon: <ExclamationCircleOutlined />,
       okText: 'Delete',
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk ]);
+  }, [ handleOk, experimentId ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

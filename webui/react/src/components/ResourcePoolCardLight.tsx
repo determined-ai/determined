@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
 
-import awsLogo from 'assets/images/aws-logo.svg';
-import gcpLogo from 'assets/images/gcp-logo.svg';
-import k8sLogo from 'assets/images/k8s-logo.svg';
-import staticLogo from 'assets/images/on-prem-logo.svg';
 import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
+import awsLogo from 'shared/assets/images/aws-logo.svg';
+import gcpLogo from 'shared/assets/images/gcp-logo.svg';
+import k8sLogo from 'shared/assets/images/k8s-logo.svg';
+import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';

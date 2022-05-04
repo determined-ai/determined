@@ -201,12 +201,19 @@ def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> 
 
         elif isinstance(thing, BoolOptArg):
             parser.add_argument(
-                thing.true_name, dest=thing.dest, action="store_true", help=thing.true_help
+                thing.true_name,
+                dest=thing.dest,
+                action="store_true",
+                help=thing.true_help,
+                default=thing.default,
             )
             parser.add_argument(
-                thing.false_name, dest=thing.dest, action="store_false", help=thing.false_help
+                thing.false_name,
+                dest=thing.dest,
+                action="store_false",
+                help=thing.false_help,
+                default=SUPPRESS,
             )
-            parser.set_defaults(**{thing.dest: thing.default})
 
     # If there are any subcommands but none claimed the default action, make
     # the default print help.

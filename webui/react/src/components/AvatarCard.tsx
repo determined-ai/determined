@@ -14,7 +14,7 @@ interface Props {
 const AvatarCard: React.FC<Props> = ({ className, user }: Props) => {
   return (
     <div className={`${css.base} ${className || ''}`}>
-      <Avatar hideTooltip username={user?.username} />
+      <Avatar hideTooltip userId={user?.id} />
       <span>{getDisplayName(user)}</span>
     </div>
   );

@@ -41,7 +41,7 @@ const trialDetails: TrialDetails = {
 
 const experimentDetails: ExperimentBase = {
   ...sampleExperiment,
-  username: 'hamid',
+  userId: 345,
 };
 
 export const state = (): React.ReactNode => (

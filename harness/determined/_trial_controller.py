@@ -16,9 +16,13 @@ class _DistributedBackend:
 
     HOROVOD = "USE_HOROVOD"
     DEEPSPEED = "USE_DEEPSPEED"
+    TORCH = "USE_TORCH_DISTRIBUTED"
 
     def use_horovod(self) -> bool:
         return bool(os.environ.get(self.HOROVOD, None))
+
+    def use_torch(self) -> bool:
+        return bool(os.environ.get(self.TORCH, None))
 
     def use_deepspeed(self) -> bool:
         return bool(os.environ.get(self.DEEPSPEED, None))
@@ -49,6 +53,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
         distributed_backend = _DistributedBackend()
         self.use_horovod = distributed_backend.use_horovod()
+        self.use_torch = distributed_backend.use_torch()
         self._check_if_trial_supports_configurations(env)
 
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()

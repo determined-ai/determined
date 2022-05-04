@@ -89,7 +89,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
     DistributedBatchSampler will differ based on the rank. In that case, the
     divergent paths of multiple workers could cause problems during training.
     PyTorchTrial always uses RepeatBatchSampler during training, PyTorchTrial
-    does not require that the workers stay in-step during validation, so this
+    does not require that the workers stay in step during validation, so this
     potential gotcha is not a problem in Determined.
     """
 

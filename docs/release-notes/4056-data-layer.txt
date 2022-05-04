@@ -1,0 +1,7 @@
+:orphan:
+
+**Deprecated Features**
+
+-  The Determined Data Layer has been deprecated and will be removed in a future version. New code
+   should not begin using it, but we will assist existing users to migrate to using `YogaDL
+   <https://yogadl.readthedocs.>`_ directly before removing the feature.

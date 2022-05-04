@@ -90,8 +90,8 @@ export const tooltipRenderer: Renderer = text => (
   <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
 );
 
-export const userRenderer: Renderer<{ username: string }> = (_, record) => (
-  <Avatar username={record.username} />
+export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
+  <Avatar userId={record.userId} />
 );
 
 /* Command Task Table Column Renderers */

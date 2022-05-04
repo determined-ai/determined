@@ -1,14 +1,15 @@
+import warnings
 from typing import Callable
 
 import determined as det
-from determined import _core, _data_layer
+from determined import _data_layer, core
 
 
 class DataLayerContext:
     def __init__(
         self,
         env: det.EnvContext,
-        distributed_context: _core.DistributedContext,
+        distributed_context: core.DistributedContext,
         per_slot_batch_size: int,
     ) -> None:
         self._training_cacheable = _data_layer._CacheableDecorator(
@@ -70,7 +71,15 @@ class DataLayerContext:
             ``dataset.batch()`` and runtime augmentation should be done after caching.
             Additionally, users should never need to call ``dataset.repeat()``.
 
+        .. warning::
+            cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future
+            version
         """
+        warnings.warn(
+            "cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future "
+            "version",
+            FutureWarning,
+        )
 
         return self._training_cacheable.cache_dataset(
             dataset_id=dataset_id,
@@ -101,7 +110,15 @@ class DataLayerContext:
                 be performed with the trial's random seed which can be set in
                 :ref:`experiment-configuration`.
 
+        .. warning::
+            cache_train_dataset was deprecated in Determined 0.18 and will be removed in a future
+            version
         """
+        warnings.warn(
+            "cache_validation_dataset was deprecated in Determined 0.18 and will be removed in a "
+            "future version",
+            FutureWarning,
+        )
 
         return self._validation_cacheable.cache_dataset(
             dataset_id=dataset_id,

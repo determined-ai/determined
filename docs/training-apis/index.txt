@@ -89,11 +89,11 @@ Known limitations:
    :maxdepth: 1
    :hidden:
 
+   api-core/index
    api-pytorch
    api-pytorch-lightning
    deepspeed/index
    api-keras
    api-estimator
-   data-layer
    experiment-config
    best-practices

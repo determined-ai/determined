@@ -46,6 +46,7 @@ func TestModels(t *testing.T) {
 			user := requireMockUser(t, db)
 			exp := requireMockExperiment(t, db, user)
 			tr := requireMockTrial(t, db, exp)
+			a := requireMockAllocation(t, db, tr.TaskID)
 
 			// Insert a model.
 			now := time.Now()
@@ -66,15 +67,22 @@ func TestModels(t *testing.T) {
 			require.NoError(t, err)
 
 			// Insert a checkpoint.
-			const latestBatch = 10
-			ckpt := &trialv1.CheckpointMetadata{
-				TrialId:           int32(tr.ID),
-				Uuid:              uuid.NewString(),
-				Resources:         map[string]int64{"ok": 1.0},
-				Framework:         "some framework",
-				Format:            "some format",
-				DeterminedVersion: "1.0.0",
-				LatestBatch:       latestBatch,
+			const stepsCompleted = 10
+			ckpt := &model.CheckpointV2{
+				UUID:         uuid.New(),
+				TaskID:       tr.TaskID,
+				AllocationID: a.AllocationID,
+				ReportTime:   time.Now().UTC(),
+				State:        model.CompletedState,
+				Resources: map[string]int64{
+					"ok": 1.0,
+				},
+				Metadata: map[string]interface{}{
+					"framework":          "some framework",
+					"format":             "some format",
+					"determined_version": "1.0.0",
+					"steps_completed":    stepsCompleted,
+				},
 			}
 			err = db.AddCheckpointMetadata(context.TODO(), ckpt)
 			require.NoError(t, err)
@@ -84,8 +92,8 @@ func TestModels(t *testing.T) {
 			const metricValue = 1.0
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
-					TrialId:     int32(tr.ID),
-					LatestBatch: latestBatch,
+					TrialId:        int32(tr.ID),
+					StepsCompleted: stepsCompleted,
 					Metrics: &structpb.Struct{
 						Fields: map[string]*structpb.Value{
 							defaultSearcherMetric: {
@@ -102,7 +110,7 @@ func TestModels(t *testing.T) {
 			}
 
 			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.Uuid)
+			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.UUID.String())
 			require.NoError(t, err)
 
 			requireModelVersionOK := func(expected, actual modelv1.ModelVersion) {
@@ -111,16 +119,12 @@ func TestModels(t *testing.T) {
 				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
 				if tt.hasValidation {
 					require.Equal(t,
-						expected.Checkpoint.SearcherMetric.Value,
-						actual.Checkpoint.SearcherMetric.Value)
-					require.Equal(t,
-						expected.Checkpoint.ValidationState, actual.Checkpoint.ValidationState)
-					require.NotNil(t, actual.Checkpoint.Metrics)
+						expected.Checkpoint.Training.SearcherMetric.Value,
+						actual.Checkpoint.Training.SearcherMetric.Value)
+					require.NotNil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				} else {
-					require.Nil(t, actual.Checkpoint.SearcherMetric)
-					require.Equal(t,
-						expected.Checkpoint.ValidationState, actual.Checkpoint.ValidationState)
-					require.Nil(t, actual.Checkpoint.Metrics)
+					require.Nil(t, actual.Checkpoint.Training.SearcherMetric)
+					require.Nil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				}
 			}
 
@@ -136,7 +140,7 @@ func TestModels(t *testing.T) {
 			}
 			var mv modelv1.ModelVersion
 			err = db.QueryProto(
-				"insert_model_version", &mv, pmdl.Id, ckpt.Uuid, expected.Name, expected.Comment,
+				"insert_model_version", &mv, pmdl.Id, ckpt.UUID, expected.Name, expected.Comment,
 				emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
 			)
 			require.NoError(t, err)

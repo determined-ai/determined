@@ -38,7 +38,7 @@ det deploy local cluster-up --no-gpu
 # Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
 
 # Navigate to a Determined example.
-git clone https://github.com/determined-ai/determined
+git clone --recurse-submodules https://github.com/determined-ai/determined
 cd determined/examples/computer_vision/cifar10_pytorch
 
 # Submit job to train a single model on a single node.

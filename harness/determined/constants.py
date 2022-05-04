@@ -4,7 +4,7 @@
 # are examples of this.
 MAX_SLOTS_PER_AGENT = 16
 
-# The default configs to use in the Determined Native API.
+# The default configs to use in when running test experiments.
 #
 # TODO: Unify the defaults used here with the defaults used in master.
 DEFAULT_SEARCHER_CFG = {"name": "single", "max_length": {"batches": 100}}

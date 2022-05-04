@@ -172,10 +172,11 @@ def local_experiment(args: Namespace) -> None:
         )
 
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
+    entrypoint = experiment_config["entrypoint"]
 
     # --local --test mode only makes sense for the legacy trial entrypoints.  Otherwise the user
     # would just run their training script directly.
-    if not det.util.match_legacy_trial_class(experiment_config["entrypoint"]):
+    if not det.util.match_legacy_trial_class(entrypoint):
         raise NotImplementedError(
             "Local test mode (--local --test) is only supported for Trial-like entrypoints. "
             "Script-like entrypoints are not supported, but maybe you can just invoke your script "
@@ -185,16 +186,7 @@ def local_experiment(args: Namespace) -> None:
     set_logger(bool(experiment_config.get("debug", False)))
 
     with _local_execution_manager(args.model_def.resolve()):
-        trial_entrypoint = determined.load.parse_trial_class_from_entrypoint(
-            experiment_config["entrypoint"]
-        )
-        if not trial_entrypoint:
-            raise ValueError(
-                "no class specification (model_def:TrialClass) "
-                "was found in ({experiment_config['entrypoint']})"
-            )
-
-        trial_class = determined.load.trial_class_from_entrypoint(trial_entrypoint)
+        trial_class = determined.load.trial_class_from_entrypoint(entrypoint)
         determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 
@@ -841,6 +833,7 @@ main_cmd = Cmd(
                     help="Return the best N checkpoints for this experiment. "
                     "If this flag is used, only checkpoints with an associated "
                     "validation metric will be considered.",
+                    metavar="N",
                 ),
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],

@@ -85,9 +85,10 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 }
 
 func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+	task := RequireMockTask(t, db, exp.OwnerID)
 	rqID := model.NewRequestID(rand.Reader)
 	tr := model.Trial{
-		TaskID:       model.NewTaskID(),
+		TaskID:       task.TaskID,
 		RequestID:    &rqID,
 		ExperimentID: exp.ID,
 		State:        model.ActiveState,
@@ -98,6 +99,18 @@ func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Tria
 	err := db.AddTrial(&tr)
 	require.NoError(t, err, "failed to add trial")
 	return &tr
+}
+
+func requireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allocation {
+	a := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tID)),
+		TaskID:       tID,
+		StartTime:    ptrs.Ptr(time.Now().UTC()),
+		State:        ptrs.Ptr(model.AllocationStateTerminated),
+	}
+	err := db.AddAllocation(&a)
+	require.NoError(t, err, "failed to add allocation")
+	return &a
 }
 
 func requireMockModel(t *testing.T, db *PgDB, user model.User) *modelv1.Model {
@@ -121,11 +134,11 @@ func requireMockModel(t *testing.T, db *PgDB, user model.User) *modelv1.Model {
 }
 
 func requireMockMetrics(
-	t *testing.T, db *PgDB, tr *model.Trial, latestBatch int, metricValue float64,
+	t *testing.T, db *PgDB, tr *model.Trial, stepsCompleted int, metricValue float64,
 ) *trialv1.TrialMetrics {
 	m := trialv1.TrialMetrics{
-		TrialId:     int32(tr.ID),
-		LatestBatch: int32(latestBatch),
+		TrialId:        int32(tr.ID),
+		StepsCompleted: int32(stepsCompleted),
 		Metrics: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				defaultSearcherMetric: {
@@ -140,21 +153,4 @@ func requireMockMetrics(
 	err := db.AddValidationMetrics(context.TODO(), &m)
 	require.NoError(t, err)
 	return &m
-}
-
-func requireMockCheckpoint(
-	t *testing.T, db *PgDB, tr *model.Trial, latestBatch int,
-) *trialv1.CheckpointMetadata {
-	ckpt := trialv1.CheckpointMetadata{
-		TrialId:           int32(tr.ID),
-		Uuid:              uuid.NewString(),
-		Resources:         map[string]int64{"ok": 1.0},
-		Framework:         "some framework",
-		Format:            "some format",
-		DeterminedVersion: "1.0.0",
-		LatestBatch:       int32(latestBatch),
-	}
-	err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
-	require.NoError(t, err)
-	return &ckpt
 }

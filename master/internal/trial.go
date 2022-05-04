@@ -233,9 +233,12 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabel("trial-run-id", t.runID)
+	if err := t.addTask(); err != nil {
+		return err
+	}
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
-		AllocationID:      model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
 		JobSubmissionTime: t.jobSubmissionTime,
@@ -273,6 +276,16 @@ func (t *trial) handleUserInitiatedStops(ctx *actor.Context, msg userInitiatedEa
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+}
+
+func (t *trial) addTask() error {
+	return t.db.AddTask(&model.Task{
+		TaskID:     t.taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  t.jobSubmissionTime,
+		JobID:      &t.jobID,
+		LogVersion: model.CurrentTaskLogVersion,
+	})
 }
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
@@ -321,7 +334,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
 	}
 
-	var latestBatch int
+	var stepsCompleted int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
@@ -329,7 +342,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
-		latestBatch = latestCheckpoint.TotalBatches
+		stepsCompleted = latestCheckpoint.StepsCompleted
 	}
 
 	return tasks.TrialSpec{
@@ -341,7 +354,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
-		LatestBatch:      latestBatch,
+		StepsCompleted:   stepsCompleted,
 		LatestCheckpoint: latestCheckpoint,
 	}.ToTaskSpec(t.generatedKeys), nil
 }

@@ -40,8 +40,7 @@ const ModelVersionHeader: React.FC<Props> = (
   const [ showDownloadModel, setShowDownloadModel ] = useState(false);
 
   const isDeletable = user?.isAdmin
-        || user?.username === modelVersion.model.username
-        || user?.username === modelVersion.username;
+        || user?.id === modelVersion.userId;
 
   const showConfirmDelete = useCallback(() => {
     Modal.confirm({
@@ -61,10 +60,8 @@ const ModelVersionHeader: React.FC<Props> = (
     return [ {
       content: (
         <Space>
-          <Avatar username={modelVersion.username || modelVersion.model.username} />
-          {getDisplayName(modelVersion.username ?
-            users.find(user => user.username === modelVersion.username) :
-            users.find(user => user.username === modelVersion.model.username))}
+          <Avatar userId={modelVersion.userId} />
+          {getDisplayName(users.find(user => user.id === modelVersion.userId))}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),

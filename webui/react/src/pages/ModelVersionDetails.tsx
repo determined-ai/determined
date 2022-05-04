@@ -4,7 +4,6 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
-import Message, { MessageType } from 'components/Message';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -13,11 +12,12 @@ import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
+import Message, { MessageType } from 'shared/components/message';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/workload';
+import { checkpointSize } from 'utils/workload';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
@@ -179,25 +179,36 @@ const ModelVersionDetails: React.FC = () => {
     const resources = Object.keys(modelVersion.checkpoint.resources || {})
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
-    const totalBatchesProcessed = getBatchNumber(modelVersion.checkpoint);
+    const hasExperiment = !!modelVersion.checkpoint.experimentId;
     return [
       {
-        content: (
+        content: hasExperiment ? (
           <Breadcrumb className={css.link}>
             <Breadcrumb.Item>
               <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
                 Experiment {modelVersion.checkpoint.experimentId}
               </Link>
             </Breadcrumb.Item>
+            {!!modelVersion.checkpoint.trialId && (
+              <Breadcrumb.Item>
+                <Link
+                  path={paths.trialDetails(
+                    modelVersion.checkpoint.trialId,
+                    modelVersion.checkpoint.experimentId,
+                  )}>
+                  Trial {modelVersion.checkpoint.trialId}
+                </Link>
+              </Breadcrumb.Item>
+            )}
+            {!!modelVersion.checkpoint.totalBatches && (
+              <Breadcrumb.Item>Batch {modelVersion.checkpoint.totalBatches}</Breadcrumb.Item>
+            )}
+          </Breadcrumb>
+        ) : (
+          <Breadcrumb>
             <Breadcrumb.Item>
-              <Link path={paths.trialDetails(
-                modelVersion.checkpoint.trialId,
-                modelVersion.checkpoint.experimentId,
-              )}>
-                Trial {modelVersion.checkpoint.trialId}
-              </Link>
+              Task {modelVersion.checkpoint.taskId}
             </Breadcrumb.Item>
-            <Breadcrumb.Item>Batch {totalBatchesProcessed}</Breadcrumb.Item>
           </Breadcrumb>
         ),
         label: 'Source',
@@ -215,7 +226,7 @@ const ModelVersionDetails: React.FC = () => {
 
   const validationMetrics = useMemo(() => {
     if (!modelVersion?.checkpoint) return [];
-    const metrics = Object.entries(modelVersion?.checkpoint.metrics?.validationMetrics || {});
+    const metrics = Object.entries(modelVersion?.checkpoint?.validationMetrics?.avgMetrics || {});
     return metrics.map(metric => ({
       content: metric[1],
       label: metric[0],

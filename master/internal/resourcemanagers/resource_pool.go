@@ -1,10 +1,9 @@
 package resourcemanagers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
-
-	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/agent"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -76,7 +76,7 @@ func NewResourcePool(
 		agents:         make(map[*actor.Ref]bool),
 		taskList:       newTaskList(),
 		groups:         make(map[*actor.Ref]*group),
-		queuePositions: initalizeJobSortState(),
+		queuePositions: initalizeJobSortState(false),
 		groupActorToID: make(map[*actor.Ref]model.JobID),
 		IDToGroupActor: make(map[model.JobID]*actor.Ref),
 		scalingInfo:    &sproto.ScalingInfo{},
@@ -101,7 +101,7 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+func (rp *ResourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateRequest) {
 	rp.notifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.AllocationID) == 0 {
@@ -121,7 +121,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	)
 	if msg.IsUserVisible {
 		if _, ok := rp.queuePositions[msg.JobID]; !ok {
-			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime)
+			rp.queuePositions[msg.JobID] = initalizeQueuePosition(msg.JobSubmissionTime, false)
 		}
 		rp.groupActorToID[msg.Group] = msg.JobID
 		rp.IDToGroupActor[msg.JobID] = msg.Group
@@ -144,7 +144,19 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		return false
 	}
 
-	resources := make([]sproto.Resources, 0, len(fits))
+	resources := make([]*containerResources, 0, len(fits))
+	rollback := false
+
+	defer func() {
+		if rollback {
+			// Rollback previous allocations.
+			for _, resource := range resources {
+				ctx.Tell(resource.agent.Handler,
+					agent.DeallocateContainer{ContainerID: resource.containerID})
+			}
+		}
+	}()
+
 	for _, fit := range fits {
 		containerID := cproto.NewID()
 		resp := ctx.Ask(fit.Agent.Handler, agent.AllocateFreeDevices{
@@ -163,31 +175,45 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		case error:
 			// Rollback previous allocations.
 			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
-			for _, resource := range resources {
-				resource := resource.(*containerResources)
-				ctx.Tell(resource.agent.Handler,
-					agent.DeallocateContainer{ContainerID: resource.containerID})
-			}
-
+			rollback = true
 			return false
 		default:
 			panic(fmt.Sprintf("bad AllocateFreeDevices response: %s", resp))
 		}
 	}
 
+	// Persist allocation_resources and container_resources.
+	for _, cr := range resources {
+		rs := task.NewResourcesState(cr, -1)
+		if err := rs.Persist(); err != nil {
+			ctx.Log().WithError(err).Error("persistence failure")
+			rollback = true
+			return false
+		}
+		if err := cr.Persist(); err != nil {
+			ctx.Log().WithError(err).Error("persistence failure")
+			rollback = true
+			return false
+		}
+	}
+
+	sprotoResources := make([]sproto.Resources, len(resources))
+	for i, v := range resources {
+		sprotoResources[i] = v
+	}
+
 	allocated := sproto.ResourcesAllocated{
 		ID:                req.AllocationID,
 		ResourcePool:      rp.config.PoolName,
-		Resources:         resources,
+		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
-	req.TaskActor.System().Tell(req.TaskActor, allocated)
+	ctx.Tell(req.TaskActor, allocated)
 
 	// Refresh state for the updated agents.
 	allocatedAgents := make([]*actor.Ref, 0, len(resources))
 	for _, allocation := range resources {
-		allocation := allocation.(*containerResources)
 		allocatedAgents = append(allocatedAgents, allocation.agent.Handler)
 	}
 
@@ -418,13 +444,15 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) moveJob(
-	ctx *actor.Context, jobID model.JobID, anchorID model.JobID, aheadOf bool,
+	ctx *actor.Context,
+	jobID model.JobID,
+	anchorID model.JobID,
+	aheadOf bool,
 ) error {
 	if rp.config.Scheduler.GetType() != config.PriorityScheduling {
 		return fmt.Errorf("unable to perform operation on resource pool with %s",
 			rp.config.Scheduler.GetType())
 	}
-
 	if anchorID == "" || jobID == "" || anchorID == jobID {
 		return nil
 	}
@@ -441,7 +469,8 @@ func (rp *ResourcePool) moveJob(
 		return job.ErrJobNotFound(anchorID)
 	}
 
-	prioChange, secondAnchor, anchorPriority := rp.findAnchor(jobID, anchorID, aheadOf)
+	prioChange, secondAnchor, anchorPriority := findAnchor(jobID, anchorID, aheadOf, rp.taskList,
+		rp.groups, rp.queuePositions, false)
 
 	if secondAnchor == "" {
 		return fmt.Errorf("unable to move job with ID %s", jobID)
@@ -483,7 +512,7 @@ func (rp *ResourcePool) moveJob(
 		}
 	}
 
-	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf)
+	msg, err := rp.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, false)
 	if err != nil {
 		return err
 	}
@@ -491,68 +520,6 @@ func (rp *ResourcePool) moveJob(
 	ctx.Tell(groupAddr, msg)
 
 	return nil
-}
-
-func (rp *ResourcePool) findAnchor(
-	jobID model.JobID,
-	anchorID model.JobID,
-	aheadOf bool,
-) (bool, model.JobID, int) {
-	var secondAnchor model.JobID
-	targetPriority := 0
-	anchorPriority := 0
-	anchorIdx := 0
-	prioChange := false
-
-	sortedReqs := sortTasksWithPosition(rp.taskList, rp.groups, rp.queuePositions, false)
-
-	for i, req := range sortedReqs {
-		if req.JobID == jobID {
-			targetPriority = *rp.groups[req.Group].priority
-		} else if req.JobID == anchorID {
-			anchorPriority = *rp.groups[req.Group].priority
-			anchorIdx = i
-		}
-	}
-
-	if aheadOf {
-		if anchorIdx == 0 {
-			secondAnchor = job.HeadAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx-1].JobID
-		}
-	} else {
-		if anchorIdx >= len(sortedReqs)-1 {
-			secondAnchor = job.TailAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx+1].JobID
-		}
-	}
-
-	if targetPriority != anchorPriority {
-		prioChange = true
-	}
-
-	return prioChange, secondAnchor, anchorPriority
-}
-
-func needMove(
-	jobPos decimal.Decimal,
-	anchorPos decimal.Decimal,
-	secondPos decimal.Decimal,
-	aheadOf bool,
-) bool {
-	if aheadOf {
-		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
-			return false
-		}
-		return true
-	}
-	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
-		return false
-	}
-
-	return true
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
@@ -564,6 +531,10 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 
 	case job.MoveJob:
+		if rp.config.Scheduler.GetType() != config.PriorityScheduling {
+			return fmt.Errorf("unable to perform operation on resource pool with %s",
+				rp.config.Scheduler.GetType())
+		}
 		err := rp.moveJob(ctx, msg.ID, msg.Anchor, msg.Ahead)
 		ctx.Respond(err)
 
@@ -603,7 +574,7 @@ func (rp *ResourcePool) setGroupPriority(ctx *actor.Context, msg job.SetGroupPri
 			ctx.Log().Errorf("failed to get job submission time: %s", err)
 			return nil
 		}
-		rp.queuePositions[jobID] = initalizeQueuePosition(time)
+		rp.queuePositions[jobID] = initalizeQueuePosition(time, false)
 	}
 	return nil
 }
@@ -625,7 +596,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.receiveSetTaskName(ctx, msg)
 
 	case sproto.AllocateRequest:
-		rp.addTask(ctx, msg)
+		rp.allocateRequest(ctx, msg)
 
 	case sproto.ResourcesReleased:
 		rp.resourcesReleased(ctx, msg.TaskActor)
@@ -752,4 +723,35 @@ func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
 		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})
+}
+
+// Single asserts there's a single element in the map and take it.
+func Single[K comparable, V any](m map[K]V) (kr K, vr V, ok bool) {
+	// TODO(ilia): move it into a shared utilities package when
+	// it'll be used elsewhere.
+	if len(m) != 1 {
+		return kr, vr, false
+	}
+	for k, v := range m {
+		kr = k
+		vr = v
+	}
+	return kr, vr, true
+}
+
+func (c containerResources) Persist() error {
+	summary := c.Summary()
+
+	agentID, _, ok := Single(summary.AgentDevices)
+	if !ok {
+		return fmt.Errorf("%d agents in containerResources summary", len(summary.AgentDevices))
+	}
+
+	snapshot := agent.ContainerSnapshot{
+		ResourceID: summary.ResourcesID,
+		ID:         c.containerID,
+		AgentID:    agentID,
+	}
+	_, err := db.Bun().NewInsert().Model(&snapshot).Exec(context.TODO())
+	return err
 }

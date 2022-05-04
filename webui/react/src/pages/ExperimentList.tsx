@@ -116,7 +116,7 @@ const ExperimentList: React.FC = () => {
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
-        user && (user.isAdmin || user.username === experiment.username);
+        user && (user.isAdmin || user.id === experiment.userId);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = pausableRunStates.has(experiment.state);
@@ -450,7 +450,6 @@ const ExperimentList: React.FC = () => {
         title: 'Archived',
       },
       {
-        dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
@@ -696,6 +695,13 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
+
+  useEffect(() => {
+    if(settings.tableOffset > total){
+      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
+      updateSettings({ tableOffset: offset });
+    }
+  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
   const ExperimentActionDropdown = useCallback(
     ({ record, onVisibleChange, children }) => (

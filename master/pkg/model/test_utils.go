@@ -62,37 +62,3 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 	}
 	return e
 }
-
-// TrialModelOption is an option that can be applied to a trial.
-type TrialModelOption interface {
-	apply(*Trial)
-}
-
-// TrialModelOptionFunc is a type that implements TrialModelOption.
-type TrialModelOptionFunc func(*Trial)
-
-func (f TrialModelOptionFunc) apply(trial *Trial) {
-	f(trial)
-}
-
-// WithTrialState is a TrialModeOption that sets a trials state.
-func WithTrialState(state State) TrialModelOption {
-	return TrialModelOptionFunc(func(trial *Trial) {
-		trial.State = state
-	})
-}
-
-// TrialModel returns a new trial with the specified options.
-func TrialModel(eID int, jobID JobID, opts ...TrialModelOption) *Trial {
-	t := &Trial{
-		TaskID:       NewTaskID(),
-		JobID:        jobID,
-		ExperimentID: eID,
-		State:        ActiveState,
-		StartTime:    time.Now(),
-	}
-	for _, o := range opts {
-		o.apply(t)
-	}
-	return t
-}

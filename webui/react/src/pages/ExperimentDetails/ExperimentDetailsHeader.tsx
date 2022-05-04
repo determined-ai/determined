@@ -245,7 +245,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         experiment.archived ? options.archive : options.unarchive
       ),
       deletableRunStates.has(experiment.state) &&
-        curUser && (curUser.isAdmin || curUser.username === experiment.username) && options.delete,
+        curUser && (curUser.isAdmin || curUser.id === experiment.userId) && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
     curUser,
@@ -253,7 +253,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     experiment.archived,
     experiment.id,
     experiment.state,
-    experiment.username,
+    experiment.userId,
     fetchExperimentDetails,
     handleContinueTrialClick,
     handleDeleteClick,

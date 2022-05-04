@@ -52,6 +52,7 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
   const fetchModels = useCallback(async () => {
     try {
       const response = await getModels({
+        archived: false,
         orderBy: 'ORDER_BY_DESC',
         sortBy: validateDetApiEnum(
           V1GetModelsRequestSortBy,

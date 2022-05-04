@@ -10,7 +10,7 @@ from typing import Any, List, Optional, cast
 import pytest
 
 import determined as det
-from determined import _core, ipc
+from determined import core, ipc
 from tests import parallel
 
 
@@ -151,8 +151,8 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
     with parallel.Execution(size, local_size=local_size, make_distributed_context=False) as pex:
 
         @pex.run
-        def contexts() -> _core.DistributedContext:
-            return _core.DistributedContext(
+        def contexts() -> core.DistributedContext:
+            return core.DistributedContext(
                 rank=pex.rank,
                 size=pex.size,
                 local_rank=pex.local_rank,

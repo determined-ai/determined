@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import json
 import pathlib
@@ -23,6 +24,15 @@ class CheckpointState(enum.Enum):
     DELETED = 4
 
 
+@dataclasses.dataclass
+class CheckpointTrainingMetadata:
+    experiment_config: Dict[str, Any]
+    experiment_id: str
+    trial_id: str
+    hparams: Dict[str, Any]
+    validation_metrics: Dict[str, Any]
+
+
 class Checkpoint(object):
     """
     A Checkpoint object is usually obtained from
@@ -40,47 +50,31 @@ class Checkpoint(object):
     def __init__(
         self,
         session: session.Session,
+        task_id: str,
+        allocation_id: str,
         uuid: str,
-        experiment_config: Dict[str, Any],
-        experiment_id: int,
-        trial_id: int,
-        hparams: Dict[str, Any],
-        batch_number: int,
-        start_time: str,
-        end_time: str,
+        report_time: Optional[str],
         resources: Dict[str, Any],
-        validation: Dict[str, Any],
         metadata: Dict[str, Any],
-        determined_version: Optional[str] = None,
-        framework: Optional[str] = None,
-        format: Optional[str] = None,  # noqa: A002
-        model_version: Optional[int] = None,
-        model_id: Optional[int] = None,
+        state: CheckpointState,
+        training: Optional[CheckpointTrainingMetadata] = None,
     ):
         self._session = session
+        self.task_id = task_id
+        self.allocation_id = allocation_id
         self.uuid = uuid
-        self.experiment_config = experiment_config
-        self.experiment_id = experiment_id
-        self.trial_id = trial_id
-        self.hparams = hparams
-        self.batch_number = batch_number
-        self.start_time = start_time
-        self.end_time = end_time
+        self.report_time = report_time
         self.resources = resources
-        self.validation = validation
-        self.framework = framework
-        self.format = format
-        self.determined_version = determined_version
-        self.model_version = model_version
-        self.model_id = model_id
         self.metadata = metadata
+        self.state = state
+        self.training = training
 
-    def _find_shared_fs_path(self) -> pathlib.Path:
+    def _find_shared_fs_path(self, checkpoint_storage: Dict[str, Any]) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
         This function assumes the host path of the shared fs exists.
         """
-        host_path = self.experiment_config["checkpoint_storage"]["host_path"]
-        storage_path = self.experiment_config["checkpoint_storage"].get("storage_path")
+        host_path = checkpoint_storage["host_path"]
+        storage_path = checkpoint_storage.get("storage_path")
         potential_paths = [
             pathlib.Path(shared._full_storage_path(host_path, storage_path), self.uuid),
             pathlib.Path(
@@ -132,13 +126,17 @@ class Checkpoint(object):
         if not any(p.exists() for p in potential_metadata_paths):
             # If the target directory doesn't already appear to contain a
             # checkpoint, attempt to fetch one.
-            if self.experiment_config["checkpoint_storage"]["type"] == "shared_fs":
-                src_ckpt_dir = self._find_shared_fs_path()
+            if self.training is None:
+                raise NotImplementedError("Non-training checkpoints cannot be downloaded")
+
+            checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
+            if checkpoint_storage["type"] == "shared_fs":
+                src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
                 manager = storage.build(
-                    self.experiment_config["checkpoint_storage"],
+                    checkpoint_storage,
                     container_path=None,
                 )
                 if not isinstance(
@@ -152,13 +150,20 @@ class Checkpoint(object):
                     raise AssertionError(
                         "Downloading from Azure, S3 or GCS requires the experiment to be "
                         "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                            self.experiment_config["checkpoint_storage"]["type"]
+                            checkpoint_storage["type"]
                         )
                     )
 
                 manager.download(self.uuid, str(local_ckpt_dir))
 
-        self.write_metadata_file(str(local_ckpt_dir.joinpath("metadata.json")))
+        # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
+        # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than
+        # 0.17.7 depended on this file existing in order to be loaded.  Therefore, when we detect
+        # that the metadata.json file is not present, we write it to make sure those checkpoints can
+        # still load.
+        metadata_path = local_ckpt_dir.joinpath("metadata.json")
+        if not metadata_path.exists():
+            self.write_metadata_file(str(metadata_path))
 
         return str(local_ckpt_dir)
 
@@ -171,20 +176,7 @@ class Checkpoint(object):
         use this method directly to obtain the latest metadata.
         """
         with open(path, "w") as f:
-            json.dump(
-                {
-                    "determined_version": self.determined_version,
-                    "framework": self.framework,
-                    "format": self.format,
-                    "experiment_id": self.experiment_id,
-                    "trial_id": self.trial_id,
-                    "hparams": self.hparams,
-                    "experiment_config": self.experiment_config,
-                    "metadata": self.metadata,
-                },
-                f,
-                indent=2,
-            )
+            json.dump(self.metadata, f, indent=2)
 
     def load(
         self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
@@ -218,8 +210,8 @@ class Checkpoint(object):
 
            Please combine Checkpoint.download() with one of the following instead:
              - ``det.pytorch.load_trial_from_checkpoint()``
-             - ``det.keras.load_trial_from_checkpoint()``
-             - ``det.estimator.load_trial_from_checkpoint()``
+             - ``det.keras.load_model_from_checkpoint()``
+             - ``det.estimator.load_estimator_from_checkpoint_path()``
         """
         warnings.warn(
             "Checkpoint.load() has been deprecated and will be removed in a future version.\n"
@@ -240,6 +232,8 @@ class Checkpoint(object):
         the checkpoint metadata, the corresponding dictionary entries in the checkpoint are
         replaced by the passed-in dictionary values.
 
+        Warning: this metadata change is not propagated to the checkpoint storage.
+
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
@@ -255,6 +249,8 @@ class Checkpoint(object):
         """
         Removes user-defined metadata from the checkpoint. Any top-level keys that
         appear in the ``keys`` list are removed from the checkpoint.
+
+        Warning: this metadata change is not propagated to the checkpoint storage.
 
         Arguments:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
@@ -379,37 +375,40 @@ class Checkpoint(object):
         return Checkpoint._get_type(metadata)
 
     def __repr__(self) -> str:
-        if self.model_id is not None:
-            return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
-                self.uuid, self.trial_id, self.model_id, self.model_version
+        if self.training is not None:
+            return (
+                f"Checkpoint(uuid={self.uuid}, task_id={self.task_id},"
+                f" trial_id={self.training.trial_id})"
             )
-        return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
+        else:
+            return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
     @classmethod
     def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
-        validation = {
-            "metrics": data.get("metrics", {}),
-            "state": data.get("validation_state", None),
-        }
+        metadata = data.get("metadata", {})
+        training_data = data.get("training")
+        training = (
+            CheckpointTrainingMetadata(
+                training_data["experimentConfig"],
+                training_data["experimentId"],
+                training_data["trialId"],
+                training_data["hparams"],
+                training_data["validationMetrics"],
+            )
+            if training_data
+            else None
+        )
 
         return cls(
             session,
+            data["taskId"],
+            data["allocationId"],
             data["uuid"],
-            data.get("experiment_config", data.get("experimentConfig")),
-            data.get("experiment_id", data.get("experimentId")),
-            data.get("trial_id", data.get("trialId")),
-            data["hparams"],
-            data.get("batch_number", data.get("batchNumber")),
-            data.get("start_time", data.get("startTime")),
-            data.get("end_time", data.get("endTime")),
+            data.get("reportTime"),
             data["resources"],
-            validation,
-            data.get("metadata", {}),
-            model_id=data.get("model_id"),
-            framework=data.get("framework"),
-            format=data.get("format"),
-            determined_version=data.get("determined_version", data.get("determinedVersion")),
-            model_version=data.get("model_version"),
+            metadata,
+            data["state"],
+            training,
         )
 
     @classmethod

@@ -8,10 +8,10 @@ The Determined Queue Management system extends scheduler functionality to offer 
 and control over scheduling decisions. It does this using the Job Queue, which provides better
 information about job ordering, such as which jobs are queued, and permits dynamic job modification.
 
-Queue Management is a new feature that is available to the fair share scheduler and the priority
-scheduler. Queue Management, described in detail in the following sections, shows all submitted jobs
-and their states, and lets you modify some configuration options, such as priority, position in the
-queue, and resource pool.
+Queue Management is a new feature that is available to the fair share, priority, and kubernetes
+preemption schedulers. Queue Management, described in detail in the following sections, shows all
+submitted jobs and their states, and lets you modify some configuration options, such as priority,
+position in the queue, and resource pool.
 
 To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` set
 of CLI commands.
@@ -61,8 +61,8 @@ The job queue can be changed in the WebUI **Job Queue** section or by using the 
 update`` command. You can make changes on a per-job basis by selecting a job and a job operation.
 Available operations include:
 
--  changing priorities for resource pools using the priority scheduler
--  changing weights for resource pools using the fair share scheduler
+-  changing job priorities for agent and Kubernetes priority scheduler
+-  changing weights for agent resource manager using the fair share scheduler
 -  changing the order of queued jobs
 -  changing resource pools
 
@@ -137,3 +137,9 @@ There are a number of constraints associated with using the job queue to modify 
 
 -  The change resource pool operation can only be performed on experiments. To change the resource
    pool of other tasks, cancel the task and resubmit it.
+
+-  Changing priority in Kubernetes always involves an implicit cancellation of the job, even in case
+   of increasing the job's priority. Priority change in Kubernetes is limited to experiments.
+
+-  Changing resource pools is not available on Kubernetes since it does not currently support
+   multiple resource pools.

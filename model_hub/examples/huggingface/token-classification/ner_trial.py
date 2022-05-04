@@ -51,7 +51,7 @@ class NERTrial(hf.BaseTransformerTrial):
             )
 
         # Create metric reducer
-        self.reducer = context.experimental.wrap_reducer(
+        self.reducer = context.wrap_reducer(
             functools.partial(ner_utils.compute_metrics, datasets_metadata.label_list),
             for_training=False,
         )

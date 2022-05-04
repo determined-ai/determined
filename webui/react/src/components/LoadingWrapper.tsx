@@ -1,10 +1,10 @@
 import { Skeleton, SkeletonProps } from 'antd';
 import React, { PropsWithChildren, useMemo } from 'react';
 
+import Message, { Props as MessageProps, MessageType } from 'shared/components/message';
 import { isObject, validateEnum } from 'utils/data';
 
 import css from './LoadingWrapper.module.scss';
-import Message, { Props as MessageProps, MessageType } from './Message';
 
 export enum LoadingState {
   Empty = 'Empty',

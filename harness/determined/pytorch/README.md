@@ -219,3 +219,16 @@ limitations (needing to know the optimizer when calling `scale_loss`).
     because `amp.scale_loss()` requires us to take actions on the correct
     optimizer, we do not allow multiple optimizers; we have to know that the
     our one optimizer is the correct optimizer to pass to scale_loss().
+
+* PyTorch Distributed:
+  * PyTorch Distributed wraps models in a `DistributedDataParallel` wrapper,
+  which must be done after initializing APEX AMP.
+  * PyTorch DDP synchronizes losses during the backwards pass
+  * Since gradients are automatically synchronized during each backwards pass, 
+    each N-1 step must be wrapped in a `no_sync` context manager to avoid 
+    inefficiencies of syncing gradients at every step during gradient 
+    aggregation
+  * DDP broadcasts parameters on model instantiation with 
+    `DistributedDataParallel()`, during which the `state_dict` from rank 0 is 
+    broadcast to all other ranks in the group. This is done automatically, 
+    unlike horovod's explicit use of `broadcast_parameters`
