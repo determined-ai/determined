@@ -1070,25 +1070,3 @@ class PyTorchTrial(det.Trial):
             batch (Any): input training or validation data batch object.
         """
         return pytorch.data_length(batch)
-
-
-def reset_parameters(model: torch.nn.Module) -> None:
-    """
-    .. warning::
-        ``det.pytorch.reset_parameters()`` is deprecated and should not be called. For custom
-        nn.Modules which do need a call to reset_parameters(), it is recommended to call
-        self.reset_parameters() directly in their __init__() function, as is standard in all
-        built-in nn.Modules.
-
-    Recursively calls ``reset_parameters()`` for all modules.
-    """
-    logging.warning(
-        "det.pytorch.reset_parameters() is deprecated and should not be called.  For custom "
-        "nn.Modules which do need a call to reset_parameters(), it is recommended to call "
-        "self.reset_parameters() directly in their __init__() function, as is standard in all "
-        "built-in nn.Modules."
-    )
-    for _, module in model.named_modules():
-        reset_params = getattr(module, "reset_parameters", None)
-        if callable(reset_params):
-            reset_params()
