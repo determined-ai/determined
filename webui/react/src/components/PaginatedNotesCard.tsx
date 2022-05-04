@@ -66,10 +66,7 @@ const PaginatedNotesCard: React.FC<Props> = (
 
   const handleDeletePage = useCallback((pageNumber: number) => {
     onDelete(pageNumber);
-    if (pageNumber === currentPage){
-      setCurrentPage(Math.max(currentPage - 1, 0));
-    }
-  }, [ currentPage, onDelete ]);
+  }, [ onDelete ]);
 
   const handleEditedNotes = useCallback((newContents: string) => {
     setEditedContents(newContents);
