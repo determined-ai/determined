@@ -30,7 +30,12 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         <WorkspaceIcon name={workspace.name} size={32} />
         <div className={css.nameRow}>
           <h1 className={css.name}>
-            <InlineEditor disabled={workspace.immutable} maxLength={80} value={workspace.name} />
+            <InlineEditor
+              disabled={workspace.immutable ||
+                (!curUser?.isAdmin && curUser?.username !== workspace.username)}
+              maxLength={80}
+              value={workspace.name}
+            />
           </h1>
           {workspace.archived && (
             <Tooltip title="Archived">
