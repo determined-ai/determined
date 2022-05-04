@@ -1,6 +1,5 @@
 import os
 import pathlib
-import tempfile
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -9,8 +8,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import _core, experimental, gpu, keras, workload
-from determined.common import check
+from determined import core, gpu, keras, workload
 
 
 class TrainAndValidate:
@@ -25,7 +23,7 @@ class TrainAndValidate:
         self._avg_training_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self._validation_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self.request_stop_step_id = request_stop_step_id
-        self._latest_batch = 0
+        self._steps_completed = 0
 
     def send(
         self,
@@ -38,7 +36,7 @@ class TrainAndValidate:
         self._training_metrics = []
         self._avg_training_metrics = []
         self._validation_metrics = []
-        self._latest_batch = 0
+        self._steps_completed = 0
         interceptor = workload.WorkloadResponseInterceptor()
 
         for step_id in range(initial_step_id, initial_step_id + steps):
@@ -47,7 +45,7 @@ class TrainAndValidate:
                 workload.train_workload(
                     step_id,
                     num_batches=scheduling_unit,
-                    total_batches_processed=self._latest_batch,
+                    total_batches_processed=self._steps_completed,
                 ),
             )
             metrics = interceptor.metrics_result()
@@ -55,15 +53,15 @@ class TrainAndValidate:
             assert len(batch_metrics) == scheduling_unit * train_batch_calls
             self._training_metrics.extend(batch_metrics)
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
-            self._latest_batch += scheduling_unit
+            self._steps_completed += scheduling_unit
             if metrics.get("stop_requested"):
-                assert step_id == self.request_stop_step_id
+                assert step_id == self.request_stop_step_id, (step_id, self)
                 stop_requested = True
 
             if step_id % validation_freq == 0:
                 yield from interceptor.send(
                     workload.validation_workload(
-                        step_id, total_batches_processed=self._latest_batch
+                        step_id, total_batches_processed=self._steps_completed
                     ),
                 )
                 validation = interceptor.metrics_result()
@@ -83,8 +81,8 @@ class TrainAndValidate:
         assert self._validation_metrics is not None
         return self._training_metrics, self._validation_metrics
 
-    def get_latest_batch(self) -> int:
-        return self._latest_batch
+    def get_steps_completed(self) -> int:
+        return self._steps_completed
 
     def get_avg_training_metrics(self) -> List[Dict[str, Any]]:
         assert self._avg_training_metrics is not None
@@ -126,10 +124,10 @@ def make_default_env_context(
     experiment_config: Dict,
     trial_seed: int = 0,
     latest_checkpoint: Optional[str] = None,
-    latest_batch: int = 0,
+    steps_completed: int = 0,
     expose_gpus: bool = False,
 ) -> det.EnvContext:
-    assert (latest_checkpoint is None) == (latest_batch == 0)
+    assert (latest_checkpoint is None) == (steps_completed == 0)
 
     if expose_gpus:
         gpu_uuids = gpu.get_gpu_uuids()
@@ -145,7 +143,7 @@ def make_default_env_context(
         master_cert_name=None,
         hparams=hparams,
         latest_checkpoint=latest_checkpoint,
-        latest_batch=latest_batch,
+        steps_completed=steps_completed,
         use_gpu=use_gpu,
         container_gpus=gpu_uuids,
         slot_ids=[],
@@ -229,7 +227,7 @@ def make_trial_controller_from_trial_implementation(
     exp_config: Optional[Dict] = None,
     checkpoint_dir: Optional[str] = None,
     latest_checkpoint: Optional[str] = None,
-    latest_batch: int = 0,
+    steps_completed: int = 0,
     expose_gpus: bool = False,
 ) -> det.TrialController:
     if not exp_config:
@@ -245,12 +243,12 @@ def make_trial_controller_from_trial_implementation(
         experiment_config=exp_config,
         trial_seed=trial_seed,
         latest_checkpoint=latest_checkpoint,
-        latest_batch=latest_batch,
+        steps_completed=steps_completed,
         expose_gpus=expose_gpus,
     )
 
     storage_manager = det.common.storage.SharedFSStorageManager(checkpoint_dir or "/tmp")
-    core_context = _core._dummy_init(storage_manager=storage_manager)
+    core_context = core._dummy_init(storage_manager=storage_manager)
 
     distributed_backend = det._DistributedBackend()
 
@@ -323,7 +321,7 @@ RestorableMakeControllerFn = Callable[
         workload.Stream,
         DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
         DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
-        DefaultNamedArg(int, "latest_batch"),  # noqa: F821
+        DefaultNamedArg(int, "steps_completed"),  # noqa: F821
     ],
     det.TrialController,
 ]
@@ -368,7 +366,7 @@ def checkpointing_and_restoring_test(
     validation_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None
-    latest_batch = 0
+    steps_completed = 0
 
     def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
         trainer = TrainAndValidate()
@@ -381,9 +379,9 @@ def checkpointing_and_restoring_test(
         if checkpoint is not None:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, latest_batch
+            nonlocal latest_checkpoint, steps_completed
             latest_checkpoint = interceptor.metrics_result()["uuid"]
-            latest_batch = trainer.get_latest_batch()
+            steps_completed = trainer.get_steps_completed()
 
     controller_A1 = make_trial_controller_fn(
         make_workloads(1, "A", True),
@@ -396,7 +394,7 @@ def checkpointing_and_restoring_test(
         make_workloads(1, "A", False),
         checkpoint_dir=checkpoint_dir,
         latest_checkpoint=latest_checkpoint,
-        latest_batch=latest_batch,
+        steps_completed=steps_completed,
     )
     controller_A2.run()
 
@@ -414,22 +412,6 @@ def checkpointing_and_restoring_test(
 
 def list_all_files(directory: str) -> List[str]:
     return [f for _, _, files in os.walk(directory) for f in files]
-
-
-def create_trial_instance(trial_def: Type[det.Trial]) -> None:
-    with tempfile.TemporaryDirectory() as td:
-        trial_instance = experimental.create_trial_instance(
-            trial_def=trial_def,
-            config={
-                "hyperparameters": {
-                    "global_batch_size": det.Constant(16),
-                    "hidden_size": 4,
-                    "learning_rate": 0.01,
-                }
-            },
-            checkpoint_dir=td,
-        )
-    check.check_isinstance(trial_instance, det.Trial)
 
 
 def ensure_requires_global_batch_size(

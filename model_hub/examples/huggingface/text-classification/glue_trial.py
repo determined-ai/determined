@@ -133,7 +133,7 @@ class GLUETrial(hf.BaseTransformerTrial):
             else:
                 return {"accuracy": (preds == labels).astype(np.float32).mean().item()}
 
-        self.reducer = context.experimental.wrap_reducer(compute_metrics, for_training=False)
+        self.reducer = context.wrap_reducer(compute_metrics, for_training=False)
 
     def build_datasets(self) -> Union[datasets.Dataset, datasets.DatasetDict]:
         # Preprocessing the datasets

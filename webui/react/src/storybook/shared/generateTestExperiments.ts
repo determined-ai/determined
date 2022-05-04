@@ -1,13 +1,13 @@
-import { CheckpointDetail,
-  CheckpointState,
-  CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+import { CheckpointState,
+  CheckpointStorageType,
+  CheckpointWorkloadExtended, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState } from 'types';
 import { generateExperiments } from 'utils/task';
 
 export const generateTestExperimentData = ():
 {
-  checkpoint:CheckpointDetail,
+  checkpoint: CheckpointWorkloadExtended,
   experiment: ExperimentBase,
 } => {
   const exp = generateExperiments(1)[0];
@@ -208,13 +208,13 @@ export const generateTestExperimentData = ():
     userId: 2,
   };
 
-  const checkpoint: CheckpointDetail = {
-    batch: 1,
+  const checkpoint: CheckpointWorkloadExtended = {
     experimentId: 2,
-    metadata: { 'Value Name': '0' },
-    metrics: { numInputs: 1 },
+    resources: { foo: 12 },
     state: CheckpointState.Completed,
+    totalBatches: 50,
     trialId: 3,
+    uuid: 'b6aab473-a959-47fa-a962-ba791b0230fb',
   };
 
   return { checkpoint, experiment };

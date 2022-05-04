@@ -30,7 +30,7 @@ class BatchMetricWriter:
 
     def on_train_step_end(
         self,
-        latest_batch: int,
+        steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
@@ -39,7 +39,7 @@ class BatchMetricWriter:
         # Log all batch metrics.
         if batch_metrics:
             for batch_idx, batch in enumerate(batch_metrics):
-                batches_seen = latest_batch - len(batch) + batch_idx
+                batches_seen = steps_completed - len(batch) + batch_idx
                 for name, value in batch.items():
                     self._maybe_write_metric(name, value, batches_seen)
                     metrics_seen.add(name)
@@ -48,14 +48,14 @@ class BatchMetricWriter:
         for name, value in metrics.items():
             if name in metrics_seen:
                 continue
-            self._maybe_write_metric(name, value, latest_batch)
+            self._maybe_write_metric(name, value, steps_completed)
 
         self.writer.reset()
 
-    def on_validation_step_end(self, latest_batch: int, metrics: Dict[str, Any]) -> None:
+    def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
-            self._maybe_write_metric(name, value, latest_batch)
+            self._maybe_write_metric(name, value, steps_completed)
 
         self.writer.reset()

@@ -10,6 +10,8 @@ with old checkpoints in the future.
 - `0.12.3-keras`: a stripped-down checkpoint, only useful for warmstarting
 - `0.13.7-keras`: a stripped-down checkpoint, only useful for warmstarting
 - `0.13.8-keras`: a stripped-down checkpoint, only useful for warmstarting
+- `0.13.13-pytorch-flex`: fetched by Checkpoint.download() to populate metadata.json
+- `0.13.13-pytorch-old`: fetched by Checkpoint.download() to populate metadata.json
 - `0.17.6-estimator`: fetched by Checkpoint.download() to populate metadata.json
 - `0.17.6-keras`: fetched by Checkpoint.download() to populate metadata.json
 - `0.17.6-pytorch`: fetched by Checkpoint.download() to populate metadata.json

@@ -58,7 +58,7 @@ def _average_training_metrics(
 
 
 def _combine_metrics_across_processes(
-    context: det._core.DistributedContext, metrics: Dict[str, Any], num_batches: int
+    context: det.core.DistributedContext, metrics: Dict[str, Any], num_batches: int
 ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
     # The chief receives the metric from every other training process.
     assert (
@@ -77,7 +77,7 @@ def _combine_metrics_across_processes(
 
 
 def _combine_and_average_training_metrics(
-    context: det._core.DistributedContext, per_batch_metrics: List[Dict[str, Any]]
+    context: det.core.DistributedContext, per_batch_metrics: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
     assert context.size > 1, "Can only average training metrics in multi-GPU training."
     metrics_timeseries = util._list_to_dict(per_batch_metrics)
@@ -132,7 +132,7 @@ def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _reduce_metrics(
-    context: det._core.DistributedContext,
+    context: det.core.DistributedContext,
     batch_metrics: List,
     keys: Any,
     metrics_reducers: Dict[str, pytorch.Reducer],

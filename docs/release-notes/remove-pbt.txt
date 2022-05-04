@@ -1,0 +1,5 @@
+:orphan:
+
+**Breaking Changes**
+
+-  HP Search: Remove the PBT searcher, which was deprecated in 0.17.6 (Jan 2022).

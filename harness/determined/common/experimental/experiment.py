@@ -232,21 +232,26 @@ class ExperimentReference:
             raise AssertionError("No checkpoint found for experiment {}".format(self.id))
 
         if not sort_by:
-            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
-            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0]["training"]["experimentConfig"]["searcher"]["metric"]
+            smaller_is_better = checkpoints[0]["training"]["experimentConfig"]["searcher"][
+                "smaller_is_better"
+            ]
 
         checkpoints.sort(
             reverse=not smaller_is_better,
-            key=lambda x: (x["metrics"]["validationMetrics"][sort_by], x["trialId"]),
+            key=lambda x: (
+                x["training"]["validationMetrics"]["avgMetrics"][sort_by],
+                x["training"]["trialId"],
+            ),
         )
 
         # Ensure returned checkpoints are from distinct trials.
         t_ids = set()
         checkpoint_refs = []
         for ckpt in checkpoints:
-            if ckpt["trialId"] not in t_ids:
+            if ckpt["training"]["trialId"] not in t_ids:
                 checkpoint_refs.append(checkpoint.Checkpoint._from_json(ckpt, self._session))
-                t_ids.add(ckpt["trialId"])
+                t_ids.add(ckpt["training"]["trialId"])
 
         return checkpoint_refs[:limit]
 

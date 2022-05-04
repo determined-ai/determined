@@ -54,15 +54,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       if (trial && record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
           ...record.checkpoint,
-          batch: record.checkpoint.totalBatches,
-          experimentId: trial?.experimentId,
-          trialId: trial?.id,
+          experimentId: trial.experimentId,
+          trialId: trial.id,
         };
         return (
           <CheckpointModalTrigger
             checkpoint={checkpoint}
             experiment={experiment}
-            title={`Checkpoint for Batch ${checkpoint.batch}`}
+            title={`Checkpoint for Batch ${checkpoint.totalBatches}`}
           />
         );
       }

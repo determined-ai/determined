@@ -99,7 +99,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
   onEvent: (event: T) => void,
-): Promise<void> => {
+): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
 
@@ -164,7 +164,7 @@ export const readStream = async <T = unknown>(
       return reader.read().then(handleStreamRead).catch(handleStreamError);
     };
 
-    reader.read().then(handleStreamRead).catch(handleStreamError);
+    return reader.read().then(handleStreamRead).catch(handleStreamError);
   } catch (e) {
     handleError(await processApiError(fetchArgs.url, e));
   }

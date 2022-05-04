@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, c
 
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import determined as det
 from determined import layers, pytorch, util, workload
@@ -59,11 +60,13 @@ class PyTorchTrialController(det.TrialController):
                 self.context.get_global_batch_size(),
             )
 
-        self.latest_batch = self.env.latest_batch
+        self.steps_completed = self.env.steps_completed
 
-        # Currently only horovod backend is supported if distributed training
+        # Currently only horovod and torch backends are supported for distributed training
         if self.context.distributed.size > 1:
-            assert self.use_horovod, "Must use horovod for distributed training"
+            assert (
+                self.use_horovod or self.use_torch
+            ), "Must use horovod or torch for distributed training"
 
     @classmethod
     def pre_execute_hook(
@@ -75,6 +78,11 @@ class PyTorchTrialController(det.TrialController):
         if distributed_backend.use_horovod():
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
+        if distributed_backend.use_torch():
+            if torch.cuda.is_available():
+                dist.init_process_group(backend="nccl")  # type: ignore
+            else:
+                dist.init_process_group(backend="gloo")  # type: ignore
 
         cls._set_random_seeds(env.trial_seed)
 
@@ -127,7 +135,7 @@ class PyTorchTrialController(det.TrialController):
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.env.latest_batch
+        skip_batches = self.env.steps_completed
 
         nreplicas = self.context.distributed.size
         rank = self.context.distributed.rank
@@ -200,7 +208,7 @@ class PyTorchTrialController(det.TrialController):
                 with self.prof.record_timing(
                     f"callbacks.{callback.__class__.__name__}.on_trial_startup"
                 ):
-                    callback.on_trial_startup(self.latest_batch, self.env.latest_checkpoint)
+                    callback.on_trial_startup(self.steps_completed, self.env.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -230,7 +238,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(load_path)
 
-            if self.context.distributed.size > 1:
+            if self.context.distributed.size > 1 and self.use_horovod:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -269,7 +277,7 @@ class PyTorchTrialController(det.TrialController):
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
-                            "latest_batch": self.latest_batch,
+                            "steps_completed": self.steps_completed,
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
                         }
@@ -348,7 +356,7 @@ class PyTorchTrialController(det.TrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
-            self.latest_batch += 1
+            self.steps_completed += 1
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next", requires_sync=False):
@@ -620,7 +628,23 @@ class PyTorchTrialController(det.TrialController):
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
-                model.load_state_dict(checkpoint["models_state_dict"][idx])
+                model_state_dict = checkpoint["models_state_dict"][idx]
+                try:
+                    model.load_state_dict(model_state_dict)
+                except Exception:
+                    # If the checkpointed model is non-DDP and the current model is DDP, append
+                    # module prefix to the checkpointed data
+                    if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+                        logging.debug("Loading non-DDP checkpoint into a DDP model")
+                        self._add_prefix_in_state_dict_if_not_present(model_state_dict, "module.")
+                    else:
+                        # If the checkpointed model is DDP and we are currently running in
+                        # single-slot mode, remove the module prefix from checkpointed data
+                        logging.debug("Loading DDP checkpoint into a non-DDP model")
+                        torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
+                            model_state_dict, "module."
+                        )
+                    model.load_state_dict(model_state_dict)
 
         if "optimizer_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
@@ -773,6 +797,31 @@ class PyTorchTrialController(det.TrialController):
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
+
+    @staticmethod
+    def _add_prefix_in_state_dict_if_not_present(state_dict: Dict[str, Any], prefix: str) -> None:
+        """Adds the prefix in state_dict in place, if does not exist.
+        ..note::
+            Given a `state_dict` from a non-DDP model, a DDP model can load it by applying
+            `_add_prefix_in_state_dict_if_present(state_dict, "module.")` before calling
+            :meth:`torch.nn.Module.load_state_dict`.
+        Args:
+            state_dict (OrderedDict): a state-dict to be loaded to the model.
+            prefix (str): prefix.
+        """
+        keys = sorted(state_dict.keys())
+        for key in keys:
+            if not key.startswith(prefix):
+                newkey = prefix + key
+                state_dict[newkey] = state_dict.pop(key)
+
+        # also add the prefix to metadata if not exists.
+        if "_metadata" in state_dict:
+            metadata = state_dict["_metadata"]
+            for key in list(metadata.keys()):
+                if not key.startswith(prefix):
+                    newkey = prefix + key
+                    metadata[newkey] = metadata.pop(key)
 
 
 class PyTorchTrial(det.Trial):
@@ -1021,25 +1070,3 @@ class PyTorchTrial(det.Trial):
             batch (Any): input training or validation data batch object.
         """
         return pytorch.data_length(batch)
-
-
-def reset_parameters(model: torch.nn.Module) -> None:
-    """
-    .. warning::
-        ``det.pytorch.reset_parameters()`` is deprecated and should not be called. For custom
-        nn.Modules which do need a call to reset_parameters(), it is recommended to call
-        self.reset_parameters() directly in their __init__() function, as is standard in all
-        built-in nn.Modules.
-
-    Recursively calls ``reset_parameters()`` for all modules.
-    """
-    logging.warning(
-        "det.pytorch.reset_parameters() is deprecated and should not be called.  For custom "
-        "nn.Modules which do need a call to reset_parameters(), it is recommended to call "
-        "self.reset_parameters() directly in their __init__() function, as is standard in all "
-        "built-in nn.Modules."
-    )
-    for _, module in model.named_modules():
-        reset_params = getattr(module, "reset_parameters", None)
-        if callable(reset_params):
-            reset_params()

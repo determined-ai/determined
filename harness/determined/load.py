@@ -1,90 +1,9 @@
-import contextlib
 import importlib
-import json
 import logging
-import re
-import runpy
 import sys
-from typing import Iterator, List, Optional, Tuple, Type, cast
+from typing import Type, cast
 
 import determined as det
-from determined.common import check
-
-in_runpy = None
-runpy_trial_class = None  # type: Optional[Type[det.Trial]]
-
-
-@contextlib.contextmanager
-def running_in_runpy() -> Iterator:
-    global in_runpy
-    in_runpy = True
-    try:
-        yield
-    finally:
-        in_runpy = True
-
-
-def convert_notebook_to_python_script(notebook_path: str) -> str:
-    check.true(
-        notebook_path.endswith(".ipynb"), f"Notebook file {notebook_path} must has a suffix .ipynb"
-    )
-    processed_cells_path = f"{notebook_path[:-6]}__det__.py"
-
-    with open(notebook_path, "r") as f1, open(processed_cells_path, "w") as f2:
-        obj = json.load(f1)
-        check.true("cells" in obj, f"Invalid notebook file {notebook_path}")
-        for cell in obj["cells"]:
-            if cell["cell_type"] == "code":
-                lines = [line for line in cell["source"] if not line.lstrip().startswith("!")]
-                f2.writelines(lines)
-                f2.write("\n")
-    return processed_cells_path
-
-
-@contextlib.contextmanager
-def overwrite_sys_args(new_args: List[str]) -> Iterator:
-    old_sys_args = sys.argv
-    sys.argv = new_args
-    try:
-        yield
-    finally:
-        sys.argv = old_sys_args
-
-
-def get_trial_class_from_native(command: List[str]) -> Type[det.Trial]:
-    global runpy_trial_class
-
-    # For now, we assume the entrypoint_cmd is a python invocation like
-    # "python <command>"
-    logging.info(f"Loading Native implementation with command {command}.")
-    if len(command) < 1:
-        raise AssertionError("Expected non-empty command, but was empty.")
-
-    if command[0].endswith(".ipynb"):
-        command[0] = convert_notebook_to_python_script(command[0])
-
-    with overwrite_sys_args(command), running_in_runpy():
-        try:
-            runpy.run_path(command[0], run_name="__main__")
-        except det.errors.StopLoadingImplementation:
-            # If caught this exception, will skip running the rest of the user code.
-            pass
-        finally:
-            trial_cls = runpy_trial_class
-            runpy_trial_class = None
-
-    if trial_cls is None:
-        raise ValueError("Please load native implementation.")
-    return trial_cls
-
-
-def parse_trial_class_from_entrypoint(entrypoint: str) -> Optional[str]:
-    entrypoint_cmd = entrypoint.split(" ")
-    trial_class_regex = re.compile("^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$")
-    for arg in entrypoint_cmd:
-        if trial_class_regex.match(arg):
-            return arg
-    return None
 
 
 def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
@@ -156,18 +75,3 @@ def get_trial_controller_class(trial_class: Type[det.Trial]) -> Type[det.TrialCo
         )
 
     return controller_class
-
-
-def get_trial_and_controller_class(
-    experiment_config: det.ExperimentConfig,
-    train_entrypoint: Optional[str],
-) -> Tuple[Type[det.Trial], Type[det.TrialController]]:
-    if experiment_config.native_enabled():
-        command = experiment_config["internal"]["native"]["command"]  # type: List[str]
-        trial_class = get_trial_class_from_native(command)
-    else:
-        if not train_entrypoint:
-            raise ValueError("Entrypoint must be specified when native is disabled")
-        trial_class = trial_class_from_entrypoint(train_entrypoint)
-
-    return trial_class, get_trial_controller_class(trial_class)

@@ -1,11 +1,11 @@
 import inspect
 import logging
-from typing import Any, Callable, List, Tuple, Union, cast
+from typing import Any, Callable, Union, cast
 
 import tensorflow as tf
 
 import determined as det
-from determined import _core, _data_layer, estimator, util
+from determined import _data_layer, core, estimator, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -46,7 +46,6 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
 
         self.experimental = EstimatorExperimentalContext(
             self.env,
-            self,
             self.distributed,
             self._per_slot_batch_size,
         )
@@ -164,29 +163,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     def __init__(
         self,
         env: det.EnvContext,
-        parent: EstimatorTrialContext,
-        distributed_context: _core.DistributedContext,
+        distributed_context: core.DistributedContext,
         per_slot_batch_size: int,
     ) -> None:
         super().__init__(env, distributed_context, per_slot_batch_size)
-        self._parent = parent
-
-    @util.deprecated(
-        "context.experimental.allgather_metrics() is deprecated since 0.15.2 and will be removed "
-        "in a future version.  It is not intended to have a replacement; please contact Determined "
-        "if you depend on this experimental method."
-    )
-    def allgather_metrics(self, metrics: Any) -> List:
-        return self._parent._allgather_fn(metrics)
-
-    @util.deprecated(
-        "context.experimental.make_metric() is deprecated since 0.15.2 and will be removed in a "
-        "future version; use context.make_metric() directly."
-    )
-    def make_metric(
-        self,
-        metric: Any,
-        reducer: Union[Callable[[List[Any]], Any], "estimator.MetricReducer"],
-        numpy_dtype: Any,
-    ) -> Tuple[tf.Operation, tf.Operation]:
-        return self._parent.make_metric(metric, reducer, numpy_dtype)

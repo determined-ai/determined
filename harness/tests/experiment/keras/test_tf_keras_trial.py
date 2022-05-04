@@ -1,6 +1,5 @@
 # type: ignore
 import os
-import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -14,6 +13,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import (  # noqa: I100
     ancient_keras_ckpt,
     tf_keras_one_var_model,
+    tf_keras_runtime_error,
     tf_keras_xor_model,
 )
 
@@ -53,7 +53,7 @@ def xor_trial_controller(request):
         trial_seed: int = 0,
         checkpoint_dir: Optional[str] = None,
         latest_checkpoint: Optional[Dict[str, Any]] = None,
-        latest_batch: int = 0,
+        steps_completed: int = 0,
     ) -> det.TrialController:
         return utils.make_trial_controller_from_trial_implementation(
             request.param,
@@ -63,7 +63,7 @@ def xor_trial_controller(request):
             trial_seed=trial_seed,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
-            latest_batch=latest_batch,
+            steps_completed=steps_completed,
         )
 
     return _xor_trial_controller
@@ -115,7 +115,7 @@ class TestKerasTrial:
     def test_one_var_training(self, test_checkpointing, tmp_path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
-        latest_batch = 0
+        steps_completed = 0
 
         # In the test_checkpointing case, we will call make_workloads() twice but batches and w
         # will persist across both calls.
@@ -145,10 +145,10 @@ class TestKerasTrial:
                     # Checkpoint and let the next TrialController finish the work.
                     interceptor = workload.WorkloadResponseInterceptor()
                     yield from interceptor.send(workload.checkpoint_workload())
-                    nonlocal latest_checkpoint, latest_batch
+                    nonlocal latest_checkpoint, steps_completed
                     latest_checkpoint = interceptor.metrics_result()["uuid"]
-                    # latest_batch is unused, but can't be 0.
-                    latest_batch = 1
+                    # steps_completed is unused, but can't be 0.
+                    steps_completed = 1
                     break
 
         hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
@@ -176,7 +176,7 @@ class TestKerasTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
-                latest_batch=latest_batch,
+                steps_completed=steps_completed,
             )
             controller.run()
 
@@ -212,7 +212,7 @@ class TestKerasTrial:
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
-        latest_batch = 0
+        steps_completed = 0
         old_loss = -1
 
         def make_workloads_1() -> workload.Stream:
@@ -226,9 +226,9 @@ class TestKerasTrial:
 
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, latest_batch
+            nonlocal latest_checkpoint, steps_completed
             latest_checkpoint = interceptor.metrics_result()["uuid"]
-            latest_batch = trainer.get_latest_batch()
+            steps_completed = trainer.get_steps_completed()
 
         controller = xor_trial_controller(
             self.hparams,
@@ -256,7 +256,7 @@ class TestKerasTrial:
             trial_seed=self.trial_seed,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
-            latest_batch=latest_batch,
+            steps_completed=steps_completed,
         )
         controller.run()
 
@@ -270,7 +270,7 @@ class TestKerasTrial:
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
             latest_checkpoint: Optional[Dict[str, Any]] = None,
-            latest_batch: int = 0,
+            steps_completed: int = 0,
         ) -> det.TrialController:
             return xor_trial_controller(
                 self.hparams,
@@ -279,7 +279,7 @@ class TestKerasTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
-                latest_batch=latest_batch,
+                steps_completed=steps_completed,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -357,7 +357,7 @@ class TestKerasTrial:
             trial_seed=self.trial_seed,
             checkpoint_dir=str(checkpoint_dir),
             latest_checkpoint=latest_checkpoint,
-            latest_batch=1,
+            steps_completed=1,
         )
         controller.run()
 
@@ -370,23 +370,17 @@ def test_checkpoint_loading(ckpt_ver):
 
 
 def test_surface_native_error():
-    cmd = ["python3", utils.fixtures_path("tf_keras_runtime_error.py")]
-    with subprocess.Popen(cmd, stderr=subprocess.PIPE) as p:
-        err = p.stderr.read()
-        assert p.wait() != 0
-        if tf.executing_eagerly():
-            assert (
-                b"ValueError: Shapes (None, 10) and (None, 1) are incompatible" in err
-                or b"ValueError: Input 0 of layer sequential is incompatible with the "
-                b"layer: : expected min_ndim=2, found ndim=1. Full shape received: [1]" in err
-                or b"ValueError: Input 0 of layer sequential is incompatible with the "
-                b"layer: : expected min_ndim=2, found ndim=1. Full shape received: (1,)" in err
-            ), err.decode("utf8")
-        else:
-            assert (
-                b"ValueError: Input 0 of layer sequential is incompatible with the layer" in err
-            ), err.decode("utf8")
+    def make_workloads() -> workload.Stream:
+        trainer = utils.TrainAndValidate()
 
+        yield from trainer.send(steps=10, validation_freq=10)
+        training_metrics, validation_metrics = trainer.result()
 
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(tf_keras_xor_model.XORTrial)
+    controller = utils.make_trial_controller_from_trial_implementation(
+        tf_keras_runtime_error.RuntimeErrorTrial,
+        {"global_batch_size": 1},
+        make_workloads(),
+        trial_seed=0,
+    )
+    with pytest.raises(ValueError, match="incompatible"):
+        controller.run()

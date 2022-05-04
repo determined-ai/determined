@@ -150,7 +150,7 @@ class QABeamSearchTrial(hf.BaseTransformerTrial):
             "squad_v2" if self.data_config.version_2_with_negative else "squad"
         )
 
-        self.reducer = context.experimental.wrap_reducer(
+        self.reducer = context.wrap_reducer(
             functools.partial(
                 qa_utils.compute_metrics,
                 self.data_config,

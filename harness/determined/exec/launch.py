@@ -14,19 +14,7 @@ from determined.common import constants, storage
 def launch(experiment_config: det.ExperimentConfig) -> int:
     entrypoint = experiment_config.get_entrypoint()
 
-    # If native is enabled, harness will load from native entrypoint command
-    if experiment_config.native_enabled():
-        entrypoint = [
-            "python3",
-            "-m",
-            "determined.launch.horovod",
-            "--autohorovod",
-            "--trial",
-            "__NATIVE__",
-        ]
-    elif not entrypoint:
-        raise AssertionError("Entrypoint not found in experiment config")
-    elif isinstance(entrypoint, str) and det.util.match_legacy_trial_class(entrypoint):
+    if isinstance(entrypoint, str) and det.util.match_legacy_trial_class(entrypoint):
         # Legacy entrypoint ("model_def:Trial") detected
         entrypoint = [
             "python3",

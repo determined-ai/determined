@@ -21,7 +21,7 @@
    :members: wrap_model, wrap_dataset, wrap_optimizer, configure_fit
    :member-order: bysource
 
-   TFKerasTrialContext always has a :class:`~determined._core._distributed.DistributedContext`
+   TFKerasTrialContext always has a :class:`~determined.core._distributed.DistributedContext`
    accessible via ``context.distributed`` for information related to distributed training.
 
    TFKerasTrialContext always has a :class:`~determined.keras.TFKerasExperimentalContext` accessible
@@ -31,7 +31,7 @@
  ``determined.keras.TFKerasTrialContext.distributed``
 ******************************************************
 
-.. autoclass:: determined._core._distributed.DistributedContext
+.. autoclass:: determined.core._distributed.DistributedContext
    :members:
    :inherited-members:
    :member-order: bysource

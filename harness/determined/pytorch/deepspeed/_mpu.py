@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from deepspeed.runtime.pipe import topology
 
-from determined import _core
+from determined import core
 
 
 @dataclass
@@ -26,7 +26,7 @@ class ModelParallelUnit:
     should_build_data_loader: bool
 
 
-def make_data_parallel_mpu(dist_context: _core.DistributedContext) -> ModelParallelUnit:
+def make_data_parallel_mpu(dist_context: core.DistributedContext) -> ModelParallelUnit:
     return ModelParallelUnit(
         data_parallel_rank=dist_context.get_rank(),
         data_parallel_world_size=dist_context.get_size(),

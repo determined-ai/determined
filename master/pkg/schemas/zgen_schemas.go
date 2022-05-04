@@ -940,6 +940,7 @@ var (
     "additionalProperties": false,
     "eventuallyRequired": [
         "checkpoint_storage",
+        "entrypoint",
         "name",
         "hyperparameters",
         "reproducibility",
@@ -1028,14 +1029,6 @@ var (
             ],
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
-        },
-        "internal": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json"
         },
         "labels": {
             "type": [
@@ -1212,34 +1205,7 @@ var (
                 }
             }
         }
-    ],
-    "checks": {
-        "must specify an entrypoint that references the trial class": {
-            "conditional": {
-                "$comment": "when internal.native is null, expect an entrypoint",
-                "when": {
-                    "properties": {
-                        "internal": {
-                            "properties": {
-                                "native": {
-                                    "type": "null"
-                                }
-                            }
-                        }
-                    }
-                },
-                "enforce": {
-                    "not": {
-                        "properties": {
-                            "entrypoint": {
-                                "type": "null"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    ]
 }
 `)
 	textGCSConfigV0 = []byte(`{
@@ -1577,23 +1543,6 @@ var (
     }
 }
 `)
-	textInternalConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/internal.json",
-    "title": "InternalConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "native"
-    ],
-    "properties": {
-        "native": {
-            "type": "object",
-            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
-        }
-    }
-}
-`)
 	textKerberosConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/kerberos.json",
@@ -1661,25 +1610,6 @@ var (
                 }
             }
         ]
-    }
-}
-`)
-	textNativeConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/native.json",
-    "title": "NativeConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "command"
-    ],
-    "properties": {
-        "command": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        }
     }
 }
 `)
@@ -2580,149 +2510,6 @@ var (
     }
 }
 `)
-	textPBTConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
-    "title": "PBTConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name"
-    ],
-    "eventuallyRequired": [
-        "metric",
-        "population_size",
-        "length_per_round",
-        "num_rounds",
-        "replace_function",
-        "explore_function"
-    ],
-    "properties": {
-        "name": {
-            "const": "pbt"
-        },
-        "population_size": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "length_per_round": {
-            "type": [
-                "object",
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
-        },
-        "num_rounds": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null,
-            "minimum": 1
-        },
-        "replace_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "unionKey": "singleproperty",
-            "conditional": {
-                "unless": {
-                    "const": null
-                },
-                "enforce": {
-                    "union": {
-                        "items": [
-                            {
-                                "unionKey": "always",
-                                "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "truncate_fraction"
-                                ],
-                                "properties": {
-                                    "truncate_fraction": {
-                                        "type": "number",
-                                        "minimum": 0.0,
-                                        "maximum": 0.5
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        "explore_function": {
-            "type": [
-                "object",
-                "null"
-            ],
-            "default": null,
-            "additionalProperties": false,
-            "eventuallyRequired": [
-                "resample_probability",
-                "perturb_factor"
-            ],
-            "properties": {
-                "resample_probability": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                },
-                "perturb_factor": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "default": null,
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                }
-            }
-        },
-        "metric": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-`)
 	textRandomConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-random.json",
@@ -2976,10 +2763,6 @@ var (
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                     },
                     {
-                        "unionKey": "const:name=pbt",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-                    },
-                    {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
                     },
@@ -3010,18 +2793,13 @@ var (
     "properties": {
         "bracket_rungs": true,
         "divisor": true,
-        "explore_function": true,
-        "length_per_round": true,
         "max_concurrent_trials": true,
         "max_length": true,
         "max_rungs": true,
         "max_trials": true,
         "mode": true,
         "name": true,
-        "num_rounds": true,
         "num_rungs": true,
-        "population_size": true,
-        "replace_function": true,
         "stop_once": true,
         "metric": {
             "type": [
@@ -3410,13 +3188,9 @@ var (
 
 	schemaHyperparametersV0 interface{}
 
-	schemaInternalConfigV0 interface{}
-
 	schemaKerberosConfigV0 interface{}
 
 	schemaLengthV0 interface{}
-
-	schemaNativeConfigV0 interface{}
 
 	schemaOptimizationsConfigV0 interface{}
 
@@ -3441,8 +3215,6 @@ var (
 	schemaGridConfigV0 interface{}
 
 	schemaSearcherLengthV0 interface{}
-
-	schemaPBTConfigV0 interface{}
 
 	schemaRandomConfigV0 interface{}
 
@@ -4055,26 +3827,6 @@ func ParsedHyperparametersV0() interface{} {
 	return schemaHyperparametersV0
 }
 
-func ParsedInternalConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaInternalConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaInternalConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaInternalConfigV0 != nil {
-		return schemaInternalConfigV0
-	}
-	err := json.Unmarshal(textInternalConfigV0, &schemaInternalConfigV0)
-	if err != nil {
-		panic("invalid embedded json for InternalConfigV0")
-	}
-	return schemaInternalConfigV0
-}
-
 func ParsedKerberosConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaKerberosConfigV0 != nil {
@@ -4113,26 +3865,6 @@ func ParsedLengthV0() interface{} {
 		panic("invalid embedded json for LengthV0")
 	}
 	return schemaLengthV0
-}
-
-func ParsedNativeConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaNativeConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaNativeConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaNativeConfigV0 != nil {
-		return schemaNativeConfigV0
-	}
-	err := json.Unmarshal(textNativeConfigV0, &schemaNativeConfigV0)
-	if err != nil {
-		panic("invalid embedded json for NativeConfigV0")
-	}
-	return schemaNativeConfigV0
 }
 
 func ParsedOptimizationsConfigV0() interface{} {
@@ -4373,26 +4105,6 @@ func ParsedSearcherLengthV0() interface{} {
 		panic("invalid embedded json for SearcherLengthV0")
 	}
 	return schemaSearcherLengthV0
-}
-
-func ParsedPBTConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaPBTConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaPBTConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaPBTConfigV0 != nil {
-		return schemaPBTConfigV0
-	}
-	err := json.Unmarshal(textPBTConfigV0, &schemaPBTConfigV0)
-	if err != nil {
-		panic("invalid embedded json for PBTConfigV0")
-	}
-	return schemaPBTConfigV0
 }
 
 func ParsedRandomConfigV0() interface{} {
@@ -4708,14 +4420,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
 	cachedSchemaBytesMap[url] = textHyperparametersV0
-	url = "http://determined.ai/schemas/expconf/v0/internal.json"
-	cachedSchemaBytesMap[url] = textInternalConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/kerberos.json"
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
 	cachedSchemaBytesMap[url] = textLengthV0
-	url = "http://determined.ai/schemas/expconf/v0/native.json"
-	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
@@ -4740,8 +4448,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textGridConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-length.json"
 	cachedSchemaBytesMap[url] = textSearcherLengthV0
-	url = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-	cachedSchemaBytesMap[url] = textPBTConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-random.json"
 	cachedSchemaBytesMap[url] = textRandomConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-single.json"
