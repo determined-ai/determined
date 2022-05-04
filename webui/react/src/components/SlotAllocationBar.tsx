@@ -167,6 +167,10 @@ const SlotAllocationBar: React.FC<Props> = ({
     );
   }, [ stateTallies, totalSlots ]);
 
+  const totalSlotsNum = useMemo(() => {
+    return slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots;
+  }, [ totalSlots, slotsPotential ]);
+
   const classes = [ css.base ];
   if (className) classes.push(className);
 
@@ -214,9 +218,7 @@ const SlotAllocationBar: React.FC<Props> = ({
               <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
-                `${stateTallies.RUNNING}/${
-                  slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots
-                } ${title || 'Compute'} Slots Allocated`}`}
+                `${stateTallies.RUNNING}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
           {footer.queued ? (
@@ -229,9 +231,9 @@ const SlotAllocationBar: React.FC<Props> = ({
           ) :
             !isAux && (
               <span>{
-                `${totalSlots > stateTallies.RUNNING ?
-                  totalSlots - stateTallies.RUNNING : 0} ${
-                  totalSlots - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
+                `${totalSlotsNum > stateTallies.RUNNING ?
+                  totalSlotsNum - stateTallies.RUNNING : 0} ${
+                  totalSlotsNum - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
               }
               </span>
             )}
