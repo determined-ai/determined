@@ -4,7 +4,7 @@ from typing import Any, Optional
 import appdirs
 
 import determined as det
-from determined import _core, tensorboard
+from determined import core, tensorboard
 from determined.common import constants, storage
 from determined.common.api import certs
 from determined.common.experimental.session import Session
@@ -23,17 +23,17 @@ class Context:
 
     def __init__(
         self,
-        checkpoint: _core.CheckpointContext,
-        distributed: Optional[_core.DistributedContext] = None,
-        preempt: Optional[_core.PreemptContext] = None,
-        train: Optional[_core.TrainContext] = None,
-        searcher: Optional[_core.SearcherContext] = None,
+        checkpoint: core.CheckpointContext,
+        distributed: Optional[core.DistributedContext] = None,
+        preempt: Optional[core.PreemptContext] = None,
+        train: Optional[core.TrainContext] = None,
+        searcher: Optional[core.SearcherContext] = None,
     ) -> None:
         self.checkpoint = checkpoint
-        self.distributed = distributed or _core.DummyDistributedContext()
-        self.preempt = preempt or _core.DummyPreemptContext(self.distributed)
-        self.train = train or _core.DummyTrainContext()
-        self.searcher = searcher or _core.DummySearcherContext(self.distributed)
+        self.distributed = distributed or core.DummyDistributedContext()
+        self.preempt = preempt or core.DummyPreemptContext(self.distributed)
+        self.train = train or core.DummyTrainContext()
+        self.searcher = searcher or core.DummySearcherContext(self.distributed)
 
     def __enter__(self) -> "Context":
         self.preempt.start()
@@ -44,34 +44,34 @@ class Context:
         self.distributed.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
-            self.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
             logger.info("InvalidHP detected during Trial init, converting InvalidHP to exit(0)")
             exit(0)
 
 
 def _dummy_init(
     *,
-    distributed: Optional[_core.DistributedContext] = None,
+    distributed: Optional[core.DistributedContext] = None,
     # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
-    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
+    preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
     Build a core.Context suitable for running off-cluster.  This is normally called by init()
     when it is detected that there is no ClusterInfo available, but can be invoked directly for
     e.g. local test mode.
     """
-    distributed = distributed or _core.DummyDistributedContext()
-    preempt = _core.DummyPreemptContext(distributed, preempt_mode)
+    distributed = distributed or core.DummyDistributedContext()
+    preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
         logger.info("no storage_manager provided; storing checkpoints in {base_path}")
         storage_manager = storage.SharedFSStorageManager(base_path)
-    checkpoint = _core.DummyCheckpointContext(distributed, storage_manager)
+    checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
 
-    train = _core.DummyTrainContext()
-    searcher = _core.DummySearcherContext(distributed)
+    train = core.DummyTrainContext()
+    searcher = core.DummySearcherContext(distributed)
 
     return Context(
         distributed=distributed,
@@ -88,10 +88,10 @@ def _dummy_init(
 # yet, so the '*' lets us delay that decision until we are ready.
 def init(
     *,
-    distributed: Optional[_core.DistributedContext] = None,
-    preempt_mode: _core.PreemptMode = _core.PreemptMode.WorkersAskChief,
+    distributed: Optional[core.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
+    preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
 ) -> Context:
     """
     core.init() builds a core.Context for use with the Core API.
@@ -120,9 +120,9 @@ def init(
         if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
             raise ValueError("you must provide a valid DistributedContext for a multi-slot task")
 
-    distributed = distributed or _core.DummyDistributedContext()
+    distributed = distributed or core.DummyDistributedContext()
 
-    preempt = _core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
+    preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
 
     # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None
@@ -142,7 +142,7 @@ def init(
         )
         tbd_writer = tensorboard.get_metric_writer()
 
-        train = _core.TrainContext(
+        train = core.TrainContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
@@ -150,8 +150,8 @@ def init(
             tbd_mgr,
             tbd_writer,
         )
-        units = _core._parse_searcher_units(info.trial._config)
-        searcher = _core.SearcherContext(
+        units = core._parse_searcher_units(info.trial._config)
+        searcher = core.SearcherContext(
             session,
             distributed,
             info.trial.trial_id,
@@ -166,14 +166,8 @@ def init(
                 container_path=constants.SHARED_FS_CONTAINER_PATH,
             )
 
-        api_path = f"/api/v1/trials/{info.trial.trial_id}/checkpoint_metadata"
-        static_metadata = {
-            "trial_id": info.trial.trial_id,
-            "trial_run_id": info.trial._trial_run_id,
-        }
-
-        checkpoint = _core.CheckpointContext(
-            distributed, storage_manager, session, api_path, static_metadata, tbd_mgr
+        checkpoint = core.CheckpointContext(
+            distributed, storage_manager, session, info.task_id, info.allocation_id, tbd_mgr
         )
 
     else:
@@ -182,7 +176,7 @@ def init(
             base_path = appdirs.user_data_dir("determined")
             logger.info("no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
-        checkpoint = _core.DummyCheckpointContext(distributed, storage_manager)
+        checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
 
     return Context(
         distributed=distributed,

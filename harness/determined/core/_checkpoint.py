@@ -1,13 +1,14 @@
 import contextlib
 import enum
+import json
 import logging
 import os
 import pathlib
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
-import determined as det
-from determined import _core, tensorboard
+from determined import core, tensorboard
 from determined.common import storage
 from determined.common.api import bindings
 from determined.common.experimental.session import Session
@@ -41,19 +42,18 @@ class CheckpointContext:
 
     def __init__(
         self,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         storage_manager: storage.StorageManager,
         session: Session,
-        api_path: str,
-        static_metadata: Optional[Dict[str, Any]] = None,
+        task_id: str,
+        allocation_id: str,
         tbd_mgr: Optional[tensorboard.TensorboardManager] = None,
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
         self._session = session
-        self._static_metadata = static_metadata or {}
-        self._static_metadata["determined_version"] = det.__version__
-        self._api_path = api_path
+        self._task_id = task_id
+        self._allocation_id = allocation_id
         self._tbd_mgr = tbd_mgr
 
     def upload(
@@ -79,8 +79,12 @@ class CheckpointContext:
         ckpt_dir = os.fspath(ckpt_dir)
 
         storage_id = str(uuid.uuid4())
-        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         resources = self._storage_manager._list_directory(ckpt_dir)
+
+        # add metadata pre-upload but without counting it among resources
+        self._write_metadata_file(ckpt_dir, metadata or {})
+
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
         self._report_checkpoint(storage_id, resources, metadata)
         return storage_id
 
@@ -158,6 +162,8 @@ class CheckpointContext:
         with self._storage_manager.store_path(storage_id) as path:
             yield path, storage_id
             resources = self._storage_manager._list_directory(path)
+            self._write_metadata_file(os.fspath(path), metadata or {})
+
         self._report_checkpoint(storage_id, resources, metadata)
 
     @contextlib.contextmanager
@@ -213,6 +219,11 @@ class CheckpointContext:
         """
         self._storage_manager.delete(storage_id)
 
+    def _write_metadata_file(self, ckpt_dir: str, metadata: Dict[str, Any]) -> None:
+        metadata_path = pathlib.Path(ckpt_dir).joinpath("metadata.json")
+        with metadata_path.open("w") as f:
+            json.dump(metadata, f, indent=2)
+
     def _report_checkpoint(
         self,
         storage_id: str,
@@ -222,32 +233,27 @@ class CheckpointContext:
         """
         After having uploaded a checkpoint, report its existence to the master.
         """
-
         resources = resources or {}
         metadata = metadata or {}
-        required = {"latest_batch"}
-        allowed = required.union({"framework", "format", "total_records", "total_epochs"})
-        missing = [k for k in required if k not in metadata]
-        extra = [k for k in metadata.keys() if k not in allowed]
-        if missing:
+
+        if "steps_completed" not in metadata:
             raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, requires all of "
-                f"the following items that have not been provided: {missing}"
-            )
-        if extra:
-            raise ValueError(
-                "metadata for reported checkpoints, in the current implementation, cannot support "
-                f"the following items that were provided: {extra}"
+                "metadata for reported checkpoints, in the current implementation, requires a "
+                "'steps_completed' item, which has not been provided"
             )
 
-        body = {
-            "uuid": storage_id,
-            "resources": resources,
-            **self._static_metadata,
-            **metadata,
-        }
+        ckpt = bindings.v1Checkpoint(
+            allocationId=self._allocation_id,
+            metadata=metadata,
+            resources={k: str(v) for k, v in resources.items()},
+            taskId=self._task_id,
+            training=bindings.v1CheckpointTrainingMetadata(),
+            uuid=storage_id,
+            reportTime=datetime.now(timezone.utc).isoformat(),
+            state=bindings.determinedcheckpointv1State.STATE_COMPLETED,
+        )
+        bindings.post_ReportCheckpoint(self._session, body=ckpt)
         logger.info(f"Reported checkpoint to master {storage_id}")
-        self._session.post(self._api_path, data=det.util.json_encode(body))
 
         # Also sync tensorboard.
         if self._tbd_mgr:
@@ -257,7 +263,7 @@ class CheckpointContext:
 class DummyCheckpointContext(CheckpointContext):
     def __init__(
         self,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         storage_manager: storage.StorageManager,
     ) -> None:
         self._dist = dist

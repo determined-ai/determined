@@ -4,7 +4,7 @@ import sys
 from typing import Any, Generator, Optional, Tuple
 
 import determined as det
-from determined import _core, tensorboard, workload
+from determined import core, tensorboard, workload
 from determined.common import check
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
@@ -74,20 +74,20 @@ class WorkloadSequencer(workload.Source):
             self,
             trial_id: int,
             last_ckpt: int = 0,
-            latest_batch: int = 0,
+            steps_completed: int = 0,
             step_id: int = 0,
             last_val: int = 0,
         ) -> None:
             # Store TrialID to distinguish between e.g. pause/restart and continue training.
             self.trial_id = trial_id
             self.last_ckpt = last_ckpt
-            self.latest_batch = latest_batch
+            self.steps_completed = steps_completed
             self.step_id = step_id
             self.last_val = last_val
 
     def __init__(
         self,
-        core_context: _core.Context,
+        core_context: core.Context,
         env: det.EnvContext,
         global_batch_size: int,
     ) -> None:
@@ -106,7 +106,7 @@ class WorkloadSequencer(workload.Source):
                 "configured with units.  Proceeding anyway, and assuming that the lengths "
                 "configured in the searcher are in terms of epochs."
             )
-            unit = _core.Unit.EPOCHS
+            unit = core.Unit.EPOCHS
         self._unit = unit
 
         self.val_from_previous_run = self.core_context.train._get_last_validation()
@@ -148,8 +148,8 @@ class WorkloadSequencer(workload.Source):
         # checkpoint state.  If the validation was before the last checkpoint, the checkpoint state
         # is already correct, while any validations after the last checkpoint aren't valid anymore
         # and can be safely ignored.
-        if self.state.latest_batch == self.val_from_previous_run:
-            self.state.last_val = self.state.latest_batch
+        if self.state.steps_completed == self.val_from_previous_run:
+            self.state.last_val = self.state.steps_completed
 
     def as_batches(
         self,
@@ -176,7 +176,7 @@ class WorkloadSequencer(workload.Source):
         if self.core_context.preempt.should_preempt():
             raise ShouldExit()
 
-    def train(self, num_batches: int, op: _core.SearcherOperation) -> WorkloadGenerator:
+    def train(self, num_batches: int, op: core.SearcherOperation) -> WorkloadGenerator:
         # Report a train step is starting.
         self.core_context.train.set_status("training")
 
@@ -186,7 +186,7 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id + 1,
             num_batches=num_batches,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
 
         response = yield from yield_and_await_response(wkld)
@@ -195,27 +195,27 @@ class WorkloadSequencer(workload.Source):
 
         if isinstance(response, workload.InvalidHP):
             # Exit before reporting metrics (which would be empty anyway).
-            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response.get("metrics", {}).get("avg_metrics", {})
         batch_metrics = response.get("metrics", {}).get("batch_metrics", [])
 
-        self.state.latest_batch += num_batches
+        self.state.steps_completed += num_batches
         self.state.step_id += 1
         self.core_context.train.report_training_metrics(
-            latest_batch=self.state.latest_batch,
+            steps_completed=self.state.steps_completed,
             metrics=metrics,
             batch_metrics=batch_metrics,
         )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
-        if self._unit == _core.Unit.BATCHES:
-            op.report_progress(self.state.latest_batch)
-        elif self._unit == _core.Unit.RECORDS:
-            op.report_progress(self.global_batch_size * self.state.latest_batch)
-        elif self._unit == _core.Unit.EPOCHS:
-            op.report_progress(self.state.latest_batch / self.as_batches(epochs=1))
+        if self._unit == core.Unit.BATCHES:
+            op.report_progress(self.state.steps_completed)
+        elif self._unit == core.Unit.RECORDS:
+            op.report_progress(self.global_batch_size * self.state.steps_completed)
+        elif self._unit == core.Unit.EPOCHS:
+            op.report_progress(self.state.steps_completed / self.as_batches(epochs=1))
         else:
             raise ValueError(f"unrecognized searcher op unit: {self._unit}")
 
@@ -231,7 +231,7 @@ class WorkloadSequencer(workload.Source):
         smaller_is_better = self.env.experiment_config["searcher"]["smaller_is_better"]
         return (now < before) if smaller_is_better else (now > before)
 
-    def validate(self, op: Optional[_core.SearcherOperation]) -> WorkloadGenerator:
+    def validate(self, op: Optional[core.SearcherOperation]) -> WorkloadGenerator:
         # Report a validation step is starting.
         self.core_context.train.set_status("validating")
 
@@ -241,7 +241,7 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id,
             num_batches=0,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
 
         response = yield from yield_and_await_response(wkld)
@@ -249,7 +249,7 @@ class WorkloadSequencer(workload.Source):
         # Validation step is complete, process the result.
 
         if isinstance(response, workload.InvalidHP):
-            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response["metrics"]["validation_metrics"]
@@ -299,9 +299,9 @@ class WorkloadSequencer(workload.Source):
             # without it.
             best_validation_before = self.core_context.train.get_experiment_best_validation()
 
-        self.state.last_val = self.state.latest_batch
+        self.state.last_val = self.state.steps_completed
         self.core_context.train.report_validation_metrics(
-            latest_batch=self.state.latest_batch,
+            steps_completed=self.state.steps_completed,
             metrics=metrics,
         )
 
@@ -321,7 +321,7 @@ class WorkloadSequencer(workload.Source):
         self.core_context.train.set_status("checkpointing")
 
         # Update the last_ckpt now so it can be captured by get_state() after we yield.
-        self.state.last_ckpt = self.state.latest_batch
+        self.state.last_ckpt = self.state.steps_completed
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.CHECKPOINT_MODEL,
@@ -329,12 +329,12 @@ class WorkloadSequencer(workload.Source):
             t_id=self._trial_id,
             s_id=self.state.step_id,
             num_batches=0,
-            total_batches_processed=self.state.latest_batch,
+            total_batches_processed=self.state.steps_completed,
         )
         response = yield from yield_and_await_response(wkld)
 
         if isinstance(response, workload.InvalidHP):
-            self.core_context.train.report_early_exit(_core.EarlyExitReason.INVALID_HP)
+            self.core_context.train.report_early_exit(core.EarlyExitReason.INVALID_HP)
             if not already_exiting:
                 raise ShouldExit(skip_exit_checkpoint=True)
             return
@@ -348,26 +348,26 @@ class WorkloadSequencer(workload.Source):
         self.check_for_preemption()
 
     def batches_until_val(self) -> int:
-        return self.state.last_val + self.min_val_period_batches - self.state.latest_batch
+        return self.state.last_val + self.min_val_period_batches - self.state.steps_completed
 
     def batches_until_ckpt(self) -> int:
-        return self.state.last_ckpt + self.min_ckpt_period_batches - self.state.latest_batch
+        return self.state.last_ckpt + self.min_ckpt_period_batches - self.state.steps_completed
 
-    def batches_until_op_complete(self, op: _core.SearcherOperation) -> int:
+    def batches_until_op_complete(self, op: core.SearcherOperation) -> int:
         return (
             self.as_batches(
-                batches=op.length if self._unit == _core.Unit.BATCHES else None,
-                records=op.length if self._unit == _core.Unit.RECORDS else None,
-                epochs=op.length if self._unit == _core.Unit.EPOCHS else None,
+                batches=op.length if self._unit == core.Unit.BATCHES else None,
+                records=op.length if self._unit == core.Unit.RECORDS else None,
+                epochs=op.length if self._unit == core.Unit.EPOCHS else None,
             )
-            - self.state.latest_batch
+            - self.state.steps_completed
         )
 
     def checkpoint_is_current(self) -> bool:
-        return self.state.last_ckpt == self.state.latest_batch
+        return self.state.last_ckpt == self.state.steps_completed
 
     def validation_is_current(self) -> bool:
-        return self.state.last_val == self.state.latest_batch
+        return self.state.last_val == self.state.steps_completed
 
     def __iter__(self) -> workload.Stream:
         try:
@@ -375,11 +375,11 @@ class WorkloadSequencer(workload.Source):
             if (
                 self.want_initial_val
                 and self.val_from_previous_run is None
-                and self.state.latest_batch == 0
+                and self.state.steps_completed == 0
             ):
                 yield from self.validate(None)
 
-            for op in self.core_context.searcher.operations(_core.SearcherMode.ChiefOnly):
+            for op in self.core_context.searcher.operations(core.SearcherMode.ChiefOnly):
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
@@ -426,7 +426,7 @@ class WorkloadSequencer(workload.Source):
 
 
 def make_compatibility_workloads(
-    core_context: _core.Context,
+    core_context: core.Context,
     env: det.EnvContext,
     global_batch_size: int,
 ) -> Tuple[workload.Stream, Optional[WorkloadSequencer]]:

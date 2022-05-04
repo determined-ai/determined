@@ -4,7 +4,7 @@ import math
 from typing import Iterator, Optional
 
 import determined as det
-from determined import _core
+from determined import core
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.core")
@@ -175,7 +175,7 @@ class SearcherContext:
     def __init__(
         self,
         session: Session,
-        dist: _core.DistributedContext,
+        dist: core.DistributedContext,
         trial_id: int,
         run_id: int,
         allocation_id: str,
@@ -323,7 +323,7 @@ class DummySearcherOperation(SearcherOperation):
 class DummySearcherContext(SearcherContext):
     """Yield a singe search op.  We need a way for this to be configurable."""
 
-    def __init__(self, dist: _core.DistributedContext, length: int = 1) -> None:
+    def __init__(self, dist: core.DistributedContext, length: int = 1) -> None:
         self._dist = dist
         self._length = length
 

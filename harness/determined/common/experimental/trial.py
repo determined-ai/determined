@@ -118,14 +118,26 @@ class TrialReference:
             return checkpoint.Checkpoint._from_json(checkpoints[0], self._session)
 
         if not sort_by:
-            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
-            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0]["training"]["experimentConfig"]["searcher"]["metric"]
+            smaller_is_better = checkpoints[0]["training"]["experimentConfig"]["searcher"][
+                "smaller_is_better"
+            ]
+
+        def has_metric(c: Dict[str, Any]) -> bool:
+            return sort_by in c["training"].get("validationMetrics", {}).get("avgMetrics", {})
+
+        checkpoints_with_metric = [c for c in checkpoints if has_metric(c)]
+
+        if not checkpoints_with_metric:
+            raise AssertionError(f"No checkpoint for trial {self.id} has metric {sort_by}")
 
         best_checkpoint_func = min if smaller_is_better else max
-        key: Callable[[Dict], Any] = lambda x: x["metrics"]["validationMetrics"][sort_by]
+        key: Callable[[Dict], Any] = lambda x: x["training"]["validationMetrics"]["avgMetrics"][
+            sort_by
+        ]
         return checkpoint.Checkpoint._from_json(
             best_checkpoint_func(
-                [c for c in checkpoints if c["metrics"] is not None],
+                checkpoints_with_metric,
                 key=key,
             ),
             self._session,

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Iterator, List, Tuple, TypeVar
 
 import pytest
 
-from determined import _core
+from determined import core
 
 T = TypeVar("T")
 
@@ -44,8 +44,8 @@ class Execution:
         self._dist = None
         if make_distributed_context:
 
-            def _make_distributed_context() -> _core.DistributedContext:
-                return _core.DistributedContext(
+            def _make_distributed_context() -> core.DistributedContext:
+                return core.DistributedContext(
                     rank=self.rank,
                     size=self.size,
                     local_rank=self.local_rank,
@@ -146,7 +146,7 @@ class Execution:
         return self._info[thread_id][2]
 
     @property
-    def distributed(self) -> _core.DistributedContext:
+    def distributed(self) -> core.DistributedContext:
         assert self._dist is not None, "Execute was configured make_distributed_context=False"
         thread_id = threading.get_ident()
         assert thread_id in self._info, "must be called from within an @Execute-decorated function"

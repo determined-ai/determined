@@ -32,6 +32,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -662,6 +663,27 @@ func (a *apiServer) GetExperimentCheckpoints(
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
+	// Override the order by for searcher metric.
+	if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
+		if req.OrderBy != apiv1.OrderBy_ORDER_BY_UNSPECIFIED {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				"cannot specify order by which is implied with sort by searcher metric",
+			)
+		}
+
+		exp, err := a.m.db.ExperimentByID(int(req.Id))
+		if err != nil {
+			return nil, fmt.Errorf("scanning for experiment: %w", err)
+		}
+
+		if exp.Config.Searcher().SmallerIsBetter() {
+			req.OrderBy = apiv1.OrderBy_ORDER_BY_ASC
+		} else {
+			req.OrderBy = apiv1.OrderBy_ORDER_BY_DESC
+		}
+	}
+
 	resp := &apiv1.GetExperimentCheckpointsResponse{}
 	resp.Checkpoints = []*checkpointv1.Checkpoint{}
 	switch err := a.m.db.QueryProto("get_checkpoints_for_experiment", &resp.Checkpoints, req.Id); {
@@ -688,23 +710,41 @@ func (a *apiServer) GetExperimentCheckpoints(
 			return false
 		}
 
-		found = false
-		for _, state := range req.ValidationStates {
-			if state == v.ValidationState {
-				found = true
-				break
-			}
-		}
-
-		if len(req.ValidationStates) != 0 && !found {
-			return false
-		}
-
 		return true
 	})
 
-	a.sort(
-		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
+	sort.Slice(resp.Checkpoints, func(i, j int) bool {
+		ai, aj := resp.Checkpoints[i], resp.Checkpoints[j]
+		if req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC {
+			if order, done := protoless.CheckpointSearcherMetricNullsLast(ai, aj); done {
+				return order
+			}
+		}
+
+		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
+			aj, ai = ai, aj
+		}
+
+		switch req.SortBy {
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_BATCH_NUMBER:
+			return protoless.CheckpointStepsCompletedLess(ai, aj)
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UUID:
+			return ai.Uuid < aj.Uuid
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID:
+			return protoless.CheckpointTrialIDLess(ai, aj)
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_END_TIME:
+			return protoless.CheckpointReportTimeLess(ai, aj)
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_STATE:
+			return ai.State.Number() < aj.State.Number()
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC:
+			return protoless.CheckpointSearcherMetricLess(ai, aj)
+		case apiv1.GetExperimentCheckpointsRequest_SORT_BY_UNSPECIFIED:
+			fallthrough
+		default:
+			return protoless.CheckpointTrialIDLess(ai, aj)
+		}
+	})
+
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 

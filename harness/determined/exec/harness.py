@@ -6,7 +6,7 @@ import sys
 from typing import Iterator
 
 import determined as det
-from determined import _core, horovod, load
+from determined import core, horovod, load
 from determined.common.api import analytics, certs
 
 
@@ -46,7 +46,7 @@ def main(train_entrypoint: str) -> int:
         experiment_config=info.trial._config,
         hparams=info.trial.hparams,
         latest_checkpoint=info.latest_checkpoint,
-        latest_batch=info.trial._latest_batch,
+        steps_completed=info.trial._steps_completed,
         use_gpu=bool(info.gpu_uuids),
         container_gpus=info.gpu_uuids,
         slot_ids=info.slot_ids,
@@ -89,11 +89,11 @@ def main(train_entrypoint: str) -> int:
         # the TrialControllers only support a fixed set of launch layers.
         distributed = None
         if distributed_backend.use_horovod():
-            distributed = _core.DistributedContext.from_horovod(horovod.hvd)
+            distributed = core.DistributedContext.from_horovod(horovod.hvd)
         elif distributed_backend.use_deepspeed():
-            distributed = _core.DistributedContext.from_deepspeed()
+            distributed = core.DistributedContext.from_deepspeed()
         elif distributed_backend.use_torch():
-            distributed = _core.DistributedContext.from_torch_distributed()
+            distributed = core.DistributedContext.from_torch_distributed()
         elif len(info.container_addrs) > 1 or len(info.slot_ids) > 1:
             raise ValueError(
                 "In multi-slot tasks, the determined.exec.harness module must not be invoked "
@@ -102,8 +102,8 @@ def main(train_entrypoint: str) -> int:
             )
 
         # Step 4: Let core.init() create the core.Context.
-        with _core.init(
-            distributed=distributed, preempt_mode=_core.PreemptMode.ChiefOnly
+        with core.init(
+            distributed=distributed, preempt_mode=core.PreemptMode.ChiefOnly
         ) as core_context:
             trial_context = trial_class.trial_context_class(core_context, env)
 
