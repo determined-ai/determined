@@ -112,6 +112,7 @@ const ResourcepoolDetail: React.FC = () => {
 
     const mainSection = clone(pool);
     delete mainSection.details;
+    delete mainSection.stats;
     return (
       <Page>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
