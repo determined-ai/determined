@@ -1,12 +1,11 @@
-import React, {useMemo} from "react";
-import Section from 'components/Section';
+import React, { useMemo } from 'react';
+
 import Grid, { GridMode } from 'components/Grid';
-import { ShirtSize } from 'themes';
 import OverviewStats from 'components/OverviewStats';
+import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
+import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
-
-
 
 export const ClusterOverallStats: React.FC = () => {
   const { agents, cluster: overview, resourcePools } = useStore();
@@ -44,31 +43,31 @@ export const ClusterOverallStats: React.FC = () => {
 
   return (
     <Section hideTitle title="Overview Stats">
-        <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
-          <OverviewStats title="Connected Agents">
-            {agents ? agents.length : '?'}
+      <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
+        <OverviewStats title="Connected Agents">
+          {agents ? agents.length : '?'}
+        </OverviewStats>
+        {cudaTotalSlots ? (
+          <OverviewStats title="CUDA Slots Allocated">
+            {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
           </OverviewStats>
-          {cudaTotalSlots ? (
-            <OverviewStats title="CUDA Slots Allocated">
-              {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {rocmTotalSlots ? (
-            <OverviewStats title="ROCm Slots Allocated">
-              {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {overview.CPU.total ? (
-            <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
-            </OverviewStats>
-          ) : null}
-          {auxContainers.total ? (
-            <OverviewStats title="Aux Containers Running">
-              {auxContainers.running} <small>/ {auxContainers.total}</small>
-            </OverviewStats>
-          ) : null}
-        </Grid>
-      </Section>
-  )
-}
+        ) : null}
+        {rocmTotalSlots ? (
+          <OverviewStats title="ROCm Slots Allocated">
+            {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
+          </OverviewStats>
+        ) : null}
+        {overview.CPU.total ? (
+          <OverviewStats title="CPU Slots Allocated">
+            {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
+          </OverviewStats>
+        ) : null}
+        {auxContainers.total ? (
+          <OverviewStats title="Aux Containers Running">
+            {auxContainers.running} <small>/ {auxContainers.total}</small>
+          </OverviewStats>
+        ) : null}
+      </Grid>
+    </Section>
+  );
+};

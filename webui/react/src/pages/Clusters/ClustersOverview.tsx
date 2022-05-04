@@ -15,7 +15,7 @@ import {
 } from 'types';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
-import { ClusterOverallStats } from '../Cluster/ClusterOverallStats'
+import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
 import css from './ClustersOverview.module.scss';
 

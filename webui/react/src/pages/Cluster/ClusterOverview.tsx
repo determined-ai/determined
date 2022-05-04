@@ -23,7 +23,7 @@ import {
 import { getSlotContainerStates } from 'utils/cluster';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
-import { ClusterOverallStats } from './ClusterOverallStats'
+import { ClusterOverallStats } from './ClusterOverallStats';
 import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
@@ -38,7 +38,7 @@ const ClusterOverview: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const { agents, resourcePools } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<GridListView>(() => {
     if (initView && Object.values(GridListView).includes(initView as GridListView)) return initView;
