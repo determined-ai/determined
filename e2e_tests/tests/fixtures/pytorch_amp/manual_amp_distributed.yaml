@@ -1,6 +1,11 @@
 description: mnist_pytorch_const with PyTorch AMP API manually applied
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+environment:
+  environment_variables:
+    #This is specified due to an error in NCCL/veth interface
+    #https://github.com/pytorch/pytorch/issues/68893
+    - NCCL_SOCKET_IFNAME=ens
 hyperparameters:
   learning_rate: 1.0
   global_batch_size: 64
