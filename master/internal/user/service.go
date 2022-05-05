@@ -112,23 +112,27 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err error) {
 	token, err := s.extractToken(c)
 	if err != nil {
-		return true, c.Redirect(
-			http.StatusSeeOther,
-			fmt.Sprintf("/det/login?redirect=%s", c.Request().URL.Path),
-		)
+		return true, redirectToLogin(c)
 	}
 
 	switch user, _, err := s.db.UserByToken(token, s.extConfig); err {
 	case nil:
 		if !user.Active {
-			return true, echo.NewHTTPError(http.StatusForbidden, "user not active")
+			return true, redirectToLogin(c)
 		}
 		return false, nil
 	case db.ErrNotFound:
-		return true, echo.NewHTTPError(http.StatusUnauthorized)
+		return true, redirectToLogin(c)
 	default:
 		return true, err
 	}
+}
+
+func redirectToLogin(c echo.Context) error {
+	return c.Redirect(
+		http.StatusSeeOther,
+		fmt.Sprintf("/det/login?redirect=%s", c.Request().URL),
+	)
 }
 
 func (s *Service) postLogout(c echo.Context) (interface{}, error) {

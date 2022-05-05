@@ -142,10 +142,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		var portProxyConf *sproto.PortProxyConfig
 		if c.GenericCommandSpec.Port != nil {
 			portProxyConf = &sproto.PortProxyConfig{
-				ServiceID:   string(c.taskID),
-				Port:        *c.GenericCommandSpec.Port,
-				ProxyTCP:    c.ProxyTCP,
-				UseHTTPAuth: c.UseHTTPAuth,
+				ServiceID:       string(c.taskID),
+				Port:            *c.GenericCommandSpec.Port,
+				ProxyTCP:        c.ProxyTCP,
+				Unauthenticated: c.Unauthenticated,
 			}
 		}
 

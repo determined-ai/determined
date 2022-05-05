@@ -136,7 +136,6 @@ func (a *apiServer) LaunchTensorboard(
 	// the same port on an agent in host mode.
 	port := getRandomPort(minTensorBoardPort, maxTensorBoardPort)
 	spec.Port = &port
-	spec.UseHTTPAuth = true
 	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
 
 	spec.Metadata = map[string]interface{}{
