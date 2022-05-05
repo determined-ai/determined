@@ -1,6 +1,4 @@
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import OverviewStats from 'components/OverviewStats';
@@ -17,6 +15,7 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
@@ -70,7 +69,7 @@ const ClusterOverview: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
+  const [ cudaTotalSlots, rocmTotalSlots, cpuTotalSlots ] = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
       let index;
       switch (pool.slotType) {
@@ -80,13 +79,16 @@ const ClusterOverview: React.FC = () => {
         case ResourceType.ROCM:
           index = 1;
           break;
+        case ResourceType.CPU:
+          index = 2;
+          break;
         default:
           index = undefined;
       }
       if (index === undefined) return acc;
       acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
       return acc;
-    }, [ 0, 0 ]);
+    }, [ 0, 0, 0 ]);
   }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
@@ -191,7 +193,7 @@ const ClusterOverview: React.FC = () => {
           ) : null}
           {overview.CPU.total ? (
             <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
+              {overview.CPU.total - overview.CPU.available} <small>/ {cpuTotalSlots}</small>
             </OverviewStats>
           ) : null}
           {auxContainers.total ? (
