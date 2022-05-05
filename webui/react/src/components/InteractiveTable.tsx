@@ -340,6 +340,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useLayoutEffect(() => {
     const newSettingsWidths = settings.columnWidths;
+    if (!newSettingsWidths) return;
     const widths = getUpscaledWidths(newSettingsWidths);
     const dropRightStyles = widths.map((width, idx) => ({
       left: `${(width / 2)}px`,
