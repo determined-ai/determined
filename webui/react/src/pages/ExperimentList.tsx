@@ -636,8 +636,10 @@ const ExperimentList: React.FC = () => {
   );
 
   const openModal = useCallback(() => {
-    modalOpen({ initialVisibleColumns: settings.columns });
-  }, [ settings.columns, modalOpen ]);
+    modalOpen(
+      { initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)) },
+    );
+  }, [ settings.columns, modalOpen, transferColumns ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ExperimentColumnName[];
