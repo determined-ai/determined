@@ -2,11 +2,19 @@ WITH owned_workspaces AS (
   SELECT id
   FROM workspaces
   WHERE user_id = $2
+),
+proj AS (
+  SELECT id FROM projects
+  WHERE id = $1
+  AND NOT immutable
+  AND (user_id = $2 OR $3 IS TRUE
+    OR workspace_id IN (SELECT id FROM owned_workspaces)
+  )
+),
+exper AS (
+  UPDATE experiments SET project_id = 1
+  WHERE project_id IN (SELECT id FROM proj)
 )
 DELETE FROM projects
-WHERE id = $1
-AND NOT immutable
-AND (user_id = $2 OR $3 IS TRUE
-  OR workspace_id IN (SELECT id FROM owned_workspaces)
-)
+WHERE id IN (SELECT id FROM proj)
 RETURNING projects.id;
