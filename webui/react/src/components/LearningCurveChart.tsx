@@ -36,6 +36,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const chartData: AlignedData = useMemo(() => {
     return [ xValues, ...data ];
   }, [ data, xValues ]);
+
   const chartOptions: Options = useMemo(() => {
 
     const onlyOneXValue = chartData?.[0]?.length === 1;

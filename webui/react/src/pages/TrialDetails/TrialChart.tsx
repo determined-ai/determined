@@ -43,7 +43,7 @@ const TrialChart: React.FC<Props> = ({
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
-    const yValues: Record<string, Record<string, number>> = {};
+    const yValues: Record<string, Record<string, number | null>> = {};
     metrics.forEach((metric, index) => yValues[index] = {});
 
     (workloads || []).forEach(wlWrapper => {
@@ -55,7 +55,12 @@ const TrialChart: React.FC<Props> = ({
         const x = metricsWl.totalBatches;
         if (!xValues.includes(x)) xValues.push(x);
 
-        yValues[index][x] = metricsWl.metrics[metric.name];
+        /**
+         * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+         * dynamic min/max ranges via uPlot.Scales.
+         */
+        const y = metricsWl.metrics[metric.name];
+        yValues[index][x] = Number.isFinite(y) ? y : null;
       });
     });
 
