@@ -46,7 +46,9 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             time.sleep(.1)
             print("x is now", x)
             if steps_completed % 10 == 0:
-                core_context.train.report_training_metrics(steps_completed=steps_completed, metrics={"x": x})
+                core_context.train.report_training_metrics(
+                    steps_completed=steps_completed, metrics={"x": x}
+                )
 
                 # NEW: report progress once in a while.
                 op.report_progress(batch)
@@ -58,9 +60,11 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 if core_context.preempt.should_preempt():
                     return
             batch += 1
-        # NEW: After training for each op, you typically validate and report the searcher metric
-        # to the master.
-        core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
+        # NEW: After training for each op, you typically validate and report the
+        # searcher metric to the master.
+        core_context.train.report_validation_metrics(
+            steps_completed=steps_completed, metrics={"x": x}
+        )
         op.report_completed(x)
 
     # NEW: after searching, save a checkpoint if our last one is not up-to-date.
