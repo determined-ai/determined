@@ -63,6 +63,24 @@ describe('LogViewerFilter', () => {
     });
   });
 
+  it('should render filters with rank 0 and no rank', async () => {
+    const values: Filters = {
+      agentIds: [],
+      allocationIds: [],
+      containerIds: [],
+      levels: [],
+      rankIds: [ 0, undefined ],
+    };
+    setup(values, { ...values, rankIds: [] });
+
+    const agentOption1 = screen.getByText('All Ranks');
+    userEvent.click(agentOption1, undefined, { skipPointerEventsCheck: true });
+    await waitFor(async () => {
+      expect(await screen.findAllByText('0')).toHaveLength(2);
+      expect(screen.queryByText('No Rank')).toBeInTheDocument();
+    });
+  });
+
   it('should call onChange when options are selected', async () => {
     const { handleOnChange } = setup(DEFAULT_FILTER_OPTIONS, {});
 
