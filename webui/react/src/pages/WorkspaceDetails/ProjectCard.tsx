@@ -15,10 +15,15 @@ interface Props {
   curUser?: DetailedUser;
   fetchProjects?: () => void;
   project: Project;
+  workspaceArchived?: boolean;
 }
 
-const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props) => {
-
+const ProjectCard: React.FC<Props> = ({
+  project,
+  curUser,
+  fetchProjects,
+  workspaceArchived,
+}: Props) => {
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.projectDetails(project.id));
   }, [ project.id ]);
@@ -28,6 +33,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props
       curUser={curUser}
       project={project}
       trigger={[ 'contextMenu' ]}
+      workspaceArchived={workspaceArchived}
       onComplete={fetchProjects}>
       <div className={css.base} onClick={handleCardClick}>
         <div className={css.nameRow}>
@@ -52,6 +58,7 @@ const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props
             curUser={curUser}
             direction="horizontal"
             project={project}
+            workspaceArchived={workspaceArchived}
             onComplete={fetchProjects}
           />
         )}
