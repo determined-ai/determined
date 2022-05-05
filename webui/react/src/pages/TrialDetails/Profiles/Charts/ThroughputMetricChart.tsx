@@ -24,7 +24,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, tri
 
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
-      <UPlotChart data={throughputMetrics.data} options={options} />
+      <UPlotChart data={throughputMetrics.data} options={options} title="Throughput" />
     </Section>
   );
 };

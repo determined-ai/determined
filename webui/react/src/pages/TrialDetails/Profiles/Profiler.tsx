@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback } from 'react';
 import uPlot from 'uplot';
 
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { Options } from 'components/UPlot/UPlotChart';
 import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
@@ -19,9 +20,6 @@ export interface Props {
   trial: TrialDetails;
 }
 
-/*
- * Shared uPlot chart options.
- */
 export const tzDate = (ts: number): Date => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC');
 
 export const baseAxes: Record<string, uPlot.Axis> = {
@@ -75,10 +73,6 @@ export const getSeriesForMetricName = (name: string, index: number): uPlot.Serie
 });
 
 const Profiler: React.FC<Props> = ({ trial }) => {
-  useEffect(() => {
-    // return () => console.log('profiler out');
-  }, []);
-  const sync = useRef(uPlot.sync('x'));
 
   const getOptionsForMetrics = useCallback(
     (activeMetricName: string, metricNames: string[]): Partial<Options> => {
@@ -91,11 +85,6 @@ const Profiler: React.FC<Props> = ({ trial }) => {
         cursor: {
           focus: { prox: 16 },
           lock: true,
-          sync: {
-            key: sync.current.key,
-            scales: [ sync.current.key, null ],
-            setSeries: false,
-          },
         },
         height: CHART_HEIGHT,
         scales: { x: { time: false } },
@@ -112,9 +101,11 @@ const Profiler: React.FC<Props> = ({ trial }) => {
 
   return (
     <div>
-      <ThroughputMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
-      <TimingMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
-      <SystemMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+      <SyncProvider>
+        <ThroughputMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+        <TimingMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+        <SystemMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
+      </SyncProvider>
     </div>
   );
 };

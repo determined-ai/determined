@@ -85,7 +85,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
         />
       )}
       title="System Metrics">
-      <UPlotChart data={systemMetrics.data} options={options} />
+      <UPlotChart data={systemMetrics.data} options={options} title="System Metrics" />
     </Section>
   );
 };

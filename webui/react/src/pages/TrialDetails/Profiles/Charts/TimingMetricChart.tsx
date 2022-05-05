@@ -20,6 +20,7 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMe
         data={timingMetrics.data}
         noDataMessage="No data found. Timing metrics may not be available for your framework."
         options={options}
+        title="Timing Metrics"
       />
     </Section>
   );
