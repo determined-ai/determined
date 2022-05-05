@@ -197,6 +197,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
         activate: true,
         experimentConfig: newConfig,
         parentId: modalState.experiment.id,
+        projectId: modalState.experiment.projectId,
       });
 
       // Route to reload path to forcibly remount experiment page.

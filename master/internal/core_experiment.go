@@ -271,6 +271,7 @@ type CreateExperimentParams struct {
 	GitCommitDate *time.Time      `json:"git_commit_date"`
 	ValidateOnly  bool            `json:"validate_only"`
 	Project       *string         `json:"project"`
+	ProjectID     *int            `json:"project_id"`
 	Workspace     *string         `json:"workspace"`
 }
 

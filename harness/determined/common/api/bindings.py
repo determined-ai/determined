@@ -906,6 +906,7 @@ class v1CreateExperimentRequest:
         config: "typing.Optional[str]" = None,
         modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None,
         parentId: "typing.Optional[int]" = None,
+        projectId: "typing.Optional[int]" = None,
         validateOnly: "typing.Optional[bool]" = None,
     ):
         self.modelDefinition = modelDefinition
@@ -913,6 +914,7 @@ class v1CreateExperimentRequest:
         self.validateOnly = validateOnly
         self.parentId = parentId
         self.activate = activate
+        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateExperimentRequest":
@@ -922,6 +924,7 @@ class v1CreateExperimentRequest:
             validateOnly=obj.get("validateOnly", None),
             parentId=obj.get("parentId", None),
             activate=obj.get("activate", None),
+            projectId=obj.get("projectId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -931,6 +934,7 @@ class v1CreateExperimentRequest:
             "validateOnly": self.validateOnly if self.validateOnly is not None else None,
             "parentId": self.parentId if self.parentId is not None else None,
             "activate": self.activate if self.activate is not None else None,
+            "projectId": self.projectId if self.projectId is not None else None,
         }
 
 class v1CreateExperimentResponse:
