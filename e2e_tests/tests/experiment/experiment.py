@@ -259,7 +259,9 @@ def is_terminal_state(state: determinedexperimentv1State) -> bool:
 
 
 class Step:
-    def __init__(self, state: str, batches: int, avg_metrics: Dict[str, Any]):
+    def __init__(
+        self, state: determinedexperimentv1State, batches: int, avg_metrics: Dict[str, Any]
+    ):
         self.state = state
         self.batches = batches
         self.avg_metrics = avg_metrics
