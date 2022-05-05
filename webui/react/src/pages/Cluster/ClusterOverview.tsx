@@ -1,4 +1,6 @@
 import { SorterResult } from 'antd/es/table/interface';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import OverviewStats from 'components/OverviewStats';
@@ -15,7 +17,6 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
@@ -32,6 +33,10 @@ const VIEW_CHOICE_KEY = 'view-choice';
 
 const defaultSorter = { descend: false, key: 'name' };
 
+const maxTheoreticalPoolSlotCapacity = (pool: ResourcePool) => {
+  // assuming that each pool has a single type of slot.
+  return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+};
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
@@ -69,26 +74,13 @@ const ClusterOverview: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots, cpuTotalSlots ] = useMemo(() => {
+  /** theoretical max capacity for each slot type in the cluster */
+  const maxTotalSlots = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
-      let index;
-      switch (pool.slotType) {
-        case ResourceType.CUDA:
-          index = 0;
-          break;
-        case ResourceType.ROCM:
-          index = 1;
-          break;
-        case ResourceType.CPU:
-          index = 2;
-          break;
-        default:
-          index = undefined;
-      }
-      if (index === undefined) return acc;
-      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
+      acc[pool.slotType] += maxTheoreticalPoolSlotCapacity(pool);
       return acc;
-    }, [ 0, 0, 0 ]);
+    }, {} as { [key in ResourceType]: number });
   }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
@@ -129,6 +121,11 @@ const ClusterOverview: React.FC = () => {
       if (column.key === 'chart') column.render = slotsBarRender;
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      }
+      if (column.key === 'slotsAvailable') {
+        column.render = (_: unknown, rp: ResourcePool): React.ReactNode => {
+          return maxTheoreticalPoolSlotCapacity(rp);
+        };
       }
       return column;
     });
@@ -181,21 +178,17 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {cudaTotalSlots ? (
-            <OverviewStats title="CUDA Slots Allocated">
-              {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {rocmTotalSlots ? (
-            <OverviewStats title="ROCm Slots Allocated">
-              {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {overview.CPU.total ? (
-            <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {cpuTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
+          {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
+            (maxTotalSlots[resType] > 0) ? (
+              <OverviewStats
+                key={resType}
+                title={`${resType} Slots Allocated`}>
+                {overview[resType].total - overview[resType].available}
+                <small>
+                  / {maxTotalSlots[resType]}
+                </small>
+              </OverviewStats>
+            ) : null))}
           {auxContainers.total ? (
             <OverviewStats title="Aux Containers Running">
               {auxContainers.running} <small>/ {auxContainers.total}</small>
