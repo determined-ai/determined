@@ -772,7 +772,7 @@ const ProjectDetails: React.FC = () => {
 
   const ExperimentTabOptions = useMemo(() => {
     return (
-      <>
+      <div className={css.tabOptions}>
         <Space className={css.actionList}>
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
@@ -805,7 +805,7 @@ const ProjectDetails: React.FC = () => {
             </div>
           </Dropdown>
         </div>
-      </>
+      </div>
     );
   }, [ filterCount,
     handleCustomizeColumnsClick,
@@ -863,13 +863,15 @@ const ProjectDetails: React.FC = () => {
     }, {
       body: (
         <PaginatedNotesCard
-          disabled={project?.archived}
           notes={project?.notes ?? []}
           onDelete={handleDeleteNote}
           onNewPage={handleNewNotesPage}
           onSave={handleSaveNotes}
         />),
-      options: <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>,
+      options: (
+        <div className={css.tabOptions}>
+          <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+        </div>),
       title: 'Notes',
     } ]);
   }, [ ExperimentActionDropdown,
@@ -890,7 +892,6 @@ const ProjectDetails: React.FC = () => {
     hasPausable,
     hasUnarchivable,
     isLoading,
-    project?.archived,
     project?.notes,
     settings,
     total,
@@ -904,7 +905,11 @@ const ProjectDetails: React.FC = () => {
       `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
-    return <Spinner tip={`Loading project ${projectId} details...`} />;
+    return (
+      <Spinner
+        tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`}
+      />
+    );
   }
 
   return (
@@ -917,9 +922,7 @@ const ProjectDetails: React.FC = () => {
         curUser={user}
         fetchProject={fetchProject}
         project={project}
-        settings={settings}
         tabs={tabs}
-        updateSettings={updateSettings}
       />
     </Page>
   );

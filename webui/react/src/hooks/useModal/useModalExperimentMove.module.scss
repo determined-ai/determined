@@ -3,6 +3,10 @@
   flex-direction: column;
   gap: var(--theme-sizes-layout-big);
 
+  .workspaceOption {
+    display: flex;
+    justify-content: space-between;
+  }
   .label {
     color: var(--theme-colors-monochrome-7)
   }
@@ -27,7 +31,9 @@
 
       li {
         cursor: pointer;
-        padding-left: var(--theme-sizes-layout-small);
+        display: flex;
+        justify-content: space-between;
+        padding-inline: var(--theme-sizes-layout-small);
 
         &:hover {
           background-color: var(--theme-colors-monochrome-16);

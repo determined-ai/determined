@@ -17,15 +17,17 @@ interface Props {
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
+  showChildrenIfEmpty?: boolean;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
+  workspaceArchived?: boolean;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ProjectActionDropdown: React.FC<Props> = (
   {
-    project, children, curUser, onVisibleChange,
-    className, direction = 'vertical', onComplete, trigger,
+    project, children, curUser, onVisibleChange, showChildrenIfEmpty = true,
+    className, direction = 'vertical', onComplete, trigger, workspaceArchived = false,
   }
   : PropsWithChildren<Props>,
 ) => {
@@ -70,42 +72,44 @@ const ProjectActionDropdown: React.FC<Props> = (
     openProjectDelete();
   }, [ openProjectDelete ]);
 
-  const ProjectActionMenu = useMemo(() => {
-    return (
-      <Menu>
-        {userHasPermissions && !project.archived &&
-          <Menu.Item key="edit" onClick={handleEditClick}>Edit...</Menu.Item>}
-        {userHasPermissions && !project.archived &&
-          <Menu.Item key="move" onClick={handleMoveClick}>Move...</Menu.Item>}
-        {userHasPermissions && (
-          <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
-            {project.archived ? 'Unarchive' : 'Archive'}
-          </Menu.Item>
-        )}
-        {userHasPermissions && !project.archived &&
-        <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>}
-      </Menu>
-    );
+  const menuItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    if (userHasPermissions && !project.archived) {
+      items.push(<Menu.Item key="edit" onClick={handleEditClick}>Edit...</Menu.Item>);
+    }
+    if (userHasPermissions && !project.archived) {
+      items.push(<Menu.Item key="move" onClick={handleMoveClick}>Move...</Menu.Item>);
+    }
+    if (userHasPermissions && !workspaceArchived) {
+      items.push((
+        <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
+          {project.archived ? 'Unarchive' : 'Archive'}
+        </Menu.Item>));
+    }
+    if (userHasPermissions && !project.archived) {
+      items.push(<Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>);
+    }
+    return items;
   }, [ handleArchiveClick,
     handleDeleteClick,
     handleEditClick,
     handleMoveClick,
     project.archived,
-    userHasPermissions ]);
+    userHasPermissions,
+    workspaceArchived ]);
 
-  if (!userHasPermissions) {
-    return (children as JSX.Element) ?? (
-      <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <button disabled>
-          <Icon name={`overflow-${direction}`} />
-        </button>
-      </div>
-    );
+  if (menuItems.length === 0 && !showChildrenIfEmpty) {
+    return null;
   }
 
   return children ? (
     <Dropdown
-      overlay={ProjectActionMenu}
+      disabled={menuItems.length === 0}
+      overlay={(
+        <Menu>
+          {menuItems}
+        </Menu>
+      )}
       placement="bottomLeft"
       trigger={trigger ?? [ 'contextMenu', 'click' ]}
       onVisibleChange={onVisibleChange}>
@@ -117,7 +121,12 @@ const ProjectActionDropdown: React.FC<Props> = (
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
-        overlay={ProjectActionMenu}
+        disabled={menuItems.length === 0}
+        overlay={(
+          <Menu>
+            {menuItems}
+          </Menu>
+        )}
         placement="bottomRight"
         trigger={trigger ?? [ 'click' ]}>
         <button onClick={stopPropagation}>

@@ -1,4 +1,4 @@
-import { Button, Menu, Modal, Tooltip } from 'antd';
+import { Button, Menu, Modal, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
@@ -25,6 +25,7 @@ interface ItemProps extends LinkProps {
   badge?: number;
   icon: string | React.ReactNode;
   label: string;
+  labelRender?: React.ReactNode;
   status?: string;
   tooltip?: boolean;
 }
@@ -66,7 +67,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
         {typeof props.icon === 'string' ?
           <div className={css.icon}><Icon name={props.icon} size="large" /></div> :
           <div className={css.icon}>{props.icon}</div>}
-        <div className={css.label}>{props.label}</div>
+        <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
       </Link>
       <div className={css.navItemExtra}>
         {status && (
@@ -247,6 +248,13 @@ const NavigationSideBar: React.FC = () => {
                             />
                           )}
                           label={workspace.name}
+                          labelRender={(
+                            <Typography.Paragraph
+                              ellipsis={{ rows: 1, tooltip: true }}
+                              style={{ color: 'var(--theme-colors-monochrome-17)' }}>
+                              {workspace.name}
+                            </Typography.Paragraph>
+                          )}
                           path={paths.workspaceDetails(workspace.id)}
                         />
                       </li>

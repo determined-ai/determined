@@ -45,7 +45,7 @@ const NotesCard: React.FC<Props> = (
   const saveNotes = useCallback(async () => {
     try {
       setIsLoading(true);
-      await onSave?.(editedNotes);
+      await onSave?.(editedNotes.trim());
       setIsEditing(false);
     } catch (e) {
       handleError(e, {

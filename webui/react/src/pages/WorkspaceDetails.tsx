@@ -177,6 +177,7 @@ const WorkspaceDetails: React.FC = () => {
       <ProjectActionDropdown
         curUser={user}
         project={record}
+        workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
       />
     );
@@ -245,7 +246,7 @@ const WorkspaceDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [ fetchProjects, saveProjectDescription, user ]);
+  }, [ fetchProjects, saveProjectDescription, user, workspace?.archived ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ProjectColumnName[];
@@ -286,12 +287,13 @@ const WorkspaceDetails: React.FC = () => {
         curUser={user}
         project={record}
         trigger={[ 'contextMenu' ]}
+        workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
         onVisibleChange={onVisibleChange}>
         {children}
       </ProjectActionDropdown>
     ),
-    [ fetchProjects, user ],
+    [ fetchProjects, user, workspace?.archived ],
   );
 
   const projectsList = useMemo(() => {
@@ -381,6 +383,7 @@ const WorkspaceDetails: React.FC = () => {
           bordered={false}
           dropdownMatchSelectWidth={140}
           label="View:"
+          showSearch={false}
           value={projectFilter}
           onSelect={handleViewSelect}>
           <Option value={ProjectFilters.All}>All projects</Option>
@@ -398,6 +401,7 @@ const WorkspaceDetails: React.FC = () => {
             bordered={false}
             dropdownMatchSelectWidth={150}
             label="Sort:"
+            showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
@@ -415,10 +419,18 @@ const WorkspaceDetails: React.FC = () => {
         {projects.length !== 0 ? (
           projectsList
         ) : (
-          <Message
-            title="No projects matching the current filters"
-            type={MessageType.Empty}
-          />
+          workspace.numProjects === 0 ? (
+            <Message
+              message='Create a project with the "New Project" button or in the CLI.'
+              title="Workspace contains no projects. "
+              type={MessageType.Empty}
+            />
+          ) : (
+            <Message
+              title="No projects matching the current filters"
+              type={MessageType.Empty}
+            />
+          )
         )}
       </Spinner>
     </Page>

@@ -65,7 +65,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
     {
-      defaultValue: true,
+      defaultValue: false,
       key: 'sortDesc',
       storageKey: 'sortDesc',
       type: { baseType: BaseType.Boolean },

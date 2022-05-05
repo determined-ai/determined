@@ -70,6 +70,10 @@ const ExperimentDetails: React.FC = () => {
   }, [ experiment, stopPolling ]);
 
   useEffect(() => {
+    fetchExperimentDetails();
+  }, [ fetchExperimentDetails ]);
+
+  useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 

@@ -1,11 +1,11 @@
 import { Tooltip, Typography } from 'antd';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
-import { paths } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { DetailedUser, Project } from 'types';
 
 import ProjectActionDropdown from './ProjectActionDropdown';
@@ -19,9 +19,17 @@ interface Props {
 
 const ProjectCard: React.FC<Props> = ({ project, curUser, fetchProjects }: Props) => {
 
+  const handleCardClick = useCallback(() => {
+    routeToReactUrl(paths.projectDetails(project.id));
+  }, [ project.id ]);
+
   return (
-    <ProjectActionDropdown curUser={curUser} project={project} onComplete={fetchProjects}>
-      <div className={css.base}>
+    <ProjectActionDropdown
+      curUser={curUser}
+      project={project}
+      trigger={[ 'contextMenu' ]}
+      onComplete={fetchProjects}>
+      <div className={css.base} onClick={handleCardClick}>
         <div className={css.nameRow}>
           <h6 className={css.name}>
             <Link inherit path={paths.projectDetails(project.id)}>

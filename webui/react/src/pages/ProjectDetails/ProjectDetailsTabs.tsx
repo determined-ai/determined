@@ -5,10 +5,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import Icon from 'components/Icon';
 import PageHeader from 'components/PageHeader';
-import { UpdateSettings } from 'hooks/useSettings';
-import { ProjectDetailsSettings } from 'pages/ProjectDetails.settings';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
-import { DetailedUser, Project } from 'types';
+import { getWorkspace } from 'services/api';
+import { DetailedUser, Project, Workspace } from 'types';
+import handleError from 'utils/error';
 import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsTabs.module.scss';
@@ -25,31 +25,31 @@ interface Props {
   curUser?: DetailedUser;
   fetchProject: () => void;
   project: Project;
-  settings: ProjectDetailsSettings;
   tabs: TabInfo[];
-  updateSettings: UpdateSettings<ProjectDetailsSettings>
 }
 
 const ProjectDetailsTabs: React.FC<Props> = (
-  { project, tabs, settings, updateSettings, fetchProject, curUser }: Props,
+  { project, tabs, fetchProject, curUser }: Props,
 ) => {
-  const [ activeTab, setActiveTab ] = useState<TabInfo>(
-    settings.tab ?
-      tabs.find(tab => sentenceToCamelCase(tab.title) === settings.tab) ?? tabs[0] :
-      tabs[0],
-  );
+  const [ workspace, setWorkspace ] = useState<Workspace>();
+  const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+
+  const fetchWorkspace = useCallback(async () => {
+    try {
+      const response = await getWorkspace({ id: project.workspaceId });
+      setWorkspace(response);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch workspace.' });
+    }
+  }, [ project.workspaceId ]);
 
   const handleTabSwitch = useCallback((tabKey: string) => {
     setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
   useEffect(() => {
-    handleTabSwitch(sentenceToCamelCase(activeTab.title));
-  }, [ activeTab.title, handleTabSwitch, updateSettings ]);
-
-  useEffect(() => {
-    updateSettings({ tab: sentenceToCamelCase(activeTab.title) });
-  }, [ activeTab.title, updateSettings ]);
+    fetchWorkspace();
+  }, [ fetchWorkspace ]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
@@ -77,7 +77,9 @@ const ProjectDetailsTabs: React.FC<Props> = (
             <ProjectActionDropdown
               curUser={curUser}
               project={project}
+              showChildrenIfEmpty={false}
               trigger={[ 'click' ]}
+              workspaceArchived={workspace?.archived}
               onComplete={fetchProject}>
               <div style={{ cursor: 'pointer' }}>
                 <Icon name="arrow-down" size="tiny" />
@@ -90,10 +92,9 @@ const ProjectDetailsTabs: React.FC<Props> = (
         type="project"
       />
       <Tabs
-        activeKey={settings.tab}
-        defaultActiveKey={settings.tab ?? sentenceToCamelCase(tabs[0].title)}
+        defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
         tabBarExtraContent={activeTab.options}
-        tabBarStyle={{ padding: 16, paddingBottom: 0, paddingRight: 0 }}
+        tabBarStyle={{ height: 50, paddingLeft: 16 }}
         onChange={handleTabSwitch}>
         {tabs.map(tabInfo => {
           return (

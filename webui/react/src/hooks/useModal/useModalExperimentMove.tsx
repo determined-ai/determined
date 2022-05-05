@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import Icon from 'components/Icon';
 import SelectFilter from 'components/SelectFilter';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
@@ -34,7 +35,7 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await getWorkspaces({ archived: false, limit: 0 });
+      const response = await getWorkspaces({ limit: 0 });
       setWorkspaces(response.workspaces);
     } catch (e) {
       handleError(e, {
@@ -51,7 +52,6 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
     if (!selectedWorkspaceId) return;
     try {
       const response = await getWorkspaceProjects({
-        archived: false,
         id: selectedWorkspaceId,
         limit: 0,
       });
@@ -76,13 +76,14 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
     if (modalRef.current) fetchWorkspaces();
   }, [ fetchWorkspaces, modalRef ]);
 
-  const handleWorkspaceSelect = useCallback((value: SelectValue) => {
-    setSelectedWorkspaceId(value as number);
+  const handleWorkspaceSelect = useCallback((workspaceId: SelectValue) => {
+    setSelectedWorkspaceId(workspaceId as number);
     setProjects([]);
   }, []);
 
-  const handleProjectSelect = useCallback((value: number) => {
-    setDestinationProjectId(value);
+  const handleProjectSelect = useCallback((project: Project) => {
+    if (project.archived) return;
+    setDestinationProjectId(project.id);
   }, []);
 
   useEffect(() => {
@@ -97,9 +98,17 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
           backgroundColor: projects[index].id === destinationProjectId ?
             'var(--theme-colors-monochrome-16)' :
             undefined,
+          color: projects[index].archived ?
+            'var(--theme-colors-monochrome-10)' :
+            undefined,
         }}
-        onClick={() => handleProjectSelect(projects[index].id)}>
-        <Typography.Text ellipsis={true}>{projects[index].name}</Typography.Text>
+        onClick={() => handleProjectSelect(projects[index])}>
+        <Typography.Text
+          disabled={projects[index].archived}
+          ellipsis={true}>
+          {projects[index].name}
+        </Typography.Text>
+        {projects[index].archived && <Icon name="archive" />}
       </li>
     );
   }, [ destinationProjectId, handleProjectSelect, projects ]);
@@ -113,11 +122,23 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
             id="workspace"
             placeholder="Select a destination workspace."
             style={{ width: '100%' }}
+            value={selectedWorkspaceId}
             onChange={handleWorkspaceSelect}>
             {workspaces.map(workspace => {
               return (
-                <Option key={workspace.id} value={workspace.id}>
-                  {workspace.name}
+                <Option
+                  className={css.workspaceOption}
+                  key={workspace.id}
+                  style={{
+                    color: workspace.archived ?
+                      'var(--theme-colors-monochrome-10)' :
+                      undefined,
+                  }}
+                  value={workspace.id}>
+                  <Typography.Text
+                    ellipsis={true}>
+                    {workspace.name}
+                  </Typography.Text>
                 </Option>
               );
             })}
