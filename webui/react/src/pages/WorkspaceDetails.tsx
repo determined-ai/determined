@@ -310,6 +310,7 @@ const WorkspaceDetails: React.FC = () => {
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
+                workspaceArchived={workspace?.archived}
               />
             ))}
           </Grid>
@@ -341,7 +342,8 @@ const WorkspaceDetails: React.FC = () => {
     size.width,
     total,
     updateSettings,
-    user ]);
+    user,
+    workspace?.archived ]);
 
   useEffect(() => {
     fetchWorkspace();
