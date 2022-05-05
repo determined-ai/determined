@@ -1,3 +1,7 @@
+.modalContent {
+  padding-bottom: 15px;
+  padding-top: 15px;
+}
 .note {
   background-color: var(--theme-colors-monochrome-14);
   border: 1px solid var(--theme-colors-monochrome-12);
@@ -33,7 +37,7 @@
 .buttons {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
+  padding-top: 20px;
   
   button + button {
     margin-left: 8px;

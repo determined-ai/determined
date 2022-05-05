@@ -133,7 +133,7 @@ const useJupyterLabModal = (): ModalHooks => {
   ), [ config, dispatch, fields, handleConfigChange, showFullConfig ]);
 
   const content = useMemo(() => (
-    <>
+    <div className={css.modalContent}>
       {formContent}
       <div className={css.buttons}>
         <Button
@@ -146,7 +146,7 @@ const useJupyterLabModal = (): ModalHooks => {
           onClick={handleCreateEnvironment}>Launch
         </Button>
       </div>
-    </>
+    </div>
   ), [ formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
