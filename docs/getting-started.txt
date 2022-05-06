@@ -137,9 +137,8 @@ experiments:
 Model and Pipeline Definition
 =============================
 
-Although the Python model and data pipeline definition files are not described in this quickstart,
-you might want to review them to become familiar with how interact with the Determined API in your
-code:
+Although the Python model and data pipeline definition files are not explained in this quickstart,
+you might want to review them to see how to call the Determined API from your code:
 
 +------------------+------------------------------------------------------------------------+
 | Filename         | Experiment Type                                                        |
@@ -151,8 +150,9 @@ code:
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations, use Determined in your domain
-by replacing the example files with your model data and code.
+After gaining basic familiarity with Determined tools and operations you can experiment in your
+domain by replacing these files with your model data and code, and setting configuration parameters
+for the kind of experiments you want to run.
 
 ***********************************
  Run a Single CPU/GPU Training Job
