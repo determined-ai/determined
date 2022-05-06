@@ -2,7 +2,7 @@
  Quickstart for Model Developers
 #################################
 
-This quickstart uses the MNIST dataset to demonstrate basic Determined functionality, and walks you
+This quickstart uses the MNIST dataset to demonstrate basic Determined functionality and walks you
 through the steps needed to install Determined, run training jobs, and visualize experiment results
 in your browser. Three examples show the scalability and enhanced functionality gained from simple
 configuration setting changes:
@@ -57,8 +57,8 @@ Hardware
 Docker
 ======
 
-For the distributed example that use an agent, install Docker to run containerized workloads. If you
-do not already have Docker installed, follow the :doc:`Installing Docker
+For the distributed example that uses an agent, install Docker to run containerized workloads. If
+you do not already have Docker installed, follow the :doc:`Installing Docker
 </sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
 
 Environment Variables
