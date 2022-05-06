@@ -115,8 +115,8 @@ You should see the following files in the ``mnist_pytorch`` folder:
    model_def.py
    README.md
 
-Configuration Files
-===================
+Configuration
+=============
 
 Each of the YAML-formatted configuration files corresponds to one of the following example
 experiments:
@@ -134,8 +134,8 @@ experiments:
 |                        | adaptive hyperparameter tuning algorithm.            |
 +------------------------+------------------------------------------------------+
 
-Model and Pipeline Definition Files
-===================================
+Model and Pipeline Definition
+=============================
 
 Although the Python model and data pipeline definition files are not described in this quickstart,
 you might want to review them to become familiar with how interact with the Determined API in your
