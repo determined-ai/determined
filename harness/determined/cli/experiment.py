@@ -499,7 +499,7 @@ def list_experiments(args: Namespace) -> None:
     }
     if not args.all:
         kwargs["archived"] = "false"
-        kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
+        kwargs["userIds"] = [authentication.must_cli_auth().get_session_user_id()]
     all_experiments: List[bindings.v1Experiment] = limit_offset_paginator(
         bindings.get_GetExperiments, "experiments", setup_session(args), **kwargs
     )
