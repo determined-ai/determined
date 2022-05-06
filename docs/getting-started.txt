@@ -4,17 +4,18 @@
 
 This quickstart uses the MNIST dataset to demonstrate basic Determined functionality, and walks you
 through the steps needed to install Determined, run training jobs, and visualize experiment results
-in your browser. Three examples show the scalability and enhanced functionality gained from
+in your browser. Three examples show the scalability and enhanced functionality gained from simple
 configuration setting changes:
 
 -  Train on a local, single CPU or GPU.
 -  Run a distributed training job on multiple GPUs.
 -  Use hyperparameter tuning.
 
-An experiment is a training job that consists of one or more variations, or trials, of the same
-model. Using the Determined API, you automatically get metric frequency output, plots, and
-checkpointing for every experiment without writing extra code. Model information, configuration
-settings, output logs, and training metrics are displayed in the WebUI.
+An experiment is a training job that consists of one or more variations, or trials, on the same
+model. By calling Determined API functions from your training loops, you automatically get metric
+frequency output, plots, and checkpointing for every experiment without writing extra code. You can
+use the WebUI to view model information, configuration settings, output logs, and training metrics
+for all of your experiments.
 
 Each of these quickstart examples uses the same model code and example dataset, differing only in
 their configuration settings. For a list of all experiment configuration settings and more detailed
