@@ -138,7 +138,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		}
 		response struct {
 			Token  string       `json:"token"`
-			UserId model.UserID `json:"userId"`
+			UserID model.UserID `json:"userId"`
 		}
 	)
 
@@ -189,7 +189,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 
 	return response{
 		Token:  token,
-		UserId: user.ID,
+		UserID: user.ID,
 	}, nil
 }
 
