@@ -57,12 +57,12 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             x += sum(all_increment_bys)
             steps_completed = batch + 1
             time.sleep(.1)
-            # NEW: some logs are easier to read if you only print from the chief.
+            # NEW: some logs are easier to read if you only log from the chief.
             if core_context.distributed.rank == 0:
-                print("x is now", x)
+                logging.info(f"x is now {x}")
             if steps_completed % 10 == 0:
-                # NEW: only the chief reports training metrics and progress,
-                # and uploads checkpoints.
+                # NEW: only the chief may report training metrics and progress,
+                # or upload checkpoints.
                 if core_context.distributed.rank == 0:
                     core_context.train.report_training_metrics(
                         steps_completed=steps_completed, metrics={"x": x}
@@ -78,14 +78,14 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                     return
             batch += 1
 
-        # NEW: only the chief is able to report_validation_metrics and report_completed.
+        # NEW: only the chief may report validation metrics and completed operations.
         if core_context.distributed.rank == 0:
             core_context.train.report_validation_metrics(
                 steps_completed=steps_completed, metrics={"x": x}
             )
             op.report_completed(x)
 
-    # NEW: again, only the chief uploads checkpoints.
+    # NEW: again, only the chief may upload checkpoints.
     if core_context.distributed.rank == 0 and last_checkpoint_batch != steps_completed:
         checkpoint_metadata = {"steps_completed": steps_completed}
         with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
@@ -172,7 +172,7 @@ def worker_main(slots_per_node, num_nodes, cross_rank, chief_ip, rank, local_ran
 
 
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
     info = det.get_cluster_info()
     assert info is not None, "this example only runs on-cluster"
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "worker":
         # Usage: SCRIPT worker $RANK $LOCAL_RANK
-        print(f"worker starting")
+        logging.info(f"worker starting")
         rank = int(sys.argv[2])
         local_rank = int(sys.argv[3])
         exitcode = worker_main(
