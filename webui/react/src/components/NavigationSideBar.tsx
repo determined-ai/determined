@@ -6,9 +6,8 @@ import { CSSTransition } from 'react-transition-group';
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { clusterStr } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';
@@ -78,16 +77,6 @@ const NavigationSideBar: React.FC = () => {
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
-
-  const cluster = useMemo(() => {
-    if (overview[ResourceType.ALL].allocation === 0) return undefined;
-    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
-      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-    }, 0);
-    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-      / totalSlots)}%`;
-  }, [ overview, resourcePools ]);
 
   const menuConfig = useMemo(() => ({
     bottom: [
@@ -186,7 +175,7 @@ const NavigationSideBar: React.FC = () => {
             {menuConfig.top.map(config => (
               <NavigationItem
                 key={config.icon}
-                status={config.icon === 'cluster' ? cluster : undefined}
+                status={config.icon === 'cluster' ? clusterStr(overview, resourcePools) : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />
