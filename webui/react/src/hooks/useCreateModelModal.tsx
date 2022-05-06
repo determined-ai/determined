@@ -6,7 +6,6 @@ import { debounce } from 'throttle-debounce';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
@@ -37,7 +36,6 @@ interface ModalHooks {
 const useCreateModelModal = (): ModalHooks => {
   const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
   const modalRef = useRef<ReturnType<ModalFunc>>();
-  const { auth: { user } } = useStore();
   const [ modalState, setModalState ] = useState<ModalState>({
     expandDetails: false,
     isNameUnique: true,
@@ -104,7 +102,7 @@ const useCreateModelModal = (): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ closeModal, showRegisterCheckpointModal, user?.id ]);
+  }, [ closeModal, showRegisterCheckpointModal ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
     if (!modalRef.current) return Promise.reject();
