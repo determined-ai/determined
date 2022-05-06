@@ -37,7 +37,6 @@ interface ModalHooks {
 const useCreateModelModal = (): ModalHooks => {
   const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
   const modalRef = useRef<ReturnType<ModalFunc>>();
-  const { auth: { user } } = useStore();
   const [ modalState, setModalState ] = useState<ModalState>({
     expandDetails: false,
     isNameUnique: true,
@@ -104,7 +103,7 @@ const useCreateModelModal = (): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ closeModal, showRegisterCheckpointModal, user?.id ]);
+  }, [ closeModal, showRegisterCheckpointModal ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
     if (!modalRef.current) return Promise.reject();
