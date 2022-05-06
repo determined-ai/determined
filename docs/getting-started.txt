@@ -11,7 +11,7 @@ configuration setting changes:
 -  Run a distributed training job on multiple GPUs.
 -  Use hyperparameter tuning.
 
-An experiment is a training job that consists of one or more variations, or trials, on the same
+An *experiment* is a training job that consists of one or more variations, or trials, on the same
 model. By calling Determined API functions from your training loops, you automatically get metric
 frequency output, plots, and checkpointing for every experiment without writing extra code. You can
 use the WebUI to view model information, configuration settings, output logs, and training metrics
@@ -28,8 +28,8 @@ information about each, see :doc:`/training-apis/experiment-config`.
 Software
 ========
 
--  Determined agent and master nodes must be configured with Ubuntu 16.04 or higher, CentOS 7, or
-   macOS 10.13 or higher.
+-  Determined *agent* and *master* nodes must be configured with Ubuntu 16.04 or higher, CentOS 7,
+   or macOS 10.13 or higher.
 
 -  Agent nodes must have Docker installed.
 
@@ -93,7 +93,7 @@ If your local machine does not have a supported Nvidia GPU, include the ``no-gpu
  Quickstart Training Examples
 ******************************
 
-Download and extract the files used in this quickstart to a local folder:
+Download and extract the files used in this quickstart to a local directory:
 
 #. Download link: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
 
@@ -103,7 +103,7 @@ Download and extract the files used in this quickstart to a local folder:
 
       tar xzvf mnist_pytorch.tgz
 
-You should see the following files in the ``mnist_pytorch`` folder:
+You should see the following files in the ``mnist_pytorch`` directory:
 
 .. code::
 
@@ -150,7 +150,7 @@ you might want to review them to see how to call the Determined API from your co
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations you can experiment in your
+After gaining basic familiarity with Determined tools and operations, you can experiment in your
 domain by replacing these files with your model data and code, and setting configuration parameters
 for the kind of experiments you want to run.
 
@@ -159,20 +159,20 @@ for the kind of experiments you want to run.
 ***********************************
 
 This exercise trains a single model for a fixed number of batches, using constant values for all
-hyperparameters on a single slot.
+hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
+schedules to run.
 
-#. In the mnist_pytorch directory, create an experiment specifying the ``const.yaml`` configuration
-   file:
+#. In the ``mnist_pytorch`` directory, create an experiment specifying the ``const.yaml``
+   configuration file:
 
    .. code:: bash
 
       det experiment create const.yaml .
 
-   The last argument dot notation (.) uploads all files in the current directory to the Determined
-   cluster and makes them available in the working directory in which each trial is run. This
-   directory is called the context directory.
+   The last dot notation (.) argument uploads all of the example files to the Determined cluster and
+   makes them available in the working, or *context*, directory in which each trial is run.
 
-   After the experiment has been submitted, you should see that the experiment is created:
+   You should receive confirmation that the experiment is created:
 
    .. code:: console
 
@@ -198,12 +198,12 @@ hyperparameters on a single slot.
       :align: center
       :alt: Dashboard
 
-   The figure shows that two experiments have been run. Experiment **3** has **COMPLETED** and
-   experiment **4** is still **ACTIVE**. Your number and status of experiments can differ depending
-   on how many times you run the example.
+   The figure shows two experiments. Experiment **3** has **COMPLETED** and experiment **4** is
+   still **ACTIVE**. Your experiment number and status can differ depending on how many times you
+   run the examples.
 
 #. While an experiment is in the ACTIVE, training state, click the experiment tile to see the
-   **Metrics** graph update with your currently defined metrics:
+   **Metrics** graph update for your currently defined metrics:
 
    .. image:: /assets/images/qs04.png
       :width: 704px
@@ -219,7 +219,9 @@ hyperparameters on a single slot.
       :align: center
       :alt: Trial page
 
-With an understanding of Determined fundamentals, you are ready to scale to the distributed
+   TBD: What is this image showing me that the user needs to know?
+
+With this fundamental understanding of Determined, you are ready to scale to the distributed
 environment in the next example.
 
 ********************************
@@ -227,10 +229,10 @@ environment in the next example.
 ********************************
 
 In the distributed configuration examples, a Determined cluster comprises a master and one or more
-agents, with the master providing centralized management of agent resources.
+agents. The master provides centralized management of the agent resources.
 
-This exercise requires a Determined cluster with multiple GPUs. The example model does not fully
-demonstrate the benefits of distributed training but does show how to work with additional hardware
+This example requires a Determined cluster with multiple GPUs and, while it does not fully
+demonstrate the benefits of distributed training, it does show how to work with additional hardware
 resources.
 
 The ``distributed.yaml`` configuration file in this example is the same as the ``const.yaml`` file
