@@ -38,8 +38,33 @@ def create_launch_cmd(
 
 def create_log_redirect_cmd() -> List[str]:
     return [
-        "determined.exec.worker_process_wrapper",
+        "python3",
+        "-m",
+        "determined.launch.wrap_rank",
         "RANK",
+        "--",
+    ]
+
+
+def create_pid_server_cmd(allocation_id: str, num_slot_ids: int) -> List[str]:
+    return [
+        "python3",
+        "-m",
+        "determined.exec.pid_server",
+        "--on-fail",
+        "SIGTERM",
+        "--on-exit",
+        "WAIT",
+        f"/tmp/pid_server-{allocation_id}",
+        str(num_slot_ids),
+        "--",
+    ]
+
+
+def create_pid_client_cmd(allocation_id: str) -> List[str]:
+    return [
+        "determined.exec.pid_client",
+        f"/tmp/pid_server-{allocation_id}",
         "--",
     ]
 
@@ -71,11 +96,16 @@ def main(override_args: List[str], script: List[str]) -> int:
 
     log_redirect_cmd = create_log_redirect_cmd()
 
-    logging.debug(
-        f"Torch distributed launching with: {torch_distributed_cmd + log_redirect_cmd + script}"
-    )
+    # Due to a bug in PyTorch, we need to wrap the launcher in pid_server/pid_client to correctly
+    # handle errors and ensure workers don't hang when a process fails
+    pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
+    pid_client_cmd = create_pid_client_cmd(info.allocation_id)
 
-    return subprocess.Popen(torch_distributed_cmd + log_redirect_cmd + script).wait()
+    launch_cmd = pid_server_cmd + torch_distributed_cmd + pid_client_cmd + log_redirect_cmd + script
+
+    logging.debug(f"Torch distributed launching with: {launch_cmd}")
+
+    return subprocess.Popen(launch_cmd).wait()
 
 
 def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:

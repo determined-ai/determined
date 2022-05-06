@@ -1,6 +1,8 @@
 import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
+import { DetailedUser } from 'types';
 import { sumArrays } from 'utils/array';
 import { secondToHour } from 'utils/datetime';
+import { getDisplayName } from 'utils/user';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 
@@ -17,16 +19,32 @@ export interface ResourceAllocationChartSeries {
 export const mapResourceAllocationApiToChartSeries = (
   apiRes: Array<V1ResourceAllocationAggregatedEntry>,
   grouping: GroupBy,
+  users: DetailedUser[],
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
     hoursByAgentLabel: mapToChartSeries(apiRes.map(item => item.byAgentLabel)),
     hoursByExperimentLabel: mapToChartSeries(apiRes.map(item => item.byExperimentLabel)),
     hoursByResourcePool: mapToChartSeries(apiRes.map(item => item.byResourcePool)),
-    hoursByUsername: mapToChartSeries(apiRes.map(item => item.byUsername)),
+    hoursByUsername: mapToChartSeries(apiRes.map(item => {
+      return mapPeriodToDisplayNames(item.byUsername, users);
+    })),
     hoursTotal: { total: apiRes.map(item => secondToHour(item.seconds)) },
     time: apiRes.map(item => item.periodStart),
   };
+};
+
+const mapPeriodToDisplayNames = (
+  period: Record<string, number>,
+  users: DetailedUser[],
+): Record<string, number> => {
+  const result:Record<string, number> = {};
+  Object.keys(period).forEach(key => {
+    const user = users.find(u => u.username === key);
+    const displayName = getDisplayName(user);
+    result[displayName] = period[key];
+  });
+  return result;
 };
 
 const mapToChartSeries = (labelByPeriod: Record<string, number>[]): Record<string, number[]> => {

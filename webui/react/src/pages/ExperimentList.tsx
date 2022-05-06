@@ -450,6 +450,7 @@ const ExperimentList: React.FC = () => {
         title: 'Archived',
       },
       {
+        dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
@@ -635,8 +636,10 @@ const ExperimentList: React.FC = () => {
   );
 
   const openModal = useCallback(() => {
-    modalOpen({ initialVisibleColumns: settings.columns });
-  }, [ settings.columns, modalOpen ]);
+    modalOpen(
+      { initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)) },
+    );
+  }, [ settings.columns, modalOpen, transferColumns ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ExperimentColumnName[];

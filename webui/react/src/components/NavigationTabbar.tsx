@@ -1,12 +1,11 @@
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
+import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
 
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
@@ -46,16 +45,6 @@ const NavigationTabbar: React.FC = () => {
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
 
-  const cluster = useMemo(() => {
-    if (overview[ResourceType.ALL].allocation === 0) return undefined;
-    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
-      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-    }, 0);
-    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-        / totalSlots)}%`;
-  }, [ overview, resourcePools ]);
-
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
@@ -80,7 +69,12 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
-        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
+        <ToolbarItem
+          icon="cluster"
+          label="Cluster"
+          path={paths.cluster()}
+          status={clusterStatusText(overview, resourcePools)}
+        />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet

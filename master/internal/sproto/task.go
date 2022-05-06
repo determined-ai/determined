@@ -57,9 +57,10 @@ type (
 
 	// PortProxyConfig configures a proxy the allocation should start.
 	PortProxyConfig struct {
-		ServiceID string
-		Port      int
-		ProxyTCP  bool
+		ServiceID       string
+		Port            int
+		ProxyTCP        bool
+		Unauthenticated bool
 	}
 
 	// EventStreamConfig configures an event stream.

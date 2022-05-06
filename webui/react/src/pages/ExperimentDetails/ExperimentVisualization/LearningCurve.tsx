@@ -150,8 +150,12 @@ const LearningCurve: React.FC<Props> = ({
         setBatches(newBatches);
 
         const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
+          /**
+           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+           * dynamic min/max ranges via uPlot.Scales.
+           */
           const value = metricsMap[trialId][batch];
-          return value != null ? value : null;
+          return Number.isFinite(value) ? value : null;
         }));
         setChartData(newChartData);
 

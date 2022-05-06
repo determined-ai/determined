@@ -8,6 +8,8 @@ import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
+import { maxPoolSlotCapacity } from './ClusterOverview';
+
 export const ClusterOverallBar: React.FC = () => {
 
   const { agents, cluster: overview, resourcePools } = useStore();
@@ -34,7 +36,7 @@ export const ClusterOverallBar: React.FC = () => {
           index = undefined;
       }
       if (index === undefined) return acc;
-      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      acc[index] += maxPoolSlotCapacity(pool);
       return acc;
     }, [ 0, 0 ]);
   }, [ resourcePools ]);
