@@ -122,8 +122,10 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
+  /** allocated percentange of total connected slots  */
   allocation?: number;
   available: number;
+  /** sum of all slots of this type across all _connected_ agents */
   total: number;
 }
 

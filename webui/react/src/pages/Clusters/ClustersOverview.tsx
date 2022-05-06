@@ -7,6 +7,7 @@ import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { ShirtSize } from 'themes';
 import {
   ResourcePool,
@@ -51,7 +52,7 @@ const ClusterOverview: React.FC = () => {
               key={idx}
               resourcePool={rp}
               resourceType={rp.slotType}
-              totalComputeSlots={rp.maxAgents * (rp.slotsPerAgent ?? 0)}
+              totalComputeSlots={maxPoolSlotCapacity(rp)}
             />
           ))}
         </Grid>
