@@ -31,12 +31,11 @@ export const SyncProvider = ({ children }) => {
   const [ syncedMin, setSyncedMin ] = useState();
   const [ syncedMax, setSyncedMax ] = useState();
   const [ queueSignal, setQueueSignal ] = useState(0);
+  const [ zoomed, setZoomed ] = useState(false);
   const fireQueue = useCallback(
     () => setQueueSignal(prevSignal => (prevSignal + 1) % 1000)
     , [ setQueueSignal ],
   );
-
-  const [ zoomed, setZoomed ] = useState(false);
 
   const updateQueue = useRef([]);
 
@@ -52,24 +51,27 @@ export const SyncProvider = ({ children }) => {
 
   useEffect(() => {
     // console.log('new bounds', timestampInMinutes(syncedMin), timestampInMinutes(syncedMax));
-    syncRef.current.plots.forEach((chart: uPlot) => {
-      const chartMin = getChartMin(chart);
-      const chartMax = getChartMax(chart);
-      // console.log('set bounds', chart.title, syncedMin, syncedMax);
-      if (chartMin > syncedMin || chartMax < syncedMax) {
-        chart.setScale('x', { max: syncedMax, min: syncedMin });
+    if(!zoomed) {
+      syncRef.current.plots.forEach((chart: uPlot) => {
+        const chartMin = getChartMin(chart);
+        const chartMax = getChartMax(chart);
+        // console.log('set bounds', chart.title, syncedMin, syncedMax);
+        if (chartMin > syncedMin || chartMax < syncedMax) {
+          chart.setScale('x', { max: syncedMax, min: syncedMin });
 
-      }
-    });
-  }, [ syncedMin, syncedMax ]);
+        }
+      });
+    }
+  }, [ syncedMin, syncedMax, zoomed ]);
 
   const dispatchScaleUpdate = useCallback(
     (chart: uPlot, scaleKey) => {
       if(scaleKey === 'x') {
-        updateQueue.current.push([ getChartMin(chart), getChartMax(chart) ]); fireQueue();
+        updateQueue.current.push([ getChartMin(chart), getChartMax(chart) ]);
+        fireQueue();
       }
     },
-    [],
+    [ fireQueue ],
   );
 
   return (
@@ -133,7 +135,7 @@ export const useSyncableBounds = (): SyncableBounds => {
     hooks: scaleUpdateDispatcher && { setScale: [ scaleUpdateDispatcher ] },
   }), [ zoomSetter, scaleUpdateDispatcher, syncRef ]);
 
-  return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
+  return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, zoomed };
 };
 
 // use sync: use  sync context else setState
