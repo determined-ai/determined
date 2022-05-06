@@ -123,18 +123,24 @@ best_checkpoint AS (
     ) c
     WHERE c.rank = 1
   ) c
-,
+),
 latest_training AS (
   SELECT s.trial_id,
     s.total_batches,
     s.end_time,
     'STATE_' || s.state AS state,
     s.metrics->'avg_metrics' as metrics
-  FROM steps s
+  FROM (
+      SELECT s.*,
+        ROW_NUMBER() OVER(
+          PARTITION BY s.trial_id
+          ORDER BY s.end_time DESC
+        ) AS rank
+      FROM steps s
+      WHERE s.state = 'COMPLETED'
+    ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
-  WHERE s.state = 'COMPLETED'
-  ORDER BY s.end_time DESC
-  LIMIT 1
+  WHERE s.rank = 1
 )
 SELECT
   row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
