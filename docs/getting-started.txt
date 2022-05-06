@@ -228,18 +228,24 @@ environment in the next example.
  Run a Distributed Training Job
 ********************************
 
-In the distributed configuration examples, a Determined cluster comprises a master and one or more
-agents. The master provides centralized management of the agent resources.
+In the distributed training example, a Determined cluster comprises a master and one or more agents.
+The master provides centralized management of the agent resources.
 
 This example requires a Determined cluster with multiple GPUs and, while it does not fully
-demonstrate the benefits of distributed training, it does show how to work with additional hardware
+demonstrate the benefits of distributed training, it does show how to work with added hardware
 resources.
 
-The ``distributed.yaml`` configuration file in this example is the same as the ``const.yaml`` file
-in the previous example, except that a ``resources.slots_per_trial`` field is defined and set to
-``8``, which is the number of your available GPU resources. The ``slots_per_trial`` value must be
-divisible by the number of GPUs per machine. You can change the value to match your hardware
-configuration.
+The ``distributed.yaml`` configuration file for this example is the same as the ``const.yaml`` file
+in the previous example, except that a ``resources.slots_per_trial`` field is defined and set to a
+value of ``8``:
+
+.. code:: yaml
+
+   resources:
+     slots_per_trial: 8
+
+This is the number of available GPU resources. The ``slots_per_trial`` value must be divisible by
+the number of GPUs per machine. You can change the value to match your hardware configuration.
 
 #. Create and run the experiment:
 
@@ -247,35 +253,69 @@ configuration.
 
       det experiment create distributed.yaml .
 
-   You can also specify a remote master IP address:
+   You can also use the ``-m`` option to specify a remote master IP address:
 
    .. code:: bash
 
       det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
-#. Enter the cluster address in your browser address bar.
+#. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept the
+   default ``determined`` username, and click **Sign In**. A password is not required.
 
-#. Accept the default ``determined`` username and click **Sign In** to view the WebUI dashboard. You
-   do not need a password.
-
-#. Click the **Experiment** tile to view the experiment’s trial display.
-
-The loss curve is similar to the single-GPU experiment in the previous exercise but the time to
-complete the trial is reduced by about half.
+#. Click the **Experiment** tile to view the experiment’s trial display. The loss curve is similar
+   to the single-GPU experiment in the previous exercise but the time to complete the trial is
+   reduced by about half.
 
 *********************************
  Run a Hyperparameter Tuning Job
 *********************************
 
-This example demonstrates hyperparameter search using the ``adaptive.yaml`` configuration file,
-which is similar to the ``const.yaml`` file in the first example but includes additional
-``hyperparameters`` settings and ``searcher`` parameter changes.
+This example demonstrates hyperparameter search. The example uses the ``adaptive.yaml``
+configuration file, which is similar to the ``const.yaml`` file in the first example but includes
+additional hyperparameter settings:
 
-Hyperparameter searches involve multiple trials or model variations per experiment. The parameter
-settings tell the search algorithm the ranges to explore for each hyperparameter. This example model
-uses a fixed batch size and searches on dropout size, filters, and learning rate. The searcher name
-is set to ``adaptive_asha`` and ``max_trials`` is set to ``16``, indicating which search algorithm
-to use and how many model configurations to explore.
+.. code:: yaml
+
+   hyperparameters:
+     global_batch_size: 64
+     learning_rate:
+       type: double
+       minval: .0001
+       maxval: 1.0
+     n_filters1:
+       type: int
+       minval: 8
+       maxval: 64
+     n_filters2:
+       type: int
+       minval: 8
+       maxval: 72
+     dropout1:
+       type: double
+       minval: .2
+       maxval: .8
+     dropout2:
+       type: double
+       minval: .2
+       maxval: .8
+
+Hyperparameter searches involve multiple trials or model variations per experiment. The
+configuration settings tell the search algorithm the ranges to explore for each hyperparameter.
+
+The ``adaptive_asha`` search method and maximum number of trials, max_trials` are also specified:
+
+.. code:: yaml
+
+   searcher:
+     name: adaptive_asha
+     metric: validation_loss
+     smaller_is_better: true
+     max_trials: 16
+     max_length:
+       batches: 937
+
+This example uses a fixed batch size and searches on dropout size, filters, and learning rate. The
+``max_trials`` setting of ``16`` indicates how many model configurations to explore.
 
 #. Create and run the experiment:
 
@@ -283,14 +323,11 @@ to use and how many model configurations to explore.
 
       det experiment create adaptive.yaml .
 
-#. Enter your cluster address in the browser address bar.
+#. To view the WebUI dashboard, enter your cluster address in the browser address bar, accept the
+   default determined username, and click **Sign In**. No password is required.
 
-#. Accept the default determined username with no password and click **Sign In** to view the
-   dashboard.
-
-#. This can take some time to complete and you can monitor the progress in the WebUI Dashboard.
-   Click the **Experiment** tile to access the experiment trial display and notice that more trials
-   have started:
+#. The experiment can take some time to complete. You can monitor progress in the WebUI Dashboard by
+   clicking the **Experiment** tile. Notice that more trials have started:
 
    .. image:: /assets/images/qs05.png
       :width: 704px
@@ -298,9 +335,9 @@ to use and how many model configurations to explore.
       :alt: Trials graphic
 
    Determined runs the number of ``max_trials`` trials and automatically starts new trials as
-   resources become available. On a typical laptop, 16 trials should take about 10 minutes to train
-   with at least one trial performing at about 98 percent validation accuracy. The hyperparameter
-   search halts poorly performing trials.
+   resources become available. For 16 trials, it should take about 10 minutes to train with at least
+   one trial performing at about 98 percent validation accuracy. The hyperparameter search halts
+   poorly performing trials.
 
 ************
  Learn More
