@@ -21,9 +21,6 @@ Each of these quickstart examples uses the same model code and example dataset, 
 their configuration settings. For a list of all experiment configuration settings and more detailed
 information about each, see :doc:`/training-apis/experiment-config`.
 
-After gaining basic familiarity with Determined tools and operations, use Determined in your domain
-by replacing the example files with your model data and code.
-
 ***************
  Prerequisites
 ***************
@@ -36,19 +33,26 @@ Software
 
 -  Agent nodes must have Docker installed.
 
--  To run jobs with GPUs, Nvidia drivers, version 384.81 or higher, must be installed on each agent.
-   Nvidia drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit
-   is not required.
+-  To run jobs with GPUs, install Nvidia drivers, version 384.81 or higher, on each agent. The
+   drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
+   required.
 
 Hardware
 ========
 
--  At least 4-CPU cores are recommended for the master node, Intel Broadwell or later, and 8GB RAM,
-   and 200GB of free disk space. The master node does not require GPUs.
+-  Master node:
 
--  at least 2-CPU cores are recommended for each agent node, Intel Broadwell or later, and 4GB RAM,
-   and 50GB of free disk space. If you are using GPUs, Nvidia GPUs with compute capability 3.7 or
-   greater are required, such as K80, P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, and TITAN XP.
+   -  At least 4-CPU cores, Intel Broadwell or later. The master node does not require GPUs.
+   -  8GB RAM
+   -  200GB of free disk space.
+
+-  Agent Node:
+
+   -  At least 2-CPU cores, Intel Broadwell or later.
+   -  If you are using GPUs, Nvidia GPUs with compute capability 3.7 or greater are required: K80,
+      P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, or TITAN XP.
+   -  4GB RAM
+   -  50GB of free disk space.
 
 Docker
 ======
@@ -152,6 +156,9 @@ code:
 +------------------+------------------------------------------------------------------------+
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
+
+After gaining basic familiarity with Determined tools and operations, use Determined in your domain
+by replacing the example files with your model data and code.
 
 ***********************************
  Run a Single CPU/GPU Training Job
