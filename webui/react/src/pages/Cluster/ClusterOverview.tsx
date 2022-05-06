@@ -41,7 +41,10 @@ const defaultSorter = { descend: false, key: 'name' };
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-  return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+  if (pool.maxAgents) return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+  // on-premise deployments don't have dynamic agents and we don't know how many
+  // agents might connect.
+  return pool.slotsAvailable;
 };
 
 export const clusterStatusText = (
