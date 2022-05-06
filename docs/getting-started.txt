@@ -15,9 +15,6 @@ model. Using the Determined API, you automatically get metric frequency output, 
 checkpointing for every experiment without writing extra code. Model information, configuration
 settings, output logs, and training metrics are displayed in the WebUI.
 
-In the distributed configuration examples, a Determined cluster comprises a master and one or more
-agents, with the master providing centralized management of agent resources.
-
 Each of these quickstart examples uses the same model code and example dataset, differing only in
 their configuration settings. For a list of all experiment configuration settings and more detailed
 information about each, see :doc:`/training-apis/experiment-config`.
@@ -54,8 +51,8 @@ Hardware
 Docker
 ======
 
-For the distributed examples that use an agent, install Docker to run containerized workloads. If
-you do not already have Docker installed, follow the :doc:`Installing Docker
+For the distributed example that use an agent, install Docker to run containerized workloads. If you
+do not already have Docker installed, follow the :doc:`Installing Docker
 </sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
 
 Environment Variables
@@ -220,15 +217,18 @@ hyperparameters on a single slot.
       :alt: Trial page
 
 With an understanding of Determined fundamentals, you are ready to scale to the distributed
-environment shown in the next example.
+environment in the next example.
 
 ********************************
  Run a Distributed Training Job
 ********************************
 
-This exercise requires a Determined cluster with multiple GPUs. The model used in this example does
-not fully demonstrate the benefits of distributed training but does show how to work with additional
-hardware resources.
+In the distributed configuration examples, a Determined cluster comprises a master and one or more
+agents, with the master providing centralized management of agent resources.
+
+This exercise requires a Determined cluster with multiple GPUs. The example model does not fully
+demonstrate the benefits of distributed training but does show how to work with additional hardware
+resources.
 
 The ``distributed.yaml`` configuration file in this example is the same as the ``const.yaml`` file
 in the previous example, except that a ``resources.slots_per_trial`` field is defined and set to
