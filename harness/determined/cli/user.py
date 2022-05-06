@@ -76,7 +76,8 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     token_store = authentication.TokenStore(parsed_args.master)
 
-    token = authentication.do_login(parsed_args.master, username, password)
+    auth = authentication.do_login(parsed_args.master, username, password)
+    token = auth["token"]
     token_store.set_token(username, token)
     token_store.set_active(username)
 
@@ -137,7 +138,8 @@ def change_password(parsed_args: Namespace) -> None:
     # password change so that the user doesn't have to do so manually.
     if parsed_args.target_user is None:
         token_store = authentication.TokenStore(parsed_args.master)
-        token = authentication.do_login(parsed_args.master, username, password)
+        auth = authentication.do_login(parsed_args.master, username, password)
+        token = auth["token"]
         token_store.set_token(username, token)
         token_store.set_active(username)
 

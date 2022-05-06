@@ -197,7 +197,8 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 			Password string `json:"password"`
 		}
 		response struct {
-			Token string `json:"token"`
+			Token  string       `json:"token"`
+			UserId model.UserID `json:"userId"`
 		}
 	)
 
@@ -243,7 +244,8 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	}
 
 	return response{
-		Token: token,
+		Token:  token,
+		UserId: user.ID,
 	}, nil
 }
 

@@ -184,7 +184,7 @@ def list_tasks(args: Namespace) -> None:
     if args.all:
         params = {}  # type: Dict[str, Any]
     else:
-        params = {"users": [authentication.must_cli_auth().get_session_user()]}
+        params = {"userIds": [authentication.must_cli_auth().get_session_user_id()]}
 
     res = api.get(args.master, api_full_path, params=params).json()[api_path]
 

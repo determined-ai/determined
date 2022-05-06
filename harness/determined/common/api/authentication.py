@@ -33,9 +33,10 @@ def salt_and_hash(password: str) -> str:
 
 
 class Session:
-    def __init__(self, username: str, token: str):
+    def __init__(self, username: str, token: str, user_id: str):
         self.username = username
         self.token = token
+        self.user_id = user_id
 
 
 class Authentication:
@@ -81,7 +82,7 @@ class Authentication:
             token = util.get_container_user_token()
 
         if token is not None:
-            return Session(session_user, token)
+            return Session(session_user, token, _get_current_user_id(self.master_address, token, cert))
 
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
@@ -99,7 +100,8 @@ class Authentication:
             password = api.salt_and_hash(password)
 
         try:
-            token = do_login(self.master_address, session_user, password, cert)
+            auth = do_login(self.master_address, session_user, password, cert)
+            token = auth["token"]
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
@@ -107,17 +109,20 @@ class Authentication:
 
         self.token_store.set_token(session_user, token)
 
-        return Session(session_user, token)
+        return Session(session_user, token, auth["user_id"])
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
 
     def get_session_user(self) -> str:
         """
-        Returns the session user for the current session. If there is no active
+        Returns the session user username for the current session. If there is no active
         session, then an UnauthenticatedException will be raised.
         """
         return self.session.username
+
+    def get_session_user_id(self) -> str:
+        return self.session.user_id
 
     def get_session_token(self, must: bool = True) -> str:
         """
@@ -138,7 +143,7 @@ def do_login(
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-) -> str:
+) -> Dict[str, str]:
     r = api.post(
         master_address,
         "login",
@@ -150,7 +155,10 @@ def do_login(
     token = r.json()["token"]
     assert isinstance(token, str), "got invalid token response from server"
 
-    return token
+    user_id = r.json()["userId"]
+
+    auth = { "token": token, "user_id": user_id }
+    return auth
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
@@ -166,6 +174,10 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
 
     return r.status_code == 200
 
+def _get_current_user_id(master_address: str, token: str, cert: Optional[certs.Cert]) -> str:
+    headers = {"Authorization": "Bearer {}".format(token)}
+    r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+    return r.json()["id"]
 
 class TokenStore:
     """
