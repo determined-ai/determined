@@ -44,7 +44,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             x += increment_by
             steps_completed = batch + 1
             time.sleep(.1)
-            print("x is now", x)
+            logging.info(f"x is now {x}")
             if steps_completed % 10 == 0:
                 core_context.train.report_training_metrics(
                     steps_completed=steps_completed, metrics={"x": x}
@@ -75,7 +75,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
     info = det.get_cluster_info()
     assert info is not None, "this example only runs on-cluster"
