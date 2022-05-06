@@ -2,23 +2,28 @@
  Quickstart for Model Developers
 #################################
 
-This quickstart walks you through the basic steps to install and run Determined, run training
-experiments, and visualize training experiment results in your browser.
+This quickstart uses the MNIST dataset to walk you through the basic steps to install Determined,
+run training experiments, and visualize the results in your browser. It uses three examples to
+demonstrate the scalability and enhanced functionality gained through configuration settings:
 
-Three model data and code examples use the MNIST dataset to demonstrate:
+-  Training on a local, single CPU or GPU.
+-  Running a distributed training job on multiple GPUs.
+-  Using hyperparameter tuning.
 
--  training on a local, single CPU with or without a GPU.
--  how to run a distributed training job on multiple GPUs to improve performance.
--  how to use hyperparameter tuning.
+An experiment is a training job that consists of one or more variations, or trials, of the same
+model. Using the Determined API, you automatically get metric frequency output, plots, and
+checkpointing for every experiment without writing extra code. Model information, configuration
+settings, output logs, and training metrics are displayed in the WebUI. Each of these quickstart
+examples uses the same model code and example dataset, differing only in their configuration
+settings. For more a list of all experiment configuration settings and more detailed information
+about each, see :doc:`/training-apis/experiment-config`.
 
-A Determined cluster comprises a master and one or more agents. A master provides centralized
-resource management of agents installed on distributed resources. Master and agent behavior are
-controlled by setting configuration variables. Each of these examples uses the same model code and
-data with simple configuration changes for each of the three examples.
+In a distributed configuration, a Determined cluster comprises a master and one or more agents. The
+master provides centralized management of agent resources, controlling agent behavior through
+configuration variables.
 
-Follow these steps for a hands-on introduction to Determined. After gaining familiarity with
-Determined tools and procedures, replace the provided model data and code with your model data and
-code.
+After gaining a basic familiarity with Determined tools and operations, apply your knowledge of
+Determined to your domain by replacing the examples with your model data and code.
 
 ***************
  Prerequisites
@@ -49,53 +54,95 @@ Hardware
 Docker
 ======
 
-For the examples that use an agent, install Docker to run containerized workloads. If you do not
-already have Docker installed, follow the :doc:`Installing Docker
+For the distributed examples that use an agent, install Docker to run containerized workloads. If
+you do not already have Docker installed, follow the :doc:`Installing Docker
 </sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
 
-Training Example
-================
+Environment Variables
+=====================
 
-These example experiments use the PyTorch MNIST image classification model:
+To run Determined on a remote master instance, set the remote IP address and port number in the
+``DET_MASTER`` environment variable:
 
-#. Download the image: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
+.. code:: bash
 
-#. Extract the configuration and model files and browse the directory:
+   export DET_MASTER=<ipAddress>:8080
+
+*******************************
+ Install and Deploy Determined
+*******************************
+
+To install the Determined library and start a cluster locally, enter:
+
+.. code:: bash
+
+   pip install determined
+   det deploy local cluster-up
+
+If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
+
+.. code:: bash
+
+   pip install determined
+   det deploy local cluster-up --no-gpu
+
+You can also specify a remote master IP address in the command line:
+
+.. code:: bash
+
+   det -m http://<ipAddress>:8080 experiment create distributed.yaml .
+
+******************************
+ Quickstart Training Examples
+******************************
+
+Download and extract the files used in this quickstart to a local folder:
+
+#. Download link: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
+
+#. Extract the configuration and model files:
 
    .. code:: bash
 
       tar xzvf mnist_pytorch.tgz
 
-The ``mnist_pytorch`` directory contains the YAML configuration files used in these examples.
+You should now have the following files in the ``mnist_pytorch`` folder:
 
-Among other variables, configuration parameters define:
+.. code::
 
--  dataset location
--  hyperparameters
--  number of batches of data to use in training
--  entry point location of the model class
--  number of GPU slots
--  batch size
--  shared memory size
+   adaptive.yaml
+   const.yaml
+   data.py
+   distributed.yaml
+   layers.py
+   model_def.py
+   README.md
 
-Each example configuration file corresponds to one of the example experiments presented in this
-quickstart:
+Configuration Files
+===================
+
+Each of the YAML-formatted configuration files corresponds to one of the following example
+experiments:
 
 +------------------------+------------------------------------------------------+
-| Configuration Filename | Experiment Type                                      |
+| Configuration Filename | Example Experiment                                   |
 +========================+======================================================+
-| ``adaptive.yaml``      | Perform a hyperparameter search using the Determined |
-|                        | adaptive hyperparameter tuning algorithm.            |
-+------------------------+------------------------------------------------------+
 | ``const.yaml``         | Train a single model on a single GPU/CPU, with       |
 |                        | constant hyperparameter values.                      |
 +------------------------+------------------------------------------------------+
 | ``distributed.yaml``   | Train a single model using multiple, distributed     |
 |                        | GPUs.                                                |
 +------------------------+------------------------------------------------------+
+| ``adaptive.yaml``      | Perform a hyperparameter search using the Determined |
+|                        | adaptive hyperparameter tuning algorithm.            |
++------------------------+------------------------------------------------------+
 
-While the Python model and data pipeline definition files are not covered in this quickstart, you
-might want to review them to gain an understanding of how the Determined API is used:
+Python Model and Data Pipeline Definition Files
+===============================================
+
+Although the Python model and data pipeline definition files are not described in this quickstart,
+you might want to review them to become familiar with how interact with the Determined API in your
+code:
 
 +------------------+------------------------------------------------------------------------+
 | Filename         | Experiment Type                                                        |
@@ -107,49 +154,9 @@ might want to review them to gain an understanding of how the Determined API is 
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-***************************************
- Install and Deploy Determined Locally
-***************************************
-
-To install the Determined library and start a cluster locally, enter:
-
-.. code:: bash
-
-   pip install determined
-   det deploy local cluster-up
-
-If your local machine does not have a supported Nvidia GPU, include the no-gpu option to start a
-cluster:
-
-.. code:: bash
-
-   det deploy local cluster-up --no-gpu
-
-**********************************
- Use a Remote Determined Instance
-**********************************
-
-You can also run these examples on a remote Determined master instance by setting the remote IP
-address before running any of the commands:
-
-.. code:: bash
-
-   export DET_MASTER=<ipAddress>:8080
-
-You can also include the master IP address in the command line:
-
-.. code:: bash
-
-   det -m http://<ipAddress>:8080 experiment create distributed.yaml .
-
 ***********************************
  Run a Single CPU/GPU Training Job
 ***********************************
-
-An experiment is a training job that consists of one or more variations, or trials, of the same
-model. By integrating the Determined API, every experiment automatically gives you metric frequency
-output, plots, and checkpointing without writing extra code. The Determined WebUI displays detailed
-information about the model, the configuration, output logs, and training metrics.
 
 This exercise trains a single model for a fixed number of batches, using constant values for all
 hyperparameters on a single slot.
@@ -210,8 +217,8 @@ hyperparameters on a single slot.
       :align: center
       :alt: Trial page
 
-You can create additional experiments repeating the ``det experiment create`` command as a way to
-gain familiarity with other Determined WebUI functions.
+With this basic understanding of how to use Determined, you are ready to scale to the distributed
+environment shown in the next example.
 
 ********************************
  Run a Distributed Training Job
@@ -219,29 +226,27 @@ gain familiarity with other Determined WebUI functions.
 
 This exercise requires a Determined cluster with multiple GPUs.
 
-Determined can coordinate multiple GPUs to train a single trial more quickly by using distributed
-training. The model used in this example does not fully demonstrate the benefits of distributed
-training but is still useful in showing how to work with additional hardware resources.
+Determined coordinates multiple, distributed GPUs to train a single trial more quickly. The model
+used in this example does not fully demonstrate the benefits of distributed training but does show
+how to work with additional hardware resources.
 
-To use distributed training, the ``resources.slots_per_trial`` field in the configuration file is
-set to the number of GPUs to distribute across. The ``distributed.yaml`` file is the same as the
-``const.yaml`` file, except that the ``resources.slots_per_trial`` field is set to ``8``. The
-default ``slots_per_trial`` setting is ``1``.
+Specify distributed training by setting the experiment configuration ``resources.slots_per_trial``
+field to the number of GPU resources available for training. The ``distributed.yaml`` file in this
+example is the same as the ``const.yaml`` file in the previous example, except that a
+``resources.slots_per_trial`` field is defined and the number of GPUs is set to ``8``. The
+``slots_per_trial`` value must be divisible by the number of GPUs per machine. You can change the
+value to match your hardware configuration.
 
-For clusters that have multiple GPUs per machine, ``slots_per_trial`` must be divisible by the
-number of GPUs per machine or the job cannot be scheduled. For example, a 7-GPU job cannot be
-scheduled on a 4-GPU per machine cluster, but an 8-GPU job can be scheduled.
-
-#. Create the experiment using the distributed.yaml file:
+#. Create the experiment:
 
    .. code:: bash
 
       det experiment create distributed.yaml .
 
-#. Enter the cluster address in the browser.
+#. Enter the cluster address in your browser address bar.
 
-#. Accept the default determined username with no password and click **Sign In** to view the WebUI
-   dashboard.
+#. Accept the default ``determined`` username and click **Sign In** to view the WebUI dashboard. You
+   do not need a password.
 
 #. Click the **Experiment** tile to view the experiment’s trial display.
 
