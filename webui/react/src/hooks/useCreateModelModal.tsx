@@ -6,7 +6,6 @@ import { debounce } from 'throttle-debounce';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
