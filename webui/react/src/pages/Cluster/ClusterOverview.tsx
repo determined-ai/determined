@@ -1,4 +1,6 @@
 import { SorterResult } from 'antd/es/table/interface';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import OverviewStats from 'components/OverviewStats';
@@ -15,7 +17,6 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource,

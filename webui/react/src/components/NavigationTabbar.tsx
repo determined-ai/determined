@@ -1,9 +1,10 @@
 import { Modal } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { handlePath, paths } from 'routes/utils';
 
 import ActionSheet from './ActionSheet';
