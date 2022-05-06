@@ -71,9 +71,9 @@ To run Determined on a remote master instance, set the remote IP address and por
 
    export DET_MASTER=<ipAddress>:8080
 
-*******************************
- Install and Deploy Determined
-*******************************
+***************************************
+ Install and Deploy Determined Locally
+***************************************
 
 To install the Determined library and start a cluster locally, enter:
 
@@ -88,12 +88,6 @@ If your local machine does not have a supported Nvidia GPU, include the ``no-gpu
 
    pip install determined
    det deploy local cluster-up --no-gpu
-
-You can also specify a remote master IP address in the command line:
-
-.. code:: bash
-
-   det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
 ******************************
  Quickstart Training Examples
@@ -250,6 +244,12 @@ configuration.
    .. code:: bash
 
       det experiment create distributed.yaml .
+
+   You can also specify a remote master IP address:
+
+   .. code:: bash
+
+      det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
 #. Enter the cluster address in your browser address bar.
 
