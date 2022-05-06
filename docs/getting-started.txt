@@ -22,8 +22,8 @@ Each of these quickstart examples uses the same model code and example dataset, 
 their configuration settings. For a list of all experiment configuration settings and more detailed
 information about each, see :doc:`/training-apis/experiment-config`.
 
-After gaining a basic familiarity with Determined tools and operations, apply your knowledge of
-Determined to your domain by replacing the examples with your model data and code.
+After gaining basic familiarity with Determined tools and operations, apply your Determined
+knowledge to your domain by replacing the example files with your model data and code.
 
 ***************
  Prerequisites
