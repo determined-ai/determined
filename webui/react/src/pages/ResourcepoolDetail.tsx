@@ -10,6 +10,7 @@ import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLigh
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
@@ -51,10 +52,10 @@ const ResourcepoolDetail: React.FC = () => {
 
   const usage = useMemo(() => {
     if(!pool) return 0;
-    const totalSlots = pool.maxAgents * (pool.slotsPerAgent ?? 0);
+    const totalSlots = pool.slotsAvailable;
     const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
     const runningState = resourceStates.filter(s => s === ResourceState.Running).length;
-    const slotsPotential = pool.maxAgents * (pool.slotsPerAgent ?? 0);
+    const slotsPotential = maxPoolSlotCapacity(pool);
     const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
       ? (totalSlots / slotsPotential) : 1;
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;

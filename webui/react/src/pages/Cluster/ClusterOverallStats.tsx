@@ -4,6 +4,7 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 
@@ -22,23 +23,13 @@ export const ClusterOverallStats: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
+  /** theoretical max capacity for each slot type in the cluster */
+  const maxTotalSlots = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
-      let index;
-      switch (pool.slotType) {
-        case ResourceType.CUDA:
-          index = 0;
-          break;
-        case ResourceType.ROCM:
-          index = 1;
-          break;
-        default:
-          index = undefined;
-      }
-      if (index === undefined) return acc;
-      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
+      acc[pool.slotType] += maxPoolSlotCapacity(pool);
       return acc;
-    }, [ 0, 0 ]);
+    }, {} as { [key in ResourceType]: number });
   }, [ resourcePools ]);
 
   return (
@@ -47,21 +38,17 @@ export const ClusterOverallStats: React.FC = () => {
         <OverviewStats title="Connected Agents">
           {agents ? agents.length : '?'}
         </OverviewStats>
-        {cudaTotalSlots ? (
-          <OverviewStats title="CUDA Slots Allocated">
-            {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
-          </OverviewStats>
-        ) : null}
-        {rocmTotalSlots ? (
-          <OverviewStats title="ROCm Slots Allocated">
-            {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
-          </OverviewStats>
-        ) : null}
-        {overview.CPU.total ? (
-          <OverviewStats title="CPU Slots Allocated">
-            {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
-          </OverviewStats>
-        ) : null}
+        {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
+          (maxTotalSlots[resType] > 0) ? (
+            <OverviewStats
+              key={resType}
+              title={`${resType} Slots Allocated`}>
+              {overview[resType].total - overview[resType].available}
+              <small>
+                / {maxTotalSlots[resType]}
+              </small>
+            </OverviewStats>
+          ) : null))}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
             {auxContainers.running} <small>/ {auxContainers.total}</small>

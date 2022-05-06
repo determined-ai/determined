@@ -4,6 +4,7 @@ import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
@@ -146,7 +147,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
           getSlotContainerStates(agents || [], pool.slotType, pool.name)
         }
         size={size}
-        slotsPotential={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+        slotsPotential={maxPoolSlotCapacity(pool)}
         title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
         totalSlots={pool.slotsAvailable}
       />
@@ -165,7 +166,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
           }
           size={size}
           title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
-          totalSlots={pool.maxAgents * (pool.slotsPerAgent ?? 0)}
+          totalSlots={maxPoolSlotCapacity(pool)}
         />
       )}
     </section>
