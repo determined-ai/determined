@@ -1,11 +1,12 @@
 import pathlib
+from typing import Tuple
 
 import tensorflow as tf
 
 BUFFER_SIZE = 400  # Used for shuffling
 
 
-def download(base, dataset):
+def download(base, dataset) -> str:
     filename = f"{dataset}.tar.gz"
     url = f"{base}/{filename}"
     path_to_zip = tf.keras.utils.get_file(filename, origin=url, extract=True)
@@ -15,7 +16,7 @@ def download(base, dataset):
     return PATH
 
 
-def _load(image_file):
+def _load(image_file: str) -> Tuple[tf.Tensor, tf.Tensor]:
     # Read and decode an image file to a uint8 tensor
     image = tf.io.read_file(image_file)
     image = tf.io.decode_jpeg(image)
@@ -35,7 +36,7 @@ def _load(image_file):
     return input_image, real_image
 
 
-def _resize(input_image, real_image, height, width):
+def _resize(input_image, real_image, height, width) -> Tuple[tf.Tensor, tf.Tensor]:
     input_image = tf.image.resize(
         input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
@@ -46,7 +47,7 @@ def _resize(input_image, real_image, height, width):
     return input_image, real_image
 
 
-def _random_crop(input_image, real_image, height, width):
+def _random_crop(input_image, real_image, height, width) -> Tuple[tf.Tensor, tf.Tensor]:
     stacked_image = tf.stack([input_image, real_image], axis=0)
     cropped_image = tf.image.random_crop(stacked_image, size=[2, height, width, 3])
 
@@ -54,7 +55,7 @@ def _random_crop(input_image, real_image, height, width):
 
 
 # Normalizing the images to [-1, 1]
-def _normalize(input_image, real_image):
+def _normalize(input_image, real_image) -> Tuple[tf.Tensor, tf.Tensor]:
     input_image = (input_image / 127.5) - 1
     real_image = (real_image / 127.5) - 1
 
@@ -62,7 +63,11 @@ def _normalize(input_image, real_image):
 
 
 @tf.function()
-def _random_jitter(input_image, real_image, height, width, jitter=0, mirror=False):
+def _random_jitter(
+    input_image, real_image,
+    height, width,
+    jitter=0, mirror=False,
+) -> Tuple[tf.Tensor, tf.Tensor]:
     if jitter > 0:
         # Resizing to 286x286
         input_image, real_image = _resize(
@@ -81,8 +86,12 @@ def _random_jitter(input_image, real_image, height, width, jitter=0, mirror=Fals
     return input_image, real_image
 
 
-def _preprocess_images(image_file, height, width, jitter=0, mirror=False):
-    input_image, real_image = _load(image_file)
+def _preprocess_images(
+    image_filename,
+    height, width,
+    jitter=0, mirror=False,
+) -> Tuple[tf.Tensor, tf.Tensor]:
+    input_image, real_image = _load(image_filename)
     input_image, real_image = _random_jitter(
         input_image, real_image,
         height, width,
@@ -98,7 +107,9 @@ def get_dataset(path, height, width, set_="train", jitter=0, mirror=False, batch
     if set_ != "train":
         jitter = 0
         mirror = False
-    ds = ds.map(lambda i: _preprocess_images(i, height, width, jitter, mirror))
+    def _prep(i):
+        return _preprocess_images(i, height, width, jitter, mirror)
+    ds = ds.map(_prep)
     if set_ == "train":
         ds = ds.shuffle(BUFFER_SIZE)
     if batch_size:
@@ -109,7 +120,7 @@ def get_dataset(path, height, width, set_="train", jitter=0, mirror=False, batch
 def main():
     import matplotlib.pyplot as plt
 
-    PATH = download()
+    PATH = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
 
     inp, re = _load(str(PATH / "train/100.jpg"))
     plt.figure(figsize=(6, 6))
