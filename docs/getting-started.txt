@@ -287,7 +287,7 @@ to use and how many model configurations to explore.
       :alt: Trials graphic
 
    Determined runs the number of ``max_trials`` trials and automatically starts new trials as
-   resources become available. On a typical laptop, 16 trials should take around 10 minutes to train
+   resources become available. On a typical laptop, 16 trials should take about 10 minutes to train
    with at least one trial performing at about 98 percent validation accuracy. The hyperparameter
    search halts poorly performing trials.
 
@@ -295,7 +295,8 @@ to use and how many model configurations to explore.
  Learn More
 ************
 
-For instructions on installing Determined in different environments, see:
+For detailed information on administrator tasks and how to install Determined on different
+platforms, see:
 
 -  :doc:`/sysadmin-basics/index` for administrator setup tasks.
 -  :doc:`/sysadmin-deploy-on-prem/index` for local setup and deployment tasks.
@@ -303,14 +304,14 @@ For instructions on installing Determined in different environments, see:
 -  :doc:`/sysadmin-deploy-on-gcp/index` for GCP deployment.
 -  :doc:`/sysadmin-deploy-on-k8s/index` for installation and running Determined on Kubernetes.
 
+In the :doc:`/examples` documentation, you can find machine learning models that have been ported to
+the Determined APIs. Each example includes a model definition and one or more experiment
+configuration files, with instructions on how to run the example.
+
+To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
+</training-hyperparameter/index>` section.
+
 For faster, less structured ways to run a Determined cluster without writing a model, see:
 
 -  :ref:`commands-and-shells`
 -  :ref:`notebooks`
-
-In the :doc:`/examples` section, you can find a list of example machine learning models that have
-been ported to the Determined APIs. Each example includes a model definition and one or more
-experiment configuration files, with instructions on how to run the example.
-
-To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
-</training-hyperparameter/index>` section.
