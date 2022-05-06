@@ -13,14 +13,14 @@ demonstrate the scalability and enhanced functionality gained through configurat
 An experiment is a training job that consists of one or more variations, or trials, of the same
 model. Using the Determined API, you automatically get metric frequency output, plots, and
 checkpointing for every experiment without writing extra code. Model information, configuration
-settings, output logs, and training metrics are displayed in the WebUI. Each of these quickstart
-examples uses the same model code and example dataset, differing only in their configuration
-settings. For more a list of all experiment configuration settings and more detailed information
-about each, see :doc:`/training-apis/experiment-config`.
+settings, output logs, and training metrics are displayed in the WebUI.
 
-In a distributed configuration, a Determined cluster comprises a master and one or more agents. The
-master provides centralized management of agent resources, controlling agent behavior through
-configuration variables.
+In the distributed configuration examples, a Determined cluster comprises a master and one or more
+agents, with the master providing centralized management of agent resources.
+
+Each of these quickstart examples uses the same model code and example dataset, differing only in
+their configuration settings. For a list of all experiment configuration settings and more detailed
+information about each, see :doc:`/training-apis/experiment-config`.
 
 After gaining a basic familiarity with Determined tools and operations, apply your knowledge of
 Determined to your domain by replacing the examples with your model data and code.
