@@ -61,6 +61,7 @@ def test_gradient_aggregation() -> None:
 
 @pytest.mark.e2e_gpu
 @pytest.mark.gpu_required
+@pytest.mark.parallel
 @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])
 def test_pytorch_distributed_with_amp(
     api_style: str, collect_trial_profiles: Callable[[int], None]
