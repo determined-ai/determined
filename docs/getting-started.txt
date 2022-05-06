@@ -188,9 +188,9 @@ hyperparameters on a single slot.
 
          det e create const.yaml . --follow
 
-#. To view the experiment progress, enter the cluster address in the browser address bar. If you
-   installed locally using the ``det deploy local`` command, the URL is ``http://localhost:8080/``.
-   Accept the default ``determined`` username and click **Sign In** to display the WebUI. No
+#. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
+   you installed locally using the ``det deploy local`` command, the URL is
+   ``http://localhost:8080/``. Accept the default ``determined`` username and click **Sign In**. No
    password is required.
 
    .. image:: /assets/images/qs01b.png
