@@ -21,25 +21,38 @@ considerations are:
 #. Create a ``4_distributed.py`` training script by copying the ``3_hpsearch.py`` from
    :ref:`core-hpsearch`.
 
-#. In your ``if __name__ == "__main__"`` block, add ``multiprocessing`` code to launch one process
-   per slot.
+#. Add launcher logic to execute one worker subprocess per slot.
+
+   Start with a ``launcher_main()`` function that executes one worker subprocess per slot.
+
+   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
+      :language: python
+      :dedent:
+      :pyobject: launcher_main
+
+   Typically, you do not have to write your own launcher. Determined provides launchers for Horovod,
+   ``torch.distributed``, and DeepSpeed. Additionally, there are third-party launchers available,
+   such as ``mpirun``. When using a custom or third-party launcher, wrap your worker script in the
+   ``python -m determined.launcher.wrap_rank`` wrapper script so the WebUI log viewer can filter
+   logs by rank.
+
+   Also add a ``worker_main()`` that will run training on each slot:
+
+   .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
+      :language: python
+      :dedent:
+      :pyobject: worker_main
+
+   Then modify your ``if __name__ == "__main__"`` block to invoke the correct ``*_main()`` based on
+   command-line arguments:
 
    .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
       :language: python
       :dedent:
       :start-at: slots_per_node = len(info.slot_ids)
 
-   Typically, your distributed training framework provides a launcher, as Horovod provides
-   ``horovodrun`` and Torch provides ``torch.distributed.launch``, so you do not have to write the
-   launcher yourself.
-
-   Even if the launcher is provided, you always need to create a
-   :class:`~determined.core.DistributedContext` on each worker to pass to ``core.init()``. In the
-   absence of a distributed training framework that might define rank/local_rank/cross_rank, you can
-   derive those values from the ClusterInfo API, as in this example.
-
-#. Use the ``allgather`` primitive to do a "distributed" increment, just to get a feel for using the
-   communication primitives:
+#. In the training code, use the ``allgather`` primitive to do a "distributed" increment, to gain
+   experience using the communication primitives:
 
    .. literalinclude:: ../../../examples/tutorials/core_api/4_distributed.py
       :language: python

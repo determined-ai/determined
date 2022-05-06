@@ -40,7 +40,7 @@ def create_log_redirect_cmd() -> List[str]:
     return [
         "python3",
         "-m",
-        "determined.exec.worker_process_wrapper",
+        "determined.launch.wrap_rank",
         "RANK",
         "--",
     ]
