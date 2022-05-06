@@ -2,13 +2,14 @@
  Quickstart for Model Developers
 #################################
 
-This quickstart uses the MNIST dataset to walk you through the basic steps to install Determined,
-run training experiments, and visualize the results in your browser. It uses three examples to
-demonstrate the scalability and enhanced functionality gained through configuration settings:
+This quickstart uses the MNIST dataset to demonstrate basic Determined functionality, and walks you
+through the steps needed to install Determined, run training jobs, and visualize experiment results
+in your browser. Three examples show the scalability and enhanced functionality gained from
+configuration setting changes:
 
--  Training on a local, single CPU or GPU.
--  Running a distributed training job on multiple GPUs.
--  Using hyperparameter tuning.
+-  Train on a local, single CPU or GPU.
+-  Run a distributed training job on multiple GPUs.
+-  Use hyperparameter tuning.
 
 An experiment is a training job that consists of one or more variations, or trials, of the same
 model. Using the Determined API, you automatically get metric frequency output, plots, and
