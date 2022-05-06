@@ -18,7 +18,7 @@ const UseJupyterLabModalContainer = () => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
-  return <Button onClick={() => modalOpen()}> Open Jupyter Lab</Button>;
+  return <Button onClick={() => modalOpen()}>Open Jupyter Lab</Button>;
 };
 
 export const Default = (): React.ReactNode => {
