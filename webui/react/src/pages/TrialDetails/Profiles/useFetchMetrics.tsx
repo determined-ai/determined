@@ -74,11 +74,16 @@ export const useFetchMetrics = (
                 Array(INIT_BUCKETS).fill(null),
               ];
             }
-            let labelRowIndex = names.indexOf(labelName) + 1; // 0th is time
-            if (labelRowIndex === 0) {
-              labelRowIndex = names.length;
+
+            const labelNamesIndex = names.indexOf(labelName);
+            let labelDataIndex;
+
+            if (labelNamesIndex === -1) {
               names = [ ...names, labelName ];
               data = [ ...data, data[0].map(() => null) ];
+              labelDataIndex = data.length - 1;
+            } else {
+              labelDataIndex = labelNamesIndex + 1;
             }
 
             // const newDataMaxTimestamp = Math.max(...newTimestamps.map(parseTime));
@@ -113,7 +118,7 @@ export const useFetchMetrics = (
               const timestampIndex = getIndexForTimestamp(initialTimestamp, timestamp);
 
               data[BATCH_INDEX][timestampIndex] = batch;
-              data[labelRowIndex][timestampIndex] = value;
+              data[labelDataIndex][timestampIndex] = value;
 
             }
 
