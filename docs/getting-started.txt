@@ -306,7 +306,7 @@ platforms, see:
 
 In the :doc:`/examples` documentation, you can find machine learning models that have been ported to
 the Determined APIs. Each example includes a model definition and one or more experiment
-configuration files, with instructions on how to run the example.
+configuration files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
 </training-hyperparameter/index>` section.
