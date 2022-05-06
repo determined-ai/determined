@@ -61,7 +61,12 @@ const poolAttributes = [
   {
     key: 'numAgents',
     label: 'Connected Agents',
-    render: (x: ResourcePool) => `${x.numAgents}/${x.maxAgents}`,
+    render: (x: ResourcePool) => {
+      if (x.maxAgents > 0) {
+        return `${x.numAgents}/${x.maxAgents}`;
+      }
+      return x.numAgents;
+    },
   },
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
