@@ -37,6 +37,8 @@ export const SyncProvider = ({ children }) => {
     , [ setQueueSignal ],
   );
 
+  const minMaxRef = useRef({});
+
   const updateQueue = useRef([]);
 
   useEffect(() => {
@@ -51,6 +53,8 @@ export const SyncProvider = ({ children }) => {
 
   useEffect(() => {
     // console.log('new bounds', timestampInMinutes(syncedMin), timestampInMinutes(syncedMax));
+    minMaxRef.current.max = syncedMax;
+    minMaxRef.current.min = syncedMin;
     if(!zoomed) {
       syncRef.current.plots.forEach((chart: uPlot) => {
         const chartMin = getChartMin(chart);
@@ -76,7 +80,7 @@ export const SyncProvider = ({ children }) => {
 
   return (
     <SyncContext.Provider
-      value={{ dispatchScaleUpdate, setZoomed, syncRef, zoomed }}>
+      value={{ dispatchScaleUpdate, minMaxRef, setZoomed, syncRef, zoomed }}>
       {children}
     </SyncContext.Provider>
   );
@@ -88,15 +92,20 @@ export const useSyncableBounds = (): SyncableBounds => {
   const syncContext = useContext(SyncContext);
   const zoomSetter = syncContext?.setZoomed ?? setZoomed;
   const scaleUpdateDispatcher = syncContext?.dispatchScaleUpdate;
+  const minMaxRef = syncContext?.minMaxRef;
   const syncRef: MutableRefObject<uPlot.SyncPubSub> = syncContext?.syncRef;
 
   const boundsOptions = useMemo(() => ({
     cursor: {
       bind: {
-        dblclick: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
+        dblclick: (chart: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
           return (e: Event) => {
             zoomSetter(false);
-            handler(e);
+            if (minMaxRef){
+              chart.setScale('x', { max: minMaxRef.current.max, min: minMaxRef.current.max });
+            } else {
+              handler(e);
+            }
           };
         },
         mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
@@ -133,7 +142,7 @@ export const useSyncableBounds = (): SyncableBounds => {
       },
     },
     hooks: scaleUpdateDispatcher && { setScale: [ scaleUpdateDispatcher ] },
-  }), [ zoomSetter, scaleUpdateDispatcher, syncRef ]);
+  }), [ zoomSetter, scaleUpdateDispatcher, syncRef, minMaxRef ]);
 
   return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, zoomed };
 };
