@@ -1,10 +1,9 @@
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
-import { clusterStr } from 'pages/Cluster/ClusterOverview';
+import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { handlePath, paths } from 'routes/utils';
 
 import ActionSheet from './ActionSheet';
@@ -73,7 +72,7 @@ const NavigationTabbar: React.FC = () => {
           icon="cluster"
           label="Cluster"
           path={paths.cluster()}
-          status={clusterStr(overview, resourcePools)}
+          status={clusterStatusText(overview, resourcePools)}
         />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>

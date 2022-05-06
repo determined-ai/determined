@@ -1,13 +1,12 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
-
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 import { paths } from 'routes/utils';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
-import { clusterStr } from './Cluster/ClusterOverview';
+import { clusterStatusText } from './Cluster/ClusterOverview';
 import ClusterLogs from './ClusterLogs';
 import css from './Clusters.module.scss';
 import ClustersOverview from './Clusters/ClustersOverview';
@@ -34,7 +33,7 @@ const Clusters: React.FC = () => {
   const { cluster: overview, resourcePools } = useStore();
 
   const cluster = useMemo(() => {
-    return clusterStr(overview, resourcePools);
+    return clusterStatusText(overview, resourcePools);
   }, [ overview, resourcePools ]);
 
   const handleTabChange = useCallback(key => {

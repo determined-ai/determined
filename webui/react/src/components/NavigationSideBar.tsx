@@ -1,12 +1,11 @@
 import { Button, Menu, Modal, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { CSSTransition } from 'react-transition-group';
-
 import { useStore } from 'contexts/Store';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { clusterStr } from 'pages/Cluster/ClusterOverview';
+import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { CSSTransition } from 'react-transition-group';
 import { paths } from 'routes/utils';
 
 import AvatarCard from './AvatarCard';
@@ -175,7 +174,7 @@ const NavigationSideBar: React.FC = () => {
             {menuConfig.top.map(config => (
               <NavigationItem
                 key={config.icon}
-                status={config.icon === 'cluster' ? clusterStr(overview, resourcePools) : undefined}
+                status={config.icon === 'cluster' ? clusterStatusText(overview, resourcePools) : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />
