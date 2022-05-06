@@ -9,7 +9,6 @@ than this.  By following these examples you can get an idea of how to modify
 your own script to integrate with the Core API.
 """
 
-# START getting-started doc
 import logging
 import sys
 import time
@@ -20,11 +19,8 @@ def main(increment_by):
     for batch in range(100):
         x += increment_by
         time.sleep(.1)
-        print("x is now", x)
+        print(f"x is now {x}")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
     main(increment_by=1)
-# END getting-started doc

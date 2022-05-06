@@ -17,6 +17,15 @@ with only a few new lines of code.
       :start-after: NEW: import determined
       :end-before: def main
 
+#. Enable ``logging``, using the ``det.LOG_FORMAT`` for logs. Enabling ``logging`` enables useful
+   log messages from the ``determined`` library, and det.LOG_FORMAT enables filter-by-level in the
+   WebUI.
+
+   .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
+      :language: python
+      :start-at: logging.basicConfig
+      :end-at: logging.error
+
 #. In your ``if __name__ == "__main__"`` block, wrap the entire execution of ``main()`` within the
    scope of :meth:`determined.core.init`, which prepares resources for training and cleans them up
    afterward. Add the ``core_context`` as a new argument to ``main()`` because the Core API is
@@ -24,7 +33,7 @@ with only a few new lines of code.
 
    .. literalinclude:: ../../../examples/tutorials/core_api/1_metrics.py
       :language: python
-      :start-at: if __name__ == "__main__"
+      :start-at: with det.core.init
 
 #. Within ``main()``, add two calls. One to report training metrics, which is called periodically
    during training, and one to report validation metrics, which is called every time a validation
