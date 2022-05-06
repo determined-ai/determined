@@ -445,22 +445,50 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
-export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
+export const decodeMetrics = (data: Sdk.V1Metrics): types.Metrics => {
+  /**
+   * using any here because this comes from the api as any
+   * however, the protos indicate that it is a Struct/Record
+   */
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const decodeMetricStruct = (data: any): Record<string, number> => {
+    const metrics: Record<string, number> = {};
+    Object.entries(data || {}).forEach(([ metric, value ]) => {
+      if (typeof metric === 'string' && (typeof value === 'number' || typeof value === 'string')) {
+        const numberValue = (typeof value === 'number') ? value : parseFloat(value);
+        if (!isNaN(numberValue)) metrics[metric] = numberValue;
+      }
+    });
+    return metrics;
+  };
+  return {
+    avgMetrics: decodeMetricStruct(data.avgMetrics),
+    batchMetrics: data.batchMetrics?.map(decodeMetricStruct),
+  };
+};
+
+export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCheckpoint => {
   const resources: Record<string, number> = {};
   Object.entries(data.resources || {}).forEach(([ res, val ]) => {
     resources[res] = parseFloat(val);
   });
-
   return {
-    batch: data.batchNumber,
-    endTime: data.endTime && data.endTime as unknown as string,
-    experimentId: data.experimentId,
-    metrics: data.metrics,
-    resources,
-    state: decodeCheckpointState(data.state),
-    trialId: data.trialId,
+    allocationId: data.allocationId,
+    experimentConfig: data.training.experimentConfig,
+    experimentId: data.training.experimentId,
+    hparams: data.training.hparams,
+    metadata: data.metadata,
+    reportTime: data.reportTime?.toString(),
+    resources: resources,
+    searcherMetric: data.training.searcherMetric,
+    state: decodeCheckpointState(data.state || Sdk.Determinedcheckpointv1State.UNSPECIFIED),
+    taskId: data.taskId,
+    totalBatches: data.metadata['steps_completed'] ?? 0,
+    trainingMetrics: data.training.trainingMetrics && decodeMetrics(data.training.trainingMetrics),
+    trialId: data.training.trialId,
     uuid: data.uuid,
-    validationMetric: data.searcherMetric,
+    validationMetrics:
+      data.training.validationMetrics && decodeMetrics(data.training.validationMetrics),
   };
 };
 

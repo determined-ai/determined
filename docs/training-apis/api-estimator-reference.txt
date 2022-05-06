@@ -23,7 +23,7 @@
    :member-order: bysource
    :show-inheritance:
 
-   EstimatorTrialContext always has a :class:`~determined._core._distributed.DistributedContext`
+   EstimatorTrialContext always has a :class:`~determined.core._distributed.DistributedContext`
    accessible via ``context.distributed`` for information related to distributed training.
 
    EstimatorTrialContext always has a :class:`~determined.estimator.EstimatorExperimentalContext`
@@ -33,7 +33,7 @@
  ``determined.estimator.EstimatorTrialContext.distributed``
 ************************************************************
 
-.. autoclass:: determined._core._distributed.DistributedContext
+.. autoclass:: determined.core._distributed.DistributedContext
    :members:
    :inherited-members:
    :member-order: bysource

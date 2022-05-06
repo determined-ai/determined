@@ -273,25 +273,6 @@ For an introduction to using the training API, please see the documentation on h
       -  Titanic
       -  :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
 
-**********************
- Features: Data Layer
-**********************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
-
-   -  -  TensorFlow (Estimator API)
-      -  MNIST
-      -  :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator.tgz>`
-
-   -  -  TensorFlow (tf.keras)
-      -  MNIST
-      -  :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras.tgz>`
-
 ***************************
  Features: Custom Reducers
 ***************************

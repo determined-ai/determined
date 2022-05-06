@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from determined import _core
+from determined import core
 from tests import parallel
 
 
@@ -59,16 +59,16 @@ class MockPreemptState:
 
 
 def make_test_preempt_context(
-    dist: _core.DistributedContext,
-    mode: _core.PreemptMode,
-) -> Tuple[MockPreemptState, _core.PreemptContext]:
+    dist: core.DistributedContext,
+    mode: core.PreemptMode,
+) -> Tuple[MockPreemptState, core.PreemptContext]:
 
     state = MockPreemptState()
-    context = _core.PreemptContext(state.mock_session, "allocation_id", dist, mode)
+    context = core.PreemptContext(state.mock_session, "allocation_id", dist, mode)
     return state, context
 
 
-def wait_on_watcher(preempt_context: _core.PreemptContext) -> None:
+def wait_on_watcher(preempt_context: core.PreemptContext) -> None:
     # It's racy as to when the watcher will actually see the signal.
     watcher = preempt_context._watcher
     assert watcher is not None
@@ -88,11 +88,11 @@ def test_preempt_workers_ask_chief(dummy: bool, auto_ack: bool) -> None:
         def do_test() -> None:
             if not dummy:
                 state, context = make_test_preempt_context(
-                    pex.distributed, _core.PreemptMode.WorkersAskChief
+                    pex.distributed, core.PreemptMode.WorkersAskChief
                 )
             else:
-                context = _core.DummyPreemptContext(
-                    pex.distributed, _core.PreemptMode.WorkersAskChief
+                context = core.DummyPreemptContext(
+                    pex.distributed, core.PreemptMode.WorkersAskChief
                 )
 
             with context:
@@ -135,18 +135,16 @@ def test_preempt_chief_only(dummy: bool, auto_ack: bool) -> None:
         # Steal the automatically-created pex.distributed contexts, then test chief/worker serially
         # so we know they're not using distributed comms.
         @pex.run
-        def distributed_contexts() -> _core.DistributedContext:
+        def distributed_contexts() -> core.DistributedContext:
             return pex.distributed
 
         # Test chief.
         if not dummy:
             state, context = make_test_preempt_context(
-                distributed_contexts[0], _core.PreemptMode.ChiefOnly
+                distributed_contexts[0], core.PreemptMode.ChiefOnly
             )
         else:
-            context = _core.DummyPreemptContext(
-                distributed_contexts[0], _core.PreemptMode.ChiefOnly
-            )
+            context = core.DummyPreemptContext(distributed_contexts[0], core.PreemptMode.ChiefOnly)
         with context:
             assert context.should_preempt() is False
             if not dummy:
@@ -166,12 +164,10 @@ def test_preempt_chief_only(dummy: bool, auto_ack: bool) -> None:
         # Test worker.
         if not dummy:
             state, context = make_test_preempt_context(
-                distributed_contexts[1], _core.PreemptMode.ChiefOnly
+                distributed_contexts[1], core.PreemptMode.ChiefOnly
             )
         else:
-            context = _core.DummyPreemptContext(
-                distributed_contexts[1], _core.PreemptMode.ChiefOnly
-            )
+            context = core.DummyPreemptContext(distributed_contexts[1], core.PreemptMode.ChiefOnly)
         with context:
             with pytest.raises(RuntimeError, match="should_preempt.*called from non-chief"):
                 context.should_preempt()
@@ -185,15 +181,15 @@ def test_preempt_workers_ask_master(dummy: bool, auto_ack: bool) -> None:
         # Steal the automatically-created pex.distributed contexts, then test chief/worker serially
         # so we know they're not using distributed comms.
         @pex.run
-        def distributed_contexts() -> _core.DistributedContext:
+        def distributed_contexts() -> core.DistributedContext:
             return pex.distributed
 
         # Test steps are identical for chief and worker.
         for dist in distributed_contexts:
             if not dummy:
-                state, context = make_test_preempt_context(dist, _core.PreemptMode.WorkersAskMaster)
+                state, context = make_test_preempt_context(dist, core.PreemptMode.WorkersAskMaster)
             else:
-                context = _core.DummyPreemptContext(dist, _core.PreemptMode.WorkersAskMaster)
+                context = core.DummyPreemptContext(dist, core.PreemptMode.WorkersAskMaster)
             with context:
                 assert context.should_preempt() is False
                 if not dummy:
@@ -218,11 +214,11 @@ def test_check_started(dummy: bool) -> None:
         def do_test() -> None:
             if not dummy:
                 state, context = make_test_preempt_context(
-                    pex.distributed, _core.PreemptMode.WorkersAskChief
+                    pex.distributed, core.PreemptMode.WorkersAskChief
                 )
             else:
-                context = _core.DummyPreemptContext(
-                    pex.distributed, _core.PreemptMode.WorkersAskChief
+                context = core.DummyPreemptContext(
+                    pex.distributed, core.PreemptMode.WorkersAskChief
                 )
 
             with pytest.raises(RuntimeError, match="cannot call.*should_preempt.*before.*start"):

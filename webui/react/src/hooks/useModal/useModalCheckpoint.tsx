@@ -8,17 +8,21 @@ import Link from 'components/Link';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
-import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
-  ExperimentConfig, RunState } from 'types';
+import {
+  CheckpointStorageType,
+  CheckpointWorkloadExtended,
+  ExperimentConfig,
+  RunState,
+} from 'types';
 import { formatDatetime } from 'utils/datetime';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize, getBatchNumber } from 'utils/workload';
+import { checkpointSize } from 'utils/workload';
 
 import useModal, { ModalHooks } from './useModal';
 import css from './useModalCheckpoint.module.scss';
 
 interface Props {
-  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended;
   config: ExperimentConfig;
   searcherValidation?: number;
   title: string;
@@ -26,7 +30,7 @@ interface Props {
 
 const getStorageLocation = (
   config: ExperimentConfig,
-  checkpoint: CheckpointDetail | CheckpointWorkload,
+  checkpoint: CheckpointWorkloadExtended,
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
@@ -96,13 +100,10 @@ const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): Mod
       return null;
     }
 
-    const totalBatchesProcessed = getBatchNumber(checkpoint);
     const state = checkpoint.state as unknown as RunState;
     const totalSize = humanReadableBytes(checkpointSize(checkpoint));
 
-    const searcherMetric = props.searcherValidation !== undefined ?
-      props.searcherValidation :
-      ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+    const searcherMetric = props.searcherValidation;
     const checkpointResources = checkpoint.resources;
     const resources = Object.keys(checkpoint.resources)
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
@@ -120,7 +121,7 @@ const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): Mod
                 Trial {checkpoint.trialId}
               </Link>
               <span className={css.sourceDivider} />
-              <span>Batch {totalBatchesProcessed}</span>
+              <span>Batch {checkpoint.totalBatches}</span>
             </div>
           ),
         )}

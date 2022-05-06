@@ -16,7 +16,7 @@ def get_dummy_env() -> det.EnvContext:
         master_cert_name=None,
         experiment_config={"resources": {"slots_per_trial": 1, "native_parallel": False}},
         latest_checkpoint=None,
-        latest_batch=0,
+        steps_completed=0,
         use_gpu=False,
         container_gpus=[],
         slot_ids=[],

@@ -1,8 +1,6 @@
 # type: ignore
 import os
 import pathlib
-import subprocess
-import sys
 import typing
 
 import pytest
@@ -142,7 +140,7 @@ class TestPyTorchTrial:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
-            latest_batch: int = 0,
+            steps_completed: int = 0,
         ) -> det.TrialController:
             updated_hparams = {
                 "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
@@ -155,7 +153,7 @@ class TestPyTorchTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
-                latest_batch=latest_batch,
+                steps_completed=steps_completed,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -164,16 +162,16 @@ class TestPyTorchTrial:
         # Build, train, and save a checkpoint with the normal hyperparameters.
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
-        latest_batch = 0
+        steps_completed = 0
 
         def make_workloads_1() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, latest_batch
+            nonlocal latest_checkpoint, steps_completed
             latest_checkpoint = interceptor.metrics_result()["uuid"]
-            latest_batch = trainer.get_latest_batch()
+            steps_completed = trainer.get_steps_completed()
 
         controller1 = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialMulti,
@@ -199,7 +197,7 @@ class TestPyTorchTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
-                latest_batch=latest_batch,
+                steps_completed=steps_completed,
             )
             controller2.run()
 
@@ -317,7 +315,7 @@ class TestPyTorchTrial:
     def test_callbacks(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = tmp_path.joinpath("checkpoint")
         latest_checkpoint = None
-        latest_batch = 0
+        steps_completed = 0
 
         controller = None
 
@@ -358,9 +356,9 @@ class TestPyTorchTrial:
 
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint, latest_batch
+            nonlocal latest_checkpoint, steps_completed
             latest_checkpoint = interceptor.metrics_result()["uuid"]
-            latest_batch = 1
+            steps_completed = 1
             assert controller.trial.counter.__dict__ == {
                 "trial_startups": 1,
                 "validation_steps_started": 1,
@@ -397,7 +395,7 @@ class TestPyTorchTrial:
             workloads=make_workloads2(),
             checkpoint_dir=str(checkpoint_dir),
             latest_checkpoint=latest_checkpoint,
-            latest_batch=latest_batch,
+            steps_completed=steps_completed,
         )
         controller.run()
         assert controller.trial.counter.__dict__ == {
@@ -586,24 +584,19 @@ class TestPyTorchTrial:
         controller.run()
 
 
-@pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
-def test_checkpoint_loading(ckpt_ver):
-    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-pytorch")
+@pytest.mark.parametrize(
+    "ckpt,istrial",
+    [
+        ("0.13.13-pytorch-old", False),
+        ("0.13.13-pytorch-flex", True),
+        ("0.17.6-pytorch", True),
+        ("0.17.7-pytorch", True),
+    ],
+)
+def test_checkpoint_loading(ckpt: str, istrial: bool):
+    checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt}")
     trial = pytorch.load_trial_from_checkpoint_path(checkpoint_dir)
-    assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
-
-
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(pytorch_xor_model.XORTrial)
-
-
-def test_native_api_local_test() -> None:
-    subprocess.check_call(
-        args=[sys.executable, "pytorch_onevar_model.py"],
-        cwd=utils.fixtures_path(""),
-        env={
-            "PYTHONUNBUFFERED": "1",
-            "PYTHONPATH": f"$PYTHONPATH:{utils.repo_path('harness')}",
-            **os.environ,
-        },
-    )
+    if istrial:
+        assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
+    else:
+        assert isinstance(trial, torch.nn.Module), type(trial)

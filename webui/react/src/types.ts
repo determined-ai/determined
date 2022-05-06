@@ -368,14 +368,6 @@ export interface MetricName {
   type: MetricType;
 }
 
-export interface Checkpoint extends EndTimes {
-  resources?: Record<string, number>;
-  state: CheckpointState;
-  trialId: number;
-  uuid?: string;
-  validationMetric?: number;
-}
-
 export interface BaseWorkload extends EndTimes {
   totalBatches: number;
 }
@@ -407,18 +399,33 @@ export interface Step extends WorkloadGroup, StartEndTimes {
   training: MetricsWorkload;
 }
 
-export interface Metrics {
-  numInputs?: number;
-  validationMetrics?: Record<string, number>;
+type MetricStruct = Record<string, number>;
+export interface Metrics extends Api.V1Metrics {
+  // these two fields are present in the protos
+  // as a struct and list of structs, respectively
+  // here, we are being a bit more precise
+  avgMetrics: MetricStruct;
+  batchMetrics?: Array<MetricStruct>;
 }
 
 export type Metadata = Record<RecordKey, string>;
 
-export interface CheckpointDetail extends Checkpoint {
-  batch: number;
+export interface CoreApiGenericCheckpoint {
+  allocationId?: string;
+  experimentConfig?: ExperimentConfig;
   experimentId?: number;
-  metadata?: Metadata;
-  metrics?: Metrics;
+  hparams?: TrialHyperparameters;
+  metadata: Metadata;
+  reportTime?: string;
+  resources: Record<string, number>;
+  searcherMetric?: number;
+  state: CheckpointState;
+  taskId?: string;
+  totalBatches: number;
+  trainingMetrics?: Metrics;
+  trialId?: number;
+  uuid: string;
+  validationMetrics?: Metrics;
 }
 
 export interface TrialPagination extends WithPagination {
@@ -508,7 +515,7 @@ export interface ModelItem {
 }
 
 export interface ModelVersion {
-  checkpoint: CheckpointDetail;
+  checkpoint: CoreApiGenericCheckpoint;
   comment?: string;
   creationTime: string;
   id: number;

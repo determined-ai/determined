@@ -276,10 +276,12 @@ def test_end_to_end_adaptive() -> None:
     assert top_2_uuids == top_k_uuids[:2]
 
     # Check that metrics are truly in sorted order.
-    try:
-        metrics = [c.validation["metrics"]["validationMetrics"]["validation_loss"] for c in top_k]
-    except Exception:
-        metrics = [c.validation["metrics"]["validation_loss"] for c in top_k]
+    assert all(c.training is not None for c in top_k)
+    metrics = [
+        c.training.validation_metrics["avgMetrics"]["validation_loss"]
+        for c in top_k
+        if c.training is not None
+    ]
 
     assert metrics == sorted(metrics)
 
@@ -295,22 +297,32 @@ def test_end_to_end_adaptive() -> None:
     checkpoint.add_metadata({"testing": "metadata"})
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
-    assert checkpoint.metadata == {"testing": "metadata"}
+    # Beginning with 0.18 the system contributes a few items to the dict
+    assert checkpoint.metadata.get("testing") == "metadata"
+    assert checkpoint.metadata.keys() == {"format", "framework", "steps_completed", "testing"}
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"some_key": "some_value"})
     db_check = d.get_checkpoint(checkpoint.uuid)
-    assert checkpoint.metadata == {"testing": "metadata", "some_key": "some_value"}
+    assert checkpoint.metadata.items() > {"testing": "metadata", "some_key": "some_value"}.items()
+    assert checkpoint.metadata.keys() == {
+        "format",
+        "framework",
+        "steps_completed",
+        "testing",
+        "some_key",
+    }
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"testing": "override"})
     db_check = d.get_checkpoint(checkpoint.uuid)
-    assert checkpoint.metadata == {"testing": "override", "some_key": "some_value"}
+    assert checkpoint.metadata.items() > {"testing": "override", "some_key": "some_value"}.items()
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.remove_metadata(["some_key"])
     db_check = d.get_checkpoint(checkpoint.uuid)
-    assert checkpoint.metadata == {"testing": "override"}
+    assert "some_key" not in checkpoint.metadata
+    assert checkpoint.metadata["testing"] == "override"
     assert checkpoint.metadata == db_check.metadata
 
 
@@ -353,3 +365,32 @@ def test_perform_initial_validation() -> None:
     config = conf.set_perform_initial_validation(config, True)
     exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("no_op"), 1)
     exp.assert_performed_initial_validation(exp_id)
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
+    "stage,ntrials,expect_workloads,expect_checkpoints",
+    [
+        ("0_start", 1, False, False),
+        ("1_metrics", 1, True, False),
+        ("2_checkpoints", 1, True, True),
+        ("3_hpsearch", 10, True, True),
+    ],
+)
+def test_core_api_tutorials(
+    stage: str, ntrials: int, expect_workloads: bool, expect_checkpoints: bool
+) -> None:
+    exp.run_basic_test(
+        conf.tutorials_path(f"core_api/{stage}.yaml"),
+        conf.tutorials_path("core_api"),
+        ntrials,
+        expect_workloads=expect_workloads,
+        expect_checkpoints=expect_checkpoints,
+    )
+
+
+@pytest.mark.parallel
+def test_core_api_distributed_tutorial() -> None:
+    exp.run_basic_test(
+        conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
+    )

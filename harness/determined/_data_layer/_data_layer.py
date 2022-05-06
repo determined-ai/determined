@@ -10,7 +10,7 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import _core
+from determined import core
 from determined.common import check
 from determined.common.api import analytics
 
@@ -37,7 +37,7 @@ class _CacheableDecorator:
         env: det.EnvContext,
         training: bool,
         per_slot_batch_size: int,
-        distributed_context: _core.DistributedContext,
+        distributed_context: core.DistributedContext,
     ) -> None:
         self._env = env
         self._distributed_context = distributed_context
@@ -60,7 +60,7 @@ class _CacheableDecorator:
             return
 
         batch_size = self._per_slot_batch_size
-        self._offset = self._env.latest_batch * batch_size
+        self._offset = self._env.steps_completed * batch_size
 
     def _init_shard(self) -> None:
         if self._distributed_context.size == 0:

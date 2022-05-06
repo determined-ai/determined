@@ -32,7 +32,6 @@ def main() -> int:
     parser.add_argument("rank_var_name")
     parser.add_argument("cmd", nargs=argparse.REMAINDER)
     args = parser.parse_args()
-
     rank = os.environ.get(args.rank_var_name)
     proc = subprocess.Popen(args.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with open(constants.CONTAINER_STDOUT, "w") as cstdout, open(

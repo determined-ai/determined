@@ -56,8 +56,6 @@ const (
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
-	// PBTSearch is the SearchMethodType for a PBT searcher.
-	PBTSearch SearchMethodType = "pbt"
 )
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -76,8 +74,6 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
 	case c.RawAdaptiveASHAConfig != nil:
 		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
-	case c.RawPBTConfig != nil:
-		return newPBTSearch(*c.RawPBTConfig, c.SmallerIsBetter())
 	default:
 		panic("no searcher type specified")
 	}
@@ -102,12 +98,4 @@ func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, e
 func (defaultSearchMethod) trialExitedEarly(
 	context, model.RequestID, model.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
-}
-
-func sumTrialLengths(us map[model.RequestID]PartialUnits) PartialUnits {
-	var sum PartialUnits = 0
-	for _, u := range us {
-		sum += u
-	}
-	return sum
 }
