@@ -7,6 +7,7 @@ import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState 
 import Link from 'components/Link';
 import Spinner from 'components/Spinner';
 import useJupyterLab from 'hooks/useJupyterLab';
+import usePrevious from 'hooks/usePrevious';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
@@ -71,10 +72,10 @@ const useJupyterLabModal = (): ModalHooks => {
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ config, setConfig ] = useState<string | undefined>();
-  const [ previousConfig, setPreviousConfig ] = useState<string | undefined>();
-  const [ previousShowConfig, setPreviousShowConfig ] = useState<boolean>(false);
+  const previousConfig = usePrevious(config, undefined);
+  const previousShowConfig = usePrevious(showFullConfig, undefined);
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
-
+  
   const [ fields, dispatch ] = useJupyterLabForm();
   const { launchJupyterLab, previewJupyterLab } = useJupyterLab();
 
@@ -158,21 +159,14 @@ const useJupyterLabModal = (): ModalHooks => {
     };
   }, [ content ]);
 
-  useEffect(() => {
-    if(config !== previousConfig){
-      setPreviousConfig(config);
+  if(config !== previousConfig || showFullConfig !== previousShowConfig){
       openOrUpdate(modalProps);
-    }
-  }, [ config, modalProps, openOrUpdate, previousConfig, previousShowConfig ]);
+  }
 
   useEffect(() => {
-    if(showFullConfig !== previousShowConfig){
-      setPreviousShowConfig(showFullConfig);
-      openOrUpdate(
-        modalProps,
-      );
-
-    }
+    if(config !== previousConfig || showFullConfig !== previousShowConfig){
+      openOrUpdate(modalProps);
+  }
   }, [ showFullConfig, modalProps, openOrUpdate, previousShowConfig ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
