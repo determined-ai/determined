@@ -19,9 +19,11 @@ import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { ShirtSize } from 'themes';
 import {
-  ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
+  ClusterOverviewResource,
+  ClusterOverview as Overview, Pagination, ResourcePool, ResourceState, ResourceType,
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { percent } from 'utils/number';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
 import css from './ClusterOverview.module.scss';
@@ -32,6 +34,28 @@ const STORAGE_SORTER_KEY = 'sorter';
 const VIEW_CHOICE_KEY = 'view-choice';
 
 const defaultSorter = { descend: false, key: 'name' };
+
+/**
+ * maximum theoretcial capacity of the resource pool in terms of the advertised
+ * compute slot type.
+ * @param pool resource pool
+ */
+export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
+  return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+};
+
+export const clusterStatusText = (
+  overview: Overview,
+  pools: ResourcePool[],
+): string | undefined => {
+  if (overview[ResourceType.ALL].allocation === 0) return undefined;
+  const totalSlots = pools.reduce((totalSlots, currentPool) => {
+    return totalSlots + maxPoolSlotCapacity(currentPool);
+  }, 0);
+  if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
+  return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
+        / totalSlots)}%`;
+};
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
@@ -70,23 +94,13 @@ const ClusterOverview: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
+  /** theoretical max capacity for each slot type in the cluster */
+  const maxTotalSlots = useMemo(() => {
     return resourcePools.reduce((acc, pool) => {
-      let index;
-      switch (pool.slotType) {
-        case ResourceType.CUDA:
-          index = 0;
-          break;
-        case ResourceType.ROCM:
-          index = 1;
-          break;
-        default:
-          index = undefined;
-      }
-      if (index === undefined) return acc;
-      acc[index] += pool.maxAgents * (pool.slotsPerAgent ?? 0);
+      if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
+      acc[pool.slotType] += maxPoolSlotCapacity(pool);
       return acc;
-    }, [ 0, 0 ]);
+    }, {} as { [key in ResourceType]: number });
   }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
@@ -127,6 +141,11 @@ const ClusterOverview: React.FC = () => {
       if (column.key === 'chart') column.render = slotsBarRender;
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      }
+      if (column.key === 'slotsAvailable') {
+        column.render = (_: unknown, rp: ResourcePool): React.ReactNode => {
+          return maxPoolSlotCapacity(rp);
+        };
       }
       return column;
     });
@@ -179,21 +198,17 @@ const ClusterOverview: React.FC = () => {
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
-          {cudaTotalSlots ? (
-            <OverviewStats title="CUDA Slots Allocated">
-              {overview.CUDA.total - overview.CUDA.available} <small>/ {cudaTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {rocmTotalSlots ? (
-            <OverviewStats title="ROCm Slots Allocated">
-              {overview.ROCM.total - overview.ROCM.available} <small>/ {rocmTotalSlots}</small>
-            </OverviewStats>
-          ) : null}
-          {overview.CPU.total ? (
-            <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
-            </OverviewStats>
-          ) : null}
+          {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
+            (maxTotalSlots[resType] > 0) ? (
+              <OverviewStats
+                key={resType}
+                title={`${resType} Slots Allocated`}>
+                {overview[resType].total - overview[resType].available}
+                <small>
+                  / {maxTotalSlots[resType]}
+                </small>
+              </OverviewStats>
+            ) : null))}
           {auxContainers.total ? (
             <OverviewStats title="Aux Containers Running">
               {auxContainers.running} <small>/ {auxContainers.total}</small>
@@ -215,7 +230,7 @@ const ClusterOverview: React.FC = () => {
                 key={idx}
                 resourcePool={rp}
                 resourceType={rp.slotType}
-                totalComputeSlots={rp.maxAgents * (rp.slotsPerAgent ?? 0)}
+                totalComputeSlots={maxPoolSlotCapacity(rp)}
               />
             ))}
           </Grid>

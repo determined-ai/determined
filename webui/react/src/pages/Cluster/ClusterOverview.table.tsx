@@ -37,10 +37,7 @@ export const columns: ColumnType<ResourcePool>[] = [
     title: 'Agents',
   },
   {
-    dataIndex: 'slotsAvailable',
     key: 'slotsAvailable',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.slotsAvailable, b.slotsAvailable),
     title: 'Total Slots',
   },
   {
