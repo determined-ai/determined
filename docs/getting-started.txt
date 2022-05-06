@@ -161,7 +161,8 @@ code:
 This exercise trains a single model for a fixed number of batches, using constant values for all
 hyperparameters on a single slot.
 
-#. In the mnist_pytorch directory, create an experiment using the const.yaml configuration file:
+#. In the mnist_pytorch directory, create an experiment specifying the ``const.yaml`` configuration
+   file:
 
    .. code:: bash
 
@@ -187,11 +188,10 @@ hyperparameters on a single slot.
 
          det e create const.yaml . --follow
 
-#. Enter the cluster address in the browser to view the experiment status. If you installed locally
-   using the ``det deploy local`` command, the URL should be http://localhost:8080/.
-
-#. To view the dashboard, enter your username and password. If you deployed locally, accept the
-   default determined username with no password and click **Sign In**:
+#. To view the experiment progress, enter the cluster address in the browser address bar. If you
+   installed locally using the ``det deploy local`` command, the URL is ``http://localhost:8080/``.
+   Accept the default ``determined`` username and click **Sign In** to display the WebUI. No
+   password is required.
 
    .. image:: /assets/images/qs01b.png
       :width: 704px
@@ -224,20 +224,17 @@ environment shown in the next example.
  Run a Distributed Training Job
 ********************************
 
-This exercise requires a Determined cluster with multiple GPUs.
+This exercise requires a Determined cluster with multiple GPUs. The model used in this example does
+not fully demonstrate the benefits of distributed training but does show how to work with additional
+hardware resources.
 
-Determined coordinates multiple, distributed GPUs to train a single trial more quickly. The model
-used in this example does not fully demonstrate the benefits of distributed training but does show
-how to work with additional hardware resources.
+The ``distributed.yaml`` configuration file in this example is the same as the ``const.yaml`` file
+in the previous example, except that a ``resources.slots_per_trial`` field is defined and set to
+``8``, which is the number of your available GPU resources. The ``slots_per_trial`` value must be
+divisible by the number of GPUs per machine. You can change the value to match your hardware
+configuration.
 
-Specify distributed training by setting the experiment configuration ``resources.slots_per_trial``
-field to the number of GPU resources available for training. The ``distributed.yaml`` file in this
-example is the same as the ``const.yaml`` file in the previous example, except that a
-``resources.slots_per_trial`` field is defined and the number of GPUs is set to ``8``. The
-``slots_per_trial`` value must be divisible by the number of GPUs per machine. You can change the
-value to match your hardware configuration.
-
-#. Create the experiment:
+#. Create and run the experiment:
 
    .. code:: bash
 
@@ -257,20 +254,23 @@ complete the trial is reduced by about half.
  Run a Hyperparameter Tuning Job
 *********************************
 
-Hyperparameter searches involve multiple trials or model variations per experiment. This example
-demonstrates hyperparameter search using the ``adaptive.yaml`` configuration file. The parameter
+This example demonstrates hyperparameter search using the ``adaptive.yaml`` configuration file,
+which is similar to the ``const.yaml`` file in the first example but includes additional
+``hyperparameters`` settings and ``searcher`` parameter changes.
+
+Hyperparameter searches involve multiple trials or model variations per experiment. The parameter
 settings tell the search algorithm the ranges to explore for each hyperparameter. This example model
 uses a fixed batch size and searches on dropout size, filters, and learning rate. The searcher name
 is set to ``adaptive_asha`` and ``max_trials`` is set to ``16``, indicating which search algorithm
 to use and how many model configurations to explore.
 
-#. Submit the experiment specifying the configuration file:
+#. Create and run the experiment:
 
    .. code:: bash
 
       det experiment create adaptive.yaml .
 
-#. Enter your cluster address in the browser.
+#. Enter your cluster address in the browser address bar.
 
 #. Accept the default determined username with no password and click **Sign In** to view the
    dashboard.
