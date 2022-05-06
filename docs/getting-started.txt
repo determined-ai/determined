@@ -285,9 +285,9 @@ to use and how many model configurations to explore.
       :alt: Trials graphic
 
    Determined runs the number of ``max_trials`` trials and automatically starts new trials as
-   resources become available. The hyperparameter search halts poorly performing trials. On a
-   typical laptop, 16 trials should take around 10 minutes to train with at least one trial
-   performing at about 98 percent validation accuracy.
+   resources become available. On a typical laptop, 16 trials should take around 10 minutes to train
+   with at least one trial performing at about 98 percent validation accuracy. The hyperparameter
+   search halts poorly performing trials.
 
 ************
  Learn More
