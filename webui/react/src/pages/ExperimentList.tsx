@@ -116,7 +116,7 @@ const ExperimentList: React.FC = () => {
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
-        user && (user.isAdmin || user.username === experiment.username);
+        user && (user.isAdmin || user.id === experiment.userId);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = pausableRunStates.has(experiment.state);
@@ -636,8 +636,10 @@ const ExperimentList: React.FC = () => {
   );
 
   const openModal = useCallback(() => {
-    modalOpen({ initialVisibleColumns: settings.columns });
-  }, [ settings.columns, modalOpen ]);
+    modalOpen(
+      { initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)) },
+    );
+  }, [ settings.columns, modalOpen, transferColumns ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ExperimentColumnName[];

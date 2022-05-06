@@ -3,11 +3,11 @@ from unittest import mock
 
 import pytest
 
-from determined import _core
+from determined import core
 from tests import parallel
 
 
-def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.SearcherContext:
+def make_test_searcher(ops: List[int], dist: core.DistributedContext) -> core.SearcherContext:
     # Mock the session.get to return a few searcher ops
     final_op = ops[-1]
     ops = list(ops)
@@ -32,7 +32,7 @@ def make_test_searcher(ops: List[int], dist: _core.DistributedContext) -> _core.
     session = mock.MagicMock()
     session.get.side_effect = session_get
 
-    searcher = _core.SearcherContext(
+    searcher = core.SearcherContext(
         session=session,
         dist=dist,
         trial_id=1,
@@ -47,11 +47,11 @@ def test_searcher_workers_ask_chief(dummy: bool) -> None:
     with parallel.Execution(2) as pex:
 
         @pex.run
-        def searchers() -> _core.SearcherContext:
+        def searchers() -> core.SearcherContext:
             if not dummy:
                 searcher = make_test_searcher([5, 10, 15], pex.distributed)
             else:
-                searcher = _core.DummySearcherContext(dist=pex.distributed)
+                searcher = core.DummySearcherContext(dist=pex.distributed)
             epochs_trained = 0
             # Iterate through ops.
             for op in searcher.operations():
@@ -111,9 +111,9 @@ def test_searcher_chief_only(dummy: bool) -> None:
             if not dummy:
                 searcher = make_test_searcher([5, 10, 15], pex.distributed)
             else:
-                searcher = _core.DummySearcherContext(dist=pex.distributed)
+                searcher = core.DummySearcherContext(dist=pex.distributed)
 
             with parallel.raises_when(
                 pex.rank != 0, RuntimeError, match="searcher.operations.*chief"
             ):
-                next(iter(searcher.operations(_core.SearcherMode.ChiefOnly)))
+                next(iter(searcher.operations(core.SearcherMode.ChiefOnly)))

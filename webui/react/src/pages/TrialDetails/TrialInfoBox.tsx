@@ -1,13 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import CheckpointModal from 'components/CheckpointModal';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
+  CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
@@ -18,16 +18,14 @@ interface Props {
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
-  const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
-  const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
+  const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
     if (!cp) return;
 
     return {
       ...cp,
-      batch: cp.totalBatches,
       experimentId: trial.experimentId,
       trialId: trial.id,
     };
@@ -42,9 +40,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
   }, [ trial?.workloads ]);
-
-  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
-  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
 
   return (
     <Section>
@@ -65,20 +60,16 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         {bestCheckpoint && (
-          <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
-            Batch {bestCheckpoint.batch}
-          </OverviewStats>
+          <CheckpointModalTrigger
+            checkpoint={bestCheckpoint}
+            experiment={experiment}
+            title="Best Checkpoint">
+            <OverviewStats clickable title="Best Checkpoint">
+              Batch {bestCheckpoint.totalBatches}
+            </OverviewStats>
+          </CheckpointModalTrigger>
         )}
       </Grid>
-      {bestCheckpoint && trial && (
-        <CheckpointModal
-          checkpoint={bestCheckpoint}
-          config={experiment.config}
-          show={showBestCheckpoint}
-          title={`Best Checkpoint for Trial ${trial.id}`}
-          onHide={handleHideBestCheckpoint}
-        />
-      )}
     </Section>
   );
 };

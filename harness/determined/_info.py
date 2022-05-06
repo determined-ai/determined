@@ -60,7 +60,7 @@ class TrialInfo:
         trial_seed: int,
         hparams: Dict[str, Any],
         config: Dict[str, Any],
-        latest_batch: int,
+        steps_completed: int,
         trial_run_id: int,
         debug: bool,
         unique_port_offset: int,
@@ -81,8 +81,8 @@ class TrialInfo:
         # rb: These fields are private because I am pretty confident that we need to find better
         # ways to pass them around the system.  But for now, they're passed in as environment
         # variables and for now we have to be able to handle that.
-        # TODO: decide if we really want to track latest_batch for users or not.
-        self._latest_batch = latest_batch
+        # TODO: decide if we really want to track steps_completed for users or not.
+        self._steps_completed = steps_completed
         # TODO: get rid of trial_run_id in favor of allocation id.
         self._trial_run_id = trial_run_id
         # TODO: decide if the experiment config is the right place for users to set a debug flag.
@@ -102,7 +102,7 @@ class TrialInfo:
             trial_seed=int(os.environ["DET_TRIAL_SEED"]),
             hparams=json.loads(os.environ["DET_HPARAMS"]),
             config=experiment_config,
-            latest_batch=int(os.environ["DET_LATEST_BATCH"]),
+            steps_completed=int(os.environ["DET_STEPS_COMPLETED"]),
             trial_run_id=int(os.environ["DET_TRIAL_RUN_ID"]),
             debug=experiment_config.get("debug", False),
             unique_port_offset=int(os.environ["DET_UNIQUE_PORT_OFFSET"]),

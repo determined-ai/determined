@@ -1,12 +1,10 @@
-import { Button, Tooltip } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
-import CheckpointModal from 'components/CheckpointModal';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
@@ -49,8 +47,6 @@ enum TrialAction {
 
 const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ total, setTotal ] = useState(0);
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
@@ -118,13 +114,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         trialId: record.id,
       };
       return (
-        <Tooltip title="View Checkpoint">
-          <Button
-            aria-label="View Checkpoint"
-            icon={<Icon name="checkpoint" />}
-            onClick={e => handleCheckpointShow(e, checkpoint)}
-          />
-        </Tooltip>
+        <CheckpointModalTrigger
+          checkpoint={checkpoint}
+          experiment={experiment}
+          title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
+        />
       );
     };
 
@@ -168,7 +162,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     });
 
     return newColumns;
-  }, [ experiment.config, experiment.id, settings, stateFilterDropdown, dropDownOnTrigger ]);
+  }, [ experiment, settings, stateFilterDropdown, dropDownOnTrigger ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -186,17 +180,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     const shouldPush = settings.tableOffset !== newSettings.tableOffset;
     updateSettings(newSettings, shouldPush);
   }, [ columns, settings.tableOffset, updateSettings ]);
-
-  const handleCheckpointShow = (
-    event: React.MouseEvent,
-    checkpoint: CheckpointWorkloadExtended,
-  ) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-
-  const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
   const fetchExperimentTrials = useCallback(async () => {
     try {
@@ -332,15 +315,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           onChange={handleTableChange}
         />
       </Section>
-      {activeCheckpoint && (
-        <CheckpointModal
-          checkpoint={activeCheckpoint}
-          config={experiment.config}
-          show={showCheckpoint}
-          title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-          onHide={handleCheckpointDismiss}
-        />
-      )}
       {settings.compare && (
         <TrialsComparisonModal
           experiment={experiment}

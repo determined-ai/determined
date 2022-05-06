@@ -8,6 +8,7 @@ orbs:
   helm: circleci/helm@1.2.0
   gcloud: circleci/gcp-cli@2.1.0
   queue: eddiewebb/queue@volatile
+  codecov: codecov/codecov@3.0.0
 
 executors:
   python-37:
@@ -1187,6 +1188,9 @@ jobs:
       - checkout-with-sm
       - react-get-deps
       - run: make -C webui/react test-ci
+      - codecov/upload:
+          flags: "web"
+          xtra_args: "-v"
       - store_test_results:
           path: webui/react/coverage
       - store_artifacts:
@@ -1259,6 +1263,9 @@ jobs:
       - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
+      - codecov/upload:
+          flags: "backend"
+          xtra_args: "-v"
 
   test-intg-master:
     machine:
@@ -1365,10 +1372,12 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
+      - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1382,10 +1391,12 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1398,10 +1409,12 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
+      - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1414,10 +1427,12 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: coverage xml -i --data-file=./test-unit-storage-pycov
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:
@@ -1431,10 +1446,12 @@ jobs:
       - setup-python-venv:
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
+      - run: coverage xml -i --data-file=./test-model-hub-pycov
+      - run: codecov -v -F harness
       - persist_to_workspace:
           root: .
           paths:

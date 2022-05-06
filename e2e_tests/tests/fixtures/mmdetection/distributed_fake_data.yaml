@@ -25,4 +25,4 @@ bind_mounts:
 resources:
   slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use
 max_restarts: 0
-entrypoint: model_hub.mmdetection:MMDetTrial
+entrypoint: python3 -m determined.launch.torch_distributed --trial model_hub.mmdetection:MMDetTrial

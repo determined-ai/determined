@@ -6,16 +6,13 @@ build_fp16_loss_scaler is large derived from the original mmcv code at
 https://github.com/open-mmlab/mmcv/blob/master/mmcv/runner/hooks/optimizer.py
 mmcv is covered by the Apache 2.0 License.  Copyright (c) OpenMMLab. All rights reserved.
 """
-import logging
 import os
 from typing import Any, Dict, Tuple
 
 import mmcv
-import mmdet.core.utils
 import torch
 
 import model_hub.utils
-from determined.horovod import hvd
 
 
 def get_config_pretrained_url_mapping() -> Dict[str, str]:
@@ -69,55 +66,6 @@ def get_pretrained_ckpt_path(download_directory: str, config_file: str) -> Tuple
         )
         return ckpt_path, torch.load(ckpt_path)  # type: ignore
     return None, None
-
-
-def reduce_mean(tensor: torch.Tensor) -> torch.Tensor:
-    if hvd._poly_hvd_type is None:
-        return tensor
-    tensor = tensor.clone()
-    logging.debug("Calling reduce_mean (hvd).")
-    hvd.allreduce_(tensor)
-    return tensor
-
-
-def monkey_patch_reduce_mean(model: torch.nn.Module) -> None:
-    """
-    Replace module directory pointer to reduce_mean with a horovod implementation instead
-    of the native pytorch one.
-    """
-    if hasattr(model, "bbox_head"):
-        bbox_module = eval(model.bbox_head.__module__)
-        if hasattr(bbox_module, "reduce_mean"):
-            if bbox_module.reduce_mean == mmdet.core.utils.reduce_mean:
-                bbox_module.reduce_mean = reduce_mean
-
-
-def convert_syncbn_model(module: torch.nn.Module) -> Any:
-    """
-    mmdetection allows users to specify SyncBN in the `norm_cfg` for different models.
-    See https://github.com/open-mmlab/mmdetection/blob/master/configs/gcnet for examples.
-    In Determined, we need to convert pytorch SyncBatchNorm to horovod's version of SyncBatchNorm
-    since we use horovod's distributed training backend.
-    """
-    mod = module
-    if isinstance(module, torch.nn.modules.batchnorm.SyncBatchNorm):
-        mod = hvd.SyncBatchNorm(
-            module.num_features,
-            module.eps,
-            module.momentum,
-            module.affine,
-            module.track_running_stats,
-        )
-        mod.running_mean = module.running_mean
-        mod.running_var = module.running_var
-        mod.num_batches_tracked = module.num_batches_tracked
-        if module.affine:
-            mod.weight.data = module.weight.data.clone().detach()
-            mod.bias.data = module.bias.data.clone().detach()
-    for name, child in module.named_children():
-        mod.add_module(name, convert_syncbn_model(child))
-    del module
-    return mod
 
 
 def build_fp16_loss_scaler(loss_scale: mmcv.Config) -> Any:

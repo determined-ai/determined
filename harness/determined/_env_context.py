@@ -12,7 +12,7 @@ class EnvContext:
         experiment_config: Dict[str, Any],
         hparams: Dict[str, Any],
         latest_checkpoint: Optional[str],
-        latest_batch: int,
+        steps_completed: int,
         use_gpu: bool,
         container_gpus: List[str],
         slot_ids: List[int],
@@ -35,7 +35,7 @@ class EnvContext:
         self.experiment_config = det.ExperimentConfig(experiment_config)
         self.hparams = hparams
         self.latest_checkpoint = latest_checkpoint
-        self.latest_batch = latest_batch
+        self.steps_completed = steps_completed
         self.use_gpu = use_gpu
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids

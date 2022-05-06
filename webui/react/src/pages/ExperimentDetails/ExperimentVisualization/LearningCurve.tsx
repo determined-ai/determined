@@ -11,7 +11,7 @@ import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/ut
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
@@ -98,7 +98,7 @@ const LearningCurve: React.FC<Props> = ({
 
     setHasLoaded(false);
 
-    consumeStream<V1TrialsSampleResponse>(
+    readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
@@ -150,8 +150,12 @@ const LearningCurve: React.FC<Props> = ({
         setBatches(newBatches);
 
         const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
+          /**
+           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+           * dynamic min/max ranges via uPlot.Scales.
+           */
           const value = metricsMap[trialId][batch];
-          return value != null ? value : null;
+          return Number.isFinite(value) ? value : null;
         }));
         setChartData(newChartData);
 

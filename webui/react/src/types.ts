@@ -19,6 +19,7 @@ export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
   displayName?: string;
+  id: number;
   modifiedAt?: number;
   username: string;
 }
@@ -121,8 +122,10 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
+  /** allocated percentange of total connected slots  */
   allocation?: number;
   available: number;
+  /** sum of all slots of this type across all _connected_ agents */
   total: number;
 }
 
@@ -367,14 +370,6 @@ export interface MetricName {
   type: MetricType;
 }
 
-export interface Checkpoint extends EndTimes {
-  resources?: Record<string, number>;
-  state: CheckpointState;
-  trialId: number;
-  uuid?: string;
-  validationMetric?: number;
-}
-
 export interface BaseWorkload extends EndTimes {
   totalBatches: number;
 }
@@ -406,18 +401,33 @@ export interface Step extends WorkloadGroup, StartEndTimes {
   training: MetricsWorkload;
 }
 
-export interface Metrics {
-  numInputs?: number;
-  validationMetrics?: Record<string, number>;
+type MetricStruct = Record<string, number>;
+export interface Metrics extends Api.V1Metrics {
+  // these two fields are present in the protos
+  // as a struct and list of structs, respectively
+  // here, we are being a bit more precise
+  avgMetrics: MetricStruct;
+  batchMetrics?: Array<MetricStruct>;
 }
 
 export type Metadata = Record<RecordKey, string>;
 
-export interface CheckpointDetail extends Checkpoint {
-  batch: number;
+export interface CoreApiGenericCheckpoint {
+  allocationId?: string;
+  experimentConfig?: ExperimentConfig;
   experimentId?: number;
-  metadata?: Metadata;
-  metrics?: Metrics;
+  hparams?: TrialHyperparameters;
+  metadata: Metadata;
+  reportTime?: string;
+  resources: Record<string, number>;
+  searcherMetric?: number;
+  state: CheckpointState;
+  taskId?: string;
+  totalBatches: number;
+  trainingMetrics?: Metrics;
+  trialId?: number;
+  uuid: string;
+  validationMetrics?: Metrics;
 }
 
 export interface TrialPagination extends WithPagination {
@@ -461,8 +471,7 @@ export interface ExperimentItem {
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export interface ExperimentBase extends ExperimentItem {
@@ -504,11 +513,11 @@ export interface ModelItem {
   name: string;
   notes?: string;
   numVersions: number;
-  username: string;
+  userId: number;
 }
 
 export interface ModelVersion {
-  checkpoint: CheckpointDetail;
+  checkpoint: CoreApiGenericCheckpoint;
   comment?: string;
   creationTime: string;
   id: number;
@@ -518,7 +527,7 @@ export interface ModelVersion {
   model: ModelItem;
   name?: string;
   notes?: string;
-  username: string;
+  userId: number;
   version: number;
 }
 
@@ -548,18 +557,16 @@ export interface ExperimentTask extends Task {
   progress?: number;
   resourcePool: string;
   state: CompoundRunState;
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export interface CommandTask extends Task {
-  displayName: string;
+  displayName?: string;
   misc?: CommandMisc;
   resourcePool: string;
   state: CommandState;
   type: CommandType;
-  userId?: number;
-  username: string;
+  userId: number;
 }
 
 export type RecentEvent = {

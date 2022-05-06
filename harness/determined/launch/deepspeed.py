@@ -69,7 +69,7 @@ def create_log_redirect_cmd() -> List[str]:
     return [
         "python3",
         "-m",
-        "determined.exec.worker_process_wrapper",
+        "determined.launch.wrap_rank",
         "RANK",
         "--",
     ]
@@ -172,7 +172,7 @@ def main(script: List[str]) -> int:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
     # - deepspeed, which launches $slots_per_trial copies of the following layers:
     #     - a pid_client process to contact the local pid_server
-    #     - worker_process_wrapper, which redirects stdin/stdout to the local container
+    #     - wrap_rank, which redirects stdin/stdout to the local container
     #     - harness.py, which actually does the training for the worker
 
     pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))

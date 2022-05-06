@@ -6,7 +6,7 @@ export interface Settings {
   row?: string[];
   search?: string;
   sortDesc: boolean;
-  sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'username';
+  sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'user';
   state?: CommandState[];
   tableLimit: number;
   tableOffset: number;

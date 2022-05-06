@@ -5,10 +5,9 @@ import { useHistory, useParams } from 'react-router';
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
+import { clusterStatusText } from './Cluster/ClusterOverview';
 import ClusterLogs from './ClusterLogs';
 import css from './Clusters.module.scss';
 import ClustersOverview from './Clusters/ClustersOverview';
@@ -35,13 +34,7 @@ const Clusters: React.FC = () => {
   const { cluster: overview, resourcePools } = useStore();
 
   const cluster = useMemo(() => {
-    if (overview[ResourceType.ALL].allocation === 0) return undefined;
-    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
-      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-    }, 0);
-    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-      / totalSlots)}%`;
+    return clusterStatusText(overview, resourcePools);
   }, [ overview, resourcePools ]);
 
   const handleTabChange = useCallback(key => {

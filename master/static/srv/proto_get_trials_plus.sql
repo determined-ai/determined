@@ -73,11 +73,12 @@ latest_validation AS (
   WHERE v.rank = 1
 ),
 best_checkpoint AS (
-  SELECT c.uuid::text AS uuid,
-    c.total_batches,
+  SELECT
+    c.uuid::text AS uuid,
+    c.steps_completed AS total_batches,
     c.trial_id,
-    c.end_time AS end_time,
-    c.resources AS resources,
+    c.report_time AS end_time,
+    c.resources,
     'STATE_' || c.state AS state
   FROM (
       SELECT c.*,
@@ -86,17 +87,31 @@ best_checkpoint AS (
           ORDER BY v.signed_searcher_metric ASC
         ) AS rank
       FROM trial_validations v
-        INNER JOIN checkpoints c ON (
-          c.total_batches = v.total_batches
-          AND c.trial_id = v.trial_id
-        )
+      INNER JOIN checkpoints_view c ON (
+        c.steps_completed = v.total_batches
+        AND c.trial_id = v.trial_id
+      )
       WHERE c.state = 'COMPLETED'
     ) c
   WHERE c.rank = 1
+),
+latest_training AS (
+  SELECT s.trial_id,
+    s.total_batches,
+    s.end_time,
+    'STATE_' || s.state AS state,
+    s.metrics->'avg_metrics' as metrics
+  FROM steps s
+  JOIN searcher_info ON searcher_info.trial_id = s.trial_id
+  WHERE s.state = 'COMPLETED'
+  ORDER BY s.end_time DESC
+  LIMIT 1
 )
-SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
+SELECT
+  row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
   row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
+  row_to_json(lt)::jsonb - 'trial_id' AS latest_training,
   t.id AS id,
   t.experiment_id,
   'STATE_' || t.state AS state,
@@ -118,13 +133,18 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
     SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))
     FROM allocations a
     WHERE a.task_id = t.task_id
-  ) AS wall_clock_time
+  ) AS wall_clock_time,
+  (
+    SELECT sum((jsonb_each).value::text::int)
+    FROM (SELECT jsonb_each(resources) FROM checkpoints c WHERE c.trial_id = t.id) r
+  ) AS total_checkpoint_size
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
-  LEFT JOIN checkpoints ckpt ON ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN checkpoints_view ckpt ON ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
   -- Return the same ordering of IDs given by $1.
   JOIN (
     SELECT *

@@ -14,8 +14,7 @@ import shutil
 import socket
 import time
 import uuid
-import warnings
-from typing import Any, Callable, Dict, List, Optional, Set, SupportsFloat, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Set, SupportsFloat, Tuple, cast
 
 import determined as det
 from determined import constants
@@ -224,20 +223,6 @@ def filter_duplicates(
             duplicates.add(item)
         last_item = item
     return duplicates
-
-
-T = TypeVar("T", bound=Callable[..., Any])
-
-
-def deprecated(msg: str) -> Callable[[T], T]:
-    def make_wrapper(fn: T) -> T:
-        def wrapper(*arg: List, **kwarg: Dict) -> Any:
-            warnings.warn(msg, FutureWarning)
-            return fn(*arg, **kwarg)
-
-        return cast(T, wrapper)
-
-    return make_wrapper
 
 
 def humanize_float(n: float) -> float:

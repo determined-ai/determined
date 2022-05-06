@@ -13,7 +13,7 @@ import {
   V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse,
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
@@ -162,7 +162,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
-    consumeStream<V1MetricNamesResponse>(
+    readStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.metricNames(
         experiment.id,
         undefined,
@@ -189,7 +189,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       setPageError(PageError.MetricNames);
     });
 
-    consumeStream<V1GetHPImportanceResponse>(
+    readStream<V1GetHPImportanceResponse>(
       detApi.StreamingInternal.getHPImportance(
         experiment.id,
         undefined,
@@ -218,7 +218,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
 
-    consumeStream<V1MetricBatchesResponse>(
+    readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
         experiment.id,
         activeMetric.name,

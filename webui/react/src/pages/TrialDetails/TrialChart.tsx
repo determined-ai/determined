@@ -19,8 +19,11 @@ interface Props {
   metricNames: MetricName[];
   metrics: MetricName[];
   onMetricChange: (value: MetricName[]) => void;
+  trialId?: number;
   workloads?: WorkloadGroup[];
 }
+
+const A_REASONABLY_SMALL_NUMBER = 0.0001;
 
 const getChartMetricLabel = (metric: MetricName): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
@@ -34,12 +37,13 @@ const TrialChart: React.FC<Props> = ({
   metrics,
   onMetricChange,
   workloads,
+  trialId,
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
-    const yValues: Record<string, Record<string, number>> = {};
+    const yValues: Record<string, Record<string, number | null>> = {};
     metrics.forEach((metric, index) => yValues[index] = {});
 
     (workloads || []).forEach(wlWrapper => {
@@ -51,7 +55,12 @@ const TrialChart: React.FC<Props> = ({
         const x = metricsWl.totalBatches;
         if (!xValues.includes(x)) xValues.push(x);
 
-        yValues[index][x] = metricsWl.metrics[metric.name];
+        /**
+         * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+         * dynamic min/max ranges via uPlot.Scales.
+         */
+        const y = metricsWl.metrics[metric.name];
+        yValues[index][x] = Number.isFinite(y) ? y : null;
       });
     });
 
@@ -65,18 +74,34 @@ const TrialChart: React.FC<Props> = ({
   }, [ metrics, workloads ]);
 
   const chartOptions: Options = useMemo(() => {
+
+    const onlyOneXValue = chartData[0]?.length === 1;
+
+    const scales = onlyOneXValue
+      ? {
+        x: {
+          max: chartData[0][0] + A_REASONABLY_SMALL_NUMBER,
+          min: chartData[0][0] - A_REASONABLY_SMALL_NUMBER,
+          time: false,
+        },
+        y: {
+          distr: scale === Scale.Log ? 3 : 1,
+          max: (chartData?.[1][0] ?? 0) + A_REASONABLY_SMALL_NUMBER,
+          min: (chartData?.[1][0] ?? 0) - A_REASONABLY_SMALL_NUMBER,
+        },
+      }
+      : { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } };
+
     return {
       axes: [
         { label: 'Batches' },
         { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
+      key: trialId,
       legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales: {
-        x: { time: false },
-        y: { distr: scale === Scale.Log ? 3 : 1 },
-      },
+      scales,
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
@@ -87,7 +112,7 @@ const TrialChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ metrics, scale ]);
+  }, [ metrics, scale, chartData, trialId ]);
 
   const options = (
     <ResponsiveFilters>

@@ -17,30 +17,6 @@ from tests import config as conf
 from tests.cluster import utils as cluster_utils
 
 
-def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:
-    target_env = os.environ.copy()
-    target_env["DET_MASTER"] = conf.make_master_url()
-
-    with subprocess.Popen(
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=context_dir, env=target_env
-    ) as p:
-        assert p.stdout is not None
-        for line in p.stdout:
-            m = re.search(r"Created experiment (\d+)\n", line.decode())
-            if m is not None:
-                return int(m.group(1))
-
-    return None
-
-
-def create_native_experiment(context_dir: str, command: List[str]) -> int:
-    experiment_id = maybe_create_native_experiment(context_dir, command)
-    if experiment_id is None:
-        pytest.fail(f"Failed to create experiment in {context_dir}: {command}")
-
-    return experiment_id
-
-
 def maybe_create_experiment(
     config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
 ) -> subprocess.CompletedProcess:
@@ -308,7 +284,7 @@ def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
 
 
 def workloads_with_training(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1MetricsWorkload]:
     ret: List[bindings.v1MetricsWorkload] = []
     for w in workloads:
@@ -318,7 +294,7 @@ def workloads_with_training(
 
 
 def workloads_with_validation(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1MetricsWorkload]:
     ret: List[bindings.v1MetricsWorkload] = []
     for w in workloads:
@@ -328,7 +304,7 @@ def workloads_with_validation(
 
 
 def workloads_with_checkpoint(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> List[bindings.v1CheckpointWorkload]:
     ret: List[bindings.v1CheckpointWorkload] = []
     for w in workloads:
@@ -404,7 +380,7 @@ def assert_performed_initial_validation(exp_id: int) -> None:
 
 
 def last_workload_matches_last_checkpoint(
-    workloads: Sequence[bindings.GetTrialResponseWorkloadContainer],
+    workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> None:
     assert len(workloads) > 0
 
@@ -556,6 +532,8 @@ def run_basic_test(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
@@ -566,13 +544,18 @@ def run_basic_test(
     )
     assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials)
+    verify_completed_experiment_metadata(
+        experiment_id, expected_trials, expect_workloads, expect_checkpoints
+    )
 
     return experiment_id
 
 
 def verify_completed_experiment_metadata(
-    experiment_id: int, num_expected_trials: Optional[int]
+    experiment_id: int,
+    num_expected_trials: Optional[int],
+    expect_workloads: bool = True,
+    expect_checkpoints: bool = True,
 ) -> None:
     # If `expected_trials` is None, the expected number of trials is
     # non-deterministic.
@@ -589,6 +572,9 @@ def verify_completed_experiment_metadata(
         if trial.state != determinedexperimentv1State.STATE_COMPLETED:
             report_failed_trial(trial.id, trial.state.value)
             pytest.fail(f"Trial {trial.id} was not STATE_COMPLETED but {trial.state.value}")
+
+        if not expect_workloads:
+            continue
 
         if len(t.workloads) == 0:
             print_trial_logs(trial.id)
@@ -614,8 +600,9 @@ def verify_completed_experiment_metadata(
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
     # The last step of every trial should be the same batch number as the last checkpoint.
-    for t in trials:
-        last_workload_matches_last_checkpoint(t.workloads)
+    if expect_checkpoints:
+        for t in trials:
+            last_workload_matches_last_checkpoint(t.workloads)
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might

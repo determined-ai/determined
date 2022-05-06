@@ -236,7 +236,7 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
       const users = [ ...state.users ];
-      const userIdx = users.findIndex(user => user.username === action.value.username);
+      const userIdx = users.findIndex(user => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }

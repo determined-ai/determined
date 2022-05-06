@@ -1,0 +1,85 @@
+{
+  "determined_version": "0.13.13",
+  "framework": "torch-1.4.0",
+  "format": "cloudpickle",
+  "experiment_id": 11,
+  "trial_id": 11,
+  "hparams": {
+    "global_batch_size": 32
+  },
+  "experiment_config": {
+    "checkpoint_policy": "best",
+    "checkpoint_storage": {
+      "host_path": "/tmp/determined-cp",
+      "save_experiment_best": 0,
+      "save_trial_best": 1,
+      "save_trial_latest": 1,
+      "type": "shared_fs"
+    },
+    "data_layer": {
+      "container_storage_path": null,
+      "type": "shared_fs"
+    },
+    "debug": false,
+    "description": "pytorch-ancient-ckpt-0.13.13",
+    "entrypoint": "model_def:OneVarPytorchTrial",
+    "environment": {
+      "environment_variables": {},
+      "force_pull_image": false,
+      "image": {
+        "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b",
+        "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"
+      },
+      "pod_spec": null,
+      "ports": null
+    },
+    "hyperparameters": {
+      "global_batch_size": {
+        "type": "const",
+        "val": 32
+      }
+    },
+    "internal": null,
+    "max_restarts": 0,
+    "min_checkpoint_period": {
+      "batches": 0
+    },
+    "min_validation_period": {
+      "batches": 0
+    },
+    "optimizations": {
+      "aggregation_frequency": 1,
+      "auto_tune_tensor_fusion": false,
+      "average_aggregated_gradients": true,
+      "average_training_metrics": false,
+      "gradient_compression": false,
+      "mixed_precision": "O0",
+      "tensor_fusion_cycle_time": 5,
+      "tensor_fusion_threshold": 64
+    },
+    "perform_initial_validation": false,
+    "records_per_epoch": 0,
+    "reproducibility": {
+      "experiment_seed": 1651612379
+    },
+    "resources": {
+      "agent_label": "",
+      "native_parallel": false,
+      "resource_pool": "",
+      "slots_per_trial": 1,
+      "weight": 1
+    },
+    "scheduling_unit": 100,
+    "searcher": {
+      "max_length": {
+        "batches": 3
+      },
+      "metric": "loss",
+      "name": "single",
+      "smaller_is_better": true,
+      "source_checkpoint_uuid": null,
+      "source_trial_id": null
+    }
+  },
+  "metadata": {}
+}

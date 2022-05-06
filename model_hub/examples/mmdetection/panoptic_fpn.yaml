@@ -47,4 +47,4 @@ environment:
 resources:
   slots_per_trial: 4 # max number of GPUs a trial is allowed to individually use
   shm_size: 200000000000
-entrypoint: model_hub.mmdetection:MMDetTrial
+entrypoint: python3 -m determined.launch.torch_distributed --trial model_hub.mmdetection:MMDetTrial

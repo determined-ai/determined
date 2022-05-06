@@ -160,7 +160,7 @@ func (r rendezvous) push() bool {
 		w <- RendezvousInfoOrError{
 			Info: &trialv1.RendezvousInfo{
 				Addresses: raddrs,
-				Rank:      int32(r.resources[caddr.id].rank),
+				Rank:      int32(r.resources[caddr.id].Rank),
 			},
 			Err: err,
 		}
@@ -213,8 +213,8 @@ func (r *rendezvous) info() ([]cAddress, []string, error) {
 	for id, r := range r.resources {
 		caddr := cAddress{
 			id:        id,
-			addresses: r.start.Addresses,
-			ordinal:   r.rank,
+			addresses: r.Started.Addresses,
+			ordinal:   r.Rank,
 		}
 		caddrs = append(caddrs, caddr)
 

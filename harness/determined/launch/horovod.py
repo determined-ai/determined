@@ -76,7 +76,7 @@ def create_worker_wrapper_cmd(allocation_id: str) -> List[str]:
     log_redirect_cmd = [
         "python3",
         "-m",
-        "determined.exec.worker_process_wrapper",
+        "determined.launch.wrap_rank",
         "HOROVOD_RANK",
         "--",
     ]
@@ -147,7 +147,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
     # - horovodrun, which launches $slots_per_trial copies of the following layers:
     #     - a pid_client process to contact the local pid_server
-    #     - worker_process_wrapper, which redirects stdin/stdout to the local container
+    #     - wrap_rank, which redirects stdin/stdout to the local container
     #     - harness.py, which actually does the training for the worker
     #
     # It is a bug in horovod that causes us to have this pid_server/pid_client pair of layers.

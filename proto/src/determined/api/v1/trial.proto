@@ -14,6 +14,21 @@ import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// WorkloadContainer is a wrapper for Determined workloads to allow repeated
+// oneof types.
+message WorkloadContainer {
+  // workload represent one of Determined workloads: training, validation, or
+  // checkpoint.
+  oneof workload {
+    // Training workload.
+    determined.trial.v1.MetricsWorkload training = 4;
+    // Validation workload.
+    determined.trial.v1.MetricsWorkload validation = 5;
+    // Checkpoint workload.
+    determined.trial.v1.CheckpointWorkload checkpoint = 6;
+  }
+}
+
 // Stream trial logs.
 message TrialLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -97,15 +112,11 @@ message GetTrialCheckpointsRequest {
     // Returns checkpoints sorted by UUID.
     SORT_BY_UUID = 1;
     // Returns checkpoints sorted by batch number.
-    SORT_BY_BATCH_NUMBER = 6;
-    // Returns checkpoints sorted by start time.
-    SORT_BY_START_TIME = 7;
+    SORT_BY_BATCH_NUMBER = 2;
     // Returns checkpoints sorted by end time.
-    SORT_BY_END_TIME = 8;
-    // Returns checkpoints sorted by validation state.
-    SORT_BY_VALIDATION_STATE = 15;
+    SORT_BY_END_TIME = 3;
     // Returns checkpoints sorted by state.
-    SORT_BY_STATE = 16;
+    SORT_BY_STATE = 4;
   }
   // The trial id.
   int32 id = 1;
@@ -119,8 +130,6 @@ message GetTrialCheckpointsRequest {
   // Limit the number of checkpoints. A value of 0 denotes no limit.
   int32 limit = 5;
 
-  // Limit the checkpoints to those that match the validation states.
-  repeated determined.checkpoint.v1.State validation_states = 6;
   // Limit the checkpoints to those that match the states.
   repeated determined.checkpoint.v1.State states = 7;
 }
@@ -205,24 +214,36 @@ message GetTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial", "workloads" ] }
   };
-  // WorkloadContainer is a wrapper for Determined workloads to allow repeated
-  // oneof types.
-  message WorkloadContainer {
-    // workload represent one of Determined workloads: training, validation, or
-    // checkpoint.
-    oneof workload {
-      // Training workload.
-      determined.trial.v1.MetricsWorkload training = 4;
-      // Validation workload.
-      determined.trial.v1.MetricsWorkload validation = 5;
-      // Checkpoint workload.
-      determined.trial.v1.CheckpointWorkload checkpoint = 6;
-    }
-  }
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
   // Trial workloads.
   repeated WorkloadContainer workloads = 2;
+}
+
+// Get the list of workloads for a trial.
+message GetTrialWorkloadsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // Order workloads in either ascending or descending order.
+  OrderBy order_by = 1;
+  // Skip the number of workloads before returning results. Negative values
+  // denote number of workloads to skip from the end before returning results.
+  int32 offset = 2;
+  // Limit the number of workloads. A value of 0 denotes no limit.
+  int32 limit = 3;
+  // Limit workloads to those that are owned by the specified trial.
+  int32 trial_id = 4;
+}
+// Response to GetTrialWorkloadsRequest.
+message GetTrialWorkloadsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workloads", "pagination" ] }
+  };
+  // The list of returned workloads.
+  repeated WorkloadContainer workloads = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Stream trial profiler metrics.
@@ -435,17 +456,6 @@ message ReportTrialValidationMetricsRequest {
 }
 // Response to ReportTrialValidationMetricsRequest
 message ReportTrialValidationMetricsResponse {}
-
-// Persist the given checkpoint metadata for the trial.
-message ReportTrialCheckpointMetadataRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "checkpoint_metadata" ] }
-  };
-  // The training metrics to persist.
-  determined.trial.v1.CheckpointMetadata checkpoint_metadata = 1;
-}
-// Response to ReportTrialCheckpointMetadataRequest
-message ReportTrialCheckpointMetadataResponse {}
 
 // Partially update the trial metadata.
 message PostTrialRunnerMetadataRequest {

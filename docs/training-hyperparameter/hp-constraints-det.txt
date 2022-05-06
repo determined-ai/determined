@@ -60,12 +60,6 @@ for an example on HP Search Constraints usage.
       -  Gracefully terminates current trial, creates a new trial with a randomly sampled set of
          hyperparameters and adds it to the trial queue.
 
-   -  -  PBT
-
-      -  Does not have specific InvalidHP handling and will treat as a poor performing trial that
-         will be replaced with either a new hyperparameter setting or a perturbation of a high
-         performing hyperparameter setting.
-
    -  -  Adaptive (ASHA)
       -  Gracefully terminates and removes associated metrics with the current trial and creates a
          new trial with a randomly sampled set of hyperparameters.

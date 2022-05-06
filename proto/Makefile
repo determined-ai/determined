@@ -84,4 +84,3 @@ check-fmt:
 .PHONY: fmt
 fmt:
 	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format -i
-

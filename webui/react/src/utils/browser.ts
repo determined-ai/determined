@@ -2,7 +2,7 @@ import { parseUrl, routeToExternalUrl } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
-import { consumeStream } from 'services/utils';
+import { readStream } from 'services/utils';
 import { BrandingType } from 'types';
 
 /*
@@ -42,7 +42,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
-  await consumeStream<V1TrialLogsResponse>(
+  await readStream<V1TrialLogsResponse>(
     detApi.StreamingExperiments.trialLogs(trialId),
     (ev) => {
       downloadStringBuffer += ev.message;

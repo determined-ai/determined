@@ -727,7 +727,9 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 
-	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
+	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
+		HTTPAuth: userService.ProcessProxyAuthentication,
+	})
 
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
@@ -840,6 +842,9 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 	if err = m.db.EndAllTaskStats(); err != nil {
+		return err
+	}
+	if err = task.WipeResourcesState(); err != nil {
 		return err
 	}
 

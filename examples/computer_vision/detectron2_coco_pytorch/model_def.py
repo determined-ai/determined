@@ -29,7 +29,7 @@ class DetectronTrial(PyTorchTrial):
 
         checkpointer = DetectionCheckpointer(
             model, self.cfg.OUTPUT_DIR
-        )  
+        )
         checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=False)
         self.model = self.context.wrap_model(checkpointer.model)
 
@@ -41,7 +41,7 @@ class DetectronTrial(PyTorchTrial):
 
         self.dataset_name = self.cfg.DATASETS.TEST[0]
         self.evaluators = get_evaluator(self.cfg, self.dataset_name, self.context.get_hparam("output_dir"), self.context.get_hparam('fake_data'))
-        self.val_reducer = self.context.experimental.wrap_reducer(EvaluatorReducer(self.evaluators), for_training=False)
+        self.val_reducer = self.context.wrap_reducer(EvaluatorReducer(self.evaluators), for_training=False)
 
         self.context.experimental.disable_dataset_reproducibility_checks()
 
@@ -66,7 +66,7 @@ class DetectronTrial(PyTorchTrial):
         return data_loader
 
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-        
+
         loss_dict = self.model(batch)
         losses = sum(loss_dict.values())
         losses_reduced = sum(loss for loss in loss_dict.values())
@@ -83,7 +83,7 @@ class DetectronTrial(PyTorchTrial):
     def evaluate_batch(self, batch: TorchData):
         outputs = self.model(batch)
         preds = self.evaluators.process(batch, outputs)
-        
+
         # results will be generated with validation_reducer
         if preds is not None:
             self.val_reducer.update(preds)

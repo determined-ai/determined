@@ -47,13 +47,12 @@ EXISTS(
 
 // AddTask persists the existence of a task.
 func (db *PgDB) AddTask(t *model.Task) error {
-	return addTask(db.sql, t)
-}
-
-func addTask(q queryHandler, t *model.Task) error {
-	if _, err := q.NamedExec(`
+	if _, err := db.sql.NamedExec(`
 INSERT INTO tasks (task_id, task_type, start_time, job_id, log_version)
 VALUES (:task_id, :task_type, :start_time, :job_id, :log_version)
+ON CONFLICT (task_id) DO UPDATE SET
+task_type=EXCLUDED.task_type, start_time=EXCLUDED.start_time,
+job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
 `, t); err != nil {
 		return errors.Wrap(err, "adding task")
 	}
@@ -92,8 +91,10 @@ WHERE task_id = $1
 // AddAllocation persists the existence of an allocation.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
 	return db.namedExecOne(`
-INSERT INTO allocations (task_id, allocation_id, slots, resource_pool, agent_label, start_time)
-VALUES (:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time)
+INSERT INTO allocations
+(task_id, allocation_id, slots, resource_pool, agent_label, start_time, state)
+VALUES
+(:task_id, :allocation_id, :slots, :resource_pool, :agent_label, :start_time, :state)
 `, a)
 }
 
@@ -105,7 +106,7 @@ func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 
 	_, err := db.sql.Exec(`
 UPDATE allocations
-SET start_time = $2, end_time = $3 
+SET start_time = $2, end_time = $3
 WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
 
 	return err
@@ -270,7 +271,7 @@ FROM task_logs l
 WHERE l.task_id = $1
 %s
 ORDER BY l.id %s LIMIT $2
-`, fragment, orderByToSQL(order))
+`, fragment, OrderByToSQL(order))
 
 	var b []*model.TaskLog
 	if err := db.queryRows(query, &b, params...); err != nil {

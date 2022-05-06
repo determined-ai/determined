@@ -43,7 +43,7 @@ class EffDetTrial(PyTorchTrial):
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.num_slots = int(self.context.get_experiment_config()['resources']['slots_per_trial'])
-        
+
         if self.args.sync_bn and self.num_slots == 1:
             print ('Can not use sync_bn with one slot. Either set sync_bn to False or use distributed training.')
             sys.exit()
@@ -67,11 +67,11 @@ class EffDetTrial(PyTorchTrial):
             jit_loss=self.args.jit_loss,
             bench_labeler=self.args.bench_labeler,
             checkpoint_path=self.args.initial_checkpoint,
-        )   
-        self.model_config = self.model.config 
+        )
+        self.model_config = self.model.config
         self.input_config = resolve_input_config(self.args, model_config=self.model_config)
         print('h: ', self.args.model, sum([m.numel() for m in self.model.parameters()]))
- 
+
         if self.args.sync_bn:
             print ('creating batch sync model')
             if self.args.model_ema:
@@ -112,11 +112,11 @@ class EffDetTrial(PyTorchTrial):
 
         if self.args.prefetcher:
             self.train_mean, self.train_std, self.train_random_erasing = self.calculate_means(mean=self.input_config['mean'], std=self.input_config['std'], re_prob=self.args.reprob, re_mode=self.args.remode, re_count=self.args.recount)
-            
+
             self.val_mean, self.val_std, self.val_random_erasing = self.calculate_means(self.input_config['mean'], self.input_config['std'])
 
-        self.val_reducer = self.context.experimental.wrap_reducer(self.validation_reducer, for_training=False)
-        
+        self.val_reducer = self.context.wrap_reducer(self.validation_reducer, for_training=False)
+
     def build_callbacks(self) :
         return {'model': self.model_ema.callback_object()}
 
@@ -126,15 +126,15 @@ class EffDetTrial(PyTorchTrial):
             re_prob=0.,
             re_mode='pixel',
             re_count=1):
-        # We need to precalculate the prefetcher. 
+        # We need to precalculate the prefetcher.
         mean = torch.tensor([x * 255 for x in mean]).cuda().view(1, 3, 1, 1)
         std = torch.tensor([x * 255 for x in std]).cuda().view(1, 3, 1, 1)
-        
+
         if re_prob > 0.:
             random_erasing = RandomErasing(probability=re_prob, mode=re_mode, max_count=re_count)
         else:
             random_erasing = None
-        
+
         return mean, std, random_erasing
 
     def _create_loader(self,
@@ -202,7 +202,7 @@ class EffDetTrial(PyTorchTrial):
         if self.context.get_hparam("fake_data"):
             dataset_train = FakeBackend()
             self.dataset_eval = dataset_train
-            
+
         else:
             dataset_train, self.dataset_eval = create_dataset(self.args.dataset, self.args.root)
 
@@ -264,7 +264,7 @@ class EffDetTrial(PyTorchTrial):
             pin_mem=self.args.pin_mem,
             anchor_labeler=self.labeler,
         )
-        
+
         self.evaluator = create_evaluator(self.args.dataset, self.loader_eval.dataset, pred_yxyx=False, context=self.context)
 
         return self.loader_eval
@@ -277,7 +277,7 @@ class EffDetTrial(PyTorchTrial):
         if epoch_idx != self.cur_epoch and self.lr_scheduler is not None:
             self.cur_epoch = epoch_idx
             self.num_updates = epoch_idx * self.data_length
-            
+
             self.lr_scheduler.step(self.cur_epoch)
             lrl2 = [param_group['lr'] for param_group in self.optimizer.param_groups]
             print (self.cur_epoch, 'new lr: ', lrl2, batch_idx)
@@ -297,13 +297,13 @@ class EffDetTrial(PyTorchTrial):
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer, self.clip_grads)
-        
+
         if self.model_ema is not None:
             self.model_ema.update(self.model)
 
         self.num_updates += 1
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step_update(num_updates=self.num_updates) 
+            self.lr_scheduler.step_update(num_updates=self.num_updates)
             lrl = [param_group['lr'] for param_group in self.optimizer.param_groups]
 
         return {"loss": loss}
@@ -326,7 +326,7 @@ class EffDetTrial(PyTorchTrial):
         reduced_loss = loss.data.item()
 
         if reduced_loss is np.nan or math.isnan(reduced_loss):
-            # The original implementation is sensitive to the hyperparameters and configurations. 
+            # The original implementation is sensitive to the hyperparameters and configurations.
             # This is used to help debug.
             if not self.context.get_hparam("fake_data"):
                 for name, p in self.model.named_parameters():
@@ -340,16 +340,16 @@ class EffDetTrial(PyTorchTrial):
         self.val_reducer.update(vals)
         self.evaluator.reset()
 
-        return {'val_loss': reduced_loss}   
-            
+        return {'val_loss': reduced_loss}
+
     def validation_reducer(self, values):
 
         concat_imgs, concat_pred = zip(*values)
-        
+
         new_concat_imgs = []
         for val in concat_imgs:
             new_concat_imgs.extend(val)
-        
+
         new_concat_pred = []
         for val in concat_pred:
             new_concat_pred.extend(val)

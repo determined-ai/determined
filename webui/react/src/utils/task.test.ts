@@ -8,14 +8,14 @@ const SampleExperimentTask: ExperimentTask = {
   archived: false,
   resourcePool: '',
   state: 'ACTIVE' as RunState,
-  username: '',
+  userId: 345,
 };
 const SampleCommandTask: CommandTask = {
   ...SampleTask,
   resourcePool: '',
   state: 'PENDING' as CommandState,
   type: 'COMMAND' as CommandType,
-  username: '',
+  userId: 345,
 };
 
 describe('isExperimentTask', () => {

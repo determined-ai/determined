@@ -27,8 +27,15 @@ func TestProtoGetTrial(t *testing.T) {
 	err := db.AddExperiment(exp)
 	require.NoError(t, err, "failed to add experiment")
 
-	tr := model.TrialModel(exp.ID, exp.JobID)
-	err = db.AddTrial(tr)
+	task := RequireMockTask(t, db, exp.OwnerID)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		JobID:        exp.JobID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+	}
+	err = db.AddTrial(&tr)
 	require.NoError(t, err, "failed to add trial")
 
 	startTime := time.Now().UTC()

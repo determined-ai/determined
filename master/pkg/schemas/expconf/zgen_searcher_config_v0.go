@@ -62,9 +62,6 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.RawAdaptiveASHAConfig != nil {
 		return *s.RawAdaptiveASHAConfig
 	}
-	if s.RawPBTConfig != nil {
-		return *s.RawPBTConfig
-	}
 	if s.RawSyncHalvingConfig != nil {
 		return *s.RawSyncHalvingConfig
 	}

@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
+import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
 import "determined/log/v1/log.proto";
@@ -108,3 +109,14 @@ message TaskLogsFieldsResponse {
   // The distinct sources present in the logs.
   repeated string sources = 6;
 }
+
+// Report the given checkpoint for the task.
+message ReportCheckpointRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint" ] }
+  };
+  // The training metrics to persist.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+}
+// Response to ReportCheckpointRequest.
+message ReportCheckpointResponse {}

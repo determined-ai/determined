@@ -47,12 +47,19 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
     # Print information about the downloaded step/checkpoint.
     table = [
-        ["Experiment ID", checkpoint.experiment_id],
-        ["Trial ID", checkpoint.trial_id],
-        ["Batch #", checkpoint.batch_number],
-        ["Report Time", render.format_time(checkpoint.end_time)],
+        ["Experiment ID", checkpoint.training.experiment_id if checkpoint.training else None],
+        ["Trial ID", checkpoint.training.trial_id if checkpoint.training else None],
+        ["Steps Completed", checkpoint.metadata.get("steps_completed")],
+        ["Report Time", render.format_time(checkpoint.report_time)],
         ["Checkpoint UUID", checkpoint.uuid],
-        ["Validation Metrics", json.dumps(checkpoint.validation["metrics"], indent=4)],
+        [
+            "Validation Metrics",
+            (
+                json.dumps(checkpoint.training.validation_metrics, indent=4)
+                if checkpoint.training
+                else None
+            ),
+        ],
         ["Metadata", json.dumps(checkpoint.metadata or {}, indent=4)],
     ]
 
@@ -76,17 +83,17 @@ def list_checkpoints(args: Namespace) -> None:
     checkpoints = r.checkpoints
     searcher_metric = ""
     if len(checkpoints) > 0:
-        config = checkpoints[0].experimentConfig or {}
+        config = checkpoints[0].training.experimentConfig or {}
         if "searcher" in config and "metric" in config["searcher"]:
             searcher_metric = str(config["searcher"]["metric"])
 
     def get_validation_metric(c: bindings.v1Checkpoint, metric: str) -> str:
         if (
-            c.metrics
-            and c.metrics.validationMetrics
-            and searcher_metric in c.metrics.validationMetrics
+            c.training.validationMetrics
+            and c.training.validationMetrics.avgMetrics
+            and metric in c.training.validationMetrics.avgMetrics
         ):
-            return str(c.metrics.validationMetrics[searcher_metric])
+            return str(c.training.validationMetrics.avgMetrics[metric])
         return ""
 
     headers = [
@@ -100,9 +107,9 @@ def list_checkpoints(args: Namespace) -> None:
     ]
     values = [
         [
-            c.trialId,
-            c.batchNumber,
-            c.state.value.replace("STATE_", ""),
+            c.training.trialId,
+            c.metadata.get("steps_completed", None),
+            c.state.value.replace("STATE_", "") if c.state is not None else "UNSPECIFIED",
             get_validation_metric(c, searcher_metric),
             c.uuid,
             render.format_resources(c.resources),

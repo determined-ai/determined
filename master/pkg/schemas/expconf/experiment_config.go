@@ -26,7 +26,6 @@ type ExperimentConfigV0 struct {
 	RawEntrypoint               *EntrypointV0               `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
-	RawInternal                 *InternalConfigV0           `json:"internal,omitempty"`
 	RawLabels                   LabelsV0                    `json:"labels"`
 	RawMaxRestarts              *int                        `json:"max_restarts"`
 	RawMinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
@@ -325,16 +324,4 @@ type SecurityConfigV0 struct {
 // KerberosConfigV0 is a legacy config.
 type KerberosConfigV0 struct {
 	RawConfigFile string `json:"config_file"`
-}
-
-//go:generate ../gen.sh
-// InternalConfigV0 is a legacy config.
-type InternalConfigV0 struct {
-	RawNative NativeConfigV0 `json:"native"`
-}
-
-//go:generate ../gen.sh
-// NativeConfigV0 is a legacy config.
-type NativeConfigV0 struct {
-	RawCommand []string `json:"command"`
 }
