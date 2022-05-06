@@ -49,7 +49,7 @@ def test_auth_with_store(requests_mock: requests_mock.Mocker, user: Optional[str
         requests_mock.get(
             "/users/me",
             status_code=200,
-            json={"username": expected_user},
+            json={"username": expected_user, "id": ""},
         )
         authentication = Authentication(MOCK_MASTER_URL, user)
         assert authentication.session.username == expected_user
@@ -78,7 +78,7 @@ def test_auth_user_from_env(
             with open(auth_json_path, "w") as f:
                 json.dump(AUTH_JSON, f)
 
-        requests_mock.get("/users/me", status_code=200, json={"username": "alice"})
+        requests_mock.get("/users/me", status_code=200, json={"username": "alice", "id":""})
 
         authentication = Authentication(MOCK_MASTER_URL, user)
         if has_token_store:

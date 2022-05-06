@@ -45,10 +45,10 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER, "id": ""}
     )
 
-    requests_mock.post("/login", status_code=200, json={"token": "fake-token"})
+    requests_mock.post("/login", status_code=200, json={"token": "fake-token", "userId": ""})
 
     requests_mock.post(
         "/experiments", status_code=requests.codes.created, headers={"Location": "/experiments/1"}
@@ -76,7 +76,7 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
 
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER, "id": ""}
     )
 
     requests_mock.get(
@@ -108,7 +108,7 @@ def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER, "id": ""}
     )
 
     requests_mock.post(
