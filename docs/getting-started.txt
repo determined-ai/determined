@@ -106,7 +106,7 @@ Download and extract the files used in this quickstart to a local folder:
 
       tar xzvf mnist_pytorch.tgz
 
-You should now have the following files in the ``mnist_pytorch`` folder:
+You should see the following files in the ``mnist_pytorch`` folder:
 
 .. code::
 
@@ -137,8 +137,8 @@ experiments:
 |                        | adaptive hyperparameter tuning algorithm.            |
 +------------------------+------------------------------------------------------+
 
-Python Model and Data Pipeline Definition Files
-===============================================
+Model and Pipeline Definition Files
+===================================
 
 Although the Python model and data pipeline definition files are not described in this quickstart,
 you might want to review them to become familiar with how interact with the Determined API in your
