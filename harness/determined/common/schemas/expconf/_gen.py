@@ -1860,6 +1860,13 @@ schemas = {
                 "null"
             ],
             "default": true
+        },
+        "per_nic_net_throughput": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     },
     "compareProperties": {

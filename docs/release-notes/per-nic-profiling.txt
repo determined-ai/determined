@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Profiler: Allow per NIC network throughput profiling with a new experiment configuration,
+      ``profiler.per_nic_network_throughput``.

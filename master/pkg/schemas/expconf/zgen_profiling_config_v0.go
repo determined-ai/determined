@@ -49,6 +49,17 @@ func (p *ProfilingConfigV0) SetSyncTimings(val bool) {
 	p.RawSyncTimings = &val
 }
 
+func (p ProfilingConfigV0) PerNicNetThroughput() bool {
+	if p.RawPerNicNetThroughput == nil {
+		panic("You must call WithDefaults on ProfilingConfigV0 before .PerNicNetThroughput")
+	}
+	return *p.RawPerNicNetThroughput
+}
+
+func (p *ProfilingConfigV0) SetPerNicNetThroughput(val bool) {
+	p.RawPerNicNetThroughput = &val
+}
+
 func (p ProfilingConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedProfilingConfigV0()
 }

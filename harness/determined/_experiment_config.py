@@ -32,6 +32,9 @@ class ExperimentConfig(dict):
     def profiling_sync_timings(self) -> bool:
         return bool(self.get("profiling", {}).get("sync_timings", True))
 
+    def profiling_per_nic_net_throughput(self) -> bool:
+        return bool(self.get("profiling", {}).get("per_nic_net_throughput", True))
+
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])
 

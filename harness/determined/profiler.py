@@ -278,6 +278,7 @@ class ProfilerAgent:
         begin_on_batch: int,
         sync_timings: bool,
         end_after_batch: Optional[int] = None,
+        per_nic_net_throughput: bool = False,
         send_batch_fn: SendBatchFnType = api.post_trial_profiler_metrics_batches,
         check_data_exists_fn: CheckDataExistsFnType = profiling_metrics_exist,
     ):
@@ -291,6 +292,7 @@ class ProfilerAgent:
         self.begin_on_batch = begin_on_batch
         self.end_after_batch = end_after_batch
         self.sync_timings = sync_timings
+        self.per_nic_net_throughput = per_nic_net_throughput
         self.send_batch_fn = send_batch_fn
         self.check_data_already_exists_fn = check_data_exists_fn
 
@@ -330,7 +332,11 @@ class ProfilerAgent:
             if self.sysmetrics_is_enabled:
                 num_producers += 1
                 self.sys_metric_collector_thread = SysMetricCollectorThread(
-                    trial_id, agent_id, self.send_queue, self.pynvml_wrapper
+                    trial_id,
+                    agent_id,
+                    self.send_queue,
+                    self.pynvml_wrapper,
+                    self.per_nic_net_throughput,
                 )
 
             num_producers += 1
@@ -362,6 +368,7 @@ class ProfilerAgent:
             begin_on_batch=begin_on_batch,
             end_after_batch=end_after_batch,
             sync_timings=env.experiment_config.profiling_sync_timings(),
+            per_nic_net_throughput=env.experiment_config.profiling_per_nic_net_throughput(),
         )
 
     # Launch the children threads. This does not mean 'start collecting metrics'
@@ -620,12 +627,18 @@ class SysMetricCollectorThread(threading.Thread):
     MEASUREMENT_INTERVAL = 0.1
 
     def __init__(
-        self, trial_id: str, agent_id: str, send_queue: queue.Queue, pynvml_wrapper: PynvmlWrapper
+        self,
+        trial_id: str,
+        agent_id: str,
+        send_queue: queue.Queue,
+        pynvml_wrapper: PynvmlWrapper,
+        per_nic_net_throughput: bool,
     ):
         self.current_batch_idx = 0
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
         self.current_batch = MetricBatch(trial_id, agent_id)
+        self.per_nic_net_throughput = per_nic_net_throughput
         self.pynvml_wrapper = pynvml_wrapper
 
         super().__init__(daemon=True)
@@ -642,7 +655,7 @@ class SysMetricCollectorThread(threading.Thread):
 
     def run(self) -> None:
         cpu_util_collector = SimpleCpuUtilCollector()
-        net_throughput_collector = NetThroughputCollector()
+        net_throughput_collector = NetThroughputCollector(pernic=self.per_nic_net_throughput)
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
         gpu_util_collector = GpuUtilCollector(self.pynvml_wrapper)
@@ -686,13 +699,8 @@ class SysMetricCollectorThread(threading.Thread):
                 MetricType.SYSTEM, SysMetricName.SIMPLE_CPU_UTIL_METRIC, cpu_util
             )
 
-            net_thru_sent, net_thru_recv = net_throughput_collector.measure(self.current_batch_idx)
-            self.current_batch.append(
-                MetricType.SYSTEM, SysMetricName.NET_THRU_SENT_METRIC, net_thru_sent
-            )
-            self.current_batch.append(
-                MetricType.SYSTEM, SysMetricName.NET_THRU_RECV_METRIC, net_thru_recv
-            )
+            for name, ms in net_throughput_collector.measure(self.current_batch_idx).items():
+                self.current_batch.append(MetricType.SYSTEM, name, ms)
 
             free_memory = free_memory_collector.measure(self.current_batch_idx)
             self.current_batch.append(MetricType.SYSTEM, SysMetricName.FREE_MEM_METRIC, free_memory)
@@ -961,22 +969,48 @@ class FreeMemoryCollector:
         return Measurement(timestamp, batch_idx, free_mem_bytes / GIGA)
 
 
+class SendRecvThroughputTracker:
+    def __init__(self, nic: Optional[str] = None):
+        postfix_nic_name = f"_{nic}" if nic else ""
+        self.sent = ThroughputTracker(
+            f"{SysMetricName.NET_THRU_SENT_METRIC}{postfix_nic_name}", multiplier=8 / GIGA
+        )
+        self.recv = ThroughputTracker(
+            f"{SysMetricName.NET_THRU_RECV_METRIC}{postfix_nic_name}", multiplier=8 / GIGA
+        )
+
+
 class NetThroughputCollector:
-    def __init__(self) -> None:
-        self.sent_throughput = ThroughputTracker("Network Sent (Gbit/s)", multiplier=8 / GIGA)
-        self.recv_throughput = ThroughputTracker("Network Recv (Gbit/s)", multiplier=8 / GIGA)
+    all_nics_name = "*"
+
+    def __init__(self, pernic: bool = False) -> None:
+        self.pernic = pernic
+        if self.pernic:
+            self.nics = {
+                nic: SendRecvThroughputTracker(nic) for nic in psutil.net_if_stats().keys()
+            }
+        else:
+            self.nics = {self.all_nics_name: SendRecvThroughputTracker()}
 
     def reset(self) -> None:
-        # Discard initial batch that is meaningless
-        net = psutil.net_io_counters()
-        self.sent_throughput.add(net.bytes_sent, batch_idx=0)
-        self.recv_throughput.add(net.bytes_recv, batch_idx=0)
+        for nic, io_counters in self.net_io_counters().items():
+            self.nics[nic].sent.add(io_counters.bytes_sent, batch_idx=0)
+            self.nics[nic].recv.add(io_counters.bytes_recv, batch_idx=0)
 
-    def measure(self, batch_idx: int) -> Tuple[Measurement, Measurement]:
-        net = psutil.net_io_counters()
-        sent = self.sent_throughput.add(net.bytes_sent, batch_idx=batch_idx)
-        recv = self.recv_throughput.add(net.bytes_recv, batch_idx=batch_idx)
-        return sent, recv
+    def measure(self, batch_idx: int) -> Dict[str, Measurement]:
+        ms = {}
+        for nic, io_counters in self.net_io_counters().items():
+            sent_tracker = self.nics[nic].sent
+            recv_tracker = self.nics[nic].recv
+            ms[sent_tracker.name] = sent_tracker.add(io_counters.bytes_sent, batch_idx=batch_idx)
+            ms[recv_tracker.name] = recv_tracker.add(io_counters.bytes_recv, batch_idx=batch_idx)
+        return ms
+
+    def net_io_counters(self) -> Dict[str, Any]:
+        if self.pernic:
+            return psutil.net_io_counters(pernic=True)  # type: ignore
+        else:
+            return {self.all_nics_name: psutil.net_io_counters(pernic=False)}
 
 
 class DiskReadWriteRateCollector:

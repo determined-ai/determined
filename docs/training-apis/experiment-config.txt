@@ -1093,6 +1093,9 @@ The ``profiling`` section specifies configuration options related to profiling e
       timing as ended. Defaults to 'true'. Applies only for frameworks that collect timing metrics
       (currently just PyTorch).
 
+   ``per_nic_net_throughput``
+      Defines whether network throughput metrics are collected per interface. Defaults to false.
+
 .. _experiment-configuration_training_units:
 
 ****************
