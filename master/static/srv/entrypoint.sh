@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
 
 set -e
@@ -39,4 +40,6 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # Do rendezvous last, to ensure all launch layers start around the same time.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --rendezvous
 
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch "$@"
+trap_and_forward_signals
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.launch "$@" &
+wait_and_handle_signals $!
