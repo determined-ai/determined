@@ -93,10 +93,6 @@ const useJupyterLabModal = (): ModalHooks => {
     }
   }, [ fields, previewJupyterLab ]);
 
-  useEffect(() => {
-    if (showFullConfig) fetchConfig();
-  }, [ fetchConfig, showFullConfig ]);
-
   const handleSecondary = useCallback(() => {
     if (showFullConfig) {
       setButtonDisabled(false);
@@ -157,18 +153,22 @@ const useJupyterLabModal = (): ModalHooks => {
     , [ content ],
   );
 
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    openOrUpdate({ ...modalProps, ...initialModalProps });
+  }, [ modalProps, openOrUpdate ]);
+
   /**
-    *Update the modal when user toggles the `Show Full Config` button.
-  */
+   * Update the modal when user toggles the `Show Full Config` button.
+   */
   useEffect(() => {
     if(config !== previousConfig || showFullConfig !== previousShowConfig){
       openOrUpdate(modalProps);
     }
-  }, [ showFullConfig, modalProps, openOrUpdate, previousShowConfig, config, previousConfig ]);
+  }, [ config, modalProps, openOrUpdate, previousConfig, previousShowConfig, showFullConfig ]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  useEffect(() => {
+    if (showFullConfig) fetchConfig();
+  }, [ fetchConfig, showFullConfig ]);
 
   return { modalClose, modalOpen, modalRef };
 };
