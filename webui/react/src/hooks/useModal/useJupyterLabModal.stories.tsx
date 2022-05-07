@@ -1,26 +1,26 @@
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import StoreDecorator from 'storybook/StoreDecorator';
 
-import JupyterLabModal from './JupyterLabModal';
-
 export default {
-  component: JupyterLabModal,
+  component: useJupyterLabModal,
   decorators: [ StoreDecorator ],
-  title: 'JupyterLabModal',
+  title: 'useJupyterLabModal',
 };
 
-const JupyterLabModalContainer = () => {
+const UseJupyterLabModalContainer = () => {
   const storeDispatch = useStoreDispatch();
-
+  const { modalOpen } = useJupyterLabModal();
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
-  return <JupyterLabModal visible={true} />;
+  return <Button onClick={() => modalOpen()}>Open Jupyter Lab</Button>;
 };
 
 export const Default = (): React.ReactNode => {
-  return <JupyterLabModalContainer />;
+  return <UseJupyterLabModalContainer />;
 };
