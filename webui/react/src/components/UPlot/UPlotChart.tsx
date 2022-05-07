@@ -8,8 +8,6 @@ import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getCssVar } from 'themes';
-import { RecordKey } from 'types';
-import { distance } from 'utils/chart';
 import handleError from 'utils/error';
 
 import { FacetedData } from './types';
@@ -59,7 +57,8 @@ const shouldRecreate = (
   const someAxisLabelHasChanged =
     prev.axes?.some((prevAxis, seriesIdx) => {
       const nextAxis = next.axes?.[seriesIdx];
-      return prevAxis.label !== nextAxis?.label;
+      return (prevAxis.label !== nextAxis?.label)
+        || (prevAxis.stroke !== nextAxis?.stroke);
     });
   if (someAxisLabelHasChanged) return true;
 
@@ -156,6 +155,8 @@ const UPlotChart: React.FC<Props> = ({
   const chartDivRef = useRef<HTMLDivElement>(null);
   const boundsRef = useRef<Record<string, ChartBounds>>({});
   const [ isReady, setIsReady ] = useState(false);
+  const { theme } = useTheme();
+  const prevTheme = usePrevious(theme, undefined);
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -169,7 +170,7 @@ const UPlotChart: React.FC<Props> = ({
     );
 
     // Override chart support colors to match theme.
-    if (extended.axes) {
+    if (theme !== prevTheme && extended.axes) {
       const borderColor = getCssVar('--theme-surface-border-weak');
       const labelColor = getCssVar('--theme-surface-on');
       extended.axes = extended.axes.map(axis => {
@@ -184,7 +185,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended;
-  }, [ options ]);
+  }, [ options, prevTheme, theme ]);
   const previousExtendedOptions = usePrevious(extendedOptions, undefined);
 
   useEffect(() => {
@@ -196,6 +197,10 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     if (!chartDivRef.current) return;
+    console.log(
+      'shouldRecreate',
+      shouldRecreate(previousExtendedOptions, extendedOptions, chartRef.current),
+    );
     if (shouldRecreate(previousExtendedOptions, extendedOptions, chartRef.current)) {
       /**
        * TODO: instead of returning true or false,
