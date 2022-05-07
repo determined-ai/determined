@@ -621,6 +621,19 @@ service Determined {
       tags: "Internal"
     };
   }
+  // PostAllocationProxyAddress sets the proxy address to use when proxying to
+  // services provided by an allocation. Upon receipt, the master will also
+  // register any proxies specified by the task.
+  rpc PostAllocationProxyAddress(PostAllocationProxyAddressRequest)
+      returns (PostAllocationProxyAddressResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/proxy_address"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // AllocationAllGather performs an all gather through the master. An
   // allocation can only perform once all gather at a time.
