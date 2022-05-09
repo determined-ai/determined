@@ -23,18 +23,6 @@ def validate_cluster_id() -> Callable:
     return validate
 
 
-def validate_scheduler_type() -> Callable:
-    def validate(s: str) -> str:
-        supported_scheduler_types = ["fair_share", "priority", "round_robin"]
-        if s not in supported_scheduler_types:
-            raise argparse.ArgumentTypeError(
-                f"supported schedulers are: {supported_scheduler_types}"
-            )
-        return s
-
-    return validate
-
-
 def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     # Preprocess the local path to store the states.
 
@@ -299,16 +287,14 @@ args_description = Cmd(
                             "--gpu-agent-instance-type",
                             type=str,
                             default=constants.defaults.COMPUTE_AGENT_INSTANCE_TYPE,
-                            help="instance type for agent in the compute "
-                            "(previously, GPU) resource pool",
+                            help="instance type for agents in the compute resource pool",
                         ),
                         Arg(
                             "--aux-agent-instance-type",
                             "--cpu-agent-instance-type",
                             type=str,
                             default=constants.defaults.AUX_AGENT_INSTANCE_TYPE,
-                            help="instance type for agent in the auxiliary "
-                            "(previously, CPU) resource pool",
+                            help="instance type for agents in the auxiliary resource pool",
                         ),
                         Arg(
                             "--db-password",
@@ -321,8 +307,8 @@ args_description = Cmd(
                             "--max-cpu-containers-per-agent",
                             type=int,
                             default=constants.defaults.MAX_AUX_CONTAINERS_PER_AGENT,
-                            help="maximum number of containers on agent in the "
-                            "auxiliary (previously, CPU) resource pool",
+                            help="maximum number of containers on agents in the "
+                            "auxiliary resource pool",
                         ),
                         Arg(
                             "--max-idle-agent-period",
@@ -387,9 +373,10 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--scheduler-type",
-                            type=validate_scheduler_type(),
+                            type=str,
+                            choices=["fair_share", "priority", "round_robin"],
                             default=constants.defaults.SCHEDULER_TYPE,
-                            help="scheduler to use (defaults to fair_share).",
+                            help="scheduler to use",
                         ),
                         Arg(
                             "--preemption-enabled",

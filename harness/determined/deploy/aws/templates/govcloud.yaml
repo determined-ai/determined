@@ -21,12 +21,12 @@ Parameters:
 
   AuxAgentInstanceType:
     Type: String
-    Description: Instance Type of Agent in the CPU resource pool
+    Description: Instance Type of agents in the auxiliary resource pool
     Default: t2.xlarge
 
   ComputeAgentInstanceType:
     Type: String
-    Description: Instance Type of Agent in the GPU resource pool
+    Description: Instance Type of agents in the compute resource pool
     Default: g4dn.xlarge
 
   InboundCIDRRange:
@@ -66,7 +66,7 @@ Parameters:
 
   MaxAgentStartingPeriod:
     Type: String
-    Description: How long for agent starting before retrying
+    Description: How long to wait for agents to start up before retrying
     Default: 20m
 
   MinDynamicAgents:
