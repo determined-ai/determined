@@ -1,8 +1,0 @@
-:orphan:
-
-**Removed Features**
-
--  The old experimental namespace methods for custom reducers in both PyTorchTrial and
-   EstimatorTrial have been removed. The experimental names were deprecated in 0.15.2 (April 2021)
-   when custom reducers were promoted to general availability. Any users who have not already
-   migrated to the non-experimental namespace for custom reducer methods must do so.
