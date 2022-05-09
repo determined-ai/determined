@@ -8,11 +8,7 @@ metadata:
     component: scheduler
     tier: control-plane
     release: {{ $schedulerType }}-{{ .Release.Name }}
-  {{- if eq $schedulerType "preemption"}}
-  name: preemption-scheduler
-  {{- else }}
-  name: coscheduler
-  {{- end}}
+  name: {{ $schedulerType }}
   namespace: kube-system
 spec:
   selector:
