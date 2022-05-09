@@ -50,7 +50,7 @@
     "screenfull": "^5.1.0",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "uplot": "^1.6.18"
+    "uplot": "^1.6.20"
   },
   "browserslist": {
     "production": [
