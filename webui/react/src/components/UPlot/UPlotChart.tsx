@@ -51,7 +51,16 @@ const shouldRecreate = (
   if (oldOptionKeys !== newOptionKeys) return true;
 
   const someAxisLabelHasChanged = oldOptions.axes?.some((oldAxis, seriesIdx) => {
-    return oldAxis.label !== newOptions.axes?.[seriesIdx]?.label;
+    const newAxis = newOptions.axes?.[seriesIdx] ?? {};
+    const labelChanged = oldAxis.label !== newAxis.label;
+    const strokeChanged = oldAxis.stroke !== newAxis.stroke;
+    const borderStrokeChanged = oldAxis.border?.stroke !== newAxis.border?.stroke;
+    const gridStrokeChanged = oldAxis.grid?.stroke !== newAxis.grid?.stroke;
+    const ticksStrokeChanged = oldAxis.ticks?.stroke !== newAxis.ticks?.stroke;
+    return (
+      labelChanged || strokeChanged ||
+      borderStrokeChanged || gridStrokeChanged || ticksStrokeChanged
+    );
   });
   if (someAxisLabelHasChanged) return true;
 
