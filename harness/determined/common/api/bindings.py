@@ -519,6 +519,24 @@ class v1AllocationAllGatherResponse:
             "data": self.data,
         }
 
+class v1AllocationPendingPreemptionSignalRequest:
+    def __init__(
+        self,
+        allocationId: str,
+    ):
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationPendingPreemptionSignalRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -5257,6 +5275,26 @@ def post_AllocationAllGather(
     if _resp.status_code == 200:
         return v1AllocationAllGatherResponse.from_json(_resp.json())
     raise APIHttpError("post_AllocationAllGather", _resp)
+
+def post_AllocationPendingPreemptionSignal(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationPendingPreemptionSignalRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/signals/pending_preemption",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AllocationPendingPreemptionSignal", _resp)
 
 def get_AllocationPreemptionSignal(
     session: "client.Session",

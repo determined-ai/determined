@@ -914,6 +914,28 @@ export interface V1AllocationAllGatherResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1AllocationPendingPreemptionSignalRequest
+ */
+export interface V1AllocationPendingPreemptionSignalRequest {
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1AllocationPendingPreemptionSignalRequest
+     */
+    allocationId: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1AllocationPendingPreemptionSignalResponse
+ */
+export interface V1AllocationPendingPreemptionSignalResponse {
+}
+
+/**
  * Response to AllocationPreemptionSignalRequest.
  * @export
  * @interface V1AllocationPreemptionSignalResponse
@@ -10379,6 +10401,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Report the receipt of a signal to stop the given allocation early. This is used to communicate back from a SLURM job that it has been notified of a pending preememption. Upon a call to this API the RM should then trigger a checkpoint and immediate exit.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationPendingPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationPendingPreemptionSignal.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationPendingPreemptionSignal.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/signals/pending_preemption`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AllocationPendingPreemptionSignalRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -11751,6 +11819,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Report the receipt of a signal to stop the given allocation early. This is used to communicate back from a SLURM job that it has been notified of a pending preememption. Upon a call to this API the RM should then trigger a checkpoint and immediate exit.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationPendingPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPendingPreemptionSignal(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12369,6 +12457,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Report the receipt of a signal to stop the given allocation early. This is used to communicate back from a SLURM job that it has been notified of a pending preememption. Upon a call to this API the RM should then trigger a checkpoint and immediate exit.
+         * @param {string} allocationId The id of the allocation.
+         * @param {V1AllocationPendingPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
+            return InternalApiFp(configuration).allocationPendingPreemptionSignal(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
          * @param {string} allocationId The id of the allocation.
          * @param {number} [timeoutSeconds] The timeout in seconds.
@@ -12727,6 +12826,19 @@ export class InternalApi extends BaseAPI {
      */
     public allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationAllGather(allocationId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Report the receipt of a signal to stop the given allocation early. This is used to communicate back from a SLURM job that it has been notified of a pending preememption. Upon a call to this API the RM should then trigger a checkpoint and immediate exit.
+     * @param {string} allocationId The id of the allocation.
+     * @param {V1AllocationPendingPreemptionSignalRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationPendingPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**

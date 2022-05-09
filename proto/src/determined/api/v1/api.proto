@@ -580,6 +580,21 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Report the receipt of a signal to stop the given allocation early.
+  // This is used to communicate back from a SLURM job that it has been
+  // notified of a pending preememption. Upon a call to this API
+  // the RM should then trigger a checkpoint and immediate exit.
+  rpc AllocationPendingPreemptionSignal(
+      AllocationPendingPreemptionSignalRequest)
+      returns (AllocationPendingPreemptionSignalResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/signals/pending_preemption"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Acknowledge the receipt of a signal to stop the given allocation early.
   // This is used indicate and exit 0 isn't final; specifically, it is used
   // for HP search directed early stops and preemption signals (not necessarily
