@@ -2,6 +2,6 @@
 
 **Breaking Changes**
 
--  API: Getting a list of experiments, models, commands, notebooks, shells, and tensorboards now
+-  API: Endpoints for getting a list of experiments, models, commands, notebooks, shells, and tensorboards now
    accept a ``userIds`` field of user IDs instead of a ``users`` field of usernames for filtering by
    user.
