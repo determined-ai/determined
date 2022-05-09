@@ -31,7 +31,7 @@ def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[
         "--on-fail",
         "SIGTERM",
         "--on-exit",
-        "WAIT",
+        "SIGTERM",
         f"/tmp/pid_server-{allocation_id}",
         str(num_slot_ids),
         "--",
