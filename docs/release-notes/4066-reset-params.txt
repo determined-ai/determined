@@ -1,5 +1,0 @@
-:orphan:
-
-**Removed Features**
-
--  Remove the ``det.pytorch.reset_parameters()`` call, which was deprecated in 0.12.13 (Aug 2020).
