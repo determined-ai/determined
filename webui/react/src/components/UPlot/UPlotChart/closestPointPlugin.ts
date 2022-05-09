@@ -43,8 +43,8 @@ export const closestPointPlugin = ({
       // find idx range
       // note: assuming X data to be sorted, uPlot behaves odd if that's false
       const cursorValX = uPlot.posToVal(cursorLeft, 'x');
-      const idxMax = findInsertionIndex(uPlot.data[0], cursorValX + distValX) - 1;
-      const idxMin = findInsertionIndex(uPlot.data[0], cursorValX - distValX);
+      const idxMax = findInsertionIndex(uPlot.data[0] as number[], cursorValX + distValX) - 1;
+      const idxMin = findInsertionIndex(uPlot.data[0] as number[], cursorValX - distValX);
 
       // find y value range
       const cursorValY = uPlot.posToVal(cursorTop, yScale);

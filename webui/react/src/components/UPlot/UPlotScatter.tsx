@@ -164,7 +164,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
           setData: [
             u => {
               // Calculate the min and max of each data properties such as size, fill and stroke.
-              (u.data[1] || []).forEach((data, index) => {
+              (u.data[1] || []).forEach((data: unknown, index: number) => {
                 if (data != null) ranges.current[index] = getMinMax(u, index);
               });
             },

@@ -35,13 +35,12 @@ const EMPTY_DATA = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
 const SCROLL_THROTTLE_TIME = 500;
 
 const shouldRecreate = (
-  chart?: uPlot,
+  newOptions: Partial<uPlot.Options>,
   oldOptions?: Partial<uPlot.Options>,
-  newOptions?: Partial<uPlot.Options>,
 ): boolean => {
-  if (!chart || !oldOptions) return true;
-  if (!newOptions) return false;
+  if (!oldOptions) return true;
   if (oldOptions.id !== newOptions.id) return true;
+  if (oldOptions.plugins !== newOptions.plugins) return true;
   if (oldOptions.title !== newOptions.title) return true;
   if (oldOptions.axes?.length !== newOptions.axes?.length) return true;
   if (oldOptions.scales?.y?.distr !== newOptions.scales?.y?.distr) return true;
@@ -51,18 +50,28 @@ const shouldRecreate = (
   if (oldOptionKeys !== newOptionKeys) return true;
 
   const someAxisLabelHasChanged = oldOptions.axes?.some((oldAxis, seriesIdx) => {
+    return oldAxis.label !== newOptions.axes?.[seriesIdx]?.label;
+  });
+  if (someAxisLabelHasChanged) return true;
+
+  return false;
+};
+
+const shouldRedraw = (
+  newOptions: Partial<uPlot.Options>,
+  oldOptions?: Partial<uPlot.Options>,
+): boolean => {
+  if (!oldOptions) return true;
+
+  const someAxisStyleHasChanged = oldOptions.axes?.some((oldAxis, seriesIdx) => {
     const newAxis = newOptions.axes?.[seriesIdx] ?? {};
-    const labelChanged = oldAxis.label !== newAxis.label;
     const strokeChanged = oldAxis.stroke !== newAxis.stroke;
     const borderStrokeChanged = oldAxis.border?.stroke !== newAxis.border?.stroke;
     const gridStrokeChanged = oldAxis.grid?.stroke !== newAxis.grid?.stroke;
     const ticksStrokeChanged = oldAxis.ticks?.stroke !== newAxis.ticks?.stroke;
-    return (
-      labelChanged || strokeChanged ||
-      borderStrokeChanged || gridStrokeChanged || ticksStrokeChanged
-    );
+    return strokeChanged || borderStrokeChanged || gridStrokeChanged || ticksStrokeChanged;
   });
-  if (someAxisLabelHasChanged) return true;
+  if (someAxisStyleHasChanged) return true;
 
   return false;
 };
@@ -150,7 +159,8 @@ const UPlotChart: React.FC<Props> = ({
    * Recreate chart if the new `options` prop changes require it.
    */
   useEffect(() => {
-    if (chartDivRef.current && shouldRecreate(chartRef.current, prevFullOptions, fullOptions)) {
+    if (!chartDivRef.current) return;
+    if (shouldRecreate(fullOptions, prevFullOptions)) {
       chartRef?.current?.destroy();
       chartRef.current = undefined;
 
@@ -171,6 +181,8 @@ const UPlotChart: React.FC<Props> = ({
           type: ErrorType.Input,
         });
       }
+    } else if (shouldRedraw(fullOptions, prevFullOptions)) {
+      chartRef?.current?.redraw();
     }
   }, [ fullOptions, prevFullOptions ]);
 

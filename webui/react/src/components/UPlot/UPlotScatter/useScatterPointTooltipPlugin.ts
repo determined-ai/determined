@@ -84,7 +84,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
     const y = yData[dataIndex];
     if (x == null || y == null) return;
 
-    const keyValues = u.data[seriesIndex]
+    const keyValues = (u.data[seriesIndex] as UPlotData[])
       .map((data: unknown, index: number) => {
         if (data == null) return null;
 
