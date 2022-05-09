@@ -61,12 +61,12 @@ Parameters:
 
   AuxAgentInstanceType:
     Type: String
-    Description: Instance Type of Agent in the CPU resource pool
+    Description: Instance Type of agents in the auxiliary resource pool
     Default: t2.xlarge
 
   ComputeAgentInstanceType:
     Type: String
-    Description: Instance Type of Agent in the GPU resource pool
+    Description: Instance Type of agents in the compute resource pool
     Default: p2.8xlarge
 
   InboundCIDRRange:
@@ -91,7 +91,7 @@ Parameters:
 
   MaxAuxContainersPerAgent:
     Type: Number
-    Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
+    Description: Maximum number of CPU containers to launch on agents in the default auxiliary resource pool.
     Default: 100
 
   MaxIdleAgentPeriod:
@@ -101,8 +101,8 @@ Parameters:
 
   MaxAgentStartingPeriod:
     Type: String
-    Description: How long for agent starting before retrying
-    Default: 10m
+    Description: How long to wait for agents to start up before retrying
+    Default: 20m
 
   MinDynamicAgents:
     Type: Number
@@ -414,7 +414,6 @@ Resources:
       ToPort: 65535
       IpProtocol: tcp
       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
-
 
   AgentSSHIngress:
     Type: AWS::EC2::SecurityGroupIngress
