@@ -922,10 +922,11 @@ def main(core_context):
             )
             # When starting a new trial, reset epoch to 0 instead of resuming from the last epoch.
             # This happens when "Continue Trial" is used, but not when resuming from a pause.
-            metadata = core_context.checkpoint.get_metadata(latest_checkpoint)
-            prev_trial_id = metadata["trial_id"]
-            if trial_id != prev_trial_id:
-                resume_epoch = 0
+            if latest_checkpoint is not None:
+                metadata = core_context.checkpoint.get_metadata(latest_checkpoint)
+                prev_trial_id = metadata["trial_id"]
+                if trial_id != prev_trial_id:
+                    resume_epoch = 0
 
         # setup exponential moving average of model weights, SWA could be used here too
         model_ema = None
