@@ -33,6 +33,11 @@ type ZoomScales = Record<string, ZoomInfo>;
 
 const EMPTY_DATA = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
 const SCROLL_THROTTLE_TIME = 500;
+const UPLOT_ERROR = {
+  level: ErrorLevel.Warn,
+  publicSubject: 'Something went wrong with uPlot.',
+  type: ErrorType.Input,
+};
 
 const shouldRecreate = (
   newOptions: Partial<uPlot.Options>,
@@ -156,7 +161,8 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   /**
-   * Recreate chart if the new `options` prop changes require it.
+   * Effect to handle uPlot recreate and redraw where we need to compare the
+   * previous and the current uPlot options.
    */
   useEffect(() => {
     if (!chartDivRef.current) return;
@@ -175,14 +181,14 @@ const UPlotChart: React.FC<Props> = ({
         setIsEmpty(true);
 
         // Record the error.
-        handleError(e, {
-          level: ErrorLevel.Warn,
-          publicSubject: 'Most likely bad data structure.',
-          type: ErrorType.Input,
-        });
+        handleError(e, { ...UPLOT_ERROR, publicSubject: 'Unable to create uPlot.' });
       }
     } else if (shouldRedraw(fullOptions, prevFullOptions)) {
-      chartRef?.current?.redraw();
+      try {
+        chartRef?.current?.redraw();
+      } catch (e) {
+        handleError(e, { ...UPLOT_ERROR, publicSubject: 'Unable to redraw uPlot.' });
+      }
     }
   }, [ fullOptions, prevFullOptions ]);
 
@@ -206,8 +212,12 @@ const UPlotChart: React.FC<Props> = ({
 
     // Update chart with data changes if chart already exists.
     if (chartRef.current) {
-      const isZoomed = Object.values(zoomScalesRef.current).some(i => i.isZoomed);
-      chartRef.current?.setData(dataRef.current, !isZoomed);
+      try {
+        const isZoomed = Object.values(zoomScalesRef.current).some(i => i.isZoomed);
+        chartRef.current?.setData(dataRef.current, !isZoomed);
+      } catch (e) {
+        handleError(e, { ...UPLOT_ERROR, publicSubject: 'Unable to update uPlot data.' });
+      }
     }
   }, [ data, fullOptions.mode, isReady ]);
 
@@ -223,7 +233,14 @@ const UPlotChart: React.FC<Props> = ({
     newScaleKeys.forEach(scaleKey => {
       const scales = newScales[scaleKey];
       if (scales.min != null && scales.max != null) {
-        chartRef.current?.setScale(scaleKey, { max: scales.max, min: scales.min });
+        try {
+          chartRef.current?.setScale(scaleKey, { max: scales.max, min: scales.min });
+        } catch (e) {
+          handleError(e, {
+            ...UPLOT_ERROR,
+            publicSubject: `Unable to update uPlot scale ${scaleKey}.`,
+          });
+        }
       }
     });
   }, [ fullOptions.scales ]);
@@ -240,13 +257,27 @@ const UPlotChart: React.FC<Props> = ({
     // Add new series that currently don't exist in the chart.
     Object.keys(newSeriesMap).forEach(label => {
       if (oldSeriesMap[label]) return;
-      chartRef.current?.addSeries(newSeriesMap[label].series);
+      try {
+        chartRef.current?.addSeries(newSeriesMap[label].series);
+      } catch (e) {
+        handleError(e, {
+          ...UPLOT_ERROR,
+          publicSubject: `Unable to add series "${label}" to uPlot.`,
+        });
+      }
     });
 
     // Remove existing series that no longer exists in `options.series`.
     Object.keys(oldSeriesMap).forEach(label => {
       if (newSeriesMap[label]) return;
-      chartRef.current?.delSeries(oldSeriesMap[label].index);
+      try {
+        chartRef.current?.delSeries(oldSeriesMap[label].index);
+      } catch (e) {
+        handleError(e, {
+          ...UPLOT_ERROR,
+          publicSubject: `Unable to delete series "${label}" from uPlot.`,
+        });
+      }
     });
   }, [ fullOptions.mode, fullOptions.series ]);
 
@@ -254,20 +285,37 @@ const UPlotChart: React.FC<Props> = ({
    * Resize the chart when resize events happen.
    */
   useEffect(() => {
-    if (!chartRef.current || !resize.width || !resize.height) return;
-    const [ width, height ] = [ resize.width, fullOptions.height || chartRef.current.height ];
+    const [ width, height ] = [ resize.width, fullOptions.height ];
 
-    if (chartRef.current.width === width && chartRef.current.height === height) return;
+    // Invalid width or height.
+    if (!width || !height) return;
 
-    chartRef.current.setSize({ height, width });
+    // No need to set size since the new sizes are the same as the previous size.
+    if (width === chartRef.current?.width && height === chartRef.current?.height) return;
+
+    try {
+      chartRef.current?.setSize({ height, width });
+    } catch (e) {
+      handleError(e, {
+        ...UPLOT_ERROR,
+        publicSubject: `Unable to set uPlot to ${width} x ${height}`,
+      });
+    }
   }, [ fullOptions.height, resize ]);
 
   /**
    * When a focus index is provided, highlight applicable series.
    */
   useEffect(() => {
-    const hasFocus = focusIndex !== undefined;
-    chartRef.current?.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+    try {
+      const hasFocus = focusIndex !== undefined;
+      chartRef.current?.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+    } catch (e) {
+      handleError(e, {
+        ...UPLOT_ERROR,
+        publicSubject: `Unable to focus on uPlot series with index ${focusIndex}.`,
+      });
+    }
   }, [ focusIndex ]);
 
   /**
@@ -276,11 +324,15 @@ const UPlotChart: React.FC<Props> = ({
    */
   useEffect(() => {
     const throttleFunc = throttle(SCROLL_THROTTLE_TIME, () => {
-      chartRef.current?.syncRect();
+      try {
+        chartRef.current?.syncRect();
+      } catch (e) {
+        handleError(e, { ...UPLOT_ERROR, publicSubject: 'Unable to resync uPlot.' });
+      }
     });
     const handleScroll = () => throttleFunc();
 
-    /*
+    /**
      * The true at the end is the important part,
      * it tells the browser to capture the event on dispatch,
      * even if that event does not normally bubble, like change, focus, and scroll.
