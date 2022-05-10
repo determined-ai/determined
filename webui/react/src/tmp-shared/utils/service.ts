@@ -1,8 +1,8 @@
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from '../../utils/error';
 import { DetApi, FetchOptions } from '../types';
 
 import { isObject } from './data';
+import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const getResponseStatus = (e: any): number | undefined => {

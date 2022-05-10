@@ -13,11 +13,12 @@ import {
   TrialDetails,
   TrialHyperparameters,
 } from 'types';
-import handleError, { DetError, isDetError, isError } from 'utils/error';
+import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
 import { RawJson } from '../../tmp-shared/types';
+import { DetError, isDetError, isError } from '../../tmp-shared/utils/error';
 import { routeToReactUrl } from '../../tmp-shared/utils/routes';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';

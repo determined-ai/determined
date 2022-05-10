@@ -5,9 +5,10 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
   isString } from 'tmp-shared/utils/data';
 import { Storage } from 'tmp-shared/utils/storage';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import { Primitive, RecordKey } from '../tmp-shared/types';
+import { ErrorType } from '../tmp-shared/utils/error';
 
 import usePrevious from './usePrevious';
 import useStorage from './useStorage';

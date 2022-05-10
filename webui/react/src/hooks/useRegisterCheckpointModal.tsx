@@ -10,8 +10,9 @@ import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { isEqual } from 'tmp-shared/utils/data';
 import { Metadata, ModelItem } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
+import { ErrorType } from '../tmp-shared/utils/error';
 import { validateDetApiEnum } from '../tmp-shared/utils/service';
 
 import css from './useRegisterCheckpointModal.module.scss';

@@ -18,9 +18,10 @@ import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
   metricTypeParamMap, RunState,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
+import { ErrorLevel, ErrorType } from '../../../tmp-shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from '../../../tmp-shared/utils/routes';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 

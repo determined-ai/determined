@@ -18,10 +18,11 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
 import { ExperimentBase, TrialDetails } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 import { ApiState } from '../tmp-shared/types';
+import { ErrorType } from '../tmp-shared/utils/error';
 import { isAborted } from '../tmp-shared/utils/service';
 
 const { TabPane } = Tabs;

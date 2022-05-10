@@ -28,8 +28,9 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/message';
 import { isEqual } from 'tmp-shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
+import { ErrorType } from '../tmp-shared/utils/error';
 import { routeToReactUrl } from '../tmp-shared/utils/routes';
 import { isAborted, validateDetApiEnum } from '../tmp-shared/utils/service';
 

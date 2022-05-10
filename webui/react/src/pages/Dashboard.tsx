@@ -23,9 +23,10 @@ import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
 
+import { ErrorType } from '../tmp-shared/utils/error';
 import { validateDetApiEnumList } from '../tmp-shared/utils/service';
 
 const defaultFilters: TaskFilters = {

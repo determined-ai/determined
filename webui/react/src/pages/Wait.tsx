@@ -11,8 +11,10 @@ import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import { capitalize } from 'tmp-shared/utils/string';
 import { CommandState } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { WaitStatus } from 'wait';
+
+import { ErrorType } from '../tmp-shared/utils/error';
 
 import css from './Wait.module.scss';
 

@@ -26,10 +26,11 @@ import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
+import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
 import { routeToReactUrl } from '../../tmp-shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from '../../tmp-shared/utils/service';
 

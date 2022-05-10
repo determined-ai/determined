@@ -7,9 +7,10 @@ import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { getCookie } from 'utils/browser';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import { routeAll } from '../routes/utils';
+import { ErrorType } from '../tmp-shared/utils/error';
 import { isAborted } from '../tmp-shared/utils/service';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {

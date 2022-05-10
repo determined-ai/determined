@@ -15,9 +15,10 @@ import Message, { MessageType } from 'shared/components/message';
 import { isEqual } from 'tmp-shared/utils/data';
 import { humanReadableBytes } from 'tmp-shared/utils/string';
 import { ModelVersion } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
+import { ErrorType } from '../tmp-shared/utils/error';
 import { isAborted } from '../tmp-shared/utils/service';
 
 import css from './ModelVersionDetails.module.scss';

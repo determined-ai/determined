@@ -4,8 +4,9 @@ import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
+import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
 import { routeToReactUrl } from '../../tmp-shared/utils/routes';
 
 import useModal, { ModalHooks } from './useModal';

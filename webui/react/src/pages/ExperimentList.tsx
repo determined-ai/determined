@@ -44,13 +44,14 @@ import { isEqual } from 'tmp-shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';
-import handleError, { ErrorLevel } from 'utils/error';
+import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import { RecordKey } from '../tmp-shared/types';
+import { ErrorLevel } from '../tmp-shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from '../tmp-shared/utils/service';
 
 import settingsConfig, {

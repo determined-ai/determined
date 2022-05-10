@@ -30,12 +30,14 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import { ShirtSize } from 'themes';
 import { isEqual } from 'tmp-shared/utils/data';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
 } from 'utils/sort';
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
+
+import { ErrorLevel, ErrorType } from '../tmp-shared/utils/error';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';

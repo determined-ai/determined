@@ -19,12 +19,13 @@ import {
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
 
 import { Primitive, Range } from '../../../tmp-shared/types';
+import { ErrorLevel, ErrorType } from '../../../tmp-shared/utils/error';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';

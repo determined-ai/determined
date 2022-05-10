@@ -32,10 +32,11 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { getDuration } from 'tmp-shared/utils/datetime';
 import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
 import { RecordKey } from '../../tmp-shared/types';
+import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
 
 import css from './ExperimentDetailsHeader.module.scss';
 

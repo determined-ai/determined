@@ -8,7 +8,9 @@ import { paths } from 'routes/utils';
 import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { Storage } from 'tmp-shared/utils/storage';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorType } from '../tmp-shared/utils/error';
 
 import css from './DeterminedAuth.module.scss';
 
