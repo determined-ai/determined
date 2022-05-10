@@ -58,4 +58,4 @@ class Pix2PixTrial(TFKerasTrial):
         return self._get_wrapped_dataset("train", self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> InputData:
-        return self._get_wrapped_dataset("test", 106)
+        return self._get_wrapped_dataset("test", self.context.get_per_slot_batch_size())
