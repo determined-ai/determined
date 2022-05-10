@@ -41,7 +41,7 @@ class Pix2PixTrial(TFKerasTrial):
 
         return model
 
-    def _get_wrapped_dataset(self, set_) -> InputData:
+    def _get_wrapped_dataset(self, set_, batch_size) -> InputData:
         ds = get_dataset(
             self.path,
             self.context.get_data_config()["height"],
@@ -49,13 +49,13 @@ class Pix2PixTrial(TFKerasTrial):
             set_,
             self.context.get_hparam("jitter"),
             self.context.get_hparam("mirror"),
-            #self.context.get_per_slot_batch_size(),
+            batch_size,
         )
         ds = self.context.wrap_dataset(ds)
         return ds
 
     def build_training_data_loader(self) -> InputData:
-        return self._get_wrapped_dataset("train")
+        return self._get_wrapped_dataset("train", self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> InputData:
-        return self._get_wrapped_dataset("val")
+        return self._get_wrapped_dataset("test", 106)
