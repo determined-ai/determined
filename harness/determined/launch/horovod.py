@@ -77,7 +77,7 @@ def create_worker_wrapper_cmd(allocation_id: str) -> List[str]:
         "python3",
         "-m",
         "determined.launch.wrap_rank",
-        "HOROVOD_RANK",
+        "HOROVOD_RANK,OMPI_COMM_WORLD_RANK,PMI_RANK",
         "--",
     ]
 

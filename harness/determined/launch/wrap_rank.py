@@ -47,8 +47,9 @@ def main() -> int:
         "rank",
         metavar="RANK",
         help=(
-            "Can be an integer rank or the name of an "
-            "environment variable containing an integer rank."
+            "Can be an integer rank or a comma-separated list of "
+            "names of environment variables which are tried, in order, "
+            "to determine an integer rank."
         ),
     )
     parser.add_argument(
@@ -56,18 +57,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    rank = None
     if set("0123456789") >= set(args.rank):
         # Rank is provided as a number.
         rank = int(args.rank)
     else:
         # Rank is provided as the name of an environment variable.
-        if args.rank not in os.environ:
+        for r in args.rank.split(","):
+            if r in os.environ:
+                rank = int(os.environ[r])
+                break
+        else:
             print(
                 f"rank environment variable is set to {args.rank}, but it is not in os.environ",
                 file=sys.stderr,
             )
             return 1
-        rank = int(os.environ[args.rank])
 
     proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
