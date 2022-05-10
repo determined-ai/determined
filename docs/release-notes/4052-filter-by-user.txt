@@ -3,4 +3,4 @@
 **Breaking Changes**
 
 -  API: Endpoints for getting lists of experiments, models, commands, notebooks, shells, and
-   tensorboards now filter by ``userIds`` instead of ``users`` (usernames)
+   tensorboards now filter by ``userIds`` instead of ``users`` (usernames).
