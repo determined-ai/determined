@@ -29,6 +29,7 @@ const routeComponentMap: Record<string, FC> = {
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
+  interactiveTask: InteractiveTask,
   jobs: JobQueue,
   modelDetails: ModelDetails,
   models: ModelRegistry,
@@ -39,7 +40,6 @@ const routeComponentMap: Record<string, FC> = {
   taskList: TaskList,
   taskLogs: TaskLogs,
   trialDetails: TrialDetails,
-  interactiveTask: InteractiveTask,
   wait: Wait,
 };
 

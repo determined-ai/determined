@@ -7,6 +7,7 @@ import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType, CommandTask } from 'types';
 import { clone } from 'utils/data';
+
 import routes from './routes';
 import { RouteConfig } from './types';
 
@@ -210,6 +211,9 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
+  interactiveTask: (taskUrl: string): string => {
+    return `/interactiveTask?${queryString.stringify({ taskUrl })}`;
+  },
   jobs: (): string => {
     return routeById.jobs.path;
   },
@@ -235,9 +239,6 @@ export const paths = {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
       : 'https://airtable.com/shrodYROolF0E1iYf';
-  },
-  interactiveTask : (taskUrl: string) => {
-    return `/interactiveTask?${queryString.stringify({taskUrl})}`
   },
   taskList: (): string => {
     return '/tasks';

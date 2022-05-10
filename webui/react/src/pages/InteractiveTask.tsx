@@ -1,7 +1,8 @@
 import queryString from 'query-string';
+import React, { useEffect } from 'react';
+
 import PageMessage from 'components/PageMessage';
-import React, {useEffect} from 'react';
-import { StoreAction,useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 
 interface Queries {
   taskUrl?: string;
@@ -10,34 +11,32 @@ interface Queries {
 export const InteractiveTask: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  
+
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-    const { taskUrl }: Queries = queryString.parse(location.search);
+  const { taskUrl }: Queries = queryString.parse(location.search);
 
-
-    if (!taskUrl){
-      return (
-        <PageMessage title={"Task not found"}>
+  if (!taskUrl){
+    return (
+      <PageMessage title={'Task not found'}>
         <div>
           <div>Missing Task Url</div>
         </div>
       </PageMessage>
-      )
-    } 
-    return (
-        <iframe 
-        src={decodeURIComponent(taskUrl)}
-        width="100%"
-        height="100%"
-        title="Interactive Task"
-        allowFullScreen
-        >
-        </iframe>
-    )
+    );
   }
-  
+  return (
+    <iframe
+      allowFullScreen
+      height="100%"
+      src={decodeURIComponent(taskUrl)}
+      title="Interactive Task"
+      width="100%"
+    />
+  );
+};
+
 export default InteractiveTask;
