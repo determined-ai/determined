@@ -198,6 +198,11 @@ const UPlotChart: React.FC<Props> = ({
   useEffect(() => {
     const alignedData = data as uPlot.AlignedData | undefined;
 
+    /**
+     * We keep a reference of `data` to avoid triggering the recreate
+     * useEffect above whenever data changes, and still allow the
+     * recreate to use the latest version of `data`.
+     */
     if (fullOptions.mode === 2 && alignedData) {
       setIsEmpty(false);
       dataRef.current = alignedData;
