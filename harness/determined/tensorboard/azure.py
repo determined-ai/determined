@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 from determined.common import util
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class AzureTensorboardManager(base.TensorboardManager):
@@ -27,10 +28,15 @@ class AzureTensorboardManager(base.TensorboardManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             whole_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            self.client.put("{}/{}".format(self.container, str(whole_path.parent)), path.name, path)
+            rank_aware_path = get_rank_aware_path(whole_path)
+            self.client.put(
+                "{}/{}".format(self.container, str(rank_aware_path.parent)),
+                rank_aware_path.name,
+                path
+            )
 
     def delete(self) -> None:
         files = self.client.list_files(self.container, self.sync_path)

@@ -3,6 +3,7 @@ from typing import Any
 
 from determined.common import util
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class GCSTensorboardManager(base.TensorboardManager):
@@ -24,9 +25,11 @@ class GCSTensorboardManager(base.TensorboardManager):
         self.bucket = self.client.bucket(bucket)
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
-            blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
+            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
+            rank_aware_path = get_rank_aware_path(canonical_path, rank)
+            blob_name = str(rank_aware_path)
             blob = self.bucket.blob(blob_name)
             logging.debug(f"Uploading to GCS: {blob_name}")
 

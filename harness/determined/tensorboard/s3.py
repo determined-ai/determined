@@ -5,6 +5,7 @@ from typing import Any, Optional
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class S3TensorboardManager(base.TensorboardManager):
@@ -42,9 +43,11 @@ class S3TensorboardManager(base.TensorboardManager):
         self.prefix = normalize_prefix(prefix)
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
-            tbd_filename = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
+            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
+            rank_aware_path = get_rank_aware_path(canonical_path, rank)
+            tbd_filename = str(rank_aware_path)
             key_name = os.path.join(self.prefix, tbd_filename)
 
             url = f"s3://{self.bucket}/{key_name}"

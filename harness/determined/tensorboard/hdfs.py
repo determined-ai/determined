@@ -5,6 +5,7 @@ from hdfs.client import InsecureClient
 
 from determined.common import util
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class HDFSTensorboardManager(base.TensorboardManager):
@@ -30,9 +31,11 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.client.makedirs(str(self.sync_path))
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
-            file_name = str(self.sync_path.joinpath(path.name))
+            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
+            rank_aware_path = get_rank_aware_path(canonical_path)
+            file_name = str(rank_aware_path)
 
             logging.debug(f"Uploading {path} to {self.hdfs_path}")
 
