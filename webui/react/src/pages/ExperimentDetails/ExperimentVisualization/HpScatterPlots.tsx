@@ -15,10 +15,12 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import {
-  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
+  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
 } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
+
+import { Primitive } from '../../../tmp-shared/types';
 
 import css from './HpScatterPlots.module.scss';
 

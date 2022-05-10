@@ -3,9 +3,10 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor } from 'react';
 
 import Icon from 'components/Icon';
-import { Eventually } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
+
+import { Eventually } from '../tmp-shared/types';
 
 import css from './ActionDropdown.module.scss';
 

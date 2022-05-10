@@ -7,6 +7,8 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import * as Type from 'types';
 
+import { RawJson } from '../tmp-shared/types';
+
 import { identity, noOp } from './utils';
 
 const updatedApiConfigParams = (
@@ -713,7 +715,7 @@ export const launchJupyterLab: Service.DetApi<
 };
 
 export const previewJupyterLab: Service.DetApi<
-  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
 > = {
   name: 'previewJupyterLab',
   postProcess: (response) => response.config,

@@ -7,11 +7,13 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
 import {
-  HyperparametersFlattened, HyperparameterType, MetricName, Primitive, RecordKey,
+  HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
+
+import { Primitive, RecordKey } from '../../../tmp-shared/types';
 
 import css from './HpTrialTable.module.scss';
 

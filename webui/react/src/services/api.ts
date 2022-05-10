@@ -6,6 +6,8 @@ import { generateDetApi } from 'services/utils';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
+import { RawJson } from '../tmp-shared/types';
+
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
@@ -262,7 +264,7 @@ export const launchJupyterLab = generateDetApi<
 >(Config.launchJupyterLab);
 
 export const previewJupyterLab = generateDetApi<
-  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
 >(Config.previewJupyterLab);
 
 export const launchTensorBoard = generateDetApi<

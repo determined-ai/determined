@@ -12,11 +12,13 @@ import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
-  Pagination, StartEndTimes, TrialItem,
+  StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { waitPageUrl } from 'wait';
+
+import { Pagination } from '../tmp-shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';

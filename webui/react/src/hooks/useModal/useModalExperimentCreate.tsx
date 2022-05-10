@@ -9,7 +9,6 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import {
   ExperimentBase,
-  RawJson,
   TrialDetails,
   TrialHyperparameters,
 } from 'types';
@@ -17,6 +16,8 @@ import { clone, isEqual } from 'utils/data';
 import handleError, { DetError, isDetError, isError } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
+
+import { RawJson } from '../../tmp-shared/types';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalExperimentCreate.module.scss';

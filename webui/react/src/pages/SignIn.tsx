@@ -16,9 +16,10 @@ import { defaultRoute } from 'routes';
 import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import { RecordKey } from 'types';
 import { getPath } from 'utils/data';
 import { capitalize } from 'utils/string';
+
+import { RecordKey } from '../tmp-shared/types';
 
 import css from './SignIn.module.scss';
 

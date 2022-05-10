@@ -30,10 +30,12 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
+import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
+
+import { RecordKey } from '../../tmp-shared/types';
 
 import css from './ExperimentDetailsHeader.module.scss';
 

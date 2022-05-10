@@ -18,12 +18,14 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  metricTypeParamMap,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
+
+import { Primitive, Range } from '../../../tmp-shared/types';
 
 import css from './HpHeatMaps.module.scss';
 

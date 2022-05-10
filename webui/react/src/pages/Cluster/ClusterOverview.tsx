@@ -20,10 +20,12 @@ import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource,
-  ClusterOverview as Overview, Pagination, ResourcePool, ResourceState, ResourceType,
+  ClusterOverview as Overview, ResourcePool, ResourceState, ResourceType,
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { percent } from 'utils/number';
+
+import { Pagination } from '../../tmp-shared/types';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
 import css from './ClusterOverview.module.scss';

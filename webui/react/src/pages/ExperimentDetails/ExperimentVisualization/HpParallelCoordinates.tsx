@@ -15,7 +15,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
@@ -24,6 +24,7 @@ import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
 
+import { Primitive, Range } from '../../../tmp-shared/types';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';

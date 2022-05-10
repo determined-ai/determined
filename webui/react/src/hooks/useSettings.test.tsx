@@ -5,8 +5,9 @@ import { Router } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'routes/history';
-import { RecordKey } from 'types';
 import { MemoryStore, Storage } from 'utils/storage';
+
+import { RecordKey } from '../tmp-shared/types';
 
 import useSettings, * as hook from './useSettings';
 

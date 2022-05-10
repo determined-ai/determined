@@ -1,8 +1,9 @@
 import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
 import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
-import { RawJson } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
+
+import { RawJson } from '../tmp-shared/types';
 
 interface JupyterLabOptions {
   name?: string,

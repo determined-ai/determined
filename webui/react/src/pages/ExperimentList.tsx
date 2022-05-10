@@ -42,7 +42,7 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentItem, RecordKey, RunState,
+  ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
@@ -50,6 +50,8 @@ import { alphaNumericSorter } from 'utils/sort';
 import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
+
+import { RecordKey } from '../tmp-shared/types';
 
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
