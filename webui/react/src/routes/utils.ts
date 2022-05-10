@@ -5,7 +5,7 @@ import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType, CommandTask } from 'types';
 
-import { RouteConfig } from '../tmp-shared/types';
+import { RouteConfig } from '../shared/types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,
@@ -16,7 +16,7 @@ import {
   reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
-} from '../tmp-shared/utils/routes';
+} from '../shared/utils/routes';
 
 import routes from './routes';
 

@@ -3,14 +3,14 @@ import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
-import history from 'tmp-shared/routes/history';
-import { LoggerInterface } from 'tmp-shared/utils/Logger';
-import { listToStr } from 'tmp-shared/utils/string';
+import history from 'shared/routes/history';
+import { LoggerInterface } from 'shared/utils/Logger';
+import { listToStr } from 'shared/utils/string';
 
 import { DetError, DetErrorOptions, ERROR_NAMESPACE, ErrorLevel, ErrorType,
-  isDetError } from '../tmp-shared/utils/error';
-import { filterOutLoginLocation } from '../tmp-shared/utils/routes';
-import { isAborted } from '../tmp-shared/utils/service';
+  isDetError } from '../shared/utils/error';
+import { filterOutLoginLocation } from '../shared/utils/routes';
+import { isAborted } from '../shared/utils/service';
 
 const errorLevelMap = {
   [ErrorLevel.Error]: 'error',

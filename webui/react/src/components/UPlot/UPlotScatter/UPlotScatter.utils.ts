@@ -1,8 +1,8 @@
 import uPlot from 'uplot';
 
-import { rgba2str, rgbaFromGradient, str2rgba } from 'tmp-shared/utils/color';
+import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 
-import { Range } from '../../../tmp-shared/types';
+import { Range } from '../../../shared/types';
 import { UPlotAxisSplits, UPlotData } from '../types';
 
 export const X_INDEX = 0;

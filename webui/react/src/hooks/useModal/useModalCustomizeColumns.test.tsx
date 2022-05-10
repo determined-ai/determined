@@ -5,7 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import { camelCaseToSentence, generateAlphaNumeric,
-  sentenceToCamelCase } from 'tmp-shared/utils/string';
+  sentenceToCamelCase } from 'shared/utils/string';
 
 import useModalCustomizeColumns from './useModalCustomizeColumns';
 

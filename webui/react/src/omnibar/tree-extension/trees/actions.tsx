@@ -5,7 +5,7 @@ import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 
-import { routeToReactUrl } from '../../../tmp-shared/utils/routes';
+import { routeToReactUrl } from '../../../shared/utils/routes';
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeToReactUrl(url));
 export const noOp = (): void => undefined;

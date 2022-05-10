@@ -2,8 +2,8 @@ import { Divider, Modal } from 'antd';
 import React, { Fragment } from 'react';
 
 import Json from 'components/Json';
-import { clone } from 'tmp-shared/utils/data';
-import { camelCaseToSentence } from 'tmp-shared/utils/string';
+import { clone } from 'shared/utils/data';
+import { camelCaseToSentence } from 'shared/utils/string';
 import { ResourcePool } from 'types';
 
 import { poolLogo } from './ResourcePoolCard';

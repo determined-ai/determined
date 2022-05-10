@@ -7,7 +7,7 @@ import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/message';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import { FacetedData } from './types';
 

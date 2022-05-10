@@ -2,11 +2,11 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import { flattenObject, isNullOrUndefined, isNumber, isObject,
-  isPrimitive } from 'tmp-shared/utils/data';
-import { capitalize } from 'tmp-shared/utils/string';
+  isPrimitive } from 'shared/utils/data';
+import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
 
-import { Pagination, RawJson } from '../tmp-shared/types';
+import { Pagination, RawJson } from '../shared/types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 

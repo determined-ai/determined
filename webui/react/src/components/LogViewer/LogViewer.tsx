@@ -14,13 +14,13 @@ import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
-import { clone } from 'tmp-shared/utils/data';
-import { formatDatetime } from 'tmp-shared/utils/datetime';
-import { copyToClipboard } from 'tmp-shared/utils/dom';
+import { clone } from 'shared/utils/data';
+import { formatDatetime } from 'shared/utils/datetime';
+import { copyToClipboard } from 'shared/utils/dom';
 import { Log, LogLevel } from 'types';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
-import { RecordKey } from '../../tmp-shared/types';
+import { RecordKey } from '../../shared/types';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';

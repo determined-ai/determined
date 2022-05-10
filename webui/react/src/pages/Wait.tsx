@@ -9,12 +9,12 @@ import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
-import { capitalize } from 'tmp-shared/utils/string';
+import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'wait';
 
-import { ErrorType } from '../tmp-shared/utils/error';
+import { ErrorType } from '../shared/utils/error';
 
 import css from './Wait.module.scss';
 

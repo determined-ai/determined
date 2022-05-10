@@ -8,8 +8,8 @@ import Link from 'components/Link';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';
-import { floatToPercent } from 'tmp-shared/utils/string';
 import { ResourceState, SlotState } from 'types';
 
 import { BadgeType } from './Badge';

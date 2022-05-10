@@ -3,11 +3,11 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor } from 'react';
 
 import Icon from 'components/Icon';
-import { capitalize } from 'tmp-shared/utils/string';
+import { capitalize } from 'shared/utils/string';
 import handleError from 'utils/error';
 
-import { Eventually } from '../tmp-shared/types';
-import { ErrorLevel, ErrorType } from '../tmp-shared/utils/error';
+import { Eventually } from '../shared/types';
+import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import css from './ActionDropdown.module.scss';
 

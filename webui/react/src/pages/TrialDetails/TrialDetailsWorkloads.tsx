@@ -11,7 +11,7 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import { isEqual } from 'tmp-shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import {
   CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,

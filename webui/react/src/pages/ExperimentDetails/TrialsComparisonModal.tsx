@@ -12,8 +12,8 @@ import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { isNumber } from 'tmp-shared/utils/data';
-import { humanReadableBytes } from 'tmp-shared/utils/string';
+import { isNumber } from 'shared/utils/data';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';

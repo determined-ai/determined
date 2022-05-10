@@ -12,14 +12,14 @@ import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
-import { isEqual } from 'tmp-shared/utils/data';
-import { humanReadableBytes } from 'tmp-shared/utils/string';
+import { isEqual } from 'shared/utils/data';
+import { humanReadableBytes } from 'shared/utils/string';
 import { ModelVersion } from 'types';
 import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
-import { ErrorType } from '../tmp-shared/utils/error';
-import { isAborted } from '../tmp-shared/utils/service';
+import { ErrorType } from '../shared/utils/error';
+import { isAborted } from '../shared/utils/service';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';

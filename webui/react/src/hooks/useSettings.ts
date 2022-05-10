@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
-  isString } from 'tmp-shared/utils/data';
-import { Storage } from 'tmp-shared/utils/storage';
+  isString } from 'shared/utils/data';
+import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import { Primitive, RecordKey } from '../tmp-shared/types';
-import { ErrorType } from '../tmp-shared/utils/error';
+import { Primitive, RecordKey } from '../shared/types';
+import { ErrorType } from '../shared/utils/error';
 
 import usePrevious from './usePrevious';
 import useStorage from './useStorage';

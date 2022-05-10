@@ -3,7 +3,7 @@ import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import { clone, isObject } from 'tmp-shared/utils/data';
+import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
 import { hpImportanceSorter } from 'utils/sort';
 

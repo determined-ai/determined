@@ -1,7 +1,7 @@
 import { Input, Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { copyToClipboard } from 'tmp-shared/utils/dom';
+import { copyToClipboard } from 'shared/utils/dom';
 import { ModelVersion } from 'types';
 
 import CopyButton from './CopyButton';

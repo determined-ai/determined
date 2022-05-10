@@ -3,7 +3,7 @@ import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import { toHtmlId, truncate } from 'tmp-shared/utils/string';
+import { toHtmlId, truncate } from 'shared/utils/string';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './TagList.module.scss';

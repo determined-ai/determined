@@ -1,8 +1,8 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { clone, isEqual } from 'tmp-shared/utils/data';
-import { percent } from 'tmp-shared/utils/number';
+import { clone, isEqual } from 'shared/utils/data';
+import { percent } from 'shared/utils/number';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,

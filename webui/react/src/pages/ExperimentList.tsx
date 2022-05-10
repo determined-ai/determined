@@ -40,7 +40,7 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { isEqual } from 'tmp-shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';
@@ -50,9 +50,9 @@ import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
-import { RecordKey } from '../tmp-shared/types';
-import { ErrorLevel } from '../tmp-shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from '../tmp-shared/utils/service';
+import { RecordKey } from '../shared/types';
+import { ErrorLevel } from '../shared/utils/error';
+import { validateDetApiEnum, validateDetApiEnumList } from '../shared/utils/service';
 
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,

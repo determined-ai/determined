@@ -27,8 +27,8 @@ import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
+import { isEqual } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
-import { isEqual } from 'tmp-shared/utils/data';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 import {
@@ -37,7 +37,7 @@ import {
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
-import { ErrorLevel, ErrorType } from '../tmp-shared/utils/error';
+import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';

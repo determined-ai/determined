@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { clone, isObject } from 'tmp-shared/utils/data';
+import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE } from 'types';
 
 import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';

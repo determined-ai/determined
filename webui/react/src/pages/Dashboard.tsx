@@ -17,8 +17,8 @@ import {
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual, validateEnumList } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
-import { isEqual, validateEnumList } from 'tmp-shared/utils/data';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, RunState, TaskFilters, TaskType,
@@ -26,8 +26,8 @@ import {
 import handleError from 'utils/error';
 import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
 
-import { ErrorType } from '../tmp-shared/utils/error';
-import { validateDetApiEnumList } from '../tmp-shared/utils/service';
+import { ErrorType } from '../shared/utils/error';
+import { validateDetApiEnumList } from '../shared/utils/service';
 
 const defaultFilters: TaskFilters = {
   limit: 25,

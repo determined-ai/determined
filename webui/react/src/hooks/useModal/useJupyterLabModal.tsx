@@ -13,7 +13,7 @@ import { getResourcePools, getTaskTemplates } from 'services/api';
 import { JupyterLabConfig, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 
-import { RawJson } from '../../tmp-shared/types';
+import { RawJson } from '../../shared/types';
 
 import css from './useJupyterLabModal.module.scss';
 import useModal, { ModalHooks } from './useModal';

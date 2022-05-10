@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { isObject } from 'tmp-shared/utils/data';
+import { isObject } from 'shared/utils/data';
 
-import { RawJson } from '../tmp-shared/types';
+import { RawJson } from '../shared/types';
 
 import css from './Json.module.scss';
 

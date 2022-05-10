@@ -5,7 +5,7 @@
  * learn more: https://github.com/testing-library/jest-dom
  */
 import '@testing-library/jest-dom/extend-expect';
-import 'tmp-shared/prototypes';
+import 'shared/prototypes';
 import { readFileSync } from 'fs';
 
 Object.defineProperty(window, 'matchMedia', {

@@ -9,8 +9,8 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
-import { getDuration } from 'tmp-shared/utils/datetime';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
   StartEndTimes, TrialItem,
@@ -18,7 +18,7 @@ import {
 import { canBeOpened } from 'utils/task';
 import { waitPageUrl } from 'wait';
 
-import { Pagination } from '../tmp-shared/types';
+import { Pagination } from '../shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';

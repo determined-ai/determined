@@ -6,12 +6,12 @@ import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
-import { floatToPercent, truncate } from 'tmp-shared/utils/string';
+import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 
-import { ErrorType } from '../../tmp-shared/utils/error';
+import { ErrorType } from '../../shared/utils/error';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;

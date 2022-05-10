@@ -6,8 +6,8 @@ import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
-import { routeToReactUrl } from '../../tmp-shared/utils/routes';
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { routeToReactUrl } from '../../shared/utils/routes';
 
 import useModal, { ModalHooks } from './useModal';
 

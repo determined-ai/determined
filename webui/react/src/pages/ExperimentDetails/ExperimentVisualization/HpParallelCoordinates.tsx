@@ -13,7 +13,7 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
-import { clone, flattenObject } from 'tmp-shared/utils/data';
+import { clone, flattenObject } from 'shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
@@ -24,8 +24,8 @@ import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
 
-import { Primitive, Range } from '../../../tmp-shared/types';
-import { ErrorLevel, ErrorType } from '../../../tmp-shared/utils/error';
+import { Primitive, Range } from '../../../shared/types';
+import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';

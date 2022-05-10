@@ -4,7 +4,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { BrandingType } from 'types';
 
-import { parseUrl, routeToExternalUrl } from '../tmp-shared/utils/routes';
+import { parseUrl, routeToExternalUrl } from '../shared/utils/routes';
 
 /*
  * In mobile view the definition of viewport height varies between

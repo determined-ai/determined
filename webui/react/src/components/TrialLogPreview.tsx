@@ -9,7 +9,7 @@ import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { formatDatetime } from 'tmp-shared/utils/datetime';
+import { formatDatetime } from 'shared/utils/datetime';
 import { LogLevel, RunState, TrialDetails } from 'types';
 
 import css from './TrialLogPreview.module.scss';

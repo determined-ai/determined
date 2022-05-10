@@ -5,7 +5,7 @@ import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerMetricsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
-import { clone, hasObjectKeys } from 'tmp-shared/utils/data';
+import { clone, hasObjectKeys } from 'shared/utils/data';
 import { RunState } from 'types';
 
 import { MetricsAggregateInterface, MetricType } from './types';

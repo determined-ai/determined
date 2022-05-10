@@ -7,7 +7,7 @@ import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { clone, isEqual } from 'tmp-shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import {
   ExperimentBase,
   TrialDetails,
@@ -17,9 +17,9 @@ import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
-import { RawJson } from '../../tmp-shared/types';
-import { DetError, isDetError, isError } from '../../tmp-shared/utils/error';
-import { routeToReactUrl } from '../../tmp-shared/utils/routes';
+import { RawJson } from '../../shared/types';
+import { DetError, isDetError, isError } from '../../shared/utils/error';
+import { routeToReactUrl } from '../../shared/utils/routes';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalExperimentCreate.module.scss';

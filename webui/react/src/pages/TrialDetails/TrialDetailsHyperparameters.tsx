@@ -2,7 +2,7 @@ import { ColumnType } from 'antd/es/table';
 import React, { useMemo } from 'react';
 
 import ResponsiveTable from 'components/ResponsiveTable';
-import { isObject } from 'tmp-shared/utils/data';
+import { isObject } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 

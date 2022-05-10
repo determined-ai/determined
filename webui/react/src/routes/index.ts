@@ -18,7 +18,7 @@ import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 
-import { RouteConfig } from '../tmp-shared/types';
+import { RouteConfig } from '../shared/types';
 
 import Routes from './routes';
 

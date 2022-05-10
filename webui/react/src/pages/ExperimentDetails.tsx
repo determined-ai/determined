@@ -11,11 +11,11 @@ import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
-import { isEqual } from 'tmp-shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-import { isAborted } from '../tmp-shared/utils/service';
+import { isAborted } from '../shared/utils/service';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';

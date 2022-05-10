@@ -13,7 +13,7 @@ import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horiz
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
 import { BrandingType } from 'types';
 
-import { reactHostAddress } from '../tmp-shared/utils/routes';
+import { reactHostAddress } from '../shared/utils/routes';
 
 import css from './Logo.module.scss';
 

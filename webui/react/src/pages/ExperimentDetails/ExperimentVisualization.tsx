@@ -15,7 +15,7 @@ import {
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
-import { hasObjectKeys } from 'tmp-shared/utils/data';
+import { hasObjectKeys } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,

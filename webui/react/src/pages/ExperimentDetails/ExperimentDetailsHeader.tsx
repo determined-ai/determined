@@ -29,14 +29,14 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
+import { getDuration } from 'shared/utils/datetime';
 import { getStateColorCssVar } from 'themes';
-import { getDuration } from 'tmp-shared/utils/datetime';
 import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { RecordKey } from '../../tmp-shared/types';
-import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
+import { RecordKey } from '../../shared/types';
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './ExperimentDetailsHeader.module.scss';
 

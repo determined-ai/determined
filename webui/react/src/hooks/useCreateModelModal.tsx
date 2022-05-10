@@ -11,7 +11,7 @@ import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../tmp-shared/utils/error';
+import { ErrorType } from '../shared/utils/error';
 
 import css from './useCreateModelModal.module.scss';
 import useRegisterCheckpointModal from './useRegisterCheckpointModal';

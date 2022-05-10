@@ -3,7 +3,7 @@ import React, { CSSProperties, useState } from 'react';
 
 import Icon from 'components/Icon';
 
-import { isMouseEvent } from '../tmp-shared/utils/routes';
+import { isMouseEvent } from '../shared/utils/routes';
 
 import css from './PageHeaderFoldable.module.scss';
 

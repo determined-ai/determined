@@ -10,7 +10,7 @@ import { patchExperiment } from 'services/api';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../../tmp-shared/utils/error';
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 const { TabPane } = Tabs;
 

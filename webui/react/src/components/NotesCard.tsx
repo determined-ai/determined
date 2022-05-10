@@ -5,7 +5,7 @@ import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError from 'utils/error';
 
-import { ErrorType } from '../tmp-shared/utils/error';
+import { ErrorType } from '../shared/utils/error';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';

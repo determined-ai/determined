@@ -26,13 +26,13 @@ import {
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/message';
-import { isEqual } from 'tmp-shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../tmp-shared/utils/error';
-import { routeToReactUrl } from '../tmp-shared/utils/routes';
-import { isAborted, validateDetApiEnum } from '../tmp-shared/utils/service';
+import { ErrorType } from '../shared/utils/error';
+import { routeToReactUrl } from '../shared/utils/routes';
+import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';

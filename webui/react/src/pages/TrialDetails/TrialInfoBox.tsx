@@ -5,8 +5,8 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
+import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import { humanReadableBytes } from 'tmp-shared/utils/string';
 import {
   CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';

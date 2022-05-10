@@ -2,7 +2,7 @@ import { serverAddress } from 'routes/utils';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
-import { openBlank } from './tmp-shared/utils/routes';
+import { openBlank } from './shared/utils/routes';
 
 // createWsUrl: Given an event url create the corresponding ws url.
 export function createWsUrl(eventUrl: string): string {

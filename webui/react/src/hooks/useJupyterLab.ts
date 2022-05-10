@@ -3,8 +3,8 @@ import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { RawJson } from '../tmp-shared/types';
-import { ErrorLevel, ErrorType } from '../tmp-shared/utils/error';
+import { RawJson } from '../shared/types';
+import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 interface JupyterLabOptions {
   name?: string,

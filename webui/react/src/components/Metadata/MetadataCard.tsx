@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../../tmp-shared/utils/error';
+import { ErrorType } from '../../shared/utils/error';
 import Spinner from '../Spinner';
 
 import EditableMetadata from './EditableMetadata';

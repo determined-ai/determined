@@ -1,6 +1,6 @@
 import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
-import { sumArrays } from 'tmp-shared/utils/array';
-import { secondToHour } from 'tmp-shared/utils/datetime';
+import { sumArrays } from 'shared/utils/array';
+import { secondToHour } from 'shared/utils/datetime';
 import { DetailedUser } from 'types';
 import { getDisplayName } from 'utils/user';
 

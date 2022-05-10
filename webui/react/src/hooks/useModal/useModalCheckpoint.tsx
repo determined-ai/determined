@@ -8,8 +8,8 @@ import Link from 'components/Link';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
-import { formatDatetime } from 'tmp-shared/utils/datetime';
-import { humanReadableBytes } from 'tmp-shared/utils/string';
+import { formatDatetime } from 'shared/utils/datetime';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
