@@ -46,3 +46,5 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
 
 	((DET_LOG_WAIT_COUNT += 2))
 fi
+
+trap 'source /run/determined/task-logging-teardown.sh' EXIT
