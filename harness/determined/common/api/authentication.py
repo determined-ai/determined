@@ -101,7 +101,7 @@ class Authentication:
 
         try:
             auth = do_login(self.master_address, session_user, password, cert)
-            token = auth["token"]
+            token = auth.get_token()
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
@@ -138,6 +138,18 @@ class Authentication:
         return self.session.token
 
 
+class AuthContext:
+    def __init__(self, token, user_id):
+        self.token = token
+        self.user_id = user_id
+
+    def get_user_id(self) -> str:
+        return self.user_id
+
+    def get_token(self) -> str:
+        return self.token
+
+
 def do_login(
     master_address: str,
     username: str,
@@ -157,8 +169,7 @@ def do_login(
 
     user_id = r.json()["userId"]
 
-    auth = {"token": token, "user_id": user_id}
-    return auth
+    return AuthContext(token, user_id)
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:

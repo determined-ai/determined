@@ -77,8 +77,8 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store = authentication.TokenStore(parsed_args.master)
 
     auth = authentication.do_login(parsed_args.master, username, password)
-    token_store.set_token(username, auth["token"])
-    token_store.set_active(username, auth["user_id"])
+    token_store.set_token(username, auth.get_token())
+    token_store.set_active(username, auth.get_user_id())
 
 
 @authentication.optional
@@ -138,8 +138,8 @@ def change_password(parsed_args: Namespace) -> None:
     if parsed_args.target_user is None:
         token_store = authentication.TokenStore(parsed_args.master)
         auth = authentication.do_login(parsed_args.master, username, password)
-        token_store.set_token(username, auth["token"])
-        token_store.set_active(username, auth["user_id"])
+        token_store.set_token(username, auth.get_token())
+        token_store.set_active(username, auth.get_user_id())
 
 
 @authentication.required
