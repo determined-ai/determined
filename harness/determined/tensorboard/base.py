@@ -53,7 +53,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         return sync_paths
 
     @abc.abstractmethod
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         """
         Save the object to the backing persistent storage.
         """

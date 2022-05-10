@@ -10,6 +10,16 @@ tb_file_types = [
     "*.pb",
 ]
 
+profiler_file_extensions = [
+    ".input_pipeline.pb",
+    ".memory_profile.json.gz",
+    ".tensorflow_stats.pb",
+    ".xplane.pb",
+    ".kernel_stats.pb",
+    ".overview_page.pb",
+    ".trace.json.gz",
+]
+
 
 def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
     """
@@ -26,3 +36,17 @@ def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
         return []
 
     return [file for filetype in tb_file_types for file in base_dir.rglob(filetype)]
+
+
+def get_rank_aware_path(p: pathlib.Path, rank: int) -> pathlib.Path:
+    for ext in profiler_file_extensions:
+        if p.match(f"*{ext}"):
+            print(f"matching *{ext}")
+            num_parts = ext.count(".")
+            while num_parts > 0:
+                p = p.with_suffix("")
+                num_parts -= 1
+            p = p.with_name(f"{p.name}#{rank}")
+            p = p.with_suffix(ext)
+            return p
+    return p

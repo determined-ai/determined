@@ -27,7 +27,7 @@ class AzureTensorboardManager(base.TensorboardManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             whole_path = self.sync_path.joinpath(path.relative_to(self.base_path))
             self.client.put("{}/{}".format(self.container, str(whole_path.parent)), path.name, path)

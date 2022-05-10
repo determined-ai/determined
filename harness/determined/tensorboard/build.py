@@ -27,18 +27,18 @@ def get_rank_if_horovod_process_else_return_zero() -> Optional[int]:
     return int(os.getenv("HOROVOD_RANK", 0))
 
 
-def get_base_path(checkpoint_config: Dict[str, Any], manager: bool = False) -> pathlib.Path:
+def get_base_path(checkpoint_config: Dict[str, Any]) -> pathlib.Path:
+    allocation_id = os.environ.get("DET_ALLOCATION_ID", "")
     rank = get_rank_if_horovod_process_else_return_zero()
 
     if checkpoint_config.get("base_path"):
-        return pathlib.Path(checkpoint_config["base_path"]).joinpath("tensorboard")
+        base_path = pathlib.Path(checkpoint_config["base_path"])
+    else:
+        base_path = pathlib.Path("/", "tmp")
 
-    if manager or rank == 0:
-        # In a distributed training job the manager should monitor the chief
-        # trials logs and ignore all other trials.
-        return pathlib.Path("/", "tmp", "tensorboard")
-
-    return pathlib.Path("/", "tmp", f"tensorboard-{rank}")
+    if rank == 0:
+        return base_path.joinpath(f"tensorboard-{allocation_id}")
+    return base_path.joinpath(f"tensorboard-{allocation_id}-{rank}")
 
 
 def build(
@@ -64,7 +64,7 @@ def build(
     if not isinstance(type_name, str):
         raise TypeError("`type` parameter of storage configuration must be a string")
 
-    base_path = get_base_path(checkpoint_config, manager=True)
+    base_path = get_base_path(checkpoint_config)
 
     if trial_id:
         sync_path = get_sync_path(cluster_id, experiment_id, trial_id)

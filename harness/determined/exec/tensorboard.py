@@ -82,6 +82,7 @@ def get_tensorboard_url() -> str:
 def check_tensorboard_responsive() -> bool:
     # Ensure Tensorboard is responding to HTTP request to prevent 502 from master.
     tensorboard_url = get_tensorboard_url()
+    logger.info(f"tensorboard_url={tensorboard_url}")
     try:
         # Attempt HTTP request to Tensorboard.
         res = requests.get(tensorboard_url)

@@ -60,7 +60,7 @@ def test_is_numerical_scalar() -> None:
 
 def test_list_tb_files(tmp_path: pathlib.Path) -> None:
     env = get_dummy_env()
-    base_path = get_base_path({"base_path": BASE_PATH}, manager=True)
+    base_path = get_base_path({"base_path": BASE_PATH})
     sync_path = get_sync_path(env.det_cluster_id, env.det_experiment_id, env.det_trial_id)
 
     manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)

@@ -30,7 +30,7 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.client.makedirs(str(self.sync_path))
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             file_name = str(self.sync_path.joinpath(path.name))
 

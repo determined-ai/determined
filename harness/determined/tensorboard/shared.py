@@ -1,9 +1,13 @@
+import logging
 import os
 import pathlib
 import shutil
 from typing import Any
 
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
+
+logger = logging.getLogger("determined.core")
 
 
 class SharedFSTensorboardManager(base.TensorboardManager):
@@ -25,11 +29,15 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         # Restore the original umask.
         os.umask(old_umask)
 
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
+            logger.debug(
+                f"SharedFSTensorboardManager({self.base_path}, {self.sync_path}) saving {path}"
+            )
             shared_fs_path = self.shared_fs_base.joinpath(path.relative_to(self.base_path))
             pathlib.Path.mkdir(shared_fs_path.parent, parents=True, exist_ok=True)
-            shutil.copy(path, shared_fs_path)
+            rank_aware_path = get_rank_aware_path(shared_fs_path, rank)
+            shutil.copy(path, rank_aware_path)
 
     def delete(self) -> None:
         shutil.rmtree(self.shared_fs_base, False)

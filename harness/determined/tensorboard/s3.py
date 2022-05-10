@@ -42,7 +42,7 @@ class S3TensorboardManager(base.TensorboardManager):
         self.prefix = normalize_prefix(prefix)
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             tbd_filename = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
             key_name = os.path.join(self.prefix, tbd_filename)

@@ -31,7 +31,7 @@ class GCSTensorboardManager(base.TensorboardManager):
         return os.path.join(self.prefix, storage_id)
 
     @util.preserve_random_state
-    def sync(self) -> None:
+    def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             blob_name = self.sync_path.joinpath(path.relative_to(self.base_path))
             to_path = self.get_storage_prefix(blob_name)

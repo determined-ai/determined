@@ -82,7 +82,7 @@ class TrainContext:
         if batch_metrics is not None:
             body["batch_metrics"] = batch_metrics
         logger.info(
-            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
+            f"***report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
@@ -90,9 +90,20 @@ class TrainContext:
         )
 
         # Also sync tensorboard.
-        if self._tbd_writer and self._tbd_mgr:
-            self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-            self._tbd_mgr.sync()
+        logger.warning("tensorboard sync will move to control loop")
+        if self._tbd_writer:
+            logger.info("write metrics to tb")
+            self._tbd_writer.on_train_step_end(
+                steps_completed,
+                metrics,
+                batch_metrics,
+            )
+
+    def upload_tb_profile(self, rank: int = 0) -> None:
+        logger.info("upload tb profile")
+        if self._tbd_mgr:
+            logger.debug("for real")
+            self._tbd_mgr.sync(rank)
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
@@ -148,9 +159,8 @@ class TrainContext:
         )
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tbd_writer and self._tbd_mgr:
+        if self._tbd_writer:
             self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            self._tbd_mgr.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
