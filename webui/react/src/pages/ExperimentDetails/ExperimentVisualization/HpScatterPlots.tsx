@@ -14,10 +14,10 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { flattenObject, isBoolean, isString } from 'tmp-shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
 } from 'types';
-import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
 
 import { Primitive } from '../../../tmp-shared/types';

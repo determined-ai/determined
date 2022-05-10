@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from 'react';
 
-import { isString } from 'utils/data';
-import { generateAlphaNumeric, toHtmlId } from 'utils/string';
+import { isString } from 'tmp-shared/utils/data';
+import { generateAlphaNumeric, toHtmlId } from 'tmp-shared/utils/string';
 
 import css from './Section.module.scss';
 import Spinner from './Spinner';

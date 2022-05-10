@@ -3,8 +3,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor } from 'react';
 
 import Icon from 'components/Icon';
+import { capitalize } from 'tmp-shared/utils/string';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { capitalize } from 'utils/string';
 
 import { Eventually } from '../tmp-shared/types';
 

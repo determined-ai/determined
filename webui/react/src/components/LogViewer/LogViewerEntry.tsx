@@ -2,9 +2,9 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import Icon from 'components/Icon';
+import { ansiToHtml } from 'tmp-shared/utils/dom';
+import { capitalize } from 'tmp-shared/utils/string';
 import { LogLevel } from 'types';
-import { ansiToHtml } from 'utils/dom';
-import { capitalize } from 'utils/string';
 
 import css from './LogViewerEntry.module.scss';
 

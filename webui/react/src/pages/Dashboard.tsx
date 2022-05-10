@@ -16,16 +16,17 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { validateDetApiEnumList } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { ShirtSize } from 'themes';
+import { isEqual, validateEnumList } from 'tmp-shared/utils/data';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
-import { isEqual, validateEnumList } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { filterTasks, taskFromCommandTask, taskFromExperiment } from 'utils/task';
+
+import { validateDetApiEnumList } from '../tmp-shared/utils/service';
 
 const defaultFilters: TaskFilters = {
   limit: 25,

@@ -1,4 +1,4 @@
-import { RecordKey } from './tmp-shared/types';
+import { RecordKey } from './types';
 
 describe('Array.prototype utility', () => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

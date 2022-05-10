@@ -2,9 +2,10 @@ import queryString from 'query-string';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import { clone, hasObjectKeys, isBoolean, isEqual, isNumber, isString } from 'utils/data';
+import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
+  isString } from 'tmp-shared/utils/data';
+import { Storage } from 'tmp-shared/utils/storage';
 import handleError, { ErrorType } from 'utils/error';
-import { Storage } from 'utils/storage';
 
 import { Primitive, RecordKey } from '../tmp-shared/types';
 

@@ -6,10 +6,10 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { ShirtSize } from 'themes';
+import { humanReadableBytes } from 'tmp-shared/utils/string';
 import {
   CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
-import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 interface Props {

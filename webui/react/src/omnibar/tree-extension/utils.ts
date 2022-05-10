@@ -1,4 +1,4 @@
-import { isAsyncFunction } from 'utils/data';
+import { isAsyncFunction } from 'tmp-shared/utils/data';
 
 import { BaseNode, Children, LeafNode, NonLeafNode, TreeNode, TreePath } from './types';
 

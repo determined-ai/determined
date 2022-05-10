@@ -1,8 +1,8 @@
 import * as Type from 'types';
 
 import { RawJson } from '../tmp-shared/types';
-
-import { clone, deletePathList, getPathList, isNumber, setPathList, unflattenObject } from './data';
+import { clone, deletePathList, getPathList, isNumber, setPathList,
+  unflattenObject } from '../tmp-shared/utils/data';
 
 // Differentiate Experiment from Task.
 export const isExperiment = (

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Primitive, RawJson, RecordKey, UnknownRecord } from '../tmp-shared/types';
+import { Primitive, RawJson, RecordKey, UnknownRecord } from '../types';
 
 // `bigint` is not support yet for
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';

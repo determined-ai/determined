@@ -18,12 +18,12 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { ShirtSize } from 'themes';
+import { percent } from 'tmp-shared/utils/number';
 import {
   ClusterOverviewResource,
   ClusterOverview as Overview, ResourcePool, ResourceState, ResourceType,
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { percent } from 'utils/number';
 
 import { Pagination } from '../../tmp-shared/types';
 

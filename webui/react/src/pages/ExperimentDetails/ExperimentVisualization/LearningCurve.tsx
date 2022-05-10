@@ -7,20 +7,21 @@ import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { flattenObject } from 'tmp-shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
   metricTypeParamMap, RunState,
 } from 'types';
-import { flattenObject } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
 
+import { isNewTabClickEvent, openBlank, routeToReactUrl } from '../../../tmp-shared/utils/routes';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';

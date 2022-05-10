@@ -1,6 +1,6 @@
 import testConfig from 'fixtures/responses/trial-details/old-trial-config-noop-adaptive.json';
 
-import { RawJson, UnknownRecord } from '../tmp-shared/types';
+import { RawJson, UnknownRecord } from '../types';
 
 import * as utils from './data';
 

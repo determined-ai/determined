@@ -1,4 +1,4 @@
-import { Storage } from 'utils/storage';
+import { Storage } from 'tmp-shared/utils/storage';
 
 class GlobalStorage {
   private keys: Record<string, string>;

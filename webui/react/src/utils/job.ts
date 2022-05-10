@@ -3,7 +3,7 @@ import * as Api from 'services/api-ts-sdk';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
 import handleError, { DetError, DetErrorOptions, ErrorType } from 'utils/error';
 
-import { capitalize } from './string';
+import { capitalize } from '../tmp-shared/utils/string';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.

@@ -1,9 +1,10 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
+import { flattenObject, isNullOrUndefined, isNumber, isObject,
+  isPrimitive } from 'tmp-shared/utils/data';
+import { capitalize } from 'tmp-shared/utils/string';
 import * as types from 'types';
-import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
-import { capitalize } from 'utils/string';
 
 import { Pagination, RawJson } from '../tmp-shared/types';
 

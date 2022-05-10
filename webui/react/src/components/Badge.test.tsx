@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { getStateColorCssVar } from 'themes';
+import { generateAlphaNumeric } from 'tmp-shared/utils/string';
 import { SlotState } from 'types';
-import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeType } from './Badge';
 

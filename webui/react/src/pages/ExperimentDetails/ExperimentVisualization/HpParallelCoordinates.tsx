@@ -13,12 +13,12 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { clone, flattenObject } from 'tmp-shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import { clone, flattenObject } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';

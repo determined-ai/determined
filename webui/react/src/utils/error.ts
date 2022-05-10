@@ -2,13 +2,14 @@ import { notification as antdNotification } from 'antd';
 import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
-import history from 'routes/history';
-import { filterOutLoginLocation, paths } from 'routes/utils';
-import { isAborted } from 'services/utils';
-import Logger, { LoggerInterface } from 'utils/Logger';
-import { listToStr } from 'utils/string';
+import { paths } from 'routes/utils';
+import history from 'tmp-shared/routes/history';
+import Logger, { LoggerInterface } from 'tmp-shared/utils/Logger';
+import { listToStr } from 'tmp-shared/utils/string';
 
-import { isString } from './data';
+import { isString } from '../tmp-shared/utils/data';
+import { filterOutLoginLocation } from '../tmp-shared/utils/routes';
+import { isAborted } from '../tmp-shared/utils/service';
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.

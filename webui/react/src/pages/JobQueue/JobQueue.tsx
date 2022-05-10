@@ -18,13 +18,13 @@ import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
 import * as Api from 'services/api-ts-sdk';
 import { GetJobsResponse } from 'services/types';
 import { ShirtSize } from 'themes';
+import { isEqual } from 'tmp-shared/utils/data';
+import { capitalize } from 'tmp-shared/utils/string';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
-import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
-import { capitalize } from 'utils/string';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

@@ -10,11 +10,11 @@ import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { StateOfUnion } from 'themes';
+import { getDuration } from 'tmp-shared/utils/datetime';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
   StartEndTimes, TrialItem,
 } from 'types';
-import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
 import { waitPageUrl } from 'wait';
 

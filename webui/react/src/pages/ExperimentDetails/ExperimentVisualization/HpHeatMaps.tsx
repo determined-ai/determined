@@ -16,13 +16,13 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { rgba2str, str2rgba } from 'tmp-shared/utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'tmp-shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
   metricTypeParamMap,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
 
 import { Primitive, Range } from '../../../tmp-shared/types';

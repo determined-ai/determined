@@ -8,10 +8,11 @@ import EditableTagList from 'components/TagList';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import { validateDetApiEnum } from 'services/utils';
+import { isEqual } from 'tmp-shared/utils/data';
 import { Metadata, ModelItem } from 'types';
-import { isEqual } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
+
+import { validateDetApiEnum } from '../tmp-shared/utils/service';
 
 import css from './useRegisterCheckpointModal.module.scss';
 

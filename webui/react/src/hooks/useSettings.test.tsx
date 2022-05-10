@@ -4,8 +4,8 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
-import history from 'routes/history';
-import { MemoryStore, Storage } from 'utils/storage';
+import history from 'tmp-shared/routes/history';
+import { MemoryStore, Storage } from 'tmp-shared/utils/storage';
 
 import { RecordKey } from '../tmp-shared/types';
 

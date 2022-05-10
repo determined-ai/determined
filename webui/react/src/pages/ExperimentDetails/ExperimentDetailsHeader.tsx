@@ -30,8 +30,8 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
+import { getDuration } from 'tmp-shared/utils/datetime';
 import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
-import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
 

@@ -2,9 +2,11 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { ModalFuncProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+
+import { routeToReactUrl } from '../../tmp-shared/utils/routes';
 
 import useModal, { ModalHooks } from './useModal';
 

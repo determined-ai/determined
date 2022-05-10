@@ -2,9 +2,8 @@ import themes, { defaultThemeId } from 'themes';
 import { primitiveSorter } from 'utils/sort';
 
 import { Primitive, Range } from '../tmp-shared/types';
-
-import { ColorScale } from './color';
-import { clone } from './data';
+import { ColorScale } from '../tmp-shared/utils/color';
+import { clone } from '../tmp-shared/utils/data';
 
 /* Color Scales */
 

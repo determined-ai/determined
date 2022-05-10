@@ -28,8 +28,8 @@ import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
+import { isEqual } from 'tmp-shared/utils/data';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
-import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
   alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
