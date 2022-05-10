@@ -30,29 +30,11 @@ export const SyncProvider = ({ children }) => {
   const syncRef = useRef(uPlot.sync('x'));
   const [ syncedMin, setSyncedMin ] = useState();
   const [ syncedMax, setSyncedMax ] = useState();
-  const [ queueSignal, setQueueSignal ] = useState(0);
   const [ zoomed, setZoomed ] = useState(false);
-  const fireQueue = useCallback(
-    () => setQueueSignal(prevSignal => (prevSignal + 1) % 1000)
-    , [ setQueueSignal ],
-  );
 
   const minMaxRef = useRef({});
 
-  const updateQueue = useRef([]);
-
   useEffect(() => {
-    // console.log('process queue', JSON.stringify(updateQueue.current));
-    while (updateQueue.current.length) {
-      const [ min, max ] = updateQueue.current.pop(); // most recent most likely to be real update?
-      // if zoom, empty it out
-      if (syncedMin == null || min < syncedMin) setSyncedMin(min);
-      if (syncedMax == null || max > syncedMax) setSyncedMax(max);
-    }
-  }, [ queueSignal, syncedMin, syncedMax ]);
-
-  useEffect(() => {
-    // console.log('new bounds', timestampInMinutes(syncedMin), timestampInMinutes(syncedMax));
     minMaxRef.current.max = syncedMax;
     minMaxRef.current.min = syncedMin;
     if(!zoomed) {
@@ -71,11 +53,12 @@ export const SyncProvider = ({ children }) => {
   const dispatchScaleUpdate = useCallback(
     (chart: uPlot, scaleKey) => {
       if(scaleKey === 'x') {
-        updateQueue.current.push([ getChartMin(chart), getChartMax(chart) ]);
-        fireQueue();
+        setSyncedMax(prevMax => Math.max(getChartMax(chart), prevMax ?? Number.MIN_SAFE_INTEGER));
+        setSyncedMin(prevMin => Math.min(getChartMin(chart), prevMin ?? Number.MAX_SAFE_INTEGER));
+
       }
     },
-    [ fireQueue ],
+    [ setSyncedMin, setSyncedMax ],
   );
 
   return (

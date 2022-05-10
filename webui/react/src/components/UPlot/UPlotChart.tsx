@@ -12,8 +12,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useSyncableBounds } from './SyncableBounds';
 import { FacetedData } from './types';
 
-// window.charts = {};
-
 export interface Options extends Omit<uPlot.Options, 'width'> {
   key?: number;
   width?: number;
@@ -85,14 +83,6 @@ const UPlotChart: React.FC<Props> = ({
   const [ isReady, setIsReady ] = useState(false);
 
   const { zoomed, boundsOptions } = useSyncableBounds();
-
-  if (title === 'Throughput') {
-    window.thru = chartRef.current;
-  }else if (title === 'System Metrics') {
-    window.sys = chartRef.current;
-  } else if (title === 'Timing Metrics') {
-    window.time = chartRef.current;
-  }
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -166,19 +156,13 @@ const UPlotChart: React.FC<Props> = ({
     } else {
       try {
         if (chartRef.current && isReady){
+          // chopping the data for throughput to test the sync
           const disp =
           title === 'Throughput'
             ? data.map((ser) => ser.slice(0, Math.floor(ser.length / 2)))
             : data;
           const min = new Date(Math.min(...disp[0]?.filter(isNumber)));
           const max = new Date(Math.max(...disp[0]?.filter(isNumber)));
-          const minTime = min.toTimeString().slice(3, 9);
-          const maxTime = max.toTimeString().slice(3, 9);
-          // const minTime = `${min.getMinutes()}:${min.getSeconds()}`;
-          // const maxTime = `${max.getMinutes()}:${max.getSeconds()}`;
-          // console.log(data[0].length);
-          // console.log(title, minTime, maxTime);
-
           chartRef.current.setData(disp as AlignedData, !zoomed);
         }
 
