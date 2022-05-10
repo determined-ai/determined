@@ -1,8 +1,8 @@
 .. _job-queue:
 
-##################
- Queue Management
-##################
+######################
+ Job Queue Management
+######################
 
 The Determined Queue Management system extends scheduler functionality to offer better visibility
 and control over scheduling decisions. It does this using the Job Queue, which provides better
