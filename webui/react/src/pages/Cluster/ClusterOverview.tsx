@@ -41,7 +41,8 @@ const defaultSorter = { descend: false, key: 'name' };
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-  if (pool.maxAgents) return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
+    return pool.maxAgents * pool.slotsPerAgent;
   // on-premise deployments don't have dynamic agents and we don't know how many
   // agents might connect.
   return pool.slotsAvailable;
