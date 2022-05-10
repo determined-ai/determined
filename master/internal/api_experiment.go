@@ -722,6 +722,10 @@ func (a *apiServer) CreateExperiment(
 		parentID := int(req.ParentId)
 		detParams.ParentID = &parentID
 	}
+	if req.ProjectId > 1 {
+		projectID := int(req.ProjectId)
+		detParams.ProjectID = &projectID
+	}
 
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {

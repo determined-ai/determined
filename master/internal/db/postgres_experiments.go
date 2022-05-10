@@ -43,6 +43,9 @@ func (db *PgDB) ProjectFromNames(workspaceName string, projectName string) (int,
 	if p.Id < 1 {
 		return 1, fmt.Errorf("workspace and project names did not match any known project")
 	}
+	if p.Archived {
+		return 1, fmt.Errorf("given workspace or project is archived and cannot add new experiments")
+	}
 	return int(p.Id), nil
 }
 

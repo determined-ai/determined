@@ -3,7 +3,7 @@ WITH wp AS (
   FROM workspace_pins
   WHERE user_id = $5
 )
-SELECT w.id, w.name, w.archived, w.immutable, u.username,
+SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
 (wp.id IS NOT NULL) AS pinned,
 (SELECT COUNT(*) FROM projects WHERE workspace_id = w.id) AS num_projects
 

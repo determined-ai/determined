@@ -259,6 +259,7 @@ export const createExperiment: Service.DetApi<
         activate: params.activate,
         config: params.experimentConfig,
         parentId: params.parentId,
+        projectId: params.projectId,
       },
       options,
     );

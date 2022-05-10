@@ -292,6 +292,8 @@ message CreateExperimentRequest {
   int32 parent_id = 4;
   // Request to auto-activate the experiment.
   bool activate = 5;
+  // Project id to contain the experiment.
+  int32 project_id = 6;
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {

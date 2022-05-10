@@ -17,5 +17,5 @@ u AS (
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.archived, p.immutable, p.notes,
 pe.last_experiment_started_at, pe.num_experiments, pe.num_active_experiments,
-u.username
+u.username, p.user_id
 FROM p, pe, u;
