@@ -1,8 +1,7 @@
-import { not } from 'fp-ts/lib/Predicate';
 import queryString from 'query-string';
 import PageMessage from 'components/PageMessage';
 import React, {useEffect} from 'react';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction,useStoreDispatch } from 'contexts/Store';
 
 interface Queries {
   taskUrl?: string;
