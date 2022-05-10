@@ -2,6 +2,12 @@ import { RouteConfig } from './types';
 
 const routes: RouteConfig[] = [
   {
+    id: 'interactiveTask',
+    needAuth: true,
+    path: '/interactiveTask',
+    title: 'Interactive Task',
+  },
+  {
     id: 'trialDetails',
     needAuth: true,
     path: '/experiments/:experimentId/trials/:trialId/:tab?',

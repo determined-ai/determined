@@ -7,7 +7,6 @@ import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType, CommandTask } from 'types';
 import { clone } from 'utils/data';
-
 import routes from './routes';
 import { RouteConfig } from './types';
 
@@ -69,7 +68,7 @@ export const locationToPath = (location?: Location): string | null => {
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
 
 export const openBlank = (url: string): void => {
-  window.open(url, '_blank', windowOpenFeatures.join(','));
+  window.open(`/det${paths.interactiveTask(url)}`, '_blank', windowOpenFeatures.join(','));
 };
 
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
@@ -236,6 +235,9 @@ export const paths = {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
       : 'https://airtable.com/shrodYROolF0E1iYf';
+  },
+  interactiveTask : (taskUrl: string) => {
+    return `/interactiveTask?${queryString.stringify({taskUrl})}`
   },
   taskList: (): string => {
     return '/tasks';
