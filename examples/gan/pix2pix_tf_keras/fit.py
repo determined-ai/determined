@@ -29,9 +29,9 @@ def fit(train_ds, test_ds, steps, preview=0):
     example_input, example_target = next(iter(test_ds.take(1)))
     start = time.time()
 
-    for step, data in train_ds.repeat().take(steps).enumerate():
+    for step, batch in train_ds.repeat().take(steps).enumerate():
         # Training step
-        losses = pix2pix.train_step(data)
+        losses = pix2pix.train_step(batch)
         if (step + 1) % 10 == 0:
             print(".", end="", flush=True)
         if preview and ((step + 1) % preview == 0):
@@ -42,6 +42,12 @@ def fit(train_ds, test_ds, steps, preview=0):
                 print("g_loss:     ", losses["g_loss"])
                 print("d_loss:     ", losses["d_loss"])
                 print("total_loss: ", losses["total_loss"])
+                val_losses = pix2pix.test_step(next(iter(test_ds)))
+                print("val_g_gan_loss: ", val_losses["g_gan_loss"])
+                print("val_g_l1_loss:  ", val_losses["g_l1_loss"])
+                print("val_g_loss:     ", val_losses["g_loss"])
+                print("val_d_loss:     ", val_losses["d_loss"])
+                print("val_total_loss: ", val_losses["total_loss"])
                 generate_images(pix2pix.generator, example_input, example_target)
             print(f"Step: {step + 1}")
             start = time.time()
@@ -49,8 +55,8 @@ def fit(train_ds, test_ds, steps, preview=0):
 
 def main():
     path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
-    train_dataset = get_dataset(path, 256, 256, "train", jitter=30, mirror=True, batch_size=1)
-    test_dataset = get_dataset(path, 256, 256, "test", batch_size=1)
+    train_dataset = get_dataset(path, 256, 256, "train", jitter=30, mirror=True, batch_size=10)
+    test_dataset = get_dataset(path, 256, 256, "test", batch_size=10)
     fit(train_dataset, test_dataset, steps=200, preview=100)
 
 
