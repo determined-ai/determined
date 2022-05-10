@@ -660,88 +660,8 @@ export interface Template {
   name: string;
 }
 
-export interface ResourcePool {
-  accelerator?: string;
-  auxContainerCapacity: number;
-  auxContainerCapacityPerAgent: number;
-  auxContainersRunning: number;
-  defaultAuxPool: boolean;
-  defaultComputePool?: boolean;
-  description: string;
-  details: RPDetails;
-  imageId: string;
-  instanceType: string;
-  location: string;
-  maxAgents: number;
-  minAgents: number;
-  name: string;
-  numAgents: number;
-  preemptible: boolean;
-  schedulerFittingPolicy: Api.V1FittingPolicy;
-  schedulerType: Api.V1SchedulerType;
+export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
   slotType: ResourceType;
-  slotsAvailable: number;
-  slotsPerAgent?: number;
-  slotsUsed: number;
-  stats?: Api.V1QueueStats;
-  type: Api.V1ResourcePoolType;
-}
-
-export interface RPDetails {
-  aws?: Partial<Aws>;
-  gcp?: Partial<Gcp>;
-  priorityScheduler?: PriorityScheduler;
-}
-
-export interface Aws {
-  customTags?: CustomTag[];
-  iamInstanceProfileArn: string;
-  imageId: string;
-  instanceName: string;
-  instanceType: string;
-  logGroup: string;
-  logStream: string;
-  publicIp: boolean;
-  region: string;
-  rootVolumeSize: number;
-  securityGroupId: string;
-  spotEnabled: boolean;
-  spotMaxPrice: string;
-  sshKeyName: string;
-  subnetId: string;
-  tagKey: string;
-  tagValue: string;
-}
-
-interface CustomTag {
-  key: string;
-  value: string;
-}
-
-export interface Gcp {
-  bootDiskSize: number;
-  bootDiskSourceImage: string;
-  externalIp: boolean;
-  gpuNum: number;
-  gpuType: string;
-  labelKey: string;
-  labelValue: string;
-  machineType: string;
-  namePrefix: string;
-  network: string;
-  networkTags: string[];
-  operationTimeoutPeriod: number;
-  preemptible: boolean;
-  project: string;
-  serviceAccountEmail: string;
-  serviceAccountScopes: string[];
-  subnetwork: string;
-  zone: string;
-}
-
-export interface PriorityScheduler {
-  defaultPriority: number;
-  preemption: boolean;
 }
 
 /* Jobs */
