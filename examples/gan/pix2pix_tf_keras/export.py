@@ -36,8 +36,12 @@ def export_model(trial_id: int, latest=False) -> tf.keras.Model:
     trial = client.get_trial(trial_id)
     checkpoint: client.Checkpoint = trial.select_checkpoint(latest=True) if latest else trial.top_checkpoint()
     print(f"Checkpoint {checkpoint.uuid}")
-    print(f"Trial {checkpoint.trial_id}")
-    print(f"Batch {checkpoint.batch_number}")
+    try:
+        # Checkpoints from AWS deployment don't have these attributes
+        print(f"Trial {checkpoint.trial_id}")
+        print(f"Batch {checkpoint.batch_number}")
+    except AttributeError:
+        pass
     path = checkpoint.download()
     model = keras.load_model_from_checkpoint_path(path)
     return model
