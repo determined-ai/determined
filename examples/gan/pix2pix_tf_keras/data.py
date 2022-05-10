@@ -125,7 +125,7 @@ def main():
     inp, re = _load(str(PATH / "train/100.jpg"))
     plt.figure(figsize=(6, 6))
     for i in range(4):
-        rj_inp, _ = _random_jitter(inp, re)
+        rj_inp, _ = _random_jitter(inp, re, 256, 256, 30, True)
         plt.subplot(2, 2, i + 1)
         plt.imshow(rj_inp / 255.0)
         plt.axis("off")
