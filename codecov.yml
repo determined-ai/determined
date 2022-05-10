@@ -8,3 +8,6 @@ coverage:
       default:
         target: 85%
         threshold: 0%
+	base: auto
+	branches:
+	  - master
