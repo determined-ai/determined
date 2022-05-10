@@ -353,21 +353,27 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
-	if config.Workspace() == "" && config.Project() != "" {
-		return nil, false, nil,
-			errors.New("workspace and project must both be included in config if one is provided")
-	}
-	if config.Workspace() != "" && config.Project() == "" {
-		return nil, false, nil,
-			errors.New("workspace and project must both be included in config if one is provided")
-	}
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
+	// CreateExperimentParams has highest priority (coming from WebUI)
 	projectID := 1
-	if config.Workspace() != "" && config.Project() != "" {
-		projectID, err = m.db.ProjectFromNames(config.Workspace(), config.Project())
-		if err != nil {
-			return nil, false, nil, errors.Wrapf(
-				err, "unable to find parent workspace and project")
+	if params.ProjectID == nil {
+		if config.Workspace() == "" && config.Project() != "" {
+			return nil, false, nil,
+				errors.New("workspace and project must both be included in config if one is provided")
 		}
+		if config.Workspace() != "" && config.Project() == "" {
+			return nil, false, nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		}
+		if config.Workspace() != "" && config.Project() != "" {
+			projectID, err = m.db.ProjectFromNames(config.Workspace(), config.Project())
+			if err != nil {
+				return nil, false, nil, errors.Wrapf(
+					err, "unable to find parent workspace and project")
+			}
+		}
+	} else {
+		projectID = *params.ProjectID
 	}
 
 	dbExp, err := model.NewExperiment(
