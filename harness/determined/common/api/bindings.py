@@ -3977,6 +3977,7 @@ class v1Project:
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        userId: int,
         username: str,
         workspaceId: int,
         description: "typing.Optional[str]" = None,
@@ -3993,6 +3994,7 @@ class v1Project:
         self.archived = archived
         self.username = username
         self.immutable = immutable
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4008,6 +4010,7 @@ class v1Project:
             archived=obj["archived"],
             username=obj["username"],
             immutable=obj["immutable"],
+            userId=obj["userId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -4023,6 +4026,7 @@ class v1Project:
             "archived": self.archived,
             "username": self.username,
             "immutable": self.immutable,
+            "userId": self.userId,
         }
 
 class v1PutProjectNotesRequest:
@@ -5672,6 +5676,7 @@ class v1Workspace:
         name: str,
         numProjects: int,
         pinned: bool,
+        userId: int,
         username: str,
     ):
         self.id = id
@@ -5681,6 +5686,7 @@ class v1Workspace:
         self.immutable = immutable
         self.numProjects = numProjects
         self.pinned = pinned
+        self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -5692,6 +5698,7 @@ class v1Workspace:
             immutable=obj["immutable"],
             numProjects=obj["numProjects"],
             pinned=obj["pinned"],
+            userId=obj["userId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -5703,6 +5710,7 @@ class v1Workspace:
             "immutable": self.immutable,
             "numProjects": self.numProjects,
             "pinned": self.pinned,
+            "userId": self.userId,
         }
 
 def post_AckAllocationPreemptionSignal(

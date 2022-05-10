@@ -4683,6 +4683,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     immutable: boolean;
+    /**
+     * ID of the user who created this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    userId: number;
 }
 
 /**
@@ -6627,6 +6633,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     pinned: boolean;
+    /**
+     * ID of the user who created this project.
+     * @type {number}
+     * @memberof V1Workspace
+     */
+    userId: number;
 }
 
 

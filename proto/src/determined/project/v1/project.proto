@@ -32,6 +32,7 @@ message Project {
         "notes",
         "num_active_experiments",
         "num_experiments",
+        "user_id",
         "username",
         "workspace_id"
       ]
@@ -61,6 +62,8 @@ message Project {
   string username = 10;
   // Whether this project is immutable (default uncategorized project).
   bool immutable = 11;
+  // ID of the user who created this project.
+  int32 user_id = 12;
 }
 
 // ProjectModel is a checkpoint associated with a project.

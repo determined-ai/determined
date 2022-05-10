@@ -697,28 +697,6 @@ func (_m *DB) ExperimentIDByTrialID(trialID int) (int, error) {
 	return r0, r1
 }
 
-// ProjectFromNames provides a mock function with workspaceName and projectName fields.
-func (db *PgDB) ProjectFromNames(workspaceName string, projectName string) (int, error) {
-	ret := _m.Called(workspaceName)
-	ret2 := _m.Called(projectName)
-
-	var r0 int
-	if rf, ok := ret.Get(ret, ret2).(func(string, string) int); ok {
-		r0 = rf(workspaceName, projectName)
-	} else {
-		r0 = ret.Get("test", "testp").(int)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(ret, ret2).(func(string, string) error); ok {
-		r1 = rf(workspaceName, projectName)
-	} else {
-		r1 = ret.Error("test", "testp")
-	}
-
-	return r0, r1
-}
-
 // ExperimentLabelUsage provides a mock function with given fields: projectID
 func (_m *DB) ExperimentLabelUsage(projectID int32) (map[string]int, error) {
 	ret := _m.Called(projectID)
@@ -1264,6 +1242,27 @@ func (_m *DB) PeriodicTelemetryInfo() ([]byte, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ProjectFromNames provides a mock function with given fields: workspaceName, projectName
+func (_m *DB) ProjectFromNames(workspaceName string, projectName string) (int, error) {
+	ret := _m.Called(workspaceName, projectName)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string, string) int); ok {
+		r0 = rf(workspaceName, projectName)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(workspaceName, projectName)
 	} else {
 		r1 = ret.Error(1)
 	}

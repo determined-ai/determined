@@ -13,7 +13,7 @@ p AS (
   WHERE workspace_id = $1
 )
 SELECT w.id, w.name, w.archived, w.immutable,
-  u.username, p.num_projects,
+  u.username, w.user_id, p.num_projects,
   (SELECT COUNT(*) > 0 FROM workspace_pins
     WHERE workspace_id = $1 AND user_id = $3
   ) AS pinned

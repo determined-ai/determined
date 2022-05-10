@@ -17,7 +17,8 @@ message Workspace {
         "name",
         "num_projects",
         "pinned",
-        "username"
+        "username",
+        "user_id"
       ]
     }
   };
@@ -37,6 +38,8 @@ message Workspace {
   int32 num_projects = 6;
   // Pin status of this workspace for the current user.
   bool pinned = 7;
+  // ID of the user who created this project.
+  int32 user_id = 8;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
