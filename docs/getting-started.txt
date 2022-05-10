@@ -57,37 +57,12 @@ Hardware
 Docker
 ======
 
-For the distributed example that uses an agent, install Docker to run containerized workloads. If
-you do not already have Docker installed, follow the :doc:`Installing Docker
-</sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
+Install Docker to run containerized workloads. If you do not already have Docker installed, follow
+the :doc:`Installing Docker </sysadmin-deploy-on-prem/requirements>` instructions to install and run
+Docker on Linux or macOS.
 
 Environment Variables
 =====================
-
-To run Determined on a remote master instance, set the remote IP address and port number in the
-``DET_MASTER`` environment variable:
-
-.. code:: bash
-
-   export DET_MASTER=<ipAddress>:8080
-
-***************************************
- Install and Deploy Determined Locally
-***************************************
-
-To install the Determined library and start a cluster locally, enter:
-
-.. code:: bash
-
-   pip install determined
-   det deploy local cluster-up
-
-If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
-
-.. code:: bash
-
-   pip install determined
-   det deploy local cluster-up --no-gpu
 
 ******************************
  Quickstart Training Examples
@@ -150,17 +125,31 @@ you might want to review them to see how to call the Determined API from your co
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations, you can experiment in your
-domain by replacing these files with your model data and code, and setting configuration parameters
-for the kind of experiments you want to run.
+After gaining basic familiarity with Determined tools and operations, you can replacing these files
+with your model data and code, and setting configuration parameters for the kind of experiments you
+want to run.
 
-***********************************
- Run a Single CPU/GPU Training Job
-***********************************
+*****************************************
+ Run a Local Single CPU/GPU Training Job
+*****************************************
 
 This exercise trains a single model for a fixed number of batches, using constant values for all
 hyperparameters on a single *slot*. A slot is a CPU or GPU computing device, which the master
 schedules to run.
+
+#. To install the Determined library and start a cluster locally, enter:
+
+   .. code:: bash
+
+      pip install determined
+      det deploy local cluster-up
+
+   If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
+
+   .. code:: bash
+
+      pip install determined
+      det deploy local cluster-up --no-gpu
 
 #. In the ``mnist_pytorch`` directory, create an experiment specifying the ``const.yaml``
    configuration file:
@@ -224,9 +213,9 @@ schedules to run.
 With this fundamental understanding of Determined, you are ready to scale to the distributed
 environment in the next example.
 
-********************************
- Run a Distributed Training Job
-********************************
+***************************************
+ Run a Remote Distributed Training Job
+***************************************
 
 In the distributed training example, a Determined cluster comprises a master and one or more agents.
 The master provides centralized management of the agent resources.
@@ -246,6 +235,13 @@ value of ``8``:
 
 This is the number of available GPU resources. The ``slots_per_trial`` value must be divisible by
 the number of GPUs per machine. You can change the value to match your hardware configuration.
+
+#. To connect to a Determined master running on a remote instance, set the remote IP address and
+   port number in the ``DET_MASTER`` environment variable:
+
+   .. code:: bash
+
+      export DET_MASTER=<ipAddress>:8080
 
 #. Create and run the experiment:
 
