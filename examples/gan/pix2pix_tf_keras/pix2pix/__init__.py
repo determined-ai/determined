@@ -1,6 +1,8 @@
 """
 Implement Pix2Pix model based on: https://www.tensorflow.org/tutorials/generative/pix2pix
 """
+from typing import Tuple
+
 import tensorflow as tf
 
 from .discriminator import (
@@ -35,16 +37,19 @@ class Pix2Pix(tf.keras.Model):
     def call(self, inputs, training=None, mask=None):
         pass
 
-    def train_step(self, data):
-        input_image, real_image = data
+    def train_step(self, batch: Tuple[tf.Tensor, tf.Tensor], verbose=False):
+        input_images, real_images = batch
+        if verbose:
+            print(f"Shape of input_images in train_step is {input_images.shape}")
+            print(f"Shape of real_images in train_step is  {real_images.shape}")
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            gen_output = self.generator(input_image, training=True)
+            gen_outputs = self.generator(input_images, training=True)
 
-            disc_real = self.discriminator([input_image, real_image], training=True)
-            disc_fake = self.discriminator([input_image, gen_output], training=True)
+            disc_reals = self.discriminator([input_images, real_images], training=True)
+            disc_fakes = self.discriminator([input_images, gen_outputs], training=True)
 
-            g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fake, gen_output, real_image)
-            d_loss = self.discriminator_loss(disc_real, disc_fake)
+            g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fakes, gen_outputs, real_images)
+            d_loss = self.discriminator_loss(disc_reals, disc_fakes)
 
         generator_gradients = gen_tape.gradient(
             g_loss, self.generator.trainable_variables
@@ -61,11 +66,14 @@ class Pix2Pix(tf.keras.Model):
         )
         return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}
 
-    def test_step(self, data):
-        input_image, target = data
-        gen_output = self.generator(input_image, training=False)
-        disc_real = self.discriminator([input_image, target], training=False)
-        disc_fake = self.discriminator([gen_output, target], training=False)
-        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fake, gen_output, target)
-        d_loss = self.discriminator_loss(disc_real, disc_fake)
+    def test_step(self, batch: Tuple[tf.Tensor, tf.Tensor], verbose=False):
+        input_images, real_images = batch
+        if verbose:
+            print(f"Shape of input_images in test_step is {input_images.shape}")
+            print(f"Shape of  real_images in test_step is {real_images.shape}")
+        gen_outputs = self.generator(input_images, training=False)
+        disc_reals = self.discriminator([input_images, real_images], training=False)
+        disc_fakes = self.discriminator([gen_outputs, real_images], training=False)
+        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fakes, gen_outputs, real_images)
+        d_loss = self.discriminator_loss(disc_reals, disc_fakes)
         return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}
