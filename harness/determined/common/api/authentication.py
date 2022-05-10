@@ -82,9 +82,7 @@ class Authentication:
             token = util.get_container_user_token()
 
         if token is not None:
-            return Session(
-                session_user, token, _get_current_user_id(self.master_address, token, cert)
-            )
+            return Session(session_user, token, self.token_store.get_active_user_id())
 
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
@@ -177,12 +175,6 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     return r.status_code == 200
 
 
-def _get_current_user_id(master_address: str, token: str, cert: Optional[certs.Cert]) -> Any:
-    headers = {"Authorization": "Bearer {}".format(token)}
-    r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
-    return r.json()["id"]
-
-
 class TokenStore:
     """
     TokenStore is a class for reading/updating a persistent store of user authentication tokens.
@@ -208,10 +200,14 @@ class TokenStore:
     def _reconfigure_from_store(self, store: dict) -> None:
         substore = store.get("masters", {}).get(self.master_address, {})
         self._active_user = cast(str, substore.get("active_user"))
+        self._active_user_id = cast(str, substore.get("active_user_id"))
         self._tokens = cast(Dict[str, str], substore.get("tokens", {}))
 
     def get_active_user(self) -> Optional[str]:
         return self._active_user
+
+    def get_active_user_id(self) -> Optional[str]:
+        return self._active_user_id
 
     def get_token(self, user: str) -> Optional[str]:
         token = self._tokens.get(user)
@@ -237,12 +233,13 @@ class TokenStore:
             tokens = substore.setdefault("tokens", {})
             tokens[username] = token
 
-    def set_active(self, username: str) -> None:
+    def set_active(self, username: str, user_id: str) -> None:
         with self._persistent_store() as substore:
             tokens = substore.setdefault("tokens", {})
             if username not in tokens:
                 raise api.errors.UnauthenticatedException(username=username)
             substore["active_user"] = username
+            substore["active_user_id"] = user_id
 
     @contextlib.contextmanager
     def _persistent_store(self) -> Iterator[Dict[str, Any]]:
@@ -325,7 +322,7 @@ def validate_token_store_v0(store: Any) -> bool:
     if not isinstance(store, dict):
         raise api.errors.CorruptTokenCacheException()
 
-    if len(set(store.keys()).difference({"active_user", "tokens"})) > 0:
+    if len(set(store.keys()).difference({"active_user", "active_user_id", "tokens"})) > 0:
         # Extra keys.
         raise api.errors.CorruptTokenCacheException()
 

@@ -26,7 +26,7 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
 
                 token_store = authentication.TokenStore(master_url)
                 token_store.set_token(me["username"], token)
-                token_store.set_active(me["username"])
+                token_store.set_active(me["username"], me["id"])
 
                 print("Authenticated as {}.".format(me["username"]))
 
