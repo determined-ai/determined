@@ -109,7 +109,7 @@ class Authentication:
 
         self.token_store.set_token(session_user, token)
 
-        return Session(session_user, token, auth["user_id"])
+        return Session(session_user, token, auth.get_user_id())
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
@@ -139,7 +139,7 @@ class Authentication:
 
 
 class AuthContext:
-    def __init__(self, token, user_id):
+    def __init__(self, token: str, user_id: str):
         self.token = token
         self.user_id = user_id
 
@@ -155,7 +155,7 @@ def do_login(
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-) -> Dict[str, str]:
+) -> AuthContext:
     r = api.post(
         master_address,
         "login",
@@ -217,7 +217,7 @@ class TokenStore:
     def get_active_user(self) -> Optional[str]:
         return self._active_user
 
-    def get_active_user_id(self) -> Optional[str]:
+    def get_active_user_id(self) -> str:
         return self._active_user_id
 
     def get_token(self, user: str) -> Optional[str]:
