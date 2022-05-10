@@ -57,9 +57,9 @@ Hardware
 Docker
 ======
 
-Install Docker to run containerized workloads. If
-you do not already have Docker installed, follow the :doc:`Installing Docker
-</sysadmin-deploy-on-prem/requirements>` instructions to install and run Docker on Linux or macOS.
+Install Docker to run containerized workloads. If you do not already have Docker installed, follow
+the :doc:`Installing Docker </sysadmin-deploy-on-prem/requirements>` instructions to install and run
+Docker on Linux or macOS.
 
 Environment Variables
 =====================
@@ -125,7 +125,9 @@ you might want to review them to see how to call the Determined API from your co
 | ``model_def.py`` | Model definition and training/validation loops.                        |
 +------------------+------------------------------------------------------------------------+
 
-After gaining basic familiarity with Determined tools and operations, you can replacing these files with your model data and code, and setting configuration parameters for the kind of experiments you want to run.
+After gaining basic familiarity with Determined tools and operations, you can replacing these files
+with your model data and code, and setting configuration parameters for the kind of experiments you
+want to run.
 
 *****************************************
  Run a Local Single CPU/GPU Training Job
@@ -156,7 +158,9 @@ schedules to run.
 
       det experiment create const.yaml .
 
-   The last dot (.) argument uploads all of the files in the current directory as the *context directory* for your model. Determined copies the model context directory contents to the trial container working directory.
+   The last dot (.) argument uploads all of the files in the current directory as the *context
+   directory* for your model. Determined copies the model context directory contents to the trial
+   container working directory.
 
    You should receive confirmation that the experiment is created:
 
@@ -209,8 +213,8 @@ schedules to run.
 
    TBD: What is this image showing me that the user needs to know?
 
-With this fundamental understanding of Determined, you are ready to scale to distributed
-training in the next example.
+With this fundamental understanding of Determined, you are ready to scale to distributed training in
+the next example.
 
 ***************************************
  Run a Remote Distributed Training Job
@@ -235,7 +239,8 @@ value of ``8``:
 This is the number of available GPU resources. The ``slots_per_trial`` value must be divisible by
 the number of GPUs per machine. You can change the value to match your hardware configuration.
 
-#. To connect to a Determined master running on a remote instance, set the remote IP address and port number in the ``DET_MASTER`` environment variable:
+#. To connect to a Determined master running on a remote instance, set the remote IP address and
+   port number in the ``DET_MASTER`` environment variable:
 
    .. code:: bash
 
