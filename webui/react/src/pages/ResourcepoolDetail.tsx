@@ -8,6 +8,7 @@ import Page from 'components/Page';
 import { poolLogo } from 'components/ResourcePoolCard';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
 import Section from 'components/Section';
+import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
@@ -132,10 +133,13 @@ const ResourcepoolDetail: React.FC = () => {
   return (
     <Page className={css.poolDetailPage}>
       <Section>
-        <div className={css.nav} onClick={() => history.goBack()}>
+        <div className={css.nav} onClick={() => history.replace(paths.cluster())}>
           <Icon name="arrow-left" size="tiny" />
           <div className={css.icon}>{poolLogo(pool.type)}</div>
-          <div>{`${pool.name} ${usage ? `- ${floatToPercent(usage)}` : '' } `}</div>
+          <div>{`${pool.name} (${
+            V1SchedulerTypeToLabel[pool.schedulerType]
+          }) ${usage ? `- ${floatToPercent(usage)}` : '' } `}
+          </div>
         </div>
       </Section>
       <Section>

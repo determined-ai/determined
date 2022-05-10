@@ -144,14 +144,24 @@ const SlotAllocationBar: React.FC<Props> = ({
     return [ parts.running, parts.pending, parts.free, parts.potential ];
   }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential, footer, isAux ]);
 
-  const stateDetails = useMemo(() => {
-    const states = [
+  const totalSlotsNum = useMemo(() => {
+    return slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots;
+  }, [ totalSlots, slotsPotential ]);
+
+  const classes = [ css.base ];
+  if (className) classes.push(className);
+
+  const renderStateDetails = (overall = false) => {
+    let states = [
       ResourceState.Warm,
       ResourceState.Assigned,
       ResourceState.Pulling,
       ResourceState.Starting,
       ResourceState.Running,
     ];
+    if(overall){
+      states = states.slice(1);
+    }
     return (
       <ul className={css.detailedLegends}>
         {states.map((state) => (
@@ -165,14 +175,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         ))}
       </ul>
     );
-  }, [ stateTallies, totalSlots ]);
-
-  const totalSlotsNum = useMemo(() => {
-    return slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots;
-  }, [ totalSlots, slotsPotential ]);
-
-  const classes = [ css.base ];
-  if (className) classes.push(className);
+  };
 
   const onClickQueued = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -197,7 +200,7 @@ const SlotAllocationBar: React.FC<Props> = ({
         condition={!showLegends}
         wrapper={(ch) => (
           !isAux ? (
-            <Popover content={stateDetails} placement="bottom">
+            <Popover content={renderStateDetails()} placement="bottom">
               {ch}
             </Popover>
           ) : <div>{ch}</div>
@@ -241,17 +244,19 @@ const SlotAllocationBar: React.FC<Props> = ({
       )}
       {showLegends && (
         <div className={css.overallLegends}>
-          <ol>
-            <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
-              <Badge state={SlotState.Running} type={BadgeType.State} />
-            </Legend>
-            <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
-              <Badge state={SlotState.Pending} type={BadgeType.State} />
-            </Legend>
-            <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
-              <Badge state={SlotState.Free} type={BadgeType.State} />
-            </Legend>
-          </ol>
+          <Popover content={renderStateDetails(true)} placement="bottom">
+            <ol>
+              <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
+                <Badge state={SlotState.Running} type={BadgeType.State} />
+              </Legend>
+              <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
+                <Badge state={SlotState.Pending} type={BadgeType.State} />
+              </Legend>
+              <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
+                <Badge state={SlotState.Free} type={BadgeType.State} />
+              </Legend>
+            </ol>
+          </Popover>
         </div>
       )}
     </div>

@@ -523,7 +523,7 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 	res := make([]*jobv1.AggregateQueueStats, 0)
 	for _, record := range aggregates {
 		res = append(res, &jobv1.AggregateQueueStats{
-			PeriodStart: record.Date.String(),
+			PeriodStart: record.Date.Format("2006-01-02"),
 			Seconds:     record.Seconds,
 		})
 	}

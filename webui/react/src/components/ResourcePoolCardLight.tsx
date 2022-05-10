@@ -65,6 +65,7 @@ const poolAttributes = [
   },
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
+  { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
 type SafeRawJson = Record<string, unknown>;
