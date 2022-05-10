@@ -211,8 +211,6 @@ schedules to run.
       :align: center
       :alt: Trial page
 
-   TBD: What is this image showing me that the user needs to know?
-
 With this fundamental understanding of Determined, you are ready to scale to distributed training in
 the next example.
 
