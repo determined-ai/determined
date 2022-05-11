@@ -523,9 +523,11 @@ func (a *Allocation) ResourcesStateChanged(
 			ContainerID:           coalesceString(msg.ContainerIDStr(), ""),
 			ContainerStartedEvent: msg.ResourcesStarted,
 		})
+
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
-			a.req.TaskActor.Address())
+			a.req.TaskActor.Address(),
+			a.req.JobID)
 		prom.AddAllocationResources(a.resources[msg.ResourcesID].Summary(), msg.ResourcesStarted)
 
 	case sproto.Terminated:
@@ -559,7 +561,8 @@ func (a *Allocation) ResourcesStateChanged(
 		for cID := range a.resources {
 			prom.DisassociateAllocationTask(a.req.AllocationID,
 				a.req.TaskID,
-				a.req.TaskActor.Address())
+				a.req.TaskActor.Address(),
+				a.req.JobID)
 			prom.RemoveAllocationResources(a.resources[cID].Summary())
 		}
 	}

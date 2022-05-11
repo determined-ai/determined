@@ -1,6 +1,7 @@
 package prom
 
 import (
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -25,13 +26,19 @@ Exposes mapping of allocation ID to container ID`,
 		Name:      "allocation_id_task_id_task_actor",
 		Help: `
 Exposes mapping of allocation ID to task ID and actor`,
-	}, []string{"allocation_id", "task_id", "task_actor"})
+	}, []string{"allocation_id", "task_id", "task_actor", "job_id"})
 
 	containerIDToRuntimeID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
 		Name:      "container_id_runtime_container_id",
 		Help:      "a mapping of the container ID to the container ID given be the runtime",
 	}, []string{"container_runtime_id", "container_id"})
+
+	taskIDToExperimentID = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: "det",
+		Name:      "task_id_experiment_id",
+		Help:      "a mapping of the experiment ID to the labels",
+	}, []string{"task_id", "experiment_id"})
 
 	experimentIDToLabels = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -77,6 +84,7 @@ func init() { //nolint: gochecknoinits
 	DetStateMetrics.MustRegister(gpuUUIDToContainerID)
 	DetStateMetrics.MustRegister(experimentIDToLabels)
 	DetStateMetrics.MustRegister(allocationIDToTask)
+	DetStateMetrics.MustRegister(taskIDToExperimentID)
 }
 
 // AssociateAllocationContainer associates an allocation with its container ID.
@@ -84,16 +92,41 @@ func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Inc()
 }
 
-// AssociateAllocationTask associates an allocation ID with its task info.
+// AssociateAllocationTask associates an allocation ID with its task/job info.
 func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
-	taskActor actor.Address) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Inc()
+	taskActor actor.Address,
+	jID model.JobID) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(), jID.String()).Inc()
+}
+
+// AssociateTaskExperiment associates a task ID with experiment info.
+func AssociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels) {
+	taskIDToExperimentID.WithLabelValues(tID.String(), eID).Inc()
+	var expLabels []string
+
+	for l, _ := range labels {
+		expLabels = append(expLabels, l)
+	}
+
+	AssociateExperimentIDLabels(eID, expLabels)
+}
+
+// DisassociateTaskExperiment disassociates a task ID with experiment info.
+func DisassociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels) {
+	taskIDToExperimentID.WithLabelValues(tID.String(), eID).Dec()
+	expLabels := make([]string, len(labels))
+
+	for l, _ := range labels {
+		expLabels = append(expLabels, l)
+	}
+
+	DisassociateExperimentIDLabels(eID, expLabels)
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String()).Dec()
+func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address, jID model.JobID) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(), jID.String()).Dec()
 }
 
 // AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.
@@ -136,10 +169,17 @@ func DisassociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 	containerIDToAllocationID.WithLabelValues(cID.String(), aID.String()).Dec()
 }
 
-// AssociateExperimentIDLabels assicates experiment ID with a list of labels.
+// AssociateExperimentIDLabels associates experiment ID with a list of labels.
 func AssociateExperimentIDLabels(eID string, labels []string) {
 	for i := range labels {
 		experimentIDToLabels.WithLabelValues(eID, labels[i]).Inc()
+	}
+}
+
+// DisassociateExperimentIDLabels disassociates experiment ID with a list of labels.
+func DisassociateExperimentIDLabels(eID string, labels []string) {
+	for i := range labels {
+		experimentIDToLabels.WithLabelValues(eID, labels[i]).Dec()
 	}
 }
 
