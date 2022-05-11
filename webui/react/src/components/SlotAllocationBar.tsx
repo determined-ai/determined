@@ -91,13 +91,15 @@ const SlotAllocationBar: React.FC<Props> = ({
       [ResourceState.Warm]: 0,
       [ResourceState.Terminated]: 0,
       [ResourceState.Unspecified]: 0,
+      [ResourceState.Potential]: 0
     };
     resourceStates.forEach(state => {
       tally[state] += 1;
     });
     tally[ResourceState.Warm] = totalSlots - tally[ResourceState.Running];
+    tally[ResourceState.Potential] = slotsPotential? slotsPotential - totalSlots:0;
     return tally;
-  }, [ resourceStates, totalSlots ]);
+  }, [ resourceStates, totalSlots, slotsPotential ]);
 
   const freeSlots = (totalSlots - resourceStates.length);
   const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
@@ -154,6 +156,7 @@ const SlotAllocationBar: React.FC<Props> = ({
 
   const renderStateDetails = (overall = false) => {
     let states = [
+      ResourceState.Potential,
       ResourceState.Warm,
       ResourceState.Assigned,
       ResourceState.Pulling,
@@ -161,6 +164,8 @@ const SlotAllocationBar: React.FC<Props> = ({
       ResourceState.Running,
     ];
     if(overall){
+      states = states.slice(2);
+    } else if(stateTallies[ResourceState.Potential] <= 0) {
       states = states.slice(1);
     }
     return (
@@ -204,7 +209,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           <div onClick={onClickScheduled}>
             <span className={css.queued}>{`${footer.scheduled && footer.scheduled > 100 ?
               '100+' :
-              footer.scheduled} Queued`}
+              footer.scheduled} Active`}
             </span>
           </div>
         )

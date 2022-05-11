@@ -81,7 +81,8 @@ export enum ResourceState { // This is almost CommandState
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminated = 'TERMINATED',
-  Warm = 'WARM'
+  Warm = 'WARM',
+  Potential = 'POTENTIAL'
 }
 
 // High level Slot state
