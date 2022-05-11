@@ -300,12 +300,7 @@ html {
     margin-left: 12px;
     width: 90px;
   }
-  .ant-upload-list-picture .ant-upload-list-item,
-  .ant-upload-list-picture-card .ant-upload-list-item,
-  .ant-upload-list-item-info {
-    border-radius: 50%;
-  }
-  .ant-upload-list-item-actions .anticon-eye {
+  .ant-upload-list-picture-card-container {
     display: none;
   }
 }

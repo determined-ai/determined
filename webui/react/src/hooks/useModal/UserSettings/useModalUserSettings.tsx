@@ -31,27 +31,49 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     openChangeDisplayNameModal();
   }, [ openChangeDisplayNameModal ]);
 
-  const [ previewImage, setPreviewImage ] = useState(false);
+  const [ previewImage, setPreviewImage ] = useState('');
   const handleIconUpload = useCallback((file) => {
     const reader = new FileReader();
-    reader.onloadend = async () => {
+    reader.onloadend = () => {
       try {
-        const readerResult = String(reader.result);
-        await setUserImage({
-          image: readerResult.substring(readerResult.indexOf(',') + 1),
-          userId: auth.user?.id || 0,
-        });
+        const miniCanvas = document.createElement('canvas');
+        const squareSize = 128; // 64px with support for retina+ screens
+        miniCanvas.width = squareSize;
+        miniCanvas.height = squareSize;
+        const ctx = miniCanvas.getContext('2d');
+        if (!ctx) {
+          return;
+        }
+        const img = new Image();
+        img.onload = async () => {
+          let offsetX = 0, offsetY = 0, width = squareSize, height = squareSize;
+          const scale = squareSize / Math.max(img.naturalWidth, img.naturalHeight);
+          if (img.naturalWidth > img.naturalHeight) {
+            height = Math.round(scale * img.naturalHeight);
+            offsetY = (squareSize - height) / 2;
+          } else if (img.naturalHeight > img.naturalWidth) {
+            width = Math.round(scale * img.naturalWidth);
+            offsetX = (squareSize - width) / 2;
+          }
+          ctx.drawImage(img, offsetX, offsetY, width, height);
+          const resizedImage = miniCanvas.toDataURL('image/jpeg');
+          setPreviewImage(resizedImage);
+          await setUserImage({
+            image: resizedImage.substring(resizedImage.indexOf(',') + 1),
+            userId: auth.user?.id || 0,
+          });
+        };
+        img.src = String(reader.result);
       } catch (e) {
         handleError(e);
       }
     };
     reader.readAsDataURL(file);
-    setPreviewImage(true);
     return false;
   }, [ auth.user ]);
 
   const handleRemoveIcon = useCallback(() => {
-    setPreviewImage(false);
+    setPreviewImage('');
     setUserImage({
       // need to send SOME data for Proto to accept content as bytes type
       image: '00000000',
@@ -64,7 +86,17 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
-          {previewImage ? '' : <Avatar hideTooltip large userId={auth.user?.id} />}
+          {previewImage.length
+            ? (
+              <img
+                height="90"
+                src={previewImage}
+                style={{ border: '1px solid #000', borderRadius: '50%' }}
+                width="90"
+              />
+            )
+            : <Avatar hideTooltip large userId={auth.user?.id} />
+          }
           <Upload
             accept="image/png, image/jpeg"
             beforeUpload={handleIconUpload}
