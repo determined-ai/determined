@@ -1,8 +1,12 @@
-.PHONY: build
-build: clean
-	mkdir -p build/
+build/stamp: $(shell find charts -type f)
+	mkdir -p build
+	rm -rf build/*.tgz
 	helm package --destination build charts/determined
 	cd build/ && ln -s determined-*.tgz determined-latest.tgz && cd ..
+	touch $@
+
+.PHONY: build
+build: build/stamp
 
 fmt:
 	helm lint charts/determined/
