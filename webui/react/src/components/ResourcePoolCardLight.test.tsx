@@ -19,9 +19,8 @@ const setup = (pool: ResourcePool) => {
 describe('AllocationBarResourcePool', () => {
   it('displays resource pool slot allocation bar ', () => {
     rps.forEach(pool => {
-        const { view } = setup(pool);
-        expect(view.getAllByText(`Allocated`, {exact: false}).length).toBeGreaterThan(0);
-      });
-    })
-
+      const { view } = setup(pool);
+      expect(view.getAllByText('Allocated', { exact: false }).length).toBeGreaterThan(0);
+    });
+  });
 });
