@@ -238,7 +238,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		return err
 	}
 
-	prom.AssociateTaskExperiment(t.taskID, strconv.Itoa(t.experimentID), t.config.Labels())
+	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),

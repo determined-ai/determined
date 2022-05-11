@@ -34,11 +34,11 @@ Exposes mapping of allocation ID to task ID and actor`,
 		Help:      "a mapping of the container ID to the container ID given be the runtime",
 	}, []string{"container_runtime_id", "container_id"})
 
-	taskIDToExperimentID = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	jobIDToExperimentID = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
-		Name:      "task_id_experiment_id",
-		Help:      "a mapping of the experiment ID to the labels",
-	}, []string{"task_id", "experiment_id"})
+		Name:      "job_id_experiment_id",
+		Help:      "a mapping of the job ID to the experiment ID",
+	}, []string{"job_id", "experiment_id"})
 
 	experimentIDToLabels = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "det",
@@ -84,7 +84,7 @@ func init() { //nolint: gochecknoinits
 	DetStateMetrics.MustRegister(gpuUUIDToContainerID)
 	DetStateMetrics.MustRegister(experimentIDToLabels)
 	DetStateMetrics.MustRegister(allocationIDToTask)
-	DetStateMetrics.MustRegister(taskIDToExperimentID)
+	DetStateMetrics.MustRegister(jobIDToExperimentID)
 }
 
 // AssociateAllocationContainer associates an allocation with its container ID.
@@ -100,9 +100,9 @@ func AssociateAllocationTask(aID model.AllocationID,
 	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(), jID.String()).Inc()
 }
 
-// AssociateTaskExperiment associates a task ID with experiment info.
-func AssociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels) {
-	taskIDToExperimentID.WithLabelValues(tID.String(), eID).Inc()
+// AssociateJobExperiment associates a job ID with experiment info.
+func AssociateJobExperiment(jID model.JobID, eID string, labels expconf.Labels) {
+	jobIDToExperimentID.WithLabelValues(jID.String(), eID).Inc()
 	var expLabels []string
 
 	for l, _ := range labels {
@@ -114,7 +114,7 @@ func AssociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels
 
 // DisassociateTaskExperiment disassociates a task ID with experiment info.
 func DisassociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels) {
-	taskIDToExperimentID.WithLabelValues(tID.String(), eID).Dec()
+	jobIDToExperimentID.WithLabelValues(tID.String(), eID).Dec()
 	expLabels := make([]string, len(labels))
 
 	for l, _ := range labels {
