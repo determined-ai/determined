@@ -57,7 +57,6 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    rank = None
     if set("0123456789") >= set(args.rank):
         # Rank is provided as a number.
         rank = int(args.rank)
