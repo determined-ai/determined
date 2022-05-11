@@ -41,10 +41,19 @@ const shouldRecreate = (
 ): boolean => {
   if (!oldOptions) return true;
   if (oldOptions.id !== newOptions.id) return true;
-  if (oldOptions.plugins !== newOptions.plugins) return true;
   if (oldOptions.title !== newOptions.title) return true;
   if (oldOptions.axes?.length !== newOptions.axes?.length) return true;
+  if (oldOptions.plugins?.length !== newOptions.plugins?.length) return true;
   if (oldOptions.scales?.y?.distr !== newOptions.scales?.y?.distr) return true;
+
+  /**
+   * `uPlot.assign` changes the references of the plugins, so a simple
+   * comparison of each plugin reference does not work. Instead, compare
+   * the plugins converted into strings.
+   */
+  const oldPLugins = JSON.stringify(oldOptions.plugins);
+  const newPLugins = JSON.stringify(newOptions.plugins);
+  if (oldPLugins !== newPLugins) return true;
 
   const oldOptionKeys = JSON.stringify(Object.keys(oldOptions).sort());
   const newOptionKeys = JSON.stringify(Object.keys(newOptions).sort());
