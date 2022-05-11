@@ -294,12 +294,15 @@ html {
   }
 
   /* override Ant Upload tool */
+
   .ant-upload.ant-upload-select-picture-card {
-    width: 90px;
     height: 90px;
     margin-left: 12px;
+    width: 90px;
   }
-  .ant-upload-list-picture .ant-upload-list-item, .ant-upload-list-picture-card .ant-upload-list-item, .ant-upload-list-item-info {
+  .ant-upload-list-picture .ant-upload-list-item,
+  .ant-upload-list-picture-card .ant-upload-list-item,
+  .ant-upload-list-item-info {
     border-radius: 50%;
   }
   .ant-upload-list-item-actions .anticon-eye {
