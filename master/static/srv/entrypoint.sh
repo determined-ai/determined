@@ -4,7 +4,6 @@ source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
 
 set -e
-set -x
 
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
