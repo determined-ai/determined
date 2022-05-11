@@ -8,3 +8,5 @@ coverage:
       informational: true
     patch:
       informational: true
+
+comment: false
