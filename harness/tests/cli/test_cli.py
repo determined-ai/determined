@@ -9,7 +9,7 @@ import requests_mock
 
 import determined.cli.cli as cli
 import determined.cli.command as command
-from determined.common import api, constants, context
+from determined.common import constants, context
 from tests.filetree import FileTree
 
 MINIMAL_CONFIG = '{"description": "test"}'
@@ -48,8 +48,11 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
         "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER, "id": ""}
     )
 
-    user = api.bindings.v1User(active=True, admin=False, id=1, username=constants.DEFAULT_DETERMINED_USER)
-    requests_mock.post("/api/v1/auth/login", status_code=200, json={"token": "fake-token", "user": user})
+    requests_mock.post(
+        "/api/v1/auth/login",
+        status_code=200,
+        json={"token": "fake-token", "user": {"id": "fake-id"}},
+    )
 
     requests_mock.post(
         "/experiments", status_code=requests.codes.created, headers={"Location": "/experiments/1"}
