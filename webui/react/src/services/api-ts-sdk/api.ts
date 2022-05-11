@@ -830,13 +830,13 @@ export interface V1AgentUserGroup {
  */
 export interface V1AggregateQueueStats {
     /**
-     * Number of queued jobs in the queue.
+     * The date of this entry.
      * @type {string}
      * @memberof V1AggregateQueueStats
      */
     periodStart: string;
     /**
-     * Number of scheduled jobs in the queue.
+     * The total number of seconds queued.
      * @type {number}
      * @memberof V1AggregateQueueStats
      */

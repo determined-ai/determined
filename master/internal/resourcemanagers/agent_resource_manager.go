@@ -22,9 +22,8 @@ import (
 )
 
 const (
-	best             = "best"
-	worst            = "worst"
-	defaultFitPolicy = best
+	best  = "best"
+	worst = "worst"
 )
 
 type agentResourceManager struct {
