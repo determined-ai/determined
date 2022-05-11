@@ -66,7 +66,7 @@ def test_non_admin_enable_disable_slots_agents() -> None:
     assert len(slots) == 1
     slot_id = slots[0]["slot_id"]
     agent_id = slots[0]["agent_id"]
-    
+
     enable_slots = ["slot", "enable", agent_id, slot_id]
     disable_slots = ["slot", "disable", agent_id, slot_id]
     enable_agents = ["agent", "enable", agent_id]
@@ -80,8 +80,10 @@ def test_non_admin_enable_disable_slots_agents() -> None:
                 conf.make_master_url(),
                 "-u",
                 constants.DEFAULT_DETERMINED_USER,
-            ] + cmd,
-            stdout=subprocess.PIPE)
+            ]
+            + cmd,
+            stdout=subprocess.PIPE,
+        )
         assert "Forbidden(user not found)" in o.stdout.decode("utf-8")
         assert o.returncode != 0
 
