@@ -218,6 +218,7 @@ const LearningCurve: React.FC<Props> = ({
       </div>
     );
   }
+  console.log(trialIds, selectedRowKeys);
 
   return (
     <div className={css.base}>

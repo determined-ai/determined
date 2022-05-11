@@ -5,13 +5,11 @@ import uPlot, { AlignedData } from 'uplot';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/message';
-import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 import { FacetedData } from './types';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
-  key?: number;
   width?: number;
 }
 
@@ -23,13 +21,11 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-interface ZoomInfo {
+interface Scale {
   isZoomed?: boolean;
   max?: number;
   min?: number;
 }
-
-type ZoomScales = Record<string, ZoomInfo>;
 
 const EMPTY_DATA = [ [], [ [] ] ] as unknown as uPlot.AlignedData;
 const SCROLL_THROTTLE_TIME = 500;
@@ -97,7 +93,7 @@ const UPlotChart: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const zoomScalesRef = useRef<ZoomScales>({});
+  const scalesRef = useRef<Record<string, Scale>>({});
   const dataRef = useRef<uPlot.AlignedData>(EMPTY_DATA);
   const [ isEmpty, setIsEmpty ] = useState(true);
   const [ isReady, setIsReady ] = useState(false);
@@ -105,16 +101,18 @@ const UPlotChart: React.FC<Props> = ({
 
   const fullOptions = useMemo(() => {
     return uPlot.assign({
+      cursor: {
+        bind: {
+          dblclick: () => {
+            // Reset zoom for every scale key.
+            Object.values(scalesRef.current).forEach(scale => {
+              scale.isZoomed = false;
+            });
+          },
+        },
+      },
       hooks: {
         destroy: [ () => setIsReady(false) ],
-        init: [ (u: uPlot) => {
-          u.over.ondblclick = () => {
-            // Reset zoom for every scale key.
-            Object.values(zoomScalesRef.current).forEach(zoomInfo => {
-              zoomInfo.isZoomed = false;
-            });
-          };
-        } ],
         ready: [ () => setIsReady(true) ],
         setScale: [ (u: uPlot, scaleKey: string) => {
           /**
@@ -125,8 +123,8 @@ const UPlotChart: React.FC<Props> = ({
            */
           const scale = u.scales[scaleKey];
           const isVertical = scale.ori === 1;
-          const currentMax = zoomScalesRef.current[scaleKey]?.max;
-          const currentMin = zoomScalesRef.current[scaleKey]?.min;
+          const currentMax = scalesRef.current[scaleKey]?.max;
+          const currentMin = scalesRef.current[scaleKey]?.min;
           // Top resolves to max vertical value, and top + height resolves to min vertical value.
           const maxPos = isVertical ? u.bbox.top : u.bbox.left + u.bbox.width;
           const minPos = isVertical ? u.bbox.top + u.bbox.height : u.bbox.left;
@@ -134,9 +132,9 @@ const UPlotChart: React.FC<Props> = ({
           const newMin = u.posToVal(minPos, scaleKey);
 
           if (currentMax == null || currentMin == null) {
-            zoomScalesRef.current[scaleKey] = { isZoomed: false, max: newMax, min: newMin };
+            scalesRef.current[scaleKey] = { isZoomed: false, max: newMax, min: newMin };
           } else {
-            zoomScalesRef.current[scaleKey] = {
+            scalesRef.current[scaleKey] = {
               isZoomed: newMax < currentMax || newMin > currentMin,
               max: Math.min(currentMax, newMax),
               min: Math.max(currentMin, newMin),
@@ -218,37 +216,13 @@ const UPlotChart: React.FC<Props> = ({
     // Update chart with data changes if chart already exists.
     if (chartRef.current) {
       try {
-        const isZoomed = Object.values(zoomScalesRef.current).some(i => i.isZoomed);
+        const isZoomed = Object.values(scalesRef.current).some(i => i.isZoomed);
         chartRef.current?.setData(dataRef.current, !isZoomed);
       } catch (e) {
         handleError(e, { ...UPLOT_ERROR, publicSubject: 'Unable to update uPlot data.' });
       }
     }
   }, [ data, fullOptions.mode, isReady ]);
-
-  /**
-   * When scales settings change in options, update chart scale.
-   */
-  useEffect(() => {
-    const oldScaleKeys = Object.keys(chartRef.current?.scales ?? {}).sort();
-    const newScales = fullOptions.scales ?? {};
-    const newScaleKeys = Object.keys(newScales).sort();
-    if (isEqual(oldScaleKeys, newScaleKeys)) return;
-
-    newScaleKeys.forEach(scaleKey => {
-      const scales = newScales[scaleKey];
-      if (scales.min != null && scales.max != null) {
-        try {
-          chartRef.current?.setScale(scaleKey, { max: scales.max, min: scales.min });
-        } catch (e) {
-          handleError(e, {
-            ...UPLOT_ERROR,
-            publicSubject: `Unable to update uPlot scale ${scaleKey}.`,
-          });
-        }
-      }
-    });
-  }, [ fullOptions.scales ]);
 
   /**
    * When series changes add or delete series.
