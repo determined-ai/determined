@@ -143,7 +143,7 @@ func (a *apiServer) SetUserPassword(
 	if err != nil {
 		return nil, err
 	}
-	if curUser.ID != model.UserID(req.UserId) {
+	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
 		return nil, grpcutil.ErrPermissionDenied
 	}
 	user := &model.User{ID: model.UserID(req.UserId)}
