@@ -2,9 +2,10 @@ package internal
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/prom"
 	"strconv"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/determined-ai/determined/master/internal/task"
 
