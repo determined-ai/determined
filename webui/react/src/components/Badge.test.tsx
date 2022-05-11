@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { getStateColorCssVar } from 'themes';
-import { SlotState } from 'types';
+import { ResourceState, SlotState } from 'types';
 import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeType } from './Badge';
@@ -56,6 +56,18 @@ describe('Badge', () => {
     userEvent.hover(view.getByText(CONTENT));
     await waitFor(() => {
       expect(view.getByRole('tooltip').textContent).toEqual(CONTENT_TOOLTIP);
+    });
+  });
+
+  it('displays correct style for potential', () => {
+    const BadgeComponent = () => {
+      return <Badge state={ResourceState.Potential} type={BadgeType.State} />;
+    };
+    const view = render(<BadgeComponent />);
+    const statePotential = view.getByText(stateToLabel(ResourceState.Potential));
+    expect(statePotential).toHaveStyle({
+      backgroundColor: getStateColorCssVar(ResourceState.Potential),
+      color: '#234b65',
     });
   });
 });
