@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 
 import pytest
 
+from determined.common import constants
 from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
@@ -48,6 +49,41 @@ def test_disable_and_enable_slots() -> None:
         slots[0]["slot_id"],
     ]
     subprocess.check_call(command)
+
+
+@pytest.mark.e2e_cpu
+def test_non_admin_enable_disable_slots_agents() -> None:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "slot",
+        "list",
+        "--json",
+    ]
+    output = subprocess.check_output(command).decode()
+    slots = json.loads(output)
+    assert len(slots) == 1
+    slot_id = slots[0]["slot_id"]
+    agent_id = slots[0]["agent_id"]
+    
+    enable_slots = ["slot", "enable", agent_id, slot_id]
+    disable_slots = ["slot", "disable", agent_id, slot_id]
+    enable_agents = ["agent", "enable", agent_id]
+    disable_agents = ["agent", "disable", agent_id]
+    print(constants.DEFAULT_DETERMINED_USER)
+    for cmd in [disable_slots, disable_agents, enable_slots, enable_agents]:
+        o = subprocess.run(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "-u",
+                constants.DEFAULT_DETERMINED_USER,
+            ] + cmd,
+            stdout=subprocess.PIPE)
+        assert "Forbidden(user not found)" in o.stdout.decode("utf-8")
+        assert o.returncode != 0
 
 
 def _fetch_slots() -> List[Dict[str, Any]]:

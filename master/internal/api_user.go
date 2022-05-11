@@ -66,9 +66,9 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 }
 
 func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
-	u, _, err := grcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.EternalSessions)
+	u, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !u.Admin {
 		return grpcutil.ErrPermissionDenied
@@ -104,7 +104,7 @@ func (a *apiServer) PostUser(
 		return nil, err
 	}
 
-	if err = grpcutil.ValidateRequest(
+	if err := grpcutil.ValidateRequest(
 		func() (bool, string) { return req.User != nil, "no user specified" },
 		func() (bool, string) { return req.User.Username != "", "no username specified" },
 	); err != nil {
@@ -115,7 +115,7 @@ func (a *apiServer) PostUser(
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
-	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+	if err := user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
 	var agentUserGroup *model.AgentUserGroup
@@ -126,7 +126,7 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	switch err = a.m.db.AddUser(user, agentUserGroup); {
+	switch err := a.m.db.AddUser(user, agentUserGroup); {
 	case err == db.ErrDuplicateRecord:
 		return nil, status.Error(codes.InvalidArgument, "user already exists")
 	case err != nil:
