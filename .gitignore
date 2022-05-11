@@ -50,6 +50,9 @@ coverage.xml
 # dotenv
 .env
 
+# local files
+determined/
+
 # virtualenv
 .venv
 venv/
