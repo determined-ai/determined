@@ -112,9 +112,9 @@ func AssociateJobExperiment(jID model.JobID, eID string, labels expconf.Labels) 
 	AssociateExperimentIDLabels(eID, expLabels)
 }
 
-// DisassociateTaskExperiment disassociates a task ID with experiment info.
-func DisassociateTaskExperiment(tID model.TaskID, eID string, labels expconf.Labels) {
-	jobIDToExperimentID.WithLabelValues(tID.String(), eID).Dec()
+// DisassociateJobExperiment disassociates a job ID with experiment info.
+func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Labels) {
+	jobIDToExperimentID.WithLabelValues(jID.String(), eID).Dec()
 	expLabels := make([]string, len(labels))
 
 	for l, _ := range labels {

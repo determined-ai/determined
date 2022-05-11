@@ -370,7 +370,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	}
 	t.allocation = nil
 
-	prom.DisassociateTaskExperiment(t.taskID, strconv.Itoa(t.experimentID), t.config.Labels())
+	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
 	// Decide if this is permanent.
 	switch {
