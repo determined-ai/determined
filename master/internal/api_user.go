@@ -65,6 +65,17 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 	}, err
 }
 
+func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
+	u, _, err := grcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.EternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if !u.Admin {
+		return grpcutil.ErrPermissionDenied
+	}
+	return nil
+}
+
 func (a *apiServer) GetUsers(
 	context.Context, *apiv1.GetUsersRequest) (*apiv1.GetUsersResponse, error) {
 	users, err := a.m.db.UserList()
@@ -89,14 +100,10 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
-
-	if err != nil {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
 		return nil, err
 	}
-	if !curUser.Admin {
-		return nil, grpcutil.ErrPermissionDenied
-	}
+
 	if err = grpcutil.ValidateRequest(
 		func() (bool, string) { return req.User != nil, "no user specified" },
 		func() (bool, string) { return req.User.Username != "", "no username specified" },
@@ -136,7 +143,7 @@ func (a *apiServer) SetUserPassword(
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+	if curUser.ID != model.UserID(req.UserId) {
 		return nil, grpcutil.ErrPermissionDenied
 	}
 	user := &model.User{ID: model.UserID(req.UserId)}
