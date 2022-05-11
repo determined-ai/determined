@@ -1,34 +1,35 @@
-import queryString from 'query-string';
+
 import React, { useEffect } from 'react';
-
-import PageMessage from 'components/PageMessage';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useParams } from 'react-router-dom';
 
-interface Queries {
-  taskUrl?: string;
+import TaskBar from 'components/TaskBar';
+
+
+interface Params {
+  taskId: string;
+  taskUrl: string;
+  taskResourcePool: string;
+  taskName: string;
 }
 
 export const InteractiveTask: React.FC = () => {
 
+  const { taskId, taskName, taskResourcePool, taskUrl } = useParams<Params>();
   const storeDispatch = useStoreDispatch();
-
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-  const { taskUrl }: Queries = queryString.parse(location.search);
+  console.log( taskId, taskName, taskResourcePool, taskUrl );
+  
 
-  if (!taskUrl){
-    return (
-      <PageMessage title={'Task not found'}>
-        <div>
-          <div>Missing Task Url</div>
-        </div>
-      </PageMessage>
-    );
-  }
+
+
   return (
+    <div>
+    <TaskBar taskName={taskName} resourcePool={taskResourcePool} />
     <iframe
       allowFullScreen
       height="100%"
@@ -36,6 +37,7 @@ export const InteractiveTask: React.FC = () => {
       title="Interactive Task"
       width="100%"
     />
+    </div>
   );
 };
 

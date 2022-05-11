@@ -5,7 +5,7 @@ import React from 'react';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { BrandingType, CommandTask } from 'types';
+import { BrandingType, CommandTask, Command } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -69,7 +69,11 @@ export const locationToPath = (location?: Location): string | null => {
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
 
 export const openBlank = (url: string): void => {
-  window.open(`/det${paths.interactiveTask(url)}`, '_blank', windowOpenFeatures.join(','));
+  window.open(url, '_blank', windowOpenFeatures.join(','));
+};
+
+export const openBlank2 = (url: string, command: CommandTask): void => {
+  window.open(`/det${paths.interactiveTask(command, url)}`, '_blank', windowOpenFeatures.join(','));
 };
 
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
@@ -211,8 +215,9 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
-  interactiveTask: (taskUrl: string): string => {
-    return `/interactiveTask?${queryString.stringify({ taskUrl })}`;
+  interactiveTask: (command: CommandTask, taskUrl: string): string => {
+    console.log(command);
+    return `/interactiveTask/${command.id}/${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/${encodeURIComponent(taskUrl)}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
