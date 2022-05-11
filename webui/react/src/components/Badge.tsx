@@ -32,11 +32,13 @@ const Badge: React.FC<BadgeProps> = ({
   if (type === BadgeType.State) {
     classes.push(css.state);
     style.backgroundColor = getStateColorCssVar(state);
-    if (state === SlotState.Free || state === ResourceState.Warm || state === ResourceState.Potential) {
+    if (state === SlotState.Free
+      || state === ResourceState.Warm
+      || state === ResourceState.Potential) {
       style.color = '#234b65';
     }
     if(state === ResourceState.Potential) {
-      style.border = '1px dashed #cccccc'
+      style.border = '1px dashed #cccccc';
     }
   } else if (type === BadgeType.Id) {
     classes.push(css.id);

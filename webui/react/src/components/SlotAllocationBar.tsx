@@ -91,13 +91,13 @@ const SlotAllocationBar: React.FC<Props> = ({
       [ResourceState.Warm]: 0,
       [ResourceState.Terminated]: 0,
       [ResourceState.Unspecified]: 0,
-      [ResourceState.Potential]: 0
+      [ResourceState.Potential]: 0,
     };
     resourceStates.forEach(state => {
       tally[state] += 1;
     });
     tally[ResourceState.Warm] = totalSlots - tally[ResourceState.Running];
-    tally[ResourceState.Potential] = slotsPotential? slotsPotential - totalSlots:0;
+    tally[ResourceState.Potential] = slotsPotential ? slotsPotential - totalSlots : 0;
     return tally;
   }, [ resourceStates, totalSlots, slotsPotential ]);
 

@@ -8,7 +8,7 @@
   padding-top: var(--theme-sizes-layout-medium);
   position: absolute;
   right: 0;
-  z-index: 101;
+  z-index: 1;
 
   :global(.ant-col:not(:last-child)) {
     border-right: 1px solid var(--theme-colors-monochrome-12);

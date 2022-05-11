@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
@@ -42,8 +42,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
 
     return data;
   }, [ hoursByLabel, hoursTotal, time ]);
-  const chartSyncKey = useRef(uPlot.sync('x'));
-  const matchSyncKeys: uPlot.Cursor.Sync.ScaleKeyMatcher = (own, ext) => own === ext;
   const chartOptions: Options = useMemo(() => {
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
@@ -91,15 +89,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         },
         { label: label ? label : 'GPU Hours' },
       ],
-      cursor: {
-        focus: { prox: 16 },
-        lock: true,
-        sync: {
-          key: chartSyncKey.current.key,
-          match: [ matchSyncKeys, matchSyncKeys ],
-          setSeries: true,
-        },
-      },
       height,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
