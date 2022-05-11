@@ -70,8 +70,8 @@ pre-publish:
 publish: pre-publish
 	$(MAKE) -C deploy publish
 
-live:
-	npx nodemon --ext txt --exec "$(MAKE) build.stamp" --ignore site
+live: build/stamp
+	python3 live.py
 
 RSTFMT_WIDTH = 100
 
