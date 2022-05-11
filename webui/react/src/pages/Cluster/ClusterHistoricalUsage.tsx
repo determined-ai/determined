@@ -112,18 +112,16 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   return (
     <>
-      <div>
-        <Row className={css.filter} justify="end" ref={filterBarRef}>
-          <Col>
-            <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
-          </Col>
-          <Col>
-            <Button onClick={() => setIsCsvModalVisible(true)}>
-              Download CSV
-            </Button>
-          </Col>
-        </Row>
-      </div>
+      <Row className={css.filter} justify="end" ref={filterBarRef}>
+        <Col>
+          <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
+        </Col>
+        <Col>
+          <Button onClick={() => setIsCsvModalVisible(true)}>
+            Download CSV
+          </Button>
+        </Col>
+      </Row>
       <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
         {chartSeries && (
           <ClusterHistoricalUsageChart

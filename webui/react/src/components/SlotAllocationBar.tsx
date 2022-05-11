@@ -35,6 +35,7 @@ export interface AllocationBarFooterProps {
   auxContainerCapacity?:number
   auxContainersRunning?: number;
   queued?: number;
+  scheduled?: number;
 }
 
 interface LegendProps {
@@ -183,6 +184,43 @@ const SlotAllocationBar: React.FC<Props> = ({
     poolName && history.push(`${paths.resourcePool(poolName)}/queued`);
   };
 
+  const onClickScheduled = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    poolName && history.push(`${paths.resourcePool(poolName)}`);
+  };
+
+  const renderFooterJobs = () => {
+    if(footer?.queued || footer?.scheduled) {
+      return (
+        footer.queued ? (
+          <div onClick={onClickQueued}>
+            <span className={css.queued}>{`${footer.queued > 100 ?
+              '100+' :
+              footer.queued} Queued`}
+            </span>
+          </div>
+        ) : (
+          <div onClick={onClickScheduled}>
+            <span className={css.queued}>{`${footer.scheduled && footer.scheduled > 100 ?
+              '100+' :
+              footer.scheduled} Queued`}
+            </span>
+          </div>
+        )
+      );
+    }
+    return !isAux && (
+      <span>{
+        `${totalSlotsNum > stateTallies.RUNNING ?
+          totalSlotsNum - stateTallies.RUNNING : 0} ${
+          totalSlotsNum - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
+      }
+      </span>
+    );
+
+  };
+
   return (
     <div className={classes.join(' ')}>
       {!hideHeader && (
@@ -224,22 +262,7 @@ const SlotAllocationBar: React.FC<Props> = ({
                 `${stateTallies.RUNNING}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
-          {footer.queued ? (
-            <div onClick={onClickQueued}>
-              <span className={css.queued}>{`${footer.queued > 100 ?
-                '100+' :
-                footer.queued} Queued`}
-              </span>
-            </div>
-          ) :
-            !isAux && (
-              <span>{
-                `${totalSlotsNum > stateTallies.RUNNING ?
-                  totalSlotsNum - stateTallies.RUNNING : 0} ${
-                  totalSlotsNum - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
-              }
-              </span>
-            )}
+          {renderFooterJobs()}
         </div>
       )}
       {showLegends && (

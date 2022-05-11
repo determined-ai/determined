@@ -512,11 +512,12 @@ func (a *agentResourceManager) createResourcePoolSummary(
 func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 	[]*jobv1.AggregateQueueStats, error,
 ) {
-	aggregates := make([]model.ResourceAggregates, 0)
-	err := db.Bun().NewSelect().Model(&aggregates).Where(
-		"aggregation_type = ? AND aggregation_key = ? AND date >= CURRENT_TIMESTAMP - interval '30 days'",
-		"queued", pool,
-	).Order("date ASC").Scan(context.TODO())
+	aggregates := []model.ResourceAggregates{}
+	err := db.Bun().NewSelect().Model(&aggregates).
+		Where("aggregation_type = ?", "queued").
+		Where("aggregation_key = ?", pool).
+		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
+		Order("date ASC").Scan(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -528,13 +529,14 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 		})
 	}
 	today := float32(0)
-	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").Where(
-		"resource_pool = ? AND start_time >= CURRENT_DATE", pool)
+	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
+		Where("resource_pool = ?", pool).
+		Where("start_time >= CURRENT_DATE")
 	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
 		"avg(extract(epoch FROM end_time - start_time))",
-	).Where(
-		"event_type = ? AND end_time >= CURRENT_DATE AND allocation_id IN (?) ", "QUEUED", subq,
-	).Scan(context.TODO(), &today)
+	).Where("event_type = ?", "QUEUED").
+		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
+		Scan(context.TODO(), &today)
 	if err != nil {
 		return nil, err
 	}

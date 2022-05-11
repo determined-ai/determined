@@ -140,7 +140,10 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
   return (
     <section>
       <SlotAllocationBar
-        footer={{ queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount }}
+        footer={{
+          queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount,
+          scheduled: poolStats?.stats.scheduledCount ?? pool?.stats?.scheduledCount,
+        }}
         hideHeader
         poolName={pool.name}
         poolType={pool.type}
@@ -157,7 +160,6 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = (
           footer={{
             auxContainerCapacity: pool.auxContainerCapacity,
             auxContainersRunning: pool.auxContainersRunning,
-            // queued: pool?.stats?.queuedCount,
           }}
           hideHeader
           isAux={true}
