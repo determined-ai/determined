@@ -180,6 +180,18 @@ func (a *apiServer) PatchUser(
 			return nil, err
 		}
 	}
+
+	if req.User.DisplayName == "" {
+		user.DisplayName = null.StringFrom(curUser.Username)
+
+		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
+		case err == db.ErrNotFound:
+			return nil, errUserNotFound
+		case err != nil:
+			return nil, err
+		}
+	}
+
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
