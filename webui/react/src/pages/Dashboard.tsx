@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_START_TIME',
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users: filters.users,
+          users: filters.users?.filter(u => u !== ''),
         },
         { signal: canceler.signal },
       );

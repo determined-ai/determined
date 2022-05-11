@@ -146,7 +146,7 @@ const ExperimentList: React.FC = () => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users: settings.user,
+          users: settings.user?.filter(u => u !== ''),
         },
         { signal: canceler.signal },
       );
