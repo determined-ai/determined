@@ -84,6 +84,16 @@ const UPlotChart: React.FC<Props> = ({
 
   const { zoomed, boundsOptions } = useSyncableBounds();
 
+  if (title === 'System Metrics') {
+    window.sys = chartRef.current;
+  } else if (title === 'Throughput') {
+    window.thru = chartRef.current;
+  } else if (title === 'Timing Metrics') {
+    window.time = chartRef.current;
+  }
+  window.options = options;
+  window.data = data;
+
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
   const extendedOptions = useMemo(() =>
@@ -163,7 +173,7 @@ const UPlotChart: React.FC<Props> = ({
             : data;
           const min = new Date(Math.min(...disp[0]?.filter(isNumber)));
           const max = new Date(Math.max(...disp[0]?.filter(isNumber)));
-          chartRef.current.setData(disp as AlignedData, !zoomed);
+          chartRef.current.setData(disp as AlignedData, false);
         }
 
       } catch(e) {
