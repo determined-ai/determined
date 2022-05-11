@@ -11,6 +11,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -24,7 +25,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 			AgentRM: &config.AgentResourceManagerConfig{
 				Scheduler: &config.SchedulerConfig{
 					FairShare:     &config.FairShareSchedulerConfig{},
-					FittingPolicy: defaultFitPolicy,
+					FittingPolicy: best,
 				},
 				DefaultAuxResourcePool:     "cpu-pool",
 				DefaultComputeResourcePool: "gpu-pool",
@@ -117,11 +118,12 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Fetch average queued time for resource pool
+	db.MustSetupTestPostgres(t)
 	_, err := agentRM.fetchAvgQueuedTime("cpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for cpu-pool")
-	_, err := agentRM.fetchAvgQueuedTime("gpu-pool")
+	_, err = agentRM.fetchAvgQueuedTime("gpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for gpu-pool")
-	_, err := agentRM.fetchAvgQueuedTime("non-existed-pool")
+	_, err = agentRM.fetchAvgQueuedTime("non-existed-pool")
 	assert.NilError(t, err, "error fetch average queued time for non-existed-pool")
 
 }
