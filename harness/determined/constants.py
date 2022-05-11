@@ -1,3 +1,5 @@
+import os
+
 # The maximum number of slots we expect any agent to have. Since we offset some ports
 # by the min(device_id) belonging to the trial, if we have two ports offset in this way,
 # we separate them by the max(min(device_id)) to avoid collisions. The two rendezvous ports
@@ -24,16 +26,21 @@ DEFAULT_EXP_CFG = {
     "optimizations": DEFAULT_OPTIMIZATIONS,
 }
 
+# Until we implement a more automatic solution, expose a temporary workaround of
+# allowing ports to be changed using envionment variables for the rare case that
+# the default ports are already in use by other processes.
+
 # TODO (DET-1189): Use port registry to allocate ssh port.
 # SSH port used for agents during dtrain (currently used with horovod and deepspeed backend).
-DTRAIN_SSH_PORT = 12350
+DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350")))
 
 # GLOO port used by Horovod for the Gloo controller.
-HOROVOD_GLOO_RENDEZVOUS_PORT = 12355
+HOROVOD_GLOO_RENDEZVOUS_PORT = int(str(os.getenv("HOROVOD_GLOO_RENDEZVOUS_PORT", "12355")))
 
 # Port for communicating between training processes. Used for reducing
 # validation metrics.
-INTER_TRAIN_PROCESS_COMM_PORT_1 = 12360
+INTER_TRAIN_PROCESS_COMM_PORT_1 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_1", "12360")))
+
 INTER_TRAIN_PROCESS_COMM_PORT_2 = INTER_TRAIN_PROCESS_COMM_PORT_1 + MAX_SLOTS_PER_AGENT
 
 # How many seconds horovod waits for startup to complete before failing.
