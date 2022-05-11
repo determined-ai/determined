@@ -51,7 +51,10 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
     requests_mock.post(
         "/api/v1/auth/login",
         status_code=200,
-        json={"token": "fake-token", "user": {"id": "fake-id"}},
+        json={
+            "token": "fake-token",
+            "user": {"id": "fake-id", "username": "", "admin": False, "active": True},
+        },
     )
 
     requests_mock.post(
