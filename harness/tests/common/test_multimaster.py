@@ -45,7 +45,7 @@ def run_api_server(
             expected_password = salt_and_hash(password)
             assert posted_credentials.get("username") == user
             assert posted_credentials.get("password") == expected_password
-            return {"token": token, "userId": ""}
+            return {"token": token, "user": {"id": "fake-id"}}
 
         def _api_v1_models(self) -> Dict[str, Any]:
             assert self.headers["Authorization"] == f"Bearer {token}"
