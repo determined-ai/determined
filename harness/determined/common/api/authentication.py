@@ -145,10 +145,7 @@ def do_login(
     cert: Optional[certs.Cert] = None,
 ) -> bindings.v1LoginResponse:
     certs.cli_cert = certs.default_load(master_address)
-    cli_auth = Authentication(master_address, try_reauth=True)
-    sess = det.common.experimental.session.Session(
-        master_address, "determined", cli_auth, certs.cli_cert
-    )
+    sess = det.common.experimental.session.Session(master_address, None, None, certs.cli_cert)
     return bindings.post_Login(sess, body=bindings.v1LoginRequest(password, username))
 
 
