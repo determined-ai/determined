@@ -1,4 +1,4 @@
-import { Button, Divider } from 'antd';
+import { Button, Divider, Upload } from 'antd';
 import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback, useState } from 'react';
 
@@ -31,70 +31,52 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
     openChangeDisplayNameModal();
   }, [ openChangeDisplayNameModal ]);
 
-  const [ previewImage, setPreviewImage ] = useState('');
-  const processProfilePic = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [ previewImage, setPreviewImage ] = useState(false);
+  const handleIconUpload = useCallback((file) => {
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const miniCanvas = document.createElement('canvas');
-      const squareSize = 128; // 64px with support for retina+ screens
-      miniCanvas.width = squareSize;
-      miniCanvas.height = squareSize;
-      const ctx = miniCanvas.getContext('2d');
-      if (ctx && reader.result) {
-        const img = new Image();
-        img.onload = () => {
-          let offsetX = 0, offsetY = 0, width = squareSize, height = squareSize;
-          const scale = squareSize / Math.max(img.naturalWidth, img.naturalHeight);
-          if (img.naturalWidth > img.naturalHeight) {
-            height = Math.round(scale * img.naturalHeight);
-            offsetY = (squareSize - height) / 2;
-          } else if (img.naturalHeight > img.naturalWidth) {
-            width = Math.round(scale * img.naturalWidth);
-            offsetX = (squareSize - width) / 2;
-          }
-          ctx.drawImage(img, offsetX, offsetY, width, height);
-          setPreviewImage(miniCanvas.toDataURL('image/jpeg'));
-          // modalClose();
-        };
-        img.src = String(reader.result);
+    reader.onloadend = async () => {
+      try {
+        const readerResult = String(reader.result);
+        await setUserImage({
+          image: readerResult.substring(readerResult.indexOf(',') + 1),
+          userId: auth.user?.id || 0,
+        });
+      } catch (e) {
+        handleError(e);
       }
     };
-    if (event?.target?.files) {
-      reader.readAsDataURL(event.target.files[0]);
-    }
-  };
+    reader.readAsDataURL(file);
+    setPreviewImage(true);
+    return false;
+  }, [ auth.user ]);
 
-  const handleIconUploadClick = useCallback(async () => {
-    if (!previewImage.length || !auth.user || !auth.user?.id) {
-      return;
-    }
-    try {
-      await setUserImage({
-        image: previewImage.substring(previewImage.indexOf(',') + 1),
-        userId: auth.user?.id,
-      });
-      setPreviewImage('');
-    } catch (e) {
-      handleError(e);
-    }
-  }, [ auth.user, previewImage ]);
+  const handleRemoveIcon = useCallback(() => {
+    setPreviewImage(false);
+    setUserImage({
+      // need to send SOME data for Proto to accept content as bytes type
+      image: '00000000',
+      userId: auth.user?.id || 0,
+    });
+  }, [ auth.user ]);
 
   return (
     <div className={css.base}>
       <div className={css.field}>
         <span className={css.header}>Avatar</span>
         <span className={css.body}>
-          {previewImage.length
-            ? <img src={previewImage} height="64" width="64" style={{border: '1px solid #000'}}/>
-            : <Avatar hideTooltip large userId={auth.user?.id} />
-          }
-          <input
+          {previewImage ? '' : <Avatar hideTooltip large userId={auth.user?.id} />}
+          <Upload
             accept="image/png, image/jpeg"
-            type="file"
-            onChange={processProfilePic}
-          />
-          <Button onClick={handleIconUploadClick}>
-            Upload
+            beforeUpload={handleIconUpload}
+            listType="picture-card"
+            maxCount={1}
+            onRemove={handleRemoveIcon}>
+            <Button>
+              Upload
+            </Button>
+          </Upload>
+          <Button onClick={handleRemoveIcon}>
+            Clear
           </Button>
         </span>
         <Divider />

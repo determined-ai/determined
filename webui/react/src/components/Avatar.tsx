@@ -62,8 +62,11 @@ const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) =>
 
   const style = {
     backgroundColor: getColor(displayName),
-    backgroundImage: `url('/users/${userID}/image?${modifiedAt}')`,
+    backgroundImage: Number(modifiedAt) ? `url('/users/${userID}/image?${modifiedAt}')` : '',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
+    verticalAlign: 'middle',
   };
   const classes = [ css.base ];
   if (large) classes.push(css.large);

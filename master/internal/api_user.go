@@ -187,7 +187,7 @@ func (a *apiServer) SetUserImage(
 	}
 
 	resp := apiv1.SetUserImageResponse{}
-	if len(req.Image) == 0 {
+	if len(req.Image) < 10 {
 		err = a.m.db.QueryProto("clear_user_image", &resp, req.UserId)
 	} else {
 		err = a.m.db.QueryProto("set_user_image", &resp, req.UserId, req.Image)
