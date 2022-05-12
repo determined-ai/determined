@@ -1,10 +1,10 @@
-
 import React, { useEffect } from 'react';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 
+import css from './InteractiveTask.module.scss';
 
 interface Params {
   taskId: string;
@@ -22,21 +22,20 @@ export const InteractiveTask: React.FC = () => {
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-  console.log( taskId, taskName, taskResourcePool, taskUrl );
-  
-
-
+  console.log(taskId, taskName, taskResourcePool, taskUrl);
 
   return (
-    <div>
-    <TaskBar taskName={taskName} resourcePool={taskResourcePool} />
-    <iframe
-      allowFullScreen
-      height="100%"
-      src={decodeURIComponent(taskUrl)}
-      title="Interactive Task"
-      width="100%"
-    />
+    <div className={css.base}>
+      <div className={css.barContainer}>
+        <TaskBar resourcePool={taskResourcePool} taskId={taskId} taskName={taskName} />
+      </div>
+      <div className={css.frameContainer}>
+        <iframe
+          allowFullScreen
+          src={decodeURIComponent(taskUrl)}
+          title="Interactive Task"
+        />
+      </div>
     </div>
   );
 };

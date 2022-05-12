@@ -1,9 +1,15 @@
 .base {
+  align-items: center;
+  background-color: #333;
+  color: #fafafa;
   display: flex;
-  height: 32px;
-  background-color: #333333;
-  color: #FAFAFA;
-  line-height: 18px;
   font-size: 12px;
+  height: 100%;
+  line-height: 18px;
   text-align: center;
+  
+  .barContent {
+    margin: 0 auto;
+    text-align: center;
+  }
 }

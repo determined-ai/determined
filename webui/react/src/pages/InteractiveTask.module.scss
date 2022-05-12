@@ -1,0 +1,15 @@
+.base {
+  height: 100%;
+  overflow: hidden;
+}
+.barContainer {
+  height: 32px;
+}
+.frameContainer {
+  height: calc(100vh - 32px);
+  
+  iframe {
+    height: 100%;
+    width: 100%;
+  }
+}

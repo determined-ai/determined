@@ -5,7 +5,7 @@ import React from 'react';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { BrandingType, CommandTask, Command } from 'types';
+import { BrandingType, Command, CommandTask } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';

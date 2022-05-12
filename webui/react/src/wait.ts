@@ -44,11 +44,10 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
 };
 
 export const openCommand = (command: CommandTask): void => {
-  console.log("command is");
+  console.log('command is');
   console.log(command);
   openBlank2(process.env.PUBLIC_URL + waitPageUrl(command), command);
 };
-
 
 export interface WaitStatus {
   isReady: boolean;
