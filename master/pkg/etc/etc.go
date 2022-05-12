@@ -40,6 +40,10 @@ const (
 	K8InitContainerEntryScriptResource = "k8_init_container_entrypoint.sh"
 	// TaskLoggingSetupScriptResource is the script to setup prerequistites for logging.
 	TaskLoggingSetupScriptResource = "task-logging-setup.sh"
+	// TaskLoggingTeardownScriptResource is the script to teardown stuff for logging.
+	TaskLoggingTeardownScriptResource = "task-logging-teardown.sh"
+	// TaskSignalHandlingScriptResource is the script to teardown stuff for logging.
+	TaskSignalHandlingScriptResource = "task-signal-handling.sh"
 )
 
 var staticRoot string

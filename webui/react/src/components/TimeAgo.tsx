@@ -2,12 +2,12 @@ import { Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { isNumber, isString } from 'utils/data';
+import { isNumber, isString } from 'shared/utils/data';
 import {
   DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_SECOND,
   DURATION_YEAR, durationInEnglish,
-} from 'utils/datetime';
-import { capitalize, capitalizeWord } from 'utils/string';
+} from 'shared/utils/datetime';
+import { capitalize, capitalizeWord } from 'shared/utils/string';
 
 interface Props {
   className?: string;

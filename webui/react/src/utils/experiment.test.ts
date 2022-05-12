@@ -1,5 +1,7 @@
 import * as Type from 'types';
 
+import { RawJson } from '../shared/types';
+
 import * as utils from './experiment';
 
 describe('Experiment Utilities', () => {
@@ -62,7 +64,7 @@ describe('Experiment Utilities', () => {
   });
 
   describe('trialHParamsToExperimentHParams', () => {
-    const tests: { input: Type.TrialHyperparameters, output: Type.RawJson }[] = [
+    const tests: { input: Type.TrialHyperparameters, output: RawJson }[] = [
       {
         input: {
           'arch.n_filters1': 62,

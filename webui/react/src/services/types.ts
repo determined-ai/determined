@@ -1,32 +1,10 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata, RecordKey } from 'types';
+import { DetailedUser, Job, Metadata } from 'types';
+
+import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
 
 import * as Api from './api-ts-sdk/api';
-
-export interface FetchOptions {
-  signal?: AbortSignal;
-}
-
-interface ApiBase {
-  name: string;
-  stubbedResponse?: unknown;
-  unAuthenticated?: boolean;
-  // middlewares?: Middleware[]; // success/failure middlewares
-}
-
-// Designed for use with Swagger generated api bindings.
-export interface DetApi<Input, DetOutput, Output> extends ApiBase {
-  postProcess: (response: DetOutput) => Output;
-  request: (params: Input, options?: FetchOptions) => Promise<DetOutput>;
-  stubbedResponse?: DetOutput;
-}
-
-export interface ApiState<T> {
-  data?: T;
-  error?: Error;
-  isLoading: boolean;
-}
 
 export interface LoginResponse {
   token: string;
@@ -36,10 +14,6 @@ export interface LoginResponse {
 export interface ApiSorter<T = string> {
   descend: boolean;
   key: T;
-}
-
-export interface SingleEntityParams {
-  id: number;
 }
 
 export type ExperimentDetailsParams = SingleEntityParams;
@@ -200,9 +174,6 @@ export interface LaunchJupyterLabParams {
   preview?: boolean;
   templateName?: string;
 }
-
-/* eslint-disable-next-line @typescript-eslint/ban-types */
-export type EmptyParams = {}
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';

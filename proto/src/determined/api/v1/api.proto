@@ -455,6 +455,16 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+  // Get the list of workloads for a trial.
+  rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
+      returns (GetTrialWorkloadsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/workloads"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Internal" ]
+    };
+  }
   // Stream trial logs.
   rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) {
     option (google.api.http) = {
@@ -606,6 +616,19 @@ service Determined {
       returns (AllocationRendezvousInfoResponse) {
     option (google.api.http) = {
       get: "/api/v1/allocations/{allocation_id}/resources/{resources_id}/rendezvous"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // PostAllocationProxyAddress sets the proxy address to use when proxying to
+  // services provided by an allocation. Upon receipt, the master will also
+  // register any proxies specified by the task.
+  rpc PostAllocationProxyAddress(PostAllocationProxyAddressRequest)
+      returns (PostAllocationProxyAddressResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/proxy_address"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

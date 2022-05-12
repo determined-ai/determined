@@ -78,32 +78,6 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-class GetTrialResponseWorkloadContainer:
-    def __init__(
-        self,
-        checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
-        training: "typing.Optional[v1MetricsWorkload]" = None,
-        validation: "typing.Optional[v1MetricsWorkload]" = None,
-    ):
-        self.training = training
-        self.validation = validation
-        self.checkpoint = checkpoint
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "GetTrialResponseWorkloadContainer":
-        return cls(
-            training=v1MetricsWorkload.from_json(obj["training"]) if obj.get("training", None) is not None else None,
-            validation=v1MetricsWorkload.from_json(obj["validation"]) if obj.get("validation", None) is not None else None,
-            checkpoint=v1CheckpointWorkload.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "training": self.training.to_json() if self.training is not None else None,
-            "validation": self.validation.to_json() if self.validation is not None else None,
-            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
-        }
-
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -299,9 +273,11 @@ class trialv1Trial:
         bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None,
         bestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         endTime: "typing.Optional[str]" = None,
+        latestTraining: "typing.Optional[v1MetricsWorkload]" = None,
         latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         runnerState: "typing.Optional[str]" = None,
         taskId: "typing.Optional[str]" = None,
+        totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
     ):
@@ -315,10 +291,12 @@ class trialv1Trial:
         self.bestValidation = bestValidation
         self.latestValidation = latestValidation
         self.bestCheckpoint = bestCheckpoint
+        self.latestTraining = latestTraining
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
+        self.totalCheckpointSize = totalCheckpointSize
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -333,10 +311,12 @@ class trialv1Trial:
             bestValidation=v1MetricsWorkload.from_json(obj["bestValidation"]) if obj.get("bestValidation", None) is not None else None,
             latestValidation=v1MetricsWorkload.from_json(obj["latestValidation"]) if obj.get("latestValidation", None) is not None else None,
             bestCheckpoint=v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj.get("bestCheckpoint", None) is not None else None,
+            latestTraining=v1MetricsWorkload.from_json(obj["latestTraining"]) if obj.get("latestTraining", None) is not None else None,
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
+            totalCheckpointSize=obj.get("totalCheckpointSize", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -351,10 +331,12 @@ class trialv1Trial:
             "bestValidation": self.bestValidation.to_json() if self.bestValidation is not None else None,
             "latestValidation": self.latestValidation.to_json() if self.latestValidation is not None else None,
             "bestCheckpoint": self.bestCheckpoint.to_json() if self.bestCheckpoint is not None else None,
+            "latestTraining": self.latestTraining.to_json() if self.latestTraining is not None else None,
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
+            "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
@@ -2146,7 +2128,7 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Sequence[GetTrialResponseWorkloadContainer]",
+        workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
         self.trial = trial
         self.workloads = workloads
@@ -2155,13 +2137,35 @@ class v1GetTrialResponse:
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[GetTrialResponseWorkloadContainer.from_json(x) for x in obj["workloads"]],
+            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
             "workloads": [x.to_json() for x in self.workloads],
+        }
+
+class v1GetTrialWorkloadsResponse:
+    def __init__(
+        self,
+        pagination: "v1Pagination",
+        workloads: "typing.Sequence[v1WorkloadContainer]",
+    ):
+        self.workloads = workloads
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialWorkloadsResponse":
+        return cls(
+            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workloads": [x.to_json() for x in self.workloads],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetUserResponse:
@@ -3301,6 +3305,28 @@ class v1PatchUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1PostAllocationProxyAddressRequest:
+    def __init__(
+        self,
+        allocationId: "typing.Optional[str]" = None,
+        proxyAddress: "typing.Optional[str]" = None,
+    ):
+        self.allocationId = allocationId
+        self.proxyAddress = proxyAddress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAllocationProxyAddressRequest":
+        return cls(
+            allocationId=obj.get("allocationId", None),
+            proxyAddress=obj.get("proxyAddress", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+            "proxyAddress": self.proxyAddress if self.proxyAddress is not None else None,
         }
 
 class v1PostCheckpointMetadataRequest:
@@ -5147,6 +5173,32 @@ class v1ValidationHistoryEntry:
             "searcherMetric": dump_float(self.searcherMetric),
         }
 
+class v1WorkloadContainer:
+    def __init__(
+        self,
+        checkpoint: "typing.Optional[v1CheckpointWorkload]" = None,
+        training: "typing.Optional[v1MetricsWorkload]" = None,
+        validation: "typing.Optional[v1MetricsWorkload]" = None,
+    ):
+        self.training = training
+        self.validation = validation
+        self.checkpoint = checkpoint
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1WorkloadContainer":
+        return cls(
+            training=v1MetricsWorkload.from_json(obj["training"]) if obj.get("training", None) is not None else None,
+            validation=v1MetricsWorkload.from_json(obj["validation"]) if obj.get("validation", None) is not None else None,
+            checkpoint=v1CheckpointWorkload.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "training": self.training.to_json() if self.training is not None else None,
+            "validation": self.validation.to_json() if self.validation is not None else None,
+            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
+        }
+
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -6438,6 +6490,32 @@ def get_GetTrialCheckpoints(
         return v1GetTrialCheckpointsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialCheckpoints", _resp)
 
+def get_GetTrialWorkloads(
+    session: "client.Session",
+    *,
+    trialId: int,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+) -> "v1GetTrialWorkloadsResponse":
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/workloads",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialWorkloadsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialWorkloads", _resp)
+
 def get_GetUser(
     session: "client.Session",
     *,
@@ -6840,6 +6918,26 @@ def post_PauseExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
+
+def post_PostAllocationProxyAddress(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1PostAllocationProxyAddressRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/proxy_address",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostAllocationProxyAddress", _resp)
 
 def post_PostCheckpointMetadata(
     session: "client.Session",

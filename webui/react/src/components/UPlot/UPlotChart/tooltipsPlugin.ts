@@ -1,6 +1,6 @@
 import uPlot, { Plugin } from 'uplot';
 
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'shared/utils/color';
 
 import css from './tooltipsPlugin.module.scss';
 

@@ -5,7 +5,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { cancelExperiment, killExperiment } from 'services/api';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './useModalExperimentStop.module.scss';
 

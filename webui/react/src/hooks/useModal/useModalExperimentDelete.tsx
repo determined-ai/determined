@@ -2,9 +2,12 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { ModalFuncProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { routeToReactUrl } from '../../shared/utils/routes';
 
 import useModal, { ModalHooks } from './useModal';
 
@@ -33,13 +36,13 @@ const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks 
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
-      content: 'Are you sure you want to delete\nthis experiment?',
+      content: `Are you sure you want to delete\n experiment ${experimentId}?`,
       icon: <ExclamationCircleOutlined />,
       okText: 'Delete',
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk ]);
+  }, [ handleOk, experimentId ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

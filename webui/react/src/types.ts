@@ -1,19 +1,10 @@
 import * as Api from 'services/api-ts-sdk';
 
+import { Primitive, RawJson, RecordKey } from './shared/types';
+
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
 }
-
-export type RecordKey = string | number | symbol;
-export type UnknownRecord = Record<RecordKey, unknown>;
-export type Primitive = boolean | number | string;
-export type NullOrUndefined<T = undefined> = T | null | undefined;
-export type Point = { x: number; y: number };
-export type Range<T = Primitive> = [ T, T ];
-export type Eventually<T> = T | Promise<T>;
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export type RawJson = Record<string, any>;
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
@@ -122,8 +113,10 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
+  /** allocated percentange of total connected slots  */
   allocation?: number;
   available: number;
+  /** sum of all slots of this type across all _connected_ agents */
   total: number;
 }
 
@@ -137,11 +130,6 @@ export interface EndTimes {
 
 export interface StartEndTimes extends EndTimes {
   startTime: string;
-}
-
-export interface Pagination {
-  limit: number;
-  offset: number;
 }
 
 /* Command */
@@ -658,88 +646,8 @@ export interface Template {
   name: string;
 }
 
-export interface ResourcePool {
-  accelerator?: string;
-  auxContainerCapacity: number;
-  auxContainerCapacityPerAgent: number;
-  auxContainersRunning: number;
-  defaultAuxPool: boolean;
-  defaultComputePool?: boolean;
-  description: string;
-  details: RPDetails;
-  imageId: string;
-  instanceType: string;
-  location: string;
-  maxAgents: number;
-  minAgents: number;
-  name: string;
-  numAgents: number;
-  preemptible: boolean;
-  schedulerFittingPolicy: Api.V1FittingPolicy;
-  schedulerType: Api.V1SchedulerType;
+export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
   slotType: ResourceType;
-  slotsAvailable: number;
-  slotsPerAgent?: number;
-  slotsUsed: number;
-  stats?: Api.V1QueueStats;
-  type: Api.V1ResourcePoolType;
-}
-
-export interface RPDetails {
-  aws?: Partial<Aws>;
-  gcp?: Partial<Gcp>;
-  priorityScheduler?: PriorityScheduler;
-}
-
-export interface Aws {
-  customTags?: CustomTag[];
-  iamInstanceProfileArn: string;
-  imageId: string;
-  instanceName: string;
-  instanceType: string;
-  logGroup: string;
-  logStream: string;
-  publicIp: boolean;
-  region: string;
-  rootVolumeSize: number;
-  securityGroupId: string;
-  spotEnabled: boolean;
-  spotMaxPrice: string;
-  sshKeyName: string;
-  subnetId: string;
-  tagKey: string;
-  tagValue: string;
-}
-
-interface CustomTag {
-  key: string;
-  value: string;
-}
-
-export interface Gcp {
-  bootDiskSize: number;
-  bootDiskSourceImage: string;
-  externalIp: boolean;
-  gpuNum: number;
-  gpuType: string;
-  labelKey: string;
-  labelValue: string;
-  machineType: string;
-  namePrefix: string;
-  network: string;
-  networkTags: string[];
-  operationTimeoutPeriod: number;
-  preemptible: boolean;
-  project: string;
-  serviceAccountEmail: string;
-  serviceAccountScopes: string[];
-  subnetwork: string;
-  zone: string;
-}
-
-export interface PriorityScheduler {
-  defaultPriority: number;
-  preemption: boolean;
 }
 
 /* Jobs */

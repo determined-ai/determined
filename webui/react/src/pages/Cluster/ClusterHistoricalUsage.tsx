@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
+import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import useSettings from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
@@ -26,6 +27,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const { users } = useStore();
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
@@ -103,10 +105,10 @@ const ClusterHistoricalUsage: React.FC = () => {
       });
 
       setChartSeries(
-        mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy),
+        mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy, users),
       );
     })();
-  }, [ filters ]);
+  }, [ filters, users ]);
 
   return (
     <>

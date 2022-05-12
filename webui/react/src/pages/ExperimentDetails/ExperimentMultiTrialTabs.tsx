@@ -8,7 +8,9 @@ import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 const { TabPane } = Tabs;
 

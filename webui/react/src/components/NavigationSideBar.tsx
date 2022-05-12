@@ -1,19 +1,19 @@
 import { Button, Menu, Modal, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef,
+  useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStore } from 'contexts/Store';
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
 
 import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
-import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 
@@ -69,25 +69,14 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
   const { auth, cluster: overview, ui, resourcePools, info } = useStore();
-  const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
-
-  const cluster = useMemo(() => {
-    if (overview[ResourceType.ALL].allocation === 0) return undefined;
-    const totalSlots = resourcePools.reduce((totalSlots, currentPool) => {
-      return totalSlots + currentPool.maxAgents * (currentPool.slotsPerAgent ?? 0);
-    }, 0);
-    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-      / totalSlots)}%`;
-  }, [ overview, resourcePools ]);
 
   const menuConfig = useMemo(() => ({
     bottom: [
@@ -165,10 +154,10 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => setShowJupyterLabModal(true)}>Launch JupyterLab
+                onClick={() => openJupyterLabModal()}>Launch JupyterLab
               </Button>
               {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => setShowJupyterLabModal(true)}>
+                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
                   <Icon
                     name={'add-small'}
                     size="tiny"
@@ -176,17 +165,13 @@ const NavigationSideBar: React.FC = () => {
                 </Button>
               ) : null}
             </div>
-            <JupyterLabModal
-              visible={showJupyterLabModal}
-              onCancel={() => setShowJupyterLabModal(false)}
-              onLaunch={() => setShowJupyterLabModal(false)}
-            />
           </section>
           <section className={css.top}>
             {menuConfig.top.map(config => (
               <NavigationItem
                 key={config.icon}
-                status={config.icon === 'cluster' ? cluster : undefined}
+                status={config.icon === 'cluster' ?
+                  clusterStatusText(overview, resourcePools) : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />

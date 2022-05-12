@@ -66,14 +66,18 @@ def test_launch_distributed(
     with test_util.set_resources_id_env_var():
         assert launch.torch_distributed.main(override_args, script) == mock_success_code
 
-    launch_cmd = launch.torch_distributed.create_launch_cmd(
+    launch_cmd = launch.torch_distributed.create_pid_server_cmd(
+        cluster_info.allocation_id, len(cluster_info.slot_ids)
+    )
+
+    launch_cmd += launch.torch_distributed.create_launch_cmd(
         len(cluster_info.container_addrs),
         len(cluster_info.slot_ids),
         cluster_info.container_rank,
         cluster_info.container_addrs[0],
         override_args,
     )
-
+    launch_cmd += launch.torch_distributed.create_pid_client_cmd(cluster_info.allocation_id)
     launch_cmd += launch.torch_distributed.create_log_redirect_cmd()
     launch_cmd += script
 

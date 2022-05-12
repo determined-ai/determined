@@ -1,12 +1,12 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
+import { clone, isEqual } from 'shared/utils/data';
+import { percent } from 'shared/utils/number';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
 } from 'types';
-import { clone, isEqual } from 'utils/data';
-import { percent } from 'utils/number';
 
 interface Props {
   children?: React.ReactNode;

@@ -8,14 +8,14 @@ import Link from 'components/Link';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
+import { formatDatetime } from 'shared/utils/datetime';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
   CheckpointWorkloadExtended,
   ExperimentConfig,
   RunState,
 } from 'types';
-import { formatDatetime } from 'utils/datetime';
-import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import useModal, { ModalHooks } from './useModal';

@@ -246,6 +246,18 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			taskLoggingSetupMode,
 			tar.TypeReg,
 		),
+		aug.OwnedArchiveItem(
+			taskLoggingTeardownScript,
+			etc.MustStaticFile(etc.TaskLoggingTeardownScriptResource),
+			taskLoggingTeardownMode,
+			tar.TypeReg,
+		),
+		aug.OwnedArchiveItem(
+			taskSignalHandlingScript,
+			etc.MustStaticFile(etc.TaskSignalHandlingScriptResource),
+			taskSignalHandlingMode,
+			tar.TypeReg,
+		),
 	}, runDir)
 }
 

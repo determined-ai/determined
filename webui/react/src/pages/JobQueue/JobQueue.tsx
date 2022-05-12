@@ -17,14 +17,16 @@ import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { GetJobsResponse } from 'services/types';
+import { isEqual } from 'shared/utils/data';
+import { capitalize } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
-import { isEqual } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
-import { capitalize } from 'utils/string';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

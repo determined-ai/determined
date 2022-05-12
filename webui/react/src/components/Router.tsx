@@ -3,8 +3,10 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
-import { RouteConfig } from 'routes/types';
-import { filterOutLoginLocation, paths } from 'routes/utils';
+import { paths } from 'routes/utils';
+
+import { RouteConfig } from '../shared/types';
+import { filterOutLoginLocation } from '../shared/utils/routes';
 
 interface Props {
   routes: RouteConfig[];
