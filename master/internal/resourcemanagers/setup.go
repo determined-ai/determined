@@ -59,12 +59,11 @@ func Setup(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-	authFuncs []echo.MiddlewareFunc,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
 	case config.ResourceManager.AgentRM != nil:
-		ref = setupAgentResourceManager(system, db, echo, config, opts, cert, authFuncs)
+		ref = setupAgentResourceManager(system, db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
 		tlsConfig, err := makeTLSConfig(cert)
 		if err != nil {
@@ -91,7 +90,6 @@ func setupAgentResourceManager(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-	authFuncs []echo.MiddlewareFunc,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("agentRM"),
@@ -99,7 +97,7 @@ func setupAgentResourceManager(
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 
-	agent.Initialize(system, echo, opts, authFuncs)
+	agent.Initialize(system, echo, opts)
 	return ref
 }
 
