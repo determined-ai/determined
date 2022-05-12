@@ -95,7 +95,8 @@ const NotesCard: React.FC<Props> = (
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title={(
         <InlineEditor
-          disabled={!onSaveTitle || !isEditing}
+          disabled={!onSaveTitle || disabled}
+          style={{ paddingLeft: '5px', paddingRight: '5px' }}
           value={title}
           onSave={onSaveTitle}
         />
@@ -105,7 +106,7 @@ const NotesCard: React.FC<Props> = (
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}
-          onClick={() => { if (notes === '') editNotes(); }}
+          onClick={() => { editNotes(); }}
         />
       </Spinner>
       <Prompt

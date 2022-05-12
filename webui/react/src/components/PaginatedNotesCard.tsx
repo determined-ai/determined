@@ -3,6 +3,7 @@ import { Button, Dropdown, Menu, Modal, Select } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import usePrevious from 'hooks/usePrevious';
 import { Note } from 'types';
 
 import Icon from './Icon';
@@ -23,10 +24,18 @@ interface Props {
 const PaginatedNotesCard: React.FC<Props> = (
   { notes, onNewPage, onSave, onDelete, disabled = false }:Props,
 ) => {
+
+  useEffect(() => {
+
+    // console.log(notes.length);
+  }, [ notes.length ]);
   const [ currentPage, setCurrentPage ] = useState(0);
+  const [ deleteTarget, setDeleteTarget ] = useState(0);
   const [ editedContents, setEditedContents ] = useState(notes?.[currentPage]?.contents ?? '');
   const [ editedName, setEditedName ] = useState(notes?.[currentPage]?.name ?? '');
   const [ modal, contextHolder ] = Modal.useModal();
+
+  const previousNumberOfNotes = usePrevious(notes.length, undefined);
 
   const handleSwitchPage = useCallback((pageNumber: number | SelectValue) => {
     if (editedContents !== notes?.[currentPage]?.contents) {
@@ -41,8 +50,18 @@ const PaginatedNotesCard: React.FC<Props> = (
       });
     } else {
       setCurrentPage(pageNumber as number);
+      setEditedContents(notes?.[currentPage]?.contents ?? '');
     }
   }, [ currentPage, editedContents, modal, notes ]);
+
+  useEffect(() => {
+    if (!previousNumberOfNotes || notes.length > previousNumberOfNotes) {
+      setCurrentPage(notes.length);
+    } else if (notes.length < previousNumberOfNotes){
+      setCurrentPage((prevPageNumber) =>
+        prevPageNumber > deleteTarget ? prevPageNumber - 1 : prevPageNumber);
+    }
+  }, [ previousNumberOfNotes, notes.length, deleteTarget ]);
 
   const handleNewPage = useCallback(() => {
     const currentPages = notes.length;
@@ -61,18 +80,26 @@ const PaginatedNotesCard: React.FC<Props> = (
   }, [ currentPage, editedName, notes, onSave ]);
 
   const handleSaveTitle = useCallback(async (newName: string) => {
-    await setEditedName(newName);
-  }, []);
+    setEditedName(newName);
+    await onSave(notes.map((note, idx) => {
+      if (idx === currentPage) {
+        return { name: newName } as Note;
+      }
+      return note;
+    }));
+  }, [ currentPage, notes, onSave ]);
 
-  const handleDeletePage = useCallback((pageNumber: number) => {
-    onDelete(pageNumber);
-  }, [ onDelete ]);
+  const handleDeletePage = useCallback((deletePageNumber: number) => {
+    onDelete(deletePageNumber);
+    setDeleteTarget(deletePageNumber);
+  }, [ onDelete, setDeleteTarget ]);
 
   const handleEditedNotes = useCallback((newContents: string) => {
     setEditedContents(newContents);
   }, []);
 
   useEffect(() => {
+    if (notes.length === 0) return;
     if (currentPage < 0) setCurrentPage(0);
     if (currentPage >= notes.length) setCurrentPage(notes.length - 1);
   }, [ currentPage, notes.length ]);
@@ -84,8 +111,11 @@ const PaginatedNotesCard: React.FC<Props> = (
 
   const ActionMenu = useCallback((pageNumber: number) => {
     return (
-      <Menu>
-        <Menu.Item danger key="delete" onClick={() => handleDeletePage(pageNumber)}>
+      <Menu onClick={({ domEvent }) => domEvent.stopPropagation()}>
+        <Menu.Item
+          danger
+          key="delete"
+          onClick={() => handleDeletePage(pageNumber)}>
           Delete...
         </Menu.Item>
       </Menu>
@@ -106,7 +136,7 @@ const PaginatedNotesCard: React.FC<Props> = (
 
   return (
     <div className={css.base}>
-      {notes.length > 1 && (
+      {notes.length > 0 && (
         <div className={css.sidebar}>
           <ul className={css.listContainer} role="list">
             {(notes as Note[]).map((note, idx) => (
@@ -121,13 +151,14 @@ const PaginatedNotesCard: React.FC<Props> = (
                     borderColor: idx === currentPage ?
                       'var(--theme-colors-monochrome-12)' :
                       undefined,
-                  }}>
-                  <span onClick={() => handleSwitchPage(idx)}>{note.name}</span>
+                  }}
+                  onClick={() => handleSwitchPage(idx)}>
+                  <span>{note.name}</span>
                   {!disabled && (
                     <Dropdown
                       overlay={() => ActionMenu(idx)}
                       trigger={[ 'click' ]}>
-                      <div className={css.action}>
+                      <div className={css.action} onClick={e => e.stopPropagation()}>
                         <Icon name="overflow-horizontal" />
                       </div>
                     </Dropdown>

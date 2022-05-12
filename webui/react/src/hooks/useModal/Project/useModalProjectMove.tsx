@@ -64,6 +64,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         <SelectFilter
           id="workspace"
           placeholder="Select a destination workspace."
+          showSearch={false}
           style={{ width: '100%' }}
           onSelect={handleWorkspaceSelect}>
           {workspaces.map(workspace => {

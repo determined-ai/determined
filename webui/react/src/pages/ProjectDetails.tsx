@@ -863,6 +863,7 @@ const ProjectDetails: React.FC = () => {
     }, {
       body: (
         <PaginatedNotesCard
+          disabled={project?.archived}
           notes={project?.notes ?? []}
           onDelete={handleDeleteNote}
           onNewPage={handleNewNotesPage}
@@ -893,6 +894,7 @@ const ProjectDetails: React.FC = () => {
     hasUnarchivable,
     isLoading,
     project?.notes,
+    project?.archived,
     settings,
     total,
     updateSettings ]);

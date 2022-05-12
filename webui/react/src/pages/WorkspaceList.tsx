@@ -300,7 +300,7 @@ const WorkspaceList: React.FC = () => {
       <div className={css.controls}>
         <SelectFilter
           bordered={false}
-          dropdownMatchSelectWidth={140}
+          dropdownMatchSelectWidth={160}
           label="View:"
           showSearch={false}
           value={workspaceFilter}

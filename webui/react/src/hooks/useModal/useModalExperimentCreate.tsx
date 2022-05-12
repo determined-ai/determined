@@ -9,9 +9,11 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import {
   ExperimentBase,
+  Project,
   RawJson,
   TrialDetails,
   TrialHyperparameters,
+  Workspace,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import handleError, { DetError, isDetError, isError } from 'utils/error';
@@ -32,8 +34,10 @@ interface Props {
 
 interface OpenProps {
   experiment: ExperimentBase;
+  project?: Project;
   trial?: TrialDetails;
   type: CreateExperimentType;
+  workspace?: Workspace;
 }
 
 interface ModalState {
@@ -325,7 +329,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     return props;
   }, [ getModalContent, handleCancel, handleOk ]);
 
-  const modalOpen = useCallback(({ experiment, trial, type }: OpenProps) => {
+  const modalOpen = useCallback(({ experiment, trial, type, workspace, project }: OpenProps) => {
     const isFork = type === CreateExperimentType.Fork;
     let config = upgradeConfig(experiment.configRaw);
 
@@ -339,7 +343,12 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
 
     const { environment: { registry_auth, ...restEnvironment }, ...restConfig } = config;
     setRegistryCredentials(registry_auth);
-    const publicConfig = { environment: restEnvironment, ...restConfig };
+    const publicConfig = {
+      environment: restEnvironment,
+      project: project?.name,
+      workspace: workspace?.name,
+      ...restConfig,
+    };
 
     setModalState(prev => {
       const newModalState = {

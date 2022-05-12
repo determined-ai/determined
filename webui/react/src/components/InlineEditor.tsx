@@ -1,5 +1,5 @@
 import React, {
-  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
+  ChangeEvent, HTMLAttributes, KeyboardEvent, RefObject, useCallback, useEffect, useRef, useState,
 } from 'react';
 
 import css from './InlineEditor.module.scss';
@@ -13,6 +13,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
+  parentTextareaRef?: RefObject<HTMLTextAreaElement>
   placeholder?: string;
   value: string;
 }
@@ -30,10 +31,13 @@ const InlineEditor: React.FC<Props> = ({
   value,
   onCancel,
   onSave,
+  parentTextareaRef,
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = parentTextareaRef ?? internalRef;
   const [ currentValue, setCurrentValue ] = useState(value);
   const [ isEditable, setIsEditable ] = useState(false);
   const [ isSaving, setIsSaving ] = useState(false);
@@ -53,7 +57,7 @@ const InlineEditor: React.FC<Props> = ({
     if (textareaRef.current) textareaRef.current.value = newValue;
     if (growWrapRef.current) growWrapRef.current.dataset.value = newValue;
     setCurrentValue(newValue);
-  }, [ maxLength ]);
+  }, [ maxLength, textareaRef ]);
 
   const cancel = useCallback(() => {
     updateEditorValue(value);
@@ -89,7 +93,7 @@ const InlineEditor: React.FC<Props> = ({
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
-  }, [ allowClear, cancel, save, value ]);
+  }, [ allowClear, cancel, save, value, textareaRef ]);
 
   const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
@@ -125,7 +129,7 @@ const InlineEditor: React.FC<Props> = ({
   useEffect(() => {
     if (!textareaRef.current || document.activeElement !== textareaRef.current) return;
     isEditable ? textareaRef.current.focus() : textareaRef.current.blur();
-  }, [ isEditable ]);
+  }, [ isEditable, textareaRef ]);
 
   return (
     <div className={classes.join(' ')} {...props}>

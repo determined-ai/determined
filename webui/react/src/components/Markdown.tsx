@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import css from './Markdown.module.scss';
 import Spinner from './Spinner';
@@ -17,6 +17,7 @@ interface Props {
 
 interface RenderProps {
   markdown: string;
+  onClick?: () => void
   placeholder?: string;
 }
 
@@ -25,10 +26,10 @@ enum TabType {
   Preview = 'preview'
 }
 
-const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder }) => {
+const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder, onClick }) => {
   const showPlaceholder = !markdown && placeholder;
   return (
-    <div className={css.render}>
+    <div className={css.render} onClick={onClick}>
       {showPlaceholder ? (
         <div className={css.placeholder}>{placeholder}</div>
       ) : (
@@ -46,7 +47,6 @@ const Markdown: React.FC<Props> = ({
   onChange,
   onClick,
 }: Props) => {
-  const handleRenderClick = useCallback(() => onClick?.(), [ onClick ]);
 
   return (
     <div aria-label="markdown-editor" className={css.base}>
@@ -74,16 +74,15 @@ const Markdown: React.FC<Props> = ({
             </React.Suspense>
           </TabPane>
           <TabPane key={TabType.Preview} tab="Preview">
-            <MarkdownRender markdown={markdown} />
+            <MarkdownRender markdown={markdown} onClick={onClick} />
           </TabPane>
         </Tabs>
       ) : (
-        <div onClick={handleRenderClick}>
-          <MarkdownRender
-            markdown={markdown}
-            placeholder="Add Notes..."
-          />
-        </div>
+        <MarkdownRender
+          markdown={markdown}
+          placeholder="Add Notes..."
+          onClick={onClick}
+        />
       )}
     </div>
   );

@@ -10,9 +10,10 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
+import { getProject } from 'services/api';
 import { isAborted } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
-import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
+import { ExperimentBase, Project, TrialDetails, ValidationHistory, Workspace } from 'types';
 import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
@@ -21,6 +22,8 @@ import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrial
 
 interface Params {
   experimentId: string;
+  projectId: string;
+  workspaceId: string;
 }
 
 const ExperimentDetails: React.FC = () => {
@@ -33,31 +36,51 @@ const ExperimentDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
 
+  const[ workspace, setWorkspace ] = useState<Workspace>();
+  const [ project, setProject ] = useState<Project>();
+
   const id = parseInt(experimentId);
+
+  const fetchProject = useCallback(async () => {
+    if (!experiment?.projectId) return;
+    try {
+      const response = await getProject({ id: experiment?.projectId }, { signal: canceler.signal });
+      setProject(prev => {
+        if (isEqual(prev, response)) return prev;
+        return response;
+      });
+    } catch (e) {
+      if (!pageError) setPageError(e as Error);
+    }
+  }, [ canceler.signal, experiment?.projectId, pageError ]);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const [ experimentData, validationHistory ] = await Promise.all([
+      const [ newExperiment, newValHistory ] = await Promise.all([
         getExperimentDetails({ id }, { signal: canceler.signal }),
         getExpValidationHistory({ id }, { signal: canceler.signal }),
       ]);
-      if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
-      if (!isEqual(validationHistory, valHistory)) setValHistory(validationHistory);
+      setExperiment((prevExperiment) =>
+        isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment);
+      setValHistory((prevValHistory) =>
+        isEqual(prevValHistory, newValHistory) ? prevValHistory : newValHistory);
       setIsSingleTrial(
-        isSingleTrialExperiment(experimentData),
+        isSingleTrialExperiment(newExperiment),
       );
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
   }, [
-    experiment,
     id,
     canceler.signal,
     pageError,
-    valHistory,
   ]);
 
-  const { stopPolling } = usePolling(fetchExperimentDetails);
+  const fetchAll = useCallback(async () => {
+    await Promise.allSettled([ fetchProject(), fetchExperimentDetails() ]);
+  }, [ fetchProject, fetchExperimentDetails ]);
+
+  const { stopPolling } = usePolling(fetchAll);
 
   const handleSingleTrialLoad = useCallback((trial: TrialDetails) => {
     setTrial(trial);
@@ -96,7 +119,9 @@ const ExperimentDetails: React.FC = () => {
           curUser={user}
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
+          project={project}
           trial={trial}
+          workspace={workspace}
         />
       )}
       stickyHeader

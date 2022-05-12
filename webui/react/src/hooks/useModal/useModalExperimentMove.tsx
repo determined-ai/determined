@@ -78,6 +78,7 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
 
   const handleWorkspaceSelect = useCallback((workspaceId: SelectValue) => {
     setSelectedWorkspaceId(workspaceId as number);
+    setDestinationProjectId(undefined);
     setProjects([]);
   }, []);
 
@@ -96,7 +97,7 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
         style={{
           ...style,
           backgroundColor: projects[index].id === destinationProjectId ?
-            'var(--theme-colors-monochrome-16)' :
+            '#e6f7ff' :
             undefined,
           color: projects[index].archived ?
             'var(--theme-colors-monochrome-10)' :
@@ -121,9 +122,10 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
           <SelectFilter
             id="workspace"
             placeholder="Select a destination workspace."
+            showSearch={false}
             style={{ width: '100%' }}
             value={selectedWorkspaceId}
-            onChange={handleWorkspaceSelect}>
+            onSelect={handleWorkspaceSelect}>
             {workspaces.map(workspace => {
               return (
                 <Option

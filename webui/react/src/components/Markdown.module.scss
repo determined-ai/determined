@@ -759,9 +759,11 @@
 }
 .render {
   padding: var(--theme-sizes-layout-big);
+  height: 100%;
 
   .placeholder {
     color: var(--theme-colors-monochrome-9);
     font-style: italic;
+    height: 100%;
   }
 }

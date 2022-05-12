@@ -31,7 +31,15 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
+import {
+  DetailedUser,
+  ExperimentBase,
+  Project,
+  RecordKey,
+  RunState,
+  TrialDetails,
+  Workspace,
+} from 'types';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { openCommand } from 'wait';
@@ -42,7 +50,9 @@ interface Props {
   curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
+  project?: Project;
   trial?: TrialDetails;
+  workspace?: Workspace
 }
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
@@ -50,6 +60,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchExperimentDetails,
   trial,
+  workspace,
+  project,
 }: Props) => {
   const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
@@ -70,6 +82,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const { modalOpen: openModalDelete } = useModalExperimentDelete({ experiment: experiment });
 
   const { modalOpen: openModalCreate } = useModalExperimentCreate();
+
+  const disabled =
+    workspace?.archived ||
+    project?.archived ||
+    experiment?.archived;
 
   const backgroundColor = useMemo(() => {
     return getStateColorCssVar(experiment.state);
@@ -116,8 +133,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   const handleContinueTrialClick = useCallback(() => {
-    openModalCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, openModalCreate, trial ]);
+    openModalCreate({
+      experiment,
+      project,
+      trial,
+      type: CreateExperimentType.ContinueTrial,
+      workspace,
+    });
+  }, [ experiment, openModalCreate, trial, workspace, project ]);
 
   const handleForkClick = useCallback(() => {
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
@@ -239,8 +262,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
     return [
-      options.fork,
-      trial?.id && options.continueTrial,
+      !disabled && options.fork,
+      !disabled && trial?.id && options.continueTrial,
       options.tensorboard,
       options.downloadModel,
       terminalRunStates.has(experiment.state) && (
@@ -251,6 +274,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     ].filter(option => !!option) as Option[];
   }, [
     curUser,
+    disabled,
     isRunningDelete,
     experiment.archived,
     experiment.id,
@@ -360,6 +384,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             </div>
             <div className={css.experimentName}>
               <InlineEditor
+                disabled={disabled}
                 isOnDark
                 maxLength={128}
                 placeholder="experiment name"
