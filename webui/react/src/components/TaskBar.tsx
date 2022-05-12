@@ -2,8 +2,8 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
 import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
-
-import { paths, routeToReactUrl } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { paths} from 'routes/utils';
 import {
   killTask,
 } from 'services/api';

@@ -1,8 +1,8 @@
 import { serverAddress } from 'routes/utils';
-import { Command, CommandState, CommandTask, CommandType } from 'types';
-import { isCommandTask } from 'utils/task';
 import { paths } from 'routes/utils';
 import { windowOpenFeatures } from 'shared/utils/routes';
+import { Command, CommandState, CommandTask, CommandType } from 'types';
+import { isCommandTask } from 'utils/task';
 
 // createWsUrl: Given an event url create the corresponding ws url.
 export function createWsUrl(eventUrl: string): string {
@@ -45,9 +45,9 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
   return waitPath + waitParams;
 };
 
-export const openCommand = (url: string, command: CommandTask): void => {
-  window.open(`/det${paths.interactiveTask(command, url)}`, '_blank', windowOpenFeatures.join(','));
-}
+export const openCommand = (command: CommandTask): void => {
+  window.open(`/det${paths.interactiveTask(command, waitPageUrl(command))}`, '_blank', windowOpenFeatures.join(','));
+};
 
 export interface WaitStatus {
   isReady: boolean;
