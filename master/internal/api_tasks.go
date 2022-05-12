@@ -85,6 +85,26 @@ func (a *apiServer) AllocationAllGather(
 	}
 }
 
+func (a *apiServer) PostAllocationProxyAddress(
+	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
+) (*apiv1.PostAllocationProxyAddressResponse, error) {
+	if req.AllocationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(handler.Address(), task.SetAllocationProxyAddress{
+		ProxyAddress: req.ProxyAddress,
+	}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.PostAllocationProxyAddressResponse{}, nil
+}
+
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {

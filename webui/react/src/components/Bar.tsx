@@ -1,8 +1,8 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+import { floatToPercent } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import { floatToPercent } from 'utils/string';
 
 import css from './Bar.module.scss';
 

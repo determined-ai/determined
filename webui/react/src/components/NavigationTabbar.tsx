@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
+import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
@@ -10,7 +11,6 @@ import { handlePath, paths } from 'routes/utils';
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
 import Icon from './Icon';
-import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
 
@@ -41,18 +41,18 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
-  const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
   const handleLaunchJupyterLab = useCallback(() => {
-    setShowJupyterLabModal(true);
     setIsShowingOverflow(false);
-  }, []);
+    openJupyterLabModal();
+  }, [ openJupyterLabModal ]);
 
   const handlePathUpdate = useCallback((e, path) => {
     handlePath(e, { path });
@@ -124,10 +124,6 @@ const NavigationTabbar: React.FC = () => {
         ]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
-      />
-      <JupyterLabModal
-        visible={showJupyterLabModal}
-        onCancel={() => setShowJupyterLabModal(false)}
       />
     </nav>
   );

@@ -1,6 +1,8 @@
 import React, { MouseEvent, PropsWithChildren, useCallback } from 'react';
 
-import { AnyMouseEventHandler, handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
+import { handlePath, linkPath } from 'routes/utils';
+
+import { AnyMouseEventHandler, windowOpenFeatures } from '../shared/utils/routes';
 
 import css from './Link.module.scss';
 

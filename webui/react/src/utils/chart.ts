@@ -1,9 +1,9 @@
 import themes, { defaultThemeId } from 'themes';
-import { Primitive, Range } from 'types';
 import { primitiveSorter } from 'utils/sort';
 
-import { ColorScale } from './color';
-import { clone } from './data';
+import { Primitive, Range } from '../shared/types';
+import { ColorScale } from '../shared/utils/color';
+import { clone } from '../shared/utils/data';
 
 /* Color Scales */
 

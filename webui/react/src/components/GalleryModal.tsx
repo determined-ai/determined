@@ -4,8 +4,8 @@ import React, { PropsWithChildren, useCallback, useEffect, useState } from 'reac
 
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
-import { isNumber } from 'utils/data';
-import { isPercent, percentToFloat } from 'utils/number';
+import { isNumber } from 'shared/utils/data';
+import { isPercent, percentToFloat } from 'shared/utils/number';
 
 import css from './GalleryModal.module.scss';
 import IconButton from './IconButton';

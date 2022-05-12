@@ -5,18 +5,21 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
+import { clone, isEqual } from 'shared/utils/data';
 import {
   ExperimentBase,
-  RawJson,
   TrialDetails,
   TrialHyperparameters,
 } from 'types';
-import { clone, isEqual } from 'utils/data';
-import handleError, { DetError, isDetError, isError } from 'utils/error';
+import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
+
+import { RawJson } from '../../shared/types';
+import { DetError, isDetError, isError } from '../../shared/utils/error';
+import { routeToReactUrl } from '../../shared/utils/routes';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalExperimentCreate.module.scss';

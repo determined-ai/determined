@@ -9,9 +9,9 @@ import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
+import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
-import { floatToPercent, truncate } from 'utils/string';
 import { openCommand } from 'wait';
 
 import css from './JobQueue.module.scss';

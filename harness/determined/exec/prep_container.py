@@ -1,6 +1,7 @@
 import argparse
 import base64
 import io
+import logging
 import os
 import socket
 import tarfile
@@ -90,8 +91,9 @@ def do_rendezvous_slurm(
             break
         except ValueError as e:
             resolution_error = e
-    if not rendezvous_ip:
-        raise resolution_error or ValueError("unable to resolve rendezvous ip")
+    else:
+        logging.warning(f"falling back to naive ip resolution after:\n\t{resolution_error}")
+        rendezvous_ip = socket.gethostbyname(socket.gethostname())
 
     # Note, rendezvous must be sorted in rank order.
     resp = bindings.post_AllocationAllGather(
@@ -121,13 +123,9 @@ def rendezvous_ifaces() -> List[str]:
     if not rendezvous_iface:
         rendezvous_iface = get_eth_interface_name()
 
-    # On systems where there is no eth, DET_INTER_NODE_NETWORK_INTERFACE should work, though.
+    # If none of these resolved, we can fallback to something naive.
     if not rendezvous_iface:
-        rendezvous_iface = os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE")
-
-    # If none of these resolved, we're out of luck.
-    if not rendezvous_iface:
-        raise ValueError("unable to resolve rendezvous iface")
+        return []
 
     return rendezvous_iface.split(",")
 
@@ -183,11 +181,58 @@ def do_rendezvous(sess: Session, allocation_id: str) -> None:
     rendezvous_info._to_file()
 
 
+def proxy_ifaces() -> List[str]:
+    # Manual override, for maximum flexibility.
+    proxy_ifaces = os.environ.get("DET_SLURM_PROXY_IFACE")
+
+    if not proxy_ifaces:
+        return []
+
+    return proxy_ifaces.split(",")
+
+
+def set_proxy_address(sess: Session, allocation_id: str) -> None:
+    proxy_ip, resolution_error = None, None
+    for proxy_iface in proxy_ifaces():
+        try:
+            proxy_ip = get_ip_from_interface(proxy_iface)
+            break
+        except ValueError as e:
+            resolution_error = e
+    else:
+        logging.warning(f"falling back to naive proxy ip resolution (error={resolution_error})")
+        proxy_ip = socket.gethostbyname(socket.gethostname())
+
+    # Right now this is just used in 'singularity-over-slurm' mode when singularity is using the
+    # equivalent of 'host' networking in Docker. When supporting any sort of network virtualization
+    # (https://sylabs.io/guides/3.0/user-guide/networking.html) this will need some revision.
+    bindings.post_PostAllocationProxyAddress(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1PostAllocationProxyAddressRequest(
+            proxyAddress=proxy_ip,
+        ),
+    )
+
+
+def do_proxy(sess: Session, allocation_id: str) -> None:
+    r_type = os.environ.get("DET_RESOURCES_TYPE")
+    assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
+
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+        return
+    elif r_type == RESOURCES_TYPE_SLURM_JOB:
+        set_proxy_address(sess, allocation_id)
+    else:
+        raise ValueError(f"unsupported resources type: {r_type}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--trial", action="store_true")
     parser.add_argument("--resources", action="store_true")
     parser.add_argument("--rendezvous", action="store_true")
+    parser.add_argument("--proxy", action="store_true")
     args = parser.parse_args()
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
@@ -207,3 +252,6 @@ if __name__ == "__main__":
 
     if args.rendezvous:
         do_rendezvous(sess, info.allocation_id)
+
+    if args.proxy:
+        do_proxy(sess, info.allocation_id)

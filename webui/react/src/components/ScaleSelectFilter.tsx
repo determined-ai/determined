@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
 import SelectFilter from 'components/SelectFilter';
-import { capitalize } from 'utils/string';
+import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 

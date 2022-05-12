@@ -1,5 +1,7 @@
-import { MetricName, MetricType, RecordKey, WorkloadGroup } from 'types';
+import { MetricName, MetricType, WorkloadGroup } from 'types';
 import { metricNameSorter } from 'utils/sort';
+
+import { RecordKey } from '../shared/types';
 
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads

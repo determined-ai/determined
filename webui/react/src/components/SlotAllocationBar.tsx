@@ -8,9 +8,9 @@ import { resourceStateToLabel } from 'constants/states';
 import history from 'routes/history';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState, SlotState } from 'types';
-import { floatToPercent } from 'utils/string';
 
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';

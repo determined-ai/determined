@@ -5,11 +5,11 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
+import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 import {
   CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
-import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 interface Props {

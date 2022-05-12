@@ -4,7 +4,7 @@ import uPlot, { AlignedData, Series } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import Message, { MessageType } from 'shared/components/message';
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'shared/utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';

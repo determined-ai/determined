@@ -4,7 +4,7 @@ import { ModalFunc, ModalStaticFunctions } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { isAsyncFunction } from 'utils/data';
+import { isAsyncFunction } from 'shared/utils/data';
 
 import usePrevious from '../usePrevious';
 

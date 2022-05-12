@@ -5,6 +5,70 @@
 ###############
 
 **************
+ Version 0.18
+**************
+
+Version 0.18.0
+==============
+
+**Release Date:** May 09, 2022
+
+**New Features**
+
+-  Add the Core API. The Core API is the first API offered by Determined that allows users to fully
+   integrate arbitrary models and training loops into the Determined platform. All of the features
+   offered by the higher-level Trial APIs, such as reporting metrics, pausing and reactivating,
+   hyperparameter search, and distributed training, are now available to arbitrary models,
+   frameworks, and training loops, with only light code changes. See the :ref:`user guide
+   <core-getting-started>` and :ref:`reference documentation <core-reference>` to get started.
+
+-  **Breaking Change**: Checkpoints: The Python SDK's ``Checkpoint.download()`` method now writes a
+   differently formatted ``metadata.json`` file into the checkpoint directory. Previously, the JSON
+   content in the file contained many system-defined fields, plus a ``metadata`` field that
+   contained the user-defined metadata for the checkpoint, which was also available as a Python
+   object as ``Checkpoint.metadata``. Now, ``metadata.json`` contains only the user-defined
+   metadata, and those metadata appear as top-level keys. Some of the fields which were previously
+   system-defined are now considered user-defined, even though they are uploaded automatically in
+   Trial-based training. This decision is in line with the Trial APIs now being optional---that is,
+   part of userspace---after the release of the Core API.
+
+-  Job queue: Add support for dynamic job modification on Kubernetes using the job queue. Users can
+   now use the WebUI or CLI to change the priority and queue position of jobs in k8s. To update jobs
+   through the WebUI, go to the Job Queue section, find the target job, and click on the Manage Job
+   option. To update jobs in the CLI, use the ``det job update`` command. Run ``det job update
+   --help`` for more information.
+
+**Bug Fixes**
+
+-  CLI: API requests executed through the Python bindings have been erroneously using the SSL
+   "noverify" option since version 0.17.6, making them potentially insecure. The option is now
+   disabled.
+
+**Deprecated Features**
+
+-  The Determined Data Layer has been deprecated and will be removed in a future version. New code
+   should not begin using it, but we will assist existing users to migrate to using `YogaDL
+   <https://yogadl.readthedocs.io>`__ directly before removing the feature.
+
+**Removed Features**
+
+-  Python API: The old experimental namespace methods for custom reducers in both PyTorchTrial and
+   EstimatorTrial have been removed. The experimental names were deprecated in 0.15.2 (April 2021)
+   when custom reducers were promoted to general availability. Any users who have not already
+   migrated to the non-experimental namespace for custom reducer methods must do so.
+
+-  Searcher: Remove the PBT searcher, which was deprecated in version 0.17.6 (January 2022).
+
+-  API: Remove the notebook logs endpoint in favor of the new task logs endpoint.
+
+-  Python API: Remove the remaining parts of the Native API, which was deprecated in version 0.13.5
+   (September 2020). The only Native API functions that still remained were
+   ``det.experimental.create()`` and ``det.expeimental.create_trial_instance()``.
+
+-  Python API: Remove the ``det.pytorch.reset_parameters()`` function, which was deprecated in
+   0.12.13 (August 2020).
+
+**************
  Version 0.17
 **************
 
@@ -31,8 +95,6 @@ Version 0.17.15
 
 -  Add a translation of DeepSpeed's DCGAN example using the new DeepSpeedTrial API.
 
-----
-
 Version 0.17.14
 ===============
 
@@ -53,12 +115,11 @@ Version 0.17.13
 
 -  Support DeepSpeed with a new DeepSpeedTrial API.
 
-   -  `DeepSpeed <https://www.deepspeed.ai/>`_ is a powerful library for training large scale models.
-         With the new ``DeepSpeedTrial`` you can combine all the benefits of Determined with the
-         features available in DeepSpeed like the Zero Redundancy Optimizer and pipeline parallel
-         training. We also provide an example based on Eleuther AI's `GPT-NeoX
-         <https://github.com/EleutherAI/gpt-neox/>`_ repo to help you get started training
-         state-of-the-art language models.
+   `DeepSpeed <https://www.deepspeed.ai/>`__ is a powerful library for training large scale models.
+   With the new ``DeepSpeedTrial`` you can combine all the benefits of Determined with the features
+   available in DeepSpeed like the Zero Redundancy Optimizer and pipeline parallel training. We also
+   provide an example based on Eleuther AI's `GPT-NeoX <https://github.com/EleutherAI/gpt-neox/>`__
+   repo to help you get started training state-of-the-art language models.
 
 -  CLI: Allow the CLI to accept any unique prefix of a task UUID to refer to the task, rather than
    requiring the entire UUID. In some places, Determined only displays the first few characters of a
@@ -1039,7 +1100,7 @@ Version 0.14.6
 
 -  REST API: Add a new endpoint to delete experiments. This endpoint is only enabled for admin users
    and deletes all resources associated with an experiment. This includes checkpoint storage,
-   Tensorboards, trial logs from all backends and metadata such as history and metrics, stored in
+   TensorBoards, trial logs from all backends and metadata such as history and metrics, stored in
    PostgreSQL.
 
 -  REST API: Add a new endpoint to fetch aggregated historical resource allocation information.
@@ -1825,13 +1886,13 @@ Version 0.13.1
    recommended to upgrade to version 0.13.1. Users already on version 0.13.0 should upgrade to
    version 0.13.1 as usual.
 
--  Tensorboard: Fix a bug that prevents Tensorboards from experiments with old experiment
+-  TensorBoard: Fix a bug that prevents TensorBoards from experiments with old experiment
    configuration versions from being loaded.
 
 -  WebUI: Fix an API response decoding issue on React where a null checkpoint resource was unhandled
    and could prevent trial detail page from rendering.
 
--  WebUI: Fix an issue where terminated Tensorboard and notebook tasks were rendered as openable.
+-  WebUI: Fix an issue where terminated TensorBoard and notebook tasks were rendered as openable.
 
 Version 0.13.0
 ==============

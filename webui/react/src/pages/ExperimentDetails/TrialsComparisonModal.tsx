@@ -12,13 +12,13 @@ import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
+import { isNumber } from 'shared/utils/data';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';
-import { isNumber } from 'utils/data';
 import handleError from 'utils/error';
 import { extractMetricNames } from 'utils/metric';
-import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
