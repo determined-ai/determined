@@ -72,7 +72,6 @@ def test_non_admin_enable_disable_slots_agents() -> None:
     disable_slots = ["slot", "disable", agent_id, slot_id]
     enable_agents = ["agent", "enable", agent_id]
     disable_agents = ["agent", "disable", agent_id]
-    print(constants.DEFAULT_DETERMINED_USER)
     for cmd in [disable_slots, disable_agents, enable_slots, enable_agents]:
         child = det_spawn(["-u", constants.DEFAULT_DETERMINED_USER] + cmd)
         child.expect(".*Forbidden.*", timeout=EXPECT_TIMEOUT)
