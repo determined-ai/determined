@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -18,6 +19,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+var once sync.Once
+var userService *Service
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -53,9 +57,19 @@ type Service struct {
 	extConfig *model.ExternalSessions
 }
 
-// New creates a new user service.
-func New(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) (*Service, error) {
-	return &Service{db, system, extConfig}, nil
+// InitService creates the user service singleton.
+func InitService(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) {
+	once.Do(func() {
+		userService = &Service{db, system, extConfig}
+	})
+}
+
+// GetService returns a reference to the user service singleton.
+func GetService() *Service {
+	if userService == nil {
+		panic("Singleton UserService is not yet initialized.")
+	}
+	return userService
 }
 
 // The middleware looks for a token in two places (in this order):
