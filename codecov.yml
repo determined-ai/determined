@@ -5,8 +5,10 @@ codecov:
 coverage:
   status:
     project:
-      informational: true
+      default:
+        informational: true
     patch:
-      informational: true
+      default:
+        informational: true
 
 comment: false
