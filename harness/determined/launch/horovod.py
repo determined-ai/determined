@@ -31,7 +31,7 @@ def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[
         "--on-fail",
         "SIGTERM",
         "--on-exit",
-        "WAIT",
+        "SIGTERM",
         f"/tmp/pid_server-{allocation_id}",
         str(num_slot_ids),
         "--",
@@ -77,7 +77,7 @@ def create_worker_wrapper_cmd(allocation_id: str) -> List[str]:
         "python3",
         "-m",
         "determined.launch.wrap_rank",
-        "HOROVOD_RANK",
+        "HOROVOD_RANK,OMPI_COMM_WORLD_RANK,PMI_RANK",
         "--",
     ]
 

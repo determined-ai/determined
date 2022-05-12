@@ -2,7 +2,8 @@ import { Button, Dropdown, Menu, Tooltip } from 'antd';
 import React, { CSSProperties, useState } from 'react';
 
 import Icon from 'components/Icon';
-import { isMouseEvent } from 'routes/utils';
+
+import { isMouseEvent } from '../shared/utils/routes';
 
 import css from './PageHeaderFoldable.module.scss';
 

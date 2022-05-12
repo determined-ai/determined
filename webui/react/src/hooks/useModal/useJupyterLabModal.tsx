@@ -10,8 +10,10 @@ import useJupyterLab from 'hooks/useJupyterLab';
 import usePrevious from 'hooks/usePrevious';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
+import { JupyterLabConfig, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
+
+import { RawJson } from '../../shared/types';
 
 import css from './useJupyterLabModal.module.scss';
 import useModal, { ModalHooks } from './useModal';

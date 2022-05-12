@@ -10,14 +10,16 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
-import { isAborted, isNotFound } from 'services/utils';
+import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
+import { humanReadableBytes } from 'shared/utils/string';
 import { ModelVersion } from 'types';
-import { isEqual } from 'utils/data';
-import handleError, { ErrorType } from 'utils/error';
-import { humanReadableBytes } from 'utils/string';
+import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
+
+import { ErrorType } from '../shared/utils/error';
+import { isAborted } from '../shared/utils/service';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';

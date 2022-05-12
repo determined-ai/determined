@@ -1,0 +1,12 @@
+codecov:
+  require_ci_to_pass: yes
+
+# coverage of each PR must be at least 85% and must not be negative
+coverage:
+  status:
+    project:
+      informational: true
+    patch:
+      informational: true
+
+comment: false

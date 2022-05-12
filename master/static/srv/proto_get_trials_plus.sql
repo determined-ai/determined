@@ -81,19 +81,48 @@ best_checkpoint AS (
     c.resources,
     'STATE_' || c.state AS state
   FROM (
-      SELECT c.*,
-        ROW_NUMBER() OVER(
-          PARTITION BY v.trial_id
-          ORDER BY v.signed_searcher_metric ASC
-        ) AS rank
-      FROM trial_validations v
-      INNER JOIN checkpoints_view c ON (
-        c.steps_completed = v.total_batches
-        AND c.trial_id = v.trial_id
-      )
-      WHERE c.state = 'COMPLETED'
+    -- Using `public.checkpoints_view` directly results in performance regressions
+    -- identical to those described below.
+    SELECT c.*,
+      ROW_NUMBER() OVER(
+        PARTITION BY c.trial_id
+        ORDER BY c.signed_searcher_metric ASC
+      ) AS rank
+    FROM (
+      SELECT old_c.*
+      FROM (
+          SELECT c.*, v.signed_searcher_metric,
+            ROW_NUMBER() OVER(
+              PARTITION BY v.trial_id
+              ORDER BY v.signed_searcher_metric ASC
+            ) AS rank
+          FROM trial_validations v
+          INNER JOIN checkpoints_old_view c ON (
+            c.steps_completed = v.total_batches
+            AND c.trial_id = v.trial_id
+          )
+          WHERE c.state = 'COMPLETED'
+        ) old_c
+      WHERE old_c.rank = 1
+      UNION ALL
+      SELECT new_c.*
+      FROM (
+          SELECT c.*, v.signed_searcher_metric,
+            ROW_NUMBER() OVER(
+              PARTITION BY v.trial_id
+              ORDER BY v.signed_searcher_metric ASC
+            ) AS rank
+          FROM trial_validations v
+          INNER JOIN checkpoints_new_view c ON (
+            c.steps_completed = v.total_batches
+            AND c.trial_id = v.trial_id
+          )
+          WHERE c.state = 'COMPLETED'
+        ) new_c
+      WHERE new_c.rank = 1
     ) c
-  WHERE c.rank = 1
+    WHERE c.rank = 1
+  ) c
 ),
 latest_training AS (
   SELECT s.trial_id,
@@ -101,11 +130,17 @@ latest_training AS (
     s.end_time,
     'STATE_' || s.state AS state,
     s.metrics->'avg_metrics' as metrics
-  FROM steps s
+  FROM (
+      SELECT s.*,
+        ROW_NUMBER() OVER(
+          PARTITION BY s.trial_id
+          ORDER BY s.end_time DESC
+        ) AS rank
+      FROM steps s
+      WHERE s.state = 'COMPLETED'
+    ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
-  WHERE s.state = 'COMPLETED'
-  ORDER BY s.end_time DESC
-  LIMIT 1
+  WHERE s.rank = 1
 )
 SELECT
   row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
@@ -118,7 +153,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
-  ckpt.uuid AS warm_start_checkpoint_uuid,
+  coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid,
   t.task_id,
   (
     SELECT s.total_batches
@@ -143,7 +178,10 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
-  LEFT JOIN checkpoints_view ckpt ON ckpt.id = t.warm_start_checkpoint_id
+  -- Using `public.checkpoints_view` directly here results in the query planner being unable to push
+  -- filters into the union all, resulting in costly scans of steps, validations and checkpoints.
+  LEFT JOIN checkpoints_old_view old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN checkpoints_new_view new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
   -- Return the same ordering of IDs given by $1.
   JOIN (

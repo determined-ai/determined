@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import { detApi } from 'services/apiConfig';
 import { jsonToClusterLog } from 'services/decoder';
-import { isNumber } from 'utils/data';
+import { isNumber } from 'shared/utils/data';
 
 import css from './ClusterLogs.module.scss';
 

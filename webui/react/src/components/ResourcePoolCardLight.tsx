@@ -9,9 +9,9 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
+import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
 import { ResourcePool, ResourceState, ResourceType } from 'types';
-import { clone } from 'utils/data';
 
 import Json from './Json';
 import Link from './Link';
@@ -61,7 +61,12 @@ const poolAttributes = [
   {
     key: 'numAgents',
     label: 'Connected Agents',
-    render: (x: ResourcePool) => `${x.numAgents}/${x.maxAgents}`,
+    render: (x: ResourcePool) => {
+      if (x.maxAgents > 0) {
+        return `${x.numAgents}/${x.maxAgents}`;
+      }
+      return x.numAgents;
+    },
   },
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },

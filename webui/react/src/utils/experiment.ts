@@ -1,6 +1,8 @@
 import * as Type from 'types';
 
-import { clone, deletePathList, getPathList, isNumber, setPathList, unflattenObject } from './data';
+import { RawJson } from '../shared/types';
+import { clone, deletePathList, getPathList, isNumber, setPathList,
+  unflattenObject } from '../shared/utils/data';
 
 // Differentiate Experiment from Task.
 export const isExperiment = (
@@ -41,7 +43,7 @@ const stepRemovalTranslations = [
 ];
 
 const getLengthFromStepCount = (
-  config: Type.RawJson,
+  config: RawJson,
   stepCount: number,
 ): [string, number] => {
   const DEFAULT_BATCHES_PER_STEP = 100;
@@ -51,7 +53,7 @@ const getLengthFromStepCount = (
 };
 
 // Add opportunistic backward compatibility to old configs.
-export const upgradeConfig = (config: Type.RawJson): Type.RawJson => {
+export const upgradeConfig = (config: RawJson): RawJson => {
   const newConfig = clone(config);
 
   stepRemovalTranslations.forEach(translation => {

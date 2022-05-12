@@ -3,7 +3,7 @@ import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
 
-import { isEqual } from './data';
+import { isEqual } from '../shared/utils/data';
 
 export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;

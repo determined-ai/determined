@@ -1,7 +1,7 @@
 import queryString from 'query-string';
 
-import history from 'routes/history';
-import { clone } from 'utils/data';
+import history from 'shared/routes/history';
+import { clone } from 'shared/utils/data';
 
 export const samlUrl = (basePath: string, queries?: string): string => {
   if (!queries) return basePath;

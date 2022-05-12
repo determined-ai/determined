@@ -17,13 +17,15 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
+import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource,
-  ClusterOverview as Overview, Pagination, ResourcePool, ResourceState, ResourceType,
+  ClusterOverview as Overview, ResourcePool, ResourceState, ResourceType,
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { percent } from 'utils/number';
+
+import { Pagination } from '../../shared/types';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
 import css from './ClusterOverview.module.scss';
@@ -41,7 +43,11 @@ const defaultSorter = { descend: false, key: 'name' };
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-  return pool.maxAgents * (pool.slotsPerAgent ?? 0);
+  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
+    return pool.maxAgents * pool.slotsPerAgent;
+  // on-premise deployments don't have dynamic agents and we don't know how many
+  // agents might connect.
+  return pool.slotsAvailable;
 };
 
 export const clusterStatusText = (

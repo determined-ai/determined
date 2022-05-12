@@ -3,8 +3,8 @@ import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
+import { glasbeyColor } from 'shared/utils/color';
 import { MetricName } from 'types';
-import { glasbeyColor } from 'utils/color';
 import { metricNameToStr } from 'utils/metric';
 
 interface Props {

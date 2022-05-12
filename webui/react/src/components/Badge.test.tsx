@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
+import { generateAlphaNumeric } from 'shared/utils/string';
 import { getStateColorCssVar } from 'themes';
 import { SlotState } from 'types';
-import { generateAlphaNumeric } from 'utils/string';
 
 import Badge, { BadgeType } from './Badge';
 

@@ -29,18 +29,6 @@ def validate_spot_max_price() -> Callable:
     return validate
 
 
-def validate_scheduler_type() -> Callable:
-    def validate(s: str) -> str:
-        supported_scheduler_types = ["fair_share", "priority", "round_robin"]
-        if s not in supported_scheduler_types:
-            raise argparse.ArgumentTypeError(
-                f"supported schedulers are: {supported_scheduler_types}"
-            )
-        return s
-
-    return validate
-
-
 def error_no_credentials() -> None:
     print(
         colored("Unable to locate AWS credentials.", "red"),
@@ -148,6 +136,14 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "or us-gov-west-1."
             )
 
+    if args.deployment_type != constants.deployment_types.EFS:
+        if args.efs_id is not None:
+            raise ValueError("--efs-id can only be specified for 'efs' deployments")
+
+    if args.deployment_type != constants.deployment_types.FSX:
+        if args.fsx_id is not None:
+            raise ValueError("--fsx-id can only be specified for 'fsx' deployments")
+
     master_tls_cert = master_tls_key = ""
     if args.master_tls_cert:
         with open(args.master_tls_cert, "rb") as f:
@@ -186,6 +182,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.RETAIN_LOG_GROUP: args.retain_log_group,
         constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
         constants.cloudformation.MOUNT_EFS_ID: args.efs_id,
+        constants.cloudformation.MOUNT_FSX_ID: args.fsx_id,
     }
 
     if args.master_config_template_path:
@@ -352,21 +349,20 @@ args_description = Cmd(
                     "--compute-agent-instance-type",
                     "--gpu-agent-instance-type",
                     type=str,
-                    help="instance type for agent in the compute (previously, GPU) resource pool",
+                    help="instance type for agents in the compute resource pool",
                 ),
                 Arg(
                     "--aux-agent-instance-type",
                     "--cpu-agent-instance-type",
                     type=str,
-                    help="instance type for agent in the auxiliary (previously, CPU) resource pool",
+                    help="instance type for agents in the auxiliary resource pool",
                 ),
                 Arg(
                     "--deployment-type",
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
-                    help=f"deployment type - "
-                    f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
+                    help="deployment type",
                 ),
                 Arg(
                     "--inbound-cidr",
@@ -404,8 +400,7 @@ args_description = Cmd(
                     "--max-aux-containers-per-agent",
                     "--max-cpu-containers-per-agent",
                     type=int,
-                    help="maximum number of containers on agent in the "
-                    "auxiliary (previously, CPU) resource pool",
+                    help="maximum number of containers on agents in the auxiliary resource pool",
                 ),
                 Arg(
                     "--min-dynamic-agents",
@@ -425,14 +420,15 @@ args_description = Cmd(
                 Arg(
                     "--spot-max-price",
                     type=validate_spot_max_price(),
-                    help="maximum hourly price for the spot instance "
+                    help="maximum hourly price for spot instances "
                     "(do not include the dollar sign)",
                 ),
                 Arg(
                     "--scheduler-type",
-                    type=validate_scheduler_type(),
+                    type=str,
+                    choices=["fair_share", "priority", "round_robin"],
                     default="fair_share",
-                    help="scheduler to use (defaults to fair_share).",
+                    help="scheduler to use",
                 ),
                 Arg(
                     "--preemption-enabled",
@@ -478,15 +474,15 @@ args_description = Cmd(
                     "--efs-id",
                     type=str,
                     help="preexisting EFS that will be mounted into the task containers; "
-                    "if not provided, a new EFS instance will be created.  Note that you need"
-                    "to ensure that the agents can connect to the EFS instance.",
+                    "if not provided, a new EFS instance will be created. The agents must be "
+                    "able to connect to the EFS instance.",
                 ),
                 Arg(
                     "--fsx-id",
                     type=str,
                     help="preexisting FSx that will be mounted into the task containers; "
-                    "if not provided, a new FSx instance will be created.  Note that you need"
-                    "to ensure that the agents can connect to the FSx instance.",
+                    "if not provided, a new FSx instance will be created. The agents must be "
+                    "able to connect to the FSx instance.",
                 ),
                 Arg(
                     "--no-prompt",
@@ -505,8 +501,7 @@ args_description = Cmd(
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
-                    help=f"deployment type - "
-                    f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
+                    help="deployment type",
                 ),
             ],
         ),

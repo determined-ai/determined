@@ -3,7 +3,7 @@ import { Button, notification, Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { copyToClipboard } from 'utils/dom';
+import { copyToClipboard } from 'shared/utils/dom';
 
 import css from './AuthToken.module.scss';
 

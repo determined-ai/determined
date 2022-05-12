@@ -826,4 +826,3 @@ def test_experiment_delete() -> None:
                 return
             elif time.time() > experiment_delete_deadline:
                 pytest.fail("experiment didn't delete after timeout")
-                return

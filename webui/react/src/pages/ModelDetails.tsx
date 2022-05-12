@@ -19,15 +19,20 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths, routeToReactUrl } from 'routes/utils';
-import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
-  patchModelVersion, unarchiveModel } from 'services/api';
+import { paths } from 'routes/utils';
+import {
+  archiveModel, deleteModel, deleteModelVersion, getModelDetails, isNotFound, patchModel,
+  patchModelVersion, unarchiveModel,
+} from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import { isAborted, isNotFound, validateDetApiEnum } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
-import { isEqual } from 'utils/data';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorType } from '../shared/utils/error';
+import { routeToReactUrl } from '../shared/utils/routes';
+import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';

@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import DraggableListItem from 'components/DraggableListItem';
-import { isEqual } from 'utils/data';
-import { camelCaseToSentence } from 'utils/string';
+import { isEqual } from 'shared/utils/data';
+import { camelCaseToSentence } from 'shared/utils/string';
 
 import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalCustomizeColumns.module.scss';

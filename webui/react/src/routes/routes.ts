@@ -1,4 +1,4 @@
-import { RouteConfig } from './types';
+import { RouteConfig } from '../shared/types';
 
 const routes: RouteConfig[] = [
   {

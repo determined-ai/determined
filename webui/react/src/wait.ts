@@ -1,4 +1,4 @@
-import { openTask, serverAddress } from 'routes/utils';
+import { serverAddress, openTask } from 'routes/utils';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
