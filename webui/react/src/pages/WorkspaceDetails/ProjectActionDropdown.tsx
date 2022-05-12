@@ -50,17 +50,17 @@ const ProjectActionDropdown: React.FC<Props> = (
     openProjectMove();
   }, [ openProjectMove ]);
 
-  const handleArchiveClick = useCallback(() => {
+  const handleArchiveClick = useCallback(async () => {
     if (project.archived) {
       try {
-        unarchiveProject({ id: project.id });
+        await unarchiveProject({ id: project.id });
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive project.' });
       }
     } else {
       try {
-        archiveProject({ id: project.id });
+        await archiveProject({ id: project.id });
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive project.' });
