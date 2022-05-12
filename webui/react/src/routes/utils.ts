@@ -217,7 +217,7 @@ export const paths = {
   },
   interactiveTask: (command: CommandTask, taskUrl: string): string => {
     console.log(command);
-    return `/interactiveTask/${command.id}/${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/${encodeURIComponent(taskUrl)}`;
+    return `/interactiveTask/${command.id}/${command.type}/${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/${encodeURIComponent(taskUrl)}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
