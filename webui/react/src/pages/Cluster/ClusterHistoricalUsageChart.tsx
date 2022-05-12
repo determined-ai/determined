@@ -10,6 +10,7 @@ import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
+  chartKey?: number
   groupBy?: GroupBy,
   height?: number,
   hoursByLabel: Record<string, number[]>,
@@ -27,6 +28,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursByLabel,
   hoursTotal,
   time,
+  chartKey,
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
@@ -90,10 +92,11 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         { label: label ? label : 'GPU Hours' },
       ],
       height,
+      key: chartKey,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [ groupBy, height, hoursByLabel, hoursTotal, label ]);
+  }, [ groupBy, height, hoursByLabel, hoursTotal, label, chartKey ]);
   const hasData = useMemo(() => {
     return Object.keys(hoursByLabel)
       .reduce((agg, label) => agg || hoursByLabel[label].length > 0, false);

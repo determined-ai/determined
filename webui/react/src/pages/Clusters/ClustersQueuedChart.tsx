@@ -44,6 +44,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
           <Radio.Button value={30}>30 days</Radio.Button>
         </Radio.Group>
         <ClusterHistoricalUsageChart
+          chartKey={viewDays}
           hoursByLabel={queuedStats.hoursAverage}
           label="Queued Hours"
           time={queuedStats.time}
