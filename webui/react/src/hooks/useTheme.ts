@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
+import { isObject } from 'shared/utils/data';
 import themes, { defaultThemeId, ThemeId } from 'themes';
-import { isObject } from 'utils/data';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type SubTheme = Record<string, any>;

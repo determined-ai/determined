@@ -7,8 +7,10 @@ import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import handleError, { ErrorType } from 'utils/error';
-import { Storage } from 'utils/storage';
+import { Storage } from 'shared/utils/storage';
+import handleError from 'utils/error';
+
+import { ErrorType } from '../shared/utils/error';
 
 import css from './DeterminedAuth.module.scss';
 

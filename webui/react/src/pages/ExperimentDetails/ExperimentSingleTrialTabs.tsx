@@ -11,8 +11,9 @@ import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';

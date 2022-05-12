@@ -13,12 +13,14 @@ import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
-import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
-import { RecordKey } from 'types';
-import { getPath } from 'utils/data';
-import { capitalize } from 'utils/string';
+import { getPath } from 'shared/utils/data';
+import { capitalize } from 'shared/utils/string';
+
+import { routeAll } from '../routes/utils';
+import { RecordKey } from '../shared/types';
+import { locationToPath, routeToReactUrl } from '../shared/utils/routes';
 
 import css from './SignIn.module.scss';
 

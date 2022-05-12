@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { generateAlphaNumeric, generateLetters } from 'utils/string';
+import { generateAlphaNumeric, generateLetters } from 'shared/utils/string';
 
 import ResponsiveTable from './ResponsiveTable';
 

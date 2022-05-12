@@ -7,7 +7,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'shared/utils/color';
 
 import css from './ProfilesEnabled.module.scss';
 import { MetricType } from './types';

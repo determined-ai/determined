@@ -5,7 +5,9 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { DetError, ErrorLevel, ErrorType } from '../shared/utils/error';
 
 const SignOut: React.FC = () => {
   const history = useHistory();

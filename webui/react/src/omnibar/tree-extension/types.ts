@@ -1,4 +1,4 @@
-import { Eventually } from 'types';
+import { Eventually } from '../../shared/types';
 
 export interface BaseNode {
   aliases?: string[];

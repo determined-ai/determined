@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { Storage, Store } from 'utils/storage';
+import { Storage, Store } from 'shared/utils/storage';
 
 export const userPreferencesStorage = new Storage(
   { basePath: 'u', delimiter: ':', store: window.localStorage },

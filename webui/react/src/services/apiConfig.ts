@@ -7,7 +7,8 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import * as Type from 'types';
 
-import { identity, noOp } from './utils';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
+import { identity, noOp } from '../shared/utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
@@ -66,7 +67,7 @@ export const commandToEndpoint: Record<Type.CommandType, string> = {
 
 /* Authentication */
 
-export const login: Service.DetApi<
+export const login: DetApi<
   Api.V1LoginRequest, Api.V1LoginResponse, Service.LoginResponse
 > = {
   name: 'login',
@@ -77,16 +78,16 @@ export const login: Service.DetApi<
   ),
 };
 
-export const logout: Service.DetApi<
-  Service.EmptyParams, Api.V1LogoutResponse, void
+export const logout: DetApi<
+  EmptyParams, Api.V1LogoutResponse, void
 > = {
   name: 'logout',
   postProcess: noOp,
   request: () => detApi.Auth.logout(),
 };
 
-export const getCurrentUser: Service.DetApi<
-  Service.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
+export const getCurrentUser: DetApi<
+  EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 > = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.mapV1User(response.user),
@@ -94,15 +95,15 @@ export const getCurrentUser: Service.DetApi<
   request: (options) => detApi.Auth.currentUser(options),
 };
 
-export const getUsers: Service.DetApi<
-  Service.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+export const getUsers: DetApi<
+  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
 > = {
   name: 'getUsers',
   postProcess: (response) => decoder.mapV1UserList(response),
   request: (options) => detApi.Users.getUsers(options),
 };
 
-export const setUserPassword: Service.DetApi<
+export const setUserPassword: DetApi<
   Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
 > = {
   name: 'setUserPassword',
@@ -113,7 +114,7 @@ export const setUserPassword: Service.DetApi<
   ),
 };
 
-export const patchUser: Service.DetApi<
+export const patchUser: DetApi<
   Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 > = {
   name: 'patchUser',
@@ -126,16 +127,16 @@ export const patchUser: Service.DetApi<
 
 /* Info */
 
-export const getInfo: Service.DetApi<
-  Service.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
+export const getInfo: DetApi<
+  EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
 > = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.getMaster(),
 };
 
-export const getTelemetry: Service.DetApi<
-  Service.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
+export const getTelemetry: DetApi<
+  EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
 > = {
   name: 'getTelemetry',
   postProcess: (response) => response,
@@ -144,16 +145,16 @@ export const getTelemetry: Service.DetApi<
 
 /* Cluster */
 
-export const getAgents: Service.DetApi<
-  Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
+export const getAgents: DetApi<
+  EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 > = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.getAgents(),
 };
 
-export const getResourcePools: Service.DetApi<
-  Service.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
+export const getResourcePools: DetApi<
+  EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
 > = {
   name: 'getResourcePools',
   postProcess: (response) => {
@@ -162,7 +163,7 @@ export const getResourcePools: Service.DetApi<
   request: () => detApi.Internal.getResourcePools(),
 };
 
-export const getResourceAllocationAggregated: Service.DetApi<
+export const getResourceAllocationAggregated: DetApi<
   Service.GetResourceAllocationAggregatedParams,
   Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
@@ -183,7 +184,7 @@ export const getResourceAllocationAggregated: Service.DetApi<
 
 /* Experiment */
 
-export const getExperiments: Service.DetApi<
+export const getExperiments: DetApi<
   Service.GetExperimentsParams, Api.V1GetExperimentsResponse, Type.ExperimentPagination
 > = {
   name: 'getExperiments',
@@ -211,7 +212,7 @@ export const getExperiments: Service.DetApi<
   },
 };
 
-export const getExperiment: Service.DetApi<
+export const getExperiment: DetApi<
   Service.GetExperimentParams, Api.V1GetExperimentResponse, Type.ExperimentItem
 > = {
   name: 'getExperiment',
@@ -225,7 +226,7 @@ export const getExperiment: Service.DetApi<
   },
 };
 
-export const createExperiment: Service.DetApi<
+export const createExperiment: DetApi<
   Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
 > = {
   name: 'createExperiment',
@@ -244,7 +245,7 @@ export const createExperiment: Service.DetApi<
   },
 };
 
-export const archiveExperiment: Service.DetApi<
+export const archiveExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
 > = {
   name: 'archiveExperiment',
@@ -254,7 +255,7 @@ export const archiveExperiment: Service.DetApi<
   },
 };
 
-export const deleteExperiment: Service.DetApi<
+export const deleteExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1DeleteExperimentResponse, void
 > = {
   name: 'deleteExperiment',
@@ -264,7 +265,7 @@ export const deleteExperiment: Service.DetApi<
   },
 };
 
-export const unarchiveExperiment: Service.DetApi<
+export const unarchiveExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
 > = {
   name: 'unarchiveExperiment',
@@ -274,7 +275,7 @@ export const unarchiveExperiment: Service.DetApi<
   },
 };
 
-export const activateExperiment: Service.DetApi<
+export const activateExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1ActivateExperimentResponse, void
 > = {
   name: 'activateExperiment',
@@ -284,7 +285,7 @@ export const activateExperiment: Service.DetApi<
   },
 };
 
-export const pauseExperiment: Service.DetApi<
+export const pauseExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1PauseExperimentResponse, void
 > = {
   name: 'pauseExperiment',
@@ -294,7 +295,7 @@ export const pauseExperiment: Service.DetApi<
   },
 };
 
-export const cancelExperiment: Service.DetApi<
+export const cancelExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1CancelExperimentResponse, void
 > = {
   name: 'cancelExperiment',
@@ -304,7 +305,7 @@ export const cancelExperiment: Service.DetApi<
   },
 };
 
-export const killExperiment: Service.DetApi<
+export const killExperiment: DetApi<
   Service.ExperimentIdParams, Api.V1KillExperimentResponse, void
 > = {
   name: 'killExperiment',
@@ -314,7 +315,7 @@ export const killExperiment: Service.DetApi<
   },
 };
 
-export const patchExperiment: Service.DetApi<
+export const patchExperiment: DetApi<
   Service.PatchExperimentParams, Api.V1PatchExperimentResponse, void
 > = {
   name: 'patchExperiment',
@@ -328,7 +329,7 @@ export const patchExperiment: Service.DetApi<
   },
 };
 
-export const getExperimentDetails: Service.DetApi<
+export const getExperimentDetails: DetApi<
   Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 > = {
   name: 'getExperimentDetails',
@@ -336,8 +337,8 @@ export const getExperimentDetails: Service.DetApi<
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 
-export const getExpValidationHistory: Service.DetApi<
-  Service.SingleEntityParams,
+export const getExpValidationHistory: DetApi<
+  SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
   Type.ValidationHistory[]
 > = {
@@ -355,7 +356,7 @@ export const getExpValidationHistory: Service.DetApi<
   },
 };
 
-export const getExpTrials: Service.DetApi<
+export const getExpTrials: DetApi<
   Service.GetTrialsParams, Api.V1GetExperimentTrialsResponse, Type.TrialPagination
 > = {
   name: 'getExperimentTrials',
@@ -381,15 +382,15 @@ export const getExpTrials: Service.DetApi<
   },
 };
 
-export const getExperimentLabels: Service.DetApi<
-  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+export const getExperimentLabels: DetApi<
+  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
   request: (options) => detApi.Experiments.getExperimentLabels(options),
 };
 
-export const getTrialDetails: Service.DetApi<
+export const getTrialDetails: DetApi<
   Service.TrialDetailsParams, Api.V1GetTrialResponse, Type.TrialDetails
 > = {
   name: 'getTrialDetails',
@@ -401,7 +402,7 @@ export const getTrialDetails: Service.DetApi<
 
 /* Tasks */
 
-export const getTask: Service.DetApi<
+export const getTask: DetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
 > = {
   name: 'getTask',
@@ -415,7 +416,7 @@ export const getTask: Service.DetApi<
 
 /* Models */
 
-export const getModels: Service.DetApi<
+export const getModels: DetApi<
   Service.GetModelsParams, Api.V1GetModelsResponse, Type.ModelPagination
 > = {
   name: 'getModels',
@@ -439,7 +440,7 @@ export const getModels: Service.DetApi<
   ),
 };
 
-export const getModel: Service.DetApi<
+export const getModel: DetApi<
   Service.GetModelParams, Api.V1GetModelResponse, Type.ModelItem | undefined
 > = {
   name: 'getModel',
@@ -451,7 +452,7 @@ export const getModel: Service.DetApi<
   ),
 };
 
-export const getModelDetails: Service.DetApi<
+export const getModelDetails: DetApi<
   Service.GetModelDetailsParams, Api.V1GetModelVersionsResponse, Type.ModelVersions | undefined
 > = {
   name: 'getModelDetails',
@@ -468,7 +469,7 @@ export const getModelDetails: Service.DetApi<
   ),
 };
 
-export const getModelVersion: Service.DetApi<
+export const getModelVersion: DetApi<
   Service.GetModelVersionParams, Api.V1GetModelVersionResponse, Type.ModelVersion | undefined
 > = {
   name: 'getModelVersion',
@@ -481,7 +482,7 @@ export const getModelVersion: Service.DetApi<
   ),
 };
 
-export const patchModel: Service.DetApi<
+export const patchModel: DetApi<
   Service.PatchModelParams, Api.V1PatchModelResponse, Type.ModelItem | undefined>
  = {
    name: 'patchModel',
@@ -493,7 +494,7 @@ export const patchModel: Service.DetApi<
      ),
  };
 
-export const patchModelVersion: Service.DetApi<
+export const patchModelVersion: DetApi<
   Service.PatchModelVersionParams, Api.V1PatchModelVersionResponse, Type.ModelVersion | undefined>
  = {
    name: 'patchModelVersion',
@@ -507,7 +508,7 @@ export const patchModelVersion: Service.DetApi<
      ),
  };
 
-export const archiveModel: Service.DetApi<
+export const archiveModel: DetApi<
   Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void
 > = {
   name: 'archiveModel',
@@ -517,7 +518,7 @@ export const archiveModel: Service.DetApi<
   ),
 };
 
-export const unarchiveModel: Service.DetApi<
+export const unarchiveModel: DetApi<
   Service.ArchiveModelParams, Api.V1UnarchiveModelResponse, void
 > = {
   name: 'unarchiveModel',
@@ -527,7 +528,7 @@ export const unarchiveModel: Service.DetApi<
   ),
 };
 
-export const deleteModel: Service.DetApi<
+export const deleteModel: DetApi<
   Service.DeleteModelParams, Api.V1DeleteModelResponse, void
 > = {
   name: 'deleteModel',
@@ -537,7 +538,7 @@ export const deleteModel: Service.DetApi<
   ),
 };
 
-export const deleteModelVersion: Service.DetApi<
+export const deleteModelVersion: DetApi<
   Service.DeleteModelVersionParams, Api.V1DeleteModelVersionResponse, void
 > = {
   name: 'deleteModelVersion',
@@ -548,15 +549,15 @@ export const deleteModelVersion: Service.DetApi<
   ),
 };
 
-export const getModelLabels: Service.DetApi<
-  Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
+export const getModelLabels: DetApi<
+  EmptyParams, Api.V1GetModelLabelsResponse, string[]
 > = {
   name: 'getModelLabels',
   postProcess: (response) => response.labels || [],
   request: (options) => detApi.Models.getModelLabels(options),
 };
 
-export const postModel: Service.DetApi<
+export const postModel: DetApi<
   Service.PostModelParams, Api.V1PostModelResponse, Type.ModelItem | undefined
 > = {
   name: 'postModel',
@@ -571,7 +572,7 @@ export const postModel: Service.DetApi<
   }),
 };
 
-export const postModelVersion: Service.DetApi<
+export const postModelVersion: DetApi<
   Service.PostModelVersionParams, Api.V1PostModelVersionResponse, Type.ModelVersion | undefined
 > = {
   name: 'postModelVersion',
@@ -588,7 +589,7 @@ export const postModelVersion: Service.DetApi<
 
 const TASK_LIMIT = 1000;
 
-export const getCommands: Service.DetApi<
+export const getCommands: DetApi<
   Service.GetCommandsParams, Api.V1GetCommandsResponse, Type.CommandTask[]
 > = {
   name: 'getCommands',
@@ -604,7 +605,7 @@ export const getCommands: Service.DetApi<
   ),
 };
 
-export const getJupyterLabs: Service.DetApi<
+export const getJupyterLabs: DetApi<
   Service.GetJupyterLabsParams, Api.V1GetNotebooksResponse, Type.CommandTask[]
 > = {
   name: 'getJupyterLabs',
@@ -620,7 +621,7 @@ export const getJupyterLabs: Service.DetApi<
   ),
 };
 
-export const getShells: Service.DetApi<
+export const getShells: DetApi<
   Service.GetShellsParams, Api.V1GetShellsResponse, Type.CommandTask[]
 > = {
   name: 'getShells',
@@ -636,7 +637,7 @@ export const getShells: Service.DetApi<
   ),
 };
 
-export const getTensorBoards: Service.DetApi<
+export const getTensorBoards: DetApi<
   Service.GetTensorBoardsParams, Api.V1GetTensorboardsResponse, Type.CommandTask[]
 > = {
   name: 'getTensorBoards',
@@ -652,7 +653,7 @@ export const getTensorBoards: Service.DetApi<
   ),
 };
 
-export const killCommand: Service.DetApi<
+export const killCommand: DetApi<
   Service.CommandIdParams, Api.V1KillCommandResponse, void
 > = {
   name: 'killCommand',
@@ -661,7 +662,7 @@ export const killCommand: Service.DetApi<
     .killCommand(params.commandId),
 };
 
-export const killJupyterLab: Service.DetApi<
+export const killJupyterLab: DetApi<
   Service.CommandIdParams, Api.V1KillNotebookResponse, void
 > = {
   name: 'killJupyterLab',
@@ -670,7 +671,7 @@ export const killJupyterLab: Service.DetApi<
     .killNotebook(params.commandId),
 };
 
-export const killShell: Service.DetApi<
+export const killShell: DetApi<
   Service.CommandIdParams, Api.V1KillShellResponse, void
 > = {
   name: 'killShell',
@@ -679,7 +680,7 @@ export const killShell: Service.DetApi<
     .killShell(params.commandId),
 };
 
-export const killTensorBoard: Service.DetApi<
+export const killTensorBoard: DetApi<
   Service.CommandIdParams, Api.V1KillTensorboardResponse, void
 > = {
   name: 'killTensorBoard',
@@ -688,7 +689,7 @@ export const killTensorBoard: Service.DetApi<
     .killTensorboard(params.commandId),
 };
 
-export const getTemplates: Service.DetApi<
+export const getTemplates: DetApi<
   Service.GetTemplatesParams, Api.V1GetTemplatesResponse, Type.Template[]
 > = {
   name: 'getTemplates',
@@ -703,7 +704,7 @@ export const getTemplates: Service.DetApi<
   ),
 };
 
-export const launchJupyterLab: Service.DetApi<
+export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.CommandTask
 > = {
   name: 'launchJupyterLab',
@@ -712,8 +713,8 @@ export const launchJupyterLab: Service.DetApi<
     .launchNotebook(params),
 };
 
-export const previewJupyterLab: Service.DetApi<
-  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+export const previewJupyterLab: DetApi<
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
 > = {
   name: 'previewJupyterLab',
   postProcess: (response) => response.config,
@@ -721,7 +722,7 @@ export const previewJupyterLab: Service.DetApi<
     .launchNotebook(params),
 };
 
-export const launchTensorBoard: Service.DetApi<
+export const launchTensorBoard: DetApi<
   Service.LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, Type.CommandTask
 > = {
   name: 'launchTensorBoard',
@@ -732,7 +733,7 @@ export const launchTensorBoard: Service.DetApi<
 
 /* Jobs */
 
-export const getJobQueue: Service.DetApi<
+export const getJobQueue: DetApi<
   Service.GetJobQParams, Api.V1GetJobsResponse, Service.GetJobsResponse
 > = {
   name: 'getJobQ',
@@ -749,7 +750,7 @@ export const getJobQueue: Service.DetApi<
   ),
 };
 
-export const getJobQueueStats: Service.DetApi<
+export const getJobQueueStats: DetApi<
   Service.GetJobQStatsParams,
   Api.V1GetJobQueueStatsResponse,
   Api.V1GetJobQueueStatsResponse
@@ -759,7 +760,7 @@ export const getJobQueueStats: Service.DetApi<
   request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
 };
 
-export const updateJobQueue: Service.DetApi<
+export const updateJobQueue: DetApi<
   Api.V1UpdateJobQueueRequest,
   Api.V1UpdateJobQueueResponse,
   Api.V1UpdateJobQueueResponse

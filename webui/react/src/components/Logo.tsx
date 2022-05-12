@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { reactHostAddress, serverAddress } from 'routes/utils';
+import { serverAddress } from 'routes/utils';
 import logoDeterminedOnDarkHorizontal from
   'shared/assets/images/logo-determined-on-dark-horizontal.svg';
 import logoDeterminedOnDarkVertical from
@@ -12,6 +12,8 @@ import logoDeterminedOnLightVertical from
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
 import { BrandingType } from 'types';
+
+import { reactHostAddress } from '../shared/utils/routes';
 
 import css from './Logo.module.scss';
 

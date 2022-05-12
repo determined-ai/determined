@@ -10,8 +10,8 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
+import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, MetricType, WorkloadGroup } from 'types';
-import { glasbeyColor } from 'utils/color';
 
 interface Props {
   defaultMetricNames: MetricName[];

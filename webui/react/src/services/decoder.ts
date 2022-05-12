@@ -1,9 +1,12 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
+import { flattenObject, isNullOrUndefined, isNumber, isObject,
+  isPrimitive } from 'shared/utils/data';
+import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
-import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
-import { capitalize } from 'utils/string';
+
+import { Pagination, RawJson } from '../shared/types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 
@@ -22,7 +25,7 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
-export const mapV1Pagination = (data: Sdk.V1Pagination): types.Pagination => {
+export const mapV1Pagination = (data: Sdk.V1Pagination): Pagination => {
   return {
     limit: data.limit ?? 0,
     offset: data.offset ?? 0,
@@ -408,9 +411,9 @@ export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentI
   return data.map(mapV1Experiment);
 };
 
-const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {
+const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
   if (!isObject(metrics)) return undefined;
-  const scalarMetrics: types.RawJson = {};
+  const scalarMetrics: RawJson = {};
   for (const key in metrics) {
     if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
       scalarMetrics[key] = Number(metrics[key]);
