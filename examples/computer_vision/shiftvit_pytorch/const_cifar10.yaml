@@ -1,0 +1,31 @@
+name: shiftvit_cifar10_const
+entrypoint: model_def:ShiftViTTrial
+data:
+  dataset_name: cifar10
+  download_dir: /data
+  num_workers: 4
+  pin_memory: True
+records_per_epoch:
+  50000
+hyperparameters:
+  lr: 1.4e-3
+  n_div: 12
+  patch_size: 2
+  embed_dim: 96
+  depths: [2, 3, 4, 2]
+  mlp_ratio: 5.0
+  drop_rate: 0.2
+  drop_path_rate: 0.45
+  norm_layer: GN1
+  act_layer: GELU
+  patch_norm: True
+  use_checkpoint: False
+  global_batch_size: 512
+min_validation_period:
+  epochs: 1
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+    epochs: 16
+  smaller_is_better: true

@@ -1,0 +1,46 @@
+name: shiftvit_cifar10_adaptive
+entrypoint: model_def:ShiftViTTrial
+data:
+  dataset_name: cifar10
+  download_dir: /data
+  num_workers: 4
+  pin_memory: True
+records_per_epoch:
+  50000
+hyperparameters:
+  lr:
+    type: log
+    minval: -4.0
+    maxval: -2.0
+    base: 10.0
+  n_div:
+    type: categorical
+    vals: [ 8, 12, 16 ]
+  drop_rate:
+    type: double
+    minval: 0.2
+    maxval: 0.9
+  drop_path_rate:
+    type: double
+    minval: 0.2
+    maxval: 0.9
+  img_size: 28
+  patch_size: 2
+  in_chans: 3
+  num_classes: 10
+  embed_dim: 96
+  depths: [2, 2, 6, 2]
+  mlp_ratio: 4.0
+  norm_layer: GN1
+  act_layer: GELU
+  patch_norm: True
+  global_batch_size: 1024
+min_validation_period:
+  epochs: 1
+searcher:
+  name: adaptive_asha
+  metric: validation_loss
+  max_length:
+    epochs: 10
+  max_trials: 128
+  smaller_is_better: True
