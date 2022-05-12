@@ -70,7 +70,6 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Prop
           <div className={css.dropdownTrigger}> <Icon name="arrow-down" size="tiny" /> </div>
         </Dropdown>
       </div>
-
     </div>
   );
 };
