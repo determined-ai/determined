@@ -72,7 +72,7 @@ def run_api_server(
 
         def do_POST(self) -> None:
             fn = {
-                "/login": self._login,
+                "/api/v1/auth/login": self._login,
             }.get(self.path)
             self.do_core(fn)
 
