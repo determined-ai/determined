@@ -9,11 +9,18 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	system := actor.NewSystem(t.Name())
+
+	// This is required only due to the resource manager needing
+	// to authenticate users when sending echo API requests.
+	// No echo http requests are sent so it won't cause issues
+	// initializing with nil values for this test.
+	user.InitService(nil, nil, nil)
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	cfg := &config.ResourceConfig{
