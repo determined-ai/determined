@@ -234,10 +234,10 @@ func deleteAgentUserGroup(tx *sqlx.Tx, userID model.UserID) error {
 }
 
 // AddUser creates a new user.
-func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
+func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (*model.UserID, error) {
 	tx, err := db.sql.Beginx()
 	if err != nil {
-		return 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	defer func() {
@@ -252,17 +252,17 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 
 	userID, err := addUser(tx, user)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if ug != nil {
 		if err := addAgentUserGroup(tx, userID, ug); err != nil {
-			return 0, err
+			return nil, err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return 0, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	tx = nil
