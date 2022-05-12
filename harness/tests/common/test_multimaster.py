@@ -45,10 +45,7 @@ def run_api_server(
             expected_password = salt_and_hash(password)
             assert posted_credentials.get("username") == user
             assert posted_credentials.get("password") == expected_password
-            return {
-                "token": token,
-                "user": {"id": "fake-id", "username": "", "admin": False, "active": True},
-            }
+            return {"token": token, "userId": ""}
 
         def _api_v1_models(self) -> Dict[str, Any]:
             assert self.headers["Authorization"] == f"Bearer {token}"
@@ -72,7 +69,7 @@ def run_api_server(
 
         def do_POST(self) -> None:
             fn = {
-                "/api/v1/auth/login": self._login,
+                "/login": self._login,
             }.get(self.path)
             self.do_core(fn)
 
