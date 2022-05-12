@@ -1,6 +1,8 @@
-import { serverAddress, openTask } from 'routes/utils';
+import { serverAddress } from 'routes/utils';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
+
+import { openBlank } from './shared/utils/routes';
 
 // createWsUrl: Given an event url create the corresponding ws url.
 export function createWsUrl(eventUrl: string): string {
@@ -43,8 +45,8 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
   return waitPath + waitParams;
 };
 
-export const openCommand = (command: CommandTask): void => {
-  openTask(process.env.PUBLIC_URL + waitPageUrl(command), command);
+export const openCommand = (command: Command | CommandTask): void => {
+  openBlank(process.env.PUBLIC_URL + waitPageUrl(command));
 };
 
 export interface WaitStatus {
