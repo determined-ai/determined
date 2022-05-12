@@ -10,11 +10,12 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
-import { isAborted } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
-import { isEqual } from 'utils/data';
 import { isSingleTrialExperiment } from 'utils/experiment';
+
+import { isAborted } from '../shared/utils/service';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';

@@ -11,11 +11,11 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import { isEqual } from 'shared/utils/data';
 import {
   CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails,
 } from 'types';
-import { isEqual } from 'utils/data';
 import { extractMetricValue } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';

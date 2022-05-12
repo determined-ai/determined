@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Select } from 'antd';
 import React from 'react';
 
-import { generateAlphaNumeric } from 'utils/string';
+import { generateAlphaNumeric } from 'shared/utils/string';
 
 import SelectFilter from './SelectFilter';
 

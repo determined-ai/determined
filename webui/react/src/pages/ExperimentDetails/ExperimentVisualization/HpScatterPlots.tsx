@@ -14,11 +14,13 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import {
-  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
+  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
 } from 'types';
-import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
+
+import { Primitive } from '../../../shared/types';
 
 import css from './HpScatterPlots.module.scss';
 
@@ -36,7 +38,7 @@ interface HpMetricData {
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
   hpValues: Record<string, number[]>;
-  metricValues: Record<string, number[]>;
+  metricValues: Record<string, (number | null)[]>;
   trialIds: number[];
 }
 
@@ -133,7 +135,7 @@ const ScatterPlots: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpTrialMap: Record<string, Record<number, { hp: Primitive, metric: number }>> = {};
+    const hpTrialMap: Record<string, Record<number, { hp: Primitive, metric: number| null }>> = {};
 
     setHasLoaded(false);
 
@@ -150,7 +152,7 @@ const ScatterPlots: React.FC<Props> = ({
       event => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
-        const hpMetricMap: Record<string, number[]> = {};
+        const hpMetricMap: Record<string, (number | null)[]> = {};
         const hpValueMap: Record<string, number[]> = {};
         const hpLabelMap: Record<string, string[]> = {};
         const hpLogScaleMap: Record<string, boolean> = {};
@@ -161,11 +163,16 @@ const ScatterPlots: React.FC<Props> = ({
 
           const flatHParams = flattenObject(trial.hparams);
           fullHParams.forEach(hParam => {
+            /**
+             * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+             * dynamic min/max ranges via uPlot.Scales.
+             */
+            const trialMetric = Number.isFinite(trial.metric) ? trial.metric : null;
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
             hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
             hpTrialMap[hParam][trialId] = {
               hp: flatHParams[hParam],
-              metric: trial.metric,
+              metric: trialMetric,
             };
           });
         });

@@ -1,3 +1,7 @@
+.modalContent {
+  padding-bottom: 15px;
+  padding-top: 15px;
+}
 .note {
   background-color: var(--theme-colors-monochrome-14);
   border: 1px solid var(--theme-colors-monochrome-12);
@@ -26,4 +30,16 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.noFooter :global(.ant-modal-confirm-btns) {
+  display: none;
+}
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20px;
+  
+  button + button {
+    margin-left: 8px;
+  }
 }

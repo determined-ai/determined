@@ -67,7 +67,7 @@ data:
       {{- if .Values.defaultScheduler}}
       {{- $schedulerType := .Values.defaultScheduler | trim}}
       {{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
-      default_scheduler: "coscheduler"
+      default_scheduler: {{ $schedulerType }}
       {{- end }}
       {{- end }}
       {{- if (ne (default "gpu" .Values.slotType) "gpu") }}

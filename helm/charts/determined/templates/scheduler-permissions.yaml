@@ -4,13 +4,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: coscheduler
+  name: {{ $schedulerType }}
   namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: coscheduler-pod-permissions
+  name: {{ $schedulerType }}-pod-permissions
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -19,24 +19,24 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: coscheduler-pod-role
+  name: {{ $schedulerType }}-pod-role
 subjects:
   - kind: ServiceAccount
-    name: coscheduler
+    name: {{ $schedulerType }}
     namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: coscheduler-pod-permissions
+  name: {{ $schedulerType }}-pod-permissions
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: coscheduler-extention-apiserver
+  name: {{ $schedulerType }}-extention-apiserver
   namespace: kube-system
 subjects:
 - kind: ServiceAccount
-  name: coscheduler
+  name: {{ $schedulerType }}
 roleRef:
   kind: Role
   name: extension-apiserver-authentication-reader
@@ -45,10 +45,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: coscheduler-as-kube-scheduler
+  name: {{ $schedulerType }}-as-kube-scheduler
 subjects:
 - kind: ServiceAccount
-  name: coscheduler
+  name: {{ $schedulerType }}
   namespace: kube-system
 roleRef:
   kind: ClusterRole
@@ -58,10 +58,10 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: coscheduler-as-volume-scheduler
+  name: {{ $schedulerType }}-as-volume-scheduler
 subjects:
 - kind: ServiceAccount
-  name: coscheduler
+  name: {{ $schedulerType }}
   namespace: kube-system
 roleRef:
   kind: ClusterRole

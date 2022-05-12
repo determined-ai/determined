@@ -12,8 +12,7 @@ The ``0_start.py`` training script used in this example contains your simple "mo
 
 .. literalinclude:: ../../../examples/tutorials/core_api/0_start.py
    :language: python
-   :start-after: START getting-started doc
-   :end-before: END getting-started doc
+   :start-at: import
 
 To run this script, create a configuration file with at least the following values:
 

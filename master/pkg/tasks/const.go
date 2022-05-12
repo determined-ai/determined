@@ -7,6 +7,12 @@ const (
 	taskLoggingSetupScript = "task-logging-setup.sh"
 	taskLoggingSetupMode   = 0744
 
+	taskLoggingTeardownScript = "task-logging-teardown.sh"
+	taskLoggingTeardownMode   = 0744
+
+	taskSignalHandlingScript = "task-signal-handling.sh"
+	taskSignalHandlingMode   = 0744
+
 	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
 	// important that we don't overwrite the user's host $HOME/.ssh/id_rsa, if the user happens to
 	// mount their host $HOME into the container's $HOME. Since we control the invocation of sshd,

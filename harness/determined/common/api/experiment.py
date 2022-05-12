@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from termcolor import colored
 
 from determined.common import api, constants, context, yaml
-from determined.common.api import authentication, bindings, certs, logs
+from determined.common.api import bindings, logs
 from determined.common.api import request as req
 from determined.common.experimental import session
 
@@ -22,9 +22,7 @@ def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) ->
 def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
     print("Waiting for first trial to begin...")
-    certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = session.Session(master_url, None, None, None)
     while True:
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
         if len(trials) > 0:
@@ -66,9 +64,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
             else:
                 print(", ", end="")
 
-    certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = session.Session(master_url, None, None, None)
     while True:
         r = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
         trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
@@ -155,9 +151,7 @@ def create_experiment(
     experiment_id = int(new_resource.split("/")[-1])
 
     if activate:
-        certs.cli_cert = certs.default_load(master_url)
-        authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-        sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+        sess = session.Session(master_url, None, None, None)
         bindings.post_ActivateExperiment(sess, id=experiment_id)
 
     return experiment_id

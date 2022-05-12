@@ -2,7 +2,7 @@ import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
-import { generateAlphaNumeric } from 'utils/string';
+import { generateAlphaNumeric } from 'shared/utils/string';
 
 import useModalCustomizeColumns from './useModalCustomizeColumns';
 

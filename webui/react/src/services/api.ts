@@ -2,11 +2,13 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
-import { generateDetApi } from 'services/utils';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
+import { EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
+import { generateDetApi } from '../shared/utils/service';
+
+export { isLoginFailure } from './utils';
 
 /* Authentication */
 
@@ -28,15 +30,15 @@ export const login = generateDetApi<
 // };
 
 export const logout = generateDetApi<
-  Service.EmptyParams, Api.V1LogoutResponse, void
+  EmptyParams, Api.V1LogoutResponse, void
 >(Config.logout);
 
 export const getCurrentUser = generateDetApi<
-  Service.EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
+  EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 >(Config.getCurrentUser);
 
 export const getUsers = generateDetApi<
-  Service.EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
 >(Config.getUsers);
 
 export const setUserPassword = generateDetApi<
@@ -50,21 +52,21 @@ export const patchUser = generateDetApi<
 /* Info */
 
 export const getInfo = generateDetApi<
-  Service.EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
+  EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo
 >(Config.getInfo);
 
 export const getTelemetry = generateDetApi<
-  Service.EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
+  EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry
 >(Config.getTelemetry);
 
 /* Cluster */
 
 export const getAgents = generateDetApi<
-  Service.EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
+  EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]
 >(Config.getAgents);
 
 export const getResourcePools = generateDetApi<
-  Service.EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
+  EmptyParams, Api.V1GetResourcePoolsResponse, Type.ResourcePool[]
 >(Config.getResourcePools);
 
 export const getResourceAllocationAggregated = generateDetApi<
@@ -110,7 +112,7 @@ export const getExpTrials = generateDetApi<
 >(Config.getExpTrials);
 
 export const getExpValidationHistory = generateDetApi<
-  Service.SingleEntityParams,
+  SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
   Type.ValidationHistory[]
 >(Config.getExpValidationHistory);
@@ -156,7 +158,7 @@ export const patchExperiment = generateDetApi<
 >(Config.patchExperiment);
 
 export const getExperimentLabels = generateDetApi<
-  Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
 /* Tasks */
@@ -216,7 +218,7 @@ export const postModelVersion = generateDetApi<
 >(Config.postModelVersion);
 
 export const getModelLabels = generateDetApi<
-  Service.EmptyParams, Api.V1GetModelLabelsResponse, string[]
+  EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
 
 /* Tasks */
@@ -262,7 +264,7 @@ export const launchJupyterLab = generateDetApi<
 >(Config.launchJupyterLab);
 
 export const previewJupyterLab = generateDetApi<
-  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, Type.RawJson
+  Service.LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
 >(Config.previewJupyterLab);
 
 export const launchTensorBoard = generateDetApi<
@@ -292,3 +294,5 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
+export { isNotFound } from '../shared/utils/service';
+export { isAuthFailure } from '../shared/utils/service';

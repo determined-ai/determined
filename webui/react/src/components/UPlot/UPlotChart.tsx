@@ -5,7 +5,9 @@ import uPlot, { AlignedData } from 'uplot';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/message';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import { FacetedData } from './types';
 

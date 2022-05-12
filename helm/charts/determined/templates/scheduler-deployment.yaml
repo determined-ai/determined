@@ -7,12 +7,8 @@ metadata:
   labels:
     component: scheduler
     tier: control-plane
-    release: coscheduler-{{ .Release.Name }}
-  {{- if eq $schedulerType "preemption"}}
-  name: preemption-scheduler
-  {{- else }}
-  name: coscheduler
-  {{- end}}
+    release: {{ $schedulerType }}-{{ .Release.Name }}
+  name: {{ $schedulerType }}
   namespace: kube-system
 spec:
   selector:
@@ -26,7 +22,7 @@ spec:
         component: scheduler
         tier: control-plane
     spec:
-      serviceAccountName: coscheduler
+      serviceAccountName: {{ $schedulerType }}
       containers:
       - command:
         - kube-scheduler
@@ -34,7 +30,7 @@ spec:
         - --leader-elect=false
         - --scheduler-name=coscheduler
         - --config=/etc/config/config.yaml
-        name: coscheduler
+        name: {{ $schedulerType }}
         {{- if eq $schedulerType "preemption"}}
         image: determinedai/kube-scheduler:0.17.0
         {{- else }}

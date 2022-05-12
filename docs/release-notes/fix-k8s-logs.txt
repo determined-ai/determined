@@ -1,0 +1,9 @@
+:orphan:
+
+**Improvements**
+
+-  Logging: In Kubernetes, ensure logs for very short tasks are not truncated.
+
+**Breaking Changes**
+
+-  Logging: The default Fluentbit version in all deployment modes is now 1.9.3, changed from 1.6.

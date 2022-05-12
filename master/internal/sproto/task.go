@@ -57,9 +57,10 @@ type (
 
 	// PortProxyConfig configures a proxy the allocation should start.
 	PortProxyConfig struct {
-		ServiceID string
-		Port      int
-		ProxyTCP  bool
+		ServiceID       string
+		Port            int
+		ProxyTCP        bool
+		Unauthenticated bool
 	}
 
 	// EventStreamConfig configures an event stream.
@@ -145,6 +146,9 @@ const (
 	// SlurmRendezvousIfaceEnvVar is the name of the env var for indicating the net iface on which
 	// to rendezvous (horovodrun will use the IPs of the nodes on this interface to launch).
 	SlurmRendezvousIfaceEnvVar = "DET_SLURM_RENDEZVOUS_IFACE"
+	// SlurmProxyIfaceEnvVar is the env var for overriding the net iface used to proxy between
+	// the master and agents.
+	SlurmProxyIfaceEnvVar = "DET_SLURM_PROXY_IFACE"
 	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
 	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
 	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.

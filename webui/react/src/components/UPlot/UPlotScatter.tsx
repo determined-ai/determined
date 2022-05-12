@@ -3,7 +3,8 @@ import uPlot from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import QuadTree, { pointWithin } from 'components/UPlot/UPlotScatter/quadtree';
-import { Range } from 'types';
+
+import { Range } from '../../shared/types';
 
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';

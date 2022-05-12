@@ -4,7 +4,7 @@ import React, { PropsWithChildren, useMemo } from 'react';
 
 import iconChart from 'shared/assets/images/icon-chart.svg';
 import iconLogs from 'shared/assets/images/icon-logs.svg';
-import { isNumber } from 'utils/data';
+import { isNumber } from 'shared/utils/data';
 
 import css from './SkeletonSection.module.scss';
 

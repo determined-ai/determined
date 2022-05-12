@@ -137,6 +137,8 @@ func (a *apiServer) LaunchShell(
 	spec.Keys = &keys
 
 	spec.ProxyTCP = true
+	// Shell authentication happens through SSH keys, instead.
+	spec.Unauthenticated = true
 
 	// Launch a Shell actor.
 	var shellID model.TaskID

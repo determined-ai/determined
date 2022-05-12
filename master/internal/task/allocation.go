@@ -65,6 +65,8 @@ type (
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
+		// proxyAddress is provided by determined.exec.prep_container if the RM doesn't provide it.
+		proxyAddress *string
 		// active all gather state
 		allGather *allGather
 
@@ -104,6 +106,10 @@ type (
 	// AllocationReady marks an allocation as ready.
 	AllocationReady struct {
 		Message string
+	}
+	// SetAllocationProxyAddress manually sets the allocation proxy address.
+	SetAllocationProxyAddress struct {
+		ProxyAddress string
 	}
 )
 
@@ -215,6 +221,15 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(a.State())
 		}
+	case SetAllocationProxyAddress:
+		if a.req.ProxyPort == nil {
+			if ctx.ExpectingResponse() {
+				ctx.Respond(ErrBehaviorUnsupported{Behavior: fmt.Sprintf("%T", msg)})
+			}
+			return nil
+		}
+		a.proxyAddress = &msg.ProxyAddress
+		a.registerProxies(ctx, a.containerProxyAddresses())
 	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
 		if a.rendezvous == nil {
 			if a.resources == nil {
@@ -500,8 +515,8 @@ func (a *Allocation) ResourcesStateChanged(
 		if a.rendezvous != nil && a.rendezvous.try() {
 			ctx.Log().Info("all containers are connected successfully (task container state changed)")
 		}
-		if a.req.ProxyPort != nil {
-			a.registerProxies(ctx, msg)
+		if a.req.ProxyPort != nil && msg.ResourcesStarted.Addresses != nil {
+			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
 		}
 
 		a.sendEvent(ctx, sproto.Event{
@@ -637,7 +652,7 @@ func (a *Allocation) kill(ctx *actor.Context) {
 	}
 }
 
-func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.ResourcesStateChanged) {
+func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Address) {
 	cfg := a.req.ProxyPort
 	if cfg == nil {
 		return
@@ -649,7 +664,7 @@ func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.ResourcesSta
 		return
 	}
 
-	for _, address := range msg.ResourcesStarted.Addresses {
+	for _, address := range addresses {
 		// Only proxy the port we expect to proxy. If a dockerfile uses an EXPOSE command,
 		// additional addresses will appear her, but currently we only proxy one uuid to one
 		// port, so it doesn't make sense to send multiple proxy.Register messages for a
@@ -667,13 +682,14 @@ func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.ResourcesSta
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 			},
-			ProxyTCP: cfg.ProxyTCP,
+			ProxyTCP:        cfg.ProxyTCP,
+			Unauthenticated: cfg.Unauthenticated,
 		})
 		a.proxies = append(a.proxies, cfg.ServiceID)
 	}
 
 	if len(a.proxies) != 1 {
-		ctx.Log().Errorf("proxied more than expected %v", len(a.proxies))
+		ctx.Log().Errorf("did not proxy as expected %v (found addrs %v)", len(a.proxies), addresses)
 	}
 }
 
@@ -692,6 +708,21 @@ func (a *Allocation) unregisterProxies(ctx *actor.Context) {
 		ctx.Tell(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Unregister{
 			ServiceID: serviceID,
 		})
+	}
+}
+
+// containerProxyAddresses forms the container address when proxyAddress is given.
+func (a *Allocation) containerProxyAddresses() []cproto.Address {
+	if a.proxyAddress == nil || a.req.ProxyPort == nil {
+		return []cproto.Address{}
+	}
+	return []cproto.Address{
+		{
+			ContainerIP:   *a.proxyAddress,
+			ContainerPort: a.req.ProxyPort.Port,
+			HostIP:        *a.proxyAddress,
+			HostPort:      a.req.ProxyPort.Port,
+		},
 	}
 }
 
@@ -836,11 +867,14 @@ func (a *Allocation) State() AllocationState {
 	for id, r := range a.resources {
 		resources[id] = r.Summary()
 
-		if r.Started != nil {
+		switch {
+		case r.Started != nil && r.Started.Addresses != nil:
 			a := r.Started.Addresses
 			na := make([]cproto.Address, len(a))
 			copy(na, a)
 			addresses[id] = na
+		case a.proxyAddress != nil:
+			addresses[id] = a.containerProxyAddresses()
 		}
 
 		if r.container != nil {

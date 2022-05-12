@@ -3,8 +3,8 @@ import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
+import { glasbeyColor } from 'shared/utils/color';
 import { MetricName } from 'types';
-import { glasbeyColor } from 'utils/color';
 import { metricNameToStr } from 'utils/metric';
 
 interface Props {
@@ -36,6 +36,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const chartData: AlignedData = useMemo(() => {
     return [ xValues, ...data ];
   }, [ data, xValues ]);
+
   const chartOptions: Options = useMemo(() => {
 
     const onlyOneXValue = chartData?.[0]?.length === 1;

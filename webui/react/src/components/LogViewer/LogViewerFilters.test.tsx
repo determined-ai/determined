@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
-import { generateAlphaNumeric, generateUUID } from 'utils/string';
 
 import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerFilters';
 
@@ -60,6 +60,24 @@ describe('LogViewerFilter', () => {
         const regex = new RegExp(`${values[key]?.length} ${LABELS[key]}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
       });
+    });
+  });
+
+  it('should render filters with rank 0 and no rank', async () => {
+    const values: Filters = {
+      agentIds: [],
+      allocationIds: [],
+      containerIds: [],
+      levels: [],
+      rankIds: [ 0, undefined ],
+    };
+    setup(values, { ...values, rankIds: [] });
+
+    const agentOption1 = screen.getByText('All Ranks');
+    userEvent.click(agentOption1, undefined, { skipPointerEventsCheck: true });
+    await waitFor(async () => {
+      expect(await screen.findAllByText('0')).toHaveLength(2);
+      expect(screen.queryByText('No Rank')).toBeInTheDocument();
     });
   });
 

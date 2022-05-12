@@ -13,7 +13,7 @@ data:
     leaderElection:
       leaderElect: false
     profiles:
-    - schedulerName: coscheduler
+    - schedulerName: {{ $schedulerType }}
       plugins:
         queueSort:
           enabled:

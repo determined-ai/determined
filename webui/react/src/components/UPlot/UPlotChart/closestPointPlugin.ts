@@ -1,9 +1,9 @@
 import { throttle } from 'throttle-debounce';
 import uPlot, { Options, Plugin } from 'uplot';
 
-import { findInsertionIndex } from 'utils/array';
+import { findInsertionIndex } from 'shared/utils/array';
+import { isEqual } from 'shared/utils/data';
 import { distance } from 'utils/chart';
-import { isEqual } from 'utils/data';
 
 import css from './closestPointPlugin.module.scss';
 

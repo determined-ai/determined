@@ -16,14 +16,16 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { rgba2str, str2rgba } from 'shared/utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  metricTypeParamMap,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
+
+import { Primitive, Range } from '../../../shared/types';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -44,7 +46,7 @@ interface HpData {
   hpLabelValues: Record<string, number[]>;
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
-  hpMetrics: Record<string, number[]>;
+  hpMetrics: Record<string, (number | null)[]>;
   hpValues: HpValue;
   metricRange: Range<number>;
   trialIds: number[];
@@ -213,7 +215,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpMetricMap: Record<number, Record<string, number>> = {};
+    const hpMetricMap: Record<number, Record<string, number | null>> = {};
     const hpValueMap: Record<number, Record<string, Primitive>> = {};
     const hpLabelMap: Record<string, string[]> = {};
     const hpLabelValueMap: Record<string, number[]> = {};
@@ -234,7 +236,7 @@ const HpHeatMaps: React.FC<Props> = ({
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const hpLogScaleMap: Record<string, boolean> = {};
-        const hpMetrics: Record<string, number[]> = {};
+        const hpMetrics: Record<string, (number | null)[]> = {};
         const hpValues: HpValue = {};
         const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
 
@@ -247,6 +249,12 @@ const HpHeatMaps: React.FC<Props> = ({
             .filter(hParam => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));
 
+          /**
+           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+           * dynamic min/max ranges via uPlot.Scales.
+           */
+          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : null;
+
           trialIds.push(trialId);
           hpMetricMap[trialId] = hpMetricMap[trialId] || {};
           hpValueMap[trialId] = hpValueMap[trialId] || {};
@@ -254,12 +262,12 @@ const HpHeatMaps: React.FC<Props> = ({
             hpValueMap[trialId][hParam1] = flatHParams[hParam1];
             trialHParams.forEach(hParam2 => {
               const key = generateHpKey(hParam1, hParam2);
-              hpMetricMap[trialId][key] = trial.metric;
+              hpMetricMap[trialId][key] = trialMetric;
             });
           });
 
-          if (trial.metric < metricRange[0]) metricRange[0] = trial.metric;
-          if (trial.metric > metricRange[1]) metricRange[1] = trial.metric;
+          if (trialMetric !== null && trialMetric < metricRange[0]) metricRange[0] = trialMetric;
+          if (trialMetric !== null && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
         });
 
         fullHParams.forEach(hParam1 => {

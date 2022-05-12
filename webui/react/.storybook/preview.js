@@ -1,6 +1,6 @@
 import 'styles/index.scss';
 import 'styles/storybook.scss';
-import 'prototypes';
+import 'shared/prototypes';
 
 import ThemeDecorator from "storybook/ThemeDecorator"
 

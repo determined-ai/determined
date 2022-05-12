@@ -88,7 +88,8 @@ func filterToParams(f api.Filter) []interface{} {
 	return params
 }
 
-func orderByToSQL(order apiv1.OrderBy) string {
+// OrderByToSQL computes the SQL keyword corresponding to the given ordering type.
+func OrderByToSQL(order apiv1.OrderBy) string {
 	switch order {
 	case apiv1.OrderBy_ORDER_BY_UNSPECIFIED:
 		return asc

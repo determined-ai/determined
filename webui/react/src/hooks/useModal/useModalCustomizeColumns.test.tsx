@@ -4,7 +4,8 @@ import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
-import { camelCaseToSentence, generateAlphaNumeric, sentenceToCamelCase } from 'utils/string';
+import { camelCaseToSentence, generateAlphaNumeric,
+  sentenceToCamelCase } from 'shared/utils/string';
 
 import useModalCustomizeColumns from './useModalCustomizeColumns';
 
