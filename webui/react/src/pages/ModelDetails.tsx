@@ -298,7 +298,6 @@ const ModelDetails: React.FC = () => {
         body: { name: editedName },
         modelName,
       });
-      routeToReactUrl(paths.modelDetails(editedName));
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',
