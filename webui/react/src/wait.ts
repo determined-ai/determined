@@ -46,7 +46,11 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
 };
 
 export const openCommand = (command: CommandTask): void => {
-  window.open(`/det${paths.interactiveTask(command, waitPageUrl(command))}`, '_blank', windowOpenFeatures.join(','));
+  window.open(
+    `/det${paths.interactiveTask(command, waitPageUrl(command))}`,
+    '_blank',
+    windowOpenFeatures.join(','),
+  );
 };
 
 export interface WaitStatus {
