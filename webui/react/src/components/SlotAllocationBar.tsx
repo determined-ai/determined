@@ -148,7 +148,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   }, [ totalSlots, stateTallies, pendingSlots, freeSlots, slotsPotential, footer, isAux ]);
 
   const totalSlotsNum = useMemo(() => {
-    return slotsPotential && slotsPotential > 0 ? slotsPotential : totalSlots;
+    return slotsPotential || totalSlots;
   }, [ totalSlots, slotsPotential ]);
 
   const classes = [ css.base ];
