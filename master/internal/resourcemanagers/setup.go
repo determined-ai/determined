@@ -59,16 +59,20 @@ func Setup(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
+	authFuncs []echo.MiddlewareFunc,
+	adminAuthFuncs []echo.MiddlewareFunc,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
 	case config.ResourceManager.AgentRM != nil:
-		ref = setupAgentResourceManager(system, db, echo, config, opts, cert)
+		ref = setupAgentResourceManager(system, db, echo, config, opts, cert,
+			authFuncs, adminAuthFuncs)
 	case config.ResourceManager.KubernetesRM != nil:
 		tlsConfig, err := makeTLSConfig(cert)
 		if err != nil {
 			panic(errors.Wrap(err, "failed to set up TLS config"))
 		}
+		// TODO do we / how do we do k8s API admin authentication?
 		ref = setupKubernetesResourceManager(
 			system, echo, config.ResourceManager.KubernetesRM, tlsConfig, opts.LoggingOptions,
 		)
@@ -90,6 +94,8 @@ func setupAgentResourceManager(
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
+	authFuncs []echo.MiddlewareFunc,
+	adminAuthFuncs []echo.MiddlewareFunc,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("agentRM"),
@@ -97,7 +103,7 @@ func setupAgentResourceManager(
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 
-	agent.Initialize(system, echo, opts)
+	agent.Initialize(system, echo, opts, authFuncs, adminAuthFuncs)
 	return ref
 }
 

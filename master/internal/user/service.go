@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -77,33 +78,54 @@ func (s *Service) extractToken(c echo.Context) (string, error) {
 	return "", echo.NewHTTPError(http.StatusUnauthorized)
 }
 
+func (s *Service) auth(c echo.Context) (isAdmin bool, err error) {
+	token, err := s.extractToken(c)
+	if err != nil {
+		return false, err
+	}
+
+	var user *model.User
+	var session *model.UserSession
+	user, session, err = s.db.UserByToken(token, s.extConfig)
+	switch err {
+	case nil:
+		if !user.Active {
+			return false, echo.NewHTTPError(http.StatusForbidden, "user not active")
+		}
+		// Set data on the request context that might be useful to
+		// event handlers.
+		c.(*context.DetContext).SetUser(*user)
+		c.(*context.DetContext).SetUserSession(*session)
+		return user.Admin, nil
+	case db.ErrNotFound:
+		return false, echo.NewHTTPError(http.StatusUnauthorized)
+	default:
+		return false, err
+	}
+}
+
+func (s *Service) ProcessAuthenticationAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		isAdmin, err := s.auth(c)
+		if err != nil {
+			return err
+		}
+		if !isAdmin {
+			return echo.NewHTTPError(http.StatusForbidden,
+				grpcutil.ErrPermissionDenied.Error())
+		}
+		return next(c)
+	}
+}
+
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		token, err := s.extractToken(c)
-		if err != nil {
+		if _, err := s.auth(c); err != nil {
 			return err
 		}
-
-		var user *model.User
-		var session *model.UserSession
-		user, session, err = s.db.UserByToken(token, s.extConfig)
-		switch err {
-		case nil:
-			if !user.Active {
-				return echo.NewHTTPError(http.StatusForbidden, "user not active")
-			}
-			// Set data on the request context that might be useful to
-			// event handlers.
-			c.(*context.DetContext).SetUser(*user)
-			c.(*context.DetContext).SetUserSession(*session)
-			return next(c)
-		case db.ErrNotFound:
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		default:
-			return err
-		}
+		return next(c)
 	}
 }
 
