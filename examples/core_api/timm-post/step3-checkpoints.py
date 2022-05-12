@@ -733,7 +733,7 @@ class DeterminedCheckpointSaver(CheckpointSaver):
     def _save(self, save_path, epoch, metric=None):
         super()._save(save_path, epoch, metric)
         checkpoint_metadata = {
-            "latest_batch": self.epoch_length * (epoch + 1),
+            "steps_completed": self.epoch_length * (epoch + 1),
             "trial_id": self.trial_id,
         }
         with self.core_context.checkpoint.store_path(checkpoint_metadata) as (path, _):
@@ -1149,7 +1149,7 @@ def main(core_context):
             latest_batch = (epoch + 1) * len(loader_train)
             if args.rank == 0:
                 core_context.train.report_training_metrics(
-                    latest_batch=latest_batch, metrics=train_metrics
+                    steps_completed=latest_batch, metrics=train_metrics
                 )
 
             if args.distributed and args.dist_bn in ("broadcast", "reduce"):
@@ -1176,7 +1176,7 @@ def main(core_context):
 
             if args.rank == 0:
                 core_context.train.report_validation_metrics(
-                    latest_batch=latest_batch,
+                    steps_completed=latest_batch,
                     metrics={"val_" + k: v for k, v in eval_metrics.items()},
                 )
 
