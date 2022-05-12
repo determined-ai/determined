@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
-import { DURATION_DAY, secondToHour } from 'shared/utils/datetime';
+import { DURATION_DAY, secondToMinute } from 'shared/utils/datetime';
 
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';
 
@@ -27,7 +27,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
     // If aggregates only has one record of today, then do not display.
     const aggd = agg.length > 1 ? agg : [];
     return ({
-      hoursAverage: { average: aggd.map(item => secondToHour(item.seconds)) },
+      hoursAverage: { average: aggd.map(item => secondToMinute(item.seconds)) },
       time: aggd.map(item => item.periodStart),
     });
   }, [ poolStats, viewDays ]);
@@ -46,7 +46,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
         <ClusterHistoricalUsageChart
           chartKey={viewDays}
           hoursByLabel={queuedStats.hoursAverage}
-          label="Queued Hours"
+          label="Queued Minuts"
           time={queuedStats.time}
         />
       </Section>
