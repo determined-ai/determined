@@ -2,7 +2,7 @@
 
 **Improvements**
 
--  Security: Improved security by requiring admin priviledges for the following actions.
+-  Security: Improved security by requiring admin privileges for the following actions.
 
   -  Reading master config.
   -  Enabling or disabling an agent.
