@@ -106,7 +106,7 @@ const NotesCard: React.FC<Props> = (
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}
-          onClick={() => { editNotes(); }}
+          onClick={(e: React.MouseEvent) => { if (e.detail > 1 || notes === '') editNotes(); }}
         />
       </Spinner>
       <Prompt

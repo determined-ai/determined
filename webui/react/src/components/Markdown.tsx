@@ -12,12 +12,12 @@ interface Props {
   editing?: boolean;
   markdown: string;
   onChange?: (editedMarkdown: string) => void;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 interface RenderProps {
   markdown: string;
-  onClick?: () => void
+  onClick?: (e: React.MouseEvent) => void
   placeholder?: string;
 }
 
