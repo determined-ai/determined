@@ -3,8 +3,6 @@ from typing import Tuple
 
 import tensorflow as tf
 
-BUFFER_SIZE = 400  # Used for shuffling
-
 
 def download(base, dataset) -> str:
     filename = f"{dataset}.tar.gz"
@@ -101,19 +99,15 @@ def _preprocess_images(
 
     return input_image, real_image
 
-def get_dataset(path, height, width, set_="train", jitter=0, mirror=False, batch_size=1):
-    """Load the images into memory; preprocess, shuffle, and batch them."""
+def load_dataset(path, height, width, set_="train", jitter=0, mirror=False):
+    """Load the images into memory and preprocess them."""
     ds = tf.data.Dataset.list_files(str(path / f"{set_}/*.jpg"))
     if set_ != "train":
         jitter = 0
         mirror = False
     def _prep(i):
         return _preprocess_images(i, height, width, jitter, mirror)
-    ds = ds.map(_prep)
-    if set_ == "train":
-        ds = ds.shuffle(BUFFER_SIZE)
-    if batch_size:
-        ds = ds.batch(batch_size)
+    ds = ds.map(_prep, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     return ds
 
 

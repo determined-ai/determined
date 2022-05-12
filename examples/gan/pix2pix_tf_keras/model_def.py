@@ -3,7 +3,7 @@ import tensorflow as tf
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
 
 from pix2pix import Pix2Pix, make_discriminator_optimizer, make_generator_optimizer
-from data import download, get_dataset
+from data import download, load_dataset
 
 
 class Pix2PixTrial(TFKerasTrial):
@@ -41,21 +41,30 @@ class Pix2PixTrial(TFKerasTrial):
 
         return model
 
-    def _get_wrapped_dataset(self, set_, batch_size) -> InputData:
-        ds = get_dataset(
+    def _get_wrapped_dataset(self, set_) -> InputData:
+        ds = load_dataset(
             self.path,
             self.context.get_data_config()["height"],
             self.context.get_data_config()["width"],
             set_,
             self.context.get_hparam("jitter"),
             self.context.get_hparam("mirror"),
-            batch_size,
         )
         ds = self.context.wrap_dataset(ds)
         return ds
 
     def build_training_data_loader(self) -> InputData:
-        return self._get_wrapped_dataset("train", self.context.get_per_slot_batch_size())
+        train_dataset = (
+            self._get_wrapped_dataset("train").cache()
+                .shuffle(self.context.get_data_config().get("BUFFER_SIZE"))
+                .batch(self.context.get_per_slot_batch_size()).repeat()
+                .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        )
+        return train_dataset
 
     def build_validation_data_loader(self) -> InputData:
-        return self._get_wrapped_dataset("test", self.context.get_per_slot_batch_size())
+        test_dataset = (
+            self._get_wrapped_dataset("test")
+                .batch(self.context.get_per_slot_batch_size())
+        )
+        return test_dataset

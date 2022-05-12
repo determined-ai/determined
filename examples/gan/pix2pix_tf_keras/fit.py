@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import time
 
-from data import download, get_dataset
+import tensorflow as tf
+
+from data import download, load_dataset
 
 from pix2pix import Pix2Pix
 
@@ -55,9 +57,14 @@ def fit(train_ds, test_ds, steps, preview=0):
 
 def main():
     path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
-    train_dataset = get_dataset(path, 256, 256, "train", jitter=30, mirror=True, batch_size=10)
-    test_dataset = get_dataset(path, 256, 256, "test", batch_size=10)
-    fit(train_dataset, test_dataset, steps=200, preview=100)
+
+    train_dataset = load_dataset(path, 256, 256, "train", jitter=30, mirror=True)
+    train_dataset = train_dataset.cache().shuffle(400).batch(40).repeat()
+    train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+    test_dataset = load_dataset(path, 256, 256, "test")
+    test_dataset = test_dataset.batch(50)
+    fit(train_dataset, test_dataset, steps=10, preview=10)
 
 
 if __name__ == "__main__":

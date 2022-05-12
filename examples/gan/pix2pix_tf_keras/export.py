@@ -9,14 +9,15 @@ import matplotlib.pyplot as plt
 from determined import keras
 from determined.experimental import client
 
-from data import download, get_dataset
+from data import download, load_dataset
 
 
 def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
     path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
-    test_ds = get_dataset(path, 256, 256, set_="test", batch_size=0)
+    test_ds = load_dataset(path, 256, 256, set_="test")
     example_input, example_target = next(iter(test_ds.take(1)))
-    prediction = generator(tf.expand_dims(example_input, 0), training=False)
+    prediction = generator(tf.expand_dims(example_input, 0), training=True)
+
 
     plt.figure(figsize=(15, 15))
 
