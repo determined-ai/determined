@@ -119,14 +119,14 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	userID, err := a.m.db.AddUser(user, agentUserGroup); 
+	userID, err := a.m.db.AddUser(user, agentUserGroup)
 	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, status.Error(codes.InvalidArgument, "user already exists")
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(userID))
+	fullUser, err := getUser(a.m.db, userID)
 	return &apiv1.PostUserResponse{User: fullUser}, err
 }
 
