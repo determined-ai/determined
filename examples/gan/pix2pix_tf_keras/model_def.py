@@ -55,16 +55,18 @@ class Pix2PixTrial(TFKerasTrial):
 
     def build_training_data_loader(self) -> InputData:
         train_dataset = (
-            self._get_wrapped_dataset("train").cache()
-                .shuffle(self.context.get_data_config().get("BUFFER_SIZE"))
-                .batch(self.context.get_per_slot_batch_size()).repeat()
-                .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+            self._get_wrapped_dataset("train")
+            .cache()
+            .shuffle(self.context.get_data_config().get("BUFFER_SIZE"))
+            .batch(self.context.get_per_slot_batch_size())
+            .repeat()
+            .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         )
         return train_dataset
 
     def build_validation_data_loader(self) -> InputData:
         test_dataset = (
             self._get_wrapped_dataset("test")
-                .batch(self.context.get_per_slot_batch_size())
+            .batch(self.context.get_per_slot_batch_size())
         )
         return test_dataset

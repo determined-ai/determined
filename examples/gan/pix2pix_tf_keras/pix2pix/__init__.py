@@ -49,7 +49,9 @@ class Pix2Pix(tf.keras.Model):
             disc_reals = self.discriminator([input_images, real_images], training=True)
             disc_fakes = self.discriminator([input_images, gen_outputs], training=True)
 
-            g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fakes, gen_outputs, real_images)
+            g_loss, g_gan_loss, g_l1_loss = self.generator_loss(
+                disc_fakes, gen_outputs, real_images
+            )
             d_loss = self.discriminator_loss(disc_reals, disc_fakes)
 
         generator_gradients = gen_tape.gradient(
@@ -65,7 +67,13 @@ class Pix2Pix(tf.keras.Model):
         self.discriminator_optimizer.apply_gradients(
             zip(discriminator_gradients, self.discriminator.trainable_variables)
         )
-        return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}
+        return {
+            "g_gan_loss": g_gan_loss,
+            "g_l1_loss": g_l1_loss,
+            "g_loss": g_loss,
+            "d_loss": d_loss,
+            "total_loss": g_loss + d_loss,
+        }
 
     def test_step(self, batch: Tuple[tf.Tensor, tf.Tensor], verbose=False):
         input_images, real_images = batch
@@ -75,6 +83,14 @@ class Pix2Pix(tf.keras.Model):
         gen_outputs = self.generator(input_images, training=False)
         disc_reals = self.discriminator([input_images, real_images], training=False)
         disc_fakes = self.discriminator([gen_outputs, real_images], training=False)
-        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fakes, gen_outputs, real_images)
+        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(
+            disc_fakes, gen_outputs, real_images
+        )
         d_loss = self.discriminator_loss(disc_reals, disc_fakes)
-        return {"g_gan_loss": g_gan_loss, "g_l1_loss": g_l1_loss, "g_loss": g_loss, "d_loss": d_loss, "total_loss": g_loss + d_loss}
+        return {
+            "g_gan_loss": g_gan_loss,
+            "g_l1_loss": g_l1_loss,
+            "g_loss": g_loss,
+            "d_loss": d_loss,
+            "total_loss": g_loss + d_loss,
+        }

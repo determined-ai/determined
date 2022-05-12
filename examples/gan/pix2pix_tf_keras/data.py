@@ -62,9 +62,12 @@ def _normalize(input_image, real_image) -> Tuple[tf.Tensor, tf.Tensor]:
 
 @tf.function()
 def _random_jitter(
-    input_image, real_image,
-    height, width,
-    jitter=0, mirror=False,
+    input_image,
+    real_image,
+    height,
+    width,
+    jitter=0,
+    mirror=False,
 ) -> Tuple[tf.Tensor, tf.Tensor]:
     if jitter > 0:
         # Resizing to 286x286
@@ -86,18 +89,24 @@ def _random_jitter(
 
 def _preprocess_images(
     image_filename,
-    height, width,
-    jitter=0, mirror=False,
+    height,
+    width,
+    jitter=0,
+    mirror=False,
 ) -> Tuple[tf.Tensor, tf.Tensor]:
     input_image, real_image = _load(image_filename)
     input_image, real_image = _random_jitter(
-        input_image, real_image,
-        height, width,
-        jitter, mirror,
+        input_image,
+        real_image,
+        height,
+        width,
+        jitter,
+        mirror,
     )
     input_image, real_image = _normalize(input_image, real_image)
 
     return input_image, real_image
+
 
 def load_dataset(path, height, width, set_="train", jitter=0, mirror=False):
     """Load the images into memory and preprocess them."""
@@ -105,8 +114,10 @@ def load_dataset(path, height, width, set_="train", jitter=0, mirror=False):
     if set_ != "train":
         jitter = 0
         mirror = False
+
     def _prep(i):
         return _preprocess_images(i, height, width, jitter, mirror)
+
     ds = ds.map(_prep, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     return ds
 

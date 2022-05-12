@@ -18,7 +18,6 @@ def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
     example_input, example_target = next(iter(test_ds.take(1)))
     prediction = generator(tf.expand_dims(example_input, 0), training=True)
 
-
     plt.figure(figsize=(15, 15))
 
     display_list = [example_input, example_target, prediction[0]]
@@ -35,7 +34,9 @@ def generate_and_plot_images(generator: tf.keras.Sequential) -> None:
 
 def export_model(trial_id: int, latest=False) -> tf.keras.Model:
     trial = client.get_trial(trial_id)
-    checkpoint: client.Checkpoint = trial.select_checkpoint(latest=True) if latest else trial.top_checkpoint()
+    checkpoint: client.Checkpoint = (
+        trial.select_checkpoint(latest=True) if latest else trial.top_checkpoint()
+    )
     print(f"Checkpoint {checkpoint.uuid}")
     try:
         # Checkpoints from AWS deployment don't have these attributes
@@ -57,7 +58,9 @@ def main():
         "--master-url", type=str, default="", help="URL of the Determined master."
     )
     parser.add_argument(
-        "--latest", action="store_true", help="Use the latest checkpoint. If omitted, the best checkpoint will be used."
+        "--latest",
+        action="store_true",
+        help="Use the latest checkpoint. If omitted, the best checkpoint will be used.",
     )
     args = parser.parse_args()
 
