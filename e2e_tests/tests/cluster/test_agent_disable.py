@@ -6,12 +6,10 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 
 import pytest
 
-from determined.common import constants
 from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_users import EXPECT_TIMEOUT, det_spawn
 from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
 
 
