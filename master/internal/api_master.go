@@ -44,7 +44,12 @@ func (a *apiServer) GetTelemetry(
 }
 
 func (a *apiServer) GetMasterConfig(
-	_ context.Context, _ *apiv1.GetMasterConfigRequest) (*apiv1.GetMasterConfigResponse, error) {
+	ctx context.Context, _ *apiv1.GetMasterConfigRequest,
+) (*apiv1.GetMasterConfigResponse, error) {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
+		return nil, err
+	}
+
 	config, err := a.m.config.Printable()
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing master config")

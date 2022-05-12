@@ -107,7 +107,11 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	}
 }
 
-func (m *Master) getConfig(echo.Context) (interface{}, error) {
+func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
+	if !ctx.(*detContext.DetContext).MustGetUser().Admin {
+		return nil, echo.NewHTTPError(http.StatusForbidden, grpcutil.ErrPermissionDenied)
+	}
+
 	return m.config.Printable()
 }
 
@@ -901,7 +905,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
+	m.echo.GET("/config", api.Route(m.getConfig), authFuncs...)
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
