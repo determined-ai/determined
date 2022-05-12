@@ -34,8 +34,9 @@ class Pix2Pix(tf.keras.Model):
         )
         self.generator_optimizer = generator_optimizer or make_generator_optimizer()
 
-    def call(self, inputs, training=None, mask=None):
-        pass
+    def call(self, input_images, training=False):
+        gen_outputs = self.generator(input_images, training=training)
+        return gen_outputs
 
     def train_step(self, batch: Tuple[tf.Tensor, tf.Tensor], verbose=False):
         input_images, real_images = batch
