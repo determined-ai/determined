@@ -11,7 +11,7 @@ import filelock
 
 import determined as det
 from determined.common import api, constants, util
-from determined.common.api import bindings, certs
+from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -101,7 +101,7 @@ class Authentication:
 
         try:
             auth = do_login(self.master_address, session_user, password, cert)
-            token = auth.to_json()["token"]
+            token = auth.get_token()
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
@@ -109,7 +109,7 @@ class Authentication:
 
         self.token_store.set_token(session_user, token)
 
-        return Session(session_user, token, auth.to_json()["user"]["id"])
+        return Session(session_user, token, auth.get_user_id())
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
@@ -138,14 +138,38 @@ class Authentication:
         return self.session.token
 
 
+class AuthContext:
+    def __init__(self, token: str, user_id: str):
+        self.token = token
+        self.user_id = user_id
+
+    def get_user_id(self) -> str:
+        return self.user_id
+
+    def get_token(self) -> str:
+        return self.token
+
+
 def do_login(
     master_address: str,
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-) -> bindings.v1LoginResponse:
-    sess = det.common.experimental.session.Session(master_address, None, None, cert)
-    return bindings.post_Login(sess, body=bindings.v1LoginRequest(password, username))
+) -> AuthContext:
+    r = api.post(
+        master_address,
+        "login",
+        json={"username": username, "password": password},
+        authenticated=False,
+        cert=cert,
+    )
+
+    token = r.json()["token"]
+    assert isinstance(token, str), "got invalid token response from server"
+
+    user_id = r.json()["userId"]
+
+    return AuthContext(token, user_id)
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
