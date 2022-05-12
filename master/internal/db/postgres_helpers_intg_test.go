@@ -35,7 +35,7 @@ func requireMockUser(t *testing.T, db *PgDB) model.User {
 		PasswordHash: null.NewString("", false),
 		Active:       true,
 	}
-	err := db.AddUser(&user, nil)
+	_, err := db.AddUser(&user, nil)
 	require.NoError(t, err, "failed to add user")
 	return user
 }
