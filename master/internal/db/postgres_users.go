@@ -17,6 +17,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 // SessionDuration is how long a newly created session is valid.
@@ -266,7 +267,7 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (*model.User
 	}
 
 	tx = nil
-	return userID, nil
+	return ptrs.Ptr(userID), nil
 }
 
 // UpdateUser updates an existing user.  `toUpdate` names the fields to update.
