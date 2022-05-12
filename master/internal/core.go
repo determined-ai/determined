@@ -726,7 +726,6 @@ func (m *Master) Run(ctx context.Context) error {
 		return errors.Wrap(err, "cannot initialize user manager")
 	}
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
-	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAuthenticationAdmin}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
 		HTTPAuth: userService.ProcessProxyAuthentication,
@@ -803,7 +802,7 @@ func (m *Master) Run(ctx context.Context) error {
 		LoggingOptions: m.config.Logging,
 	}
 	m.rm = resourcemanagers.Setup(m.system, m.db, m.echo,
-		m.config.ResourceConfig, agentOpts, cert, authFuncs, adminAuthFuncs)
+		m.config.ResourceConfig, agentOpts, cert, authFuncs)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))

@@ -24,14 +24,12 @@ func Initialize(
 	e *echo.Echo,
 	opts *aproto.MasterSetAgentOptions,
 	authFuncs []echo.MiddlewareFunc,
-	adminAuthFuncs []echo.MiddlewareFunc,
 ) {
 	_, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts})
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
-	// TODO see why /agents needs to be authorized
-	e.Any("/agents*", api.Route(system, nil)) //, authFuncs...)
-	e.PATCH("/agents*", api.Route(system, nil), adminAuthFuncs...)
+	e.Any("/agents*", api.Route(system, nil))
+	e.PATCH("/agents*", api.Route(system, nil), authFuncs...)
 }
 
 type agents struct {
