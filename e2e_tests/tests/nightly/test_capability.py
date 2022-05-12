@@ -37,7 +37,6 @@ def test_gan_mnist_pytorch_const() -> None:
     exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("gan_mnist_pytorch"), 1)
 
 
-
 @pytest.mark.nightly
 def test_pix2pix_facades_const() -> None:
     config = conf.load_config(conf.gan_examples_path("pix2pix_tf_keras/const.yaml"))

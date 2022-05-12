@@ -47,7 +47,7 @@ official_examples = [
     (
         "gan/pix2pix_tf_keras",
         "gan/pix2pix_tf_keras/const.yaml",
-    )
+    ),
     (
         "decision_trees/gbt_titanic_estimator",
         "decision_trees/gbt_titanic_estimator/const.yaml",
