@@ -243,6 +243,10 @@ For an introduction to using the training API, please see the documentation on h
       -  MNIST
       -  :download:`dcgan_tf_keras.tgz </examples/dcgan_tf_keras.tgz>`
 
+   -  -  TensorFlow (tf.keras)
+      -  pix2pix
+      -  :download:`pix2pix_tf_keras.tgz </examples/pix2pix_tf_keras.tgz>`
+
 ********
  Graphs
 ********
