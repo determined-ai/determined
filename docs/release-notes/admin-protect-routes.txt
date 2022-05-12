@@ -10,7 +10,7 @@
 
 **Breaking Changes**
 
--  Security: The following routes and CLI commands will need admin privileges
+-  Security: The following routes and CLI commands will need admin privileges.
 
   -  ``det master config```
   -  ``det agent enable``
