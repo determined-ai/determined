@@ -24,7 +24,7 @@ type DB interface {
 	DeleteUserSessionByID(sessionID model.SessionID) error
 	DeleteUserSessionByToken(userSessionToken string) error
 	UserByUsername(username string) (*model.User, error)
-	AddUser(user *model.User, ug *model.AgentUserGroup) error
+	AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error)
 	UpdateUser(updated *model.User, toUpdate []string, ug *model.AgentUserGroup) error
 	UpdateUsername(userID *model.UserID, newUsername string) error
 	UserList() (values []model.FullUser, err error)
