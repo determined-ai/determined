@@ -60,19 +60,20 @@ const Avatar: React.FC<Props> = ({ hideTooltip, name, large, userId }: Props) =>
     }
   }, [ fetchUsers, userId, name, users ]);
 
-  const style = {
-    backgroundColor: getColor(displayName),
-    backgroundImage: Number(modifiedAt) ? `url('/users/${userID}/image?${modifiedAt}')` : '',
+  const style = { backgroundColor: getColor(displayName) };
+  const iconStyle: React.CSSProperties = {
+    backgroundImage: `url('/users/${userID}/image?${modifiedAt}')`,
     backgroundPosition: 'center center',
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
-    verticalAlign: 'middle',
+    position: 'absolute',
   };
   const classes = [ css.base ];
   if (large) classes.push(css.large);
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
       {getInitials(displayName)}
+      <div className={classes.join(' ')} style={iconStyle} />
     </div>
   );
   return hideTooltip ? avatar : <Tooltip placement="right" title={displayName}>{avatar}</Tooltip>;
