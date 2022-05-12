@@ -98,7 +98,8 @@ func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
 	taskActor actor.Address,
 	jID model.JobID) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(), jID.String()).Inc()
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
+		jID.String()).Inc()
 }
 
 // AssociateJobExperiment associates a job ID with experiment info.
@@ -106,7 +107,7 @@ func AssociateJobExperiment(jID model.JobID, eID string, labels expconf.Labels) 
 	jobIDToExperimentID.WithLabelValues(jID.String(), eID).Inc()
 	var expLabels []string
 
-	for l, _ := range labels {
+	for l := range labels {
 		expLabels = append(expLabels, l)
 	}
 
@@ -118,7 +119,7 @@ func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Label
 	jobIDToExperimentID.WithLabelValues(jID.String(), eID).Dec()
 	expLabels := make([]string, len(labels))
 
-	for l, _ := range labels {
+	for l := range labels {
 		expLabels = append(expLabels, l)
 	}
 
@@ -126,8 +127,10 @@ func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Label
 }
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
-func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address, jID model.JobID) {
-	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(), jID.String()).Dec()
+func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address,
+	jID model.JobID) {
+	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
+		jID.String()).Dec()
 }
 
 // AssociateContainerRuntimeID associates a Determined container ID with the runtime container ID.
