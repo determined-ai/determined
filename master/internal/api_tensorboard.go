@@ -14,8 +14,10 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/ghodss/yaml"
 
 	"github.com/pkg/errors"
 
@@ -265,10 +267,12 @@ func (a *apiServer) LaunchTensorboard(
 
 	spec.Base.ExtraEnvVars = uniqEnvVars
 
-	spec.Config.Environment.Image = model.RuntimeItem{
-		CPU:  expConf.Environment().Image().CPU(),
-		CUDA: expConf.Environment().Image().CUDA(),
-		ROCM: expConf.Environment().Image().ROCM(),
+	if !usingCustomImage(req) {
+		spec.Config.Environment.Image = model.RuntimeItem{
+			CPU:  expConf.Environment().Image().CPU(),
+			CUDA: expConf.Environment().Image().CUDA(),
+			ROCM: expConf.Environment().Image().ROCM(),
+		}
 	}
 	// Prefer RegistryAuth already present over the one from inferred from the experiment.
 	if spec.Config.Environment.RegistryAuth == nil {
@@ -315,6 +319,31 @@ func (a *apiServer) LaunchTensorboard(
 		Tensorboard: tb,
 		Config:      protoutils.ToStruct(spec.Config),
 	}, err
+}
+
+func usingCustomImage(req *apiv1.LaunchTensorboardRequest) bool {
+	if req.Config == nil {
+		return false
+	}
+
+	configBytes, err := protojson.Marshal(req.Config)
+	if err != nil {
+		return false
+	}
+
+	type DummyImg struct {
+		Image string `json:"image"`
+	}
+	type DummyEnv struct {
+		Environment DummyImg `json:"environment"`
+	}
+	dummy := DummyEnv{
+		Environment: DummyImg{},
+	}
+
+	err = yaml.Unmarshal(configBytes, &dummy)
+
+	return err == nil && dummy.Environment.Image != ""
 }
 
 type tensorboardConfig struct {
