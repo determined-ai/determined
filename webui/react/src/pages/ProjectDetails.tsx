@@ -327,6 +327,7 @@ const ProjectDetails: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
+        projectArchived={project?.archived}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
       />
@@ -511,6 +512,7 @@ const ProjectDetails: React.FC = () => {
     stateFilterDropdown,
     tableSearchIcon,
     userFilterDropdown,
+    project?.archived,
     users,
   ]);
 
@@ -761,13 +763,14 @@ const ProjectDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <TaskActionDropdown
         curUser={user}
+        projectArchived={project?.archived}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
         onVisibleChange={onVisibleChange}>
         {children}
       </TaskActionDropdown>
     ),
-    [ user, handleActionComplete ],
+    [ user, handleActionComplete, project?.archived ],
   );
 
   const ExperimentTabOptions = useMemo(() => {
