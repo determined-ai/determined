@@ -5,7 +5,7 @@ import React from 'react';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { BrandingType, Command, CommandTask } from 'types';
+import { BrandingType, CommandTask } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -72,7 +72,7 @@ export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 
-export const openBlank2 = (url: string, command: CommandTask): void => {
+export const openTask = (url: string, command: CommandTask): void => {
   window.open(`/det${paths.interactiveTask(command, url)}`, '_blank', windowOpenFeatures.join(','));
 };
 
@@ -216,8 +216,9 @@ export const paths = {
     return `/experiments/${experimentId}/model_def`;
   },
   interactiveTask: (command: CommandTask, taskUrl: string): string => {
-    console.log(command);
-    return `/interactiveTask/${command.id}/${command.type}/${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/${encodeURIComponent(taskUrl)}`;
+    return `/interactiveTask/${command.id}/${command.type}/
+    ${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/
+    ${encodeURIComponent(taskUrl)}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;

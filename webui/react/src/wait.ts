@@ -1,4 +1,4 @@
-import { openBlank, openBlank2, serverAddress } from 'routes/utils';
+import { openTask, serverAddress } from 'routes/utils';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
@@ -44,9 +44,7 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
 };
 
 export const openCommand = (command: CommandTask): void => {
-  console.log('command is');
-  console.log(command);
-  openBlank2(process.env.PUBLIC_URL + waitPageUrl(command), command);
+  openTask(process.env.PUBLIC_URL + waitPageUrl(command), command);
 };
 
 export interface WaitStatus {

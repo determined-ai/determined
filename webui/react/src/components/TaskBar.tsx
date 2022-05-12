@@ -1,13 +1,13 @@
-import { Dropdown, Menu } from 'antd';
-import React, {useCallback}  from 'react';
-import { paths, routeToReactUrl } from 'routes/utils';
-import { Modal } from 'antd';
-import { CommandTask, CommandType } from 'types';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Menu } from 'antd';
+import { Modal } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
+import { paths, routeToReactUrl } from 'routes/utils';
 import {
-  killTask
+  killTask,
 } from 'services/api';
+import { CommandTask, CommandType } from 'types';
 
 import Icon from './Icon';
 import css from './TaskBar.module.scss';
@@ -20,7 +20,10 @@ interface Props{
 
 export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Props) => {
 
-  const task = {id, name, resourcePool, type} as CommandTask;
+  const task = useMemo(() => {
+    const commandTask = { id, name, resourcePool, type } as CommandTask;
+    return commandTask;
+  }, [ id, name, resourcePool, type ]);
 
   const deleteTask = useCallback((task: CommandTask) => {
     Modal.confirm({
@@ -31,15 +34,14 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Prop
       icon: <ExclamationCircleOutlined />,
       okText: 'Kill',
       onOk: async () => {
-        console.log("killing task: ", task)
         await killTask(task);
-        routeToReactUrl(paths.taskList())
+        routeToReactUrl(paths.taskList());
       },
       title: 'Confirm Task Kill',
     });
-  }, [task])
+  }, []);
 
-  const dropdownOptions = (
+  const dropdownOverlay = useMemo(() => (
     <Menu>
       <Menu.Item
         key="kill"
@@ -52,18 +54,19 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Prop
         View Logs
       </Menu.Item>
     </Menu>
-  );
+  ), [ task, deleteTask ]);
 
   return (
     <div className={css.base}>
       <div className={css.barContent}>
-        {name}  —  {resourcePool}
+        <span>{name}</span>
+        <span>&#8212;</span>
+        <span>{resourcePool}</span>
         <Dropdown
-          overlay={dropdownOptions}
+          overlay={dropdownOverlay}
           placement="bottomRight"
           trigger={[ 'click' ]}>
-          <span> <Icon name="arrow-down" size="tiny" /> </span>
-
+          <div className={css.dropdownTrigger}> <Icon name="arrow-down" size="tiny" /> </div>
         </Dropdown>
       </div>
 

@@ -1,15 +1,27 @@
 .base {
   align-items: center;
   background-color: #333;
+  border: none;
   color: #fafafa;
   display: flex;
   font-size: 12px;
   height: 100%;
-  line-height: 18px;
+  line-height: 32px;
   text-align: center;
   
   .barContent {
     margin: 0 auto;
     text-align: center;
+
+    span {
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+    .dropdownTrigger {
+      cursor: pointer;
+      display: inline;
+      padding-left: 5px;
+      padding-right: 5px;
+    }
   }
 }
