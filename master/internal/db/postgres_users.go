@@ -17,7 +17,6 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 // SessionDuration is how long a newly created session is valid.
@@ -235,10 +234,10 @@ func deleteAgentUserGroup(tx *sqlx.Tx, userID model.UserID) error {
 }
 
 // AddUser creates a new user.
-func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (*model.UserID, error) {
+func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID, error) {
 	tx, err := db.sql.Beginx()
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return 0, errors.WithStack(err)
 	}
 
 	defer func() {
@@ -253,21 +252,21 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (*model.User
 
 	userID, err := addUser(tx, user)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	if ug != nil {
 		if err := addAgentUserGroup(tx, userID, ug); err != nil {
-			return nil, err
+			return 0, err
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, errors.WithStack(err)
+		return 0, errors.WithStack(err)
 	}
 
 	tx = nil
-	return ptrs.Ptr(userID), nil
+	return userID, nil
 }
 
 // UpdateUser updates an existing user.  `toUpdate` names the fields to update.
