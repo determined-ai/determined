@@ -28,6 +28,14 @@ class TypeAnno:
         # Only Refs to empty structs ever return True; we skip generating them.
         return False
 
+    def dump_as_urlparam(self, val: Code) -> Code:
+        """
+        Dump a value for url parameters.
+
+        Defaults to the normal dump(), but can be overridden.
+        """
+        return self.dump(val)
+
 
 class TypeDef:
     def gen_def(self) -> Code:
@@ -97,7 +105,7 @@ class Int(NoParse, TypeAnno):
         return "int"
 
 
-class Bool(NoParse, TypeAnno):
+class Bool(TypeAnno):
     def __init__(self):
         pass
 
@@ -106,6 +114,23 @@ class Bool(NoParse, TypeAnno):
 
     def annotation(self, prequoted=False) -> Code:
         return "bool"
+
+    def need_parse(self) -> bool:
+        return False
+
+    def load(self, val: Code) -> Code:
+        return val
+
+    def dump(self, val: Code) -> Code:
+        return val
+
+    def dump_as_urlparam(self, val: Code) -> Code:
+        """
+        Covert True to "true" and False to "false", but only to embed in a url parameter.
+
+        By default, requests encodes True as `val=True`.  GRPC pukes unless you encode `val=true`.
+        """
+        return f"str({val}).lower()"
 
 
 class Ref(TypeAnno):
@@ -397,12 +422,13 @@ class Function:
             for p in query_params:
                 param = self.params[p]
                 value = ""
-                if param.type.need_parse():
+                if param.type.need_parse() or not param.required:
                     value = (
-                        f"{param.type.dump(str(param.name))} if {param.name} else None"
+                        f"{param.type.dump_as_urlparam(param.name)} if {param.name} "
+                        "is not None else None"
                     )
                 else:
-                    value = f"{param.name}"
+                    value = f"{param.type.dump_as_urlparam(param.name)}"
                 out += [f'        "{self.params[p].serialized_name}": {value},']
             out += ["    }"]
         else:
