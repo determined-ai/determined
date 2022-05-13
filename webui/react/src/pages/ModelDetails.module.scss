@@ -13,8 +13,8 @@
   }
   .noVersions {
     align-items: center;
-    background-color: var(--theme-colors-monochrome-17);
-    border: 1px solid #f0f0f0;
+    background-color: var(--theme-surface-strong);
+    border: solid var(--theme-stroke-width) var(--theme-surface-border);
     border-radius: 2px;
     display: flex;
     flex-direction: column;
@@ -25,7 +25,7 @@
       margin-bottom: 8px;
     }
     .subtext {
-      color: var(--theme-colors-monochrome-9);
+      color: var(--theme-surface-on-weak);
       font-size: 14px;
       margin: 0;
       max-width: 370px;

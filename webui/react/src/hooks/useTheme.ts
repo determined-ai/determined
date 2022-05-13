@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RecordKey } from 'shared/types';
-import { isObject } from 'shared/utils/data';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes, { DarkLight, globalCssVars, Theme } from 'themes';
 import { BrandingType } from 'types';

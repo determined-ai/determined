@@ -1,8 +1,8 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { isColor, rgba2str, rgbaMix, str2rgba } from 'shared/utils/color';
 import {
   BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState,
 } from 'types';
-import { isColor, rgba2str, rgbaMix, str2rgba } from 'utils/color';
 
 const STRONG_WEAK_DELTA = 45;
 

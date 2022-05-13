@@ -127,19 +127,20 @@ const useJupyterLabModal = (): ModalHooks => {
   ), [ config, dispatch, fields, handleConfigChange, showFullConfig ]);
 
   const content = useMemo(() => (
-    <div className={css.modalContent}>
+    <>
       {formContent}
-      <>
+      <div className={css.buttons}>
         <Button onClick={handleSecondary}>
           {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
         </Button>
         <Button
           disabled={buttonDisabled}
           type="primary"
-          onClick={handleCreateEnvironment}>Launch
+          onClick={handleCreateEnvironment}>
+          Launch
         </Button>
-      </>
-    </div>
+      </div>
+    </>
   ), [ formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig ]);
 
   const modalProps: ModalFuncProps = useMemo(() => ({

@@ -7,7 +7,6 @@ import useResize from 'hooks/useResize';
 import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { getCssVar } from 'themes';
 import handleError from 'utils/error';
 
 import { FacetedData } from './types';
@@ -156,7 +155,6 @@ const UPlotChart: React.FC<Props> = ({
   const boundsRef = useRef<Record<string, ChartBounds>>({});
   const [ isReady, setIsReady ] = useState(false);
   const { theme } = useTheme();
-  const prevTheme = usePrevious(theme, undefined);
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -170,9 +168,9 @@ const UPlotChart: React.FC<Props> = ({
     );
 
     // Override chart support colors to match theme.
-    if (theme !== prevTheme && extended.axes) {
-      const borderColor = getCssVar('--theme-surface-border-weak');
-      const labelColor = getCssVar('--theme-surface-on');
+    if (theme && extended.axes) {
+      const borderColor = theme.surfaceBorderWeak;
+      const labelColor = theme.surfaceOn;
       extended.axes = extended.axes.map(axis => {
         return {
           ...axis,
@@ -185,7 +183,8 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended;
-  }, [ options, prevTheme, theme ]);
+  }, [ options, theme ]);
+
   const previousExtendedOptions = usePrevious(extendedOptions, undefined);
 
   useEffect(() => {
@@ -197,10 +196,6 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     if (!chartDivRef.current) return;
-    console.log(
-      'shouldRecreate',
-      shouldRecreate(previousExtendedOptions, extendedOptions, chartRef.current),
-    );
     if (shouldRecreate(previousExtendedOptions, extendedOptions, chartRef.current)) {
       /**
        * TODO: instead of returning true or false,

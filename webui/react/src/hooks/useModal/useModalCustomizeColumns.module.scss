@@ -23,7 +23,7 @@
         }
       }
       .listContainer {
-        border: 1px solid var(--theme-colors-monochrome-10);
+        border: solid var(--theme-stroke-width) var(--theme-surface-border);
         border-radius: var(--theme-border-radius);
           
         ul {
@@ -39,7 +39,7 @@
             padding-left: 6px;
 
             &:hover {
-              background-color: var(--theme-colors-monochrome-16);
+              background-color: var(--theme-surface-strong);
             }
             mark {
               background-color: #faed27;

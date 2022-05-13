@@ -2,7 +2,6 @@ import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
 import useTheme from 'hooks/useTheme';
-import { getCssVar } from 'themes';
 
 import css from './ParallelCoordinates.module.scss';
 
@@ -21,7 +20,7 @@ const ParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<Hermes>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { mode } = useTheme();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -49,30 +48,30 @@ const ParallelCoordinates: React.FC<Props> = ({
           style: {
             axes: {
               label: {
-                fillStyle: getCssVar('--theme-surface-on'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.surfaceOn,
+                strokeStyle: theme.surfaceWeak,
               },
               labelActive: {
-                fillStyle: getCssVar('--theme-surface-on-strong'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.surfaceOnStrong,
+                strokeStyle: theme.surfaceWeak,
               },
               labelHover: {
-                fillStyle: getCssVar('--theme-surface-on-strong'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.surfaceOnStrong,
+                strokeStyle: theme.surfaceWeak,
               },
             },
             dimension: {
               label: {
-                fillStyle: getCssVar('--theme-surface-on'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.surfaceOn,
+                strokeStyle: theme.surfaceWeak,
               },
               labelActive: {
-                fillStyle: getCssVar('--theme-status-active'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.statusActive,
+                strokeStyle: theme.surfaceWeak,
               },
               labelHover: {
-                fillStyle: getCssVar('--theme-status-active'),
-                strokeStyle: getCssVar('--theme-surface-weak'),
+                fillStyle: theme.statusActive,
+                strokeStyle: theme.surfaceWeak,
               },
             },
           },
@@ -90,7 +89,7 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     if (redraw) chartRef.current?.redraw();
-  }, [ config, data, dimensions, mode ]);
+  }, [ config, data, dimensions, theme ]);
 
   return (
     <div className={css.base}>
