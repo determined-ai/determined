@@ -15,7 +15,7 @@ import {
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import {
-  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, Project, RunState,
+  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';

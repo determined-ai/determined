@@ -9,11 +9,9 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import {
   ExperimentBase,
-  Project,
   RawJson,
   TrialDetails,
   TrialHyperparameters,
-  Workspace,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import handleError, { DetError, isDetError, isError } from 'utils/error';
