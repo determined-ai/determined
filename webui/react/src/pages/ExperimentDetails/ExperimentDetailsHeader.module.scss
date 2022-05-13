@@ -6,15 +6,17 @@
     border-radius: 24px;
     display: flex;
     justify-content: center;
-    padding: 4px;
+    padding: 4px 16px 4px 4px;
 
     button {
       background-color: transparent;
       color: #fff;
       opacity: 0.75;
     }
+    .buttonPause,
     .buttonPlay {
       border-color: #fff;
+      border-radius: 100%;
     }
     .buttonPlay i {
       margin-left: 3px;
@@ -40,6 +42,9 @@
       text-transform: uppercase;
     }
   }
+  .state.terminated {
+    padding: 4px 12px;
+  }
   .id {
     flex-shrink: 0;
     overflow: hidden;
@@ -50,28 +55,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
-  // @media only screen and (max-width: $breakpoint-tablet) {
-  //   align-items: flex-start;
-  //   flex-direction: column;
-  //   width: 100%;
-
-  //   .experimentInfo {
-  //     width: 100%;
-  //   }
-  //   .experimentId {
-  //     border-right: 0;
-  //     flex-shrink: 1;
-  //     font-size: 14px;
-  //     width: 100%;
-  //   }
-  //   .experimentName {
-  //     font-size: 14px;
-  //   }
-  //   .trial {
-  //     font-size: 14px;
-  //   }
-  // }
 }
 .foldableSection {
   display: flex;

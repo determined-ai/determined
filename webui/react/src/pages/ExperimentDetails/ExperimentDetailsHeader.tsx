@@ -60,6 +60,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
+  const classes = [ css.state ];
+
+  const isPausable = pausableRunStates.has(experiment.state);
+  const isPaused = experiment.state === RunState.Paused;
+  const isTerminated = terminalRunStates.has(experiment.state);
+
+  if (isTerminated) classes.push(css.terminated);
+
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
@@ -319,8 +327,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         leftContent={(
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
-              <div className={css.state} style={stateStyle}>
-                {pausableRunStates.has(experiment.state) && (
+              <div className={classes.join(' ')} style={stateStyle}>
+                {isPausable && (
                   <Button
                     className={css.buttonPause}
                     icon={<Icon name="pause" size="large" />}
@@ -328,7 +336,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                     onClick={handlePauseClick}
                   />
                 )}
-                {experiment.state === RunState.Paused && (
+                {isPaused && (
                   <Button
                     className={css.buttonPlay}
                     icon={<Icon name="play" size="large" />}
@@ -336,7 +344,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                     onClick={handlePlayClick}
                   />
                 )}
-                {!terminalRunStates.has(experiment.state) && (
+                {!isTerminated && (
                   <Button
                     className={css.buttonStop}
                     icon={<Icon name="stop" size="large" />}
