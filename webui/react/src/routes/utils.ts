@@ -95,7 +95,7 @@ export const paths = {
   },
   interactiveTask: (command: CommandTask, taskUrl: string): string => {
     return `/interactiveTask/${command.id}/${command.type}/
-    ${encodeURIComponent(command.name)}/${encodeURIComponent(command.resourcePool)}/
+    ${command.name}/${command.resourcePool}/
     ${encodeURIComponent(taskUrl)}`;
   },
   jobs: (): string => {
