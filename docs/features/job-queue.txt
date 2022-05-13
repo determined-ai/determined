@@ -6,8 +6,8 @@
 
 Job queue management extends scheduler functionality to offer better visibility and control over
 scheduling decisions. It does this by using the *job queue*, which provides information about job
-ordering and which jobs are queued, and by permitting dynamic job modification. Queue anagement
-shows all submitted jobs and job states and lets you modify configuration options, such as priority,
+ordering and which jobs are queued, and by permitting dynamic job modification. Job queue management
+shows all submitted jobs and job states and lets you modify configuration options, including priority,
 queue position, and resource pool membership.
 
 Queue management is available to the fair share, priority, and Kubernetes preemption schedulers.
@@ -87,21 +87,32 @@ not represent the job priority. In addition to job order, the listing shows:
 +---------------+------------------------------------------------------------------------------+
 | Job Property  | Description                                                                  |
 +===============+==============================================================================+
-| ``ID``        | TBD                                                                          |
+| ``ID``        | Unique ID assigned to the job.                                               |
 +---------------+------------------------------------------------------------------------------+
-| ``Type``      | TBD                                                                          |
+| ``Type``      | Job type:                                                                    |
+|               |                                                                              |
+|               | - ``TYPE_COMMAND``                                                           |
+|               | - ``TYPE_EXPERIMENT``                                                        |
+|               | - ``TYPE_NOTEBOOK``                                                          |
+|               | - ``TYPE_SHELL``                                                             |
+|               | - ``TYPE_TENSORBOARD``                                                       |
+|               |                                                                              |
 +---------------+------------------------------------------------------------------------------+
-| ``Job Name``  | TBD                                                                          |
+| ``Job Name``  | Command or experiment name, also displayed in the WebUI.                     |
 +---------------+------------------------------------------------------------------------------+
-| ``Priority``  | TBD                                                                          |
+| ``Priority``  | Latest priority assigned to the job.                                         |
 +---------------+------------------------------------------------------------------------------+
-| ``Submitted`` | TBD                                                                          |
+| ``Submitted`` | Job submission timestamp.                                                    |
 +---------------+------------------------------------------------------------------------------+
-| ``Slots``     | (acquired/needed)                                                            |
+| ``Slots``     | Number of slots acquired or needed.                                          |
 +---------------+------------------------------------------------------------------------------+
-| ``Status``    | TBD                                                                          |
+| ``Status``    | Job status:                                                                  |
+|               |                                                                              |
+|               | - ``Queued``                                                                 |
+|               | - ``Scheduled``                                                              |
+|               |                                                                              |
 +---------------+------------------------------------------------------------------------------+
-| ``User``      | TBD                                                                          |
+| ``User``      | Job owner.                                                                   |
 +---------------+------------------------------------------------------------------------------+
 
 **********************
@@ -139,11 +150,10 @@ Examples:
 .. code:: bash
 
    $ det job update jobID --priority 10
-   $ det job update jobID --resource-pool a100
+   $ det job update jobID --resource-pool compute-pool
    $ det job update jobID --ahead-of jobID-2
 
-TBD: Is jobID a literal or a variable, which should be shown as <jobID>? Also, need to describe what
-the result of each of these examples is.
+The example changes the ``jobID`` job priority to ``10``, the resource pool of the job to ``compute-pool``, and moves ``jobID`` ahead of job ``jobID-2`` in the queue. Currently running jobs with a priority lower than and including the ``jobID-2`` priority can be preempted to run the newly promoted ``jobID`` job.
 
 To update a job in batch, use the ``update-batch`` argument:
 
