@@ -37,8 +37,8 @@ of `generate_blob_list.py`.
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-A constant MNIST trial can be run via `det -m <master host:port> experiment create -f 
-const_mnist.yaml .`. The other configurations can be run by specifying the appropriate 
+A constant MNIST trial can be run via `det -m <master host:port> experiment create -f
+const_mnist.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const_mnist.yaml`.
 
 ## Results
