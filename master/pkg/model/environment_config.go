@@ -8,11 +8,15 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
+
+	"github.com/ghodss/yaml"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -235,4 +239,33 @@ func ValidateSlurm(slurm []string) []error {
 	}
 
 	return slurmErrors
+}
+
+// UsingCustomImage checks for image argument in request.
+// It's only used for tensor board now.
+// Error is ignored because we treat unexpected error when parsing as not using custom image.
+func UsingCustomImage(req *apiv1.LaunchTensorboardRequest) bool {
+	if req.Config == nil {
+		return false
+	}
+
+	configBytes, err := protojson.Marshal(req.Config)
+	if err != nil {
+		return false
+	}
+
+	type DummyEnv struct {
+		Image *RuntimeItem `json:"image"`
+	}
+	type DummyConfig struct {
+		Environment DummyEnv `json:"environment"`
+	}
+
+	dummy := DummyConfig{
+		Environment: DummyEnv{},
+	}
+
+	err = yaml.Unmarshal(configBytes, &dummy)
+
+	return err == nil && dummy.Environment.Image != nil
 }
