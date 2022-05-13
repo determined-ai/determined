@@ -191,7 +191,7 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     return r.status_code == 200
 
 
-def _get_current_user_id(master_address: str, token: str, cert: Optional[certs.Cert]) -> str:
+def _get_current_user_id(master_address: str, token: str, cert: Optional[certs.Cert]) -> Any:
     headers = {"Authorization": "Bearer {}".format(token)}
     r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
     return r.json()["id"]
