@@ -13,7 +13,8 @@ import pytest
 from pexpect import spawn
 
 from determined.common import constants, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
+from determined.common.experimental import session
 from tests import command
 from tests import config as conf
 from tests import experiment as exp
@@ -179,6 +180,22 @@ def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, .
 def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
     rows = extract_columns(output, [0, 1])
     return [(int(r[0]), r[1]) for r in rows]
+
+
+@pytest.mark.e2e_cpu
+def test_post_user_api(clean_auth: None) -> None:
+    master_url = conf.make_master_url()
+    authentication.cli_auth = authentication.Authentication(
+        conf.make_master_url(), requested_user="admin", password="", try_reauth=True
+    )
+    new_username = get_random_string()
+
+    user = bindings.v1User(active=True, admin=False, username=new_username, id=0)
+    body = bindings.v1PostUserRequest(password="", user=user)
+    resp = bindings.post_PostUser(
+        session.Session(master_url, "admin", authentication.cli_auth, None), body=body
+    )
+    assert resp.to_json()["user"]["username"] == new_username
 
 
 @pytest.mark.e2e_cpu
