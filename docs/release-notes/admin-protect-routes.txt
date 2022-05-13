@@ -4,25 +4,23 @@
 
 -  Security: Improved security by requiring admin privileges for the following actions.
 
-  -  Reading master config.
-  -  Enabling or disabling an agent.
-  -  Enabling or disabling a slot.
+   -  Reading master config.
+   -  Enabling or disabling an agent.
+   -  Enabling or disabling a slot.
 
 **Breaking Changes**
 
 -  Security: The following routes and CLI commands will need admin privileges.
 
-  -  ``det master config```
-  -  ``det agent enable``
-  -  ``det agent disable ``
-  -  ``det slot enable``
-  -  ``det slot disable``
-  -  ``/config``  
-  -  ``/api/v1/master/config``
-  -  ``/api/v1/agents/:agent_id/enable``
-  -  ``/api/v1/agents/:agent_id/disable``
-  -  ``/agents/:agent_id/slots/:slot_id
-  -  ``/api/v1/agents/:agent_id/slots/:slot_id/enable``
-  -  ``/api/v1/agents/:agent_id/slots/:slot_id/disable``  
-
-
+   -  ``det master config```
+   -  ``det agent enable``
+   -  ``det agent disable``
+   -  ``det slot enable``
+   -  ``det slot disable``
+   -  ``/config``
+   -  ``/api/v1/master/config``
+   -  ``/api/v1/agents/:agent_id/enable``
+   -  ``/api/v1/agents/:agent_id/disable``
+   -  ``/agents/:agent_id/slots/:slot_id``
+   -  ``/api/v1/agents/:agent_id/slots/:slot_id/enable``
+   -  ``/api/v1/agents/:agent_id/slots/:slot_id/disable``

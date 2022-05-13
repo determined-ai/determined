@@ -1,8 +1,10 @@
 import contextlib
+import json
 import logging
 import os
 import pathlib
 import shutil
+import subprocess
 import time
 import uuid
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
@@ -468,7 +470,7 @@ def test_non_admin_commands() -> None:
     disable_slots = ["slot", "disable", agent_id, slot_id]
     enable_agents = ["agent", "enable", agent_id]
     disable_agents = ["agent", "disable", agent_id]
-    config = ["agent", "master", "config"]
+    config = ["master", "config"]
     for cmd in [disable_slots, disable_agents, enable_slots, enable_agents, config]:
         child = det_spawn(["-u", constants.DEFAULT_DETERMINED_USER] + cmd)
         child.expect(".*Forbidden.*", timeout=EXPECT_TIMEOUT)
