@@ -106,6 +106,7 @@ const ProjectDetails: React.FC = () => {
     hasCancelable,
     hasDeletable,
     hasKillable,
+    hasMovable,
     hasPausable,
     hasUnarchivable,
   } = useMemo(() => {
@@ -115,6 +116,7 @@ const ProjectDetails: React.FC = () => {
       hasCancelable: false,
       hasDeletable: false,
       hasKillable: false,
+      hasMovable: false,
       hasPausable: false,
       hasUnarchivable: false,
     };
@@ -122,6 +124,11 @@ const ProjectDetails: React.FC = () => {
       const experiment = experimentMap[id];
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
+      const isMovable =
+        user &&
+        (user.isAdmin || user.username === experiment.username) &&
+        !experiment?.parentArchived &&
+        !experiment.archived;
       const isCancelable = cancellableRunStates.has(experiment.state);
       const isDeletable = deletableRunStates.has(experiment.state) &&
         user && (user.isAdmin || user.username === experiment.username);
@@ -129,6 +136,7 @@ const ProjectDetails: React.FC = () => {
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = pausableRunStates.has(experiment.state);
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
+      if (!tracker.hasMovable && isMovable) tracker.hasMovable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
       if (!tracker.hasDeletable && isDeletable) tracker.hasDeletable = true;
@@ -327,7 +335,6 @@ const ProjectDetails: React.FC = () => {
     const actionRenderer: ExperimentRenderer = (_, record) => (
       <TaskActionDropdown
         curUser={user}
-        projectArchived={project?.archived}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
       />
@@ -512,7 +519,6 @@ const ProjectDetails: React.FC = () => {
     stateFilterDropdown,
     tableSearchIcon,
     userFilterDropdown,
-    project?.archived,
     users,
   ]);
 
@@ -763,14 +769,13 @@ const ProjectDetails: React.FC = () => {
     ({ record, onVisibleChange, children }) => (
       <TaskActionDropdown
         curUser={user}
-        projectArchived={project?.archived}
         task={taskFromExperiment(record)}
         onComplete={handleActionComplete}
         onVisibleChange={onVisibleChange}>
         {children}
       </TaskActionDropdown>
     ),
-    [ user, handleActionComplete, project?.archived ],
+    [ user, handleActionComplete ],
   );
 
   const ExperimentTabOptions = useMemo(() => {
@@ -831,6 +836,7 @@ const ProjectDetails: React.FC = () => {
               { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
               { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
               { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
+              { disabled: !hasMovable, label: Action.Move, value: Action.Move },
             ]}
             selectedRowCount={(settings.row ?? []).length}
             onAction={handleBatchAction}
@@ -893,6 +899,7 @@ const ProjectDetails: React.FC = () => {
     hasCancelable,
     hasDeletable,
     hasKillable,
+    hasMovable,
     hasPausable,
     hasUnarchivable,
     isLoading,

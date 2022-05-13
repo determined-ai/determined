@@ -54,6 +54,7 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
     state: state as Type.RunState,
     url: '#',
     username: user.username,
+    workspaceId: 1,
   };
 }
 
@@ -129,7 +130,7 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
         searcherType: 'single',
         username: user.username,
-      } as Type.ExperimentItem;
+      } as unknown as Type.ExperimentItem;
     });
 };
 
@@ -221,6 +222,7 @@ export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.Recent
     id: `${experiment.id}`,
     lastEvent,
     name: experiment.name,
+    parentArchived: experiment.parentArchived,
     progress: experiment.progress,
     projectId: experiment.projectId,
     resourcePool: experiment.resourcePool,
@@ -228,6 +230,7 @@ export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.Recent
     state: experiment.state,
     url: paths.experimentDetails(experiment.id),
     username: experiment.username,
+    workspaceId: experiment.workspaceId,
   };
   return task;
 };

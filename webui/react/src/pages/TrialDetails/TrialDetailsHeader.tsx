@@ -62,24 +62,28 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (trial.bestAvailableCheckpoint !== undefined) {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.ContinueTrial,
-        label: 'Continue Trial',
-        onClick: handleContinueTrial,
-      });
-    } else {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.ContinueTrial,
-        label: 'Continue Trial',
-        tooltip: 'No checkpoints found. Cannot continue trial',
-      });
+    if (!experiment.archived && !experiment.parentArchived) {
+      if (trial.bestAvailableCheckpoint !== undefined) {
+        options.push({
+          icon: <Icon name="fork" size="small" />,
+          key: Action.ContinueTrial,
+          label: 'Continue Trial',
+          onClick: handleContinueTrial,
+        });
+      } else {
+        options.push({
+          icon: <Icon name="fork" size="small" />,
+          key: Action.ContinueTrial,
+          label: 'Continue Trial',
+          tooltip: 'No checkpoints found. Cannot continue trial',
+        });
+      }
     }
 
     return options;
   }, [
+    experiment.archived,
+    experiment.parentArchived,
     fetchTrialDetails,
     handleContinueTrial,
     isRunningTensorBoard,

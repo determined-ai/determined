@@ -34,10 +34,8 @@ interface Props {
 
 interface OpenProps {
   experiment: ExperimentBase;
-  project?: Project;
   trial?: TrialDetails;
   type: CreateExperimentType;
-  workspace?: Workspace;
 }
 
 interface ModalState {
@@ -74,11 +72,14 @@ const trialContinueConfig = (
   experimentConfig: RawJson,
   trialHparams: TrialHyperparameters,
   trialId: number,
+  workspaceName: string,
+  projectName: string,
 ): RawJson => {
   const newConfig = clone(experimentConfig);
   return {
     ...newConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
+    project: projectName,
     searcher: {
       max_length: experimentConfig.searcher.max_length,
       metric: experimentConfig.searcher.metric,
@@ -86,6 +87,7 @@ const trialContinueConfig = (
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
       source_trial_id: trialId,
     },
+    workspace: workspaceName,
   };
 };
 
@@ -329,24 +331,35 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
     return props;
   }, [ getModalContent, handleCancel, handleOk ]);
 
-  const modalOpen = useCallback(({ experiment, trial, type, workspace, project }: OpenProps) => {
+  const modalOpen = useCallback(({ experiment, trial, type }: OpenProps) => {
     const isFork = type === CreateExperimentType.Fork;
     let config = upgradeConfig(experiment.configRaw);
 
     if (!isFork && trial) {
-      config = trialContinueConfig(config, trial.hyperparameters, trial.id);
+      config = trialContinueConfig(
+        config,
+        trial.hyperparameters,
+        trial.id,
+        experiment.workspaceName,
+        experiment.projectName,
+      );
       config.description = `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
         (config.description ? ` (${config.description})` : '');
     } else if (isFork) {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
 
-    const { environment: { registry_auth, ...restEnvironment }, ...restConfig } = config;
+    const {
+      environment: { registry_auth, ...restEnvironment },
+      project: stripIt,
+      workspace: stripItToo,
+      ...restConfig
+    } = config;
     setRegistryCredentials(registry_auth);
     const publicConfig = {
       environment: restEnvironment,
-      project: project?.name,
-      workspace: workspace?.name,
+      project: experiment.projectName,
+      workspace: experiment.workspaceName,
       ...restConfig,
     };
 

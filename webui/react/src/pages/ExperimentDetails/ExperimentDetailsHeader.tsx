@@ -21,6 +21,7 @@ import useModalExperimentCreate, {
   CreateExperimentType,
 } from 'hooks/useModal/useModalExperimentCreate';
 import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
+import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
@@ -34,14 +35,13 @@ import { getStateColorCssVar } from 'themes';
 import {
   DetailedUser,
   ExperimentBase,
-  Project,
   RecordKey,
   RunState,
   TrialDetails,
-  Workspace,
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { taskFromExperiment } from 'utils/task';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -50,9 +50,7 @@ interface Props {
   curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  project?: Project;
   trial?: TrialDetails;
-  workspace?: Workspace
 }
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
@@ -60,8 +58,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchExperimentDetails,
   trial,
-  workspace,
-  project,
 }: Props) => {
   const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
@@ -79,14 +75,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     onClose: handleModalClose,
   });
 
+  const { modalOpen: openModalMove } = useModalExperimentMove(
+    { experiment: taskFromExperiment(experiment), onClose: handleModalClose },
+  );
+
   const { modalOpen: openModalDelete } = useModalExperimentDelete({ experiment: experiment });
 
   const { modalOpen: openModalCreate } = useModalExperimentCreate();
 
-  const disabled =
-    workspace?.archived ||
-    project?.archived ||
-    experiment?.archived;
+  const disabled = experiment?.parentArchived || experiment?.archived;
 
   const backgroundColor = useMemo(() => {
     return getStateColorCssVar(experiment.state);
@@ -132,15 +129,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
+  const handleMoveClick = useCallback(() => openModalMove(), [ openModalMove ]);
+
   const handleContinueTrialClick = useCallback(() => {
     openModalCreate({
       experiment,
-      project,
       trial,
       type: CreateExperimentType.ContinueTrial,
-      workspace,
     });
-  }, [ experiment, openModalCreate, trial, workspace, project ]);
+  }, [ experiment, openModalCreate, trial ]);
 
   const handleForkClick = useCallback(() => {
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
@@ -230,6 +227,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Fork',
         onClick: handleForkClick,
       },
+      move: {
+        icon: <Icon name="fork" size="small" />,
+        key: 'move',
+        label: 'Move',
+        onClick: handleMoveClick,
+      },
       tensorboard: {
         icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
@@ -264,9 +267,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     return [
       !disabled && options.fork,
       !disabled && trial?.id && options.continueTrial,
+      !disabled && options.move,
       options.tensorboard,
       options.downloadModel,
-      terminalRunStates.has(experiment.state) && (
+      terminalRunStates.has(experiment.state) && !experiment.parentArchived && (
         experiment.archived ? options.archive : options.unarchive
       ),
       deletableRunStates.has(experiment.state) &&
@@ -285,6 +289,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     handleContinueTrialClick,
     handleDeleteClick,
     handleForkClick,
+    handleMoveClick,
     isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,

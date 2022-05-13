@@ -395,15 +395,18 @@ export const mapV1Experiment = (
     name: data.name,
     notes: data.notes,
     numTrials: data.numTrials || 0,
-    parentArchived: data.parentArchived || false,
+    parentArchived: data.parentArchived ?? false,
     progress: data.progress != null ? data.progress : undefined,
     projectId: data.projectId,
+    projectName: data.projectName ?? '',
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     username: data.username,
+    workspaceId: data.workspaceId ?? 0,
+    workspaceName: data.workspaceName ?? '',
   };
 };
 

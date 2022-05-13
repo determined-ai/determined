@@ -459,6 +459,7 @@ export interface ExperimentItem {
   parentArchived: boolean;
   progress?: number;
   projectId: number;
+  projectName: string;
   resourcePool: string;
   searcherType: string;
   startTime: string;
@@ -466,6 +467,8 @@ export interface ExperimentItem {
   trialIds?: number[];
   userId?: number;
   username: string;
+  workspaceId: number;
+  workspaceName: string;
 }
 
 export interface ExperimentBase extends ExperimentItem {
@@ -548,13 +551,14 @@ export type CompoundRunState = RunState | JobState
 
 export interface ExperimentTask extends Task {
   archived: boolean;
-  parentArchived?: boolean;
+  parentArchived: boolean;
   progress?: number;
   projectId: number;
   resourcePool: string;
   state: CompoundRunState;
   userId?: number;
   username: string;
+  workspaceId: number;
 }
 
 export interface CommandTask extends Task {

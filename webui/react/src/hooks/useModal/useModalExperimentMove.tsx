@@ -22,7 +22,9 @@ interface Props {
 }
 
 const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
-  const [ selectedWorkspaceId, setSelectedWorkspaceId ] = useState<number>();
+  const [ selectedWorkspaceId, setSelectedWorkspaceId ] = useState<number | undefined>(
+    experiment?.workspaceId,
+  );
   const [ destinationProjectId, setDestinationProjectId ] = useState<number>();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ projects, setProjects ] = useState<Project[]>([]);
@@ -55,12 +57,7 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
         id: selectedWorkspaceId,
         limit: 0,
       });
-      setProjects(prev => {
-        const withoutCurrent = response.projects.filter(p =>
-          p.id !== experiment?.projectId);
-        if (isEqual(prev, withoutCurrent)) return prev;
-        return withoutCurrent;
-      });
+      setProjects(prev => isEqual(prev, response.projects) ? prev : response.projects);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -70,7 +67,7 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ experiment?.projectId, selectedWorkspaceId ]);
+  }, [ selectedWorkspaceId ]);
 
   useEffect(() => {
     if (modalRef.current) fetchWorkspaces();
@@ -83,15 +80,16 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
   }, []);
 
   const handleProjectSelect = useCallback((project: Project) => {
-    if (project.archived) return;
+    if (project.archived || experiment?.projectId === project.id) return;
     setDestinationProjectId(project.id);
-  }, []);
+  }, [ experiment?.projectId ]);
 
   useEffect(() => {
     if (modalRef.current) fetchProjects();
   }, [ fetchProjects, modalRef ]);
 
   const renderRow = useCallback(({ index, style }) => {
+    const disabled = projects[index].archived || projects[index].id === experiment?.projectId;
     return (
       <li
         style={{
@@ -99,20 +97,21 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
           backgroundColor: projects[index].id === destinationProjectId ?
             '#e6f7ff' :
             undefined,
-          color: projects[index].archived ?
+          color: disabled ?
             'var(--theme-colors-monochrome-10)' :
             undefined,
         }}
         onClick={() => handleProjectSelect(projects[index])}>
         <Typography.Text
-          disabled={projects[index].archived}
+          disabled={disabled}
           ellipsis={true}>
           {projects[index].name}
         </Typography.Text>
         {projects[index].archived && <Icon name="archive" />}
+        { projects[index].id === experiment?.projectId && <Icon name="workspaces" />}
       </li>
     );
-  }, [ destinationProjectId, handleProjectSelect, projects ]);
+  }, [ destinationProjectId, handleProjectSelect, projects, experiment?.projectId ]);
 
   const modalContent = useMemo(() => {
     return (
@@ -203,13 +202,15 @@ const useModalExperimentMove = ({ onClose, experiment }: Props): ModalHooks => {
     };
   }, [ handleOk, modalContent ]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    setSelectedWorkspaceId(undefined);
-    setDestinationProjectId(undefined);
-    setProjects([]);
-    fetchWorkspaces();
-    openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
-  }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      setDestinationProjectId(undefined);
+      fetchWorkspaces();
+      fetchProjects();
+      openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
+    },
+    [ fetchWorkspaces, getModalProps, openOrUpdate, fetchProjects ],
+  );
 
   /*
    * When modal props changes are detected, such as modal content

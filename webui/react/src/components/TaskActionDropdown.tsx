@@ -15,7 +15,7 @@ import {
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import {
-  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
+  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, Project, RunState,
 } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
@@ -29,7 +29,6 @@ interface Props {
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  projectArchived?: boolean
   task: AnyTask;
 }
 
@@ -40,7 +39,6 @@ const TaskActionDropdown: React.FC<Props> = ({
   onComplete,
   curUser,
   onVisibleChange,
-  projectArchived,
   children,
 }: PropsWithChildren<Props>) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
@@ -58,8 +56,12 @@ const TaskActionDropdown: React.FC<Props> = ({
   const isDeletable = (
     isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
   ) ? deletableRunStates.has(task.state) : false;
-  const isMovable = isExperimentTask(task) && curUser &&
-    (curUser.isAdmin || curUser.username === task.username) && !projectArchived && !task?.archived;
+  const isMovable =
+    isExperimentTask(task) &&
+    curUser &&
+    (curUser.isAdmin || curUser.username === task.username) &&
+    !task.parentArchived &&
+    !task?.archived;
 
   const { modalOpen: openExperimentMove } = useModalExperimentMove(
     { experiment: isMovable ? (task as ExperimentTask) : undefined, onClose: onComplete },

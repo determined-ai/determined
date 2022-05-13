@@ -49,7 +49,8 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           <h1 className={css.name}>
             <InlineEditor
               disabled={workspace.immutable ||
-                (!curUser?.isAdmin && curUser?.username !== workspace.username)}
+                 workspace.archived
+                || (!curUser?.isAdmin && curUser?.username !== workspace.username)}
               maxLength={80}
               value={workspace.name}
               onSave={handleNameChange}
