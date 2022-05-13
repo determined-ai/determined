@@ -7,8 +7,8 @@
 Job queue management extends scheduler functionality to offer better visibility and control over
 scheduling decisions. It does this by using the *job queue*, which provides information about job
 ordering and which jobs are queued, and by permitting dynamic job modification. Job queue management
-shows all submitted jobs and job states and lets you modify configuration options, including priority,
-queue position, and resource pool membership.
+shows all submitted jobs and job states and lets you modify configuration options, including
+priority, queue position, and resource pool membership.
 
 Queue management is available to the fair share, priority, and Kubernetes preemption schedulers.
 
@@ -91,12 +91,11 @@ not represent the job priority. In addition to job order, the listing shows:
 +---------------+------------------------------------------------------------------------------+
 | ``Type``      | Job type:                                                                    |
 |               |                                                                              |
-|               | - ``TYPE_COMMAND``                                                           |
-|               | - ``TYPE_EXPERIMENT``                                                        |
-|               | - ``TYPE_NOTEBOOK``                                                          |
-|               | - ``TYPE_SHELL``                                                             |
-|               | - ``TYPE_TENSORBOARD``                                                       |
-|               |                                                                              |
+|               | -  ``TYPE_COMMAND``                                                          |
+|               | -  ``TYPE_EXPERIMENT``                                                       |
+|               | -  ``TYPE_NOTEBOOK``                                                         |
+|               | -  ``TYPE_SHELL``                                                            |
+|               | -  ``TYPE_TENSORBOARD``                                                      |
 +---------------+------------------------------------------------------------------------------+
 | ``Job Name``  | Command or experiment name, also displayed in the WebUI.                     |
 +---------------+------------------------------------------------------------------------------+
@@ -108,9 +107,8 @@ not represent the job priority. In addition to job order, the listing shows:
 +---------------+------------------------------------------------------------------------------+
 | ``Status``    | Job status:                                                                  |
 |               |                                                                              |
-|               | - ``Queued``                                                                 |
-|               | - ``Scheduled``                                                              |
-|               |                                                                              |
+|               | -  ``Queued``                                                                |
+|               | -  ``Scheduled``                                                             |
 +---------------+------------------------------------------------------------------------------+
 | ``User``      | Job owner.                                                                   |
 +---------------+------------------------------------------------------------------------------+
@@ -153,7 +151,10 @@ Examples:
    $ det job update jobID --resource-pool compute-pool
    $ det job update jobID --ahead-of jobID-2
 
-The example changes the ``jobID`` job priority to ``10``, the resource pool of the job to ``compute-pool``, and moves ``jobID`` ahead of job ``jobID-2`` in the queue. Currently running jobs with a priority lower than and including the ``jobID-2`` priority can be preempted to run the newly promoted ``jobID`` job.
+The example changes the ``jobID`` job priority to ``10``, the resource pool of the job to
+``compute-pool``, and moves ``jobID`` ahead of job ``jobID-2`` in the queue. Currently running jobs
+with a priority lower than and including the ``jobID-2`` priority can be preempted to run the newly
+promoted ``jobID`` job.
 
 To update a job in batch, use the ``update-batch`` argument:
 
