@@ -4,20 +4,20 @@
   flex-direction: column;
   height: 100%;
   justify-content: center;
-  padding: var(--theme-sizes-layout-giant);
+  padding: 40px;
 
   img {
     height: 100px;
     width: 100px;
   }
   .title {
-    color: var(--theme-colors-monochrome-10);
-    font-size: var(--theme-sizes-font-medium);
-    margin-top: var(--theme-sizes-layout-medium);
+    color: var(--theme-status-inactive-weak);
+    font-size: 14px;
+    margin-top: 4px;
   }
   span {
-    color: var(--theme-colors-monochrome-10);
-    font-size: var(--theme-sizes-font-small);
-    margin-top: var(--theme-sizes-layout-medium);
+    color: var(--theme-status-inactive-weak);
+    font-size: 12px;
+    margin-top: 4px;
   }
 }

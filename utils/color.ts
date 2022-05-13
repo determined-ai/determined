@@ -30,7 +30,12 @@ export interface ColorScale {
 }
 
 const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+const hslRegex = /^hsl\(\d+,\s*\d+%,\s*\d+%\)$/i;
 const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
+
+export const isColor = (color: string): boolean => {
+  return hexRegex.test(color) || hslRegex.test(color) || rgbaRegex.test(color);
+};
 
 export const glasbeyColor = (seriesIdx: number): string => {
   const index = seriesIdx % GLASBEY.length;
@@ -108,6 +113,33 @@ export const rgbaFromGradient = (
   }
 
   return { b, g, r };
+};
+
+export const rgbaMix = (
+  rgba0: RgbaColor,
+  rgba1: RgbaColor,
+  amount: number,
+  rounded = true,
+): RgbaColor => {
+  const dr = rgba1.r - rgba0.r;
+  const dg = rgba1.g - rgba0.g;
+  const db = rgba1.b - rgba0.b;
+  const da = (rgba1.a ?? 1.0) - (rgba0.a ?? 1.0);
+  const [ adr, adg, adb, ada ] = [ dr, dg, db, da ].map(x => Math.abs(x));
+  const delta = adr + adg + adb + (255 * ada);
+  if (delta === 0) return rgba0;
+
+  const [ pr, pg, pb, pa ] = [ dr, dg, db, da ].map(x => x * amount / delta);
+  const r = Math.min(255, Math.max(0, rgba0.r + pr));
+  const g = Math.min(255, Math.max(0, rgba0.g + pg));
+  const b = Math.min(255, Math.max(0, rgba0.b + pb));
+  const a = Math.min(1.0, Math.max(0.0, (rgba0.a ?? 1.0) + pa));
+  return {
+    a,
+    b: rounded ? Math.round(b) : b,
+    g: rounded ? Math.round(g) : g,
+    r: rounded ? Math.round(r) : r,
+  };
 };
 
 export const str2rgba = (str: string): RgbaColor => {
