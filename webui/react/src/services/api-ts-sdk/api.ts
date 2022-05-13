@@ -1746,11 +1746,35 @@ export interface V1Experiment {
      */
     progress?: number;
     /**
-     * The id of a project associated with this experiment.
+     * The id of the project associated with this experiment.
      * @type {number}
      * @memberof V1Experiment
      */
     projectId: number;
+    /**
+     * The name of the project associated with this experiment.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    projectName?: string;
+    /**
+     * The id of the workspace associated with this experiment.
+     * @type {number}
+     * @memberof V1Experiment
+     */
+    workspaceId?: number;
+    /**
+     * The name of the workspace associated with this experiment.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    workspaceName?: string;
+    /**
+     * The archived status of the parent project (can be inherited from workspace).
+     * @type {boolean}
+     * @memberof V1Experiment
+     */
+    parentArchived?: boolean;
 }
 
 /**

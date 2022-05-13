@@ -22,8 +22,14 @@ SELECT
     u.username AS username,
     (SELECT json_agg(id) FROM trial_ids) AS trial_ids,
 	  (SELECT count(id) FROM trial_ids) AS num_trials,
-    e.project_id AS project_id
+    p.id AS project_id,
+    p.name AS project_name,
+    w.id AS workspace_id,
+    w.name AS workspace_name,
+    (w.archived OR p.archived) AS parent_archived
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
+LEFT JOIN projects p ON e.project_id = p.id
+LEFT JOIN workspaces w ON p.workspace_id = w.id
 WHERE e.id = $1

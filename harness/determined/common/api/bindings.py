@@ -1120,10 +1120,14 @@ class v1Experiment:
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
+        parentArchived: "typing.Optional[bool]" = None,
         progress: "typing.Optional[float]" = None,
+        projectName: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
         trialIds: "typing.Optional[typing.Sequence[int]]" = None,
         userId: "typing.Optional[int]" = None,
+        workspaceId: "typing.Optional[int]" = None,
+        workspaceName: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -1145,6 +1149,10 @@ class v1Experiment:
         self.forkedFrom = forkedFrom
         self.progress = progress
         self.projectId = projectId
+        self.projectName = projectName
+        self.workspaceId = workspaceId
+        self.workspaceName = workspaceName
+        self.parentArchived = parentArchived
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1169,6 +1177,10 @@ class v1Experiment:
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
             projectId=obj["projectId"],
+            projectName=obj.get("projectName", None),
+            workspaceId=obj.get("workspaceId", None),
+            workspaceName=obj.get("workspaceName", None),
+            parentArchived=obj.get("parentArchived", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1193,6 +1205,10 @@ class v1Experiment:
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
             "projectId": self.projectId,
+            "projectName": self.projectName if self.projectName is not None else None,
+            "workspaceId": self.workspaceId if self.workspaceId is not None else None,
+            "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+            "parentArchived": self.parentArchived if self.parentArchived is not None else None,
         }
 
 class v1ExperimentSimulation:
