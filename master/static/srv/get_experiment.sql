@@ -14,7 +14,7 @@ SELECT
     e.start_time AS start_time,
     e.end_time AS end_time,
     'STATE_' || e.state AS state,
-    (w.archived OR p.archived OR e.archived) AS archived,
+    e.archived AS archived,
     e.progress AS progress,
     e.job_id AS job_id,
     e.parent_id AS forked_from,
@@ -22,7 +22,11 @@ SELECT
     u.username AS username,
     (SELECT json_agg(id) FROM trial_ids) AS trial_ids,
 	  (SELECT count(id) FROM trial_ids) AS num_trials,
-    e.project_id AS project_id
+    p.id AS project_id,
+    p.name AS project_name,
+    w.id AS workspace_id,
+    w.name AS workspace_name,
+    (w.archived OR p.archived) AS parent_archived
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
