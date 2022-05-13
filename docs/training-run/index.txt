@@ -4,106 +4,255 @@
  Run Training Code
 ###################
 
-In this document, we will cover how to run your training code. You can submit your code to a cluster
-and run them as experiments. We will go over the whole cycle of it.
+This section covers how to run training code by submitting your code to a cluster and running it as
+an experiment.
+
+**********************
+ Configure a Launcher
+**********************
+
+The entrypoint of a model is configured in the :ref:`Experiment Configuration
+<experiment-configuration>` file, and specifies the path of the model and how it should be launched.
+Predefined launchers are provided in the ``determined.launch`` module and custom scripts are also
+supported.
+
+The launcher is configurable in the experiment configuration ``entrypoint`` field. The
+``entrypoint`` trial object or script launches the training code.
+
+.. code:: yaml
+
+   entrypoint: python3 -m (LAUNCH_LAYER) (TRIAL_DEFINITION)
+
+or a custom script:
+
+.. code:: yaml
+
+   entrypoint: python3 script.py arg1 arg2
+
+Entrypoints for pre-configured launch layers may differ slightly in arguments, but have the same
+format:
+
+.. code:: bash
+
+   python3 -m (LAUNCH_MODULE) (--trial TRIAL)|(SCRIPT...)
+
+where ``(LAUNCH_MODULE)`` is a Determined launcher and ``(--trial TRIAL)|(SCRIPT...)`` refers to the
+training script, which can be in a simplified format that the Determined launcher recognizes or a
+custom script.
+
+Determined supports the following predefined launchers provided in the determined.launch module:
+
+-  Horovod
+-  PyTorch Distributed
+-  DeepSpeed
+
+Training Code Definition
+========================
+
+To launch a model or training script, either pass a trial class path to --trial or run a custom
+script that runs the training code. Only one of these can be used at the same time.
+
+Trial Class
+-----------
+
+.. code:: bash
+
+   --trial TRIAL
+
+To specify a trial class to be trained, the launcher accepts a TRIAL argument in the following
+format:
+
+.. code:: yaml
+
+   filepath:ClassName
+
+where filepath is the location of your training class file, and ClassName is the name of the Python
+training class
+
+Custom Script
+-------------
+
+.. code:: bash
+
+   script.py [args...]
+
+A custom script can be launched under supported launch layers instead of a trial class definition,
+with arguments passed as expected.
+
+Horovod Launcher
+================
+
+Format:
+
+``determined.launch.horovod [[HVD_OVERRIDES...] --] (--trial TRIAL)|(SCRIPT...)``
+
+The module accepts arguments to be passed directly to the Horovod launcher called under-the-hood,
+horovodrun, which overrides automatically set values. See the official Horovod documentation for
+more information about the horovodrun launcher. The optional override arguments must end with a
+``--`` separator before the trial specification.
+
+Example:
+
+.. code:: bash
+
+   python3 -m determined.launch.horovod --fusion-threshold-mb 1 --cycle-time-ms 2 -- --trial model_def:MyTrial
+
+PyTorch Distributed Launcher
+============================
+
+Format:
+
+``determined.launch.torch_distributed [[TORCH_OVERRIDES...] --] (--trial TRIAL)|(SCRIPT...)``
+
+This launcher is a Determined wrapper around PyTorch's native distributed training launcher,
+torch.distributed.run. Any arbitrary override arguments to torch.distributed.run are accepted, which
+overrides default values set by Determined. See the official PyTorch documentation for information
+about how to use ``torch.distributed.run``. The optional override arguments must end with a ``--``
+separator before the trial specification.
+
+Example:
+
+.. code:: bash
+
+   python3 -m determined.launch.torch_distributed --rdzv_endpoint=$CUSTOM_RDZV_ADDR -- --trial model_def:MyTrial
+
+DeepSpeed Launcher
+==================
+
+Format:
+
+``determined.launch.deepspeed [[DEEPSPEED_ARGS...] --] (--trial TRIAL)|(SCRIPT...)``
+
+The DeepSpeed launcher launches a training script under deepspeed with automatic handling of IP
+addresses, node and container communication, and fault tolerance. See the official DeepSpeed
+documentation for information about how to use the DeepSpeed launcher.
+
+Example:
+
+.. code:: bash
+
+   python3 -m determined.launch.deepspeed --trial model_def:MyTrial
+
+Legacy Launcher
+===============
+
+Format:
+
+``entrypoint: model_def:TrialClass``
+
+The entrypoint field expects a predefined or custom script, but also supports legacy file and trial
+class definitions.
+
+When you specify a trial class as the entry point, it must be a subclass of a Determined trial
+class.
+
+Each trial class is designed to support one deep learning application framework. When training or
+validating models, the trial might need to load data from an external source so the training code
+needs to define data loaders.
+
+A TrialClass is located in the ``model_def`` filepath and launched automatically. This is considered
+legacy behavior. By default, this configuration automatically detects distributed training, based on
+slot size and number of machines, and launches with Horovod for distributed training. If used in a
+distributed training context, the entrypoint is:
+
+.. code:: bash
+
+   python3 -m determined.launch.horovod --trial model_def:TrialClass
+
+Nested Launchers
+================
+
+Entrypoint supports nesting multiple launch layers in a single script. This can be useful for tasks
+that need to be run before the training code starts, such as profiling tools (dlprof), custom memory
+management tools (numactl), or data preprocessing.
+
+Example:
+
+.. code:: bash
+
+   dlprof --mode=simple python3 -m determined.launch.autohorovod --trial model_def:MnistTrial
 
 **********************
  Create an Experiment
 **********************
 
-Currently, we only support the use of the CLI to create an experiment from scratch. You can
-alternatively create an experiment from an existing experiment or trial on the WebUI. The CLI
-command to create an experiment is as follows:
+Currently, the CLI is the only supported mechanism for creating an experiment, although, you can
+create an experiment from an existing experiment or trial using the WebUI. To create an experiment:
 
 .. code::
 
    $ det experiment create <configuration file> <context directory>
 
-The ``det experiment create`` command requires two arguments:
+-  The :ref:`Experiment Configuration <experiment-configuration>` file is a YAML file that controls
+   your experiment.
+-  The context directory contains relevant training code, which is uploaded to the master.
 
--  The :ref:`configuration file <experiment-configuration>` is a :ref:`YAML <topic-guides_yaml>`
-   file that configures the experiment.
--  The context directory contains all code that are relevant to training and will be uploaded to the
-   master.
+The total size of the files in the context cannot exceed 95 MB. As a result, only very small
+datasets should be included. Instead, set up data loaders to read data from an external source.
+Refer to the :ref:`Prepare Data <prepare-data>` section for more data loading options.
 
-We don't allow the total size of the files in the context to exceed 95 MiB. As a result, datasets
-should typically not be included unless they are very small; instead, users should set up data
-loaders to read data from an external source. Refer to :ref:`preparing data <prepare-data>` for more
-suggestions on data loading.
+Because project directories can include large artifacts that should not be packaged as part of the
+model definition, including data sets or compiled binaries, users can specify a ``.detignore`` file
+at the top level, which lists the file paths to be omitted from the model definition. The
+``.detignore`` file uses the same syntax as `.gitignore <https://git-scm.com/docs/gitignore>`__.
+Byte-compiled Python files, including ``.pyc`` files and ``__pycache__`` directories, are always
+ignored.
 
-Since project directories might include large artifacts that should not be packaged as part of the
-model definition (e.g., data sets or compiled binaries), users can optionally include a
-``.detignore`` file at the top level that specifies file paths to be omitted from the model
-definition. The ``.detignore`` file uses the same syntax as `.gitignore
-<https://git-scm.com/docs/gitignore>`__. Note that byte-compiled Python files (e.g., ``.pyc`` files
-or ``__pycache__`` directories) are always ignored.
+********************
+ Pre-training Setup
+********************
 
-Local Test Mode
-===============
+Trials are created to train the model. The :ref:`Hyperparameter Tuning <hyperparameter-tuning>`
+searcher specified in the experiment configuration file defines a set of hyperparameter
+configurations. Each set corresponds to a single trial.
 
-The local test mode is to sanity-check your training code and run a compressed version of the full
-experiment circle. It can help you debug the errors in your code without running the full experiment
-circle that is expensive in the resources it takes and sometimes needs a long time to get ready. It
-helps with quick iteration on the code. You can run the following command:
+After the context and experiment configuration reach the master, the experiment waits for the
+scheduler to assign slots. If there are insufficient idle slots available, the master automatically
+scales up the resource pools.
 
-.. code::
+When a trial is ready to run, the master communicates with the agent, or :ref:`distributed training
+<multi-gpu-training>` agents, which create(s) containers that have the configured environment and
+training code. A set of default container images applicable to many deep learning tasks is provided,
+but you can also specify a :ref:`custom image <custom-docker-images>`. If the specified container
+images do not exist locally, the trial container fetches the images from the registry.
 
-   det experiment create --local --test-mode <configuration file> <context directory>
-
-***********
- Get Ready
-***********
-
-The trials are created to train the model. The :ref:`searcher <hyperparameter-tuning>` described by
-the experiment configuration defines a set of hyperparameter configurations, each of which
-corresponds to one trial.
-
-Once the context and configuration for an experiment have reached the master, the experiment waits
-for the scheduler to assign slots to it. If there are no enough idle slots, the master will scale up
-the resource pools automatically.
-
-When a trial is ready to run, the master communicates with the appropriate agent (or agents, in the
-case of :ref:`distributed training <multi-gpu-training>`), which creates containers with the
-configured environment and the submitted training code. We supply a set of default container images
-that are appropriate for many deep learning tasks, but users can also supply a :ref:`custom image
-<custom-docker-images>` if desired. If the specified container images are not existent locally, the
-trial container will fetch the images from the registry.
-
-After starting the containers, each trial runs the ``startup-hook.sh`` that exists in the context
+After starting the containers, each trial runs the ``startup-hook.sh`` script in the context
 directory.
 
-However, this whole process might take very long before each trial starts training.
+The pre-training activity can take a long time before each trial begins training.
 
 ****************
  Start Training
 ****************
 
-To start training, we load and run the entrypoint, which is the user-defined Python class and
-specified in the experiment configuration.
+When training starts, the system launches the object or script specified by the entry point defined
+in the configuration file. Agents automatically communicate with the master to get what is needed to
+run and report results. Tasks might include:
 
-The user-provided class must be a subclass of a trial class included in Determined. Each trial class
-is designed to support one deep learning application framework. While training or validating models,
-the trial may need to load data from an external source therefore the training code needs to define
-data loaders.
-
-Our library automatically communicates with the master to get what needs to run and report back the
-results. It might:
-
-#. train the model for a few batches on the training dataset;
-#. checkpoint the states of the model and other objects;
-#. validate the model on the validation dataset.
+-  Train the model for a few batches on the training dataset.
+-  Checkpoint the model and other object states.
+-  Validate the model on the validation dataset.
 
 ********************
  Pause and Activate
 ********************
 
-An important feature of Determined is the ability to have trials stop running and then start again
-later without losing any training progress. The scheduler might choose to stop running a trial to
-allow a trial from another experiment to run, but a user can also manually pause an experiment at
-any time, which causes all of its trials to stop.
+Trials can be stopped and restarted without losing training progress. The scheduler can stop running
+a trial to allow a trial from another experiment to run, but you can also manually pause, or
+*checkpoint*, an experiment at any time, which causes all of its trials to stop. After a trial is
+set to stop, it takes a checkpoint at the next available opportunity, such as after the current
+workload completes, and stops running. This frees the slots used by the trial. When the trial
+resumes running, because more slots become available in the cluster or when you activate the
+experiment, it loads the saved checkpoint, continuing training from the saved state.
 
-Checkpointing is essential to this ability. After a trial is set to be stopped, it takes a
-checkpoint at the next available opportunity (i.e., once its current workload finishes running) and
-then stops running, freeing up the slots it was using. When it resumes running, either because more
-slots become available in the cluster or because a user activates the experiment, it loads the saved
-checkpoint, allowing it to continue training from the same state it had before.
+***************
+ Best Practice
+***************
+
+Use local test mode to sanity-check your training code and run a compressed version of the full
+experiment. This can help debug coding errors without running the full experiment, which is
+expensive in resources and startup time. For quick code iteration, run:
+
+.. code::
+
+   det experiment create --local --test-mode <configuration file> <context directory>
