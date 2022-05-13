@@ -9,7 +9,6 @@ import yaml
 from determined.cli import render
 from determined.cli.session import setup_session
 from determined.cli.util import format_args, pagination_args
-from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Session
@@ -17,10 +16,12 @@ from determined.common.experimental import Session
 
 @authentication.required
 def ls(args: Namespace) -> None:
-    config = api.get(args.master, "config").json()
-    is_priority = check_is_priority(config, args.resource_pool)
+    session = setup_session(args)
+    pools = bindings.get_GetResourcePools(setup_session(args))
+    is_priority = check_is_priority(pools, args.resource_pool)
+
     response = bindings.get_GetJobs(
-        setup_session(args),
+        session,
         resourcePool=args.resource_pool,
         pagination_limit=args.limit,
         pagination_offset=args.offset,
@@ -115,25 +116,16 @@ def _single_update(
     bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
 
 
-def is_priority_rm(config: dict) -> bool:
-    try:
-        if config["resource_manager"]["scheduler"]["type"] != "priority":
-            return False
-    except KeyError:
-        pass
-    return True
+def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool: str) -> bool:
+    if resource_pool is None:
+        resource_pool = "default"
+    if pools.resourcePools is None:
+        raise ValueError(f"No resource pools found checking scheduler type of {resource_pool}")
 
-
-def check_is_priority(config: dict, resource_pool: str) -> bool:
-    try:
-        for pool in config["resource_pools"]:
-            if pool["pool_name"] == resource_pool and pool["scheduler"]["type"] != "priority":
-                return False
-        return is_priority_rm(config)
-
-    except (KeyError, TypeError):
-        return is_priority_rm(config)
-    return True
+    for pool in pools.resourcePools:
+        if resource_pool == pool.name:
+            return pool.schedulerType == bindings.v1SchedulerType.SCHEDULER_TYPE_PRIORITY
+    raise ValueError(f"Pool {resource_pool} not found")
 
 
 def validate_operation_args(operation: str) -> dict:
