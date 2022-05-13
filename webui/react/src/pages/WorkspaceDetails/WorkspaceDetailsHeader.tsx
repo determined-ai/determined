@@ -37,6 +37,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
         silent: false,
         type: ErrorType.Server,
       });
+      return e as Error;
     }
   }, [ workspace.id ]);
 
