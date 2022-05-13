@@ -83,9 +83,9 @@ class Authentication:
 
         if token is not None:
             if self.token_store.get_active_user_id() is None:
-                return Session(
-                    session_user, token, _get_current_user_id(self.master_address, token, cert)
-                )
+                current_user_id = _get_current_user_id(self.master_address, token, cert)
+                self.token_store.set_active(session_user, current_user_id)
+                return Session(session_user, token, current_user_id)
             else:
                 return Session(session_user, token, self.token_store.get_active_user_id())
 
