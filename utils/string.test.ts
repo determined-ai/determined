@@ -1,11 +1,27 @@
 import * as utils from './string';
 
 describe('String Utilities', () => {
+  describe('camelCaseToKebab', () => {
+    it('should convert camel case to a kebab', () => {
+      expect(utils.camelCaseToKebab('hello')).toBe('hello');
+      expect(utils.camelCaseToKebab('camelCase')).toBe('camel-case');
+      expect(utils.camelCaseToKebab(' carJumpStart ')).toBe('car-jump-start');
+    });
+  });
+
   describe('camelCaseToSentence', () => {
     it('should convert camel case to a sentence', () => {
       expect(utils.camelCaseToSentence('hello')).toBe('Hello');
       expect(utils.camelCaseToSentence('camelCase')).toBe('Camel Case');
       expect(utils.camelCaseToSentence(' carJumpStart ')).toBe('Car Jump Start');
+    });
+  });
+
+  describe('kebabToCamelCase', () => {
+    it('should convert kebab to camel case', () => {
+      expect(utils.kebabToCamelCase('Hello')).toBe('hello');
+      expect(utils.kebabToCamelCase('camel-case')).toBe('camelCase');
+      expect(utils.kebabToCamelCase(' car-jump-start ')).toBe('carJumpStart');
     });
   });
 

@@ -5,9 +5,21 @@ const CHARACTERS = `0123456789${LETTERS}`;
 
 export const DEFAULT_ALPHA_NUMERIC_LENGTH = 8;
 
+export const camelCaseToKebab = (text: string): string => {
+  return text.trim().split('').map((char, index) => {
+    return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;
+  }).join('');
+};
+
 export const camelCaseToSentence = (text: string): string => {
   const result = text.trim().replace(/([A-Z])/g, ' $1');
   return result.charAt(0).toUpperCase() + result.slice(1);
+};
+
+export const kebabToCamelCase = (text: string): string => {
+  return text.trim().split('-').map((word, index) => {
+    return index === 0 ? word.toLowerCase() : capitalizeWord(word);
+  }).join('');
 };
 
 export const sentenceToCamelCase = (text: string): string => {
