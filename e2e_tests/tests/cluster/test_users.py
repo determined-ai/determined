@@ -182,10 +182,6 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 
 @pytest.mark.e2e_cpu
-def test_login_api() -> None:
-    
-
-@pytest.mark.e2e_cpu
 def test_logout(clean_auth: None) -> None:
     # Tests fallback to default determined user
     creds = create_test_user(ADMIN_CREDENTIALS, True)
