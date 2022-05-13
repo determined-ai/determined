@@ -48,6 +48,34 @@ describe('Color Utilities', () => {
     },
   ];
 
+  describe('isColor', () => {
+    it('should match hex color', () => {
+      colors.forEach(color => {
+        expect(utils.isColor(color.hex)).toEqual(true);
+      });
+    });
+
+    it('should match hsl color', () => {
+      colors.forEach(color => {
+        expect(utils.isColor(color.hslStr)).toEqual(true);
+      });
+    });
+
+    it('should match rgba color', () => {
+      colors.forEach(color => {
+        expect(utils.isColor(color.rgbStr)).toEqual(true);
+      });
+    });
+
+    it('should not match invalid colors', () => {
+      expect(utils.isColor('')).toEqual(false);
+      expect(utils.isColor('abc')).toEqual(false);
+      expect(utils.isColor('#12345678')).toEqual(false);
+      expect(utils.isColor('rgba()')).toEqual(false);
+      expect(utils.isColor('hsl()')).toEqual(false);
+    });
+  });
+
   describe('glasbeyColor', () => {
     const firstColor = 'rgb(0, 155, 222)';
     const lastColor = 'rgb(142, 190, 88)';
@@ -117,6 +145,27 @@ describe('Color Utilities', () => {
       const grey = { a: 0.5, b: 128, g: 128, r: 128 };
       expect(utils.rgbaFromGradient(black, white, 0.5)).toEqual(grey);
       expect(utils.rgbaFromGradient(white, black, 0.5)).toEqual(grey);
+    });
+  });
+
+  describe('rgbaMix', () => {
+    const black = { b: 0, g: 0, r: 0 };
+    const white = { b: 255, g: 255, r: 255 };
+    const color = { b: 200, g: 150, r: 100 };
+    const amount = 33;
+
+    it('should mix rgba colors', () => {
+      const result0 = { a: 1.0, b: 185.33333333333334, g: 139, r: 92.66666666666667 };
+      const result1 = { a: 1.0, b: 205.76190476190476, g: 161, r: 116.23809523809524 };
+      expect(utils.rgbaMix(color, black, amount, false)).toStrictEqual(result0);
+      expect(utils.rgbaMix(color, white, amount, false)).toStrictEqual(result1);
+    });
+
+    it('should round mixed results', () => {
+      const result0 = { a: 1.0, b: 185, g: 139, r: 93 };
+      const result1 = { a: 1.0, b: 206, g: 161, r: 116 };
+      expect(utils.rgbaMix(color, black, amount)).toStrictEqual(result0);
+      expect(utils.rgbaMix(color, white, amount)).toStrictEqual(result1);
     });
   });
 
