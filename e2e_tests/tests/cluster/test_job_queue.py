@@ -8,6 +8,8 @@ import pytest
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import ADMIN_CREDENTIALS, log_in_user
+
 
 @pytest.mark.e2e_cpu
 def test_job_queue_adjust_weight() -> None:
@@ -39,6 +41,7 @@ def test_job_queue_adjust_weight() -> None:
 def get_raw_data() -> Tuple[List[Dict[str, str]], List[str]]:
     data = []
     ordered_ids = []
+    log_in_user(ADMIN_CREDENTIALS)
     output = subprocess.check_output(["det", "job", "list"]).decode("utf-8")
     lines = output.split("\n")
     keys = [line.strip() for line in lines[0].split("|")]

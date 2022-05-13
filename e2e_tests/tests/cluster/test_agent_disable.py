@@ -10,11 +10,13 @@ from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import ADMIN_CREDENTIALS, log_in_user
 from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
 
 
 @pytest.mark.e2e_cpu
 def test_disable_and_enable_slots() -> None:
+    log_in_user(ADMIN_CREDENTIALS)
     command = [
         "det",
         "-m",
@@ -76,6 +78,7 @@ def _wait_for_slots(min_slots_expected: int, max_ticks: int = 60 * 2) -> List[Di
 
 @contextlib.contextmanager
 def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> Iterator[str]:
+    log_in_user(ADMIN_CREDENTIALS)
     command = (
         ["det", "-m", conf.make_master_url(), "agent", "disable"]
         + (["--drain"] if drain else [])
@@ -85,6 +88,7 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
     try:
         yield subprocess.check_output(command).decode()
     finally:
+        log_in_user(ADMIN_CREDENTIALS)
         command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
         subprocess.check_call(command)
 
