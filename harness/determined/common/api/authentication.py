@@ -82,7 +82,10 @@ class Authentication:
             token = util.get_container_user_token()
 
         if token is not None:
-            return Session(session_user, token, self.token_store.get_active_user_id())
+            if self.token_store.get_active_user_id() is None:
+                return Session(session_user, token, _get_current_user_id(self.master_address, token, cert))
+            else:
+                return Session(session_user, token, self.token_store.get_active_user_id())
 
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
@@ -184,6 +187,12 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
         return False
 
     return r.status_code == 200
+
+
+def _get_current_user_id(master_address: str, token: str, cert: Optional[certs.Cert]) -> str:
+    headers = {"Authorization": "Bearer {}".format(token)}
+    r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+    return r.json()["id"]
 
 
 class TokenStore:
