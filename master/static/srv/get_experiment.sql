@@ -14,7 +14,7 @@ SELECT
     e.start_time AS start_time,
     e.end_time AS end_time,
     'STATE_' || e.state AS state,
-    e.archived AS archived,
+    (w.archived OR p.archived OR e.archived) AS archived,
     e.progress AS progress,
     e.job_id AS job_id,
     e.parent_id AS forked_from,
@@ -26,4 +26,6 @@ SELECT
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id
+LEFT JOIN projects p ON e.project_id = p.id
+LEFT JOIN workspaces w ON p.workspace_id = w.id
 WHERE e.id = $1
