@@ -1,17 +1,18 @@
-$padding: var(--theme-sizes-layout-large);
+$padding: 12px;
 $line-height: 22px;
 
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  border-radius: var(--theme-sizes-border-radius);
-  box-shadow: var(--theme-shadow);
-  color: var(--theme-colors-monochrome-0);
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
+  border-radius: var(--theme-border-radius);
+  box-shadow: var(--theme-elevation);
+  color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
-  font-size: var(--theme-sizes-font-medium);
+  font-size: 14px;
   line-height: $line-height;
   overflow: hidden;
-  padding: var(--theme-sizes-layout-medium) $padding var(--theme-sizes-layout-medium);
+  padding: $padding;
   text-overflow: ellipsis;
 
   .body {
@@ -35,20 +36,20 @@ $line-height: 22px;
       }
     }
     .default {
-      color: var(--theme-colors-monochrome-7);
+      color: var(--theme-surface-on);
       display: flex;
 
       span {
         margin-right: 4px;
       }
       i {
-        color: var(--theme-colors-monochrome-7);
+        color: var(--theme-surface-on-weak);
         font-weight: bold;
       }
     }
   }
   .empty {
-    color: var(--theme-colors-monochrome-7);
+    color: var(--theme-surface-on-weak);
   }
   section {
     padding: 0 $padding;

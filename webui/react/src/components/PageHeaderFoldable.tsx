@@ -1,10 +1,11 @@
-import { Button, Dropdown, Menu, Tooltip } from 'antd';
-import React, { CSSProperties, useState } from 'react';
+import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
+import React, { useState } from 'react';
 
 import Icon from 'components/Icon';
 
 import { isMouseEvent } from '../shared/utils/routes';
 
+import IconButton from './IconButton';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
@@ -20,7 +21,6 @@ interface Props {
   foldableContent?: React.ReactNode,
   leftContent: React.ReactNode,
   options?: Option[],
-  style?: CSSProperties;
 }
 
 const renderOptionLabel =
@@ -31,7 +31,7 @@ const renderOptionLabel =
   };
 
 const PageHeaderFoldable: React.FC<Props> = (
-  { foldableContent, leftContent, options, style }: Props,
+  { foldableContent, leftContent, options }: Props,
 ) => {
   const [ isExpanded, setIsExpanded ] = useState(false);
 
@@ -57,45 +57,43 @@ const PageHeaderFoldable: React.FC<Props> = (
   }
 
   return (
-    <>
-      <div className={css.base} style={style}>
+    <div className={css.base}>
+      <div className={css.header}>
         <div className={css.left}>
           {leftContent}
         </div>
         {foldableContent && (
-          <div className={css.toggle} onClick={() => setIsExpanded(!isExpanded)}>
-            <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} />
-          </div>
+          <IconButton
+            icon={isExpanded ? 'arrow-up' : 'arrow-down'}
+            iconSize="tiny"
+            label="Toggle"
+            type="text"
+            onClick={() => setIsExpanded(prev => !prev)}
+          />
         )}
-        <div className={css.options}>
-          {options?.slice(0, 3).map((opt, i) => (
+        <Space className={css.options}>
+          {options?.slice(0, 3).map(option => (
             <Button
-              className={css.optionsMainButton}
-              disabled={!opt.onClick}
-              ghost={i !== 0}
-              icon={opt?.icon}
-              key={opt.key}
-              loading={opt.isLoading}
-              onClick={opt.onClick}>{renderOptionLabel(opt)}
+              disabled={!option.onClick}
+              icon={option?.icon}
+              key={option.key}
+              loading={option.isLoading}
+              onClick={option.onClick}>{renderOptionLabel(option)}
             </Button>
           ))}
           {dropdownOptions && (
-            <Dropdown arrow overlay={dropdownOptions} placement="bottomRight">
+            <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={[ 'click' ]}>
               <Button
                 className={dropdownClasses.join(' ')}
-                ghost={true}
+                ghost
                 icon={<Icon name="overflow-vertical" />}
               />
             </Dropdown>
           )}
-        </div>
-        {foldableContent && isExpanded && (
-          <div className={css.bottom}>
-            {foldableContent}
-          </div>
-        )}
+        </Space>
       </div>
-    </>
+      {foldableContent && isExpanded && <div className={css.foldable}>{foldableContent}</div>}
+    </div>
   );
 };
 

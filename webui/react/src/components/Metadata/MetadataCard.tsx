@@ -57,7 +57,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
 
   return (
     <Card
-      bodyStyle={{ padding: 'var(--theme-sizes-layout-big)' }}
+      bodyStyle={{ padding: '16px' }}
       extra={isEditing ? (
         <Space size="small">
           <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
@@ -70,7 +70,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
           </Tooltip>
         )
       )}
-      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
+      headStyle={{ paddingInline: '16px' }}
       title={'Metadata'}>
       {showPlaceholder ? (
         <div

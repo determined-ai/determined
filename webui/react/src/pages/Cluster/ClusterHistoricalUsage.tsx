@@ -1,10 +1,9 @@
-import { Button, Col, Row } from 'antd';
+import { Button, Space } from 'antd';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import useResize from 'hooks/useResize';
 import useSettings from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 
@@ -25,7 +24,6 @@ export const MAX_RANGE_MONTH = 36;
 const ClusterHistoricalUsage: React.FC = () => {
   const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
-  const filterBarRef = useRef<HTMLDivElement>(null);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { users } = useStore();
 
@@ -69,14 +67,7 @@ const ClusterHistoricalUsage: React.FC = () => {
     });
   }, [ updateSettings ]);
 
-  /* On first load: make sure filter bar doesn't overlap charts */
-  const filterBarResize = useResize(filterBarRef);
-  useEffect(() => {
-    if (!filterBarRef.current || !filterBarRef.current.parentElement) return;
-    filterBarRef.current.parentElement.style.height = filterBarResize.height + 'px';
-  }, [ filterBarRef, filterBarResize ]);
-
-  /*
+  /**
    * When grouped by month force csv modal to display start/end of month.
    */
   let csvAfterDate = filters.afterDate;
@@ -89,7 +80,7 @@ const ClusterHistoricalUsage: React.FC = () => {
     }
   }
 
-  /*
+  /**
    * Load chart data.
    */
   useEffect(() => {
@@ -111,19 +102,11 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [ filters, users ]);
 
   return (
-    <>
-      <div>
-        <Row className={css.filter} justify="end" ref={filterBarRef}>
-          <Col>
-            <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
-          </Col>
-          <Col>
-            <Button onClick={() => setIsCsvModalVisible(true)}>
-              Download CSV
-            </Button>
-          </Col>
-        </Row>
-      </div>
+    <div className={css.base}>
+      <Space align="end" className={css.filters}>
+        <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
+        <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
+      </Space>
       <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
         {chartSeries && (
           <ClusterHistoricalUsageChart
@@ -180,7 +163,7 @@ const ClusterHistoricalUsage: React.FC = () => {
           onVisibleChange={setIsCsvModalVisible}
         />
       )}
-    </>
+    </div>
   );
 };
 

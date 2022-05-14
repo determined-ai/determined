@@ -16,27 +16,30 @@ interface Props {
   mode?: GridMode | number;
 }
 
-const defaultProps = {
-  minItemWidth: 240,
-  mode: GridMode.AutoFit,
+const sizeMap = {
+  [ShirtSize.small]: '4px',
+  [ShirtSize.medium]: '8px',
+  [ShirtSize.large]: '16px',
 };
 
-const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  const classes = [ css.base ];
-  const mode = props.mode || defaultProps.mode;
-  const itemWidth = props.minItemWidth || defaultProps.minItemWidth;
+const Grid: React.FC<Props> = ({
+  border,
+  gap = ShirtSize.medium,
+  minItemWidth = 240,
+  mode = GridMode.AutoFit,
+  children,
+}: PropsWithChildren<Props>) => {
   const style = {
-    gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap})` : '',
-    gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}px, 1fr))`,
+    gridGap: `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
+    gridTemplateColumns: `repeat(${mode}, minmax(${minItemWidth}px, 1fr))`,
   };
+  const classes = [ css.base ];
 
-  if (props.border) classes.push(css.border);
+  if (border) classes.push(css.border);
 
   return (
-    <div className={classes.join(' ')} style={style}>{props.children}</div>
+    <div className={classes.join(' ')} style={style}>{children}</div>
   );
 };
-
-Grid.defaultProps = defaultProps;
 
 export default Grid;

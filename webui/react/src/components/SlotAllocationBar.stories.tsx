@@ -24,7 +24,7 @@ export const Default = (): React.ReactNode => (
       ResourceState.Pulling, ResourceState.Running,
     ]}
     showLegends
-    size={ShirtSize.big}
+    size={ShirtSize.large}
     totalSlots={4}
   />
 );
@@ -34,7 +34,7 @@ export const NoLegends = (): React.ReactNode => (
     resourceStates={[
       ResourceState.Pulling, ResourceState.Running,
     ]}
-    size={ShirtSize.big}
+    size={ShirtSize.large}
     totalSlots={4}
   />
 );
@@ -43,7 +43,7 @@ export const ZeroTotalSlots = (): React.ReactNode => (
   <Wrapper
     resourceStates={[]}
     showLegends
-    size={ShirtSize.big}
+    size={ShirtSize.large}
     totalSlots={0}
   />
 );
@@ -52,7 +52,7 @@ export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => (
   <Wrapper
     resourceStates={[ ResourceState.Running ]}
     showLegends
-    size={ShirtSize.big}
+    size={ShirtSize.large}
     totalSlots={0}
   />
 );

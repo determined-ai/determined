@@ -15,44 +15,40 @@ export interface BarPart {
 
 export interface Props {
   barOnly?: boolean;
+  inline?: boolean;
   parts: BarPart[];
   size?: ShirtSize;
 }
 
-const partStyle = (part: BarPart) => {
-  let style = {
-    backgroundColor: part.color,
-    borderColor: 'var(--theme-colors-monochrome-11)',
-    borderStyle: 'none',
-    borderWidth: 1,
-    width: floatToPercent(part.percent, 0),
-  };
-
-  if (part.bordered) {
-    style = { ...style, borderStyle: 'dashed dashed dashed none' };
-  }
-
-  return style;
+const sizeMap = {
+  [ShirtSize.small]: '4px',
+  [ShirtSize.medium]: '12px',
+  [ShirtSize.large]: '24px',
 };
 
-const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
+const partStyle = (part: BarPart) => ({
+  backgroundColor: part.color,
+  borderStyle: part.bordered ? 'dashed dashed dashed none' : 'none',
+  width: floatToPercent(part.percent, 0),
+});
+
+const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.small }: Props) => {
   const classes: string[] = [ css.base ];
 
   if (barOnly) classes.push(css.barOnly);
+  if (inline) classes.push(css.inline);
 
   return (
     <div className={classes.join(' ')}>
       <div
         className={css.bar}
-        style={{ height: `var(--theme-sizes-layout-${size || ShirtSize.tiny})` }}>
+        style={{ height: `calc(${sizeMap[size]} + var(--theme-density) * 1px)` }}>
         <div className={css.parts}>
-          {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => {
-            return (
-              <Tooltip key={idx} title={part.label}>
-                <li style={partStyle(part)} />
-              </Tooltip>
-            );
-          })}
+          {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => (
+            <Tooltip key={idx} title={part.label}>
+              <li style={partStyle(part)} />
+            </Tooltip>
+          ))}
         </div>
 
       </div>

@@ -1,17 +1,18 @@
 .base {
+  margin: 0;
   padding-inline-start: 0;
 }
 .item {
   align-items: center;
-  border-color: var(--theme-colors-monochrome-14);
+  border-color: var(--theme-stage-border);
   border-style: dashed;
   border-width: 0 0 1px 0;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   list-style-type: none;
-  margin-bottom: var(--theme-sizes-layout-micro);
-  padding-bottom: var(--theme-sizes-layout-micro);
+  margin-bottom: 2px;
+  padding-bottom: 2px;
   width: 100%;
 
   span {
@@ -24,8 +25,8 @@
   padding: 0;
 }
 .label {
-  color: var(--theme-colors-monochrome-7);
-  margin-right: var(--theme-sizes-layout-medium);
+  color: var(--theme-stage-on);
+  margin-right: 8px;
 }
 .value {
   overflow-wrap: break-word;

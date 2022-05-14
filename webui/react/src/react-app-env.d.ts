@@ -15,6 +15,7 @@ export declare global {
     analytics: any;
     dev: any;
   }
+
   interface Array<T> {
     first(): T;
     last(): T;
