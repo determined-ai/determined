@@ -47,6 +47,14 @@ const ProjectDetailsTabs: React.FC<Props> = (
     setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
+  /**
+   * prevents stable tab content, e.g. archived state
+   */
+  useEffect(() =>
+    setActiveTab(
+      (curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0],
+    ), [ tabs ]);
+
   useEffect(() => {
     fetchWorkspace();
   }, [ fetchWorkspace ]);
