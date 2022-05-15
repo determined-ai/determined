@@ -44,17 +44,17 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     return curUser?.isAdmin || curUser?.username === workspace.username;
   }, [ curUser?.isAdmin, curUser?.username, workspace.username ]);
 
-  const handleArchiveClick = useCallback(() => {
+  const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
       try {
-        unarchiveWorkspace({ id: workspace.id });
+        await unarchiveWorkspace({ id: workspace.id });
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
       }
     } else {
       try {
-        archiveWorkspace({ id: workspace.id });
+        await archiveWorkspace({ id: workspace.id });
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
@@ -62,10 +62,10 @@ const WorkspaceActionDropdown: React.FC<Props> = (
     }
   }, [ onComplete, workspace.archived, workspace.id ]);
 
-  const handlePinClick = useCallback(() => {
+  const handlePinClick = useCallback(async () => {
     if (workspace.pinned) {
       try {
-        unpinWorkspace({ id: workspace.id });
+        await unpinWorkspace({ id: workspace.id });
         fetchPinnedWorkspaces();
         onComplete?.();
       } catch (e) {
@@ -73,7 +73,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
       }
     } else {
       try {
-        pinWorkspace({ id: workspace.id });
+        await pinWorkspace({ id: workspace.id });
         fetchPinnedWorkspaces();
         onComplete?.();
       } catch (e) {
