@@ -208,10 +208,15 @@ const TrialRangeHyperparametersContainer = () => {
     },
     id: 1,
     name: 'Sample Experiment',
+    parentArchived: false,
+    projectId: 1,
+    projectName: 'Uncategorized',
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
     username: 'determined',
+    workspaceId: 1,
+    workspaceName: 'Uncategorized',
   };
   const sampleTrial: TrialDetails = {
     endTime: '2021-06-09T15:35:27.464642Z',

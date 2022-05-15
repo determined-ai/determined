@@ -29,6 +29,7 @@ const ExperimentDetails: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trial, setTrial ] = useState<TrialDetails>();
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();

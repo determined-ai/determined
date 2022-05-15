@@ -251,7 +251,7 @@ export const createExperiment: Service.DetApi<
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder.mapV1GetExperimentResponse(resp);
+    return decoder.mapV1GetExperimentDetailsResponse(resp);
   },
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
@@ -354,7 +354,7 @@ export const getExperimentDetails: Service.DetApi<
   Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 > = {
   name: 'getExperimentDetails',
-  postProcess: (response) => decoder.mapV1GetExperimentResponse(response),
+  postProcess: (response) => decoder.mapV1GetExperimentDetailsResponse(response),
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 

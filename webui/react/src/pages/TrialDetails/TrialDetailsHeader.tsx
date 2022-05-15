@@ -10,7 +10,8 @@ import useCreateExperimentModal, {
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
+import { canExperimentActionUser } from 'utils/experiment';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 
@@ -62,7 +63,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (!experiment.archived && !experiment.parentArchived) {
+    if (canExperimentActionUser(experiment, ExperimentAction.ContinueTrial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
           icon: <Icon name="fork" size="small" />,
@@ -82,8 +83,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
     return options;
   }, [
-    experiment.archived,
-    experiment.parentArchived,
+    experiment,
     fetchTrialDetails,
     handleContinueTrial,
     isRunningTensorBoard,

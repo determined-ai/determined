@@ -4713,6 +4713,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     userId: number;
+    /**
+     * The name of the associated workspace.
+     * @type {string}
+     * @memberof V1Project
+     */
+    workspaceName?: string;
 }
 
 /**

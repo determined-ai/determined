@@ -3,6 +3,7 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Icon from 'components/Icon';
 import SelectFilter from 'components/SelectFilter';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { getWorkspaces, moveProject } from 'services/api';
@@ -78,7 +79,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
             const disabled = workspace.archived || workspace.id === project.workspaceId;
             return (
               <Option
-                // className={css.workspaceOption}
+                className={css.workspaceOption}
+                disabled={disabled}
                 key={workspace.id}
                 style={{
                   color: disabled ?
@@ -90,6 +92,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
                   ellipsis={true}>
                   {workspace.name}
                 </Typography.Text>
+                {workspace.archived && <Icon name="archive" />}
+                {workspace.id === project.workspaceId && <Icon name="checkmark" />}
               </Option>
             );
           })}

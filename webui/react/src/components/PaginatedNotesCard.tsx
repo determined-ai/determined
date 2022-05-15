@@ -24,11 +24,6 @@ interface Props {
 const PaginatedNotesCard: React.FC<Props> = (
   { notes, onNewPage, onSave, onDelete, disabled = false }:Props,
 ) => {
-
-  useEffect(() => {
-
-    // console.log(notes.length);
-  }, [ notes.length ]);
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ deleteTarget, setDeleteTarget ] = useState(0);
   const [ editedContents, setEditedContents ] = useState(notes?.[currentPage]?.contents ?? '');

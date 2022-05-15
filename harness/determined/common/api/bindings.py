@@ -3998,6 +3998,7 @@ class v1Project:
         workspaceId: int,
         description: "typing.Optional[str]" = None,
         lastExperimentStartedAt: "typing.Optional[str]" = None,
+        workspaceName: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.name = name
@@ -4011,6 +4012,7 @@ class v1Project:
         self.username = username
         self.immutable = immutable
         self.userId = userId
+        self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4027,6 +4029,7 @@ class v1Project:
             username=obj["username"],
             immutable=obj["immutable"],
             userId=obj["userId"],
+            workspaceName=obj.get("workspaceName", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4043,6 +4046,7 @@ class v1Project:
             "username": self.username,
             "immutable": self.immutable,
             "userId": self.userId,
+            "workspaceName": self.workspaceName if self.workspaceName is not None else None,
         }
 
 class v1PutProjectNotesRequest:

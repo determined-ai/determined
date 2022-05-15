@@ -64,6 +64,8 @@ message Project {
   bool immutable = 11;
   // ID of the user who created this project.
   int32 user_id = 12;
+  // The name of the associated workspace.
+  string workspace_name = 13;
 }
 
 // ProjectModel is a checkpoint associated with a project.

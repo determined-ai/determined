@@ -319,7 +319,8 @@ const InteractiveTable: InteractiveTable = ({
         ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
     );
     if (typeof pagePadding !== 'number') pagePadding = 16;
-    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * pagePadding ;
+    const padding = 24;
+    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * padding ;
   }, []);
 
   const getUpscaledWidths = useCallback(

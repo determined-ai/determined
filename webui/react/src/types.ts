@@ -308,6 +308,7 @@ export enum ExperimentAction {
   CompareTrials = 'Compare Trials',
   ContinueTrial = 'Continue Trial',
   Delete = 'Delete',
+  DownloadCode = 'Download Experiment Code',
   Fork = 'Fork',
   Kill = 'Kill',
   Move = 'Move',
@@ -456,10 +457,8 @@ export interface ExperimentItem {
   name: string;
   notes?: string;
   numTrials: number;
-  parentArchived: boolean;
   progress?: number;
   projectId: number;
-  projectName: string;
   resourcePool: string;
   searcherType: string;
   startTime: string;
@@ -467,17 +466,26 @@ export interface ExperimentItem {
   trialIds?: number[];
   userId?: number;
   username: string;
+}
+
+export interface ProjectExperiment extends ExperimentItem {
+  parentArchived: boolean;
+  projectName: string;
   workspaceId: number;
   workspaceName: string;
 }
 
-export interface ExperimentBase extends ExperimentItem {
+export interface ExperimentBase extends ProjectExperiment {
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+
 }
 // TODO we should be able to remove ExperimentOld but leaving this off.
-export interface ExperimentOld extends ExperimentBase {
+export interface ExperimentOld extends ExperimentItem {
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   url: string;
 }
 
@@ -797,6 +805,7 @@ export interface Project {
   numExperiments: number;
   username: string;
   workspaceId: number;
+  workspaceName: string;
 }
 
 export interface ProjectPagination extends WithPagination {

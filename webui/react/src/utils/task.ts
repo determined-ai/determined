@@ -1,5 +1,4 @@
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
-import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
 
@@ -79,7 +78,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     resources: {},
     searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
-  const exp = generateExperiments(1)[0];
+  const { projectId, ... exp } = generateExperiments(1)[0];
   return {
     ...exp,
     ...experimentTask,
@@ -211,28 +210,6 @@ export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentComma
       name: 'requested',
     },
   };
-};
-
-export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.RecentExperimentTask => {
-  const lastEvent = experiment.endTime ?
-    { date: experiment.endTime, name: 'finished' } :
-    { date: experiment.startTime, name: 'requested' };
-  const task: Type.RecentTask = {
-    archived: experiment.archived,
-    id: `${experiment.id}`,
-    lastEvent,
-    name: experiment.name,
-    parentArchived: experiment.parentArchived,
-    progress: experiment.progress,
-    projectId: experiment.projectId,
-    resourcePool: experiment.resourcePool,
-    startTime: experiment.startTime,
-    state: experiment.state,
-    url: paths.experimentDetails(experiment.id),
-    username: experiment.username,
-    workspaceId: experiment.workspaceId,
-  };
-  return task;
 };
 
 // Checks whether tensorboard source matches a given source list.
