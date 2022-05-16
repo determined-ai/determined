@@ -13,15 +13,11 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-const (
-	defaultServiceName = "determined-master"
-)
-
 // maintain a single tracer provider.
 var tracer *sdktrace.TracerProvider
 
 // otelConfig initiates a new tracer and sets it as the default for otel.
-func configureOtel(endpoint string) *sdktrace.TracerProvider {
+func configureOtel(endpoint string, serviceName string) *sdktrace.TracerProvider {
 	// avoid repeatedly re-creating the tracer.
 	if tracer != nil {
 		return tracer
@@ -36,7 +32,7 @@ func configureOtel(endpoint string) *sdktrace.TracerProvider {
 	}
 
 	// Create a new tracer provider with a batch span processor and the otlp exporter.
-	tracer = newTraceProvider(exp)
+	tracer = newTraceProvider(exp, serviceName)
 
 	// Set the Tracer Provider and the W3C Trace Context propagator as globals
 	otel.SetTracerProvider(tracer)
@@ -63,12 +59,13 @@ func newExporter(ctx context.Context, endpoint string) (*otlptrace.Exporter, err
 	return otlptrace.New(ctx, client)
 }
 
-func newTraceProvider(exp *otlptrace.Exporter) *sdktrace.TracerProvider {
+func newTraceProvider(exp *otlptrace.Exporter, serviceName string) *sdktrace.TracerProvider {
 	// The service.name attribute is required.
-	resource := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(defaultServiceName),
-	)
+	resource :=
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(serviceName),
+		)
 
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),

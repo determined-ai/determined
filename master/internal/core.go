@@ -868,7 +868,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	if m.config.Telemetry.OtelEnabled {
-		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint)
+		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint, "determined-master")
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
