@@ -81,7 +81,7 @@ const UPlotChart: React.FC<Props> = ({
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
 
-  const { zoomed, boundsOptions } = useSyncableBounds();
+  const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -91,7 +91,7 @@ const UPlotChart: React.FC<Props> = ({
     uPlot.assign(
       {
         hooks: {
-          destroy: [ () => setIsReady(false) ],
+          destroy: [ () => setIsReady(false), () => setZoomed(false) ],
           ready: [ () => setIsReady(true) ],
 
         },
@@ -99,7 +99,7 @@ const UPlotChart: React.FC<Props> = ({
       },
       boundsOptions || {},
       options || {},
-    ), [ options, boundsOptions ]) as uPlot.Options;
+    ), [ options, boundsOptions, setZoomed ]) as uPlot.Options;
 
   useEffect(() => {
     return () => {
