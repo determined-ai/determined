@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import uPlot from 'uplot';
 
-import { UPlotData } from './types';
 interface SyncContext {
   setZoomed: (zoomed: boolean) => void;
   syncRef: MutableRefObject<uPlot.SyncPubSub>;
@@ -51,48 +50,42 @@ export const useSyncableBounds = (): SyncableBounds => {
   const zoomSetter = syncContext?.setZoomed ?? setZoomed;
   const syncRef: MutableRefObject<uPlot.SyncPubSub> | undefined = syncContext?.syncRef;
 
-  const boundsOptions = useMemo(() => ({
-    cursor: {
-      bind: {
-        dblclick: (chart: uPlot, _target: EventTarget, handler: (e: MouseEvent) => void) => {
-          return (e: MouseEvent) => {
-            handler(e);
-            zoomSetter(false);
-            return null;
-          };
-        },
-        mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
-          return (e: MouseEvent) => {
-            const mouseEvent = e as MouseEvent;
-            mouseX.current = mouseEvent.clientX;
-            handler(e);
-            return null;
-          };
-        },
-        mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
-          return (e: MouseEvent) => {
-            const mouseEvent = e as MouseEvent;
-            if (mouseX.current != null) {
-              handler(e);
-            }
-            if (mouseX.current != null && Math.abs(mouseEvent.clientX - mouseX.current) > 5) {
-              zoomSetter(true);
-            }
-            mouseX.current = undefined;
-            handler(e);
-            return null;
-          } ;
-        },
+  const boundsOptions = useMemo(() => {
+    return {
+      cursor: {
+        bind: {
+          dblclick: (chart: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
+            return (e: MouseEvent) => {
+              zoomSetter(false);
+              return handler(e);
+            };
+          },
+          mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
+            return (e: MouseEvent) => {
+              mouseX.current = e.clientX;
+              return handler(e);
+            };
+          },
+          mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
+            return (e: MouseEvent) => {
+              if (mouseX.current != null && Math.abs(e.clientX - mouseX.current) > 5) {
+                zoomSetter(true);
+              }
+              mouseX.current = undefined;
+              return handler(e);
+            } ;
+          },
 
+        },
+        drag: syncRef ? { dist: 5, uni: 10, x: true } : { dist: 5, uni: 10, x: true, y: true },
+        sync: syncRef && {
+          key: syncRef.current.key,
+          scales: [ syncRef.current.key, null ],
+          setSeries: false,
+        },
       },
-      drag: { dist: 5, uni: 10, x: true },
-      sync: syncRef && {
-        key: syncRef.current.key,
-        scales: [ syncRef.current.key, null ],
-        setSeries: false,
-      },
-    },
-  }), [ zoomSetter, syncRef ]) as Partial<uPlot.Options>;
+    };
+  }, [ zoomSetter, syncRef ]) as Partial<uPlot.Options>;
 
   return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
 };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
@@ -7,6 +6,7 @@ import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import { useSyncableBounds } from './SyncableBounds';
 import { FacetedData } from './types';
@@ -99,7 +99,7 @@ const UPlotChart: React.FC<Props> = ({
       },
       boundsOptions || {},
       options || {},
-    ), [ options, boundsOptions ]);
+    ), [ options, boundsOptions ]) as uPlot.Options;
 
   useEffect(() => {
     return () => {
@@ -116,7 +116,6 @@ const UPlotChart: React.FC<Props> = ({
       try {
         if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
-          chartRef.current.title = title;
         }
       } catch(e) {
         chartRef.current?.destroy();
@@ -132,7 +131,7 @@ const UPlotChart: React.FC<Props> = ({
     } else {
       try {
         if (chartRef.current && isReady){
-          chartRef.current.setData(data, !zoomed);
+          chartRef.current.setData(data as AlignedData, !zoomed);
         }
       } catch(e) {
         chartRef.current?.destroy();
