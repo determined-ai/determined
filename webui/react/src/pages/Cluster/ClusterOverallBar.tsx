@@ -54,7 +54,7 @@ export const ClusterOverallBar: React.FC = () => {
         <SlotAllocationBar
           resourceStates={cudaSlotStates}
           showLegends
-          size={ShirtSize.medium}
+          size={ShirtSize.large}
           title={`Compute (${ResourceType.CUDA})`}
           totalSlots={cudaTotalSlots}
         />
@@ -63,7 +63,7 @@ export const ClusterOverallBar: React.FC = () => {
         <SlotAllocationBar
           resourceStates={rocmSlotStates}
           showLegends
-          size={ShirtSize.medium}
+          size={ShirtSize.large}
           title={`Compute (${ResourceType.ROCM})`}
           totalSlots={rocmTotalSlots}
         />
@@ -72,7 +72,7 @@ export const ClusterOverallBar: React.FC = () => {
         <SlotAllocationBar
           resourceStates={cpuSlotStates}
           showLegends
-          size={ShirtSize.medium}
+          size={ShirtSize.large}
           title={`Compute (${ResourceType.CPU})`}
           totalSlots={overview.CPU.total}
         />

@@ -44,7 +44,7 @@ $line-height: 22px;
       display: flex;
 
       span {
-        font-size: var(--theme-sizes-font-small);
+        font-size: 12px;
         margin-right: 4px;
       }
       i {
@@ -64,7 +64,7 @@ section.details {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
 
   ul {
     flex-grow: 1;

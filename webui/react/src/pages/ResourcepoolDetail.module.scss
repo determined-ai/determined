@@ -5,12 +5,12 @@
     display: flex;
   
     .icon {
-      margin: 0 var(--theme-sizes-layout-enormous);
+      margin: 0 24px;
     }
   }
   :global {
     .ant-tabs-nav {
-      margin-bottom: var(--theme-sizes-layout-medium) !important;
+      margin-bottom: 8px !important;
       padding: 0 !important;
     }
   }

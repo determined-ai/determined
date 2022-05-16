@@ -147,7 +147,7 @@ const ResourcepoolDetail: React.FC = () => {
         <RenderAllocationBarResourcePool
           poolStats={poolStats}
           resourcePool={pool}
-          size={ShirtSize.giant}
+          size={ShirtSize.large}
         />
       </Section>
       <Section>
