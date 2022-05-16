@@ -64,7 +64,7 @@ const InlineEditor: React.FC<Props> = ({
     if (textareaRef.current) textareaRef.current.value = newValue;
     if (growWrapRef.current) growWrapRef.current.dataset.value = newValue;
     setCurrentValue(newValue);
-  }, [ maxLength, textareaRef ]);
+  }, [ maxLength ]);
 
   const cancel = useCallback(() => {
     updateEditorValue(value);
@@ -100,7 +100,7 @@ const InlineEditor: React.FC<Props> = ({
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
-  }, [ allowClear, cancel, save, value, textareaRef ]);
+  }, [ allowClear, cancel, save, value ]);
 
   const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
@@ -136,7 +136,7 @@ const InlineEditor: React.FC<Props> = ({
   useEffect(() => {
     if (!textareaRef.current || document.activeElement !== textareaRef.current) return;
     isEditable ? textareaRef.current.focus() : textareaRef.current.blur();
-  }, [ isEditable, textareaRef ]);
+  }, [ isEditable ]);
 
   return (
     <div className={classes.join(' ')} {...props}>
