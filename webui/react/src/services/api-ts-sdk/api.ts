@@ -5938,7 +5938,7 @@ export interface V1User {
      * @type {number}
      * @memberof V1User
      */
-    id: number;
+    id?: number;
     /**
      * The user login name of the user.
      * @type {string}

@@ -190,7 +190,7 @@ def test_post_user_api(clean_auth: None) -> None:
     )
     new_username = get_random_string()
 
-    user = bindings.v1User(active=True, admin=False, username=new_username, id=0)
+    user = bindings.v1User(active=True, admin=False, username=new_username)
     body = bindings.v1PostUserRequest(password="", user=user)
     resp = bindings.post_PostUser(
         session.Session(master_url, "admin", authentication.cli_auth, None), body=body

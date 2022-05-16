@@ -5092,10 +5092,10 @@ class v1User:
         self,
         active: bool,
         admin: bool,
-        id: int,
         username: str,
         agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
         displayName: "typing.Optional[str]" = None,
+        id: "typing.Optional[int]" = None,
         modifiedAt: "typing.Optional[str]" = None,
     ):
         self.id = id
@@ -5109,7 +5109,7 @@ class v1User:
     @classmethod
     def from_json(cls, obj: Json) -> "v1User":
         return cls(
-            id=obj["id"],
+            id=obj.get("id", None),
             username=obj["username"],
             admin=obj["admin"],
             active=obj["active"],
@@ -5120,7 +5120,7 @@ class v1User:
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id,
+            "id": self.id if self.id is not None else None,
             "username": self.username,
             "admin": self.admin,
             "active": self.active,
