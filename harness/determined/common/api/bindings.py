@@ -5265,7 +5265,7 @@ def get_AllocationPreemptionSignal(
     timeoutSeconds: "typing.Optional[int]" = None,
 ) -> "v1AllocationPreemptionSignalResponse":
     _params = {
-        "timeoutSeconds": timeoutSeconds if timeoutSeconds is not None else None,
+        "timeoutSeconds": timeoutSeconds,
     }
     _resp = session._do_request(
         method="GET",
@@ -5637,9 +5637,9 @@ def get_GetAgents(
     sortBy: "typing.Optional[v1GetAgentsRequestSortBy]" = None,
 ) -> "v1GetAgentsResponse":
     _params = {
-        "label": label if label is not None else None,
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "label": label,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
@@ -5724,12 +5724,12 @@ def get_GetCommands(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -5793,8 +5793,8 @@ def get_GetExperimentCheckpoints(
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
@@ -5840,8 +5840,8 @@ def get_GetExperimentTrials(
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
@@ -5895,16 +5895,16 @@ def get_GetExperiments(
 ) -> "v1GetExperimentsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
-        "description": description if description is not None else None,
-        "labels": labels if labels is not None else None,
-        "limit": limit if limit is not None else None,
-        "name": name if name is not None else None,
-        "offset": offset if offset is not None else None,
+        "description": description,
+        "labels": labels,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -5925,7 +5925,7 @@ def get_GetJobQueueStats(
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetJobQueueStatsResponse":
     _params = {
-        "resourcePools": resourcePools if resourcePools is not None else None,
+        "resourcePools": resourcePools,
     }
     _resp = session._do_request(
         method="GET",
@@ -5950,9 +5950,9 @@ def get_GetJobs(
 ) -> "v1GetJobsResponse":
     _params = {
         "orderBy": orderBy.value if orderBy is not None else None,
-        "pagination.limit": pagination_limit if pagination_limit is not None else None,
-        "pagination.offset": pagination_offset if pagination_offset is not None else None,
-        "resourcePool": resourcePool if resourcePool is not None else None,
+        "pagination.limit": pagination_limit,
+        "pagination.offset": pagination_offset,
+        "resourcePool": resourcePool,
     }
     _resp = session._do_request(
         method="GET",
@@ -6086,8 +6086,8 @@ def get_GetModelVersions(
     sortBy: "typing.Optional[v1GetModelVersionsRequestSortBy]" = None,
 ) -> "v1GetModelVersionsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
@@ -6121,16 +6121,16 @@ def get_GetModels(
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
-        "description": description if description is not None else None,
-        "id": id if id is not None else None,
-        "labels": labels if labels is not None else None,
-        "limit": limit if limit is not None else None,
-        "name": name if name is not None else None,
-        "offset": offset if offset is not None else None,
+        "description": description,
+        "id": id,
+        "labels": labels,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -6175,12 +6175,12 @@ def get_GetNotebooks(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -6202,8 +6202,8 @@ def get_GetResourcePools(
     offset: "typing.Optional[int]" = None,
 ) -> "v1GetResourcePoolsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
     }
     _resp = session._do_request(
         method="GET",
@@ -6248,12 +6248,12 @@ def get_GetShells(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -6372,9 +6372,9 @@ def get_GetTemplates(
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
 ) -> "v1GetTemplatesResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "name": name if name is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
     }
@@ -6421,12 +6421,12 @@ def get_GetTensorboards(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "userIds": userIds if userIds is not None else None,
-        "users": users if users is not None else None,
+        "userIds": userIds,
+        "users": users,
     }
     _resp = session._do_request(
         method="GET",
@@ -6471,8 +6471,8 @@ def get_GetTrialCheckpoints(
     states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
@@ -6499,8 +6499,8 @@ def get_GetTrialWorkloads(
     orderBy: "typing.Optional[v1OrderBy]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
-        "limit": limit if limit is not None else None,
-        "offset": offset if offset is not None else None,
+        "limit": limit,
+        "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
     }
     _resp = session._do_request(
@@ -7202,9 +7202,9 @@ def get_ResourceAllocationAggregated(
     startDate: "typing.Optional[str]" = None,
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
-        "endDate": endDate if endDate is not None else None,
+        "endDate": endDate,
         "period": period.value if period is not None else None,
-        "startDate": startDate if startDate is not None else None,
+        "startDate": startDate,
     }
     _resp = session._do_request(
         method="GET",
@@ -7226,8 +7226,8 @@ def get_ResourceAllocationRaw(
     timestampBefore: "typing.Optional[str]" = None,
 ) -> "v1ResourceAllocationRawResponse":
     _params = {
-        "timestampAfter": timestampAfter if timestampAfter is not None else None,
-        "timestampBefore": timestampBefore if timestampBefore is not None else None,
+        "timestampAfter": timestampAfter,
+        "timestampBefore": timestampBefore,
     }
     _resp = session._do_request(
         method="GET",

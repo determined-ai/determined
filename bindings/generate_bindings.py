@@ -28,6 +28,14 @@ class TypeAnno:
         # Only Refs to empty structs ever return True; we skip generating them.
         return False
 
+    def need_urlparam_dump(self) -> bool:
+        """
+        Dump a value for url parameters.
+
+        Defaults to need_parse(), since dump_as_urlparam() defaults to dump()
+        """
+        return self.need_parse()
+
     def dump_as_urlparam(self, val: Code) -> Code:
         """
         Dump a value for url parameters.
@@ -105,7 +113,7 @@ class Int(NoParse, TypeAnno):
         return "int"
 
 
-class Bool(TypeAnno):
+class Bool(NoParse, TypeAnno):
     def __init__(self):
         pass
 
@@ -115,14 +123,8 @@ class Bool(TypeAnno):
     def annotation(self, prequoted=False) -> Code:
         return "bool"
 
-    def need_parse(self) -> bool:
-        return False
-
-    def load(self, val: Code) -> Code:
-        return val
-
-    def dump(self, val: Code) -> Code:
-        return val
+    def need_urlparam_dump(self) -> bool:
+        return True
 
     def dump_as_urlparam(self, val: Code) -> Code:
         """
@@ -421,14 +423,12 @@ class Function:
             out += ["    _params = {"]
             for p in query_params:
                 param = self.params[p]
-                value = ""
-                if param.type.need_parse() or not param.required:
-                    value = (
-                        f"{param.type.dump_as_urlparam(param.name)} if {param.name} "
-                        "is not None else None"
-                    )
-                else:
+                if param.type.need_urlparam_dump():
                     value = f"{param.type.dump_as_urlparam(param.name)}"
+                    if not param.required:
+                        value += f" if {param.name} is not None else None"
+                else:
+                    value = param.name
                 out += [f'        "{self.params[p].serialized_name}": {value},']
             out += ["    }"]
         else:
