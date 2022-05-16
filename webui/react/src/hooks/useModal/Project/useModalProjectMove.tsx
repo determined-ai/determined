@@ -1,11 +1,12 @@
-import { Select, Typography } from 'antd';
+import { notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import SelectFilter from 'components/SelectFilter';
+import Link from 'components/Link';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
+import { paths } from 'routes/utils';
 import { getWorkspaces, moveProject } from 'services/api';
 import { Project, Workspace } from 'types';
 import { isEqual } from 'utils/data';
@@ -68,7 +69,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="workspace">Workspace</label>
-        <SelectFilter
+        <Select
           id="workspace"
           placeholder="Select a destination workspace."
           showSearch={false}
@@ -79,25 +80,21 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
             const disabled = workspace.archived || workspace.id === project.workspaceId;
             return (
               <Option
-                className={css.workspaceOption}
                 disabled={disabled}
                 key={workspace.id}
-                style={{
-                  color: disabled ?
-                    'var(--theme-colors-monochrome-10)' :
-                    undefined,
-                }}
                 value={workspace.id}>
-                <Typography.Text
-                  ellipsis={true}>
-                  {workspace.name}
-                </Typography.Text>
-                {workspace.archived && <Icon name="archive" />}
-                {workspace.id === project.workspaceId && <Icon name="checkmark" />}
+                <div className={disabled ? css.workspaceOptionDisabled : ''}>
+                  <Typography.Text
+                    ellipsis={true}>
+                    {workspace.name}
+                  </Typography.Text>
+                  {workspace.archived && <Icon name="archive" />}
+                  {workspace.id === project.workspaceId && <Icon name="checkmark" />}
+                </div>
               </Option>
             );
           })}
-        </SelectFilter>
+        </Select>
       </div>
     );
   }, [ handleWorkspaceSelect, workspaces, project.workspaceId, destinationWorkspaceId ]);
@@ -106,6 +103,22 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
     if (!destinationWorkspaceId) return;
     try {
       await moveProject({ destinationWorkspaceId, projectId: project.id });
+      const destinationWorkspaceName: string =
+        workspaces.find((w) => w.id === destinationWorkspaceId)?.name ?? '';
+      notification.open(
+        {
+          btn: null,
+          description: (
+            <div>
+              <p>
+                {project.name} moved to workspace {destinationWorkspaceName}
+              </p>
+              <Link path={paths.workspaceDetails(destinationWorkspaceId)}>View Workspace</Link>
+            </div>
+          ),
+          message: 'Move Success',
+        },
+      );
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -115,7 +128,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ destinationWorkspaceId, project.id ]);
+  }, [ destinationWorkspaceId, project.id, project.name, workspaces ]);
 
   const getModalProps = useCallback((destinationWorkspaceId?: number): ModalFuncProps => {
     return {

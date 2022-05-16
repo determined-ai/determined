@@ -3,10 +3,6 @@
   flex-direction: column;
   gap: var(--theme-sizes-layout-big);
 
-  .workspaceOption {
-    display: flex;
-    justify-content: space-between;
-  }
   .label {
     color: var(--theme-colors-monochrome-7)
   }
@@ -44,5 +40,13 @@
         }
       }
     }
+  }
+}
+.workspaceOptionDisabled {
+  display: flex;
+  justify-content: space-between;
+
+  span {
+    color: var(--theme-colors-monochrome-10);
   }
 }

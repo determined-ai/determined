@@ -182,20 +182,16 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             {workspaces.map(workspace => {
               return (
                 <Option
-                  className={css.workspaceOption}
                   disabled={workspace.archived}
                   key={workspace.id}
-                  style={{
-                    color: workspace.archived ?
-                      'var(--theme-colors-monochrome-10)' :
-                      undefined,
-                  }}
                   value={workspace.id}>
-                  <Typography.Text
-                    ellipsis={true}>
-                    {workspace.name}
-                  </Typography.Text>
-                  {workspace.archived && <Icon name="archive" />}
+                  <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
+                    <Typography.Text
+                      ellipsis={true}>
+                      {workspace.name}
+                    </Typography.Text>
+                    {workspace.archived && <Icon name="archive" />}
+                  </div>
                 </Option>
               );
             })}
@@ -251,11 +247,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       notification.open({
         btn: null,
         description: (
-          <div className={css.toast}>
+          <div>
             <p>
               {experimentText} moved to project {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
+            <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
           </div>
         ),
         message: 'Move Success',
@@ -268,12 +264,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     } else {
       notification.warn({
         description: (
-          <div className={css.toast}>
+          <div>
             <p>
               {numFailures} out of {experimentIds.length} experiments failed to move
               to project {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
+            <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
           </div>
         ),
         message: 'Partial Move Failure',

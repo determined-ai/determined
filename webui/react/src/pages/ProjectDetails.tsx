@@ -661,12 +661,6 @@ const ProjectDetails: React.FC = () => {
     onSave: (handleUpdateColumns as (columns: string[]) => void),
   });
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
   const handleCustomizeColumnsClick = useCallback(() => {
     openCustomizeColumns(
       { initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)) },
@@ -818,7 +812,6 @@ const ProjectDetails: React.FC = () => {
     );
   }, [ filterCount,
     handleCustomizeColumnsClick,
-    resetColumnWidths,
     resetFilters,
     settings.archived,
     switchShowArchived ]);
