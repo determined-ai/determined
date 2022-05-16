@@ -1181,6 +1181,18 @@ service Determined {
       tags: "Checkpoints"
     };
   }
+  
+  // Delete Checkpoints. 
+  rpc DeleteCheckpoints(DeleteCheckpointsRequest) 
+      returns (DeleteCheckpointsResponse) {
+        option (google.api.http) = {
+          delete: "/api/v1/checkpoints"
+          body: "*"
+        };  
+     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Checkpoints"
+    };
+    }
 
   // Get the set of metric names recorded for an experiment.
   rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
