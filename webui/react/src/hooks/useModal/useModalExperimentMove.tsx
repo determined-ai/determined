@@ -244,33 +244,34 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       ? `Experiment ${experimentIds[0]}`
       : `${experimentIds.length} experiments`;
 
+    const destinationProjectName =
+      projects.find((p) => p.id === destSettings.projectId)?.name ?? '';
+
     if (numFailures === 0) {
       notification.open({
         btn: null,
         description: (
           <div className={css.toast}>
             <p>
-              {experimentText} moved to project
-              {projects.find((p) => p.id === destSettings.projectId)?.name}
+              {experimentText} moved to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
           </div>
         ),
-        message: 'Experiments Moved',
+        message: 'Move Success',
       });
     } else if (numFailures === experimentIds.length) {
       notification.warn({
-        description: 'Move Failure',
-        message: `Unable to move ${experimentText}.`,
+        description: `Unable to move ${experimentText}`,
+        message: 'Move Failure',
       });
     } else {
       notification.warn({
         description: (
           <div className={css.toast}>
             <p>
-              {experimentIds.length - numFailures} out of {experimentIds.length} experiments moved
-              to project
-              {projects.find((p) => p.id === destSettings.projectId)?.name}
+              {numFailures} out of {experimentIds.length} experiments failed to move
+              to project {destinationProjectName}
             </p>
             <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
           </div>
@@ -278,7 +279,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         message: 'Partial Move Failure',
       });
     }
-
   }, [ destSettings.projectId, experimentIds, projects ]);
 
   const getModalProps = useCallback((experimentIds, destinationProjectId): ModalFuncProps => {

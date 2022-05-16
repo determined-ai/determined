@@ -788,7 +788,6 @@ const ProjectDetails: React.FC = () => {
           <Switch checked={settings.archived} onChange={switchShowArchived} />
           <Label type={LabelTypes.TextOnly}>Show Archived</Label>
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
@@ -801,7 +800,6 @@ const ProjectDetails: React.FC = () => {
                   {settings.archived ? 'Hide Archived' : 'Show Archived'}
                 </Menu.Item>
                 <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
-                <Menu.Item key="resetWidths" onClick={resetColumnWidths}>Reset Widths</Menu.Item>
                 {filterCount > 0 && (
                   <Menu.Item key="resetFilters" onClick={resetFilters}>
                     Clear Filters ({filterCount})
