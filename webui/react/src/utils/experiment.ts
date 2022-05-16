@@ -115,8 +115,10 @@ export const alwaysFalseExperimentChecker = (
  */
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
-  /** for internal use: the typing ensures that checkers
+  /**
+   * for internal use: the typing ensures that checkers
    * are defined for every ExperimentAction
+   * we expose the functions below as convenient wrappers
    */
   [ExperimentAction.Activate]: (experiment, user) => experiment.state === RunState.Paused,
 
@@ -158,23 +160,33 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
 };
 
-export const canExperimentActionUser = (
-  experiment: ProjectExperiment,
+export const canUserActionExperiment = (
+  user: DetailedUser | undefined,
   action: ExperimentAction,
-  user?: DetailedUser,
-): boolean => experimentCheckers[action](experiment, user);
+  experiment: ProjectExperiment,
+): boolean => !!experiment && experimentCheckers[action](experiment, user);
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
   targets: ExperimentAction[],
   user?: DetailedUser,
 ): ExperimentAction[] => {
-  if (!experiment) return [];
-  return targets.filter(action => canExperimentActionUser(experiment, action, user));
-
+  if (!experiment) return []; // redundant, for clarity
+  return targets.filter(action => canUserActionExperiment(user, action, experiment));
 };
 
-export const getCommonActionsForExperiments = (
+export const getActionsForExperimentsUnion = (
+  experiments: ProjectExperiment[],
+  targets: ExperimentAction[],
+  user?: DetailedUser,
+): ExperimentAction[] => {
+  if (!experiments.length) return []; // redundant, for clarity
+  const actionsForExperiments = experiments.map(e => getActionsForExperiment(e, targets, user));
+  return targets.filter((action) =>
+    actionsForExperiments.some(experimentActions => experimentActions.includes(action)));
+};
+
+export const getActionsForExperimentsIntersection = (
   experiments: ProjectExperiment[],
   targets: ExperimentAction[],
   user?: DetailedUser,

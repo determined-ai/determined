@@ -40,7 +40,7 @@ import {
 } from 'types';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { canExperimentActionUser, getActionsForExperiment } from 'utils/experiment';
+import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -80,7 +80,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
 
-  const isMovable = canExperimentActionUser(experiment, Action.Move, curUser);
+  const isMovable = canUserActionExperiment(curUser, Action.Move, experiment);
 
   const { modalOpen: openModalStop } = useModalExperimentStop({
     experimentId: experiment.id,

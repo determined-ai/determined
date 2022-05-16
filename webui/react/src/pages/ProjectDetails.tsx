@@ -50,7 +50,7 @@ import { ExperimentAction as Action, CommandTask, ExperimentItem,
 import { isEqual } from 'utils/data';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
-  getCommonActionsForExperiments,
+  getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { alphaNumericSorter } from 'utils/sort';
@@ -129,7 +129,7 @@ const ProjectDetails: React.FC = () => {
 
   const availableBatchActions = useMemo(() => {
     const experiments = settings.row?.map(id => experimentMap[id]) ?? [];
-    return getCommonActionsForExperiments(experiments, batchActions, user);
+    return getActionsForExperimentsUnion(experiments, batchActions, user);
   }, [ experimentMap, settings.row, user ]);
 
   const fetchProject = useCallback(async () => {
