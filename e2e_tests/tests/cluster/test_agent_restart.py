@@ -6,14 +6,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Tuple, Union, cast
 
-import pexpect
 import pytest
 
 from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
-from .test_users import ADMIN_CREDENTIALS, EXPECT_TIMEOUT
+from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import get_command_info, run_command, wait_for_command_state
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
@@ -124,22 +123,14 @@ class ManagedCluster:
         assert agent_data[0]["draining"] is False
 
     def fetch_config(self) -> Dict:
-        username, password = ADMIN_CREDENTIALS
-        child = pexpect.spawn("det", ["-m", self.master_url, "user", "login", username])
-        expected = "Password for user '{}':".format(username)
-        child.expect(expected, timeout=EXPECT_TIMEOUT)
-        child.sendline(password)
-        child.read()
-        child.wait()
-        assert child.exitstatus == 0
-
-        master_config = json.loads(
-            subprocess.run(
-                ["det", "-m", self.master_url, "master", "config", "--json"],
-                stdout=subprocess.PIPE,
-                check=True,
-            ).stdout.decode()
-        )
+        with logged_in_user(ADMIN_CREDENTIALS):
+            master_config = json.loads(
+                subprocess.run(
+                    ["det", "-m", self.master_url, "master", "config", "--json"],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                ).stdout.decode()
+            )
         return cast(Dict, master_config)
 
     def fetch_config_reattach_wait(self) -> float:
