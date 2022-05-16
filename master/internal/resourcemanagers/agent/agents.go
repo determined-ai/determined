@@ -27,10 +27,8 @@ func Initialize(
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
-	// This is required to set the user context so that we are able to determine
-	// if the user is an admin when calling PATCH slots and agents.
 	e.PATCH("/agents*", api.Route(system, nil),
-		echo.MiddlewareFunc(user.GetService().ProcessAuthentication))
+		echo.MiddlewareFunc(user.GetService().ProcessAdminAuthentication))
 }
 
 type agents struct {

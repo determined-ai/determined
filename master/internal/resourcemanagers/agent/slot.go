@@ -10,8 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/context"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -75,11 +73,6 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, result))
 		}
 	case echo.PATCH:
-		if !apiCtx.(*context.DetContext).MustGetUser().Admin {
-			ctx.Respond(echo.NewHTTPError(http.StatusForbidden, grpcutil.ErrPermissionDenied))
-			return
-		}
-
 		patch := patchSlot{}
 		if err := api.BindPatch(&patch, apiCtx); err != nil {
 			ctx.Respond(errors.Wrap(err, "error patching slot"))

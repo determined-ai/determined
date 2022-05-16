@@ -94,6 +94,16 @@ func (s *Service) extractToken(c echo.Context) (string, error) {
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
+	return s.processAuthentication(next, false)
+}
+
+// ProcessAdminAuthentication is a middleware processing function that authenticates requests much
+// like ProcessAuthentication but requires the user to be an admin.
+func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
+	return s.processAuthentication(next, true)
+}
+
+func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		token, err := s.extractToken(c)
 		if err != nil {
@@ -108,6 +118,10 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			if !user.Active {
 				return echo.NewHTTPError(http.StatusForbidden, "user not active")
 			}
+			if adminOnly && !user.Admin {
+				return echo.NewHTTPError(http.StatusForbidden, "user not admin")
+			}
+
 			// Set data on the request context that might be useful to
 			// event handlers.
 			c.(*context.DetContext).SetUser(*user)
