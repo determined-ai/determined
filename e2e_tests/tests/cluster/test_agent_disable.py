@@ -78,15 +78,15 @@ def _wait_for_slots(min_slots_expected: int, max_ticks: int = 60 * 2) -> List[Di
 
 @contextlib.contextmanager
 def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> Iterator[str]:
-    with logged_in_user(ADMIN_CREDENTIALS):
-        command = (
-            ["det", "-m", conf.make_master_url(), "agent", "disable"]
-            + (["--drain"] if drain else [])
-            + (["--json"] if json else [])
-            + [agent_id]
-        )
+    command = (
+        ["det", "-m", conf.make_master_url(), "agent", "disable"]
+        + (["--drain"] if drain else [])
+        + (["--json"] if json else [])
+        + [agent_id]
+    )
     try:
-        yield subprocess.check_output(command).decode()
+        with logged_in_user(ADMIN_CREDENTIALS):
+            yield subprocess.check_output(command).decode()
     finally:
         with logged_in_user(ADMIN_CREDENTIALS):
             command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
