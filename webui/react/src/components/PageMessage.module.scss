@@ -9,11 +9,11 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
     max-width: 400px;
     text-align: center;
 
-    & > * { margin-bottom: var(--theme-sizes-layout-big); }
+    & > * { margin-bottom: 16px; }
     & > *:last-child { margin-bottom: 0; }
   }
 }

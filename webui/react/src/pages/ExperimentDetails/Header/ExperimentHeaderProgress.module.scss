@@ -1,12 +1,13 @@
 .base {
   font-size: 0;
 
-  :global(.ant-progress-inner) {
-    background-color: var(--theme-colors-monochrome-12);
-    border-radius: 0;
-    height: 4px;
-  }
+  :global(.ant-progress-outer),
+  :global(.ant-progress-inner),
   :global(.ant-progress-bg) {
     border-radius: 0;
+    height: calc(4px + var(--theme-density) * 1px);
+  }
+  :global(.ant-progress-inner) {
+    background-color: var(--theme-stage-strong);
   }
 }

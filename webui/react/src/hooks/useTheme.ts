@@ -1,22 +1,46 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isObject } from 'shared/utils/data';
-import themes, { defaultThemeId, ThemeId } from 'themes';
+import { RecordKey } from 'shared/types';
+import { camelCaseToKebab } from 'shared/utils/string';
+import themes, { DarkLight, globalCssVars, Theme } from 'themes';
+import { BrandingType } from 'types';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-type SubTheme = Record<string, any>;
+type ThemeHook = {
+  mode: DarkLight,
+  setBranding: Dispatch<SetStateAction<BrandingType>>,
+  setMode: Dispatch<SetStateAction<DarkLight>>,
+  theme: Theme,
+};
 
-const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
-  if (isObject(theme)) {
-    return Object.keys(theme)
-      .map(key => flattenTheme(theme[key], `${basePath}-${key}`))
-      .reduce((acc, sub) => ({ ...acc, ...sub }), {});
-  } else if (Array.isArray(theme)) {
-    return theme
-      .map((sub: SubTheme, index: number) => flattenTheme(sub, `${basePath}-${index}`))
-      .reduce((acc, sub) => ({ ...acc, ...sub }), {});
-  }
-  return { [basePath]: theme };
+const STYLESHEET_ID = 'antd-stylesheet';
+const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+
+const themeConfig = {
+  [DarkLight.Dark]: { antd: 'antd.dark.min.css' },
+  [DarkLight.Light]: { antd: 'antd.min.css' },
+};
+
+const createStylesheetLink = () => {
+  const link = document.createElement('link');
+  link.id = STYLESHEET_ID;
+  link.rel = 'stylesheet';
+
+  document.head.appendChild(link);
+
+  return link;
+};
+
+const getStylesheetLink = () => {
+  return document.getElementById(STYLESHEET_ID) as HTMLLinkElement || createStylesheetLink();
+};
+
+const getIsDarkMode = (): boolean => {
+  return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
+};
+
+const updateAntDesignTheme = (path: string) => {
+  const link = getStylesheetLink();
+  link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
 };
 
 /*
@@ -26,19 +50,45 @@ const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
  * `useTheme` hook is meant to be used only once in the top level component such as App
  * and storybook Theme decorators and not individual components.
  */
-export const useTheme = (): { setThemeId: Dispatch<SetStateAction<ThemeId>>, themeId: ThemeId } => {
-  const [ themeId, setThemeId ] = useState<ThemeId>(defaultThemeId);
+export const useTheme = (): ThemeHook => {
+  const [ branding, setBranding ] = useState(BrandingType.Determined);
+  const [ mode, setMode ] = useState(() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
+
+  const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
+
+  const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
+    setMode(event.matches ? DarkLight.Dark : DarkLight.Light);
+  }, []);
 
   useEffect(() => {
-    const theme = themes[themeId];
-    const root = document.documentElement;
-    const cssVars = flattenTheme(theme);
+    // Set global CSS variables shared across themes.
+    Object.keys(globalCssVars).forEach(key => {
+      const value = (globalCssVars as Record<RecordKey, string>)[key];
+      document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
+    });
 
-    // Set each theme property as top level CSS variable
-    Object.keys(cssVars).forEach(key => root.style.setProperty(`--${key}`, cssVars[key]));
-  }, [ themeId ]);
+    // Set each theme property as top level CSS variable.
+    Object.keys(theme).forEach(key => {
+      const value = (theme as Record<RecordKey, string>)[key];
+      document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
+    });
+  }, [ theme ]);
 
-  return { setThemeId, themeId };
+  // Detect browser/OS level dark/light mode changes.
+  useEffect(() => {
+    matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
+
+    return () => {
+      matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
+    };
+  }, [ handleSchemeChange ]);
+
+  // When mode changes update theme.
+  useEffect(() => {
+    updateAntDesignTheme(themeConfig[mode].antd);
+  }, [ mode ]);
+
+  return { mode, setBranding, setMode, theme };
 };
 
 export default useTheme;

@@ -1,19 +1,23 @@
 .base {
-  align-items: center;
-  display: flex;
+  font-size: 14px;
 
-  .experimentInfo {
+  .state {
     align-items: center;
-    display: flex;
-  }
-  .experimentState {
-    align-items: center;
-    border-radius: 20px;
+    border-radius: 24px;
     display: flex;
     justify-content: center;
-    margin-right: var(--theme-sizes-layout-medium);
-    padding: var(--theme-sizes-layout-tiny);
+    padding: 4px 16px 4px 4px;
 
+    button {
+      background-color: transparent;
+      color: #fff;
+      opacity: 0.75;
+    }
+    .buttonPause,
+    .buttonPlay {
+      border-color: #fff;
+      border-radius: 100%;
+    }
     .buttonPlay i {
       margin-left: 3px;
     }
@@ -24,66 +28,32 @@
     .buttonPlay:hover,
     .buttonStop:hover {
       color: inherit;
-      opacity: 0.75;
+      opacity: 1;
     }
     .buttonPause:hover,
     .buttonPlay:hover {
       border-color: inherit;
     }
-    .state {
+    label {
       display: inline-block;
-      font-size: var(--theme-sizes-font-micro);
+      font-size: 10px;
       font-weight: bold;
+      line-height: 16px;
       text-transform: uppercase;
     }
   }
-  .experimentId {
-    border-right: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-17);
+  .state.terminated {
+    padding: 4px 12px;
+  }
+  .id {
     flex-shrink: 0;
     overflow: hidden;
-    padding-right: var(--theme-sizes-layout-small);
     text-overflow: ellipsis;
   }
-  .experimentName {
+  .name {
     flex-shrink: 1;
-    opacity: 0.75;
     overflow: hidden;
-    padding-left: var(--theme-sizes-layout-small);
     text-overflow: ellipsis;
-  }
-  // .state {
-  //   border-radius: 100px;
-  //   display: inline-flex;
-  //   font-size: var(--theme-sizes-font-micro);
-  //   font-weight: 600;
-  //   margin-right: var(--theme-sizes-layout-medium);
-  //   padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
-  //   text-transform: uppercase;
-  // }
-  // [class*=Icon_base_] {
-  //   padding: 0 var(--theme-sizes-layout-medium);
-  // }
-
-  @media only screen and (max-width: $breakpoint-tablet) {
-    align-items: flex-start;
-    flex-direction: column;
-    width: 100%;
-
-    .experimentInfo {
-      width: 100%;
-    }
-    .experimentId {
-      border-right: 0;
-      flex-shrink: 1;
-      font-size: var(--theme-sizes-font-medium);
-      width: 100%;
-    }
-    .experimentName {
-      font-size: var(--theme-sizes-font-medium);
-    }
-    .trial {
-      font-size: var(--theme-sizes-font-medium);
-    }
   }
 }
 .foldableSection {
@@ -101,7 +71,7 @@
     display: inline-block;
     line-height: 32px;
     opacity: 0.75;
-    padding-right: var(--theme-sizes-layout-small);
+    padding-right: 6px;
   }
   .link {
     color: inherit;

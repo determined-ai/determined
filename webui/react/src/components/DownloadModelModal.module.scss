@@ -4,13 +4,14 @@
     justify-content: space-between;
   }
   .codeSample {
-    background-color: var(--theme-colors-monochrome-13);
-    border: 1px solid var(--theme-colors-monochrome-11);
-    border-radius: var(--theme-sizes-layout-tiny);
-    margin-bottom: var(--theme-sizes-layout-medium);
-    padding: var(--theme-sizes-layout-medium);
+    background-color: var(--theme-float-strong);
+    border: solid var(--theme-stroke-width) var(--theme-float-border);
+    border-radius: 4px;
+    font-family: var(--theme-font-family-code);
+    margin-bottom: 8px;
+    padding: 8px;
   }
   .bottomLine {
-    color: var(--theme-colors-monochrome-8);
+    color: var(--theme-float-on-weak);
   }
 }

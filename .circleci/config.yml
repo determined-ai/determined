@@ -930,6 +930,7 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
+      - run: make -C model_hub examples
       - run: make -C helm build
       - attach_workspace:
           at: .
@@ -1016,6 +1017,10 @@ jobs:
                 make -C model_hub build-docker-dev
                 make -C model_hub publish-docker-dev
             fi
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   package-and-push-system-rc:
     docker:
@@ -1042,6 +1047,10 @@ jobs:
       - run: make -C agent publish
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   package-and-push-system-release:
     docker:
@@ -1067,6 +1076,10 @@ jobs:
       - run: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   publish-helm:
     docker:

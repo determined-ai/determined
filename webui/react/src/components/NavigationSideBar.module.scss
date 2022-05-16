@@ -1,9 +1,11 @@
 /* stylelint-disable no-descending-specificity */
 
 .base {
-  background-color: var(--theme-colors-base-2);
+  background-color: var(--theme-stage);
+  border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
+  box-sizing: border-box;
   display: flex;
-  flex-basis: var(--theme-sizes-navigation-maxWidth);
+  flex-basis: var(--nav-side-bar-width-max);
   flex-direction: column;
   flex-grow: 0;
   flex-shrink: 0;
@@ -22,8 +24,8 @@
     align-items: center;
     display: flex;
     justify-content: center;
-    padding: var(--theme-sizes-layout-big) 0;
-    width: var(--theme-sizes-navigation-maxWidth);
+    padding: 16px 0;
+    width: var(--nav-side-bar-width-max);
   }
   section.top {
     flex-grow: 1;
@@ -32,9 +34,9 @@
     position: relative;
   }
   .version {
-    background-color: var(--theme-colors-base-1);
-    color: var(--theme-colors-base-12);
-    font-size: var(--theme-sizes-font-tiny);
+    background-color: var(--theme-stage-strong);
+    color: var(--theme-stage-on-strong);
+    font-size: 11px;
     font-style: italic;
     height: 32px;
     width: 100%;
@@ -55,11 +57,11 @@
 
     .launchButton {
       background-color: transparent;
-      border-color: var(--theme-colors-monochrome-9);
-      border-radius: var(--theme-sizes-border-radius);
+      border-color: var(--theme-stage-border);
+      border-radius: var(--theme-border-radius);
       border-style: solid;
-      border-width: var(--theme-sizes-border-width);
-      color: var(--theme-colors-monochrome-17);
+      border-width: var(--theme-stroke-width);
+      color: var(--theme-stage-on);
       flex-grow: 1;
       flex-shrink: 1;
       overflow: hidden;
@@ -67,71 +69,72 @@
     .launchIcon {
       align-items: center;
       background-color: transparent;
-      border-color: var(--theme-colors-monochrome-9);
-      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
+      border-color: var(--theme-stage-border);
+      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
       border-style: solid;
-      border-width: var(--theme-sizes-border-width);
-      color: var(--theme-colors-monochrome-17);
+      border-width: var(--theme-stroke-width);
+      color: var(--theme-stage-on);
       display: flex;
       flex-shrink: 0;
       justify-content: center;
-      width: var(--theme-sizes-layout-giant);
+      width: 32px;
     }
   }
   .launchBlock:hover {
     .launchButton,
-    .launchIcon { border-color: var(--theme-colors-monochrome-17); }
+    .launchIcon { border-color: var(--theme-stage-border-strong); }
   }
   .navItem {
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-stage-on);
     cursor: pointer;
     display: block;
     height: 48px;
     position: relative;
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
 
     [class*=Icon_base_] {
-      left: var(--theme-sizes-layout-big);
+      left: 16px;
       position: absolute;
-      top: var(--theme-sizes-layout-large);
+      top: 12px;
     }
     .label {
-      font-size: var(--theme-sizes-font-small);
-      height: var(--theme-sizes-layout-enormous);
+      font-size: 12px;
+      height: 24px;
       left: 56px;
-      line-height: var(--theme-sizes-layout-enormous);
+      line-height: 24px;
       overflow: hidden;
       position: absolute;
-      top: var(--theme-sizes-layout-large);
+      top: 12px;
       white-space: nowrap;
       width: auto;
     }
     .status {
-      background-color: var(--theme-colors-action-normal);
-      border-radius: var(--theme-sizes-layout-medium);
-      bottom: var(--theme-sizes-layout-big);
-      color: var(--theme-colors-monochrome-17);
-      font-size: var(--theme-sizes-font-tiny);
-      height: 0 var(--theme-sizes-layout-big);
-      padding: 0 var(--theme-sizes-layout-small);
+      background-color: var(--theme-status-active);
+      border-radius: 8px;
+      bottom: 16px;
+      color: var(--theme-status-active-on);
+      font-size: 11px;
+      height: 0 16px;
+      padding: 0 6px;
       position: absolute;
-      right: var(--theme-sizes-layout-big);
+      right: 16px;
       white-space: nowrap;
     }
   }
-  .navItem.active {
-    background-color: var(--theme-colors-base-0);
+  .navItem.active,
+  .navItem.active:hover {
+    background-color: var(--theme-stage-strong);
+    color: var(--theme-stage-on-strong);
     cursor: default;
   }
   .navItem:hover {
-    background-color: var(--theme-colors-base-3);
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-stage-on-strong);
   }
   .user {
-    background-color: var(--theme-colors-base-4);
+    background-color: var(--theme-stage-weak);
   }
-  .user:hover {
-    background-color: var(--theme-colors-base-3);
+  .user:hover > span {
+    color: var(--theme-stage-on-weak);
   }
 }
 .collapsedAppear {
@@ -140,122 +143,122 @@
 }
 .collapsedEnter,
 .collapsedExitDone {
-  flex-basis: var(--theme-sizes-navigation-maxWidth);
+  flex-basis: var(--nav-side-bar-width-max);
 
   section.launch {
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
   }
   .navItem {
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
 
     .label { opacity: 1; }
     .status {
-      right: var(--theme-sizes-layout-big);
+      right: 16px;
       transform: translateX(0);
     }
   }
   .navItem.hasStatus {
     height: 48px;
 
-    .status { bottom: var(--theme-sizes-layout-big); }
+    .status { bottom: 16px; }
   }
   .user {
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
 
     span { opacity: 1; }
   }
 }
 .collapsedEnterActive {
-  flex-basis: var(--theme-sizes-navigation-minWidth);
-  transition: flex-basis var(--theme-animationCurve);
+  flex-basis: var(--nav-side-bar-width-min);
+  transition: flex-basis var(--animation-curve);
 
   section.launch {
-    transition: width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-minWidth);
+    transition: width var(--animation-curve);
+    width: var(--nav-side-bar-width-min);
   }
   .logo {
     height: 24px;
     left: 12px;
     top: 16px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      top var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoIcon {
     height: 24px;
     left: 0;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      width var(--animation-curve);
     width: 32px;
   }
   .logoLabel {
     opacity: 0;
     transition:
-      opacity var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 0;
   }
   .launchBlock {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: 32px;
 
     .launchButton {
       opacity: 0;
       padding: 0;
       transition:
-        opacity var(--theme-animationCurve),
-        padding var(--theme-animationCurve),
-        width var(--theme-animationCurve);
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
+        width var(--animation-curve);
       width: 0;
     }
     .launchIcon {
       border-radius: 100%;
-      transition: border-radius var(--theme-animationCurve);
+      transition: border-radius var(--animation-curve);
     }
   }
   .navItem {
-    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-minWidth);
+    transition: height var(--animation-curve), width var(--animation-curve);
+    width: var(--nav-side-bar-width-min);
 
     .label {
       opacity: 0;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
     .status {
       right: 50%;
       transform: translateX(50%);
       transition:
-        bottom var(--theme-animationCurve),
-        right var(--theme-animationCurve),
-        transform var(--theme-animationCurve);
+        bottom var(--animation-curve),
+        right var(--animation-curve),
+        transform var(--animation-curve);
     }
   }
   .navItem.hasStatus {
     height: 72px;
 
-    .status { bottom: var(--theme-sizes-layout-large); }
+    .status { bottom: 12px; }
   }
   .user {
-    transition: width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-minWidth);
+    transition: width var(--animation-curve);
+    width: var(--nav-side-bar-width-min);
 
     span {
       opacity: 0;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
   }
 }
 .collapsedExit,
 .collapsedEnterDone {
-  flex-basis: var(--theme-sizes-navigation-minWidth);
+  flex-basis: var(--nav-side-bar-width-min);
 
   section.launch {
-    width: var(--theme-sizes-navigation-minWidth);
+    width: var(--nav-side-bar-width-min);
   }
   .logo {
     height: 24px;
@@ -283,7 +286,7 @@
     .launchIcon { border-radius: 100%; }
   }
   .navItem {
-    width: var(--theme-sizes-navigation-minWidth);
+    width: var(--nav-side-bar-width-min);
 
     .label { opacity: 0; }
     .status {
@@ -294,10 +297,10 @@
   .navItem.hasStatus {
     height: 72px;
 
-    .status { bottom: var(--theme-sizes-layout-large); }
+    .status { bottom: 12px; }
   }
   .user {
-    width: var(--theme-sizes-navigation-minWidth);
+    width: var(--nav-side-bar-width-min);
 
     span { opacity: 0; }
   }
@@ -313,87 +316,87 @@
   }
 }
 .collapsedExitActive {
-  flex-basis: var(--theme-sizes-navigation-maxWidth);
-  transition: flex-basis var(--theme-animationCurve);
+  flex-basis: var(--nav-side-bar-width-max);
+  transition: flex-basis var(--animation-curve);
 
   section.launch {
-    transition: width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-maxWidth);
+    transition: width var(--animation-curve);
+    width: var(--nav-side-bar-width-max);
   }
   .logo {
     height: 64.94px;
     left: 60px;
     top: 24px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      top var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      top var(--animation-curve),
+      width var(--animation-curve);
     width: 128px;
   }
   .logoIcon {
     height: 40px;
     left: 32px;
     transition:
-      height var(--theme-animationCurve),
-      left var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      height var(--animation-curve),
+      left var(--animation-curve),
+      width var(--animation-curve);
     width: 52px;
   }
   .logoLabel {
     opacity: 1;
     transition:
-      opacity var(--theme-animationCurve),
-      width var(--theme-animationCurve);
+      opacity var(--animation-curve),
+      width var(--animation-curve);
     width: 120px;
   }
   .launchBlock {
-    transition: width var(--theme-animationCurve);
+    transition: width var(--animation-curve);
     width: 206px;
 
     .launchButton {
       opacity: 1;
-      padding: 0 var(--theme-sizes-layout-big);
+      padding: 0 16px;
       transition:
-        opacity var(--theme-animationCurve),
-        padding var(--theme-animationCurve),
-        width var(--theme-animationCurve);
+        opacity var(--animation-curve),
+        padding var(--animation-curve),
+        width var(--animation-curve);
       width: 100%;
     }
     .launchIcon {
-      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
-      transition: border-radius var(--theme-animationCurve);
+      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
+      transition: border-radius var(--animation-curve);
     }
   }
   .navItem {
-    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-maxWidth);
+    transition: height var(--animation-curve), width var(--animation-curve);
+    width: var(--nav-side-bar-width-max);
 
     .label {
       opacity: 1;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
     .status {
-      right: var(--theme-sizes-layout-big);
+      right: 16px;
       transform: translateX(0);
       transition:
-        bottom var(--theme-animationCurve),
-        right var(--theme-animationCurve),
-        transform var(--theme-animationCurve);
+        bottom var(--animation-curve),
+        right var(--animation-curve),
+        transform var(--animation-curve);
     }
   }
   .navItem.hasStatus {
     height: 48px;
 
-    .status { bottom: var(--theme-sizes-layout-big); }
+    .status { bottom: 16px; }
   }
   .user {
-    transition: width var(--theme-animationCurve);
-    width: var(--theme-sizes-navigation-maxWidth);
+    transition: width var(--animation-curve);
+    width: var(--nav-side-bar-width-max);
 
     span {
       opacity: 1;
-      transition: opacity var(--theme-animationCurve);
+      transition: opacity var(--animation-curve);
     }
   }
 }

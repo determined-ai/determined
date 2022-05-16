@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -237,6 +239,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		return err
 	}
 
+	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
+
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
@@ -319,6 +323,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
 		}
+
 		t.id = modelTrial.ID
 		t.idSet = true
 		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
@@ -365,6 +370,8 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		ctx.Log().WithError(err).Error("trial allocation failed")
 	}
 	t.allocation = nil
+
+	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
 	// Decide if this is permanent.
 	switch {

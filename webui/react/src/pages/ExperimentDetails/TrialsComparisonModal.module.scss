@@ -2,7 +2,7 @@ $border-color: var(--theme-colors-monochrome-13);
 
 .base {
   border: 1px solid $border-color;
-  border-radius: var(--theme-sizes-border-radius);
+  border-radius: var(--theme-border-radius);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -37,7 +37,7 @@ $border-color: var(--theme-colors-monochrome-13);
     background-color: var(--theme-colors-monochrome-17);
     display: flex;
     overflow: hidden;
-    padding: var(--theme-sizes-layout-medium);
+    padding: 8px;
     text-overflow: ellipsis;
     white-space: nowrap;
 
@@ -55,7 +55,7 @@ $border-color: var(--theme-colors-monochrome-13);
     position: sticky;
   }
   .cell.indent {
-    padding-left: var(--theme-sizes-layout-huge);
+    padding-left: 20px;
   }
   .cell.spanAll {
     border-right: 0;
@@ -69,7 +69,7 @@ $border-color: var(--theme-colors-monochrome-13);
     font-size: 14px;
 
     :hover {
-      color: var(--theme-colors-action-normal);
+      color: var(--theme-status-active);
     }
   }
 }

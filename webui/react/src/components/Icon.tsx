@@ -1,12 +1,23 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
-import { Theme } from 'themes';
 import { CommonProps } from 'types';
 
 import css from './Icon.module.scss';
 
-export type IconSize = keyof Theme['sizes']['icon'];
+export type IconSize = (
+  'tiny' |
+  'small' |
+  'medium' |
+  'large' |
+  'big' |
+  'great' |
+  'huge' |
+  'enormous' |
+  'giant' |
+  'jumbo' |
+  'mega'
+);
 
 interface Props extends CommonProps {
   name?: string;
@@ -14,28 +25,15 @@ interface Props extends CommonProps {
   title?: string;
 }
 
-const defaultProps: Props = {
-  name: 'star',
-  size: 'medium',
-};
-
-const Icon: React.FC<Props> = ({ name, title, size, ...rest }: Props) => {
+const Icon: React.FC<Props> = ({ name = 'star', size = 'medium', title, ...rest }: Props) => {
   const classes = [ css.base ];
 
   if (name) classes.push(`icon-${name}`);
   if (size) classes.push(css[size]);
+
   const icon = <i className={classes.join(' ')} {...rest} />;
 
-  if (title) {
-    return (
-      <Tooltip title={title}>
-        {icon}
-      </Tooltip>
-    );
-  }
-  return icon;
+  return title ? <Tooltip title={title}>{icon}</Tooltip> : icon;
 };
-
-Icon.defaultProps = defaultProps;
 
 export default Icon;

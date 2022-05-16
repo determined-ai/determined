@@ -8,6 +8,7 @@ import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import useTheme from 'hooks/useTheme';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -69,6 +70,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
+  const { theme } = useTheme();
+
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.hyperparameters[key];
@@ -118,8 +121,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [ chartData ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData?.metricRange, smallerIsBetter ]);
+    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData?.metricRange, smallerIsBetter, theme ]);
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
     hooks: { onFilterChange: handleFilterChange },

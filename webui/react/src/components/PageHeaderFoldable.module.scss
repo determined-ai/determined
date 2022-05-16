@@ -1,75 +1,56 @@
 .base {
-  align-items: center;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.25) 100%);
-  color: var(--theme-colors-monochrome-17);
+  align-items: stretch;
+  background-color: var(--theme-stage);
+  color: var(--theme-stage-on);
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  font-size: var(--theme-sizes-font-small);
-  justify-content: space-between;
-  padding: var(--theme-sizes-layout-big);
-  width: 100%;
-}
-.left {
-  align-items: flex-start;
-  display: flex;
-  flex: 1 0 0;
   flex-direction: column;
-  overflow: hidden;
-  white-space: nowrap;
-  word-break: break-all;
-}
-.toggle {
-  cursor: pointer;
-  height: var(--theme-sizes-icon-medium);
-  margin: 0 var(--theme-sizes-layout-big);
-  overflow: hidden;
-}
-.options {
-  display: flex;
-  justify-content: flex-end;
+  font-size: 14px;
+  width: 100%;
 
-  > button {
-    margin-left: var(--theme-sizes-layout-medium);
-  }
-}
-.optionsDropdown {
-  border-color: transparent !important;
-  color: var(--theme-colors-monochrome-17);
-  opacity: 0.9;
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: calc(8px + var(--theme-density) * 1px);
 
-  &:focus,
-  &:hover {
-    color: var(--theme-colors-monochrome-17) !important;
-    opacity: 1;
-  }
-}
-.optionsMainButton {
-  color: var(--theme-colors-monochrome-0) !important;
-  display: none;
-  opacity: 0.9;
-
-  &:focus,
-  &:hover {
-    border-color: var(--theme-colors-monochrome-17) !important;
-    color: var(--theme-colors-monochrome-0) !important;
-    opacity: 1;
-  }
-  &:global(.ant-btn-background-ghost) {
-    color: var(--theme-colors-monochrome-17) !important;
-
-    &:focus,
-    &:hover {
-      color: var(--theme-colors-monochrome-17) !important;
+    .left {
+      align-items: flex-start;
+      display: flex;
+      flex: 1 0 0;
+      flex-direction: column;
+      overflow: hidden;
+      white-space: nowrap;
+      word-break: break-all;
+    }
+    .toggle {
+      cursor: pointer;
+      height: 20px;
+      margin: 0 16px;
+      overflow: hidden;
+    }
+    .options {
+      display: flex;
+      flex: 1 0 0;
+      justify-content: flex-end;
+    }
+    .optionsDropdown {
+      border-color: transparent !important;
+      color: var(--theme-stage-on);
+      opacity: 0.9;
+    
+      &:focus,
+      &:hover {
+        color: var(--theme-colors-monochrome-17) !important;
+        opacity: 1;
+      }
     }
   }
-  i {
-    margin-right: var(--theme-sizes-layout-small);
+  .foldable {
+    border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
+    flex: 1 1 100%;
+    padding: calc(16px + var(--theme-density) * 1px);
+    width: 100%;
   }
-}
-.bottom {
-  flex: 1 1 100%;
-  width: 100%
 }
 
 @media only screen and (min-width: $breakpoint-tablet) {
