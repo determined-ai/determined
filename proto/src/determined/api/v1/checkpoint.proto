@@ -28,3 +28,12 @@ message PostCheckpointMetadataResponse {
   // The updated checkpoint.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
+
+// Request to Delete the list of checkpoints 
+message DeleteCheckpointsRequest {
+  // The list of uuids for the requested checkpoint. 
+  repeated string checkpoint_uuids = 1; 
+}
+
+// Response to DeleteCheckpointsRequest 
+message DeleteCheckpointsResponse {}

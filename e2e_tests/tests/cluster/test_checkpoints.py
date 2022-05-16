@@ -1,4 +1,6 @@
 import json
+import os
+import random
 import sys
 import tempfile
 import time
@@ -10,6 +12,7 @@ import yaml
 from determined import errors
 from determined.common import api, storage
 from determined.common.api import authentication, bindings, certs
+from determined.common.api.bindings import determinedcheckpointv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -43,6 +46,52 @@ def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:
 @pytest.mark.e2e_cpu
 def test_gc_checkpoints_lfs() -> None:
     run_gc_checkpoints_test(exp.shared_fs_checkpoint_config())
+
+
+@pytest.mark.e2e_cpu
+def test_delete_checkpoints() -> None:
+    base_conf_path = conf.fixtures_path("no_op/single-default-ckpt.yaml")
+    config = conf.load_config(str(base_conf_path))
+    checkpoint_storage_delete = {
+        "type": "shared_fs",
+        "host_path": "/tmp",
+        "storage_path": "delete-checkpoints-e2etest",
+    }
+    config["checkpoint_storage"] = {}
+    config["checkpoint_storage"].update(checkpoint_storage_delete)
+    config["min_checkpoint_period"] = {}
+    config["min_checkpoint_period"]["batches"] = 10
+
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
+    )
+
+    t_s = exp.test_session()
+    exp_checkpoints = bindings.get_GetExperimentCheckpoints(session=t_s, id=exp_id).checkpoints
+
+    assert len(exp_checkpoints) > 0
+    print(f"len of checkpoints: {len(exp_checkpoints)}")
+
+    d_index = random.randint(0, len(exp_checkpoints) - 1)
+    d_CheckpointUuid = exp_checkpoints[d_index].uuid
+    delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=[d_CheckpointUuid])
+    bindings.delete_DeleteCheckpoints(session=t_s, body=delete_body)
+    wait_for_gc_to_finish(exp_id)
+
+    d_checkpoint = bindings.get_GetCheckpoint(
+        session=t_s, checkpointUuid=d_CheckpointUuid
+    ).checkpoint
+    if d_checkpoint is not None:
+        assert d_checkpoint.state == determinedcheckpointv1State.STATE_DELETED
+    else:
+        raise Exception("Failed to get checkpoint to validate correct deletion")
+
+    checkpoint_config = config["checkpoint_storage"]
+    storage_manager = storage.build(checkpoint_config, container_path=None)
+    checkpoint_file = os.path.join(storage_manager._base_path, d_CheckpointUuid)
+
+    if os.path.exists(checkpoint_file):
+        raise AssertionError(f"Checkpoint with uuid {d_CheckpointUuid} was not deleted")
 
 
 def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:

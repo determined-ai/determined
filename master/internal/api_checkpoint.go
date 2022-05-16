@@ -2,7 +2,11 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -10,6 +14,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
@@ -26,6 +34,95 @@ func (a *apiServer) GetCheckpoint(
 		return resp,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
 	}
+}
+
+func (a *apiServer) DeleteCheckpoints(
+	ctx context.Context,
+	req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
+	checkpointsToDelete := req.CheckpointUuids
+	registeredCheckpointUUIDs, err := a.m.db.FilterForRegisteredCheckpoints(checkpointsToDelete)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.NotFound, "error getting list of checkpoints in model registry")
+	}
+
+	// return 400 if model registry checkpoints and include all the model registry checkpoints
+	if len(registeredCheckpointUUIDs) > 0 {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"This subset of list of checkpoints provided are in the model registry: %v cannot be deleted.",
+			registeredCheckpointUUIDs)
+	}
+
+	taskSpec := *a.m.taskSpec
+
+	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
+
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
+	agentUserGroup, err := a.m.db.AgentUserGroup(curUser.ID)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"cannot find user and group information for user %s: %s",
+			curUser.Username,
+			err,
+		)
+	}
+	if agentUserGroup == nil {
+		agentUserGroup = &a.m.config.Security.DefaultTask
+	}
+
+	taskSpec.AgentUserGroup = agentUserGroup
+
+	jobID := model.NewJobID()
+	if err := a.m.db.AddJob(&model.Job{
+		JobID:   jobID,
+		JobType: model.JobTypeCheckpointGC,
+		OwnerID: &curUser.ID,
+	}); err != nil {
+		return nil, errors.Wrapf(err, "persisting new job")
+	}
+
+	groupeIDcUUIDS, err := a.m.db.GetExpIDsUsingCheckpointUUIDs(checkpointsToDelete)
+
+	if err != nil {
+		errors.Wrapf(err, "grouping checkpoint ids with exp id")
+	}
+
+	for _, expIDcUUIDs := range groupeIDcUUIDS {
+		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.EID)
+
+		if err != nil {
+			return nil, errors.Wrapf(err, "getting experiment by experiment id")
+		}
+
+		jsonVCheckpoints, _ := json.Marshal(expIDcUUIDs.CUUIDS)
+
+		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
+			taskID:            model.NewTaskID(),
+			jobID:             jobID,
+			jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
+			GCCkptSpec: tasks.GCCkptSpec{
+				Base:         taskSpec,
+				ExperimentID: exp.ID,
+				LegacyConfig: exp.Config.AsLegacy(),
+				ToDelete:     jsonVCheckpoints,
+			},
+			rm: a.m.rm,
+			db: a.m.db,
+
+			taskLogger: a.m.taskLogger,
+		}).AwaitTermination(); gcErr != nil {
+			return nil, errors.Wrapf(gcErr, "failed to gc checkpoints requested by user")
+		}
+	}
+
+	a.m.db.MarkCheckpointsDeleted(checkpointsToDelete)
+
+	return &apiv1.DeleteCheckpointsResponse{}, nil
 }
 
 func (a *apiServer) PostCheckpointMetadata(
