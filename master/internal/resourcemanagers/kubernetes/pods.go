@@ -5,6 +5,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	k8sV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -555,6 +557,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
+	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
+
 	summary := make(map[string]model.AgentSummary)
 	for _, node := range p.currentNodes {
 		var numSlots int64
@@ -596,6 +600,27 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 				curSlot++
 			}
 		}
+		for _, other := range nodeToTasks[node.Name] {
+			for i := 0; i < taskSlots[other]; i++ {
+				if curSlot >= int(numSlots) {
+					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
+					continue
+				}
+
+				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
+					ID:      strconv.Itoa(i),
+					Device:  device.Device{Type: deviceType},
+					Enabled: true,
+					Container: &cproto.Container{
+						Parent:  actor.Addr(""),
+						ID:      cproto.ID(other), //can we just leave these blank for non-determined tasks?
+						State:   "RUNNING",
+						Devices: []device.Device{},
+					},
+				}
+				curSlot++
+			}
+		}
 
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
@@ -614,11 +639,77 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 			ID:             node.Name,
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
-			NumContainers:  len(podByNode[node.Name]),
+			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
 			ResourcePool:   "",
 			Addresses:      addrs,
 		}
 	}
 
 	return summary
+}
+
+func (p *pods) nonDetPods() []k8sV1.Pod {
+	var nonDetPods []k8sV1.Pod
+	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{
+		TypeMeta:             metaV1.TypeMeta{},
+		LabelSelector:        "",
+		FieldSelector:        "",
+		Watch:                false,
+		AllowWatchBookmarks:  false,
+		ResourceVersion:      "",
+		ResourceVersionMatch: "",
+		TimeoutSeconds:       nil,
+		Limit:                0,
+		Continue:             "",
+	})
+	if err != nil {
+		return nonDetPods
+	}
+	for _, p := range pList.Items {
+		if _, ok := p.Labels["determined"]; ok {
+			continue
+		}
+		if p.Spec.NodeName != "" {
+			nonDetPods = append(nonDetPods, p)
+		}
+	}
+	return nonDetPods
+}
+
+func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int) {
+	nodeToTasks := make(map[string][]string)
+	taskSlots := make(map[string]int) //int or string
+
+	nonDetPods := p.nonDetPods()
+	if len(nonDetPods) == 0 {
+		return nodeToTasks, taskSlots
+	}
+	for _, node := range p.currentNodes {
+		nodeToTasks[node.Name] = []string{}
+	}
+
+	for _, p := range nonDetPods {
+		if _, ok := nodeToTasks[p.Spec.NodeName]; !ok {
+			continue
+		}
+		reqs := 0
+		for _, c := range p.Spec.Containers {
+			if deviceType == device.CPU {
+				reqs += int(c.Resources.Requests.Cpu().Value())
+			} else if deviceType == device.CUDA {
+				reqs += int(c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value())
+			} else {
+				continue
+			}
+		}
+		if reqs > 0 {
+			nodeToTasks[p.Spec.NodeName] = append(nodeToTasks[p.Spec.NodeName], p.Name)
+			taskSlots[p.Name] = reqs
+		}
+
+		// loop through the containers and aggregate the deviceType resource requests and add them to the task Slots
+		// if resource requests greater than zero, add to nodeToTasks as well as taskSlots
+		// return in the end and add to the summary function
+	}
+	return nodeToTasks, taskSlots
 }
