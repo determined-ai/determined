@@ -109,11 +109,6 @@ export const alwaysFalseExperimentChecker = (
   user?: DetailedUser,
 ): boolean => false;
 
-/**
- * only a single trial experiment is continueTrialable, this is just
- * whether it's blocked at the experiment level
- */
-
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
    * for internal use: the typing ensures that checkers
