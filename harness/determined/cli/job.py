@@ -117,13 +117,11 @@ def _single_update(
 
 
 def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool: str) -> bool:
-    if resource_pool is None:
-        resource_pool = "default"
     if pools.resourcePools is None:
         raise ValueError(f"No resource pools found checking scheduler type of {resource_pool}")
 
     for pool in pools.resourcePools:
-        if resource_pool == pool.name:
+        if (resource_pool is None and pool.defaultComputePool) or resource_pool == pool.name:
             return pool.schedulerType == bindings.v1SchedulerType.SCHEDULER_TYPE_PRIORITY
     raise ValueError(f"Pool {resource_pool} not found")
 
