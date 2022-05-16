@@ -86,7 +86,8 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
     )
     try:
         with logged_in_user(ADMIN_CREDENTIALS):
-            yield subprocess.check_output(command).decode()
+            out = subprocess.check_output(command).decode()
+        yield out
     finally:
         with logged_in_user(ADMIN_CREDENTIALS):
             command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
