@@ -201,4 +201,3 @@ def test_start_tensorboard_with_custom_image(
                         raise AssertionError(f"Setting custom image not working properly: {line}")
             else:
                 raise AssertionError("Did not find custom image in output")
-                
