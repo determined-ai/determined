@@ -1,8 +1,6 @@
-// @ts-nocheck
 import React, {
   createContext,
   MutableRefObject,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -11,56 +9,36 @@ import React, {
 } from 'react';
 import uPlot from 'uplot';
 
-import { distance } from 'utils/chart';
+import { UPlotData } from './types';
+interface SyncContext {
+  setZoomed: (zoomed: boolean) => void;
+  syncRef: MutableRefObject<uPlot.SyncPubSub>;
+  zoomed : boolean
+}
 
 interface SyncableBounds {
   boundsOptions: Partial<uPlot.Options>;
-  isZoomed: (zoomed: boolean) => void;
+  setZoomed: (zoomed: boolean) => void;
   zoomed: boolean;
 }
 
-const SyncContext = createContext();
+const SyncContext = createContext<SyncContext|undefined>(undefined);
 
-const getChartMin = (chart: UPlot) => chart.scales.x.min;
-const getChartMax = (chart: UPlot) => chart.scales.x.max;
-
-export const SyncProvider = ({ children }) => {
+export const SyncProvider: React.FC = ({ children }) => {
   const syncRef = useRef(uPlot.sync('x'));
-  const [ syncedMin, setSyncedMin ] = useState();
-  const [ syncedMax, setSyncedMax ] = useState();
   const [ zoomed, setZoomed ] = useState(false);
 
-  const minMaxRef = useRef({});
-
   useEffect(() => {
-    minMaxRef.current.max = syncedMax;
-    minMaxRef.current.min = syncedMin;
     if(!zoomed) {
       syncRef.current.plots.forEach((chart: uPlot) => {
-        const chartMin = getChartMin(chart);
-        const chartMax = getChartMax(chart);
-        if (chartMin > syncedMin || chartMax < syncedMax) {
-          chart.setScale('x', { max: syncedMax, min: syncedMin });
-
-        }
+        chart.setData(chart.data, true);
       });
     }
-  }, [ syncedMin, syncedMax, zoomed ]);
-
-  const dispatchScaleUpdate = useCallback(
-    (chart: uPlot, scaleKey) => {
-      if(scaleKey === 'x') {
-        setSyncedMax(prevMax => Math.max(getChartMax(chart), prevMax ?? Number.MIN_SAFE_INTEGER));
-        setSyncedMin(prevMin => Math.min(getChartMin(chart), prevMin ?? Number.MAX_SAFE_INTEGER));
-
-      }
-    },
-    [ setSyncedMin, setSyncedMax ],
-  );
+  }, [ zoomed ]);
 
   return (
     <SyncContext.Provider
-      value={{ dispatchScaleUpdate, minMaxRef, setZoomed, syncRef, zoomed }}>
+      value={{ setZoomed, syncRef, zoomed }}>
       {children}
     </SyncContext.Provider>
   );
@@ -68,61 +46,53 @@ export const SyncProvider = ({ children }) => {
 
 export const useSyncableBounds = (): SyncableBounds => {
   const [ zoomed, setZoomed ] = useState(false);
-  const mousePosition = useRef();
+  const mouseX = useRef<number|undefined>(undefined);
   const syncContext = useContext(SyncContext);
   const zoomSetter = syncContext?.setZoomed ?? setZoomed;
-  const scaleUpdateDispatcher = syncContext?.dispatchScaleUpdate;
-  const minMaxRef = syncContext?.minMaxRef;
-  const syncRef: MutableRefObject<uPlot.SyncPubSub> = syncContext?.syncRef;
+  const syncRef: MutableRefObject<uPlot.SyncPubSub> | undefined = syncContext?.syncRef;
 
   const boundsOptions = useMemo(() => ({
     cursor: {
       bind: {
-        dblclick: (chart: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
-          return (e: Event) => {
-            zoomSetter(false);
-            if (minMaxRef){
-              chart.setScale('x', { max: minMaxRef.current.max, min: minMaxRef.current.max });
-            } else {
-              handler(e);
-            }
-          };
-        },
-        mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
+        dblclick: (chart: uPlot, _target: EventTarget, handler: (e: MouseEvent) => void) => {
           return (e: MouseEvent) => {
-            mousePosition.current = [ e.clientX, e.clientY ];
             handler(e);
+            zoomSetter(false);
+            return null;
           };
         },
-        mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
+        mousedown: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
           return (e: MouseEvent) => {
-            if (!mousePosition.current) {
+            const mouseEvent = e as MouseEvent;
+            mouseX.current = mouseEvent.clientX;
+            handler(e);
+            return null;
+          };
+        },
+        mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
+          return (e: MouseEvent) => {
+            const mouseEvent = e as MouseEvent;
+            if (mouseX.current != null) {
               handler(e);
-              return;
             }
-            if (distance(
-              e.clientX,
-              e.clientY,
-              mousePosition.current[0],
-              mousePosition.current[1],
-            ) > 5) {
+            if (mouseX.current != null && Math.abs(mouseEvent.clientX - mouseX.current) > 5) {
               zoomSetter(true);
             }
-            mousePosition.current = undefined;
+            mouseX.current = undefined;
             handler(e);
-          };
+            return null;
+          } ;
         },
 
       },
-      drag: { dist: 5, uni: 10, x: true, y: true },
+      drag: { dist: 5, uni: 10, x: true },
       sync: syncRef && {
         key: syncRef.current.key,
         scales: [ syncRef.current.key, null ],
         setSeries: false,
       },
     },
-    hooks: scaleUpdateDispatcher && { setScale: [ scaleUpdateDispatcher ] },
-  }), [ zoomSetter, scaleUpdateDispatcher, syncRef, minMaxRef ]);
+  }), [ zoomSetter, syncRef ]) as Partial<uPlot.Options>;
 
-  return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, zoomed };
+  return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
 };
