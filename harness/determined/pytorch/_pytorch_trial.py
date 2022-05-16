@@ -298,6 +298,9 @@ class PyTorchTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            # upload tb
+            self.context._core.train.upload_tb_profile(self.context.distributed.rank)
+
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)

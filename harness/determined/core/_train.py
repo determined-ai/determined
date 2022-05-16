@@ -82,15 +82,14 @@ class TrainContext:
         if batch_metrics is not None:
             body["batch_metrics"] = batch_metrics
         logger.info(
-            f"***report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
+            f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
             data=det.util.json_encode(body),
         )
 
-        # Also sync tensorboard.
-        logger.warning("tensorboard sync will move to control loop")
+        # Sync tensorboard (metrics only; profile sync is in control loop)
         if self._tbd_writer:
             logger.info("write metrics to tb")
             self._tbd_writer.on_train_step_end(

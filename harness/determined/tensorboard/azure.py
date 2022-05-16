@@ -35,7 +35,7 @@ class AzureTensorboardManager(base.TensorboardManager):
             self.client.put(
                 "{}/{}".format(self.container, str(rank_aware_path.parent)),
                 rank_aware_path.name,
-                path
+                path,
             )
 
     def delete(self) -> None:
