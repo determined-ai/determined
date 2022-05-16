@@ -203,6 +203,7 @@ const themeBase = {
   statusPendingOn: 'rgba(255, 255, 255, 1.0)',
   statusPendingOnStrong: undefined,
   statusPendingOnWeak: undefined,
+  statusPotential: 'rgba(255, 255, 255, 1.0)',
   statusSuccess: 'rgba(0, 153, 0, 1.0)',
   statusSuccessStrong: undefined,
   statusSuccessWeak: undefined,
