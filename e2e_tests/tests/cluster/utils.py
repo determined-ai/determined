@@ -6,7 +6,7 @@ from typing import Any, Dict
 import pytest
 import requests
 
-from determined.common import api
+from determined.common import api, constants
 from determined.common.api import authentication, certs
 from tests import config as conf
 
@@ -42,6 +42,8 @@ def run_command(sleep: int = 30, slots: int = 1) -> str:
         "det",
         "-m",
         conf.make_master_url(),
+        "-u",
+        constants.DEFAULT_DETERMINED_USER,
         "command",
         "run",
         "-d",
@@ -58,7 +60,16 @@ def run_zero_slot_command(sleep: int = 30) -> str:
 
 
 def get_command_info(command_id: str) -> Dict[str, Any]:
-    command = ["det", "-m", conf.make_master_url(), "command", "list", "--json"]
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "-u",
+        constants.DEFAULT_DETERMINED_USER,
+        "command",
+        "list",
+        "--json",
+    ]
     command_data = json.loads(subprocess.check_output(command).decode())
     return next((d for d in command_data if d["id"] == command_id), {})
 
