@@ -9,11 +9,12 @@ import determined.keras
 
 
 class RuntimeErrorTrial(det.keras.TFKerasTrial):
-    _searcher_metric = "val_accuracy"
     """
     A model guaranteed to throw a runtime error, so we can check that native framework errors are
     surfaced properly.
     """
+
+    _searcher_metric = "val_accuracy"
 
     def __init__(self, context: det.keras.TFKerasTrialContext) -> None:
         self.context = context
