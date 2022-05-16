@@ -58,14 +58,19 @@ const PaginatedNotesCard: React.FC<Props> = (
   }, [ currentPage, editedContents, modal, notes, fireNoteChangeSignal ]);
 
   useEffect(() => {
-    if (!previousNumberOfNotes || notes.length > previousNumberOfNotes) {
-      handleSwitchPage(notes.length);
+    if (previousNumberOfNotes == null) {
+      if (notes.length) {
+        handleSwitchPage(0);
+        fireNoteChangeSignal();
+      }
+    } else if (notes.length > previousNumberOfNotes) {
+      handleSwitchPage(notes.length - 1);
     } else if (notes.length < previousNumberOfNotes){
       // dont call handler here because page isn't actually switching
       setCurrentPage((prevPageNumber) =>
         prevPageNumber > deleteTarget ? prevPageNumber - 1 : prevPageNumber);
     }
-  }, [ previousNumberOfNotes, notes.length, deleteTarget, handleSwitchPage ]);
+  }, [ previousNumberOfNotes, notes.length, deleteTarget, handleSwitchPage, fireNoteChangeSignal ]);
 
   const handleNewPage = useCallback(() => {
     const currentPages = notes.length;
