@@ -105,7 +105,9 @@ interface CellProps {
   isCellRightClickable?: boolean;
 }
 
-export const PAGE_PADDING = 16;
+const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
+  return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
+};
 
 const RightClickableRowContext = createContext({});
 
@@ -312,12 +314,6 @@ const InteractiveTable: InteractiveTable = ({
   });
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
-
-  const getAdjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
-    let pagePadding = parseInt(getCssVar('--theme-sizes-layout-big').slice(0, -2));
-    if (typeof pagePadding !== 'number') pagePadding = 16;
-    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
-  }, []);
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
