@@ -105,7 +105,6 @@ const ClusterHistoricalUsage: React.FC = () => {
   return (
     <div className={css.base}>
       <SyncProvider>
-
         <Space align="end" className={css.filters}>
           <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>

@@ -70,10 +70,7 @@ const ProfilesEnabled: React.FC = () => {
   const chartOptions = useMemo(() => {
     // Define shared options between all charts.
     const sharedOptions: Partial<Options> = {
-      cursor: {
-        focus: { prox: 16 },
-        lock: true,
-      },
+      cursor: { focus: { prox: 16 } },
       height: CHART_HEIGHT,
       scales: { x: { time: false } },
       tzDate,
