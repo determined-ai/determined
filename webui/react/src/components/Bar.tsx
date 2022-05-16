@@ -23,7 +23,7 @@ export interface Props {
 const partStyle = (part: BarPart) => {
   let style = {
     backgroundColor: part.color,
-    borderColor: 'var(--theme-colors-monochrome-11)',
+    borderColor: 'var(--theme-float-border)',
     borderStyle: 'none',
     borderWidth: 1,
     width: floatToPercent(part.percent, 0),
