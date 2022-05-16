@@ -48,6 +48,7 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   return {
     ...task,
     archived: false,
+    parentArchived: false,
     progress,
     projectId: 1,
     state: state as Type.RunState,

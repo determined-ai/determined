@@ -1,6 +1,7 @@
 WITH e AS (
   SELECT id, project_id FROM experiments
   WHERE id = $1
+  AND NOT archived
 ),
 p AS (
   SELECT projects.id, projects.workspace_id FROM projects, e

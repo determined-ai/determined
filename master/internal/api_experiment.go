@@ -721,6 +721,18 @@ func (a *apiServer) CreateExperiment(
 	if req.ParentId != 0 {
 		parentID := int(req.ParentId)
 		detParams.ParentID = &parentID
+		parentExp := &experimentv1.Experiment{}
+		err := a.m.db.QueryProto("get_experiment", parentExp, req.ParentId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error retrieving parent experiment: %s", err)
+		}
+		if parentExp.Archived {
+			return nil, status.Errorf(codes.Internal, "forking an archived experiment")
+		}
+		if parentExp.ParentArchived {
+			return nil, status.Errorf(codes.Internal,
+				"forking an experiment in an archived workspace/project")
+		}
 	}
 	if req.ProjectId > 1 {
 		projectID := int(req.ProjectId)

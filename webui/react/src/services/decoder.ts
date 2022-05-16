@@ -395,6 +395,7 @@ export const mapV1Experiment = (
     name: data.name,
     notes: data.notes,
     numTrials: data.numTrials || 0,
+    parentArchived: data.parentArchived || false,
     progress: data.progress != null ? data.progress : undefined,
     projectId: data.projectId,
     resourcePool: data.resourcePool || '',

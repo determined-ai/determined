@@ -7,6 +7,7 @@ import { isMouseEvent } from 'routes/utils';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
+  disabled?: boolean,
   icon?: React.ReactNode,
   isLoading?: boolean,
   key: string;
@@ -45,7 +46,7 @@ const PageHeaderFoldable: React.FC<Props> = (
         {options.map(opt => (
           <Menu.Item
             className={css.optionsDropdownItem}
-            disabled={!opt.onClick}
+            disabled={opt.disabled || !opt.onClick}
             key={opt.key}
             onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}>
             {renderOptionLabel(opt)}
@@ -70,7 +71,7 @@ const PageHeaderFoldable: React.FC<Props> = (
           {options?.slice(0, 3).map((opt, i) => (
             <Button
               className={css.optionsMainButton}
-              disabled={!opt.onClick}
+              disabled={opt.disabled || !opt.onClick}
               ghost={i !== 0}
               icon={opt?.icon}
               key={opt.key}

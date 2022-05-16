@@ -456,6 +456,7 @@ export interface ExperimentItem {
   name: string;
   notes?: string;
   numTrials: number;
+  parentArchived: boolean;
   progress?: number;
   projectId: number;
   resourcePool: string;
@@ -547,6 +548,7 @@ export type CompoundRunState = RunState | JobState
 
 export interface ExperimentTask extends Task {
   archived: boolean;
+  parentArchived?: boolean;
   progress?: number;
   projectId: number;
   resourcePool: string;

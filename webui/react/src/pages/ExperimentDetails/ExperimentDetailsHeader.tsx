@@ -201,6 +201,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         },
       },
       fork: {
+        disabled: experiment.archived || experiment.parentArchived,
         icon: <Icon name="fork" size="small" />,
         key: 'fork',
         label: 'Fork',
@@ -253,6 +254,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningDelete,
     experiment.archived,
     experiment.id,
+    experiment.parentArchived,
     experiment.state,
     experiment.username,
     fetchExperimentDetails,
