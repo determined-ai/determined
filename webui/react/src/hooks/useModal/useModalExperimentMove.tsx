@@ -1,12 +1,14 @@
-import { Empty, Select, Typography } from 'antd';
+import { Empty, notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
 import { Project, Workspace } from 'types';
 import { isEqual } from 'utils/data';
@@ -55,6 +57,18 @@ export const settingsConfig: SettingsConfig = {
     },
   ],
   storagePath: 'experiment-destination',
+};
+
+const moveExperimentWithHandler = async (
+  experimentId: number,
+  destinationProjectId: number,
+): Promise<number> => {
+  try {
+    await moveExperiment({ destinationProjectId, experimentId });
+    return 0;
+  } catch (e) {
+    return 1;
+  }
 };
 
 const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
@@ -217,29 +231,55 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     );
   }, [ handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces ]);
 
-  const moveExperimentWithHandler = useCallback(async (experimentId, destinationProjectId) => {
-    try {
-      await moveExperiment({ destinationProjectId, experimentId: parseInt(experimentId) });
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to move experiment.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
   const handleOk = useCallback(async () => {
     if (!destSettings.projectId || !experimentIds?.length) return;
 
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       experimentIds.map((experimentId) =>
-        moveExperimentWithHandler(experimentId, destSettings.projectId)),
+        moveExperimentWithHandler(experimentId, destSettings.projectId as number)),
     );
+    const numFailures = results.filter(res => res.status !== 'fulfilled' || res.value === 1).length;
 
-  }, [ destSettings.projectId, experimentIds, moveExperimentWithHandler ]);
+    const experimentText = experimentIds.length === 1
+      ? `Experiment ${experimentIds[0]}`
+      : `${experimentIds.length} experiments`;
+
+    if (numFailures === 0) {
+      notification.open({
+        btn: null,
+        description: (
+          <div className={css.toast}>
+            <p>
+              {experimentText} moved to project
+              {projects.find((p) => p.id === destSettings.projectId)?.name}
+            </p>
+            <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
+          </div>
+        ),
+        message: 'Experiments Moved',
+      });
+    } else if (numFailures === experimentIds.length) {
+      notification.warn({
+        description: 'Move Failure',
+        message: `Unable to move ${experimentText}.`,
+      });
+    } else {
+      notification.warn({
+        description: (
+          <div className={css.toast}>
+            <p>
+              {experimentIds.length - numFailures} out of {experimentIds.length} experiments moved
+              to project
+              {projects.find((p) => p.id === destSettings.projectId)?.name}
+            </p>
+            <Link path={paths.projectDetails(destSettings.projectId)}>Go to Project</Link>
+          </div>
+        ),
+        message: 'Partial Move Failure',
+      });
+    }
+
+  }, [ destSettings.projectId, experimentIds, projects ]);
 
   const getModalProps = useCallback((experimentIds, destinationProjectId): ModalFuncProps => {
     const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';

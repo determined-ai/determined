@@ -104,6 +104,11 @@ export const alwaysTrueExperimentChecker = (
   user?: DetailedUser,
 ): boolean => true;
 
+export const alwaysFalseExperimentChecker = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+): boolean => false;
+
 /**
  * only a single trial experiment is continueTrialable, this is just
  * whether it's blocked at the experiment level
