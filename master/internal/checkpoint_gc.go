@@ -1,8 +1,11 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -89,5 +92,20 @@ func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
 	if err := t.db.CompleteTask(t.taskID, time.Now().UTC()); err != nil {
 		ctx.Log().WithError(err).Error("marking GC task complete")
 	}
+
+	var deleteCheckpoints []uuid.UUID
+	if err := json.Unmarshal(t.ToDelete, &deleteCheckpoints); err != nil {
+		ctx.Log().WithError(err).Error("unmarshalling ToDelete in checkpoint GC task")
+	}
+
+	var deleteCheckpoints_str []string
+	for _, dC := range deleteCheckpoints {
+		deleteCheckpoints_str = append(deleteCheckpoints_str, dC.String())
+	}
+
+	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints_str); err != nil {
+		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+	}
+
 	ctx.Self().Stop()
 }

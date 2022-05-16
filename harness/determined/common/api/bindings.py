@@ -161,6 +161,7 @@ class determinedjobv1Type(enum.Enum):
     TYPE_TENSORBOARD = "TYPE_TENSORBOARD"
     TYPE_SHELL = "TYPE_SHELL"
     TYPE_COMMAND = "TYPE_COMMAND"
+    TYPE_CHECKPOINTGC = "TYPE_CHECKPOINTGC"
 
 class determinedtaskv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -943,6 +944,24 @@ class v1CurrentUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1DeleteCheckpointsRequest:
+    def __init__(
+        self,
+        checkpointUuids: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.checkpointUuids = checkpointUuids
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteCheckpointsRequest":
+        return cls(
+            checkpointUuids=obj.get("checkpointUuids", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "checkpointUuids": self.checkpointUuids if self.checkpointUuids is not None else None,
         }
 
 class v1Device:
@@ -5520,6 +5539,25 @@ def get_CurrentUser(
     if _resp.status_code == 200:
         return v1CurrentUserResponse.from_json(_resp.json())
     raise APIHttpError("get_CurrentUser", _resp)
+
+def delete_DeleteCheckpoints(
+    session: "client.Session",
+    *,
+    body: "v1DeleteCheckpointsRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/checkpoints",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteCheckpoints", _resp)
 
 def delete_DeleteExperiment(
     session: "client.Session",
