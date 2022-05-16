@@ -1,5 +1,5 @@
 import React, {
-  ChangeEvent, HTMLAttributes, KeyboardEvent, RefObject, useCallback, useEffect, useRef, useState,
+  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
 } from 'react';
 
 import css from './InlineEditor.module.scss';
@@ -9,11 +9,11 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;
   allowNewline?: boolean;
   disabled?: boolean;
+  focusSignal?: number;
   isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
-  parentTextareaRef?: RefObject<HTMLTextAreaElement>
   placeholder?: string;
   value: string;
 }
@@ -31,13 +31,12 @@ const InlineEditor: React.FC<Props> = ({
   value,
   onCancel,
   onSave,
-  parentTextareaRef,
+  focusSignal,
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
 
-  const internalRef = useRef<HTMLTextAreaElement>(null);
-  const textareaRef = parentTextareaRef ?? internalRef;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [ currentValue, setCurrentValue ] = useState(value);
   const [ isEditable, setIsEditable ] = useState(false);
   const [ isSaving, setIsSaving ] = useState(false);
@@ -50,6 +49,14 @@ const InlineEditor: React.FC<Props> = ({
     classes.push(css.maxLength);
   }
   if (disabled) classes.push(css.disabled);
+
+  useEffect(() => {
+    if (focusSignal != null && !disabled){
+      setIsEditable(true);
+      textareaRef.current?.focus();
+    }
+
+  }, [ focusSignal, setIsEditable, disabled ]);
 
   const updateEditorValue = useCallback((value: string) => {
     let newValue = value;

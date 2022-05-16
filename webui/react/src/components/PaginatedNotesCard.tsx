@@ -29,10 +29,17 @@ const PaginatedNotesCard: React.FC<Props> = (
   const [ editedContents, setEditedContents ] = useState(notes?.[currentPage]?.contents ?? '');
   const [ editedName, setEditedName ] = useState(notes?.[currentPage]?.name ?? '');
   const [ modal, contextHolder ] = Modal.useModal();
+  const [ noteChangeSignal, setNoteChangeSignal ] = useState(1);
+  const fireNoteChangeSignal =
+  useCallback(
+    () => setNoteChangeSignal((prev) => (prev === 100 ? 1 : prev + 1)),
+    [ setNoteChangeSignal ],
+  );
 
   const previousNumberOfNotes = usePrevious(notes.length, undefined);
 
   const handleSwitchPage = useCallback((pageNumber: number | SelectValue) => {
+    if (pageNumber === currentPage) return;
     if (editedContents !== notes?.[currentPage]?.contents) {
       modal.confirm({
         content: (
@@ -40,29 +47,31 @@ const PaginatedNotesCard: React.FC<Props> = (
             You have unsaved notes, are you sure you want to switch pages?
             Unsaved notes will be lost.
           </p>),
-        onOk: () => setCurrentPage(pageNumber as number),
+        onOk: () => { setCurrentPage(pageNumber as number); fireNoteChangeSignal(); },
         title: 'Unsaved content',
       });
     } else {
       setCurrentPage(pageNumber as number);
       setEditedContents(notes?.[currentPage]?.contents ?? '');
+      fireNoteChangeSignal();
     }
-  }, [ currentPage, editedContents, modal, notes ]);
+  }, [ currentPage, editedContents, modal, notes, fireNoteChangeSignal ]);
 
   useEffect(() => {
     if (!previousNumberOfNotes || notes.length > previousNumberOfNotes) {
-      setCurrentPage(notes.length);
+      handleSwitchPage(notes.length);
     } else if (notes.length < previousNumberOfNotes){
+      // dont call handler here because page isn't actually switching
       setCurrentPage((prevPageNumber) =>
         prevPageNumber > deleteTarget ? prevPageNumber - 1 : prevPageNumber);
     }
-  }, [ previousNumberOfNotes, notes.length, deleteTarget ]);
+  }, [ previousNumberOfNotes, notes.length, deleteTarget, handleSwitchPage ]);
 
   const handleNewPage = useCallback(() => {
     const currentPages = notes.length;
     onNewPage();
-    setCurrentPage(currentPages);
-  }, [ notes.length, onNewPage ]);
+    handleSwitchPage(currentPages);
+  }, [ notes.length, onNewPage, handleSwitchPage ]);
 
   const handleSave = useCallback(async (editedNotes: string) => {
     setEditedContents(editedNotes);
@@ -78,7 +87,7 @@ const PaginatedNotesCard: React.FC<Props> = (
     setEditedName(newName);
     await onSave(notes.map((note, idx) => {
       if (idx === currentPage) {
-        return { name: newName } as Note;
+        return { ...note, name: newName } as Note;
       }
       return note;
     }));
@@ -95,9 +104,9 @@ const PaginatedNotesCard: React.FC<Props> = (
 
   useEffect(() => {
     if (notes.length === 0) return;
-    if (currentPage < 0) setCurrentPage(0);
-    if (currentPage >= notes.length) setCurrentPage(notes.length - 1);
-  }, [ currentPage, notes.length ]);
+    if (currentPage < 0) { setCurrentPage(0); fireNoteChangeSignal(); }
+    if (currentPage >= notes.length) { setCurrentPage(notes.length - 1); fireNoteChangeSignal(); }
+  }, [ currentPage, notes.length, fireNoteChangeSignal ]);
 
   useEffect(() => {
     setEditedContents(notes?.[currentPage]?.contents ?? '');
@@ -198,6 +207,7 @@ const PaginatedNotesCard: React.FC<Props> = (
               </div>
             </Dropdown>
           )}
+          noteChangeSignal={noteChangeSignal}
           notes={notes?.[currentPage]?.contents ?? ''}
           style={{ border: 0 }}
           title={notes?.[currentPage]?.name ?? ''}
