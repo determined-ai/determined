@@ -201,9 +201,4 @@ def test_start_tensorboard_with_custom_image(
                         raise AssertionError(f"Setting custom image not working properly: {line}")
             else:
                 raise AssertionError("Did not find custom image in output")
-        #     if SERVICE_READY in line:
-        #         break
-        #     if AWAITING_METRICS in line:
-        #         raise AssertionError("Tensorboard did not find metrics")
-        # else:
-        #     raise AssertionError(f"Did not find {SERVICE_READY} in output")
+                
