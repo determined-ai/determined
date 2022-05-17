@@ -2,10 +2,6 @@ import logging
 import pathlib
 from typing import List
 
-tb_file_types = [
-    "*",
-]
-
 
 def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
     """
@@ -21,4 +17,4 @@ def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
         logging.warning(f"{base_dir} directory does not exist.")
         return []
 
-    return [file for filetype in tb_file_types for file in base_dir.rglob(filetype)]
+    return [file for file in base_dir.rglob("*")]
