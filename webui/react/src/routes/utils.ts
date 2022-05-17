@@ -18,6 +18,8 @@ import {
   routeToReactUrl,
 } from '../shared/utils/routes';
 
+import { waitPageUrl } from 'wait';
+
 import routes from './routes';
 
 // serverAddress returns determined cluster (master) address.
@@ -93,10 +95,10 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
-  interactive: (command: CommandTask, taskUrl: string): string => {
+  interactive: (command: CommandTask): string => {
     return `/interactive/${command.id}/${command.type}/
       ${command.name}/${command.resourcePool}/
-      ${encodeURIComponent(taskUrl)}`;
+      ${encodeURIComponent(waitPageUrl(command))}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
