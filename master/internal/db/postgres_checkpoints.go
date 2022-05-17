@@ -2,10 +2,12 @@ package db
 
 import (
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 // FilterForRegisteredCheckpoints gets the deleted checkpoints provided in the model registry.
-func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []string) ([]string, error) {
+func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []uuid.UUID) ([]string, error) {
 	var checkpointIDRows []struct {
 		ID string
 	}
@@ -29,7 +31,7 @@ func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []string) ([]st
 }
 
 // MarkCheckpointsDeleted updates the provided delete checkpoints to DELETED state.
-func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []string) error {
+func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
 	_, err := db.sql.Exec(`UPDATE raw_checkpoints c
     SET state = 'DELETED'
     WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))`, deleteCheckpoints)
@@ -55,7 +57,7 @@ type ExperimentCheckpointGrouping struct {
 
 // GroupCheckpointUUIDsByExperimentID creates the mapping of checkpoint uuids to experiment id.
 // The checkpount uuids grouped together are comma separated.
-func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []string) (
+func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	[]*ExperimentCheckpointGrouping, error) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 

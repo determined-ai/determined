@@ -2,9 +2,10 @@ package tasks
 
 import (
 	"archive/tar"
-	"encoding/json"
 	"path/filepath"
 	"strconv"
+
+	"github.com/google/uuid"
 
 	"github.com/docker/docker/api/types/mount"
 
@@ -22,7 +23,7 @@ type GCCkptSpec struct {
 
 	ExperimentID       int
 	LegacyConfig       expconf.LegacyConfig
-	ToDelete           json.RawMessage
+	ToDelete           []uuid.UUID
 	DeleteTensorboards bool
 }
 

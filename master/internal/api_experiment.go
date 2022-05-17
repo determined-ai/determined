@@ -207,7 +207,6 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 		0,
 		0,
 		0,
-		true,
 	)
 	if err != nil {
 		return err

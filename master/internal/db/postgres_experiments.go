@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -1146,8 +1147,7 @@ WHERE id = $1`, id)
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-	delete bool,
-) ([]byte, error) {
+) ([]uuid.UUID, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
@@ -1220,23 +1220,6 @@ WITH const AS (
                    IS NULL))
 )`
 
-	if delete {
-		ctes += `, do_delete_v1 AS (
-    UPDATE checkpoints c
-    SET state = 'DELETED'
-    FROM selected_checkpoints
-    WHERE c.id = selected_checkpoints.id
-)
-`
-		ctes += `, do_delete_v2 AS (
-	UPDATE checkpoints_v2 c
-	SET state = 'DELETED'
-	FROM selected_checkpoints
-	WHERE c.id = selected_checkpoints.id
-)
-		`
-	}
-
 	query := `
 SELECT row_to_json(x)
 FROM (
@@ -1251,5 +1234,18 @@ FROM (
 ) x
 `
 
-	return db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
+	checkpointsBytes, err := db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var checkpointsGCRaw []uuid.UUID
+
+	for _, cB := range checkpointsBytes {
+		cUUID, _ := uuid.ParseBytes(cB)
+		checkpointsGCRaw = append(checkpointsGCRaw, cUUID)
+	}
+
+	return checkpointsGCRaw, nil
 }
