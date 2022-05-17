@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -26,6 +27,8 @@ func Initialize(
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
+	e.PATCH("/agents*", api.Route(system, nil),
+		echo.MiddlewareFunc(user.GetService().ProcessAdminAuthentication))
 }
 
 type agents struct {

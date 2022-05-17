@@ -22,10 +22,10 @@
       justify-content: space-between;
 
       .nameAndIcon {
-        margin-block: var(--theme-sizes-layout-large);
+        margin-block: 12px;
 
         .name {
-          font-size: var(--theme-sizes-font-enormous);
+          font-size: 24px;
           margin: 0;
         }
       }

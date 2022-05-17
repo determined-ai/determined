@@ -112,7 +112,7 @@ const ResourcePoolCard: React.FC<Props> = ({
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
-          <p className={css.fade}>{pool.description || 'No description.'}</p>
+          <p>{pool.description || 'No description.'}</p>
         </section>
         <hr />
         <section>
@@ -124,7 +124,7 @@ const ResourcePoolCard: React.FC<Props> = ({
             />
           )}
           {pool.auxContainerCapacityPerAgent > 0 && (
-            <div className={css.cpuContainers}>
+            <div className={css.spaceBetweenHorizontal}>
               <span>Aux containers running:</span>
               <span>{pool.auxContainersRunning}</span>
             </div>

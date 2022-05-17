@@ -2,13 +2,28 @@ import copy
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
+import types
 from typing import Dict
 
 import determined as det
 import determined.common
-from determined.common import constants, storage
+from determined.common import api, constants, storage
+from determined.exec import prep_container
+
+
+# Signal handler to intercept SLURM SIGTERM notification of pending preemption
+def trigger_preemption(signum: int, frame: types.FrameType) -> None:
+    info = det.get_cluster_info()
+    if info and info.container_rank == 0:
+        # Chief container, requests preemption, others ignore
+        logging.debug(f"[rank={info.container_rank}] SIGTERM: Preemption imminent.")
+        # Notify the master that we need to be preempted
+        api.post(
+            info.master_url, f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption"
+        )
 
 
 def launch(experiment_config: det.ExperimentConfig) -> int:
@@ -27,6 +42,10 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
 
     if isinstance(entrypoint, str):
         entrypoint = ["sh", "-c", entrypoint]
+
+    if os.environ.get("DET_RESOURCES_TYPE") == prep_container.RESOURCES_TYPE_SLURM_JOB:
+        # SLURM sends SIGTERM to notify of pending preemption
+        signal.signal(signal.SIGTERM, trigger_preemption)
 
     logging.info(f"Launching: {entrypoint}")
 

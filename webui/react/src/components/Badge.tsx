@@ -32,6 +32,7 @@ const Badge: React.FC<BadgeProps> = ({
   if (type === BadgeType.State) {
     classes.push(css.state);
     style.backgroundColor = getStateColorCssVar(state);
+    style.color = getStateColorCssVar(state, { isOn: true });
     if (state === SlotState.Free) {
       style.color = '#234b65';
     }

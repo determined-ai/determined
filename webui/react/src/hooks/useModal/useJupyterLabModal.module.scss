@@ -1,16 +1,15 @@
-.modalContent {
-  padding-bottom: 15px;
-  padding-top: 15px;
-}
 .note {
-  background-color: var(--theme-colors-monochrome-14);
-  border: 1px solid var(--theme-colors-monochrome-12);
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   margin-bottom: 4px;
   padding: 2;
   text-align: center;
 }
+.note + div {
+  margin: 0;
+}
 .loading {
-  padding: var(--theme-sizes-layout-mega);
+  padding: 40px;
 }
 .line {
   align-items: center;
@@ -30,6 +29,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 10px;
 }
 .noFooter :global(.ant-modal-confirm-btns) {
   display: none;

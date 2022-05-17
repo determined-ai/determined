@@ -2,7 +2,7 @@
   background: var(--theme-colors-underlay);
   color: var(--theme-colors-monochrome-17);
   display: none;
-  font-size: var(--theme-sizes-font-tiny);
+  font-size: 11px;
   position: absolute;
   z-index: 99;
 
@@ -24,7 +24,7 @@
     border-color: var(--theme-colors-overlay);
     border-radius: 100%;
     border-style: solid;
-    border-width: var(--theme-sizes-border-width);
+    border-width: var(--theme-stroke-width);
     display: inline-block;
     height: 9px;
     left: 0;
@@ -39,5 +39,5 @@
   bottom: 0;
   position: absolute;
   top: 0;
-  width: var(--theme-sizes-border-width);
+  width: var(--theme-stroke-width);
 }

@@ -1,6 +1,8 @@
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
+import useTheme from 'hooks/useTheme';
+
 import css from './ParallelCoordinates.module.scss';
 
 interface Props {
@@ -18,6 +20,7 @@ const ParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<Hermes>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -28,7 +31,7 @@ const ParallelCoordinates: React.FC<Props> = ({
       chartRef.current?.destroy();
       chartRef.current = undefined;
     };
-  }, [ config, dimensions ]);
+  }, [ dimensions ]);
 
   useEffect(() => {
     let redraw = true;
@@ -40,7 +43,41 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     try {
-      if (config) chartRef.current?.setConfig(config, false);
+      if (config) {
+        const newConfig = Hermes.deepMerge({
+          style: {
+            axes: {
+              label: {
+                fillStyle: theme.surfaceOn,
+                strokeStyle: theme.surfaceWeak,
+              },
+              labelActive: {
+                fillStyle: theme.surfaceOnStrong,
+                strokeStyle: theme.surfaceWeak,
+              },
+              labelHover: {
+                fillStyle: theme.surfaceOnStrong,
+                strokeStyle: theme.surfaceWeak,
+              },
+            },
+            dimension: {
+              label: {
+                fillStyle: theme.surfaceOn,
+                strokeStyle: theme.surfaceWeak,
+              },
+              labelActive: {
+                fillStyle: theme.statusActive,
+                strokeStyle: theme.surfaceWeak,
+              },
+              labelHover: {
+                fillStyle: theme.statusActive,
+                strokeStyle: theme.surfaceWeak,
+              },
+            },
+          },
+        }, config);
+        chartRef.current?.setConfig(newConfig, false);
+      }
     } catch (e) {
       redraw = false;
     }
@@ -52,7 +89,7 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     if (redraw) chartRef.current?.redraw();
-  }, [ config, data, dimensions ]);
+  }, [ config, data, dimensions, theme ]);
 
   return (
     <div className={css.base}>

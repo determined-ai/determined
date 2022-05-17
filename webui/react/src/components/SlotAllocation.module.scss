@@ -2,33 +2,33 @@
   .header {
     display: flex;
     flex-direction: row;
-    font-size: var(--theme-sizes-font-medium);
+    font-size: 14px;
     justify-content: space-between;
   }
   .bar {
-    margin: var(--theme-sizes-layout-small) 0;
+    margin: 6px 0;
   }
 }
 li.legend {
   list-style-type: none;
 
   .count {
-    margin-right: var(--theme-sizes-layout-small);
+    margin-right: 6px;
   }
 }
 ul.detailedLegends li {
-  margin-top: var(--theme-sizes-layout-small);
+  margin-top: 6px;
 }
 div.overallLegends {
   display: flex;
   flex-direction: row;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
   justify-content: center;
 
   ol {
     display: flex;
     flex-direction: row;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
     justify-content: center;
     margin: 0 auto;
     padding: 0;
@@ -37,7 +37,7 @@ div.overallLegends {
     display: block;
     height: 100%;
     margin: 0;
-    margin-left: var(--theme-sizes-layout-huge);
+    margin-left: 20px;
     padding: 0;
   }
   li:first-child {
@@ -54,11 +54,11 @@ ul.detailedLegends {
 }
 .footer {
   display: flex;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
   justify-content: space-between;
   margin-bottom: 8px;
 
   .queued {
-    color: var(--theme-colors-states-pending)
+    color: var(--theme-status-pending)
   }
 }

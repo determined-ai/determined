@@ -45,15 +45,19 @@ clean:
 build:
 	python setup.py -q bdist_wheel
 
-.PHONY: examples
-examples: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
+build-examples/stamp: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
+	touch $@
 
-build-examples/%.tgz: examples/*/%/
+.PHONY: examples
+examples: build-examples/stamp
+
+# the first `examples/*/%` defines `$<` and the second sets file dependencies
+build-examples/%.tgz: examples/*/% examples/*/%/*
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
-build-examples/%.tgz: examples/%/
+build-examples/%.tgz: examples/%/ examples/%/*
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")

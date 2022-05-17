@@ -1,5 +1,5 @@
 .base {
-  background-color: var(--theme-colors-overlay);
+  background-color: var(--theme-overlay);
   display: none;
   height: 100%;
   left: 0;
@@ -9,7 +9,7 @@
   width: 100%;
 
   .sheet {
-    background-color: var(--theme-colors-base-2);
+    background-color: var(--theme-float);
     bottom: 0;
     display: flex;
     flex-direction: column;
@@ -18,14 +18,14 @@
   }
   .item {
     align-items: center;
-    color: var(--theme-colors-monochrome-17);
+    color: var(--theme-float-on);
     display: flex;
-    height: var(--theme-sizes-navigation-toolbarHeight);
+    height: var(--nav-bottom-bar-height);
 
-    [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
-    .label { font-size: var(--theme-sizes-font-medium); }
+    [class^=Icon_base_] { padding: 0 16px; }
+    .label { font-size: 14px; }
     .spacer {
-      width: calc(var(--theme-sizes-icon-large) + 2 * var(--theme-sizes-layout-big));
+      width: calc(24px + 2 * 16px);
     }
   }
 }
@@ -37,11 +37,11 @@
 }
 .sheetEnterActive {
   opacity: 1;
-  transition: opacity var(--theme-animationCurve);
+  transition: opacity var(--animation-curve);
 
   .sheet {
     bottom: 0;
-    transition: bottom var(--theme-animationCurve);
+    transition: bottom var(--animation-curve);
   }
 }
 .sheetEnterDone {
@@ -57,11 +57,11 @@
 }
 .sheetExitActive {
   opacity: 0;
-  transition: opacity var(--theme-animationCurve);
+  transition: opacity var(--animation-curve);
 
   .sheet {
     bottom: -50%;
-    transition: bottom var(--theme-animationCurve);
+    transition: bottom var(--animation-curve);
   }
 }
 .sheetExitDone {

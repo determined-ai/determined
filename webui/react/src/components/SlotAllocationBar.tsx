@@ -186,7 +186,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           </Popover>
         )}>
         <div className={css.bar}>
-          <Bar {...barProps} parts={barParts} />
+          <Bar {...barProps} inline parts={barParts} />
         </div>
       </ConditionalWrapper>
       {footer && (

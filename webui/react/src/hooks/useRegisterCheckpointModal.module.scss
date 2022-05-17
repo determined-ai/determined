@@ -1,13 +1,13 @@
 .base {
   display: flex;
   flex-direction: column;
-  gap: var(--theme-sizes-layout-big);
+  gap: 16px;
 
   .directions {
     margin: 0;
   }
   .expandDetails {
-    color: var(--theme-colors-action-normal);
+    color: var(--theme-status-active);
     cursor: pointer;
     margin: 0;
   }
@@ -19,14 +19,14 @@
     justify-content: space-between;
 
     p {
-      color: var(--theme-colors-action-normal);
+      color: var(--theme-status-active);
       cursor: pointer;
       margin: 0;
     }
   }
   h2 {
     color: var(--theme-colors-monochrome-5);
-    font-size: var(--theme-sizes-font-medium);
+    font-size: 14px;
 
     span {
       color: var(--theme-colors-monochrome-8);
@@ -35,5 +35,5 @@
 }
 .toast {
   display: flex;
-  gap: var(--theme-sizes-layout-big);
+  gap: 16px;
 }

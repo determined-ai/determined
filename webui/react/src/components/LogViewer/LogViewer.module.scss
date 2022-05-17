@@ -1,6 +1,6 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  color: var(--theme-colors-monochrome-6);
+  background-color: var(--theme-stage);
+  color: var(--theme-stage-on);
   height: 100%;
   position: relative;
   width: 100%;
@@ -10,8 +10,8 @@
     position: relative;
   }
   .container > .logs {
-    font-family: 'Source Code Pro', monospace;
-    font-size: var(--theme-sizes-font-small);
+    font-family: var(--font-family-code);
+    font-size: 12px;
     height: 100%;
   }
   .container > .empty {
@@ -21,21 +21,22 @@
     width: 100%;
   }
   .buttons {
-    bottom: var(--theme-sizes-layout-giant);
+    bottom: 32px;
     display: flex;
     flex-direction: column;
     position: absolute;
-    right: var(--theme-sizes-layout-giant);
+    right: 32px;
   }
   .buttons > button {
-    border-color: var(--theme-colors-monochrome-9);
-    box-shadow: var(--theme-shadow);
-    color: var(--theme-colors-monochrome-9);
+    background-color: var(--theme-float);
+    border-color: var(--theme-float-border);
+    box-shadow: var(--theme-elevation);
+    color: var(--theme-float-on);
     transition: opacity 0.2s linear;
     user-select: none;
   }
   .buttons > button + button {
-    margin-top: var(--theme-sizes-layout-big);
+    margin-top: 16px;
   }
   .scrollToOldest {
     opacity: 0.2;
@@ -43,11 +44,11 @@
     user-select: auto;
   }
   .scrollToOldest:focus {
-    border-color: var(--theme-colors-action-normal);
-    color: var(--theme-colors-monochrome-9);
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active-on);
 
     &::after {
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       box-shadow: var(--theme-outline);
       content: '';
       height: 100%;
@@ -59,10 +60,10 @@
     transition: all 0.2s linear;
   }
   .enableTailing:focus {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
 
     &::after {
-      border-radius: var(--theme-sizes-border-radius);
+      border-radius: var(--theme-border-radius);
       box-shadow: var(--theme-outline);
       content: '';
       height: 100%;
@@ -71,10 +72,10 @@
     }
   }
   .enableTailing.enabled {
-    border-color: var(--theme-colors-action-normal);
-    color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active);
   }
 }
 .options {
-  padding: var(--theme-sizes-layout-medium) var(--theme-sizes-layout-medium) 0 0;
+  padding: 8px 8px 0 0;
 }

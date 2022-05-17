@@ -519,6 +519,24 @@ class v1AllocationAllGatherResponse:
             "data": self.data,
         }
 
+class v1AllocationPendingPreemptionSignalRequest:
+    def __init__(
+        self,
+        allocationId: str,
+    ):
+        self.allocationId = allocationId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AllocationPendingPreemptionSignalRequest":
+        return cls(
+            allocationId=obj["allocationId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "allocationId": self.allocationId,
+        }
+
 class v1AllocationPreemptionSignalResponse:
     def __init__(
         self,
@@ -5258,6 +5276,26 @@ def post_AllocationAllGather(
         return v1AllocationAllGatherResponse.from_json(_resp.json())
     raise APIHttpError("post_AllocationAllGather", _resp)
 
+def post_AllocationPendingPreemptionSignal(
+    session: "client.Session",
+    *,
+    allocationId: str,
+    body: "v1AllocationPendingPreemptionSignalRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/signals/pending_preemption",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AllocationPendingPreemptionSignal", _resp)
+
 def get_AllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -5640,8 +5678,8 @@ def get_GetAgents(
         "label": label,
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5726,8 +5764,8 @@ def get_GetCommands(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -5795,9 +5833,9 @@ def get_GetExperimentCheckpoints(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
-        "states": [x.value for x in states] if states else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5842,9 +5880,9 @@ def get_GetExperimentTrials(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
-        "states": [x.value for x in states] if states else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -5894,15 +5932,15 @@ def get_GetExperiments(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
     _params = {
-        "archived": archived,
+        "archived": str(archived).lower() if archived is not None else None,
         "description": description,
         "labels": labels,
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
-        "states": [x.value for x in states] if states else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -5949,7 +5987,7 @@ def get_GetJobs(
     resourcePool: "typing.Optional[str]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
-        "orderBy": orderBy.value if orderBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
         "pagination.limit": pagination_limit,
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
@@ -6088,8 +6126,8 @@ def get_GetModelVersions(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6120,15 +6158,15 @@ def get_GetModels(
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
-        "archived": archived,
+        "archived": str(archived).lower() if archived is not None else None,
         "description": description,
         "id": id,
         "labels": labels,
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -6177,8 +6215,8 @@ def get_GetNotebooks(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -6250,8 +6288,8 @@ def get_GetShells(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -6375,8 +6413,8 @@ def get_GetTemplates(
         "limit": limit,
         "name": name,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6423,8 +6461,8 @@ def get_GetTensorboards(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
     }
@@ -6473,9 +6511,9 @@ def get_GetTrialCheckpoints(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
-        "sortBy": sortBy.value if sortBy else None,
-        "states": [x.value for x in states] if states else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -6501,7 +6539,7 @@ def get_GetTrialWorkloads(
     _params = {
         "limit": limit,
         "offset": offset,
-        "orderBy": orderBy.value if orderBy else None,
+        "orderBy": orderBy.value if orderBy is not None else None,
     }
     _resp = session._do_request(
         method="GET",
@@ -7203,7 +7241,7 @@ def get_ResourceAllocationAggregated(
 ) -> "v1ResourceAllocationAggregatedResponse":
     _params = {
         "endDate": endDate,
-        "period": period.value if period else None,
+        "period": period.value if period is not None else None,
         "startDate": startDate,
     }
     _resp = session._do_request(
