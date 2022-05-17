@@ -14,6 +14,7 @@ from tests import config
 from tests.experiment import profile_test
 from tests.nightly.compute_stats import compare_stats
 
+from .cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 from .cluster_log_manager import ClusterLogManager
 
 _INTEG_MARKERS = {
@@ -161,7 +162,8 @@ def using_k8s(request: SubRequest) -> bool:
         "--json",
     ]
 
-    output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
+    with logged_in_user(ADMIN_CREDENTIALS):
+        output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
 
     rp = json.loads(output)["resource_manager"]["type"]
     return bool(rp == "kubernetes")
