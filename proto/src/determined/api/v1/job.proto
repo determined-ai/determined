@@ -52,6 +52,8 @@ message RPQueueStat {
   determined.job.v1.QueueStats stats = 1;
   // Resource pool.
   string resource_pool = 2;
+  // Aggregate stats.
+  repeated determined.job.v1.AggregateQueueStats aggregates = 3;
 }
 // Get job stats.
 message GetJobQueueStatsRequest {

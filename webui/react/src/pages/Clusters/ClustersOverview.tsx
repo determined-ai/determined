@@ -1,26 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
+import Link from 'components/Link';
 import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
+import { paths } from 'routes/utils';
 import { ShirtSize } from 'themes';
 import {
   ResourcePool,
 } from 'types';
-import { getSlotContainerStates } from 'utils/cluster';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
+import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
 import css from './ClustersOverview.module.scss';
 
 const ClusterOverview: React.FC = () => {
 
-  const { agents, resourcePools } = useStore();
+  const { resourcePools } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
 
   const [ canceler ] = useState(new AbortController());
@@ -40,20 +41,17 @@ const ClusterOverview: React.FC = () => {
 
   return (
     <div className={css.base}>
+      <ClusterOverallStats />
       <ClusterOverallBar />
       <Section
         title={'Resource Pools'}>
-        <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
-            <ResourcePoolCardLight
-              computeContainerStates={
-                getSlotContainerStates(agents || [], rp.slotType, rp.name)
-              }
-              key={idx}
-              resourcePool={rp}
-              resourceType={rp.slotType}
-              totalComputeSlots={maxPoolSlotCapacity(rp)}
-            />
+            <Link key={idx} path={paths.resourcePool(rp.name)}>
+              <ResourcePoolCardLight
+                resourcePool={rp}
+              />
+            </Link>
           ))}
         </Grid>
       </Section>

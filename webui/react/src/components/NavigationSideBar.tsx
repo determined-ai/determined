@@ -49,8 +49,8 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 
   if (isActive) classes.push(css.active);
   if (status) classes.push(css.hasStatus);
-
-  useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
+  useEffect(() => setIsActive(path ?
+    location.pathname.startsWith(path) : false), [ location.pathname, path ]);
 
   const link = (
     <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
@@ -102,8 +102,6 @@ const NavigationSideBar: React.FC = () => {
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-      { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-      { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
     ],
   }), [ info.branding ]);
 

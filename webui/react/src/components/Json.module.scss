@@ -38,3 +38,8 @@
     border-width: 0;
   }
 }
+.alternateBackground {
+  li:nth-child(even) {
+    background-color: var(--theme-colors-monochrome-13);
+  }
+}

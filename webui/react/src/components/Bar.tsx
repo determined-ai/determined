@@ -20,17 +20,27 @@ export interface Props {
   size?: ShirtSize;
 }
 
+const partStyle = (part: BarPart) => {
+  let style = {
+    backgroundColor: part.color,
+    borderColor: 'var(--theme-float-border)',
+    borderStyle: 'none',
+    borderWidth: 1,
+    width: floatToPercent(part.percent, 0),
+  };
+
+  if (part.bordered) {
+    style = { ...style, borderStyle: 'dashed' };
+  }
+
+  return style;
+};
+
 const sizeMap = {
   [ShirtSize.small]: '4px',
   [ShirtSize.medium]: '12px',
   [ShirtSize.large]: '24px',
 };
-
-const partStyle = (part: BarPart) => ({
-  backgroundColor: part.color,
-  borderStyle: part.bordered ? 'dashed dashed dashed none' : 'none',
-  width: floatToPercent(part.percent, 0),
-});
 
 const Bar: React.FC<Props> = ({ barOnly, inline, parts, size = ShirtSize.small }: Props) => {
   const classes: string[] = [ css.base ];

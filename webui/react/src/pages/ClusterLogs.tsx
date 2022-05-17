@@ -37,7 +37,6 @@ const ClusterLogs: React.FC = () => {
       <LogViewer
         decoder={jsonToClusterLog}
         sortKey="id"
-        title={<div className={css.title}>Cluster Logs</div>}
         onFetch={handleFetch}
       />
     </div>

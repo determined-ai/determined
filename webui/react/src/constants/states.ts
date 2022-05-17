@@ -121,6 +121,8 @@ export const resourceStateToLabel: { [key in ResourceState]: string } = {
   [ResourceState.Terminated]: 'Terminated',
   [ResourceState.Pulling]: 'Pulling',
   [ResourceState.Starting]: 'Starting',
+  [ResourceState.Warm]: 'Warm',
+  [ResourceState.Potential]: 'Potential',
   [ResourceState.Unspecified]: 'Unspecified',
 };
 

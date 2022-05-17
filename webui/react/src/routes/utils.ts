@@ -70,7 +70,7 @@ const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
 
 export const paths = {
   cluster: (): string => {
-    return '/cluster';
+    return '/clusters';
   },
   clusterLogs: (): string => {
     return '/logs';
@@ -113,6 +113,9 @@ export const paths = {
   },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
+  },
+  resourcePool: (name: string): string => {
+    return `/resourcepool/${name}`;
   },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined

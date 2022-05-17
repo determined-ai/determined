@@ -824,6 +824,26 @@ export interface V1AgentUserGroup {
 }
 
 /**
+ * Aggregate statistics for a queue.
+ * @export
+ * @interface V1AggregateQueueStats
+ */
+export interface V1AggregateQueueStats {
+    /**
+     * The date of this entry.
+     * @type {string}
+     * @memberof V1AggregateQueueStats
+     */
+    periodStart: string;
+    /**
+     * The total number of seconds queued.
+     * @type {number}
+     * @memberof V1AggregateQueueStats
+     */
+    seconds: number;
+}
+
+/**
  * Allocation tracks a specific instance of a Task.
  * @export
  * @interface V1Allocation
@@ -4299,6 +4319,12 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     resourcePool: string;
+    /**
+     * Aggregate stats.
+     * @type {Array<V1AggregateQueueStats>}
+     * @memberof V1RPQueueStat
+     */
+    aggregates?: Array<V1AggregateQueueStats>;
 }
 
 /**

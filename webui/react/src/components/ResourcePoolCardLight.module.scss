@@ -3,18 +3,22 @@ $line-height: 22px;
 
 .base {
   background-color: var(--theme-surface);
-  border: solid var(--theme-stroke-width) var(--theme-surface-border);
+  border: 1px solid var(--theme-stroke-width) var(--theme-surface-border);
   border-radius: var(--theme-border-radius);
   box-shadow: var(--theme-elevation);
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
   font-size: 14px;
+  height: 100%;
   line-height: $line-height;
   overflow: hidden;
   padding: $padding;
   text-overflow: ellipsis;
 
+  &:hover {
+    background-color: var(--theme-colors-monochrome-16);
+  }
   .body {
     display: flex;
     flex-direction: column;
@@ -40,6 +44,7 @@ $line-height: 22px;
       display: flex;
 
       span {
+        font-size: 12px;
         margin-right: 4px;
       }
       i {
@@ -59,7 +64,7 @@ section.details {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  font-size: var(--theme-sizes-font-small);
+  font-size: 12px;
 
   ul {
     flex-grow: 1;

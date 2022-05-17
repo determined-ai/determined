@@ -3,7 +3,7 @@ import React, { CSSProperties, PropsWithChildren } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
-import { RunState, SlotState } from 'types';
+import { ResourceState, RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 
@@ -33,8 +33,13 @@ const Badge: React.FC<BadgeProps> = ({
     classes.push(css.state);
     style.backgroundColor = getStateColorCssVar(state);
     style.color = getStateColorCssVar(state, { isOn: true });
-    if (state === SlotState.Free) {
+    if (state === SlotState.Free
+      || state === ResourceState.Warm
+      || state === ResourceState.Potential) {
       style.color = '#234b65';
+    }
+    if(state === ResourceState.Potential) {
+      style.border = '1px dashed #cccccc';
     }
   } else if (type === BadgeType.Id) {
     classes.push(css.id);

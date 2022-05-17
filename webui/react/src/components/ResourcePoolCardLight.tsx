@@ -1,28 +1,28 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1RPQueueStat } from 'services/api-ts-sdk';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
-import { ResourcePool, ResourceState, ResourceType } from 'types';
+import { deviceTypes, ResourcePool } from 'types';
+import { getSlotContainerStates } from 'utils/cluster';
 
 import Json from './Json';
-import Link from './Link';
 import css from './ResourcePoolCardLight.module.scss';
-import ResourcePoolDetails from './ResourcePoolDetails';
 
 interface Props {
-  computeContainerStates: ResourceState[];
+  poolStats?: V1RPQueueStat | undefined;
   resourcePool: ResourcePool;
-  resourceType: ResourceType;
-  totalComputeSlots: number;
+  size?: ShirtSize;
 }
 
 export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
@@ -70,18 +70,12 @@ const poolAttributes = [
   },
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
+  { key: 'schedulerType', label: 'Scheduler Type' },
 ];
 
 type SafeRawJson = Record<string, unknown>;
 
-const ResourcePoolCardLight: React.FC<Props> = ({
-  computeContainerStates,
-  resourcePool: pool,
-  totalComputeSlots,
-}: Props) => {
-  const [ detailVisible, setDetailVisible ] = useState(false);
-
-  const { pool: poolOverview } = useStore();
+const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) => {
 
   const descriptionClasses = [ css.description ];
 
@@ -115,8 +109,6 @@ const ResourcePoolCardLight: React.FC<Props> = ({
     }, {} as SafeRawJson);
   }, [ processedPool, isAux, pool ]);
 
-  const toggleModal = useCallback(() => setDetailVisible((cur: boolean) => !cur), []);
-
   return (
     <div className={css.base}>
       <div className={css.header}>
@@ -124,51 +116,68 @@ const ResourcePoolCardLight: React.FC<Props> = ({
           <div className={css.name}>{pool.name}</div>
         </div>
         <div className={css.default}>
-          {(pool.defaultAuxPool || pool.defaultComputePool) && <span>default</span>}
-          <Link onClick={toggleModal}><Icon name="info" /></Link>
+          {(pool.defaultAuxPool || pool.defaultComputePool) && <span>Default</span>}
+          {pool.description && <Icon name="info" title={pool.description} /> }
         </div>
       </div>
       <div className={css.body}>
-        <section>
-          {poolOverview[pool.name]?.total > 0 && (
-            <SlotAllocationBar
-              footer={{ queued: pool?.stats?.queuedCount }}
-              hideHeader
-              poolType={pool.type}
-              resourceStates={computeContainerStates}
-              size={ShirtSize.medium}
-              slotsPotential={totalComputeSlots}
-              totalSlots={pool.slotsAvailable}
-            />
-          )}
-          {isAux && (
-            <SlotAllocationBar
-              footer={{
-                auxContainerCapacity: pool.auxContainerCapacity,
-                auxContainersRunning: pool.auxContainersRunning,
-              }}
-              hideHeader
-              isAux={true}
-              poolType={pool.type}
-              resourceStates={computeContainerStates}
-              size={ShirtSize.medium}
-              totalSlots={totalComputeSlots}
-            />
-          )}
-        </section>
+        <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.medium} />
         <section className={css.details}>
           <Json hideDivider json={shortDetails} />
-          <div>
-            <ResourcePoolDetails
-              finally={toggleModal}
-              resourcePool={processedPool}
-              visible={detailVisible}
-            />
-          </div>
         </section>
         <div />
       </div>
     </div>
+  );
+};
+
+export const RenderAllocationBarResourcePool: React.FC<Props> = (
+  {
+    poolStats,
+    resourcePool: pool,
+    size = ShirtSize.large,
+  }: Props,
+) => {
+  const { agents } = useStore();
+  const isAux = useMemo(() => {
+    return pool.auxContainerCapacityPerAgent > 0;
+  }, [ pool ]);
+  return (
+    <section>
+      <SlotAllocationBar
+        footer={{
+          queued: poolStats?.stats.queuedCount ?? pool?.stats?.queuedCount,
+          scheduled: poolStats?.stats.scheduledCount ?? pool?.stats?.scheduledCount,
+        }}
+        hideHeader
+        poolName={pool.name}
+        poolType={pool.type}
+        resourceStates={
+          getSlotContainerStates(agents || [], pool.slotType, pool.name)
+        }
+        size={size}
+        slotsPotential={maxPoolSlotCapacity(pool)}
+        title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+        totalSlots={pool.slotsAvailable}
+      />
+      {isAux && (
+        <SlotAllocationBar
+          footer={{
+            auxContainerCapacity: pool.auxContainerCapacity,
+            auxContainersRunning: pool.auxContainersRunning,
+          }}
+          hideHeader
+          isAux={true}
+          poolType={pool.type}
+          resourceStates={
+            getSlotContainerStates(agents || [], pool.slotType, pool.name)
+          }
+          size={size}
+          title={deviceTypes.has(pool.slotType) ? pool.slotType : undefined}
+          totalSlots={maxPoolSlotCapacity(pool)}
+        />
+      )}
+    </section>
   );
 };
 

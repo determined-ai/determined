@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"time"
@@ -21,9 +22,8 @@ import (
 )
 
 const (
-	best             = "best"
-	worst            = "worst"
-	defaultFitPolicy = best
+	best  = "best"
+	worst = "worst"
 )
 
 type agentResourceManager struct {
@@ -154,6 +154,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case *apiv1.GetJobQueueStatsRequest:
+		resp := &apiv1.GetJobQueueStatsResponse{
+			Results: make([]*apiv1.RPQueueStat, 0),
+		}
 		rpRefs := make([]*actor.Ref, 0)
 		if len(msg.ResourcePools) == 0 {
 			rpRefs = append(rpRefs, ctx.Children()...)
@@ -162,12 +165,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				rpRefs = append(rpRefs, ctx.Child(rp))
 			}
 		}
-		resp := &apiv1.GetJobQueueStatsResponse{
-			Results: make([]*apiv1.RPQueueStat, 0),
-		}
+
 		actorResps := ctx.AskAll(job.GetJobQStats{}, rpRefs...).GetAll()
 		for _, rpRef := range rpRefs {
-			qStats := apiv1.RPQueueStat{ResourcePool: rpRef.Address().Local()}
+			poolName := rpRef.Address().Local()
+			qStats := apiv1.RPQueueStat{ResourcePool: poolName}
 			aResp := actorResps[rpRef]
 			switch aMsg := aResp.(type) {
 			case error:
@@ -176,6 +178,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				return nil
 			case *jobv1.QueueStats:
 				qStats.Stats = aMsg
+				aggregates, err := a.fetchAvgQueuedTime(poolName)
+				if err != nil {
+					return fmt.Errorf("fetch average queued time: %s", err)
+				}
+				qStats.Aggregates = aggregates
 				resp.Results = append(resp.Results, &qStats)
 			default:
 				return fmt.Errorf("unexpected response type: %T", aMsg)
@@ -499,4 +506,42 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 
 	return resp, nil
+}
+
+func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
+	[]*jobv1.AggregateQueueStats, error,
+) {
+	aggregates := []model.ResourceAggregates{}
+	err := db.Bun().NewSelect().Model(&aggregates).
+		Where("aggregation_type = ?", "queued").
+		Where("aggregation_key = ?", pool).
+		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
+		Order("date ASC").Scan(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*jobv1.AggregateQueueStats, 0)
+	for _, record := range aggregates {
+		res = append(res, &jobv1.AggregateQueueStats{
+			PeriodStart: record.Date.Format("2006-01-02"),
+			Seconds:     record.Seconds,
+		})
+	}
+	today := float32(0)
+	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
+		Where("resource_pool = ?", pool).
+		Where("start_time >= CURRENT_DATE")
+	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
+		"avg(extract(epoch FROM end_time - start_time))",
+	).Where("event_type = ?", "QUEUED").
+		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
+		Scan(context.TODO(), &today)
+	if err != nil {
+		return nil, err
+	}
+	res = append(res, &jobv1.AggregateQueueStats{
+		PeriodStart: time.Now().Format("2006-01-02"),
+		Seconds:     today,
+	})
+	return res, nil
 }

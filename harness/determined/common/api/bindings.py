@@ -433,6 +433,28 @@ class v1AgentUserGroup:
             "agentGid": self.agentGid if self.agentGid is not None else None,
         }
 
+class v1AggregateQueueStats:
+    def __init__(
+        self,
+        periodStart: str,
+        seconds: float,
+    ):
+        self.periodStart = periodStart
+        self.seconds = seconds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AggregateQueueStats":
+        return cls(
+            periodStart=obj["periodStart"],
+            seconds=float(obj["seconds"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "periodStart": self.periodStart,
+            "seconds": dump_float(self.seconds),
+        }
+
 class v1Allocation:
     def __init__(
         self,
@@ -3676,21 +3698,25 @@ class v1RPQueueStat:
         self,
         resourcePool: str,
         stats: "v1QueueStats",
+        aggregates: "typing.Optional[typing.Sequence[v1AggregateQueueStats]]" = None,
     ):
         self.stats = stats
         self.resourcePool = resourcePool
+        self.aggregates = aggregates
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RPQueueStat":
         return cls(
             stats=v1QueueStats.from_json(obj["stats"]),
             resourcePool=obj["resourcePool"],
+            aggregates=[v1AggregateQueueStats.from_json(x) for x in obj["aggregates"]] if obj.get("aggregates", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "stats": self.stats.to_json(),
             "resourcePool": self.resourcePool,
+            "aggregates": [x.to_json() for x in self.aggregates] if self.aggregates is not None else None,
         }
 
 class v1RendezvousInfo:
