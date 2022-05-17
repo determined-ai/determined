@@ -12,7 +12,6 @@ from tests.filetree import FileTree
 AWAITING_METRICS = "TensorBoard is awaiting metrics"
 SERVICE_READY = "TensorBoard is running at: http"
 num_trials = 1
-custom_image_for_testing = "custom_alpine"
 
 
 def shared_fs_config(num_trials: int) -> str:
@@ -163,23 +162,21 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
 
 
 @pytest.mark.slow
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
+@pytest.mark.e2e_cpu
 def test_start_tensorboard_with_custom_image(
-    tmp_path: Path, secrets: Dict[str, str], prefix: Optional[str]
+    tmp_path: Path
 ) -> None:
     """
     Start a random experiment configured with the shared_fs backend, start a
-    TensorBoard instance pointed to the experiment, and kill the TensorBoard
+    TensorBoard instance pointed to the experiment with custom image, verify the image has been set, and kill the TensorBoard
     instance.
     """
-    with FileTree(tmp_path, {"config.yaml": s3_config(1, secrets, prefix)}) as tree:
+    with FileTree(tmp_path, {"config.yaml": shared_fs_config(1)}) as tree:
         config_path = tree.joinpath("config.yaml")
         experiment_id = exp.run_basic_test(
             str(config_path), conf.fixtures_path("no_op"), num_trials
         )
-
+    not_a_real_image = "not_a_real_image"
     command = [
         "tensorboard",
         "start",
@@ -187,15 +184,15 @@ def test_start_tensorboard_with_custom_image(
         "--no-browser",
         "--detach",
         "--config",
-        f"environment.image={custom_image_for_testing}",
+        f"environment.image={not_a_real_image}",
     ]
     with cmd.interactive_command(*command) as tensorboard:
         t_id = tensorboard.task_id
         commandt = ["tensorboard", "config", t_id]
         with cmd.interactive_command(*commandt, task_id=t_id) as tensorboard_config:
             for line in tensorboard_config.stdout:
-                if "cpu" in line or "cuda:" in line or "rocm" in line:
-                    if custom_image_for_testing in line:
+                if "cpu" in line or "cuda" in line or "rocm" in line:
+                    if not_a_real_image in line:
                         break
                     else:
                         raise AssertionError(f"Setting custom image not working properly: {line}")
