@@ -1,10 +1,8 @@
 package agent
 
 import (
-	"fmt"
 	"net/http"
 	"reflect"
-	"runtime/debug"
 	"sort"
 	"strings"
 	"syscall"
@@ -139,14 +137,12 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		var masterSetAgentOptions aproto.AgentMessage
-		fmt.Println("websocketconnected", a.awaitingReconnect, a.agentReattachEnabled)
 		// For reconnecting containers, or when reattach is enabled, try to synchronize containers.
 		// Flush them otherwise.
 		reconnect, _ := msg.IsReconnect()
 		if a.awaitingReconnect && (a.agentReattachEnabled || reconnect) {
 			optsCopy := *a.opts
 			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
-			fmt.Println("containersToReattach", optsCopy.ContainersToReattach)
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
 		} else {
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
@@ -392,8 +388,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
-		fmt.Println("UNEXPECTED MESSAGE", msg, reflect.TypeOf(msg))
-		debug.PrintStack()
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
@@ -522,11 +516,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 }
 
 func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
-	if a.agentState != nil {
-		fmt.Println("agent summarize debug")
-		fmt.Println(maps.Keys(a.agentState.containerAllocation))
-		fmt.Println(maps.Keys(a.agentState.containerState))
-	}
 	result := model.AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
@@ -563,7 +552,6 @@ func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.Containe
 		result = append(result, aproto.ContainerReattach{Container: *container})
 	}
 
-	fmt.Println("gatherContainersToReattach: ", result)
 	return result
 }
 

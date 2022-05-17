@@ -792,7 +792,6 @@ func (a *Allocation) containerProxyAddresses() []cproto.Address {
 }
 
 func (a *Allocation) terminated(ctx *actor.Context) {
-	fmt.Println("terminated 10")
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
 	exit := &AllocationExited{FinalState: a.State()}
 	if a.exited {
@@ -805,7 +804,6 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		return
 	}
 	a.exited = true
-	fmt.Println("terminated 20")
 	defer ctx.Tell(ctx.Self().Parent(), exit)
 	defer ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 	defer a.unregisterProxies(ctx)
@@ -817,10 +815,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	if len(a.resources) == 0 {
 		return
 	}
-	fmt.Println("terminated 30")
 	defer a.markResourcesReleased(ctx)
-
-	fmt.Println("terminated per-purge")
 
 	if a.req.Preemptible {
 		defer a.preemption.Close()
@@ -873,7 +868,6 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 
 // markResourcesReleased persists completion information.
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
-	fmt.Println("markResourcesReleased", a.model.AllocationID)
 	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		ctx.Log().WithError(err).Error("error deleting allocation session")
@@ -887,7 +881,6 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 }
 
 func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
-	fmt.Println("purging", a.model.AllocationID)
 	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).
 		Where("allocation_id = ?", a.model.AllocationID).
 		Exec(context.TODO())

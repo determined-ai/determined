@@ -486,7 +486,6 @@ func (c *containerManager) unmakeContainerDockerLabels(ctx *actor.Context, cont 
 func (c *containerManager) revalidateContainers(
 	ctx *actor.Context, expectedSurvivors []aproto.ContainerReattach) (
 	[]aproto.ContainerReattachAck, error) {
-	fmt.Println("expectedSurvivors", expectedSurvivors)
 	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
 
 	for _, expectedSurvivor := range expectedSurvivors {
@@ -510,8 +509,6 @@ func (c *containerManager) revalidateContainers(
 
 		result = append(result, ack)
 	}
-
-	fmt.Println("expectedSurvivors result", result)
 
 	return result, nil
 }

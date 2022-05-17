@@ -617,7 +617,6 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 		newSpec.Labels = make(map[string]string)
 	}
 	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
-	fmt.Println(newSpec.Labels["determined-queue-position"])
 	spec.Environment.SetPodSpec(newSpec)
 }
 

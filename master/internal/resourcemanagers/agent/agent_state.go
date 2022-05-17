@@ -475,7 +475,6 @@ func (a *AgentState) delete() error {
 
 func (a *AgentState) clearUnlessRecovered(
 	recovered map[cproto.ID]aproto.ContainerReattachAck) error {
-	fmt.Println("clearUnlessRecovered", recovered)
 	updated := false
 	for d := range a.Devices {
 		if cID := a.Devices[d]; cID != nil {
