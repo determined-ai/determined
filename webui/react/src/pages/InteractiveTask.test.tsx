@@ -42,11 +42,7 @@ const InteractiveTaskContainer: React.FC = () => {
   );
 };
 
-const setup = () => {
-  render(
-    <InteractiveTaskContainer />,
-  );
-};
+const setup = () => render(<InteractiveTaskContainer />);
 
 describe('InteractiveTask', () => {
   it('task name and resource pool are shown', async () => {

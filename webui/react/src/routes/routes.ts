@@ -2,9 +2,9 @@ import { RouteConfig } from '../shared/types';
 
 const routes: RouteConfig[] = [
   {
-    id: 'interactiveTask',
+    id: 'interactive',
     needAuth: true,
-    path: '/interactiveTask/:taskId/:taskType/:taskName/:taskResourcePool/:taskUrl',
+    path: '/interactive/:taskId/:taskType/:taskName/:taskResourcePool/:taskUrl',
     title: 'Interactive Task',
   },
   {

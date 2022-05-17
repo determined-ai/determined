@@ -104,7 +104,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
       <ConditionalWrapper
         condition={canBeOpened(record)}
         wrapper={children => (
-          <Link path={paths.interactiveTask(record, waitPageUrl(record))}>
+          <Link path={paths.interactive(record, waitPageUrl(record))}>
             {children}
           </Link>
         )}>
@@ -127,7 +127,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
     <ConditionalWrapper
       condition={canBeOpened(record)}
       wrapper={ch => (
-        <Link path={paths.interactiveTask(record, waitPageUrl(record))}>
+        <Link path={paths.interactive(record, waitPageUrl(record))}>
           {ch}
         </Link>
       )}>

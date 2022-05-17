@@ -93,10 +93,10 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
-  interactiveTask: (command: CommandTask, taskUrl: string): string => {
-    return `/interactiveTask/${command.id}/${command.type}/
-    ${command.name}/${command.resourcePool}/
-    ${encodeURIComponent(taskUrl)}`;
+  interactive: (command: CommandTask, taskUrl: string): string => {
+    return `/interactive/${command.id}/${command.type}/
+      ${command.name}/${command.resourcePool}/
+      ${encodeURIComponent(taskUrl)}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
