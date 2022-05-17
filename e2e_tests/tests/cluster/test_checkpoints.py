@@ -91,7 +91,7 @@ def test_delete_checkpoints() -> None:
     checkpoint_file = os.path.join(storage_manager._base_path, d_CheckpointUuid)
 
     if os.path.exists(checkpoint_file):
-        raise AssertionError(f"Checkpoint with uuid {d_CheckpointUuid} was not deleted")
+        raise AssertionError(f"Checkpoint file with patg {checkpoint_file} was not deleted")
 
 
 def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
