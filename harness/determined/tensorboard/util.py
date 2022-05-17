@@ -3,11 +3,7 @@ import pathlib
 from typing import List
 
 tb_file_types = [
-    "*tfevents*",
-    "*.trace.json.gz",
-    "*.trace.json",
-    "*.memory_profile.json.gz",
-    "*.pb",
+    "*",
 ]
 
 
