@@ -57,21 +57,37 @@ func (a *apiServer) GetSlot(
 }
 
 func (a *apiServer) EnableAgent(
-	_ context.Context, req *apiv1.EnableAgentRequest) (resp *apiv1.EnableAgentResponse, err error) {
+	ctx context.Context, req *apiv1.EnableAgentRequest,
+) (resp *apiv1.EnableAgentResponse, err error) {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
+		return nil, err
+	}
 	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) DisableAgent(
-	_ context.Context, req *apiv1.DisableAgentRequest) (resp *apiv1.DisableAgentResponse, err error) {
+	ctx context.Context, req *apiv1.DisableAgentRequest,
+) (resp *apiv1.DisableAgentResponse, err error) {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
+		return nil, err
+	}
 	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) EnableSlot(
-	_ context.Context, req *apiv1.EnableSlotRequest) (resp *apiv1.EnableSlotResponse, err error) {
+	ctx context.Context, req *apiv1.EnableSlotRequest,
+) (resp *apiv1.EnableSlotResponse, err error) {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
+		return nil, err
+	}
 	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 
 func (a *apiServer) DisableSlot(
-	_ context.Context, req *apiv1.DisableSlotRequest) (resp *apiv1.DisableSlotResponse, err error) {
+	ctx context.Context, req *apiv1.DisableSlotRequest,
+) (resp *apiv1.DisableSlotResponse, err error) {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
+		return nil, err
+	}
 	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }

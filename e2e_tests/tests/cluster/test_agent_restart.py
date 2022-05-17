@@ -12,6 +12,7 @@ from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import get_command_info, run_command, wait_for_command_state
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
@@ -122,13 +123,14 @@ class ManagedCluster:
         assert agent_data[0]["draining"] is False
 
     def fetch_config(self) -> Dict:
-        master_config = json.loads(
-            subprocess.run(
-                ["det", "-m", self.master_url, "master", "config", "--json"],
-                stdout=subprocess.PIPE,
-                check=True,
-            ).stdout.decode()
-        )
+        with logged_in_user(ADMIN_CREDENTIALS):
+            master_config = json.loads(
+                subprocess.run(
+                    ["det", "-m", self.master_url, "master", "config", "--json"],
+                    stdout=subprocess.PIPE,
+                    check=True,
+                ).stdout.decode()
+            )
         return cast(Dict, master_config)
 
     def fetch_config_reattach_wait(self) -> float:
