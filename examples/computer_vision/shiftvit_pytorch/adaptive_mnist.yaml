@@ -22,11 +22,11 @@ hyperparameters:
     drop_rate:
       type: double
       minval: 0.1
-      maxval: 0.4
+      maxval: 0.5
     drop_path_rate:
       type: double
-      minval: 0.2
-      maxval: 0.9
+      minval: 0.1
+      maxval: 0.5
     norm_layer: GN1
     act_layer: GELU
     patch_norm: True
@@ -36,8 +36,8 @@ hyperparameters:
     opt: adamw
     lr:
       type: log
-      minval: -5.0
-      maxval: 0.0
+      minval: -4.0
+      maxval: -1.0
       base: 10.0
     opt_eps: 1.0e-8
     opt_betas: null
@@ -47,7 +47,7 @@ hyperparameters:
   # timm.scheduler.create_schedulers args
   scheduler:
     sched: cosine
-    epochs: 5
+    epochs: 10
     lr_noise: null
     lr_noise_pct: 0.67
     lr_noise_std: 1.0
@@ -57,7 +57,7 @@ hyperparameters:
     cooldown_epochs: 0
   # timm.data.create_transform args
   transform:
-    scale: [ .85, 1.15 ]
+    scale: [ .9, 1. ]
     ratio: [ .9, 1.1 ]
     hflip: 0.
     vflip: 0.
@@ -73,7 +73,7 @@ searcher:
   name: adaptive_asha
   metric: validation_loss
   max_length:
-    epochs: 5
-  max_trials: 32
+    epochs: 10 # epochs + cooldown_epochs from scheduler
+  max_trials: 64
   smaller_is_better: True
-max_restarts: 1
+max_restarts: 0

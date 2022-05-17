@@ -21,9 +21,7 @@ import torch
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import data
-
-# shiftfit.py cloned into directory via startup-hook.sh during container initialization.
-import shiftvit
+import shiftvit  # shiftfit.py cloned via startup-hook.sh during container initialization.
 
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -58,8 +56,29 @@ class ShiftViTTrial(PyTorchTrial):
         self.scheduler = self.context.wrap_lr_scheduler(
             scheduler, step_mode=LRScheduler.StepMode.MANUAL_STEP
         )
-        # timm's scheduler expects an epoch_idx arg. Track when the epoch changes.
-        self._last_epoch_idx = None
+
+        # timm's scheduler expects to be stepped at the end of each epoch and to be passed an epoch_idx arg.
+        # The internal epoch_idx arg used by Determined is computed based on the len of the un-sharded training
+        # dataloader and its count is stepped when the number of globally processed batches surpasses an integer
+        # multiple of this length.  Consequently, during distributed training workers which are simultaneously
+        # processing the same batch_idx can have differing epoch_idx values near the end of an epoch.  Keying off of
+        # epoch_idx while stepping the scheduler can therefore lead to un-synchronized stepping, so we instead perform
+        # the epoch-end bookkeeping manually by tracking the appropriate batches-per-epoch. We default to using the
+        # records_per_epoch field to define epoch lengths, if provided, and otherwise rely on the training
+        # dataloader's len.
+        self._records_per_epoch = self.context.get_experiment_config().get(
+            "records_per_epoch", None
+        )
+        self._global_batch_size = self.context.get_global_batch_size()
+        if self._records_per_epoch is None:
+            self._batches_per_epoch = None
+        else:
+            self._batches_per_epoch = int(
+                math.ceil(self._records_per_epoch / self._global_batch_size)
+            )
+
+        self._training_loader_len = None
+        self._last_epoch_idx = 0
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         """Builds the callback for stepping the ShiftViT learning-rate scheduler used when training on ImageNet."""
@@ -69,25 +88,21 @@ class ShiftViTTrial(PyTorchTrial):
 
     def build_training_data_loader(self) -> DataLoader:
         training_data_loader = self._get_data_loader(train=True)
-
-        # epoch_idx is internally computed based on the len of the training dataloader.  If records_per_epoch is set
-        # in the config file, and records_per_epoch is not equal to the length of the training dataset, this can create
-        # two different notions of epoch lengths.
-        records_per_epoch = self.context.get_experiment_config().get(
-            "records_per_epoch", None
+        self._training_loader_len = len(training_data_loader)
+        num_workers = self.context.distributed.size
+        batches_per_epoch_from_dataloader = int(
+            math.ceil(self._training_loader_len / num_workers)
         )
-        if records_per_epoch is not None:
-            global_batch_size = self.context.get_global_batch_size()
-            records_per_epoch_batches = int(
-                math.ceil(records_per_epoch / global_batch_size)
+        # If records_per_epoch was not specified in the config, compute batches per epoch based on the dataloader len
+        if self._records_per_epoch is None:
+            self._batches_per_epoch = batches_per_epoch_from_dataloader
+        elif batches_per_epoch_from_dataloader != self._batches_per_epoch:
+            warning_msg = (
+                f"The 'records_per_epoch' configuration yields {self._batches_per_epoch} batches-per-epoch, "
+                f"while the len of the training DataLoader yields {batches_per_epoch_from_dataloader}. Epoch "
+                "lengths are internally computed based on the latter number."
             )
-            if records_per_epoch_batches != len(training_data_loader):
-                warning_msg = (
-                    f"The 'records_per_epoch' configuration yields {records_per_epoch_batches} batches, "
-                    f"while the len of the training DataLoader yields {len(training_data_loader)} batches. Epoch "
-                    "lengths are internally computed based on the latter number."
-                )
-                warnings.warn(warning_msg)
+            warnings.warn(warning_msg)
         return training_data_loader
 
     def build_validation_data_loader(self) -> DataLoader:
@@ -106,9 +121,15 @@ class ShiftViTTrial(PyTorchTrial):
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
 
-        if epoch_idx != self._last_epoch_idx:
-            self._last_epoch_idx = epoch_idx
-            self.scheduler.step(epoch=epoch_idx)
+        if not (batch_idx + 1) % self._batches_per_epoch:
+            self._last_epoch_idx += 1
+            print(
+                f"LR SCHEDULER STEPPED AT EPOCH {epoch_idx}/{self._last_epoch_idx} BATCH {batch_idx}"
+            )
+            print(f"LEN TRAIN LOADER: {self._training_loader_len}")
+            print(f"BATCHES PER EPOCH {self._batches_per_epoch}")
+            print(f"BATCH SHAPE {images.shape}")
+            self.scheduler.step(epoch=self._last_epoch_idx)
 
         return {"loss": loss}
 
@@ -143,46 +164,28 @@ class ShiftViTTrial(PyTorchTrial):
             pin_memory=self.data_config.pin_memory,
             persistent_workers=self.data_config.persistent_workers,
             shuffle=train,
+            drop_last=train,
         )
 
 
 class TimingCallback(PyTorchCallback):
-    """
-    Callback for use when training on ImageNet. Steps the ShiftViT learning-rate scheduler at the end of each epoch,
-    following the ShiftViT training procedures, and prints epoch timing statistics.
-    """
+    """Callback for computing and printing total duration of entire trial and of the training portion of the trial."""
 
     def __init__(self) -> None:
         self._trial_start_time = None
-        self._training_epoch_start_time = None
-        self._validation_epoch_start_time = None
+        self._train_start_time = None
 
     def on_trial_startup(
         self, first_batch_idx: int, checkpoint_uuid: Optional[str]
     ) -> None:
         self._trial_start_time = time.perf_counter()
 
+    def on_training_start(self) -> None:
+        self._train_start_time = time.perf_counter()
+
     def on_trial_shutdown(self) -> None:
         trial_end_time = time.perf_counter()
         print(f"Trial duration: {trial_end_time - self._trial_start_time:.4f} seconds")
-
-    def on_training_epoch_start(self, epoch_idx: int) -> None:
-        print(f"Starting training epoch {epoch_idx}")
-        self._training_epoch_start_time = time.perf_counter()
-
-    def on_training_epoch_end(self, epoch_idx: int) -> None:
-        print(f"Ending training epoch {epoch_idx}")
-        training_epoch_end_time = time.perf_counter()
         print(
-            f"Training epoch {epoch_idx} duration: {training_epoch_end_time - self._training_epoch_start_time:.4f} seconds"
-        )
-
-    def on_validation_epoch_start(self) -> None:
-        print("val epoch start")
-        self._validation_epoch_start_time = time.perf_counter()
-
-    def on_validation_epoch_end(self, outputs: List[Any]) -> None:
-        validation_epoch_end_time = time.perf_counter()
-        print(
-            f"Validation epoch duration: {validation_epoch_end_time - self._validation_epoch_start_time:.4f} seconds"
+            f"Training-start to trial-end duration: {trial_end_time - self._train_start_time:.4f} seconds"
         )

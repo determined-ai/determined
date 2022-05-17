@@ -31,7 +31,7 @@ hyperparameters:
   # timm.optim.create_optimizer args, using ShiftViT training defaults
   optimizer:
     opt: adamw
-    lr: 5.0e-4
+    lr: 1.0e-3
     opt_eps: 1.0e-8
     opt_betas: null
     clip_grad: null
@@ -73,7 +73,7 @@ searcher:
   max_length:
     epochs: 5 # 300 for full ShiftViT; epochs + cooldown_epochs from scheduler
   smaller_is_better: true
-max_restarts: 1
+max_restarts: 0
 profiling:
   enabled: True
 optimizations:
