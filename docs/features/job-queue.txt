@@ -42,7 +42,7 @@ The following constraints are associated with using the job queue to modify jobs
  Job States
 ************
 
-Queued jobs can be in the ``Queued`` or ``Scheduled`` state:
+Queued jobs can be in the ``Queued`` or ``Scheduled`` state.
 
 +---------------+-----------------------------------------------------------------------+
 | State         | Description                                                           |
