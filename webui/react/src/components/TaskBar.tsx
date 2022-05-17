@@ -62,14 +62,15 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Prop
       <div className={css.barContent}>
         <span>{name}</span>
         <span>&#8212;</span>
-        <span>{resourcePool}</span>
         <Dropdown
           overlay={dropdownOverlay}
           placement="bottomRight"
           trigger={[ 'click' ]}>
           <div
             className={css.dropdownTrigger}
-            data-testid="task-action-dropdown-trigger"> <Icon name="arrow-down" size="tiny" />
+            data-testid="task-action-dropdown-trigger">
+            <span className={css.dropdownTrigger}>{resourcePool}</span>
+            <Icon name="arrow-down" size="tiny" />
           </div>
         </Dropdown>
       </div>
