@@ -161,6 +161,10 @@ taskContainerDefaults:
 telemetry:
   enabled: true
 
+## Configure Prometheus endpoints for monitoring.
+#observability:
+#    enable_prometheus: true
+
 ## A user-friendly name to identify this cluster by.
 # clusterName: Dev
 
