@@ -105,7 +105,10 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		e.restored = true
 	}
 
-	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
+	experimentActor, _ := m.system.ActorOf(actor.Addr("experiments", e.ID), e)
+	// Wait for experiment to run PreStart, which waits for trial PreStarts,
+	// which in turn waits for allocations to be initialized.
+	m.system.Ask(experimentActor, actor.Ping{}).Get()
 	return nil
 }
 
@@ -151,7 +154,7 @@ func (e *experiment) restoreTrial(
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-		searcher, e.rm, e.taskLogger, e.db, config, ckpt, e.taskSpec,
+		searcher, e.rm, e.taskLogger, e.db, config, ckpt, e.taskSpec, true,
 	)
 	if trialID != nil {
 		t.id = *trialID
@@ -162,7 +165,9 @@ func (e *experiment) restoreTrial(
 			})
 		}
 	}
-	ctx.ActorOf(searcher.Create.RequestID, t)
+	trialActor, _ := ctx.ActorOf(searcher.Create.RequestID, t)
+	ctx.Ask(trialActor, actor.Ping{}).Get()
+
 	l.Debug("restored trial")
 }
 

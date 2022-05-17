@@ -34,6 +34,7 @@ stages:
         master_port: 8081
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
+        container_auto_remove_disabled: true
 
   - agent:
       name: agent2
@@ -45,3 +46,4 @@ stages:
         fluent:
           port: 24225  # default value is 24224
           container_name: determined-fluent-2
+        container_auto_remove_disabled: true

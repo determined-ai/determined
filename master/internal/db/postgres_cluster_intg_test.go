@@ -74,7 +74,7 @@ func TestClusterAPI(t *testing.T) {
 	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
 
 	// Don't complete the above allocation and call CloseOpenAllocations
-	db.CloseOpenAllocations()
+	db.CloseOpenAllocations(nil)
 
 	// Retrieve the open allocation and check if end time is set to cluster_heartbeat
 	aOut, err := db.AllocationByID(aIn.AllocationID)

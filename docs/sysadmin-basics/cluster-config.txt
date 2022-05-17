@@ -391,6 +391,13 @@ The master supports the following configuration settings:
    -  ``max_aux_containers_per_agent``: The maximum number of auxiliary or system containers that
       can be scheduled on each agent in this pool.
 
+   -  ``agent_reconnect_wait``: Maximum time the master should wait for a disconnected agent before
+      considering it dead.
+
+   -  ``agent_reattach_enabled`` (experimental): Whether master & agent try to recover running
+      containers after a restart. On master or agent process restart, the agent must reconnect
+      within ``agent_reconnect_wait`` period.
+
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
       overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
       in that resource pool. There is no merging behavior; when a resource pool's
@@ -888,3 +895,20 @@ The master supports the following configuration settings:
       -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
          value of the ``master_host`` option is an IP address or is not contained in the
          certificate.
+
+-  ``fluent``: fluentd settings.
+      -  ``image``: Docker image to use for the managed Fluent Bit daemon. Defaults to
+         ``fluent/fluent-bit:1.6``.
+      -  ``port``: TCP port for the Fluent Bit daemon to listen on. Defaults to 24224. When running
+         multiple agents on the same node, should be unique.
+      -  ``container_name``: Name for the Fluent Bit container. Defaults to ``determined-fluent``.
+         When running multiple agents on the same node, should be unique.
+
+-  ``agent_reconnect_attempts``: Maximum number of times agent will attempt to reconnect to master
+   on connection failure. Defaults to 5.
+
+-  ``agent_reconnect_backoff``: Time interval between reconnection attempts, in seconds. Defaults to
+   5 seconds.
+
+-  ``container_auto_remove_disabled`` (debug): Whether to disable setting ``AutoRemove`` flag on
+   task containers. Defaults to false.

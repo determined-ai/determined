@@ -56,6 +56,10 @@ type (
 		dockerID      string
 		containerInfo types.ContainerJSON
 	}
+	containerReattached struct {
+		dockerID      string
+		containerInfo types.ContainerJSON
+	}
 	containerTerminated struct {
 		ExitCode aproto.ExitCode
 	}
@@ -311,6 +315,10 @@ func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
 				ctx.Sender(),
 				containerTerminated{ExitCode: aproto.ExitCode(containerInfo.State.ExitCode)})
 		} else {
+			ctx.Tell(
+				ctx.Sender(),
+				containerReattached{dockerID: cont.ID, containerInfo: containerInfo},
+			)
 			select {
 			case err = <-eerr:
 				sendErr(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
