@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// GetDeleteCheckpointsInModelRegistry gets the deleted checkpoints provided in the model registry.
+// FilterForRegisteredCheckpoints gets the deleted checkpoints provided in the model registry.
 func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []string) ([]string, error) {
 	var checkpointIDRows []struct {
 		ID string
@@ -28,7 +28,7 @@ func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []string) ([]st
 	return checkpointIDs, nil
 }
 
-// UpdateCheckpointsStateToDelete updates the provided delete checkpoints to DELETED state.
+// MarkCheckpointsDeleted updates the provided delete checkpoints to DELETED state.
 func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []string) error {
 	_, err := db.sql.Exec(`UPDATE raw_checkpoints c
     SET state = 'DELETED'
@@ -41,19 +41,21 @@ func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []string) error {
     SET state = 'DELETED'
     WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))`, deleteCheckpoints)
 	if err != nil {
-		fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
+		return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
 	}
 
 	return nil
 }
 
+// ExperimentCheckpointGrouping represents a mapping of checkpoint uuids to experiment id.
 type ExperimentCheckpointGrouping struct {
 	EID    int
 	CUUIDS []string
 }
 
-func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) ([]*ExperimentCheckpointGrouping, error) {
-
+// GetExpIDsUsingCheckpointUUIDs creates the mapping of checkpoint uuids to experiment id.
+func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) (
+	[]*ExperimentCheckpointGrouping, error) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
@@ -70,7 +72,9 @@ func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) ([]*Experime
 		var eIDcUUIDs ExperimentCheckpointGrouping
 		err = rows.StructScan(eIDcUUIDs)
 		if err != nil {
-			return nil, fmt.Errorf("reading rows into a slice of struct that stores checkpoint ids grouped by exp ID")
+			return nil,
+				fmt.Errorf(
+					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID")
 		}
 		groupeIDcUUIDS = append(groupeIDcUUIDS, &eIDcUUIDs)
 	}
