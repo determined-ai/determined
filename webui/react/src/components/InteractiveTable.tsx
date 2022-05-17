@@ -19,7 +19,6 @@ import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import { getCssVar } from 'themes';
 
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
@@ -328,7 +327,7 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [ pageWidth, getAdjustedColumnWidthSum ],
+    [ pageWidth ],
   );
 
   useLayoutEffect(() => {
@@ -416,7 +415,7 @@ const InteractiveTable: InteractiveTable = ({
         });
       });
     },
-    [ settings.columns, pageWidth, getAdjustedColumnWidthSum, columnDefs ],
+    [ settings.columns, pageWidth, columnDefs ],
   );
 
   const handleResizeStart = useCallback(
