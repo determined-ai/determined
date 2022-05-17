@@ -43,7 +43,7 @@ func (a *apiServer) DeleteCheckpoints(
 	registeredCheckpointUUIDs, err := a.m.db.FilterForRegisteredCheckpoints(checkpointsToDelete)
 	if err != nil {
 		return nil, status.Errorf(
-			codes.NotFound, "error getting list of checkpoints in model registry")
+			codes.Unknown, "error getting list of checkpoints in model registry")
 	}
 
 	// return 400 if model registry checkpoints and include all the model registry checkpoints
@@ -59,7 +59,8 @@ func (a *apiServer) DeleteCheckpoints(
 
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(
+			codes.Unknown, "cannot get current user for the current session")
 	}
 
 	agentUserGroup, err := a.m.db.AgentUserGroup(curUser.ID)
@@ -83,20 +84,20 @@ func (a *apiServer) DeleteCheckpoints(
 		JobType: model.JobTypeCheckpointGC,
 		OwnerID: &curUser.ID,
 	}); err != nil {
-		return nil, errors.Wrapf(err, "persisting new job")
+		return nil, status.Error(codes.Aborted, "persisting new job")
 	}
 
 	groupeIDcUUIDS, err := a.m.db.GetExpIDsUsingCheckpointUUIDs(checkpointsToDelete)
 
 	if err != nil {
-		errors.Wrapf(err, "grouping checkpoint ids with exp id")
+		return nil, status.Error(codes.Aborted, "grouping checkpoint ids with exp ids")
 	}
 
 	for _, expIDcUUIDs := range groupeIDcUUIDS {
 		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.EID)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "getting experiment by experiment id")
+			return nil, status.Error(codes.Aborted, "getting experiment by exp id")
 		}
 
 		jsonVCheckpoints, _ := json.Marshal(expIDcUUIDs.CUUIDS)
@@ -116,11 +117,14 @@ func (a *apiServer) DeleteCheckpoints(
 
 			taskLogger: a.m.taskLogger,
 		}).AwaitTermination(); gcErr != nil {
-			return nil, errors.Wrapf(gcErr, "failed to gc checkpoints requested by user")
+			return nil, status.Error(codes.Aborted, "failed to GC checkpoints given by user")
 		}
 	}
 
-	a.m.db.MarkCheckpointsDeleted(checkpointsToDelete)
+	err = a.m.db.MarkCheckpointsDeleted(checkpointsToDelete)
+	if err != nil {
+		return nil, status.Error(codes.Aborted, "marking GC checkpoints as deleted")
+	}
 
 	return &apiv1.DeleteCheckpointsResponse{}, nil
 }
