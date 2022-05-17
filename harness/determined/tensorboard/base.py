@@ -5,7 +5,6 @@ import time
 from typing import List
 
 from determined import tensorboard
-from determined.tensorboard import util
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):
@@ -44,7 +43,6 @@ class TensorboardManager(metaclass=abc.ABCMeta):
             logging.warning(f"{self.base_path} directory does not exist.")
             return []
         tb_files = [file for file in self.base_path.rglob("*") if file.is_file()]
-        logging.debug(f"tb_files={', '.join(str(f) for f in tb_files)}")
         return list(filter(lambda file: file.stat().st_mtime > since, tb_files))
 
     def to_sync(self) -> List[pathlib.Path]:
