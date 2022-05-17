@@ -40,7 +40,11 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         files exist but few or none need to be re-synced.
         """
 
-        tb_files = util.find_tb_files(self.base_path)
+        if not self.base_path.exists():
+            logging.warning(f"{self.base_path} directory does not exist.")
+            return []
+        tb_files = [file for file in self.base_path.rglob("*") if file.is_file()]
+        logging.debug(f"tb_files={', '.join(str(f) for f in tb_files)}")
         return list(filter(lambda file: file.stat().st_mtime > since, tb_files))
 
     def to_sync(self) -> List[pathlib.Path]:
