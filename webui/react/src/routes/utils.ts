@@ -97,8 +97,7 @@ export const paths = {
   },
   interactive: (command: CommandTask): string => {
     return `/interactive/${command.id}/${command.type}/
-      ${command.name}/${command.resourcePool}/
-      ${encodeURIComponent(waitPageUrl(command))}`;
+      ${command.name}/${command.resourcePool}/${encodeURIComponent(waitPageUrl(command))}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;

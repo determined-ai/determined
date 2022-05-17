@@ -40,14 +40,14 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
     throw new Error('command cannot be opened');
   const kind = isCommandTask(command) ? command.type : command.kind;
 
-  const waitPath = `/det/wait/${kind.toLowerCase()}/${command.id}`;
+  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind.toLowerCase()}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   return waitPath + waitParams;
 };
 
 export const openCommand = (command: CommandTask): void => {
   window.open(
-    `/det${paths.interactive(command)}`,
+    process.env.PUBLIC_URL + paths.interactive(command),
     '_blank',
     windowOpenFeatures.join(','),
   );
