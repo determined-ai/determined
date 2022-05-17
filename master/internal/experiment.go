@@ -347,7 +347,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			e.Config.CheckpointStorage().SaveExperimentBest(),
 			e.Config.CheckpointStorage().SaveTrialBest(),
 			e.Config.CheckpointStorage().SaveTrialLatest(),
-			true,
 		)
 		if err != nil {
 			ctx.Log().WithError(err).Error("")

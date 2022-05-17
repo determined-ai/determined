@@ -86,7 +86,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	return m.db.ExperimentCheckpointsToGCRaw(
-		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
+		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
 
 func (m *Master) getExperimentModelDefinition(c echo.Context) error {
@@ -221,7 +221,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialLatest(),
-			true,
 		)
 		if err != nil {
 			return nil, err

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -40,7 +39,20 @@ func (a *apiServer) GetCheckpoint(
 func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
 	req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
-	checkpointsToDelete := req.CheckpointUuids
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
+	checkpointsToDeleteStr := req.CheckpointUuids
+
+	var checkpointsToDelete []uuid.UUID
+
+	for _, cStr := range checkpointsToDeleteStr {
+		cUUID, _ := uuid.Parse(cStr)
+		checkpointsToDelete = append(checkpointsToDelete, cUUID)
+	}
+
 	registeredCheckpointUUIDs, err := a.m.db.FilterForRegisteredCheckpoints(checkpointsToDelete)
 	if err != nil {
 		return nil, err
@@ -57,7 +69,6 @@ func (a *apiServer) DeleteCheckpoints(
 
 	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +108,7 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, err
 		}
 
+<<<<<<< HEAD
 		CUUIDS := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
 		if len(CUUIDS) <= 0 {
 			return nil, status.Errorf(codes.Internal, "did not group checkpoint uuids by experiment ID: %v correctly", expIDcUUIDs.ExperimentID)
@@ -106,6 +118,14 @@ func (a *apiServer) DeleteCheckpoints(
 
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not marshal checkpoint uuids")
+=======
+		CUUIDsStr := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
+		var cUUIDsToDelete []uuid.UUID
+
+		for _, cStr := range CUUIDsStr {
+			cUUID, _ := uuid.Parse(cStr)
+			cUUIDsToDelete = append(cUUIDsToDelete, cUUID)
+>>>>>>> 957d8afae (changes for cli, gcraw, ToDelete)
 		}
 
 		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
@@ -116,7 +136,7 @@ func (a *apiServer) DeleteCheckpoints(
 				Base:         taskSpec,
 				ExperimentID: exp.ID,
 				LegacyConfig: exp.Config.AsLegacy(),
-				ToDelete:     jsonVCheckpoints,
+				ToDelete:     cUUIDsToDelete,
 			},
 			rm: a.m.rm,
 			db: a.m.db,
