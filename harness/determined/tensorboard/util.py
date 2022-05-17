@@ -17,4 +17,4 @@ def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
         logging.warning(f"{base_dir} directory does not exist.")
         return []
 
-    return [file for file in base_dir.rglob("*")]
+    return [file for file in base_dir.rglob("*") if not file.is_dir()]
