@@ -163,13 +163,11 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
-def test_start_tensorboard_with_custom_image(
-    tmp_path: Path
-) -> None:
+def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
     Start a random experiment configured with the shared_fs backend, start a
-    TensorBoard instance pointed to the experiment with custom image, verify the image has been set, and kill the TensorBoard
-    instance.
+    TensorBoard instance pointed to the experiment with custom image, verify 
+    the image has been set, and kill the TensorBoard instance.
     """
     with FileTree(tmp_path, {"config.yaml": shared_fs_config(1)}) as tree:
         config_path = tree.joinpath("config.yaml")
