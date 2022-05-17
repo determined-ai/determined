@@ -107,7 +107,7 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	}
 }
 
-func (m *Master) getConfig(echo.Context) (interface{}, error) {
+func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
 	return m.config.Printable()
 }
 
@@ -721,11 +721,10 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
 
-	userService, err := user.New(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
-	if err != nil {
-		return errors.Wrap(err, "cannot initialize user manager")
-	}
+	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
+	userService := user.GetService()
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
+	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAdminAuthentication}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
 		HTTPAuth: userService.ProcessProxyAuthentication,
@@ -903,7 +902,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig))
+	m.echo.GET("/config", api.Route(m.getConfig), adminAuthFuncs...)
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 

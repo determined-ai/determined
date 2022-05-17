@@ -590,7 +590,11 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
+	forcePreemption := false
 	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
+		if msg.ForcePreemption {
+			forcePreemption = true
+		}
 		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
 	}
 
@@ -598,7 +602,7 @@ func (a *Allocation) Terminate(ctx *actor.Context) {
 		return
 	}
 	switch {
-	case a.req.Preemptible && a.rendezvous != nil && a.rendezvous.ready():
+	case a.req.Preemptible && (a.rendezvous != nil && a.rendezvous.ready()) || forcePreemption:
 		a.preempt(ctx)
 	default:
 		a.kill(ctx)

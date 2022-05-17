@@ -11,3 +11,6 @@ sphinx==4.2.0
 
 # Theme
 furo==2021.10.9
+
+# live.py
+watchdog

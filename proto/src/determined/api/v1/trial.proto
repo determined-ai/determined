@@ -318,6 +318,18 @@ message AckAllocationPreemptionSignalRequest {
   // The allocation that is acknowledging the request.
   string allocation_id = 1;
 }
+// Allocation has been notified of a pending preemption
+message AllocationPendingPreemptionSignalRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+
+// Response to AllocationPendingPreemptionSignalRequest
+message AllocationPendingPreemptionSignalResponse {}
+
 // Response to AckAllocationPreemptionSignalRequest.
 message AckAllocationPreemptionSignalResponse {}
 
