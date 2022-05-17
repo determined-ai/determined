@@ -79,7 +79,7 @@ func (a *apiServer) DeleteCheckpoints(
 	taskSpec.AgentUserGroup = agentUserGroup
 
 	jobID := model.NewJobID()
-	if err := a.m.db.AddJob(&model.Job{
+	if err = a.m.db.AddJob(&model.Job{
 		JobID:   jobID,
 		JobType: model.JobTypeCheckpointGC,
 		OwnerID: &curUser.ID,
@@ -94,9 +94,9 @@ func (a *apiServer) DeleteCheckpoints(
 	}
 
 	for _, expIDcUUIDs := range groupeIDcUUIDS {
-		exp, err := a.m.db.ExperimentByID(expIDcUUIDs.EID)
+		exp, err1 := a.m.db.ExperimentByID(expIDcUUIDs.EID)
 
-		if err != nil {
+		if err1 != nil {
 			return nil, status.Error(codes.Aborted, "getting experiment by exp id")
 		}
 
