@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,23 +85,25 @@ func (a *apiServer) DeleteCheckpoints(
 		JobType: model.JobTypeCheckpointGC,
 		OwnerID: &curUser.ID,
 	}); err != nil {
-		return nil, status.Error(codes.Aborted, "persisting new job")
+		return nil, status.Error(codes.Internal, "persisting new job")
 	}
 
 	groupeIDcUUIDS, err := a.m.db.GetExpIDsUsingCheckpointUUIDs(checkpointsToDelete)
 
 	if err != nil {
-		return nil, status.Error(codes.Aborted, "grouping checkpoint ids with exp ids")
+		print(err)
+		return nil, err
 	}
 
 	for _, expIDcUUIDs := range groupeIDcUUIDS {
 		exp, err1 := a.m.db.ExperimentByID(expIDcUUIDs.EID)
 
 		if err1 != nil {
-			return nil, status.Error(codes.Aborted, "getting experiment by exp id")
+			return nil, err
 		}
 
-		jsonVCheckpoints, _ := json.Marshal(expIDcUUIDs.CUUIDS)
+		CUUIDS := strings.Split(expIDcUUIDs.CUUIDsString, ",")
+		jsonVCheckpoints, _ := json.Marshal(CUUIDS)
 
 		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
 			taskID:            model.NewTaskID(),

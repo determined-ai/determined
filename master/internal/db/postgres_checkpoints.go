@@ -16,7 +16,7 @@ func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []string) ([]st
 	WHERE c.uuid::text IN (SELECT UNNEST($1::text[])); 
 `, &checkpointIDRows, deleteCheckpoints); err != nil {
 		return nil, fmt.Errorf(
-			"querying for all requested delete checkpoints registered in model registry")
+			"querying for all requested delete checkpoints registered in model registry: %w", err)
 	}
 
 	var checkpointIDs []string
@@ -49,32 +49,34 @@ func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []string) error {
 
 // ExperimentCheckpointGrouping represents a mapping of checkpoint uuids to experiment id.
 type ExperimentCheckpointGrouping struct {
-	EID    int
-	CUUIDS []string
+	EID          int
+	CUUIDsString string
 }
 
 // GetExpIDsUsingCheckpointUUIDs creates the mapping of checkpoint uuids to experiment id.
+// The checkpount uuids grouped together are comma separated.
 func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) (
 	[]*ExperimentCheckpointGrouping, error) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
-		`SELECT e.id AS eID, array_agg(c.uuid::text) AS cUUIDs
+		`SELECT e.id AS EID, array_agg(c.uuid::text) AS CUUIDsString
 	FROM experiments e
 	JOIN checkpoints_view c ON c.experiment_id = e.id
 	WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))
 	GROUP BY e.id`, checkpoints)
 	if err != nil {
-		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids")
+		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
 	}
 
+	print(rows)
 	for rows.Next() {
 		var eIDcUUIDs ExperimentCheckpointGrouping
-		err = rows.StructScan(eIDcUUIDs)
+		err = rows.StructScan(&eIDcUUIDs)
 		if err != nil {
 			return nil,
 				fmt.Errorf(
-					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID")
+					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID:  %w", err)
 		}
 		groupeIDcUUIDS = append(groupeIDcUUIDS, &eIDcUUIDs)
 	}
