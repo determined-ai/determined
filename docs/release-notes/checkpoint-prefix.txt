@@ -2,4 +2,5 @@
 
 **Bug Fixes**
 
--  Kubernetes: Specifying `checkpointStorage.prefix` for `checkpointStorage.type=s3` will now upload checkpoints correctly while before it was ignored.
+-  Kubernetes: Specifying `checkpointStorage.prefix` for `checkpointStorage.type=s3` will now upload
+   checkpoints correctly while before it was ignored.
