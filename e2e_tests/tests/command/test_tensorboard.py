@@ -161,7 +161,6 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
-@pytest.mark.slow
 @pytest.mark.e2e_cpu
 def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
