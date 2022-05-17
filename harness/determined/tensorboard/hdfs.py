@@ -34,7 +34,7 @@ class HDFSTensorboardManager(base.TensorboardManager):
     def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
             canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            rank_aware_path = get_rank_aware_path(canonical_path)
+            rank_aware_path = get_rank_aware_path(canonical_path, rank)
             file_name = str(rank_aware_path)
 
             logging.debug(f"Uploading {path} to {self.hdfs_path}")

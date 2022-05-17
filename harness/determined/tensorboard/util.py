@@ -38,15 +38,21 @@ def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:
     return [file for filetype in tb_file_types for file in base_dir.rglob(filetype)]
 
 
-def get_rank_aware_path(p: pathlib.Path, rank: int) -> pathlib.Path:
+def get_rank_aware_path(path: pathlib.Path, rank: int) -> pathlib.Path:
+    """
+    Add suffix "#{rank}" to the names of tensorboard
+    profiler data files; those names are the host names.
+    For example, with rank = 3 "2022_05_13_15_25_41/ip-172-31-8-212.input_pipeline.pb"
+    will become "2022_05_13_15_25_41/ip-172-31-8-212#3.input_pipeline.pb"
+    """
     for ext in profiler_file_extensions:
-        if p.match(f"*{ext}"):
+        if path.match(f"*{ext}"):
             print(f"matching *{ext}")
             num_parts = ext.count(".")
             while num_parts > 0:
-                p = p.with_suffix("")
+                path = path.with_suffix("")
                 num_parts -= 1
-            p = p.with_name(f"{p.name}#{rank}")
-            p = p.with_suffix(ext)
-            return p
-    return p
+            path = path.with_name(f"{path.name}#{rank}")
+            path = path.with_suffix(ext)
+            return path
+    return path
