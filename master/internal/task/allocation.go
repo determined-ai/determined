@@ -213,6 +213,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
 	case AllocationReady:
+		// AllocationReady only comes from the running container, so to
+		// avoid a race condition with the slower transition to running state
+		// which comes via polling for dispatcher RM, move the state to running now.
+		a.setMostProgressedModelState(model.AllocationStateRunning)
 		a.model.IsReady = ptrs.Ptr(true)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
