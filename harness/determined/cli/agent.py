@@ -4,7 +4,7 @@ import os
 import sys
 from collections import OrderedDict
 from operator import attrgetter
-from typing import Any, Callable, List
+from typing import Any, Callable, Dict, List
 
 from determined.cli import render
 from determined.cli import task as cli_task
@@ -77,6 +77,18 @@ def list_slots(args: argparse.Namespace) -> None:
         if r["container_id"]
     }
 
+    def get_task_name(containers: Dict[str, Any], slot: Dict[str, Any]) -> str:
+        if slot["container"] and slot["container"]["id"] in containers:
+            return str(containers[slot["container"]["id"]]["name"])
+        if slot["container"] and (
+            "determined-master-deployment" in slot["container"]["id"]
+            or "determined-db-deployment" in slot["container"]["id"]
+        ):
+            return "Determined System Task"
+        if slot["container"]:
+            return "Non-Determined Task"
+        return "FREE"
+
     slots = [
         OrderedDict(
             [
@@ -91,12 +103,7 @@ def list_slots(args: argparse.Namespace) -> None:
                     if slot["container"] and slot["container"]["id"] in c_names
                     else (slot["container"]["id"] if slot["container"] else "FREE"),
                 ),
-                (
-                    "task_name",
-                    c_names[slot["container"]["id"]]["name"]
-                    if slot["container"] and slot["container"]["id"] in c_names
-                    else ("Non-Determined Task" if slot["container"] else " None"),
-                ),
+                ("task_name", get_task_name(c_names, slot)),
                 ("type", slot["device"]["type"]),
                 ("device", slot["device"]["brand"]),
             ]
