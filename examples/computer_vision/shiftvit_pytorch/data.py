@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+import dataclasses
 from io import BytesIO, StringIO
 from typing import Any, Dict, Tuple, Union
 import os
@@ -14,14 +14,19 @@ from torch.utils.data import Dataset
 import torchvision
 import torchvision.transforms as T
 
+Stat = Union[Tuple[float], Tuple[float, float, float]]
 
-@dataclass
+
+@dataclasses.dataclass
 class DatasetMetadata:
     num_classes: int
     img_size: int
     in_chans: int
-    mean: Union[Tuple[float], Tuple[float, float, float]]
-    std: Union[Tuple[float], Tuple[float, float, float]]
+    mean: Stat
+    std: Stat
+
+    def to_dict(self) -> Dict[str, Union[int, Stat]]:
+        return dataclasses.asdict(self)
 
 
 DATASET_METADATA_BY_NAME = {
@@ -111,11 +116,16 @@ DATASET_DICT = {
 }
 
 
-def download_dataset(
+def get_dataset(
     data_config: attrdict.AttrDict, train: bool, transform: nn.Module
 ) -> Dataset:
-    dataset = DATASET_DICT[data_config.dataset_name]
-    if data_config.dataset_name == "imagenet":
+    """
+    Downloads or streams (in the case of ImageNet) the training or validation dataset, and applies `transform`
+    to the corresponding images.
+    """
+    dataset_name = data_config.dataset_name
+    dataset = DATASET_DICT[dataset_name]
+    if dataset_name == "imagenet":
         # Imagenet data is streamed from GCS directly into memory.
         return dataset(data_config=data_config, train=train, transform=transform)
     else:
@@ -131,26 +141,13 @@ def download_dataset(
 
 
 def build_transform(
-    dataset_metadata: Any, data_config: attrdict.AttrDict, train: bool
+    dataset_metadata: Any, transform_config: attrdict.AttrDict, train: bool
 ) -> nn.Module:
-    if train and data_config.dataset_name == "imagenet":
-        # Employ ShiftViT data augmentation steps using timm.
-        transform_args = data_config.transform
-        return create_transform(
-            input_size=dataset_metadata.img_size,
-            is_training=True,
-            color_jitter=transform_args.color_jitter,
-            auto_augment=transform_args.auto_augment,
-            interpolation=transform_args.interpolation,
-            re_prob=transform_args.re_prob,
-            re_mode=transform_args.re_mode,
-            re_count=transform_args.re_count,
-        )
-    else:
-        return T.Compose(
-            [
-                T.CenterCrop(dataset_metadata.img_size),
-                T.ToTensor(),
-                T.Normalize(mean=dataset_metadata.mean, std=dataset_metadata.std),
-            ]
-        )
+    """Generate transforms via timm's transform factory."""
+    return create_transform(
+        input_size=dataset_metadata.img_size,
+        is_training=train,
+        mean=dataset_metadata.mean,
+        std=dataset_metadata.std,
+        **transform_config,
+    )

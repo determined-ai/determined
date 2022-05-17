@@ -10,56 +10,60 @@ data:
   gcs_validation_blob_list_path: imagenet/imagenet/validation-blob-list.txt
   num_workers: 8
   pin_memory: True
-  # ShfitViT default training augmentations
+  persistent_workers: True
+records_per_epoch: 2048 #1271158
+hyperparameters:
+  # ShiftViT ImageNet experiments use batch_size = 1024
+  global_batch_size: 1024
+  # ShiftViT model args, using ShiftViT defaults
+  model:
+    n_div: 12
+    patch_size: 4
+    embed_dim: 96
+    depths: [ 2, 2, 6, 2 ]
+    mlp_ratio: 4.0
+    drop_rate: 0.0
+    drop_path_rate: 0.1
+    norm_layer: GN1
+    act_layer: GELU
+    patch_norm: True
+    use_checkpoint: False
+  # timm.optim.create_optimizer args, using ShiftViT training defaults
+  optimizer:
+    opt: adamw
+    lr: 5.0e-4
+    opt_eps: 1.0e-8
+    opt_betas: null
+    clip_grad: null
+    momentum: 0.9
+    weight_decay: 0.05
+  # timm.scheduler.create_schedulers args, using ShiftViT training defaults
+  scheduler:
+    sched: cosine
+    # ShiftViT ImageNet experiments train for 300 epochs, reduced here for cost. Other scheduler parameters
+    # follow ShiftViT defaults.
+    epochs: 5 # 280
+    lr_noise: null
+    lr_noise_pct: 0.67
+    lr_noise_std: 1.0
+    warmup_lr: 1.0e-6
+    min_lr: 1.0e-5
+    warmup_epochs: 20
+    cooldown_epochs: 20
+  # timm.data.create_transform args, using ShiftViT training defaults
   transform:
+    scale: [ 0.08, 1.0 ]
+    ratio: [ .75, 1.33 ]
+    hflip: 0.5
+    vflip: 0.
     color_jitter: 0.4
     auto_augment: rand-m9-mstd0.5-inc1
     interpolation: bicubic
     re_prob: 0.25
     re_mode: pixel
     re_count: 1
-records_per_epoch: 2048 #1271158
-hyperparameters:
-  n_div: 12
-  patch_size: 4
-  embed_dim: 96
-  depths: [2, 2, 6, 2]
-  mlp_ratio: 4.0
-  drop_rate: 0.0
-  drop_path_rate: 0.1
-  norm_layer: GN1
-  act_layer: GELU
-  patch_norm: True
-  use_checkpoint: False
-  # ShiftViT ImageNet experiments use batch_size = 1024
-  global_batch_size: 1024
-  # ShiftViT optimizer defaults
-  optimizer:
-    opt: adamw
-    lr: 5.0e-4
-    opt_eps: 1.0e-8
-    opt_betas: null
-    clip_gard: null
-    momentum: 0.9
-    weight_decay: 0.05
-  # ShiftViT scheduler defaults
-  scheduler:
-    sched: cosine
-    # ShiftViT ImageNet experiments train for 300 epochs, reduced here for cost. Other scheduler parameters
-    # follow ShiftViT defaults.
-    epochs: &epochs 5 # epochs variable reused in 'searcher'
-    lr_noise: null
-    lr_noise_pct: 0.67
-    lr_noise_std: 1.0
-    warmup_lr: 1.0e-6
-    min_lr: 1.0e-5
-    decay_epochs: 30
-    warmup_epochs: 20
-    cooldown_epochs: 20
-    patience_epochs: 10
-    decay_rate: 0.1
 min_validation_period:
-  epochs: 1000 #1
+  epochs: 1
 resources:
   slots_per_trial: 8
   shm_size: 17179869184 # 16 GiB
@@ -67,7 +71,7 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-    epochs: *epochs
+    epochs: 5 # 300 for full ShiftViT; epochs + cooldown_epochs from scheduler
   smaller_is_better: true
 max_restarts: 1
 profiling:

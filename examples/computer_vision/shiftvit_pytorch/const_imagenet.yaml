@@ -10,6 +10,7 @@ data:
   gcs_validation_blob_list_path: imagenet/imagenet/validation-blob-list.txt
   num_workers: 8
   pin_memory: True
+  persistent_workers: True
   # ShfitViT default training augmentations
   transform:
     color_jitter: 0.4
@@ -47,7 +48,7 @@ hyperparameters:
     sched: cosine
     # ShiftViT ImageNet experiments train for 300 epochs, reduced here for cost. Other scheduler parameters
     # follow ShiftViT defaults.
-    epochs: &epochs 5 # epochs variable reused in 'searcher'
+    epochs: &epochs 5
     lr_noise: null
     lr_noise_pct: 0.67
     lr_noise_std: 1.0

@@ -4,6 +4,7 @@ data:
   download_dir: /data
   num_workers: 4
   pin_memory: True
+  persistent_workers: True
 records_per_epoch:
   60000
 hyperparameters:

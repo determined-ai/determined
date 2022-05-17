@@ -5,36 +5,68 @@ data:
   download_dir: /data
   num_workers: 4
   pin_memory: True
+  persistent_workers: True
 records_per_epoch:
   50000
 hyperparameters:
-  lr:
-    type: log
-    minval: -4.0
-    maxval: -2.0
-    base: 10.0
-  n_div:
-    type: categorical
-    vals: [ 8, 12, 16 ]
-  drop_rate:
-    type: double
-    minval: 0.2
-    maxval: 0.9
-  drop_path_rate:
-    type: double
-    minval: 0.2
-    maxval: 0.9
-  img_size: 28
-  patch_size: 2
-  in_chans: 3
-  num_classes: 10
-  embed_dim: 96
-  depths: [2, 2, 6, 2]
-  mlp_ratio: 4.0
-  norm_layer: GN1
-  act_layer: GELU
-  patch_norm: True
-  global_batch_size: 1024
+  global_batch_size: 512
+  # ShiftViT model args
+  model:
+    n_div:
+      type: categorical
+      vals: [ 8, 12, 16 ]
+    patch_size: 2
+    embed_dim: 96
+    depths: [ 2, 2, 6, 2 ]
+    mlp_ratio: 4.0
+    drop_rate:
+      type: double
+      minval: 0.2
+      maxval: 0.9
+    drop_path_rate:
+      type: double
+      minval: 0.2
+      maxval: 0.9
+    norm_layer: GN1
+    act_layer: GELU
+    patch_norm: True
+    use_checkpoint: False
+  # ShiftViT optimizer defaults
+  optimizer:
+    opt: adamw
+    lr:
+      type: log
+      minval: -4.0
+      maxval: -2.0
+      base: 10.0
+    opt_eps: 1.0e-8
+    opt_betas: null
+    clip_grad: null
+    momentum: 0.9
+    weight_decay: 0.05
+  # ShiftViT scheduler defaults
+  scheduler:
+    sched: cosine
+    epochs: 10
+    lr_noise: null
+    lr_noise_pct: 0.67
+    lr_noise_std: 1.0
+    warmup_lr: 1.0e-6
+    min_lr: 1.0e-5
+    warmup_epochs: 1
+    cooldown_epochs: 0
+  # timm.data.create_transform args
+  transform:
+    scale: [ 0.33, 1.0 ]
+    ratio: [ .75, 1.33 ]
+    hflip: 0.5
+    vflip: 0.
+    color_jitter: 0.4
+    auto_augment: rand-m9-mstd0.5-inc1
+    interpolation: bicubic
+    re_prob: 0.25
+    re_mode: pixel
+    re_count: 1
 min_validation_period:
   epochs: 1
 searcher:
@@ -42,5 +74,6 @@ searcher:
   metric: validation_loss
   max_length:
     epochs: 10
-  max_trials: 128
+  max_trials: 64
   smaller_is_better: True
+max_restarts: 1
