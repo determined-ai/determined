@@ -464,7 +464,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 	}
 
 	params.Username = strings.ToLower(params.Username)
-	err = s.db.AddUser(&model.User{
+	_, err = s.db.AddUser(&model.User{
 		Username: params.Username,
 		Admin:    params.Admin,
 		Active:   params.Active,
