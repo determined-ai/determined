@@ -19,7 +19,6 @@ import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import { getCssVar } from 'themes';
 
 import css from './InteractiveTable.module.scss';
 import Spinner from './Spinner';
@@ -105,7 +104,9 @@ interface CellProps {
   isCellRightClickable?: boolean;
 }
 
-export const PAGE_PADDING = 16;
+const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
+  return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
+};
 
 const RightClickableRowContext = createContext({});
 
@@ -313,12 +314,6 @@ const InteractiveTable: InteractiveTable = ({
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  const getAdjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
-    let pagePadding = parseInt(getCssVar('--theme-sizes-layout-big').slice(0, -2));
-    if (typeof pagePadding !== 'number') pagePadding = 16;
-    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
-  }, []);
-
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
       let newWidths = widths;
@@ -332,7 +327,7 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [ pageWidth, getAdjustedColumnWidthSum ],
+    [ pageWidth ],
   );
 
   useLayoutEffect(() => {
@@ -420,7 +415,7 @@ const InteractiveTable: InteractiveTable = ({
         });
       });
     },
-    [ settings.columns, pageWidth, getAdjustedColumnWidthSum, columnDefs ],
+    [ settings.columns, pageWidth, columnDefs ],
   );
 
   const handleResizeStart = useCallback(
