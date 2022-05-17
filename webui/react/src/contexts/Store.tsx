@@ -29,7 +29,7 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
-  pool: PoolOverview
+  pool: PoolOverview;
   resourcePools: ResourcePool[];
   ui: UI;
   users: DetailedUser[];

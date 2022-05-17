@@ -713,6 +713,25 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
+func (a *apiServer) AllocationPendingPreemptionSignal(
+	ctx context.Context,
+	req *apiv1.AllocationPendingPreemptionSignalRequest,
+) (*apiv1.AllocationPendingPreemptionSignalResponse, error) {
+	allocationID := model.AllocationID(req.AllocationId)
+	_, err := a.allocationHandlerByID(allocationID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), sproto.PendingPreemption{
+		AllocationID: allocationID,
+	}, nil); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
+}
+
 func (a *apiServer) MarkAllocationResourcesDaemon(
 	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {

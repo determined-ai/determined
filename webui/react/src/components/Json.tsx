@@ -9,6 +9,7 @@ import css from './Json.module.scss';
 type TextTransfomer = (key: string) => string;
 
 interface Props {
+  alternateBackground?: boolean;
   hideDivider?: boolean;
   json: RawJson;
   translateLabel?: TextTransfomer;
@@ -42,9 +43,12 @@ const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => 
   );
 };
 
-const Json: React.FC<Props> = ({ json, translateLabel, hideDivider }: Props) => {
+const Json: React.FC<Props> = (
+  { json, translateLabel, hideDivider, alternateBackground }: Props,
+) => {
   const classes = [ css.base ];
   if(hideDivider) classes.push(css.hideDivider);
+  if(alternateBackground) classes.push(css.alternateBackground);
   return (
     <ul className={classes.join(' ')}>
       {Object.entries(json).map(([ label, value ]) => (

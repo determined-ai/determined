@@ -19,7 +19,6 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths } from 'routes/utils';
 import {
   archiveModel, deleteModel, deleteModelVersion, getModelDetails, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
@@ -31,7 +30,6 @@ import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
 import { ErrorType } from '../shared/utils/error';
-import { routeToReactUrl } from '../shared/utils/routes';
 import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
@@ -298,7 +296,6 @@ const ModelDetails: React.FC = () => {
         body: { name: editedName },
         modelName,
       });
-      routeToReactUrl(paths.modelDetails(editedName));
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',

@@ -1,8 +1,10 @@
 import contextlib
+import json
 import logging
 import os
 import pathlib
 import shutil
+import subprocess
 import time
 import uuid
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
@@ -462,6 +464,36 @@ def test_non_admin_user_link_with_agent_user(clean_auth: None) -> None:
         child.wait()
         child.close()
 
+        assert child.exitstatus != 0
+
+
+@pytest.mark.e2e_cpu
+def test_non_admin_commands() -> None:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "slot",
+        "list",
+        "--json",
+    ]
+    output = subprocess.check_output(command).decode()
+    slots = json.loads(output)
+    assert len(slots) == 1
+    slot_id = slots[0]["slot_id"]
+    agent_id = slots[0]["agent_id"]
+
+    enable_slots = ["slot", "enable", agent_id, slot_id]
+    disable_slots = ["slot", "disable", agent_id, slot_id]
+    enable_agents = ["agent", "enable", agent_id]
+    disable_agents = ["agent", "disable", agent_id]
+    config = ["master", "config"]
+    for cmd in [disable_slots, disable_agents, enable_slots, enable_agents, config]:
+        child = det_spawn(["-u", constants.DEFAULT_DETERMINED_USER] + cmd)
+        child.expect(".*Forbidden.*", timeout=EXPECT_TIMEOUT)
+        child.read()
+        child.wait()
+        child.close()
         assert child.exitstatus != 0
 
 

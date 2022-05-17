@@ -72,6 +72,8 @@ export enum ResourceState { // This is almost CommandState
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminated = 'TERMINATED',
+  Warm = 'WARM',
+  Potential = 'POTENTIAL'
 }
 
 // High level Slot state
@@ -88,6 +90,7 @@ export const resourceStates: ResourceState[] = [
   ResourceState.Pulling,
   ResourceState.Starting,
   ResourceState.Running,
+  ResourceState.Warm,
   ResourceState.Terminated,
 ];
 

@@ -3,9 +3,9 @@
 
   & > * {
     cursor: pointer;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
     height: 20px;
-    margin: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium) var(--theme-sizes-layout-micro) 0;
+    margin: 2px 8px 2px 0;
   }
   .showMore {
     white-space: nowrap;
@@ -16,7 +16,7 @@
   }
   .tagPlus:hover,
   .tagEdit:hover {
-    border-color: var(--theme-colors-action-normal);
+    border-color: var(--theme-status-active);
   }
   &.ghost {
     .tagEdit,

@@ -1,7 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
-  padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
+  padding: 16px 16px 0 16px;
   width: 100%;
 
   .breadcrumbs { align-self: flex-start; }
@@ -10,14 +10,14 @@
     display: flex;
   }
   .title {
-    color: var(--theme-colors-base-0);
-    font-size: var(--theme-sizes-font-great);
+    color: var(--theme-colors-monochrome-3);
+    font-size: 20px;
     font-weight: 400;
   }
   .subTitle {
     color: var(--theme-colors-monochrome-7);
-    font-size: var(--theme-sizes-font-medium);
-    padding-left: var(--theme-sizes-layout-medium);
+    font-size: 14px;
+    padding-left: 8px;
   }
   .options {
     display: flex;
@@ -27,6 +27,6 @@
 }
 .sticky {
   background-color: var(--theme-colors-monochrome-17);
-  border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-  padding: var(--theme-sizes-layout-big);
+  border-bottom: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+  padding: 16px;
 }

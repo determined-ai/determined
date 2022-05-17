@@ -128,9 +128,17 @@ type (
 		Resources         []Resources
 		JobSubmissionTime time.Time
 	}
+	// PendingPreemption notifies the task actor that it should release
+	// resources due to a pending system-triggered preemption.
+	PendingPreemption struct {
+		AllocationID model.AllocationID
+	}
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
 		ResourcePool string
+		// If specified as true (default false), Requestor wants to force
+		// a preemption attempt instead of an immediate kill.
+		ForcePreemption bool
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {

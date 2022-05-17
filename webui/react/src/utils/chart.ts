@@ -1,26 +1,22 @@
-import themes, { defaultThemeId } from 'themes';
+import { Primitive, Range } from 'shared/types';
+import { ColorScale } from 'shared/utils/color';
+import { clone } from 'shared/utils/data';
+import { Theme } from 'themes';
 import { primitiveSorter } from 'utils/sort';
-
-import { Primitive, Range } from '../shared/types';
-import { ColorScale } from '../shared/utils/color';
-import { clone } from '../shared/utils/data';
 
 /* Color Scales */
 
-const DEFAULT_SCALE_COLORS: Range<string> = [
-  themes[defaultThemeId].colors.danger.light,
-  themes[defaultThemeId].colors.action.normal,
-];
-const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
-const NEUTRAL_SCALE_COLORS: Range<string> = [
-  'rgb(255, 184, 0)',
-  themes[defaultThemeId].colors.action.normal,
-];
+export const getColorScale = (
+  theme: Theme,
+  range?: Range<number>,
+  smallerIsBetter?: boolean,
+): ColorScale[] => {
+  const defaultScale = [ theme.statusCriticalWeak, theme.statusActive ];
+  const reverseScale = clone(defaultScale).reverse();
+  let colors = [ theme.statusWarningStrong, theme.statusActive ];
 
-export const getColorScale = (range?: Range<number>, smallerIsBetter?: boolean): ColorScale[] => {
-  let colors = NEUTRAL_SCALE_COLORS;
   if (smallerIsBetter != null) {
-    colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
+    colors = smallerIsBetter ? reverseScale : defaultScale;
   }
   return colors.map((color, index): ColorScale => {
     if (range) {

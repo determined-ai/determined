@@ -20,17 +20,17 @@
       .title {
         align-items: center;
         display: flex;
-        gap: var(--theme-sizes-layout-large);
+        gap: 12px;
 
         .versionBox {
           background-color: var(--theme-colors-monochrome-14);
           border-radius: 15%;
           height: min-content;
-          padding: var(--theme-sizes-layout-medium);
+          padding: 8px;
           width: min-content;
         }
         .versionName {
-          font-size: var(--theme-sizes-font-enormous);
+          font-size: 24px;
           margin: 0;
         }
       }
@@ -56,8 +56,8 @@
   .codeSample {
     background-color: var(--theme-colors-monochrome-13);
     border: 1px solid var(--theme-colors-monochrome-11);
-    border-radius: var(--theme-sizes-layout-tiny);
-    padding: var(--theme-sizes-layout-medium);
+    border-radius: 4px;
+    padding: 8px;
     white-space: pre-wrap;
 
     code {

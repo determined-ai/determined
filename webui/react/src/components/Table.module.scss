@@ -3,10 +3,10 @@
   display: flex;
 }
 .versionBox {
-  background-color: var(--theme-colors-monochrome-14);
+  background-color: var(--theme-surface);
   border-radius: 15%;
-  color: var(--theme-colors-monochrome-0);
+  color: var(--theme-surface-on);
   height: min-content;
-  padding: var(--theme-sizes-layout-small);
+  padding: 6px;
   width: min-content
 }

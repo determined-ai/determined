@@ -18,9 +18,9 @@
     width: 100%;
   }
   .legend {
-    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-bottom: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
     flex-shrink: 0;
-    padding: var(--theme-sizes-layout-large);
+    padding: 12px;
     width: 100%;
   }
 }

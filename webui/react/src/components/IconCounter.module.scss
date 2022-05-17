@@ -2,12 +2,12 @@
   align-items: center;
   cursor: pointer;
   display: grid;
-  grid-gap: var(--theme-sizes-layout-small);
+  grid-gap: 6px;
   grid-template-columns: 1fr auto;
   user-select: none;
 
   .count {
-    font-size: var(--theme-sizes-font-medium);
+    font-size: 14px;
     font-weight: bold;
   }
 }

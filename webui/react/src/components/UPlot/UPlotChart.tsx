@@ -4,10 +4,10 @@ import uPlot, { AlignedData } from 'uplot';
 
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/message';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import { FacetedData } from './types';
 
@@ -56,7 +56,8 @@ const shouldRecreate = (
   const someAxisLabelHasChanged =
     prev.axes?.some((prevAxis, seriesIdx) => {
       const nextAxis = next.axes?.[seriesIdx];
-      return prevAxis.label !== nextAxis?.label;
+      return (prevAxis.label !== nextAxis?.label)
+        || (prevAxis.stroke !== nextAxis?.stroke);
     });
   if (someAxisLabelHasChanged) return true;
 
@@ -153,20 +154,37 @@ const UPlotChart: React.FC<Props> = ({
   const chartDivRef = useRef<HTMLDivElement>(null);
   const boundsRef = useRef<Record<string, ChartBounds>>({});
   const [ isReady, setIsReady ] = useState(false);
+  const { theme } = useTheme();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
-  const extendedOptions = useMemo(
-    () =>
-      getExtendedOptions(
-        options,
-        boundsRef,
-        chartDivRef.current?.offsetWidth,
-        () => setIsReady(true),
-        () => setIsReady(false),
-      ),
-    [ options ],
-  );
+  const extendedOptions = useMemo(() => {
+    const extended = getExtendedOptions(
+      options,
+      boundsRef,
+      chartDivRef.current?.offsetWidth,
+      () => setIsReady(true),
+      () => setIsReady(false),
+    );
+
+    // Override chart support colors to match theme.
+    if (theme && extended.axes) {
+      const borderColor = theme.surfaceBorderWeak;
+      const labelColor = theme.surfaceOn;
+      extended.axes = extended.axes.map(axis => {
+        return {
+          ...axis,
+          border: { stroke: borderColor },
+          grid: { stroke: borderColor },
+          stroke: labelColor,
+          ticks: { stroke: borderColor },
+        };
+      });
+    }
+
+    return extended;
+  }, [ options, theme ]);
+
   const previousExtendedOptions = usePrevious(extendedOptions, undefined);
 
   useEffect(() => {

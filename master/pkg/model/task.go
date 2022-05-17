@@ -104,6 +104,14 @@ type TaskStats struct {
 	EndTime      *time.Time
 }
 
+// ResourceAggregates is the model for resource_aggregates in the database.
+type ResourceAggregates struct {
+	Date            *time.Time
+	AggregationType string
+	AggregationKey  string
+	Seconds         float32
+}
+
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
 	AllocationStatePending AllocationState = 0

@@ -1,12 +1,12 @@
 .base {
   display: flex;
   flex-direction: column;
-  gap: var(--theme-sizes-layout-big);
+  gap: 16px;
 
   .columns {
     display: flex;
     flex-direction: row;
-    gap: var(--theme-sizes-layout-small);
+    gap: 6px;
     
     .column {
       flex-basis: 50%;
@@ -23,8 +23,8 @@
         }
       }
       .listContainer {
-        border: 1px solid var(--theme-colors-monochrome-10);
-        border-radius: var(--theme-sizes-border-radius);
+        border: solid var(--theme-stroke-width) var(--theme-surface-border);
+        border-radius: var(--theme-border-radius);
           
         ul {
           height: 200px;
@@ -32,14 +32,14 @@
           margin-bottom: 0;
           overflow-y: auto;
           padding-left: 0;
-          padding-top: var(--theme-sizes-layout-small);
+          padding-top: 6px;
 
           li {
             cursor: pointer;
-            padding-left: var(--theme-sizes-layout-small);
+            padding-left: 6px;
 
             &:hover {
-              background-color: var(--theme-colors-monochrome-16);
+              background-color: var(--theme-surface-strong);
             }
             mark {
               background-color: #faed27;
@@ -49,12 +49,12 @@
         }
       }
       button {
-        padding: var(--theme-sizes-layout-small)
+        padding: 6px
       }
     }
   }
   h2 {
     color: var(--theme-colors-monochrome-5);
-    font-size: var(--theme-sizes-font-medium);
+    font-size: 14px;
   }
 }

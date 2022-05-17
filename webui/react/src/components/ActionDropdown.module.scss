@@ -1,5 +1,5 @@
 .base {
-  color: var(--theme-colors-monochrome-8);
+  color: var(--theme-ix-on);
   display: flex;
   justify-content: flex-end;
 
@@ -16,13 +16,13 @@
     padding: 0;
     width: 100%;
 
-    &:hover { color: var(--theme-colors-action-normal); }
+    &:hover { color: var(--theme-status-active); }
   }
   button:disabled,
   button[disabled] {
-    color: var(--theme-colors-monochrome-11);
+    color: var(--theme-float-on);
     cursor: not-allowed;
 
-    &:hover { color: var(--theme-colors-monochrome-11); }
+    &:hover { color: var(--theme-ix-on-active); }
   }
 }

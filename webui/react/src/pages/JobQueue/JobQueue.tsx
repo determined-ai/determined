@@ -20,7 +20,7 @@ import { GetJobsResponse } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import { Job, JobAction, JobType, ResourcePool, RPStats } from 'types';
+import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
@@ -33,7 +33,13 @@ import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
 import RPStatsOverview from './RPStats';
 
-const JobQueue: React.FC = () => {
+interface Props {
+  bodyNoPadding?: boolean,
+  jobState?: JobState,
+  selected?: ResourcePool,
+}
+
+const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   const { resourcePools } = useStore();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
@@ -77,7 +83,7 @@ const JobQueue: React.FC = () => {
       const [ jobs, stats ] = await Promise.all(promises);
 
       // Process jobs response.
-      setJobs(jobs.jobs);
+      setJobs(jobState ? jobs.jobs.filter(j => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
@@ -92,7 +98,7 @@ const JobQueue: React.FC = () => {
     } finally {
       setPageState(cur => ({ ...cur, isLoading: false }));
     }
-  }, [ canceler.signal, selectedRp?.name, settings ]);
+  }, [ canceler.signal, selectedRp?.name, settings, jobState ]);
 
   usePolling(fetchAll);
 
@@ -233,6 +239,10 @@ const JobQueue: React.FC = () => {
   }, [ dropDownOnTrigger, selectedRp, jobs, isJobOrderAvailable ]);
 
   useEffect(() => {
+    selected && setSelectedRp(selected);
+  }, [ selected, setSelectedRp ]);
+
+  useEffect(() => {
     if (resourcePools.length === 0) {
       if (selectedRp) {
         resetSettings([ 'selectedRp' ]);
@@ -303,27 +313,34 @@ const JobQueue: React.FC = () => {
   }, [ selectedRp ]);
 
   return (
-    <Page className={css.base} id="jobs" title="Job Queue by Resource Pool">
-      <Section hideTitle title="Resource Pools">
-        <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
-          {rpStats.map((stats, idx) => {
-            let onClick = undefined;
-            const isTargetRp = stats.resourcePool === selectedRp?.name;
-            if (!isTargetRp) {
-              onClick = rpSwitcher(stats.resourcePool);
-            }
-            return (
-              <RPStatsOverview
-                focused={isTargetRp}
-                key={idx}
-                stats={stats}
-                onClick={onClick}
-              />
-            );
-          })}
-        </Grid>
-      </Section>
-      <Section title={tableTitle}>
+    <Page
+      bodyNoPadding={bodyNoPadding}
+      className={css.base}
+      headerComponent={<div />}
+      id="jobs"
+      title="Job Queue by Resource Pool">
+      {!selected && (
+        <Section hideTitle title="Resource Pools">
+          <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
+            {rpStats.map((stats, idx) => {
+              let onClick = undefined;
+              const isTargetRp = stats.resourcePool === selectedRp?.name;
+              if (!isTargetRp) {
+                onClick = rpSwitcher(stats.resourcePool);
+              }
+              return (
+                <RPStatsOverview
+                  focused={isTargetRp}
+                  key={idx}
+                  stats={stats}
+                  onClick={onClick}
+                />
+              );
+            })}
+          </Grid>
+        </Section>
+      )}
+      <Section hideTitle={!!selected} title={tableTitle}>
         <ResponsiveTable<Job>
           columns={columns}
           dataSource={jobs}

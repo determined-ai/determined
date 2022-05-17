@@ -1,28 +1,28 @@
 .tooltip {
-  background-color: var(--theme-colors-monochrome-17);
-  border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
-  border-radius: var(--theme-sizes-border-radius);
-  box-shadow: var(--theme-shadow);
+  background-color: var(--theme-float);
+  border: solid var(--theme-stroke-width) var(--theme-float-border);
+  border-radius: var(--theme-border-radius);
+  box-shadow: var(--theme-elevation);
   cursor: auto;
   display: none;
-  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  padding: 4px 6px;
   pointer-events: none;
   position: absolute;
 
   .row {
     display: flex;
-    font-size: var(--theme-sizes-font-small);
+    font-size: 12px;
   }
   .label {
-    color: var(--theme-colors-monochrome-6);
-    padding-right: var(--theme-sizes-layout-small);
+    color: var(--theme-float-on-weak);
+    padding-right: 6px;
     white-space: nowrap;
   }
   .label::after {
     content: ':';
   }
   .info {
-    color: var(--theme-colors-monochrome-0);
+    color: var(--theme-float-on);
     white-space: nowrap;
   }
 }

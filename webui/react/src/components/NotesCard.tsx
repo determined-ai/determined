@@ -70,7 +70,7 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
           </Tooltip>
         )
       )}
-      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
+      headStyle={{ paddingInline: '16px' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title="Notes">
       <Spinner spinning={isLoading}>

@@ -10,7 +10,7 @@
   }
   .resourceName {
     flex-shrink: 1;
-    padding-right: var(--theme-sizes-layout-small);
+    padding-right: 6px;
   }
   .resourceSpacer {
     flex-grow: 1;
@@ -19,10 +19,10 @@
   }
   .resourceSize {
     flex-shrink: 0;
-    padding-left: var(--theme-sizes-layout-small);
+    padding-left: 6px;
   }
   .link a {
-    color: var(--theme-colors-action-normal) !important;
+    color: var(--theme-status-active) !important;
   }
   .placeholder {
     color: var(--theme-colors-monochrome-10);

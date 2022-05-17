@@ -5,8 +5,6 @@ import React, { useCallback } from 'react';
 
 import Icon, { IconSize } from 'components/Icon';
 
-import css from './IconButton.module.scss';
-
 interface Props {
   className?: string;
   icon: string;
@@ -26,19 +24,13 @@ const IconButton: React.FC<Props> = ({
   tooltipPlacement = 'top',
   type,
 }: Props) => {
-  const classes = [ css.base ];
-
-  if (className) classes.push(className);
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (onClick) onClick(e);
-  }, [ onClick ]);
+  const handleClick = useCallback((e: React.MouseEvent) => onClick?.(e), [ onClick ]);
 
   return (
     <Tooltip placement={tooltipPlacement} title={label}>
       <Button
         aria-label={label}
-        className={classes.join(' ')}
+        className={className}
         type={type}
         onClick={handleClick}>
         <Icon name={icon} size={iconSize} />
