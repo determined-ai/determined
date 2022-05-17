@@ -1240,12 +1240,14 @@ FROM (
 		return nil, err
 	}
 
-	var checkpointsGCRaw []uuid.UUID
+	print(checkpointsBytes)
+	/*
+		var checkpointsGCRaw []uuid.UUID
 
-	for _, cB := range checkpointsBytes {
-		cUUID, _ := uuid.ParseBytes(cB)
-		checkpointsGCRaw = append(checkpointsGCRaw, cUUID)
-	}
+		for _, cB := range checkpointsBytes {
+			cUUID, _ := uuid.ParseBytes(cB)
+			checkpointsGCRaw = append(checkpointsGCRaw, cUUID)
+		}*/
 
-	return checkpointsGCRaw, nil
+	return nil, nil
 }
