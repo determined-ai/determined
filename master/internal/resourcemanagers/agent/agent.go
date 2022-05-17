@@ -137,7 +137,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		var masterSetAgentOptions aproto.AgentMessage
-		// For reconnecting containers, or when reattach is enabled, try to synchronize containers.
+		// Do container revalidation:
+		// - when reattach is on or off, on all valid reconnects.
+		// - when reattach is on, also do it on initial connect.
+		//   Note: restored agents have their `awaitingReconnect == true`.
 		// Flush them otherwise.
 		reconnect, _ := msg.IsReconnect()
 		if a.awaitingReconnect && (a.agentReattachEnabled || reconnect) {
