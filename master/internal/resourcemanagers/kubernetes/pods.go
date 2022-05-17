@@ -5,9 +5,10 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/cproto"
 	"net/http"
 	"strconv"
+
+	"github.com/determined-ai/determined/master/pkg/cproto"
 
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -600,8 +601,9 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 				curSlot++
 			}
 		}
-		for _, other := range nodeToTasks[node.Name] {
-			for i := 0; i < taskSlots[other]; i++ {
+
+		for _, taskName := range nodeToTasks[node.Name] {
+			for i := 0; i < taskSlots[taskName]; i++ {
 				if curSlot >= int(numSlots) {
 					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
 					continue
@@ -613,7 +615,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 					Enabled: true,
 					Container: &cproto.Container{
 						Parent:  actor.Addr(""),
-						ID:      cproto.ID(other), //can we just leave these blank for non-determined tasks?
+						ID:      cproto.ID(taskName),
 						State:   "RUNNING",
 						Devices: []device.Device{},
 					},
@@ -648,29 +650,17 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 	return summary
 }
 
-func (p *pods) nonDetPods() []k8sV1.Pod {
+func (p *pods) getNonDetPods() []k8sV1.Pod {
 	var nonDetPods []k8sV1.Pod
-	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{
-		TypeMeta:             metaV1.TypeMeta{},
-		LabelSelector:        "",
-		FieldSelector:        "",
-		Watch:                false,
-		AllowWatchBookmarks:  false,
-		ResourceVersion:      "",
-		ResourceVersionMatch: "",
-		TimeoutSeconds:       nil,
-		Limit:                0,
-		Continue:             "",
-	})
+	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		return nonDetPods
 	}
 	for _, p := range pList.Items {
-		if _, ok := p.Labels["determined"]; ok {
-			continue
-		}
-		if p.Spec.NodeName != "" {
-			nonDetPods = append(nonDetPods, p)
+		if _, ok := p.Labels["determined"]; !ok {
+			if p.Spec.NodeName != "" {
+				nonDetPods = append(nonDetPods, p)
+			}
 		}
 	}
 	return nonDetPods
@@ -678,9 +668,9 @@ func (p *pods) nonDetPods() []k8sV1.Pod {
 
 func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int) {
 	nodeToTasks := make(map[string][]string)
-	taskSlots := make(map[string]int) //int or string
+	taskSlots := make(map[string]int)
 
-	nonDetPods := p.nonDetPods()
+	nonDetPods := p.getNonDetPods()
 	if len(nonDetPods) == 0 {
 		return nodeToTasks, taskSlots
 	}
@@ -698,18 +688,12 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 				reqs += int(c.Resources.Requests.Cpu().Value())
 			} else if deviceType == device.CUDA {
 				reqs += int(c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value())
-			} else {
-				continue
 			}
 		}
 		if reqs > 0 {
 			nodeToTasks[p.Spec.NodeName] = append(nodeToTasks[p.Spec.NodeName], p.Name)
 			taskSlots[p.Name] = reqs
 		}
-
-		// loop through the containers and aggregate the deviceType resource requests and add them to the task Slots
-		// if resource requests greater than zero, add to nodeToTasks as well as taskSlots
-		// return in the end and add to the summary function
 	}
 	return nodeToTasks, taskSlots
 }

@@ -94,7 +94,7 @@ def list_slots(args: argparse.Namespace) -> None:
                 (
                     "task_name",
                     c_names[slot["container"]["id"]]["name"]
-                    if slot["container"] and slot["container"]['id'] in c_names
+                    if slot["container"] and slot["container"]["id"] in c_names
                     else ("Non-Determined Task" if slot["container"] else " None"),
                 ),
                 ("type", slot["device"]["type"]),
