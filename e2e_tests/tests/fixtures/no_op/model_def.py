@@ -56,6 +56,7 @@ class NoOpTrialController(det.TrialController):
         self.chaos_probability_train = self.env.hparams.get("chaos_probability_train")
         self.chaos_probability_validate = self.env.hparams.get("chaos_probability_validate")
         self.chaos_probability_checkpoint = self.env.hparams.get("chaos_probability_checkpoint")
+        self.nan_probability_validate = self.env.hparams.get("nan_probability_validate", 0)
         self.fail_on_first_validation = self.env.hparams.get("fail_on_first_validation", "")
         self.fail_on_chechpoint_save = self.env.hparams.get("fail_on_chechpoint_save", "")
         self.validation_set_size = self.env.hparams.get("validation_set_size", 32 * 32)
@@ -165,7 +166,10 @@ class NoOpTrialController(det.TrialController):
         self.chaos_failure(self.chaos_probability_validate)
         time.sleep(self.validation_secs)
         metrics = {
-            name: self.current_metric() for name in ["validation_error", *self.validation_metrics()]
+            name: (
+                np.nan if random.random() < self.nan_probability_validate else self.current_metric()
+            )
+            for name in ["validation_error", *self.validation_metrics()]
         }
         response = {
             "metrics": {"validation_metrics": metrics, "num_inputs": self.validation_set_size},

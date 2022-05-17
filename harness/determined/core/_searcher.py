@@ -1,6 +1,5 @@
 import enum
 import logging
-import math
 from typing import Iterator, Optional
 
 import determined as det
@@ -94,8 +93,6 @@ class SearcherOperation:
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
         if self._completed:
             raise RuntimeError("you may only call op.report_completed() once")
-        if math.isnan(searcher_metric):
-            raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
         body = {"op": {"length": self._length}, "searcherMetric": searcher_metric}
         logger.debug(f"op.report_completed({searcher_metric})")
@@ -306,8 +303,6 @@ class DummySearcherOperation(SearcherOperation):
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
         if self._completed:
             raise RuntimeError("you may only call op.report_completed() once")
-        if math.isnan(searcher_metric):
-            raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
         logger.info(
             f"SearcherOperation Complete: searcher_metric={det.util.json_encode(searcher_metric)}"
