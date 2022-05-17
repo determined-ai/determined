@@ -98,12 +98,12 @@ func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
 		ctx.Log().WithError(err).Error("unmarshalling ToDelete in checkpoint GC task")
 	}
 
-	var deleteCheckpoints_str []string
+	var deleteCheckpointsStr []string
 	for _, dC := range deleteCheckpoints {
-		deleteCheckpoints_str = append(deleteCheckpoints_str, dC.String())
+		deleteCheckpointsStr = append(deleteCheckpointsStr, dC.String())
 	}
 
-	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints_str); err != nil {
+	if err := t.db.MarkCheckpointsDeleted(deleteCheckpointsStr); err != nil {
 		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 	}
 
