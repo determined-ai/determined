@@ -77,41 +77,6 @@ def list_slots(args: argparse.Namespace) -> None:
         if r["container_id"]
     }
 
-    c_names["non-determined"] = {"name": "Non-Determined Task", "allocation_id": "OCCUPIED"}
-
-    print()
-    slots = []
-    print("AGENT ITEMS:")
-    for agent_id, agent in sorted(agents.items()):
-        for slot_id, slot in sorted(agent["slots"].items()):
-            print("slot_id:", slot_id)
-            # print("slot:", slot)
-            if slot["container"] is not None:
-                print("container:", slot["container"]["id"])
-            print()
-            slots.append(OrderedDict([
-                ("agent_id", local_id(agent_id)),
-                ("resource_pool", agent["resource_pool"]),
-                ("slot_id", local_id(slot_id)),
-                ("enabled", slot["enabled"]),
-                ("draining", slot.get("draining", False)),
-                (
-                    "allocation_id",
-                    c_names[slot["container"]["id"]]["allocation_id"]
-                    if slot["container"] and slot["container"]["id"] in c_names
-                    else "FREE",
-                ),
-                (
-                    "task_name",
-                    c_names[slot["container"]["id"]]["name"] if slot["container"] else "None",
-                ),
-                ("type", slot["device"]["type"]),
-                ("device", slot["device"]["brand"]),
-            ]))
-    # print(agents.items())
-    print("END")
-    print()
-
     slots = [
         OrderedDict(
             [
@@ -123,12 +88,14 @@ def list_slots(args: argparse.Namespace) -> None:
                 (
                     "allocation_id",
                     c_names[slot["container"]["id"]]["allocation_id"]
-                    if slot["container"]
-                    else "FREE",
+                    if slot["container"] and slot["container"]["id"] in c_names
+                    else (slot["container"]["id"] if slot["container"] else "FREE"),
                 ),
                 (
                     "task_name",
-                    c_names[slot["container"]["id"]]["name"] if slot["container"] else "None",
+                    c_names[slot["container"]["id"]]["name"]
+                    if slot["container"] and slot["container"]['id'] in c_names
+                    else ("Non-Determined Task" if slot["container"] else " None"),
                 ),
                 ("type", slot["device"]["type"]),
                 ("device", slot["device"]["brand"]),
