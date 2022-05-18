@@ -171,7 +171,11 @@ SELECT
   ) AS wall_clock_time,
   (
     SELECT sum((jsonb_each).value::text::int)
-    FROM (SELECT jsonb_each(resources) FROM checkpoints c WHERE c.trial_id = t.id) r
+    FROM (
+        SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
+        UNION ALL
+        SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
+    ) r
   ) AS total_checkpoint_size
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
