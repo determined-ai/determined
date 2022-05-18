@@ -1,8 +1,8 @@
 import { Button, Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import {
   CheckpointWorkloadExtended, ExperimentBase,
 } from 'types';

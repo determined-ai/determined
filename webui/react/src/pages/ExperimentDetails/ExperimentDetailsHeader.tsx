@@ -1,11 +1,9 @@
 import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
@@ -31,6 +29,8 @@ import {
 } from 'services/api';
 import { getDuration } from 'shared/utils/datetime';
 import { getStateColorCssVar } from 'themes';
+import Icon from 'tmp-shared/components/Icon/Icon';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';

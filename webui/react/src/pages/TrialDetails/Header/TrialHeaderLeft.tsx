@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import { paths } from 'routes/utils';
 import { getStateColorCssVar } from 'themes';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { ExperimentBase, TrialDetails } from 'types';
 
 import css from './TrialHeaderLeft.module.scss';

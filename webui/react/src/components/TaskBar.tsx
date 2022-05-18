@@ -11,6 +11,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 
 import Icon from '../tmp-shared/components/Icon/Icon';
+
 import css from './TaskBar.module.scss';
 interface Props{
   id: string;

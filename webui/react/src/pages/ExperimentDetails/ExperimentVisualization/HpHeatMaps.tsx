@@ -6,7 +6,6 @@ import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
@@ -19,6 +18,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
   metricTypeParamMap,

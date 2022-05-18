@@ -1,9 +1,9 @@
 import { Breadcrumb, Space } from 'antd';
 import React from 'react';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
+import Icon from 'tmp-shared/components/Icon/Icon';
 
 export default {
   component: Breadcrumb,

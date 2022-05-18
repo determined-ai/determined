@@ -3,6 +3,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Icon from '../tmp-shared/components/Icon/Icon';
+
 import css from './TableFilterSearch.module.scss';
 
 interface Props extends FilterDropdownProps {

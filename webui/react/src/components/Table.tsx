@@ -5,12 +5,12 @@ import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
   StartEndTimes, TrialItem,

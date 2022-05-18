@@ -2,8 +2,9 @@ import React, {
   ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
 } from 'react';
 
-import css from './InlineEditor.module.scss';
 import Spinner from '../tmp-shared/components/Spinner/Spinner';
+
+import css from './InlineEditor.module.scss';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;

@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -15,6 +14,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { clone, flattenObject } from 'shared/utils/data';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,

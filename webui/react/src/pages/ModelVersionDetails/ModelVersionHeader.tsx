@@ -5,7 +5,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Avatar from 'components/Avatar';
 import CopyButton from 'components/CopyButton';
 import DownloadModelModal from 'components/DownloadModelModal';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
@@ -16,6 +15,7 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { ModelVersion } from 'types';
 import { getDisplayName } from 'utils/user';
 

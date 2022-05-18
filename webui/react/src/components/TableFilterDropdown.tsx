@@ -6,6 +6,7 @@ import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import usePrevious from 'hooks/usePrevious';
 
 import Icon from '../tmp-shared/components/Icon/Icon';
+
 import css from './TableFilterDropdown.module.scss';
 
 interface Props extends FilterDropdownProps {

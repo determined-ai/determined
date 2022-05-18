@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -29,6 +28,7 @@ import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import { isEqual } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 import {

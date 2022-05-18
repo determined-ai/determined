@@ -7,7 +7,6 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
@@ -17,6 +16,7 @@ import Message, { MessageType } from 'shared/components/message';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { Log, LogLevel } from 'types';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 

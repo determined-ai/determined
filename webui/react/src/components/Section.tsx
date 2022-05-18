@@ -3,8 +3,9 @@ import React, { PropsWithChildren } from 'react';
 import { isString } from 'shared/utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'shared/utils/string';
 
-import css from './Section.module.scss';
 import Spinner from '../tmp-shared/components/Spinner/Spinner';
+
+import css from './Section.module.scss';
 
 interface Props {
   bodyBorder?: boolean;

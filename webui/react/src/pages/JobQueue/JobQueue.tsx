@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown, { Triggers } from 'tmp-shared/components/ActionDropdown/ActionDropdown';
 import Grid, { GridMode } from 'components/Grid';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
@@ -20,6 +18,8 @@ import { GetJobsResponse } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
+import ActionDropdown, { Triggers } from 'tmp-shared/components/ActionDropdown/ActionDropdown';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,

@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, {
   ColumnDef,
@@ -41,6 +40,7 @@ import {
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { isEqual } from 'shared/utils/data';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';

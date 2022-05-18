@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -13,6 +12,7 @@ import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 

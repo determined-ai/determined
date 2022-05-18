@@ -1,13 +1,13 @@
 import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import Icon from 'tmp-shared/components/Icon/Icon';
 import Link from 'components/Link';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { Storage } from 'shared/utils/storage';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import handleError from 'utils/error';
 
 import { ErrorType } from '../shared/utils/error';

@@ -4,10 +4,11 @@ import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
+
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
 import NavigationTabbar from './NavigationTabbar';
-import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 interface Props {
   children?: React.ReactNode;

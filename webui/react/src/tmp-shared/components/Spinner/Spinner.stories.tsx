@@ -4,6 +4,7 @@ import HelmetDecorator from 'storybook/HelmetDecorator';
 import StoreDecorator from 'storybook/StoreDecorator';
 
 import Page from '../../../components/Page';
+
 import Spinner from './Spinner';
 
 export default {

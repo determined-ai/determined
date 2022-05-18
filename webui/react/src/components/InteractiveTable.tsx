@@ -20,8 +20,9 @@ import { throttle } from 'throttle-debounce';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 
-import css from './InteractiveTable.module.scss';
 import Spinner from '../tmp-shared/components/Spinner/Spinner';
+
+import css from './InteractiveTable.module.scss';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;

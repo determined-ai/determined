@@ -3,7 +3,6 @@ import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
-import Icon from 'tmp-shared/components/Icon/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
@@ -13,6 +12,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { ModelItem } from 'types';
 import { getDisplayName } from 'utils/user';
 

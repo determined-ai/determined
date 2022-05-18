@@ -2,8 +2,9 @@ import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useCallback } from 'react';
 
-import css from './Markdown.module.scss';
 import Spinner from '../tmp-shared/components/Spinner/Spinner';
+
+import css from './Markdown.module.scss';
 
 const { TabPane } = Tabs;
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));

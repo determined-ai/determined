@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom';
 
 import Link from 'components/Link';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
@@ -16,6 +15,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { hasObjectKeys } from 'shared/utils/data';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
