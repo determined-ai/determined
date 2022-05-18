@@ -433,6 +433,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
+  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }
