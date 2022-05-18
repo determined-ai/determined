@@ -126,24 +126,12 @@ into scheduling decisions.
 When using :ref:`Determined on Kubernetes <determined-on-kubernetes>`, Determined workloads such as
 experiments, notebooks, and shells are executed by launching Kubernetes pods. Hence, the scheduling
 behavior that applies to those workloads depends on how the Kubernetes scheduler has been
-configured. Determined currently supports three schedulers for Kubernetes use:
-
-#. Kubernetes default scheduler
-#. Kubernetes coscheduling plugin (coscheduler)
-#. Determined preemption scheduler
-
-The coscheduling plugin provides the added benefit of gang scheduling, while the preemption
-scheduler provides gang schedulins, priority scheduling with preemption, and backfilling.
-
-To set the scheduler that Determined will use, edit the ``defaultScheduler`` field in ``values.yaml``.
-The Kubernetes default scheduler will always be enabled, but setting ``defaultScheduler`` to the
-coscheduler or the preemption scheduler will cause a new system pod to be deployed. The coscheduler
-and the preemption scheduler are mutually exclusive and only one may be deployed at a time.
+configured.
 
 .. _gang-scheduling-on-kubernetes:
 
-Gang Scheduling on Kubernetes using the Coscheduler
-===================================================
+Gang Scheduling on Kubernetes
+=============================
 
 By default, the Kubernetes scheduler does not perform gang scheduling or support preemption of pods.
 While it does take pod priority into account, it greedily schedules pods without consideration for
@@ -198,18 +186,22 @@ To enable gang scheduling with commands or CPU experiments, enable the coschedul
          spec:
             schedulerName: coscheduler
 
+You can also use ``schedulerName: default-scheduler`` to use the default Kubernetes scheduler.
+
+Additionally, please note that when running Determined on Kubernetes, a higher priority value means
+a higher priority (e.g. a priority 50 task will run before a priority 40 task).
+
 .. _priority-scheduling-on-kubernetes:
 
 Priority Scheduling with Preemption on Kubernetes
 =================================================
 
 Determined also makes available a priority scheduler that extends the Kubernetes scheduler to
-support preemption with backfilling. This plugin will perform gang scheduling like the coscheduler
-does, but will also preempt existing pods if higher priority pods are submitted. If there is still
-space in the cluster, backfilling will attempt to fill the nodes by scheduling lower priority jobs.
-Additionally, if there are leftover slots on partially-filled nodes, the scheduler will attempt to
-assign single-slot tasks until the space is filled. This packing behavior only occurs with
-single-slot tasks.
+support preemption with backfilling. This plugin will preempt existing pods if higher priority pods
+are submitted. If there is still space in the cluster, backfilling will attempt to fill the nodes by
+scheduling lower priority jobs. Additionally, if there are leftover slots on partially-filled nodes,
+the scheduler will attempt to assign single-slot tasks until the space is filled. This packing
+behavior only occurs with single-slot tasks.
 
 This plugin is also in beta and is not enabled by default. To enable it, edit ``values.yaml`` in the
 Determined Helm chart to set the ``defaultScheduler`` field to ``preemption``. Autoscaling is not
@@ -222,21 +214,7 @@ priorityClass and specify it in the ``pod_spec`` of the config. If both are spec
 priorityClass will take precedence over the priority field. In Kubernetes, a higher priority value
 means a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 
-The Kubernetes priority scheduler can be used with Determined's :ref:`job-queue` feature, which
-allows more insight into scheduling decisions.
-
-==================================================
-Additional Scheduling Considerations on Kubernetes
-==================================================
-
-To use the default Kubernetes scheduler, specify ``schedulerName: default-scheduler`` in ``values.yaml`` 
-or simply leave the field blank. 
-
-Additionally, when running Determined on Kubernetes, a higher priority value means
-a higher priority (e.g. a priority 50 task will run before a priority 40 task). The opposite is true of 
-Determined on non-Kubernetes clusters, where lower values are more prioritized. 
-
-If using a cluster with tainted nodes or labels, users must specify the tolerations or
+Additionally, if using a cluster with tainted nodes or labels, users must specify the tolerations or
 node selectors in the ``pod_spec``. We recommend using both tolerations and node selectors to better
 constrain where your experiments can run, especially on clusters that contain multiple GPU types.
 
@@ -260,3 +238,5 @@ Below is an example that illustrates how to set priorities, tolerations, and nod
                value: "value"
                effect: "NoSchedule"
 
+The Kubernetes priority scheduler can be used with Determined's :ref:`job-queue` feature, which
+allows more insight into scheduling decisions.
