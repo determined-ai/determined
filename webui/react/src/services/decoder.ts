@@ -504,6 +504,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     hyperparameters: flattenObject(data.hparams),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
+    restarts: data.restarts,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,

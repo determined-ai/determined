@@ -17,6 +17,7 @@ WITH searcher_info AS (
     SELECT
         t.id AS id,
         'STATE_' || t.state AS state,
+        t.restarts,
         t.start_time,
         t.end_time,
         coalesce(t.end_time, now()) - t.start_time AS duration,
