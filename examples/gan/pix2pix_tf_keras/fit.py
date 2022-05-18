@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
 import time
 
+import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from data import download, load_dataset
