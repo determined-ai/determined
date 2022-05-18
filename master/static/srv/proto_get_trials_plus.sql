@@ -137,6 +137,7 @@ latest_training AS (
           ORDER BY s.end_time DESC
         ) AS rank
       FROM steps s
+      INNER JOIN searcher_info ON s.trial_id = searcher_info.trial_id
       WHERE s.state = 'COMPLETED'
     ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
