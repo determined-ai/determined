@@ -583,26 +583,6 @@ export enum TrialProfilerMetricLabelsProfilerMetricType {
 }
 
 /**
- * One datapoint in a series of metrics from a trial.
- * @export
- * @interface TrialsSampleResponseDataPoint
- */
-export interface TrialsSampleResponseDataPoint {
-    /**
-     * Total batches processed by the time this measurement is taken.
-     * @type {number}
-     * @memberof TrialsSampleResponseDataPoint
-     */
-    batches: number;
-    /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
-     * @memberof TrialsSampleResponseDataPoint
-     */
-    value: number;
-}
-
-/**
  * Trial is a set of workloads and are exploring a determined set of hyperparameters.
  * @export
  * @interface Trialv1Trial
@@ -1448,6 +1428,26 @@ export interface V1CurrentUserResponse {
      * @memberof V1CurrentUserResponse
      */
     user: V1User;
+}
+
+/**
+ * One datapoint in a series of metrics from a trial.
+ * @export
+ * @interface V1DataPoint
+ */
+export interface V1DataPoint {
+    /**
+     * Total batches processed by the time this measurement is taken.
+     * @type {number}
+     * @memberof V1DataPoint
+     */
+    batches: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPoint
+     */
+    value: number;
 }
 
 /**
@@ -5966,6 +5966,26 @@ export interface V1Slot {
 }
 
 /**
+ * Response to SummarizeTrialRequest.
+ * @export
+ * @interface V1SummarizeTrialResponse
+ */
+export interface V1SummarizeTrialResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1SummarizeTrialResponse
+     */
+    trial: Trialv1Trial;
+    /**
+     * The downsampled datapoints.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1SummarizeTrialResponse
+     */
+    data: Array<V1DataPoint>;
+}
+
+/**
  * Task is the model for a task in the database.
  * @export
  * @interface V1Task
@@ -6445,10 +6465,10 @@ export interface V1TrialsSampleResponseTrial {
     hparams: any;
     /**
      * A possibly down-sampled series of metric readings through the progress of the trial.
-     * @type {Array<TrialsSampleResponseDataPoint>}
+     * @type {Array<V1DataPoint>}
      * @memberof V1TrialsSampleResponseTrial
      */
-    data: Array<TrialsSampleResponseDataPoint>;
+    data: Array<V1DataPoint>;
 }
 
 /**
@@ -9934,6 +9954,68 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/summarize`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
+            }
+
+            if (metricNames) {
+                localVarQueryParameter['metricNames'] = metricNames;
+            }
+
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches;
+            }
+
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches;
+            }
+
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -10502,6 +10584,30 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -10794,6 +10900,21 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
             return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+            return ExperimentsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options)(fetch, basePath);
         },
         /**
          * 
@@ -11100,6 +11221,23 @@ export class ExperimentsApi extends BaseAPI {
      */
     public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Downsample metrics collected during a trial.
+     * @param {number} trialId The requested trial&#39;s id.
+     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+     * @param {Array<string>} [metricNames] The names of selected metrics.
+     * @param {number} [startBatches] Sample from metrics after this batch number.
+     * @param {number} [endBatches] Sample from metrics before this batch number.
+     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+        return ExperimentsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19197,6 +19335,68 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/summarize`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
+            }
+
+            if (metricNames) {
+                localVarQueryParameter['metricNames'] = metricNames;
+            }
+
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches;
+            }
+
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches;
+            }
+
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -19424,6 +19624,30 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -19531,6 +19755,21 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Downsample metrics collected during a trial.
+         * @param {number} trialId The requested trial&#39;s id.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+            return TrialsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -19625,6 +19864,23 @@ export class TrialsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Downsample metrics collected during a trial.
+     * @param {number} trialId The requested trial&#39;s id.
+     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+     * @param {Array<string>} [metricNames] The names of selected metrics.
+     * @param {number} [startBatches] Sample from metrics after this batch number.
+     * @param {number} [endBatches] Sample from metrics before this batch number.
+     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+        return TrialsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, options)(this.fetch, this.basePath);
     }
 
     /**
