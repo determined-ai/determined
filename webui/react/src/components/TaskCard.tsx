@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';

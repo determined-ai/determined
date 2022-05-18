@@ -1,7 +1,7 @@
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown from 'components/ActionDropdown';
+import ActionDropdown from 'tmp-shared/components/ActionDropdown/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';

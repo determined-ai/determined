@@ -2,11 +2,11 @@ import { Dropdown, Menu, Modal, ModalFuncProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { capitalize } from 'shared/utils/string';
 
-import { Eventually } from '../shared/types';
-import { DetError, ErrorLevel, ErrorType } from '../shared/utils/error';
+import { Eventually } from '../../../shared/types';
+import { DetError, ErrorLevel, ErrorType } from '../../../shared/utils/error';
 
 import css from './ActionDropdown.module.scss';
 

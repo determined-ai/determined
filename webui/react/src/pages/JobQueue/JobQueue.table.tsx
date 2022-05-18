@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';

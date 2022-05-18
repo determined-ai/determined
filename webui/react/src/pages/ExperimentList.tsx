@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, {
   ColumnDef,

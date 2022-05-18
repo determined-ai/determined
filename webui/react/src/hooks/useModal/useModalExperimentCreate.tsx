@@ -2,7 +2,7 @@ import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';

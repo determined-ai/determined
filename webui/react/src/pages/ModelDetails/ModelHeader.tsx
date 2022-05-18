@@ -3,7 +3,7 @@ import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import Avatar from 'components/Avatar';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';

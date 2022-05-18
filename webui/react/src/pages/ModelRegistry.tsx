@@ -3,7 +3,7 @@ import { ColumnsType } from 'antd/lib/table';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown, { Triggers } from 'components/ActionDropdown';
+import ActionDropdown, { Triggers } from 'tmp-shared/components/ActionDropdown/ActionDropdown';
 import Grid, { GridMode } from 'components/Grid';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';

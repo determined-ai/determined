@@ -10,7 +10,7 @@ import { handlePath, paths } from 'routes/utils';
 
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
-import Icon from './Icon';
+import Icon from '../tmp-shared/components/Icon/Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
 

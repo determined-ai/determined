@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import DownloadModelModal from 'components/DownloadModelModal';
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import InlineEditor from 'components/InlineEditor';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import showModalItemCannotDelete from 'components/ModalItemDelete';

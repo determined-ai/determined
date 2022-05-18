@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 
 import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';
-import Icon from './Icon';
+import Icon from '../tmp-shared/components/Icon/Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 

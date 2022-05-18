@@ -5,7 +5,7 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
 import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
@@ -24,7 +24,7 @@ import { openCommand } from 'wait';
 
 import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
-import css from './ActionDropdown.module.scss';
+import css from '../tmp-shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Link from './Link';
 
 interface Props {

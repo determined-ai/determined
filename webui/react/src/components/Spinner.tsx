@@ -2,7 +2,7 @@ import { Spin } from 'antd';
 import { SpinProps, SpinState } from 'antd/es/spin';
 import React, { PropsWithChildren } from 'react';
 
-import Icon, { IconSize } from 'components/Icon';
+import Icon, { IconSize } from 'tmp-shared/components/Icon/Icon';
 
 import css from './Spinner.module.scss';
 

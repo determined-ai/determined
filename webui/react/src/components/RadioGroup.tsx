@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import Icon, { IconSize } from 'components/Icon';
+import Icon, { IconSize } from 'tmp-shared/components/Icon/Icon';
 import useResize from 'hooks/useResize';
 
 import css from './RadioGroup.module.scss';

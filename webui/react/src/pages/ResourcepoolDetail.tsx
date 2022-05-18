@@ -2,7 +2,7 @@ import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import Icon from 'components/Icon';
+import Icon from 'tmp-shared/components/Icon/Icon';
 import Json from 'components/Json';
 import Page from 'components/Page';
 import { poolLogo } from 'components/ResourcePoolCard';
