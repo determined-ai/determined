@@ -11,7 +11,7 @@ _validators = {"sanity": {}, "completeness": {}}  # type: Dict[str, Any]
 def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) -> Any:
     # Use the experiment config schema by default.
     if url is None:
-        url = "http://determined.ai/schemas/expconf/v1/experiment.json"
+        url = "http://determined.ai/schemas/expconf/v0/experiment.json"
 
     global _validators
     key = "completeness" if complete else "sanity"
