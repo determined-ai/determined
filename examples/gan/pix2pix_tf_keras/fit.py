@@ -4,7 +4,6 @@ import time
 import tensorflow as tf
 
 from data import download, load_dataset
-
 from pix2pix import Pix2Pix
 
 
