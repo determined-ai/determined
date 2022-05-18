@@ -6,6 +6,7 @@ import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
+import InteractiveTask from 'pages/InteractiveTask';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
@@ -30,6 +31,7 @@ const routeComponentMap: Record<string, FC> = {
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
+  interactive: InteractiveTask,
   jobs: JobQueue,
   modelDetails: ModelDetails,
   models: ModelRegistry,

@@ -16,7 +16,6 @@ import {
   StartEndTimes, TrialItem,
 } from 'types';
 import { canBeOpened } from 'utils/task';
-import { waitPageUrl } from 'wait';
 
 import { Pagination } from '../shared/types';
 
@@ -104,7 +103,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
       <ConditionalWrapper
         condition={canBeOpened(record)}
         wrapper={children => (
-          <Link path={waitPageUrl(record)}>
+          <Link path={paths.interactive(record)}>
             {children}
           </Link>
         )}>
@@ -127,7 +126,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
     <ConditionalWrapper
       condition={canBeOpened(record)}
       wrapper={ch => (
-        <Link path={waitPageUrl(record)} popout>
+        <Link path={paths.interactive(record)}>
           {ch}
         </Link>
       )}>

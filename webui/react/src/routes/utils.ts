@@ -4,6 +4,7 @@ import queryString from 'query-string';
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
 import { BrandingType, CommandTask } from 'types';
+import { waitPageUrl } from 'wait';
 
 import { RouteConfig } from '../shared/types';
 import {
@@ -92,6 +93,10 @@ export const paths = {
   },
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
+  },
+  interactive: (command: CommandTask): string => {
+    return `/interactive/${command.id}/${command.type}/
+      ${command.name}/${command.resourcePool}/${encodeURIComponent(waitPageUrl(command))}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
