@@ -51,7 +51,7 @@ MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node:
 |----------------------------|--------------|
 | `const_mnist.yaml`         | 98.7         |
 | `distributed_mnist.yaml`   | 98.8         |
-| `const_cifar10.yaml`       | 75.6         |
+| `const_cifar10.yaml`       | 74.9         |
 | `distributed_cifar10.yaml` | 75.4         |
 
 ### ImageNet

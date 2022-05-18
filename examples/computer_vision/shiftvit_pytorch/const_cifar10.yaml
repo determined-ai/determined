@@ -37,7 +37,7 @@ hyperparameters:
   # timm.scheduler.create_schedulers args
   scheduler:
     sched: cosine
-    epochs: 16
+    epochs: 32
     lr_noise: null
     lr_noise_pct: 0.67
     lr_noise_std: 1.0
