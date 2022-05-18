@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 import torchvision
 import torchvision.transforms as T
 
-Stat = Union[Tuple[float], Tuple[float, float, float]]
+ImageStat = Union[Tuple[float], Tuple[float, float, float]]
 
 
 @dataclasses.dataclass
@@ -22,10 +22,10 @@ class DatasetMetadata:
     num_classes: int
     img_size: int
     in_chans: int
-    mean: Stat
-    std: Stat
+    mean: ImageStat
+    std: ImageStat
 
-    def to_dict(self) -> Dict[str, Union[int, Stat]]:
+    def to_dict(self) -> Dict[str, Union[int, ImageStat]]:
         return dataclasses.asdict(self)
 
 

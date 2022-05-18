@@ -14,13 +14,13 @@ hyperparameters:
   global_batch_size: 2048
   # ShiftViT model args
   model:
-    n_div: 16
+    n_div: 12
     patch_size: 2
     embed_dim: 96
     depths: [ 2, 2, 6, 2 ]
     mlp_ratio: 4.0
-    drop_rate: 0.25
-    drop_path_rate: 0.25
+    drop_rate: 0.136243
+    drop_path_rate: 0.179870
     norm_layer: GN1
     act_layer: GELU
     patch_norm: True
@@ -37,7 +37,7 @@ hyperparameters:
   # timm.scheduler.create_schedulers args
   scheduler:
     sched: cosine
-    epochs: 16
+    epochs: 128
     lr_noise: null
     lr_noise_pct: 0.67
     lr_noise_std: 1.0
@@ -63,7 +63,7 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-    epochs: 16 # epochs + cooldown_epochs from scheduler
+    epochs: 128 # epochs + cooldown_epochs from scheduler
   smaller_is_better: true
 max_restarts: 0
 resources:

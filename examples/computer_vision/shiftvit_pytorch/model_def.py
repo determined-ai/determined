@@ -3,6 +3,7 @@ ShiftViT code and paper:s
 https://github.com/microsoft/SPACH/blob/main/models/shiftvit.py
 https://arxiv.org/abs/2201.10801
 """
+import logging
 import math
 import time
 import warnings
@@ -22,6 +23,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import data
 import shiftvit  # shiftfit.py cloned via startup-hook.sh during container initialization.
+
+logger = logging.getLogger("determined.core")
 
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -166,11 +169,12 @@ class ShiftViTTrial(PyTorchTrial):
             pin_memory=self.data_config.pin_memory,
             persistent_workers=self.data_config.persistent_workers,
             shuffle=train,
+            drop_last=train,
         )
 
 
 class TimingCallback(PyTorchCallback):
-    """Callback for computing and printing total duration of entire trial and of the training portion of the trial."""
+    """Logs duration from trial- to training-start, training-start to trial-end, and total trial time."""
 
     def __init__(self) -> None:
         self._trial_start_time = None
@@ -183,13 +187,16 @@ class TimingCallback(PyTorchCallback):
 
     def on_training_start(self) -> None:
         self._train_start_time = time.perf_counter()
-        print(
+
+        logging.info(
             f"Trial-start to training-start duration: {self._train_start_time - self._trial_start_time:.4f} seconds"
         )
 
     def on_trial_shutdown(self) -> None:
         trial_end_time = time.perf_counter()
-        print(f"Trial duration: {trial_end_time - self._trial_start_time:.4f} seconds")
-        print(
+        logging.info(
             f"Training-start to trial-end duration: {trial_end_time - self._train_start_time:.4f} seconds"
+        )
+        logging.info(
+            f"Trial-start to trial-end duration: {trial_end_time - self._trial_start_time:.4f} seconds"
         )
