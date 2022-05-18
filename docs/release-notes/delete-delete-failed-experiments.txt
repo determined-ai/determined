@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Experiments: When an deleting an experiment fails, it is now retry-able.
