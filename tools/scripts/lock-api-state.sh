@@ -1,5 +1,11 @@
 #!/bin/bash -ex
 
+# check for dirty changes
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "untracked or dirty files are not allowed, cleanup before running lock-api-state.sh"
+    exit 1
+fi
+
 ## lock in current protobuf state
 
 # make gen-buf-image ensures that it starts with a clean git state
