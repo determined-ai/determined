@@ -78,7 +78,7 @@ class ShiftViTTrial(PyTorchTrial):
             )
 
         self._training_loader_len = None
-        self._last_epoch_idx = 0
+        self._curr_epoch_idx = 0
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         """Builds the callback for stepping the ShiftViT learning-rate scheduler used when training on ImageNet."""
@@ -121,15 +121,17 @@ class ShiftViTTrial(PyTorchTrial):
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
 
-        if not (batch_idx + 1) % self._batches_per_epoch:
-            self._last_epoch_idx += 1
+        # Step timm lr scheduler after completion of epoch.
+        is_last_batch_of_epoch = (batch_idx + 1) % self._batches_per_epoch == 0
+        if is_last_batch_of_epoch:
+            self._curr_epoch_idx += 1
             print(
-                f"LR SCHEDULER STEPPED AT EPOCH {epoch_idx}/{self._last_epoch_idx} BATCH {batch_idx}"
+                f"LR SCHEDULER STEPPED AT EPOCH {epoch_idx}/{self._curr_epoch_idx} BATCH {batch_idx}"
             )
             print(f"LEN TRAIN LOADER: {self._training_loader_len}")
             print(f"BATCHES PER EPOCH {self._batches_per_epoch}")
             print(f"BATCH SHAPE {images.shape}")
-            self.scheduler.step(epoch=self._last_epoch_idx)
+            self.scheduler.step(epoch=self._curr_epoch_idx)
 
         return {"loss": loss}
 
@@ -164,7 +166,6 @@ class ShiftViTTrial(PyTorchTrial):
             pin_memory=self.data_config.pin_memory,
             persistent_workers=self.data_config.persistent_workers,
             shuffle=train,
-            drop_last=train,
         )
 
 
@@ -182,6 +183,9 @@ class TimingCallback(PyTorchCallback):
 
     def on_training_start(self) -> None:
         self._train_start_time = time.perf_counter()
+        print(
+            f"Trial-start to training-start duration: {self._train_start_time - self._trial_start_time:.4f} seconds"
+        )
 
     def on_trial_shutdown(self) -> None:
         trial_end_time = time.perf_counter()

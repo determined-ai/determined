@@ -1,5 +1,7 @@
 name: shiftvit_cifar10_adaptive
 entrypoint: model_def:ShiftViTTrial
+reproducibility:
+  experiment_seed: 42
 data:
   dataset_name: cifar10
   download_dir: /data

@@ -1,5 +1,7 @@
 name: shiftvit_imagenet_distributed
 entrypoint: model_def:ShiftViTTrial
+reproducibility:
+  experiment_seed: 42
 data:
   dataset_name: imagenet
   # TODO: Change this to the name of your bucket.

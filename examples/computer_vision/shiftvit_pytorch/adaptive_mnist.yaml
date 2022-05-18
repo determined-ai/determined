@@ -1,5 +1,7 @@
 name: shiftvit_mnist_adaptive
 entrypoint: model_def:ShiftViTTrial
+reproducibility:
+  experiment_seed: 42
 data:
   dataset_name: mnist
   download_dir: /data
