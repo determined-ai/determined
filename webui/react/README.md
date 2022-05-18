@@ -70,7 +70,7 @@ npm run lint:js
 npm run lint:css
 ```
 
-Our Javascript linting rules and CSS linting rules can be found in [.eslintrc.js](.eslistrc.js) and [.stylelintrc.js](.stylelintrc.js) respectively.
+Our Javascript linting rules and CSS linting rules can be found in [.eslintrc.js](.eslintrc.js) and [.stylelintrc.js](.stylelintrc.js) respectively.
 
 ### Unit and Interaction Testing
 
