@@ -267,6 +267,7 @@ class trialv1Trial:
         experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
         id: int,
+        restarts: int,
         startTime: str,
         state: "determinedexperimentv1State",
         totalBatchesProcessed: int,
@@ -286,6 +287,7 @@ class trialv1Trial:
         self.startTime = startTime
         self.endTime = endTime
         self.state = state
+        self.restarts = restarts
         self.hparams = hparams
         self.totalBatchesProcessed = totalBatchesProcessed
         self.bestValidation = bestValidation
@@ -306,6 +308,7 @@ class trialv1Trial:
             startTime=obj["startTime"],
             endTime=obj.get("endTime", None),
             state=determinedexperimentv1State(obj["state"]),
+            restarts=obj["restarts"],
             hparams=obj["hparams"],
             totalBatchesProcessed=obj["totalBatchesProcessed"],
             bestValidation=v1MetricsWorkload.from_json(obj["bestValidation"]) if obj.get("bestValidation", None) is not None else None,
@@ -326,6 +329,7 @@ class trialv1Trial:
             "startTime": self.startTime,
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
+            "restarts": self.restarts,
             "hparams": self.hparams,
             "totalBatchesProcessed": self.totalBatchesProcessed,
             "bestValidation": self.bestValidation.to_json() if self.bestValidation is not None else None,

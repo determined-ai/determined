@@ -56,6 +56,7 @@ message Trial {
         "experimentId",
         "startTime",
         "state",
+        "restarts",
         "hparams",
         "totalBatchesProcessed"
       ]
@@ -71,6 +72,8 @@ message Trial {
   google.protobuf.Timestamp end_time = 4;
   // The current state of the trial.
   determined.experiment.v1.State state = 5;
+  // Number times the trial restarted.
+  int32 restarts = 17;
   // Trial hyperparameters.
   google.protobuf.Struct hparams = 6;
   // The current processed batches.
