@@ -32,7 +32,7 @@ export const serverAddress = (path = ''): string => {
   return (customServer || reactHostAddress()) + path;
 };
 
-// checks to see if the provided address resolves to a live Determeind server or not.
+// checks to see if the provided address resolves to a live Determined server or not.
 export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {

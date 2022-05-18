@@ -360,7 +360,7 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const mapV1GetExperimentResponse = (
+export const mapV1GetExperimentDetailsResponse = (
   { experiment: exp, config, jobSummary }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
@@ -381,6 +381,10 @@ export const mapV1GetExperimentResponse = (
     config: ioToExperimentConfig(ioConfig),
     configRaw: config,
     hyperparameters,
+    parentArchived: exp.parentArchived ?? false,
+    projectName: exp.projectName ?? '',
+    workspaceId: exp.workspaceId ?? 0,
+    workspaceName: exp.workspaceName ?? '',
   };
 };
 
@@ -399,6 +403,7 @@ export const mapV1Experiment = (
     notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
+    projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
@@ -611,4 +616,33 @@ export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.Resourc
     data.toString().toUpperCase()
       .replace('TYPE_', '') as keyof typeof types.ResourceType
   ];
+};
+
+export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
+  return {
+    archived: data.archived,
+    id: data.id,
+    immutable: data.immutable,
+    name: data.name,
+    numProjects: data.numProjects,
+    pinned: data.pinned,
+    username: data.username,
+  };
+};
+
+export const mapV1Project = (data: Sdk.V1Project): types.Project => {
+  return {
+    archived: data.archived,
+    description: data.description,
+    id: data.id,
+    immutable: data.immutable,
+    lastExperimentStartedAt: data.lastExperimentStartedAt,
+    name: data.name,
+    notes: data.notes,
+    numActiveExperiments: data.numActiveExperiments,
+    numExperiments: data.numExperiments,
+    username: data.username,
+    workspaceId: data.workspaceId,
+    workspaceName: data.workspaceName ?? '',
+  };
 };

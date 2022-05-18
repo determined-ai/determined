@@ -9,8 +9,7 @@ import React, {
 } from 'react';
 
 import Icon from '../shared/components/Icon/Icon';
-
-import Label from './Label';
+import Label, { LabelTypes } from './Label';
 import css from './SelectFilter.module.scss';
 
 const { OptGroup, Option } = Select;
@@ -105,7 +104,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
 
   return (
     <div className={classes.join(' ')}>
-      {props.label && <Label>{props.label}</Label>}
+      {props.label && <Label type={LabelTypes.TextOnly}>{props.label}</Label>}
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}

@@ -9,6 +9,7 @@ import IconButton from './IconButton';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
+  disabled?: boolean,
   icon?: React.ReactNode,
   isLoading?: boolean,
   key: string;
@@ -46,7 +47,7 @@ const PageHeaderFoldable: React.FC<Props> = (
         {options.map(opt => (
           <Menu.Item
             className={css.optionsDropdownItem}
-            disabled={!opt.onClick}
+            disabled={opt.disabled || !opt.onClick}
             key={opt.key}
             onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}>
             {renderOptionLabel(opt)}
@@ -74,7 +75,8 @@ const PageHeaderFoldable: React.FC<Props> = (
         <Space className={css.options}>
           {options?.slice(0, 3).map(option => (
             <Button
-              disabled={!option.onClick}
+              className={css.optionsMainButton}
+              disabled={option.disabled || !option.onClick}
               icon={option?.icon}
               key={option.key}
               loading={option.isLoading}

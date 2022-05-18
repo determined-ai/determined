@@ -10,6 +10,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;
   allowNewline?: boolean;
   disabled?: boolean;
+  focusSignal?: number;
   isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
@@ -31,9 +32,11 @@ const InlineEditor: React.FC<Props> = ({
   value,
   onCancel,
   onSave,
+  focusSignal,
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [ currentValue, setCurrentValue ] = useState(value);
   const [ isEditable, setIsEditable ] = useState(false);
@@ -47,6 +50,14 @@ const InlineEditor: React.FC<Props> = ({
     classes.push(css.maxLength);
   }
   if (disabled) classes.push(css.disabled);
+
+  useEffect(() => {
+    if (focusSignal != null && !disabled){
+      setIsEditable(true);
+      textareaRef.current?.focus();
+    }
+
+  }, [ focusSignal, setIsEditable, disabled ]);
 
   const updateEditorValue = useCallback((value: string) => {
     let newValue = value;
@@ -132,6 +143,7 @@ const InlineEditor: React.FC<Props> = ({
     <div className={classes.join(' ')} {...props}>
       <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
         <textarea
+          cols={1}
           maxLength={maxLength}
           placeholder={placeholder}
           readOnly={!isEditable}

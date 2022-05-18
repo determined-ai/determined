@@ -1,0 +1,21 @@
+.base {
+  align-items: center;
+  background-color: var(--theme-colors-monochrome-16);
+  border-bottom: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-12);
+  display: flex;
+  gap: var(--theme-sizes-layout-small);
+  padding: var(--theme-sizes-layout-medium) var(--theme-sizes-layout-big);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 2;
+
+  .link {
+    display: flex;
+    gap: var(--theme-sizes-layout-small);
+
+    & i {
+      color: var(--theme-colors-monochrome-9)
+    }
+  }
+}

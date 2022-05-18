@@ -1,7 +1,7 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
 export type ExperimentColumnName =
@@ -51,12 +51,12 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   user: 85,
 };
 
-export interface ExperimentListSettings extends InteractiveTableSettings {
+export interface ProjectDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ExperimentColumnName[];
   label?: string[];
   search?: string;
-  sortKey: V1GetExperimentsRequestSortBy;
+  sortKey: V1GetProjectExperimentsRequestSortBy;
   state?: RunState[];
   user?: string[];
 }
@@ -112,7 +112,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetExperimentsRequestSortBy.STARTTIME,
+      defaultValue: V1GetProjectExperimentsRequestSortBy.STARTTIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },
@@ -153,7 +153,7 @@ const config: SettingsConfig = {
       },
     },
   ],
-  storagePath: 'experiment-list',
+  storagePath: 'project-details',
 };
 
 export default config;

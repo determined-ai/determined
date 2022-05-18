@@ -1,5 +1,4 @@
 import { killableCommandStates, killableRunStates, terminalCommandStates } from 'constants/states';
-import { paths } from 'routes/utils';
 import { LaunchTensorBoardParams } from 'services/types';
 import * as Type from 'types';
 
@@ -48,10 +47,14 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   return {
     ...task,
     archived: false,
+    parentArchived: false,
     progress,
+    projectId: 1,
     state: state as Type.RunState,
     url: '#',
     userId: user.id,
+    username: user.username,
+    workspaceId: 1,
   };
 }
 
@@ -76,7 +79,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     resources: {},
     searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
-  const exp = generateExperiments(1)[0];
+  const { projectId, ... exp } = generateExperiments(1)[0];
   return {
     ...exp,
     ...experimentTask,
@@ -124,9 +127,11 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
         labels: [],
         name: experimentTask.name,
         numTrials: Math.round(Math.random() * 60000),
+        projectId: 1,
         resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
         searcherType: 'single',
         userId: user.id,
+        username: user.username,
       } as Type.ExperimentItem;
     });
 };
@@ -208,25 +213,6 @@ export const taskFromCommandTask = (command: Type.CommandTask): Type.RecentComma
       name: 'requested',
     },
   };
-};
-
-export const taskFromExperiment = (experiment: Type.ExperimentItem): Type.RecentExperimentTask => {
-  const lastEvent = experiment.endTime ?
-    { date: experiment.endTime, name: 'finished' } :
-    { date: experiment.startTime, name: 'requested' };
-  const task: Type.RecentTask = {
-    archived: experiment.archived,
-    id: `${experiment.id}`,
-    lastEvent,
-    name: experiment.name,
-    progress: experiment.progress,
-    resourcePool: experiment.resourcePool,
-    startTime: experiment.startTime,
-    state: experiment.state,
-    url: paths.experimentDetails(experiment.id),
-    userId: experiment.userId,
-  };
-  return task;
 };
 
 // Checks whether tensorboard source matches a given source list.

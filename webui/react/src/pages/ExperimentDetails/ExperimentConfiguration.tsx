@@ -16,11 +16,14 @@ const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
   /**
    * strip registry_auth from config for display
+   * as well as workspace/project names
    */
   let publicConfig = {};
   if (experiment.configRaw) {
     const {
       environment: { registry_auth, ...restEnvironment },
+      workspace,
+      project,
       ...restConfig
     } = experiment.configRaw;
     publicConfig = { environment: restEnvironment, ...restConfig };

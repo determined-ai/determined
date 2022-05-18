@@ -1,67 +1,72 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Switch } from 'antd';
-import { FilterDropdownProps } from 'antd/es/table/interface';
+import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
+import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import {
-  checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
-  ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig,
-  relativeTimeRenderer, stateRenderer, userRenderer,
-} from 'components/Table';
+import PaginatedNotesCard from 'components/PaginatedNotesCard';
+import Spinner from 'components/Spinner';
+import { checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
+  ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, relativeTimeRenderer,
+  stateRenderer,
+  userRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
-import TaskActionDropdown from 'components/TaskActionDropdown';
-import { cancellableRunStates, deletableRunStates, pausableRunStates,
-  terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
+import useModalExperimentMove, {
+  Settings as MoveExperimentSettings,
+  settingsConfig as moveExperimentSettingsConfig,
+} from 'hooks/useModal/useModalExperimentMove';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import {
-  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
-  getExperiments, killExperiment, openOrCreateTensorBoard,
-  patchExperiment, pauseExperiment, unarchiveExperiment,
-} from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
+  getExperimentLabels, getProject, getProjectExperiments,
+  killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
+  setProjectNotes,
+  unarchiveExperiment } from 'services/api';
+import { Determinedexperimentv1State,
+  V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Message, { MessageType } from 'shared/components/message';
+import { ExperimentAction as Action, CommandTask, ExperimentItem,
+  Note, Project, ProjectExperiment, RecordKey, RunState } from 'types';
 import { isEqual } from 'shared/utils/data';
+import handleError, { ErrorLevel } from 'utils/error';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
-} from 'types';
-import handleError from 'utils/error';
+  getActionsForExperimentsUnion,
+  getProjectExperimentForExperimentItem,
+} from 'utils/experiment';
 import { alphaNumericSorter } from 'utils/sort';
-import { isTaskKillable, taskFromExperiment } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
 
 import { RecordKey } from '../shared/types';
 import { ErrorLevel } from '../shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from '../shared/utils/service';
+import css from './ProjectDetails.module.scss';
 
-import settingsConfig, {
-  DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
-  ExperimentColumnName,
-  ExperimentListSettings,
-} from './ExperimentList.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
+  ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
+import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
-const filterKeys: Array<keyof ExperimentListSettings> = [ 'label', 'search', 'state', 'user' ];
+const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
 /*
  * This indicates that the cell contents are rightClickable
@@ -70,90 +75,101 @@ const filterKeys: Array<keyof ExperimentListSettings> = [ 'label', 'search', 'st
 const onRightClickableCell = () =>
   ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
-const ExperimentList: React.FC = () => {
+interface Params {
+  projectId: string;
+}
+
+const batchActions = [
+  Action.OpenTensorBoard,
+  Action.Activate,
+  Action.Move,
+  Action.Pause,
+  Action.Archive,
+  Action.Unarchive,
+  Action.Cancel,
+  Action.Kill,
+  Action.Delete,
+];
+
+const ProjectDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
-  const [ canceler ] = useState(new AbortController());
-  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const { projectId } = useParams<Params>();
+  const [ project, setProject ] = useState<Project>();
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ labels, setLabels ] = useState<string[]>([]);
+  const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
+  const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
+  const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
+    moveExperimentSettingsConfig,
+  );
+
+  useEffect(() => {
+    updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
+  }, [ updateDestinationSettings, project?.workspaceId ]);
+
+  const id = parseInt(projectId);
+
   const {
-    activeSettings,
-    resetSettings,
     settings,
     updateSettings,
-  } = useSettings<ExperimentListSettings>(settingsConfig);
+    resetSettings,
+    activeSettings,
+  } = useSettings<ProjectDetailsSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
-      acc[experiment.id] = experiment;
+      acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
       return acc;
-    }, {} as Record<RecordKey, ExperimentItem>);
-  }, [ experiments ]);
+    }, {} as Record<RecordKey, ProjectExperiment>);
+  }, [
+    experiments,
+    project,
+  ]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
-  const {
-    hasActivatable,
-    hasArchivable,
-    hasCancelable,
-    hasDeletable,
-    hasKillable,
-    hasPausable,
-    hasUnarchivable,
-  } = useMemo(() => {
-    const tracker = {
-      hasActivatable: false,
-      hasArchivable: false,
-      hasCancelable: false,
-      hasDeletable: false,
-      hasKillable: false,
-      hasPausable: false,
-      hasUnarchivable: false,
-    };
-    for (const id of settings.row || []) {
-      const experiment = experimentMap[id];
-      if (!experiment) continue;
-      const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
-      const isCancelable = cancellableRunStates.has(experiment.state);
-      const isDeletable = deletableRunStates.has(experiment.state) &&
-        user && (user.isAdmin || user.id === experiment.userId);
-      const isKillable = isTaskKillable(experiment);
-      const isActivatable = experiment.state === RunState.Paused;
-      const isPausable = pausableRunStates.has(experiment.state);
-      if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
-      if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
-      if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
-      if (!tracker.hasDeletable && isDeletable) tracker.hasDeletable = true;
-      if (!tracker.hasKillable && isKillable) tracker.hasKillable = true;
-      if (!tracker.hasActivatable && isActivatable) tracker.hasActivatable = true;
-      if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
-    }
-    return tracker;
+  const availableBatchActions = useMemo(() => {
+    const experiments = settings.row?.map(id => experimentMap[id]) ?? [];
+    return getActionsForExperimentsUnion(experiments, batchActions, user);
   }, [ experimentMap, settings.row, user ]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchProject = useCallback(async () => {
+    try {
+      const response = await getProject({ id }, { signal: canceler.signal });
+      setProject(prev => {
+        if (isEqual(prev, response)) return prev;
+        return response;
+      });
+    } catch (e) {
+      if (!pageError) setPageError(e as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [ canceler.signal, id, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
-      const response = await getExperiments(
+      const response = await getProjectExperiments(
         {
           archived: settings.archived ? undefined : false,
+          id,
           labels: settings.label,
           limit: settings.tableLimit,
           name: settings.search,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
+          sortBy: validateDetApiEnum(V1GetProjectExperimentsRequestSortBy, settings.sortKey),
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
           users: settings.user,
         },
         { signal: canceler.signal },
       );
-      setTotal(response.pagination.total || 0);
+      setTotal(response.pagination.total ?? 0);
       setExperiments(prev => {
         if (isEqual(prev, response.experiments)) return prev;
         return response.experiments;
@@ -163,7 +179,8 @@ const ExperimentList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler,
+  }, [ canceler.signal,
+    id,
     settings.archived,
     settings.label,
     settings.search,
@@ -176,15 +193,18 @@ const ExperimentList: React.FC = () => {
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ signal: canceler.signal });
+      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) { handleError(e); }
-  }, [ canceler.signal ]);
+  }, [ canceler.signal, id ]);
+
+  const fetchUsers = useFetchUsers(canceler);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([ fetchExperiments(), fetchLabels(), fetchUsers() ]);
-  }, [ fetchExperiments, fetchLabels, fetchUsers ]);
+    await Promise.allSettled([
+      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll);
 
@@ -289,7 +309,7 @@ const ExperimentList: React.FC = () => {
         silent: false,
       });
       setIsLoading(false);
-      return e;
+      return e as Error;
     }
   }, [ ]);
 
@@ -297,18 +317,21 @@ const ExperimentList: React.FC = () => {
     const tagsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         compact
+        disabled={record.archived || project?.archived}
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
       />
     );
 
-    const actionRenderer: ExperimentRenderer = (_, record) => (
-      <TaskActionDropdown
-        curUser={user}
-        task={taskFromExperiment(record)}
-        onComplete={handleActionComplete}
-      />
-    );
+    const actionRenderer: ExperimentRenderer = (_, record) => {
+      return (
+        <ExperimentActionDropdown
+          curUser={user}
+          experiment={getProjectExperimentForExperimentItem(record, project)}
+          onComplete={handleActionComplete}
+        />
+      );
+    };
 
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
       <InlineEditor
@@ -329,7 +352,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'id',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
-        key: V1GetExperimentsRequestSortBy.ID,
+        key: V1GetProjectExperimentsRequestSortBy.ID,
         onCell: onRightClickableCell,
         render: experimentNameRenderer,
         sorter: true,
@@ -340,8 +363,8 @@ const ExperimentList: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: ExperimentListSettings) => !!settings.search,
-        key: V1GetExperimentsRequestSortBy.NAME,
+        isFiltered: (settings: ProjectDetailsSettings) => !!settings.search,
+        key: V1GetProjectExperimentsRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: experimentNameRenderer,
         sorter: true,
@@ -359,7 +382,7 @@ const ExperimentList: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: labels.map(label => ({ text: label, value: label })),
-        isFiltered: (settings: ExperimentListSettings) => !!settings.label,
+        isFiltered: (settings: ProjectDetailsSettings) => !!settings.label,
         key: 'labels',
         onCell: onRightClickableCell,
         render: tagsRenderer,
@@ -368,7 +391,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'forkedFrom',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
-        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        key: V1GetProjectExperimentsRequestSortBy.FORKEDFROM,
         onCell: onRightClickableCell,
         render: forkedFromRenderer,
         sorter: true,
@@ -377,7 +400,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'startTime',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
-        key: V1GetExperimentsRequestSortBy.STARTTIME,
+        key: V1GetProjectExperimentsRequestSortBy.STARTTIME,
         onCell: onRightClickableCell,
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
@@ -395,7 +418,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'numTrials',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
-        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        key: V1GetProjectExperimentsRequestSortBy.NUMTRIALS,
         onCell: onRightClickableCell,
         sorter: true,
         title: 'Trials',
@@ -417,7 +440,7 @@ const ExperimentList: React.FC = () => {
             value,
           })),
         isFiltered: () => !!settings.state,
-        key: V1GetExperimentsRequestSortBy.STATE,
+        key: V1GetProjectExperimentsRequestSortBy.STATE,
         render: stateRenderer,
         sorter: true,
         title: 'State',
@@ -432,7 +455,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'resourcePool',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
-        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        key: V1GetProjectExperimentsRequestSortBy.RESOURCEPOOL,
         onCell: onRightClickableCell,
         sorter: true,
         title: 'Resource Pool',
@@ -440,7 +463,7 @@ const ExperimentList: React.FC = () => {
       {
         dataIndex: 'progress',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
-        key: V1GetExperimentsRequestSortBy.PROGRESS,
+        key: V1GetProjectExperimentsRequestSortBy.PROGRESS,
         render: experimentProgressRenderer,
         sorter: true,
         title: 'Progress',
@@ -456,9 +479,9 @@ const ExperimentList: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: ExperimentListSettings) => !!settings.user,
-        key: V1GetExperimentsRequestSortBy.USER,
+        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
+        isFiltered: (settings: ProjectDetailsSettings) => !!settings.user,
+        key: V1GetProjectExperimentsRequestSortBy.USER,
         render: userRenderer,
         sorter: true,
         title: 'User',
@@ -486,6 +509,7 @@ const ExperimentList: React.FC = () => {
     nameFilterSearch,
     saveExperimentDescription,
     settings,
+    project,
     stateFilterDropdown,
     tableSearchIcon,
     userFilterDropdown,
@@ -502,7 +526,7 @@ const ExperimentList: React.FC = () => {
     } else {
       const columnNames = columns.map(column => column.dataIndex as ExperimentColumnName);
       const actualColumns = settings.columns.filter(name => columnNames.includes(name));
-      const newSettings: Partial<ExperimentListSettings> = {};
+      const newSettings: Partial<ProjectDetailsSettings> = {};
       if (actualColumns.length < settings.columns.length) {
         newSettings.columns = actualColumns;
       }
@@ -521,9 +545,19 @@ const ExperimentList: React.FC = () => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [ columns ]);
 
-  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+  const { modalOpen: openMoveModal } = useModalExperimentMove({ onClose: handleActionComplete });
+
+  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> | void => {
+    if (!settings.row) return;
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorBoard({ experimentIds: settings.row });
+    }
+    if (action === Action.Move) {
+      return openMoveModal({
+        experimentIds: settings.row,
+        sourceProjectId: project?.id,
+        sourceWorkspaceId: project?.workspaceId,
+      });
     }
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {
@@ -545,7 +579,7 @@ const ExperimentList: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row ]);
+  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {
@@ -626,23 +660,17 @@ const ExperimentList: React.FC = () => {
     }
   }, [ updateSettings ]);
 
-  const { modalOpen } = useModalCustomizeColumns({
+  const { modalOpen: openCustomizeColumns } = useModalCustomizeColumns({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
     onSave: (handleUpdateColumns as (columns: string[]) => void),
   });
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
-  const openModal = useCallback(() => {
-    modalOpen(
+  const handleCustomizeColumnsClick = useCallback(() => {
+    openCustomizeColumns(
       { initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)) },
     );
-  }, [ settings.columns, modalOpen, transferColumns ]);
+  }, [ openCustomizeColumns, settings.columns, transferColumns ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ExperimentColumnName[];
@@ -678,6 +706,41 @@ const ExperimentList: React.FC = () => {
 
   }, [ settings, updateSettings ]);
 
+  const handleNewNotesPage = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      await addProjectNote({ contents: '', id: project.id, name: 'Untitled' });
+      await fetchProject();
+    } catch (e) { handleError(e); }
+  }, [ fetchProject, project?.id ]);
+
+  const handleSaveNotes = useCallback(async (notes: Note[]) => {
+    if (!project?.id) return;
+    try {
+      await setProjectNotes({ notes, projectId: project.id });
+      await fetchProject();
+    } catch (e) { handleError(e); }
+  }, [ fetchProject, project?.id ]);
+
+  const { modalOpen: openNoteDelete } = useModalProjectNoteDelete({
+    onClose: fetchProject,
+    project,
+  });
+
+  const handleDeleteNote = useCallback((pageNumber: number) => {
+    if (!project?.id) return;
+    try {
+      openNoteDelete({ pageNumber });
+    } catch (e) { handleError(e); }
+  }, [ openNoteDelete, project?.id ]);
+
+  useEffect(() => {
+    if(settings.tableOffset > total){
+      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
+      updateSettings({ tableOffset: offset });
+    }
+  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
+
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -702,80 +765,165 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  useEffect(() => {
-    if(settings.tableOffset > total){
-      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
-
-  const ExperimentActionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
-      <TaskActionDropdown
-        curUser={user}
-        task={taskFromExperiment(record)}
-        onComplete={handleActionComplete}
-        onVisibleChange={onVisibleChange}>
-        {children}
-      </TaskActionDropdown>
-    ),
-    [ user, handleActionComplete ],
+  const ContextMenu = useCallback(
+    ({ record, onVisibleChange, children }) => {
+      return (
+        <ExperimentActionDropdown
+          curUser={user}
+          experiment={getProjectExperimentForExperimentItem(record, project)}
+          onComplete={handleActionComplete}
+          onVisibleChange={onVisibleChange}>
+          {children}
+        </ExperimentActionDropdown>
+      );
+    },
+    [ user, handleActionComplete, project ],
   );
+
+  const ExperimentTabOptions = useMemo(() => {
+    return (
+      <div className={css.tabOptions}>
+        <Space className={css.actionList}>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+        </Space>
+        <div className={css.actionOverflow} title="Open actions menu">
+          <Dropdown
+            overlay={(
+              <Menu>
+                <Menu.Item
+                  key="switchArchive"
+                  onClick={() => switchShowArchived(!settings.archived)}>
+                  {settings.archived ? 'Hide Archived' : 'Show Archived'}
+                </Menu.Item>
+                <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
+                {filterCount > 0 && (
+                  <Menu.Item key="resetFilters" onClick={resetFilters}>
+                    Clear Filters ({filterCount})
+                  </Menu.Item>
+                )}
+              </Menu>
+            )}
+            placement="bottomRight"
+            trigger={[ 'click' ]}>
+            <div>
+              <Icon name="overflow-vertical" />
+            </div>
+          </Dropdown>
+        </div>
+      </div>
+    );
+  }, [ filterCount,
+    handleCustomizeColumnsClick,
+    resetFilters,
+    settings.archived,
+    switchShowArchived ]);
+
+  const tabs: TabInfo[] = useMemo(() => {
+    return ([ {
+      body: (
+        <div className={css.experimentTab}>
+          <TableBatch
+            actions={batchActions.map((action) => ({
+              disabled: !availableBatchActions.includes(action),
+              label: action,
+              value: action,
+            }))}
+            selectedRowCount={(settings.row ?? []).length}
+            onAction={handleBatchAction}
+            onClear={clearSelected}
+          />
+          <InteractiveTable
+            areRowsSelected={!!settings.row}
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ContextMenu}
+            dataSource={experiments}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="id"
+            rowSelection={{
+              onChange: handleTableRowSelect,
+              preserveSelectedRowKeys: true,
+              selectedRowKeys: settings.row ?? [],
+            }}
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          />
+        </div>
+      ),
+      options: ExperimentTabOptions,
+      title: 'Experiments',
+    }, {
+      body: (
+        <PaginatedNotesCard
+          disabled={project?.archived}
+          notes={project?.notes ?? []}
+          onDelete={handleDeleteNote}
+          onNewPage={handleNewNotesPage}
+          onSave={handleSaveNotes}
+        />),
+      options: (
+        <div className={css.tabOptions}>
+          <Button type="text" onClick={handleNewNotesPage}>+ New Page</Button>
+        </div>),
+      title: 'Notes',
+    } ]);
+  }, [ ContextMenu,
+    ExperimentTabOptions,
+    clearSelected,
+    columns,
+    experiments,
+    handleBatchAction,
+    handleDeleteNote,
+    handleNewNotesPage,
+    handleSaveNotes,
+    handleTableRowSelect,
+    availableBatchActions,
+    isLoading,
+    project?.notes,
+    project?.archived,
+    settings,
+    total,
+    updateSettings ]);
+
+  if (isNaN(id)) {
+    return <Message title={`Invalid Project ID ${projectId}`} />;
+  } else if (pageError) {
+    const message = isNotFound(pageError) ?
+      `Unable to find Project ${projectId}` :
+      `Unable to fetch Project ${projectId}`;
+    return <Message title={message} type={MessageType.Warning} />;
+  } else if (!project) {
+    return (
+      <Spinner
+        tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`}
+      />
+    );
+  }
 
   return (
     <Page
+      bodyNoPadding
       containerRef={pageRef}
-      id="experiments"
-      options={(
-        <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-          <Button onClick={openModal}>Columns</Button>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
-          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
-        </Space>
-      )}
-      title="Experiments">
-      <TableBatch
-        actions={[
-          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
-          { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
-          { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
-          { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
-          { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
-          { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
-          { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
-          { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
-        ]}
-        selectedRowCount={(settings.row ?? []).length}
-        onAction={handleBatchAction}
-        onClear={clearSelected}
-      />
-      <InteractiveTable
-        areRowsSelected={!!settings.row}
-        columns={columns}
-        containerRef={pageRef}
-        ContextMenu={ExperimentActionDropdown}
-        dataSource={experiments}
-        loading={isLoading}
-        pagination={getFullPaginationConfig({
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-        }, total)}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey="id"
-        rowSelection={{
-          onChange: handleTableRowSelect,
-          preserveSelectedRowKeys: true,
-          selectedRowKeys: settings.row ?? [],
-        }}
-        settings={settings as InteractiveTableSettings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+      docTitle="Project Details"
+      id="projectDetails">
+      <ProjectDetailsTabs
+        curUser={user}
+        fetchProject={fetchProject}
+        project={project}
+        tabs={tabs}
       />
     </Page>
   );
 };
 
-export default ExperimentList;
+export default ProjectDetails;

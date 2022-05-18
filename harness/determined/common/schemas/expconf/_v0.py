@@ -940,12 +940,14 @@ class ExperimentConfigV0(schemas.SchemaBase):
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
+    project: Optional[str] = None
     records_per_epoch: Optional[int] = None
     reproducibility: Optional[ReproducibilityConfigV0] = None
     resources: Optional[ResourcesConfigV0] = None
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
     # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
+    workspace: Optional[str] = None
 
     @schemas.auto_init
     def __init__(
@@ -969,12 +971,14 @@ class ExperimentConfigV0(schemas.SchemaBase):
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
+        project: Optional[str] = None,
         records_per_epoch: Optional[int] = None,
         reproducibility: Optional[ReproducibilityConfigV0] = None,
         resources: Optional[ResourcesConfigV0] = None,
         scheduling_unit: Optional[int] = None,
         # security: Optional[SecurityConfigV0] = None,
         # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
+        workspace: Optional[str] = None,
     ) -> None:
         pass
 

@@ -21,7 +21,8 @@ WITH page_info AS (
                 )
             AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
             AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
-    ), $8, $9) AS page_info
+            AND ($8 = 0 OR e.project_id = $8)
+    ), $9, $10) AS page_info
 ), exps AS (
     SELECT
         e.id AS id,
@@ -43,6 +44,7 @@ WITH page_info AS (
         e.job_id AS job_id,
         e.parent_id AS forked_from,
         e.owner_id AS user_id,
+        e.project_id AS project_id,
         u.username AS username,
         COALESCE(u.display_name, u.username) as display_name
     FROM experiments e
@@ -64,6 +66,7 @@ WITH page_info AS (
             )
         AND ($6 = '' OR (e.config->>'description') ILIKE  ('%%' || $6 || '%%'))
         AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
+        AND ($8 = 0 OR e.project_id = $8)
     ORDER BY %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
@@ -71,4 +74,3 @@ WITH page_info AS (
 SELECT
     (SELECT coalesce(json_agg(exps), '[]'::json) FROM exps) AS experiments,
     (SELECT p.page_info FROM page_info p) AS pagination
-

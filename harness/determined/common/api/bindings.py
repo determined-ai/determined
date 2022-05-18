@@ -361,6 +361,24 @@ class v1AckAllocationPreemptionSignalRequest:
             "allocationId": self.allocationId,
         }
 
+class v1AddProjectNoteResponse:
+    def __init__(
+        self,
+        notes: "typing.Sequence[v1Note]",
+    ):
+        self.notes = notes
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AddProjectNoteResponse":
+        return cls(
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "notes": [x.to_json() for x in self.notes],
+        }
+
 class v1Agent:
     def __init__(
         self,
@@ -878,6 +896,7 @@ class v1CreateExperimentRequest:
         config: "typing.Optional[str]" = None,
         modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None,
         parentId: "typing.Optional[int]" = None,
+        projectId: "typing.Optional[int]" = None,
         validateOnly: "typing.Optional[bool]" = None,
     ):
         self.modelDefinition = modelDefinition
@@ -885,6 +904,7 @@ class v1CreateExperimentRequest:
         self.validateOnly = validateOnly
         self.parentId = parentId
         self.activate = activate
+        self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateExperimentRequest":
@@ -894,6 +914,7 @@ class v1CreateExperimentRequest:
             validateOnly=obj.get("validateOnly", None),
             parentId=obj.get("parentId", None),
             activate=obj.get("activate", None),
+            projectId=obj.get("projectId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -903,6 +924,7 @@ class v1CreateExperimentRequest:
             "validateOnly": self.validateOnly if self.validateOnly is not None else None,
             "parentId": self.parentId if self.parentId is not None else None,
             "activate": self.activate if self.activate is not None else None,
+            "projectId": self.projectId if self.projectId is not None else None,
         }
 
 class v1CreateExperimentResponse:
@@ -1077,6 +1099,7 @@ class v1Experiment:
         jobId: str,
         name: str,
         numTrials: int,
+        projectId: int,
         searcherType: str,
         startTime: str,
         state: "determinedexperimentv1State",
@@ -1087,10 +1110,14 @@ class v1Experiment:
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
+        parentArchived: "typing.Optional[bool]" = None,
         progress: "typing.Optional[float]" = None,
+        projectName: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
         trialIds: "typing.Optional[typing.Sequence[int]]" = None,
         userId: "typing.Optional[int]" = None,
+        workspaceId: "typing.Optional[int]" = None,
+        workspaceName: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.description = description
@@ -1111,6 +1138,11 @@ class v1Experiment:
         self.jobId = jobId
         self.forkedFrom = forkedFrom
         self.progress = progress
+        self.projectId = projectId
+        self.projectName = projectName
+        self.workspaceId = workspaceId
+        self.workspaceName = workspaceName
+        self.parentArchived = parentArchived
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1134,6 +1166,11 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+            projectId=obj["projectId"],
+            projectName=obj.get("projectName", None),
+            workspaceId=obj.get("workspaceId", None),
+            workspaceName=obj.get("workspaceName", None),
+            parentArchived=obj.get("parentArchived", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1157,6 +1194,11 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
+            "projectId": self.projectId,
+            "projectName": self.projectName if self.projectName is not None else None,
+            "workspaceId": self.workspaceId if self.workspaceId is not None else None,
+            "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+            "parentArchived": self.parentArchived if self.parentArchived is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -1526,6 +1568,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_NAME = "SORT_BY_NAME"
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
 
 class v1GetExperimentsResponse:
     def __init__(
@@ -1860,6 +1903,60 @@ class v1GetNotebooksResponse:
         return {
             "notebooks": [x.to_json() for x in self.notebooks] if self.notebooks is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
+        }
+
+class v1GetProjectExperimentsRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_ID = "SORT_BY_ID"
+    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
+    SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_END_TIME = "SORT_BY_END_TIME"
+    SORT_BY_STATE = "SORT_BY_STATE"
+    SORT_BY_NUM_TRIALS = "SORT_BY_NUM_TRIALS"
+    SORT_BY_PROGRESS = "SORT_BY_PROGRESS"
+    SORT_BY_USER = "SORT_BY_USER"
+    SORT_BY_NAME = "SORT_BY_NAME"
+    SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
+    SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+
+class v1GetProjectExperimentsResponse:
+    def __init__(
+        self,
+        experiments: "typing.Sequence[v1Experiment]",
+        pagination: "v1Pagination",
+    ):
+        self.experiments = experiments
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectExperimentsResponse":
+        return cls(
+            experiments=[v1Experiment.from_json(x) for x in obj["experiments"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experiments": [x.to_json() for x in self.experiments],
+            "pagination": self.pagination.to_json(),
+        }
+
+class v1GetProjectResponse:
+    def __init__(
+        self,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json(),
         }
 
 class v1GetResourcePoolsResponse:
@@ -2247,6 +2344,81 @@ class v1GetUsersResponse:
     def to_json(self) -> typing.Any:
         return {
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
+        }
+
+class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_CREATION_TIME = "SORT_BY_CREATION_TIME"
+    SORT_BY_LAST_EXPERIMENT_START_TIME = "SORT_BY_LAST_EXPERIMENT_START_TIME"
+    SORT_BY_NAME = "SORT_BY_NAME"
+    SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
+    SORT_BY_ID = "SORT_BY_ID"
+
+class v1GetWorkspaceProjectsResponse:
+    def __init__(
+        self,
+        pagination: "v1Pagination",
+        projects: "typing.Sequence[v1Project]",
+    ):
+        self.projects = projects
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspaceProjectsResponse":
+        return cls(
+            projects=[v1Project.from_json(x) for x in obj["projects"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "projects": [x.to_json() for x in self.projects],
+            "pagination": self.pagination.to_json(),
+        }
+
+class v1GetWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "v1Workspace",
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json(),
+        }
+
+class v1GetWorkspacesRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_ID = "SORT_BY_ID"
+    SORT_BY_NAME = "SORT_BY_NAME"
+
+class v1GetWorkspacesResponse:
+    def __init__(
+        self,
+        pagination: "v1Pagination",
+        workspaces: "typing.Sequence[v1Workspace]",
+    ):
+        self.workspaces = workspaces
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspacesResponse":
+        return cls(
+            workspaces=[v1Workspace.from_json(x) for x in obj["workspaces"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspaces": [x.to_json() for x in self.workspaces],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1IdleNotebookRequest:
@@ -3033,6 +3205,72 @@ class v1ModelVersion:
             "notes": self.notes if self.notes is not None else None,
         }
 
+class v1MoveExperimentRequest:
+    def __init__(
+        self,
+        destinationProjectId: int,
+        experimentId: int,
+    ):
+        self.experimentId = experimentId
+        self.destinationProjectId = destinationProjectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveExperimentRequest":
+        return cls(
+            experimentId=obj["experimentId"],
+            destinationProjectId=obj["destinationProjectId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId,
+            "destinationProjectId": self.destinationProjectId,
+        }
+
+class v1MoveProjectRequest:
+    def __init__(
+        self,
+        destinationWorkspaceId: int,
+        projectId: int,
+    ):
+        self.projectId = projectId
+        self.destinationWorkspaceId = destinationWorkspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveProjectRequest":
+        return cls(
+            projectId=obj["projectId"],
+            destinationWorkspaceId=obj["destinationWorkspaceId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "projectId": self.projectId,
+            "destinationWorkspaceId": self.destinationWorkspaceId,
+        }
+
+class v1Note:
+    def __init__(
+        self,
+        contents: str,
+        name: str,
+    ):
+        self.name = name
+        self.contents = contents
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Note":
+        return cls(
+            name=obj["name"],
+            contents=obj["contents"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "contents": self.contents,
+        }
+
 class v1Notebook:
     def __init__(
         self,
@@ -3316,6 +3554,46 @@ class v1PatchModelVersionResponse:
             "modelVersion": self.modelVersion.to_json(),
         }
 
+class v1PatchProject:
+    def __init__(
+        self,
+        description: "typing.Optional[str]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.description = description
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchProject":
+        return cls(
+            name=obj.get("name", None),
+            description=obj.get("description", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+            "description": self.description if self.description is not None else None,
+        }
+
+class v1PatchProjectResponse:
+    def __init__(
+        self,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json(),
+        }
+
 class v1PatchUser:
     def __init__(
         self,
@@ -3350,6 +3628,42 @@ class v1PatchUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1PatchWorkspace:
+    def __init__(
+        self,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWorkspace":
+        return cls(
+            name=obj.get("name", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+        }
+
+class v1PatchWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "v1Workspace",
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json(),
         }
 
 class v1PostAllocationProxyAddressRequest:
@@ -3522,6 +3836,50 @@ class v1PostModelVersionResponse:
             "modelVersion": self.modelVersion.to_json(),
         }
 
+class v1PostProjectRequest:
+    def __init__(
+        self,
+        name: str,
+        workspaceId: int,
+        description: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.description = description
+        self.workspaceId = workspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostProjectRequest":
+        return cls(
+            name=obj["name"],
+            description=obj.get("description", None),
+            workspaceId=obj["workspaceId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "description": self.description if self.description is not None else None,
+            "workspaceId": self.workspaceId,
+        }
+
+class v1PostProjectResponse:
+    def __init__(
+        self,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostProjectResponse":
+        return cls(
+            project=v1Project.from_json(obj["project"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "project": self.project.to_json(),
+        }
+
 class v1PostTrialProfilerMetricsBatchRequest:
     def __init__(
         self,
@@ -3580,6 +3938,42 @@ class v1PostUserResponse:
             "user": self.user.to_json() if self.user is not None else None,
         }
 
+class v1PostWorkspaceRequest:
+    def __init__(
+        self,
+        name: str,
+    ):
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWorkspaceRequest":
+        return cls(
+            name=obj["name"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+        }
+
+class v1PostWorkspaceResponse:
+    def __init__(
+        self,
+        workspace: "v1Workspace",
+    ):
+        self.workspace = workspace
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWorkspaceResponse":
+        return cls(
+            workspace=v1Workspace.from_json(obj["workspace"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "workspace": self.workspace.to_json(),
+        }
+
 class v1PreviewHPSearchRequest:
     def __init__(
         self,
@@ -3618,6 +4012,112 @@ class v1PreviewHPSearchResponse:
     def to_json(self) -> typing.Any:
         return {
             "simulation": self.simulation.to_json() if self.simulation is not None else None,
+        }
+
+class v1Project:
+    def __init__(
+        self,
+        archived: bool,
+        id: int,
+        immutable: bool,
+        name: str,
+        notes: "typing.Sequence[v1Note]",
+        numActiveExperiments: int,
+        numExperiments: int,
+        userId: int,
+        username: str,
+        workspaceId: int,
+        description: "typing.Optional[str]" = None,
+        lastExperimentStartedAt: "typing.Optional[str]" = None,
+        workspaceName: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.name = name
+        self.workspaceId = workspaceId
+        self.description = description
+        self.lastExperimentStartedAt = lastExperimentStartedAt
+        self.notes = notes
+        self.numExperiments = numExperiments
+        self.numActiveExperiments = numActiveExperiments
+        self.archived = archived
+        self.username = username
+        self.immutable = immutable
+        self.userId = userId
+        self.workspaceName = workspaceName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Project":
+        return cls(
+            id=obj["id"],
+            name=obj["name"],
+            workspaceId=obj["workspaceId"],
+            description=obj.get("description", None),
+            lastExperimentStartedAt=obj.get("lastExperimentStartedAt", None),
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+            numExperiments=obj["numExperiments"],
+            numActiveExperiments=obj["numActiveExperiments"],
+            archived=obj["archived"],
+            username=obj["username"],
+            immutable=obj["immutable"],
+            userId=obj["userId"],
+            workspaceName=obj.get("workspaceName", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "workspaceId": self.workspaceId,
+            "description": self.description if self.description is not None else None,
+            "lastExperimentStartedAt": self.lastExperimentStartedAt if self.lastExperimentStartedAt is not None else None,
+            "notes": [x.to_json() for x in self.notes],
+            "numExperiments": self.numExperiments,
+            "numActiveExperiments": self.numActiveExperiments,
+            "archived": self.archived,
+            "username": self.username,
+            "immutable": self.immutable,
+            "userId": self.userId,
+            "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+        }
+
+class v1PutProjectNotesRequest:
+    def __init__(
+        self,
+        notes: "typing.Sequence[v1Note]",
+        projectId: int,
+    ):
+        self.notes = notes
+        self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutProjectNotesRequest":
+        return cls(
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+            projectId=obj["projectId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "notes": [x.to_json() for x in self.notes],
+            "projectId": self.projectId,
+        }
+
+class v1PutProjectNotesResponse:
+    def __init__(
+        self,
+        notes: "typing.Sequence[v1Note]",
+    ):
+        self.notes = notes
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutProjectNotesResponse":
+        return cls(
+            notes=[v1Note.from_json(x) for x in obj["notes"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "notes": [x.to_json() for x in self.notes],
         }
 
 class v1PutTemplateResponse:
@@ -5248,6 +5748,52 @@ class v1WorkloadContainer:
             "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
         }
 
+class v1Workspace:
+    def __init__(
+        self,
+        archived: bool,
+        id: int,
+        immutable: bool,
+        name: str,
+        numProjects: int,
+        pinned: bool,
+        userId: int,
+        username: str,
+    ):
+        self.id = id
+        self.name = name
+        self.archived = archived
+        self.username = username
+        self.immutable = immutable
+        self.numProjects = numProjects
+        self.pinned = pinned
+        self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Workspace":
+        return cls(
+            id=obj["id"],
+            name=obj["name"],
+            archived=obj["archived"],
+            username=obj["username"],
+            immutable=obj["immutable"],
+            numProjects=obj["numProjects"],
+            pinned=obj["pinned"],
+            userId=obj["userId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "archived": self.archived,
+            "username": self.username,
+            "immutable": self.immutable,
+            "numProjects": self.numProjects,
+            "pinned": self.pinned,
+            "userId": self.userId,
+        }
+
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",
     *,
@@ -5286,6 +5832,26 @@ def post_ActivateExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ActivateExperiment", _resp)
+
+def post_AddProjectNote(
+    session: "client.Session",
+    *,
+    body: "v1Note",
+    projectId: int,
+) -> "v1AddProjectNoteResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{projectId}/notes",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1AddProjectNoteResponse.from_json(_resp.json())
+    raise APIHttpError("post_AddProjectNote", _resp)
 
 def post_AllocationAllGather(
     session: "client.Session",
@@ -5426,6 +5992,44 @@ def post_ArchiveModel(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveModel", _resp)
+
+def post_ArchiveProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{id}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ArchiveProject", _resp)
+
+def post_ArchiveWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/archive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ArchiveWorkspace", _resp)
 
 def post_CancelExperiment(
     session: "client.Session",
@@ -5579,6 +6183,25 @@ def delete_DeleteModelVersion(
         return
     raise APIHttpError("delete_DeleteModelVersion", _resp)
 
+def delete_DeleteProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteProject", _resp)
+
 def delete_DeleteTemplate(
     session: "client.Session",
     *,
@@ -5597,6 +6220,25 @@ def delete_DeleteTemplate(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteTemplate", _resp)
+
+def delete_DeleteWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(
     session: "client.Session",
@@ -5883,8 +6525,12 @@ def get_GetExperimentCheckpoints(
 
 def get_GetExperimentLabels(
     session: "client.Session",
+    *,
+    projectId: "typing.Optional[int]" = None,
 ) -> "v1GetExperimentLabelsResponse":
-    _params = None
+    _params = {
+        "projectId": projectId,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/experiment/labels",
@@ -6264,6 +6910,67 @@ def get_GetNotebooks(
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
 
+def get_GetProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> "v1GetProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProject", _resp)
+
+def get_GetProjectExperiments(
+    session: "client.Session",
+    *,
+    id: int,
+    archived: "typing.Optional[bool]" = None,
+    description: "typing.Optional[str]" = None,
+    labels: "typing.Optional[typing.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetProjectExperimentsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
+) -> "v1GetProjectExperimentsResponse":
+    _params = {
+        "archived": str(archived).lower() if archived is not None else None,
+        "description": description,
+        "labels": labels,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
+        "userIds": userIds,
+        "users": users,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{id}/experiments",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectExperimentsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectExperiments", _resp)
+
 def get_GetResourcePools(
     session: "client.Session",
     *,
@@ -6621,6 +7328,94 @@ def get_GetUsers(
         return v1GetUsersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUsers", _resp)
 
+def get_GetWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> "v1GetWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspace", _resp)
+
+def get_GetWorkspaceProjects(
+    session: "client.Session",
+    *,
+    id: int,
+    archived: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetWorkspaceProjectsRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
+) -> "v1GetWorkspaceProjectsResponse":
+    _params = {
+        "archived": str(archived).lower() if archived is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "users": users,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{id}/projects",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspaceProjectsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspaceProjects", _resp)
+
+def get_GetWorkspaces(
+    session: "client.Session",
+    *,
+    archived: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    pinned: "typing.Optional[bool]" = None,
+    sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
+) -> "v1GetWorkspacesResponse":
+    _params = {
+        "archived": str(archived).lower() if archived is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "pinned": str(pinned).lower() if pinned is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "users": users,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/workspaces",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspacesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspaces", _resp)
+
 def put_IdleNotebook(
     session: "client.Session",
     *,
@@ -6888,6 +7683,46 @@ def post_MarkAllocationResourcesDaemon(
         return
     raise APIHttpError("post_MarkAllocationResourcesDaemon", _resp)
 
+def post_MoveExperiment(
+    session: "client.Session",
+    *,
+    body: "v1MoveExperimentRequest",
+    experimentId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/move",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveExperiment", _resp)
+
+def post_MoveProject(
+    session: "client.Session",
+    *,
+    body: "v1MoveProjectRequest",
+    projectId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{projectId}/move",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_MoveProject", _resp)
+
 def patch_PatchExperiment(
     session: "client.Session",
     *,
@@ -6949,6 +7784,26 @@ def patch_PatchModelVersion(
         return v1PatchModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchModelVersion", _resp)
 
+def patch_PatchProject(
+    session: "client.Session",
+    *,
+    body: "v1PatchProject",
+    id: int,
+) -> "v1PatchProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/projects/{id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PatchProjectResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchProject", _resp)
+
 def patch_PatchUser(
     session: "client.Session",
     *,
@@ -6969,6 +7824,26 @@ def patch_PatchUser(
         return v1PatchUserResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUser", _resp)
 
+def patch_PatchWorkspace(
+    session: "client.Session",
+    *,
+    body: "v1PatchWorkspace",
+    id: int,
+) -> "v1PatchWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/workspaces/{id}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PatchWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchWorkspace", _resp)
+
 def post_PauseExperiment(
     session: "client.Session",
     *,
@@ -6987,6 +7862,25 @@ def post_PauseExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseExperiment", _resp)
+
+def post_PinWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/pin",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PinWorkspace", _resp)
 
 def post_PostAllocationProxyAddress(
     session: "client.Session",
@@ -7067,6 +7961,26 @@ def post_PostModelVersion(
         return v1PostModelVersionResponse.from_json(_resp.json())
     raise APIHttpError("post_PostModelVersion", _resp)
 
+def post_PostProject(
+    session: "client.Session",
+    *,
+    body: "v1PostProjectRequest",
+    workspaceId: int,
+) -> "v1PostProjectResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{workspaceId}/projects",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PostProjectResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostProject", _resp)
+
 def post_PostTrialProfilerMetricsBatch(
     session: "client.Session",
     *,
@@ -7125,6 +8039,25 @@ def post_PostUser(
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
 
+def post_PostWorkspace(
+    session: "client.Session",
+    *,
+    body: "v1PostWorkspaceRequest",
+) -> "v1PostWorkspaceResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/workspaces",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PostWorkspaceResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostWorkspace", _resp)
+
 def post_PreviewHPSearch(
     session: "client.Session",
     *,
@@ -7143,6 +8076,26 @@ def post_PreviewHPSearch(
     if _resp.status_code == 200:
         return v1PreviewHPSearchResponse.from_json(_resp.json())
     raise APIHttpError("post_PreviewHPSearch", _resp)
+
+def put_PutProjectNotes(
+    session: "client.Session",
+    *,
+    body: "v1PutProjectNotesRequest",
+    projectId: int,
+) -> "v1PutProjectNotesResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/projects/{projectId}/notes",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1PutProjectNotesResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutProjectNotes", _resp)
 
 def put_PutTemplate(
     session: "client.Session",
@@ -7448,6 +8401,63 @@ def post_UnarchiveModel(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveModel", _resp)
+
+def post_UnarchiveProject(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/projects/{id}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnarchiveProject", _resp)
+
+def post_UnarchiveWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/unarchive",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnarchiveWorkspace", _resp)
+
+def post_UnpinWorkspace(
+    session: "client.Session",
+    *,
+    id: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/unpin",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnpinWorkspace", _resp)
 
 def post_UpdateJobQueue(
     session: "client.Session",

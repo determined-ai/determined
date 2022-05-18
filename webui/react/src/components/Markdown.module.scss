@@ -758,11 +758,13 @@
   }
 }
 .render {
+  height: 100%;
   padding: 16px;
 
   .placeholder {
     color: var(--theme-stage-on-weak);
     font-size: 14px;
     font-style: italic;
+    height: 100%;
   }
 }

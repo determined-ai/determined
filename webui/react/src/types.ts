@@ -301,8 +301,10 @@ export enum ExperimentAction {
   CompareTrials = 'Compare Trials',
   ContinueTrial = 'Continue Trial',
   Delete = 'Delete',
+  DownloadCode = 'Download Experiment Code',
   Fork = 'Fork',
   Kill = 'Kill',
+  Move = 'Move',
   Pause = 'Pause',
   OpenTensorBoard = 'View in TensorBoard',
   Unarchive = 'Unarchive',
@@ -457,6 +459,7 @@ export interface ExperimentItem {
   notes?: string;
   numTrials: number;
   progress?: number;
+  projectId: number;
   resourcePool: string;
   searcherType: string;
   startTime: string;
@@ -465,13 +468,24 @@ export interface ExperimentItem {
   userId: number;
 }
 
-export interface ExperimentBase extends ExperimentItem {
+export interface ProjectExperiment extends ExperimentItem {
+  parentArchived: boolean;
+  projectName: string;
+  workspaceId: number;
+  workspaceName: string;
+}
+
+export interface ExperimentBase extends ProjectExperiment {
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+
 }
 // TODO we should be able to remove ExperimentOld but leaving this off.
-export interface ExperimentOld extends ExperimentBase {
+export interface ExperimentOld extends ExperimentItem {
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   url: string;
 }
 
@@ -545,10 +559,14 @@ export type CompoundRunState = RunState | JobState
 
 export interface ExperimentTask extends Task {
   archived: boolean;
+  parentArchived: boolean;
   progress?: number;
+  projectId: number;
   resourcePool: string;
   state: CompoundRunState;
-  userId: number;
+  userId?: number;
+  username: string;
+  workspaceId: number;
 }
 
 export interface CommandTask extends Task {
@@ -669,3 +687,40 @@ export enum JobAction {
 }
 
 /* End of Jobs */
+
+export interface Workspace {
+  archived: boolean;
+  id: number;
+  immutable: boolean;
+  name: string;
+  numProjects: number;
+  pinned: boolean;
+  username: string;
+}
+
+export interface WorkspacePagination extends WithPagination {
+  workspaces: Workspace[];
+}
+
+export interface Note {
+  contents: string;
+  name: string;
+}
+export interface Project {
+  archived: boolean;
+  description?: string;
+  id: number;
+  immutable: boolean;
+  lastExperimentStartedAt?: Date;
+  name: string;
+  notes: Note[];
+  numActiveExperiments: number;
+  numExperiments: number;
+  username: string;
+  workspaceId: number;
+  workspaceName: string;
+}
+
+export interface ProjectPagination extends WithPagination {
+  projects: Project[];
+}

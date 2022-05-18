@@ -7,6 +7,7 @@ from . import (
     master,
     model,
     notebook,
+    project,
     remote,
     render,
     resources,
@@ -15,4 +16,5 @@ from . import (
     tensorboard,
     trial,
     user,
+    workspace,
 )
