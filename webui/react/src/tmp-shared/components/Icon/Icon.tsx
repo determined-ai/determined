@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
-import { CommonProps } from 'types';
+import { CommonProps } from '../../types';
 
 import css from './Icon.module.scss';
 
