@@ -117,7 +117,7 @@ commands:
 
   skip-if-docs-only:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git remote add upstream https://github.com/determined-ai/determined-ee
       - run: git fetch upstream
       - run:
           name: check for docs-only changes
