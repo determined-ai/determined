@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 
 import css from './InlineEditor.module.scss';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   allowClear?: boolean;

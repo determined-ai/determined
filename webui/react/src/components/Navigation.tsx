@@ -7,7 +7,7 @@ import usePolling from 'hooks/usePolling';
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
 import NavigationTabbar from './NavigationTabbar';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 interface Props {
   children?: React.ReactNode;

@@ -9,7 +9,7 @@ import { ErrorType } from '../shared/utils/error';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 interface Props {
   disabled?: boolean;

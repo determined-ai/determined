@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';

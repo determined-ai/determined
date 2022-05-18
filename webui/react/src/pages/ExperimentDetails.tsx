@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Page from 'components/Page';
-import Spinner from 'components/Spinner';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';

@@ -21,7 +21,7 @@ import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 
 import css from './InteractiveTable.module.scss';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;

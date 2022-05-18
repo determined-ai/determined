@@ -4,7 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
-import Spinner from 'components/Spinner';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';

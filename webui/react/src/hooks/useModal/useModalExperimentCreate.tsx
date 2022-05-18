@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Icon from 'tmp-shared/components/Icon/Icon';
-import Spinner from 'components/Spinner';
+import Spinner from 'tmp-shared/components/Spinner/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';

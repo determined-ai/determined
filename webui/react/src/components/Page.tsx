@@ -7,7 +7,7 @@ import { BrandingType} from 'types';
 import { CommonProps } from '../tmp-shared/types';
 
 import css from './Page.module.scss';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;

@@ -4,7 +4,7 @@ import { isString } from 'shared/utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'shared/utils/string';
 
 import css from './Section.module.scss';
-import Spinner from './Spinner';
+import Spinner from '../tmp-shared/components/Spinner/Spinner';
 
 interface Props {
   bodyBorder?: boolean;
