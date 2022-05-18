@@ -132,12 +132,10 @@ data:
       enabled: {{ .Values.telemetry.enabled }}
     {{- end }}
 
-
     {{- if .Values.observability }}
     observability:
       enable_prometheus: {{ .Values.observability.enable_prometheus }}
     {{- end }}
-
 
     {{- if .Values.clusterName }}
     cluster_name: {{ .Values.clusterName }}
