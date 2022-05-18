@@ -356,6 +356,32 @@ func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point,
 	return metricSeries, maxEndTime
 }
 
+// MetricsSeries returns a time-series of the specified metrics in the specified trials.
+func (db *PgDB) MetricsSeries(trialID int32, startTime time.Time, metricType string,
+	metricName string, startBatches int, endBatches int) (metricSeries []lttb.Point,
+	maxEndTime time.Time, err error) {
+	rows, err := db.sql.Query(`
+SELECT
+  total_batches AS batches,
+  s.metrics->'avg_metrics'->$1 AS value,
+  s.end_time as end_time
+FROM trials t
+  INNER JOIN steps s ON t.id=s.trial_id
+WHERE t.id=$2
+  AND s.state = 'COMPLETED'
+  AND total_batches >= $3
+  AND total_batches <= $4
+  AND s.end_time > $5
+  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
+ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
+	if err != nil {
+		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
+	defer rows.Close()
+	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
+	return metricSeries, maxEndTime, nil
+}
+
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,

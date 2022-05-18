@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -511,6 +512,69 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	}
 
 	resp.Workloads = workloads.Workloads
+
+	return resp, nil
+}
+
+func (a *apiServer) MultiTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
+	maxDatapoints int, startBatches int, endBatches int) (*apiv1.TrialsSampleResponse_Trial, error) {
+	var metricSeries []lttb.Point
+	var startTime time.Time
+	var endTime time.Time
+	var err error
+	var trial apiv1.TrialsSampleResponse_Trial
+	trial.TrialId = trialID
+	trialCursors := make(map[int32]time.Time)
+
+	switch metricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricSeries, endTime, err = a.m.db.MetricsSeries(trialID, startTime,
+			"training", metricName, startBatches, endBatches)
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricSeries, endTime, err = a.m.db.MetricsSeries(trialID, startTime,
+			"validation", metricName, startBatches, endBatches)
+	}
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+	}
+	if len(metricSeries) > 0 {
+		// if we get empty results, the endTime is incorrectly zero
+		trialCursors[trialID] = endTime
+	}
+	metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+
+	var pts []*map[string]interface{}
+	for _, in := range metricSeries {
+		var out map[string]interface{}
+		out["Batches"] = int32(in.X)
+		out[metricName] = in.Y
+		append(pts, &out)
+		// trial.Data = append(trial.Data, &out)
+	}
+	trial.Data = pts
+	return &trial, nil
+}
+
+func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
+	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_plus",
+		resp.Trial,
+		"{"+strconv.Itoa(int(req.TrialId))+"}",
+	); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
+	}
+
+	tsample, err := a.MultiTrialSample(req.TrialId, "loss", apiv1.MetricType_METRIC_TYPE_TRAINING,
+		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed sampling")
+	}
+	resp.Data = tsample.Data
 
 	return resp, nil
 }

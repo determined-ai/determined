@@ -90,27 +90,10 @@ class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
     PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
 
-class TrialsSampleResponseDataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "TrialsSampleResponseDataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
-        }
+class apiv1MetricType(enum.Enum):
+    METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
+    METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
+    METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
 
 class determinedcheckpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -943,6 +926,28 @@ class v1CurrentUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1DataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
         }
 
 class v1Device:
@@ -2844,11 +2849,6 @@ class v1MetricNamesResponse:
             "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
         }
 
-class v1MetricType(enum.Enum):
-    METRIC_TYPE_UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
-    METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
-    METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
-
 class v1Metrics:
     def __init__(
         self,
@@ -4616,6 +4616,33 @@ class v1Slot:
             "draining": self.draining if self.draining is not None else None,
         }
 
+class v1SummarizeTrialRequestMetricType(enum.Enum):
+    METRIC_TYPE_ALL = "METRIC_TYPE_ALL"
+    METRIC_TYPE_TRAINING = "METRIC_TYPE_TRAINING"
+    METRIC_TYPE_VALIDATION = "METRIC_TYPE_VALIDATION"
+
+class v1SummarizeTrialResponse:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
+        return cls(
+            trial=trialv1Trial.from_json(obj["trial"]),
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trial": self.trial.to_json(),
+            "data": [x.to_json() for x in self.data],
+        }
+
 class v1Task:
     def __init__(
         self,
@@ -5047,7 +5074,7 @@ class v1TrialsSampleResponse:
 class v1TrialsSampleResponseTrial:
     def __init__(
         self,
-        data: "typing.Sequence[TrialsSampleResponseDataPoint]",
+        data: "typing.Sequence[v1DataPoint]",
         hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
     ):
@@ -5060,7 +5087,7 @@ class v1TrialsSampleResponseTrial:
         return cls(
             trialId=obj["trialId"],
             hparams=obj["hparams"],
-            data=[TrialsSampleResponseDataPoint.from_json(x) for x in obj["data"]],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
         )
 
     def to_json(self) -> typing.Any:
@@ -7410,6 +7437,36 @@ def post_SetUserPassword(
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
+
+def get_SummarizeTrial(
+    session: "client.Session",
+    *,
+    trialId: int,
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
+    metricType: "typing.Optional[v1SummarizeTrialRequestMetricType]" = None,
+    startBatches: "typing.Optional[int]" = None,
+) -> "v1SummarizeTrialResponse":
+    _params = {
+        "endBatches": endBatches,
+        "maxDatapoints": maxDatapoints,
+        "metricNames": metricNames,
+        "metricType": metricType.value if metricType is not None else None,
+        "startBatches": startBatches,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/summarize",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1SummarizeTrialResponse.from_json(_resp.json())
+    raise APIHttpError("get_SummarizeTrial", _resp)
 
 def post_UnarchiveExperiment(
     session: "client.Session",

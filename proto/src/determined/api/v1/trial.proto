@@ -10,6 +10,7 @@ import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
 import "determined/log/v1/log.proto";
 import "determined/trial/v1/trial.proto";
+import "determined/api/v1/experiment.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -296,6 +297,35 @@ message PostTrialProfilerMetricsBatchRequest {
 }
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
+
+// Get downsampled metrics from a trial.
+message SummarizeTrialRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "max_datapoints", "trial_id" ] }
+  };
+  // The requested trial's id.
+  int32 trial_id = 1;
+  // The maximum number of data points to return after downsampling.
+  int32 max_datapoints = 2;
+  // The names of selected metrics.
+  repeated string metric_names = 3;
+  // Sample from metrics after this batch number.
+  int32 start_batches = 4;
+  // Sample from metrics before this batch number.
+  int32 end_batches = 5;
+  // Type of metrics.
+  MetricType metric_type = 6;
+}
+// Response to SummarizeTrialRequest.
+message SummarizeTrialResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data", "trial" ] }
+  };
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+  // The downsampled datapoints.
+  repeated DataPoint data = 2;
+}
 
 // Long poll for updates to the preemption status for an allocation.
 message AllocationPreemptionSignalRequest {
