@@ -638,6 +638,12 @@ export interface Trialv1Trial {
      */
     state: Determinedexperimentv1State;
     /**
+     * Number times the trial restarted.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    restarts: number;
+    /**
      * Trial hyperparameters.
      * @type {any}
      * @memberof Trialv1Trial
