@@ -1107,7 +1107,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 
 	for _, in := range metricSeries {
-		out := apiv1.TrialsSampleResponse_DataPoint{
+		out := apiv1.DataPoint{
 			Batches: int32(in.X),
 			Value:   in.Y,
 		}
