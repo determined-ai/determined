@@ -3,8 +3,10 @@ Shows an example
 """
 
 import argparse
-import tensorflow as tf
+import os
+
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 from determined import keras
 from determined.experimental import client
@@ -55,7 +57,7 @@ def main():
         "--trial-id", type=int, required=True, help="Trial ID to export."
     )
     parser.add_argument(
-        "--master-url", type=str, default="", help="URL of the Determined master."
+        "--master-url", type=str, default=os.environ["DET_MASTER"], help="URL of the Determined master (uses DET_MASTER environment variable by default)."
     )
     parser.add_argument(
         "--latest",
