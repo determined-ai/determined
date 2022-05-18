@@ -304,6 +304,7 @@ export const ioToExperimentConfig =
     description: io.description || undefined,
     hyperparameters: ioToHyperparametereters(io.hyperparameters),
     labels: io.labels || undefined,
+    maxRestarts: io.max_restarts,
     name: io.name,
     profiling: { enabled: !!io.profiling?.enabled },
     resources: {},

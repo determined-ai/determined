@@ -276,6 +276,7 @@ export interface ExperimentConfig {
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];
+  maxRestarts: number;
   name: string;
   profiling?: {
     enabled: boolean;

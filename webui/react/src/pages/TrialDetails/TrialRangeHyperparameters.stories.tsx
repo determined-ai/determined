@@ -54,6 +54,7 @@ const TrialRangeHyperparametersContainer = () => {
         },
       },
       labels: [],
+      maxRestarts: 5,
       name: 'mnist_pytorch_adaptive_search',
       profiling: { enabled: false },
       resources: {},

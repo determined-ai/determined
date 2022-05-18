@@ -92,6 +92,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
       },
       dataLayer: { type: 'shared_fs' },
       hyperparameters: {},
+      maxRestarts: 5,
       name: experimentTask.name,
       resources: {},
       searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
