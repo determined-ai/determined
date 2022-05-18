@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Kubernetes: Specifying `observability.enable_prometheus` will now correctly enable Prometheus monitoring routes.
