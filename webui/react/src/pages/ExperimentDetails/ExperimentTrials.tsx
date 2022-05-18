@@ -101,6 +101,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       </Link>
     );
 
+    const restartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      const maxRestarts = experiment.config.maxRestarts ?? 0;
+      return (
+        <>{record.restarts}{maxRestarts ? `/${maxRestarts}` : ''}</>
+      );
+    };
+
     const validationRenderer = (key: string) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -155,6 +162,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
+        column.render = restartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }

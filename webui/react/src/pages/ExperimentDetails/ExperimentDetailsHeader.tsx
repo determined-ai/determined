@@ -320,7 +320,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {trial && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Restarts:</span>
-                <span>{trial.restarts}</span>
+                <span>
+                  {trial.restarts}
+                  {experiment.config.maxRestarts ? `/${experiment.config.maxRestarts}` : ''}
+                </span>
               </div>
             )}
             <TagList

@@ -150,6 +150,7 @@ export const ioExperimentConfig = io.type({
   description: optional(io.string),
   hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
+  max_restarts: io.number,
   name: io.string,
   profiling: optional(io.type({ enabled: io.boolean })),
   resources: ioExpResources,
