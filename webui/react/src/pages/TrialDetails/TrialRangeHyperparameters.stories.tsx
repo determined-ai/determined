@@ -223,6 +223,7 @@ const TrialRangeHyperparametersContainer = () => {
       log: 0.5138800609919691,
     },
     id: 1,
+    restarts: 0,
     startTime: '2021-06-09T15:26:58.003220Z',
     state: RunState.Completed,
     totalBatchesProcessed: 58,
