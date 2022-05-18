@@ -1,13 +1,12 @@
 import { Dropdown, Menu, Modal, ModalFuncProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { JSXElementConstructor } from 'react';
+import React, { JSXElementConstructor, useCallback } from 'react';
 
 import Icon from 'components/Icon';
 import { capitalize } from 'shared/utils/string';
-import handleError from 'utils/error';
 
 import { Eventually } from '../shared/types';
-import { ErrorLevel, ErrorType } from '../shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import css from './ActionDropdown.module.scss';
 
@@ -22,24 +21,30 @@ interface Props<T extends string> {
   id: string;
   kind: string;
   onComplete?: (action?: T) => void;
+  onError: (error: DetError) => void;
   onTrigger: Triggers<T>;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const menuClickErrorHandler = (e: unknown, actionKey: string, kind: string, id : string): void => {
-  handleError(e, {
-    level: ErrorLevel.Error,
-    publicMessage: `Unable to ${actionKey} ${kind} ${id}.`,
-    publicSubject: `${capitalize(actionKey.toString())} failed.`,
-    silent: false,
-    type: ErrorType.Server,
-  });
-};
-
 const ActionDropdown = <T extends string>(
-  { id, kind, onComplete, onTrigger, confirmations, actionOrder }: Props<T>,
+  { id, kind, onComplete, onTrigger, confirmations, actionOrder, onError }: Props<T>,
 ): React.ReactElement<unknown, JSXElementConstructor<unknown>> | null => {
+
+  const menuClickErrorHandler = useCallback((
+    e: unknown,
+    actionKey: string,
+    kind: string,
+    id : string,
+  ): void => {
+    onError(new DetError(e, {
+      level: ErrorLevel.Error,
+      publicMessage: `Unable to ${actionKey} ${kind} ${id}.`,
+      publicSubject: `${capitalize(actionKey.toString())} failed.`,
+      silent: false,
+      type: ErrorType.Server,
+    }));
+  }, [ onError ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();

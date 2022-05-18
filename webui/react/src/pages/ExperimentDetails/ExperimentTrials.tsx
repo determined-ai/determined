@@ -141,6 +141,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         ]}
         id={experiment.id + ''}
         kind="experiment"
+        onError={handleError}
         onTrigger={dropDownOnTrigger(record)}
       />
     );

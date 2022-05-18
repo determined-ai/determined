@@ -181,6 +181,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
                   }}
                   id={record.name}
                   kind="job"
+                  onError={handleError}
                   onTrigger={dropDownOnTrigger(record)}
                 />
               </div>
