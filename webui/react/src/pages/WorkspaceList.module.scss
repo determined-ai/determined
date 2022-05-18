@@ -1,0 +1,17 @@
+.base {
+  height: fit-content;
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--theme-sizes-layout-big);
+  }
+}
+
+@media only screen and (max-width: $breakpoint-mobile) {
+  .base {
+    .controls {
+      flex-wrap: wrap;
+    }
+  }
+}

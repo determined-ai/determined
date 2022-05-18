@@ -1171,6 +1171,13 @@ schemas = {
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/profiling.json"
         },
+        "project": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
         "records_per_epoch": {
             "type": [
                 "integer",
@@ -1225,6 +1232,13 @@ schemas = {
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
+        },
+        "workspace": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
         }
     },
     "allOf": [

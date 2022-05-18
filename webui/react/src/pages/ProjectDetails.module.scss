@@ -1,0 +1,34 @@
+
+.experimentTab {
+  padding: var(--theme-sizes-layout-big);
+}
+.tabOptions {
+  padding: var(--theme-sizes-layout-medium);
+
+  .actionOverflow {
+    display: none;
+  }
+  .actionList {
+    display: inline-flex;
+  }
+}
+:global(.ant-tabs-nav-wrap) {
+  align-self: flex-end !important;
+}
+:global(.ant-tabs-nav-list) {
+  height: min-content;
+}
+
+@media only screen and (max-width: $breakpoint-tablet) {
+  .tabOptions {
+    .actionList {
+      display: none;
+    }
+    .actionOverflow {
+      cursor: pointer;
+      display: block;
+
+      &:hover { color: var(--theme-colors-action-normal); }
+    }
+  }
+}

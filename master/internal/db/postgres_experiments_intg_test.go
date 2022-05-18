@@ -222,6 +222,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,
+				0,
 				tt.offset,
 				tt.limit,
 			)
@@ -246,6 +247,7 @@ func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) mo
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		Archived:             false,
+		ProjectID:            1,
 	}
 }
 

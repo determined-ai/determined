@@ -9,6 +9,7 @@
   flex-direction: column;
   flex-grow: 0;
   flex-shrink: 0;
+  max-height: calc(var(--vh, 1vh) * 100);
   overflow: visible;
 
   header {
@@ -19,6 +20,7 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-height: 0;
   }
   section.launch {
     align-items: center;
@@ -27,8 +29,27 @@
     padding: 16px 0;
     width: var(--nav-side-bar-width-max);
   }
-  section.top {
+  section.workspaces {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
+    min-height: 0;
+    overflow: hidden;
+
+    .noWorkspaces {
+      align-self: center;
+      color: #bfbfbf;
+      font-size: var(--theme-sizes-font-small);
+      padding: var(--theme-sizes-layout-small);
+    }
+    .pinnedWorkspaces {
+      list-style: none;
+      margin: 0;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 0;
+    }
   }
   footer {
     position: relative;
@@ -129,6 +150,79 @@
   }
   .navItem:hover {
     color: var(--theme-stage-on-strong);
+  // .navItemContainer {
+  //   align-items: center;
+  //   display: flex;
+  //   flex-wrap: nowrap;
+  //   width: var(--theme-sizes-navigation-maxWidth);
+  //
+  //   &.active {
+  //     background-color: var(--theme-colors-base-0);
+  //     cursor: default;
+  //   }
+  //   &:hover {
+  //     background-color: var(--theme-colors-base-3);
+  //     color: var(--theme-colors-monochrome-17);
+  //   }
+  //   .navItem {
+  //     align-items: center;
+  //     align-self: flex-start;
+  //     color: var(--theme-colors-monochrome-17);
+  //     cursor: pointer;
+  //     display: flex;
+  //     flex-grow: 1;
+  //     height: 48px;
+  //     max-width: 100%;
+  //
+  //     .icon {
+  //       padding-inline: var(--theme-sizes-layout-big);
+  //     }
+  //     .label {
+  //       font-size: var(--theme-sizes-font-small);
+  //       height: var(--theme-sizes-layout-enormous);
+  //       line-height: var(--theme-sizes-layout-enormous);
+  //       overflow: hidden;
+  //       padding-right: var(--theme-sizes-layout-big);
+  //       white-space: nowrap;
+  //       width: auto
+  //     }
+  //   }
+  //   .navItem.active {
+  //     cursor: default;
+  //   }
+  //   .navItemExtra {
+  //     align-items: center;
+  //     display: flex;
+  //     flex-direction: column;
+  //
+  //     & a {
+  //       align-items: center;
+  //       display: flex;
+  //       flex-grow: 1;
+  //     }
+  //     & span {
+  //       cursor: default;
+  //     }
+  //     .status {
+  //       background-color: var(--theme-colors-action-normal);
+  //       border-radius: var(--theme-sizes-layout-medium);
+  //       color: var(--theme-colors-monochrome-17);
+  //       flex-grow: 0;
+  //       font-size: var(--theme-sizes-font-tiny);
+  //       height: var(--theme-sizes-layout-big);
+  //       margin-right: var(--theme-sizes-layout-big);
+  //       padding: 0 var(--theme-sizes-layout-small);
+  //       white-space: nowrap;
+  //     }
+  //     .action {
+  //       height: 100%;
+  //
+  //       & * {
+  //         color: #bfbfbf;
+  //         height: 100%;
+  //       }
+  //     }
+  //   }
   }
   .user {
     background-color: var(--theme-stage-weak);
@@ -150,16 +244,19 @@
   }
   .navItem {
     width: var(--nav-side-bar-width-max);
+  // .noWorkspaces { opacity: 1; }
+  // .navItemContainer {
+  //   width: var(--theme-sizes-navigation-maxWidth);
 
+    .action,
     .label { opacity: 1; }
     .status {
       right: 16px;
       transform: translateX(0);
     }
   }
-  .navItem.hasStatus {
+  .navItemContainer.hasStatus {
     height: 48px;
-
     .status { bottom: 16px; }
   }
   .user {
@@ -224,7 +321,16 @@
   .navItem {
     transition: height var(--animation-curve), width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
+  // .noWorkspaces {
+  //   opacity: 0;
+  //   transition: opacity var(--theme-animationCurve);
+  // }
+  // .navItemContainer {
+  //   flex-direction: column;
+  //   transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
+  //   width: var(--theme-sizes-navigation-minWidth);
 
+    .action,
     .label {
       opacity: 0;
       transition: opacity var(--animation-curve);
@@ -236,9 +342,19 @@
         bottom var(--animation-curve),
         right var(--animation-curve),
         transform var(--animation-curve);
+    // .navItemExtra {
+    //   display: none;
+    //
+    //   & * {
+    //     flex-direction: column;
+    //     justify-content: center;
+    //   }
+    //   .status {
+    //     margin: 0;
+    //   }
     }
   }
-  .navItem.hasStatus {
+  .navItemContainer.hasStatus {
     height: 72px;
 
     .status { bottom: 12px; }
@@ -287,14 +403,23 @@
   }
   .navItem {
     width: var(--nav-side-bar-width-min);
+  // .noWorkspaces { opacity: 0; }
+  // .navItemContainer {
+  //   flex-direction: column;
+  //   width: var(--theme-sizes-navigation-minWidth);
 
+    .action,
     .label { opacity: 0; }
-    .status {
-      right: 50%;
-      transform: translateX(50%);
+    .navItemExtra {
+      & * {
+        justify-content: center;
+      }
+      .status {
+        margin: 0;
+      }
     }
   }
-  .navItem.hasStatus {
+  .navItemContainer.hasStatus {
     height: 72px;
 
     .status { bottom: 12px; }
@@ -306,14 +431,18 @@
   }
 }
 .collapsedExit {
-  .navItem {
+  .noWorkspaces { display: block; }
+  .navItemContainer {
+    .action,
     .label { display: block; }
   }
 }
 .collapsedEnterDone {
-  .navItem {
+  .navItemContainer {
+    .action,
     .label { display: none; }
   }
+  .noWorkspaces { display: none; }
 }
 .collapsedExitActive {
   flex-basis: var(--nav-side-bar-width-max);
@@ -371,7 +500,15 @@
   .navItem {
     transition: height var(--animation-curve), width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
+  // .noWorkspaces {
+  //   opacity: 1;
+  //   transition: opacity var(--theme-animationCurve);
+  // }
+  // .navItemContainer {
+  //   transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
+  //   width: var(--theme-sizes-navigation-maxWidth);
 
+    .action,
     .label {
       opacity: 1;
       transition: opacity var(--animation-curve);
@@ -383,9 +520,11 @@
         bottom var(--animation-curve),
         right var(--animation-curve),
         transform var(--animation-curve);
+    // .navItemExtra {
+    //   display: none;
     }
   }
-  .navItem.hasStatus {
+  .navItemContainer.hasStatus {
     height: 48px;
 
     .status { bottom: 16px; }

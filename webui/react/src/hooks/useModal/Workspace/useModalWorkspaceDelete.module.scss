@@ -1,0 +1,12 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-sizes-layout-big);
+
+  .label {
+    color: var(--theme-colors-monochrome-7)
+  }
+  :global(p) {
+    margin: 0;
+  }
+}
