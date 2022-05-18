@@ -6,7 +6,8 @@ export const getSlotContainerStates = (
   resourcePoolName?: string,
 ): ResourceState[] => {
   const slotContainerStates = agents
-    .filter(agent => resourcePoolName ? agent.resourcePool === resourcePoolName : true)
+    .filter(agent => resourcePoolName && resourcePoolName !== 'kubernetes' ?
+      agent.resourcePool === resourcePoolName : true)
     .map(agent => {
       return deviceTypes.has(resourceType)
         ? agent.resources.filter(res => res.type === resourceType)
