@@ -317,6 +317,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <Link className={css.link} path={paths.jobs()}>{jobInfoLinkText}</Link>
               </div>
             )}
+            {trial && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Restarts:</span>
+                <span>{trial.restarts}</span>
+              </div>
+            )}
             <TagList
               ghost={true}
               tags={experiment.config.labels || []}
