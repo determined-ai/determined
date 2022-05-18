@@ -18,6 +18,7 @@ The datasets are located [here](http://efrosgans.eecs.berkeley.edu/pix2pix/datas
 * **`print_models.py`**: Generates images showing the layers structure of the discriminator and generator.
 
 ### Configuration Files
+* **`adaptive.yaml`**: Train the model using the Asynchronous Successive Halving Algorithm for hyperparameter searching.
 * **`const.yaml`**: Train the model with constant hyperparameter values.
 * **`distributed.yaml`**: Same as `const.yaml`, but use multiple GPUs for distributed training.
 
