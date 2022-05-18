@@ -16,12 +16,35 @@ export type Confirmations<T extends string> =
   Partial<{ [key in T]: Omit<ModalFuncProps, 'onOk'>}>
 
 interface Props<T extends string> {
+  /**
+   * define the order of actions to show up in the dropdown menu.
+   */
   actionOrder: T[];
+  /**
+   * whether to prompt the user to confirm the action before executing it
+   * with options to customize the generated modal.
+   */
   confirmations?: Confirmations<T>
+  /**
+   * How to identify the entity that the action is being performed on.
+   * This is used to generate the modal content and for logging purposes.
+   */
   id: string;
+  /**
+   * kind of the entity that the action is being performed on.
+   */
   kind: string;
+  /**
+   * what to do after each action is completed.
+   */
   onComplete?: (action?: T) => void;
+  /**
+   * how to handle errors.
+   */
   onError: (error: DetError) => void;
+  /**
+   * what to do when an action is selected.
+   */
   onTrigger: Triggers<T>;
 }
 
