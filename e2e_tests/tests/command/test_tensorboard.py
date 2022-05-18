@@ -173,7 +173,6 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         experiment_id = exp.run_basic_test(
             str(config_path), conf.fixtures_path("no_op"), num_trials
         )
-    not_a_real_image = "not_a_real_image"
     command = [
         "tensorboard",
         "start",
@@ -181,7 +180,7 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         "--no-browser",
         "--detach",
         "--config",
-        f"environment.image={not_a_real_image}",
+        "environment.image=alpine",
     ]
     with cmd.interactive_command(*command) as tensorboard:
         t_id = tensorboard.task_id
@@ -189,7 +188,7 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         with cmd.interactive_command(*commandt, task_id=t_id) as tensorboard_config:
             for line in tensorboard_config.stdout:
                 if "cpu" in line or "cuda" in line or "rocm" in line:
-                    if not_a_real_image in line:
+                    if "alpine" in line:
                         break
                     else:
                         raise AssertionError(f"Setting custom image not working properly: {line}")
