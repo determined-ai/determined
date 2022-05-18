@@ -1,5 +1,4 @@
 import logging
-import math
 import sys
 from typing import Any, Generator, Optional, Tuple
 
@@ -272,11 +271,6 @@ class WorkloadSequencer(workload.Source):
             raise RuntimeError(
                 f"Searcher validation metric '{searcher_metric_name}' returned "
                 f"a non-scalar value: {searcher_metric}"
-            )
-
-        if math.isnan(searcher_metric):
-            raise RuntimeError(
-                f"Searcher validation metric '{searcher_metric_name}' returned a NaN value"
             )
 
         # Report to the searcher API first, so we don't end up in a situation where we die between
