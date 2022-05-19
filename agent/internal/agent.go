@@ -63,9 +63,15 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
-		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
-		return a.connect(ctx)
+		err := a.connect(ctx)
 
+		// Set up SIGINT and SIGTERM listeners after we try to connect to master.
+		// Ironically listening before we connect to master means we are unable
+		// to process signals during a.connect since this PreStart message blocks
+		// processing other messages (including the os.Signal messages). Without
+		// setting up listeners, Go will handle closing our program for us.
+		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
+		return err
 	case aproto.AgentMessage:
 		switch {
 		case msg.MasterSetAgentOptions != nil:
