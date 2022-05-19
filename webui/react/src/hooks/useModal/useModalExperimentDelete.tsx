@@ -4,10 +4,10 @@ import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
-
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase } from 'types';
-import handleError, { ErrorLevel, ErrorType } from '../../shared/utils/error';
-import { routeToReactUrl } from '../../shared/utils/routes';
+import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from './useModal';
 
@@ -36,13 +36,13 @@ const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks =>
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
-      content: `Are you sure you want to delete\n experiment ${experimentId}?`,
+      content: `Are you sure you want to delete\n experiment ${experiment.id}?`,
       icon: <ExclamationCircleOutlined />,
       okText: 'Delete',
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk, experimentId ]);
+  }, [ handleOk, experiment.id ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

@@ -52,7 +52,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <p className={css.projects}>
             {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
-          <div className={css.avatar}><Avatar username={workspace.username} /></div>
+          <div className={css.avatar}><Avatar name={workspace.username} /></div>
         </div>
         {workspace.pinned && <PushpinOutlined className={css.pinned} />}
         {!workspace.immutable && (

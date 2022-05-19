@@ -4,9 +4,9 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchProject } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
 import handleError from 'utils/error';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './useModalProjectEdit.module.scss';
 

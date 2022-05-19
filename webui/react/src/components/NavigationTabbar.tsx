@@ -8,8 +8,6 @@ import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettin
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
 
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';

@@ -21,13 +21,13 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspace, getWorkspaceProjects, isNotFound, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
-import { validateDetApiEnum } from 'shared/utils/service';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
-import { isEqual } from 'shared/utils/data';
 import handleError from 'utils/error';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,

@@ -4,9 +4,9 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchWorkspace } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './useModalWorkspaceEdit.module.scss';
 

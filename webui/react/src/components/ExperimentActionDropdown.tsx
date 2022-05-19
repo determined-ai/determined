@@ -9,14 +9,15 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, DetailedUser, ProjectExperiment,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import {
   getActionsForExperiment,
 } from 'utils/experiment';
-import { capitalize } from 'utils/string';
 import { openCommand } from 'wait';
 
 import css from './ActionDropdown.module.scss';

@@ -39,12 +39,10 @@ import {
   RunState,
   TrialDetails,
 } from 'types';
-import { getDuration } from 'utils/datetime';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'wait';
 
-import { RecordKey } from '../../shared/types';
 import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -54,6 +52,11 @@ interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
   trial?: TrialDetails;
+  name?: string;
+  // TODO: separate components for
+  // 1) displaying an abbreviated string as an Avatar and
+  // 2) finding user by userId in the store and displaying string Avatar or profile image
+  userId?: number;
 }
 
 const headerActions = [

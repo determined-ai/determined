@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
-import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import { isEqual } from 'shared/utils/data';
+import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './BreadcrumbBar.module.scss';

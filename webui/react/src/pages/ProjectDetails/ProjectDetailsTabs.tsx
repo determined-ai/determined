@@ -7,9 +7,9 @@ import Icon from 'components/Icon';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
 import { getWorkspace } from 'services/api';
+import { sentenceToCamelCase } from 'shared/utils/string';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
-import { sentenceToCamelCase } from 'utils/string';
 
 import css from './ProjectDetailsTabs.module.scss';
 

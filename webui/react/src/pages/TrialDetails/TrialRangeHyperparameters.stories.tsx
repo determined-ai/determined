@@ -215,7 +215,7 @@ const TrialRangeHyperparametersContainer = () => {
     startTime: '2021-06-09T15:26:57.610700Z',
     state: RunState.Completed,
     userId: 2,
-    username: 'determined',
+
     workspaceId: 1,
     workspaceName: 'Uncategorized',
   };

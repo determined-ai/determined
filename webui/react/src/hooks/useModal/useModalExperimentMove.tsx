@@ -10,9 +10,10 @@ import SelectFilter from 'components/SelectFilter';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
-import { Project, Workspace } from 'types';
 import { isEqual } from 'shared/utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { Project, Workspace } from 'types';
+import handleError from 'utils/error';
 
 import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalExperimentMove.module.scss';

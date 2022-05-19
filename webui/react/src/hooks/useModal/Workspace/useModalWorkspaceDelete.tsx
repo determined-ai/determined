@@ -4,11 +4,11 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { deleteWorkspace } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './useModalWorkspaceDelete.module.scss';
 

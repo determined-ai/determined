@@ -4,10 +4,10 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { createProject } from 'services/api';
-import handleError from 'utils/error';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
 

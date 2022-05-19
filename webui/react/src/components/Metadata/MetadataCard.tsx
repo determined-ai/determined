@@ -2,10 +2,10 @@ import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../../shared/utils/error';
 import Spinner from '../Spinner';
 
 import EditableMetadata from './EditableMetadata';

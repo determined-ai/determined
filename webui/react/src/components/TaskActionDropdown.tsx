@@ -1,11 +1,9 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import Icon from 'components/Icon';
-
-import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
 import { paths } from 'routes/utils';
 import {
   killTask,

@@ -19,11 +19,11 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import { validateDetApiEnum } from 'shared/utils/service';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
-import { isEqual } from 'shared/utils/data';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,

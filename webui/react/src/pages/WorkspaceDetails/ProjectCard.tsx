@@ -80,7 +80,7 @@ const ProjectCard: React.FC<Props> = ({
             />
           )}
         </div>
-        <div className={css.avatar}><Avatar username={project.username} /></div>
+        <div className={css.avatar}><Avatar name={project.username} /></div>
       </div>
     </ProjectActionDropdown>
   );
