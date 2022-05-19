@@ -15,5 +15,6 @@ export const Default = (): React.ReactNode => (
     name="task name"
     resourcePool="task-resource-pool"
     type={CommandType.JupyterLab}
+    handleViewLogsClick={() => {}}
   />
 );

@@ -32,6 +32,7 @@ export interface Props {
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
   sortKey?: keyof Log;
   title?: React.ReactNode;
+  handleCloseLogs?: () => void;
 }
 
 export interface ViewerLog extends Log {
@@ -106,6 +107,7 @@ const LogViewer: React.FC<Props> = ({
   onDownload,
   onFetch,
   sortKey = 'time',
+  handleCloseLogs,
   ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
@@ -501,6 +503,12 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleFullScreen}
           />
         </Tooltip>
+        {handleCloseLogs && (<Tooltip placement="bottomRight" title="Close Logs">
+          <Button className={css.transparentButton}
+            aria-label="Close Logs"
+            onClick={handleCloseLogs}
+          > X </Button>
+        </Tooltip>)}
         {onDownload && (
           <Tooltip placement="bottomRight" title="Download Logs">
             <Button
