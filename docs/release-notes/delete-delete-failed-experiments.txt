@@ -2,4 +2,4 @@
 
 **Improvements**
 
--  Experiments: When an deleting an experiment fails, it is now retry-able.
+-  Experiments: When attempting to delete an experiment, if the delete fails it is now retry-able.
