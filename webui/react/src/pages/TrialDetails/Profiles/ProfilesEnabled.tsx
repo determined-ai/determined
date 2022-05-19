@@ -3,6 +3,7 @@ import React, { useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
@@ -19,7 +20,7 @@ const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 16 };
  * Shared uPlot chart options.
  */
 const tzDate = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC');
-const matchSyncKeys: uPlot.Cursor.Sync.ScaleKeyMatcher = (own, ext) => own === ext;
+
 const timeAxis: uPlot.Axis = {
   label: 'Time',
   scale: 'x',
@@ -64,21 +65,12 @@ const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false 
 
 const ProfilesEnabled: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartSyncKey = useRef(uPlot.sync('x'));
   const { metrics, settings } = useProfilesFilterContext();
 
   const chartOptions = useMemo(() => {
     // Define shared options between all charts.
     const sharedOptions: Partial<Options> = {
-      cursor: {
-        focus: { prox: 16 },
-        lock: true,
-        sync: {
-          key: chartSyncKey.current.key,
-          match: [ matchSyncKeys, matchSyncKeys ],
-          setSeries: true,
-        },
-      },
+      cursor: { focus: { prox: 16 } },
       height: CHART_HEIGHT,
       scales: { x: { time: false } },
       tzDate,
@@ -165,38 +157,40 @@ const ProfilesEnabled: React.FC = () => {
 
   return (
     <div ref={containerRef}>
-      <Section
-        bodyBorder
-        bodyNoPadding
-        title="Throughput">
-        <UPlotChart
-          data={chartData[MetricType.Throughput]}
-          options={chartOptions[MetricType.Throughput]}
-          style={CHART_STYLE}
-        />
-      </Section>
-      <Section
-        bodyBorder
-        bodyNoPadding
-        title="Timing Metrics">
-        <UPlotChart
-          data={chartData[MetricType.Timing]}
-          noDataMessage="No data found. Timing metrics may not be available for your framework."
-          options={chartOptions[MetricType.Timing]}
-          style={CHART_STYLE}
-        />
-      </Section>
-      <Section
-        bodyBorder
-        bodyNoPadding
-        filters={<SystemMetricFilter />}
-        title="System Metrics">
-        <UPlotChart
-          data={chartData[MetricType.System]}
-          options={chartOptions[MetricType.System]}
-          style={CHART_STYLE}
-        />
-      </Section>
+      <SyncProvider>
+        <Section
+          bodyBorder
+          bodyNoPadding
+          title="Throughput">
+          <UPlotChart
+            data={chartData[MetricType.Throughput]}
+            options={chartOptions[MetricType.Throughput]}
+            style={CHART_STYLE}
+          />
+        </Section>
+        <Section
+          bodyBorder
+          bodyNoPadding
+          title="Timing Metrics">
+          <UPlotChart
+            data={chartData[MetricType.Timing]}
+            noDataMessage="No data found. Timing metrics may not be available for your framework."
+            options={chartOptions[MetricType.Timing]}
+            style={CHART_STYLE}
+          />
+        </Section>
+        <Section
+          bodyBorder
+          bodyNoPadding
+          filters={<SystemMetricFilter />}
+          title="System Metrics">
+          <UPlotChart
+            data={chartData[MetricType.System]}
+            options={chartOptions[MetricType.System]}
+            style={CHART_STYLE}
+          />
+        </Section>
+      </SyncProvider>
     </div>
   );
 };

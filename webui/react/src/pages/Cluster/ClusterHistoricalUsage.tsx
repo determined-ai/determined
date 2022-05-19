@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { useStore } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
@@ -103,66 +104,68 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   return (
     <div className={css.base}>
-      <Space align="end" className={css.filters}>
-        <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
-        <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
-      </Space>
-      <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
-        {chartSeries && (
-          <ClusterHistoricalUsageChart
-            groupBy={chartSeries.groupedBy}
-            hoursByLabel={chartSeries.hoursTotal}
-            time={chartSeries.time}
+      <SyncProvider>
+        <Space align="end" className={css.filters}>
+          <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
+          <Button onClick={() => setIsCsvModalVisible(true)}>Download CSV</Button>
+        </Space>
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
+          {chartSeries && (
+            <ClusterHistoricalUsageChart
+              groupBy={chartSeries.groupedBy}
+              hoursByLabel={chartSeries.hoursTotal}
+              time={chartSeries.time}
+            />
+          )}
+        </Section>
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
+          {chartSeries && (
+            <ClusterHistoricalUsageChart
+              groupBy={chartSeries.groupedBy}
+              hoursByLabel={chartSeries.hoursByUsername}
+              hoursTotal={chartSeries?.hoursTotal?.total}
+              time={chartSeries.time}
+            />
+          )}
+        </Section>
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
+          {chartSeries && (
+            <ClusterHistoricalUsageChart
+              groupBy={chartSeries.groupedBy}
+              hoursByLabel={chartSeries.hoursByExperimentLabel}
+              hoursTotal={chartSeries?.hoursTotal?.total}
+              time={chartSeries.time}
+            />
+          )}
+        </Section>
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
+          {chartSeries && (
+            <ClusterHistoricalUsageChart
+              groupBy={chartSeries.groupedBy}
+              hoursByLabel={chartSeries.hoursByResourcePool}
+              hoursTotal={chartSeries?.hoursTotal?.total}
+              time={chartSeries.time}
+            />
+          )}
+        </Section>
+        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Agent Label">
+          {chartSeries && (
+            <ClusterHistoricalUsageChart
+              groupBy={chartSeries.groupedBy}
+              hoursByLabel={chartSeries.hoursByAgentLabel}
+              hoursTotal={chartSeries?.hoursTotal?.total}
+              time={chartSeries.time}
+            />
+          )}
+        </Section>
+        {isCsvModalVisible && (
+          <ClusterHistoricalUsageCsvModal
+            afterDate={csvAfterDate}
+            beforeDate={csvBeforeDate}
+            onVisibleChange={setIsCsvModalVisible}
           />
         )}
-      </Section>
-      <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
-        {chartSeries && (
-          <ClusterHistoricalUsageChart
-            groupBy={chartSeries.groupedBy}
-            hoursByLabel={chartSeries.hoursByUsername}
-            hoursTotal={chartSeries?.hoursTotal?.total}
-            time={chartSeries.time}
-          />
-        )}
-      </Section>
-      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
-        {chartSeries && (
-          <ClusterHistoricalUsageChart
-            groupBy={chartSeries.groupedBy}
-            hoursByLabel={chartSeries.hoursByExperimentLabel}
-            hoursTotal={chartSeries?.hoursTotal?.total}
-            time={chartSeries.time}
-          />
-        )}
-      </Section>
-      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
-        {chartSeries && (
-          <ClusterHistoricalUsageChart
-            groupBy={chartSeries.groupedBy}
-            hoursByLabel={chartSeries.hoursByResourcePool}
-            hoursTotal={chartSeries?.hoursTotal?.total}
-            time={chartSeries.time}
-          />
-        )}
-      </Section>
-      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Agent Label">
-        {chartSeries && (
-          <ClusterHistoricalUsageChart
-            groupBy={chartSeries.groupedBy}
-            hoursByLabel={chartSeries.hoursByAgentLabel}
-            hoursTotal={chartSeries?.hoursTotal?.total}
-            time={chartSeries.time}
-          />
-        )}
-      </Section>
-      {isCsvModalVisible && (
-        <ClusterHistoricalUsageCsvModal
-          afterDate={csvAfterDate}
-          beforeDate={csvBeforeDate}
-          onVisibleChange={setIsCsvModalVisible}
-        />
-      )}
+      </SyncProvider>
     </div>
   );
 };
