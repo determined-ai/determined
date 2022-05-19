@@ -6,7 +6,8 @@ import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
-import { handlePath, paths, routeToReactUrl } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { ResourceType } from 'types';
 import { percent } from 'utils/number';
 

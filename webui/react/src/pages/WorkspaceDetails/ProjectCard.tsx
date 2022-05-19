@@ -5,7 +5,8 @@ import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Project } from 'types';
 
 import ProjectActionDropdown from './ProjectActionDropdown';

@@ -14,8 +14,7 @@ import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { capitalize } from 'utils/string';
+import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
 import { ErrorLevel, ErrorType } from '../shared/utils/error';

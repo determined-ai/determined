@@ -9,7 +9,8 @@ import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate'
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
 import { DetailedUser, Workspace } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './WorkspaceDetailsHeader.module.scss';
 

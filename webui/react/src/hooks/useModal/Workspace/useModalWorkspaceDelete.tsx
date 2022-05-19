@@ -3,10 +3,12 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { deleteWorkspace } from 'services/api';
 import { Workspace } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './useModalWorkspaceDelete.module.scss';
 

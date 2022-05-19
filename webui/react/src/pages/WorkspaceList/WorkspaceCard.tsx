@@ -6,7 +6,8 @@ import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import WorkspaceIcon from 'components/WorkspaceIcon';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Workspace } from 'types';
 
 import WorkspaceActionDropdown from './WorkspaceActionDropdown';

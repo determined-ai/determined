@@ -94,6 +94,7 @@ const NavigationSideBar: React.FC = () => {
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
   const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
+  const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');

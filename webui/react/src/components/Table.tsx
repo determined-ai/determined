@@ -13,7 +13,7 @@ import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
-  Pagination, Project, StartEndTimes, TrialItem, Workspace,
+  Project, StartEndTimes, TrialItem, Workspace,
 } from 'types';
 import { canBeOpened } from 'utils/task';
 
