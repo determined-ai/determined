@@ -743,10 +743,24 @@ The master supports the following configuration settings:
 -  ``db``: Specifies the configuration of the database.
 
    -  ``user``: The database user to use when logging in the database. (*Required*)
+
    -  ``password``: The password to use when logging in the database. (*Required*)
+
    -  ``host``: The database host to use. (*Required*)
+
    -  ``port``: The database port to use. (*Required*)
+
    -  ``name``: The database name to use. (*Required*)
+
+   -  ``ssl_mode``: The SSL mode to use. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS>`__ for
+      the list of possible values and their meanings. Defaults to ``disable``. In order to ensure
+      that SSL is used, this should be set to ``require``, ``verify-ca``, or ``verify-full``.
+
+   -  ``ssl_root_cert``: The location of the root certificate file to use for verifying the server's
+      certificate. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBQ-SSL-CERTIFICATES>`__ for more
+      information about certificate verification. Defaults to ``~/.postgresql/root.crt``.
 
 -  ``security``: Specifies security-related configuration settings.
 
