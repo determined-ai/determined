@@ -3,11 +3,12 @@ import json
 import os
 import sys
 from collections import OrderedDict
+from operator import attrgetter
 from typing import Any, Callable, List
 
-from determined.cli.session import setup_session
 from determined.cli import render
 from determined.cli import task as cli_task
+from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.check import check_false
@@ -21,22 +22,23 @@ def local_id(address: str) -> str:
 @authentication.required
 def list_agents(args: argparse.Namespace) -> None:
     resp = bindings.get_GetAgents(setup_session(args))
+
     agents = [
         OrderedDict(
             [
                 ("id", local_id(a.id)),
                 ("version", a.version),
                 ("registered_time", render.format_time(a.registeredTime)),
-                ("num_slots", len(a.slots)),
-                ("num_containers", len(a.containers)),
+                ("num_slots", len(a.slots) if a.slots is not None else ""),
+                ("num_containers", len(a.containers) if a.containers is not None else ""),
                 ("resource_pool", a.resourcePool),
                 ("enabled", a.enabled),
                 ("draining", a.draining),
                 ("label", a.label),
-                ("addresses", ", ".join(a.addresses)),
+                ("addresses", ", ".join(a.addresses) if a.addresses is not None else ""),
             ]
         )
-        for a in sorted(resp.agents, key=lambda x: x.id)
+        for a in sorted(resp.agents or [], key=attrgetter("id"))
     ]
 
     if args.json:
