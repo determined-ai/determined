@@ -24,8 +24,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 import data
 import shiftvit  # shiftfit.py cloned via startup-hook.sh during container initialization.
 
-logger = logging.getLogger("determined.core")
-
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
