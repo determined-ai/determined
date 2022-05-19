@@ -11,10 +11,11 @@ export default {
 
 export const Default = (): React.ReactNode => (
   <TaskBar
+    // eslint-disable-next-line   @typescript-eslint/no-empty-function
+    handleViewLogsClick={() => {}}
     id="task id"
     name="task name"
     resourcePool="task-resource-pool"
     type={CommandType.JupyterLab}
-    handleViewLogsClick={() => {}}
   />
 );

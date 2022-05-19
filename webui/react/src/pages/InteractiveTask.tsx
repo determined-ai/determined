@@ -16,14 +16,14 @@ interface Params {
   taskUrl: string;
 }
 
-enum PageViews {
+enum PageView {
   IFRAME= 'Iframe',
   TASK_LOGS = 'Task Logs'
 }
 
 export const InteractiveTask: React.FC = () => {
 
-  const [pageView, setPageView] = useState<PageViews>(PageViews.IFRAME)
+  const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
   const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
 
   const storeDispatch = useStoreDispatch();
@@ -32,25 +32,34 @@ export const InteractiveTask: React.FC = () => {
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
-
-    return (
+  return (
     <div className={css.base}>
       <div className={css.barContainer}>
-        <TaskBar id={taskId} name={taskName} resourcePool={taskResourcePool} type={taskType} handleViewLogsClick={() => setPageView(PageViews.TASK_LOGS)}/>
+        <TaskBar
+          handleViewLogsClick={() => setPageView(PageView.TASK_LOGS)}
+          id={taskId}
+          name={taskName}
+          resourcePool={taskResourcePool}
+          type={taskType}
+        />
       </div>
-      {pageView == PageViews.IFRAME && (
-         <div className={css.frameContainer}>
-         <iframe
-           allowFullScreen
-           src={decodeURIComponent(taskUrl)}
-           title="Interactive Task"
-         />
-       </div>
+      {pageView === PageView.IFRAME && (
+        <div className={css.frameContainer}>
+          <iframe
+            allowFullScreen
+            src={decodeURIComponent(taskUrl)}
+            title="Interactive Task"
+          />
+        </div>
       )}
-      {pageView == PageViews.TASK_LOGS && (
-      <div className={css.contentContainer}>
-        <TaskLogs taskId={taskId} taskType={taskType} onCloseLogs={() => setPageView(PageViews.IFRAME)}/>
-      </div>
+      {pageView === PageView.TASK_LOGS && (
+        <div className={css.contentContainer}>
+          <TaskLogs
+            taskId={taskId}
+            taskType={taskType}
+            onCloseLogs={() => setPageView(PageView.IFRAME)}
+          />
+        </div>
       )
       }
     </div>

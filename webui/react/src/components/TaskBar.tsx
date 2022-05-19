@@ -13,14 +13,20 @@ import { CommandTask, CommandType } from 'types';
 import Icon from './Icon';
 import css from './TaskBar.module.scss';
 interface Props{
+  handleViewLogsClick: () => void;
   id: string;
   name: string;
   resourcePool: string;
   type: CommandType
-  handleViewLogsClick: () => void
 }
 
-export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type, handleViewLogsClick} : Props) => {
+export const TaskBar: React.FC<Props> = ({
+  handleViewLogsClick,
+  id,
+  name,
+  resourcePool,
+  type,
+} : Props) => {
 
   const task = useMemo(() => {
     const commandTask = { id, name, resourcePool, type } as CommandTask;
@@ -56,7 +62,7 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type, handleV
         View Logs
       </Menu.Item>
     </Menu>
-  ), [ task, deleteTask ]);
+  ), [ task, deleteTask, handleViewLogsClick ]);
 
   return (
     <div className={css.base}>

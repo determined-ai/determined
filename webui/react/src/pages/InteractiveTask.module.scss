@@ -2,20 +2,20 @@
   height: 100%;
   overflow: hidden;
 
-.barContainer {
-  height: 32px;
-}
-.contentContainer{
-  height: 100%;
-  padding-bottom: 15px;
-}
-.frameContainer {
-  height: calc(100vh - 32px);
-  
-  iframe {
-    border: none;
-    height: 100%;
-    width: 100%;
+  .barContainer {
+    height: 32px;
   }
-}
+  .contentContainer {
+    height: 100%;
+    padding-bottom: 15px;
+  }
+  .frameContainer {
+    height: calc(100vh - 32px);
+  
+    iframe {
+      border: none;
+      height: 100%;
+      width: 100%;
+    }
+  }
 }
