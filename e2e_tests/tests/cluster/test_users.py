@@ -886,20 +886,29 @@ def test_change_displayname(clean_auth: None) -> None:
     sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
     u_patch = create_test_user(ADMIN_CREDENTIALS, True)
     all_users = bindings.get_GetUsers(sess).users
+
+    assert all_users is not None
+
     patch_user = list(filter(lambda u: u.username == u_patch.username, all_users))[0]
+
+    current_user = list(filter(lambda u: u.username == u_patch.username, all_users))[0]
+
+    patch_user = bindings.v1PatchUser(displayName="determined")
+
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     patch_user.displayName = "determined"
 
-    bindings.patch_PatchUser(sess, body=patch_user, userId=patch_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
-    patched_user = bindings.get_GetUser(sess, userId=patch_user.id).user
+    patched_user = bindings.get_GetUser(sess, userId=current_user.id).user
 
     assert patched_user.displayName == "determined"
 
     patch_user.displayName = ""
 
-    bindings.patch_PatchUser(sess, body=patch_user, userId=patch_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
-    patched_user = bindings.get_GetUser(sess, userId=patch_user.id).user
+    patched_user = bindings.get_GetUser(sess, userId=current_user.id).user
 
     assert patched_user.displayName == "admin"
