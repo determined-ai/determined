@@ -15,7 +15,7 @@ import pytest
 from pexpect import spawn
 
 from determined.common import constants, yaml
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication, certs, bindings
 from determined.common.experimental import session
 from tests import command
 from tests import config as conf
@@ -875,3 +875,31 @@ def test_experiment_delete() -> None:
                 return
             elif time.time() > experiment_delete_deadline:
                 pytest.fail("experiment didn't delete after timeout")
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_postgres
+def test_change_displayname(clean_auth: None) -> None:
+  master_url = conf.make_master_url()
+  certs.cli_cert = certs.default_load(master_url)
+  authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+  sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+  u_patch = create_test_user(ADMIN_CREDENTIALS, True)
+  all_users = bindings.get_GetUsers(sess).users
+  patch_user = list(filter(lambda u: u.username == u_patch.username, all_users))[0]
+  
+  patch_user.DisplayName = 'determined'
+
+  bindings.patch_PatchUser(sess,body=patch_user, userId=patch_user.id)
+
+  patched_user = bindings.get_GetUser(sess, userId=patch_user.id).user
+
+  assert patched_user.DisplayName == 'determined'
+
+  patch_user.DisplayName = ''
+
+  bindings.patch_PatchUser(sess, body=patch_user, userId=patch_user.id)
+
+  patched_user = bindings.get_GetUser(sess, userId=patch_user.id).user
+
+  assert patched_user.DisplayName == 'admin'
