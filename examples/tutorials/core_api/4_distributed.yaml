@@ -1,5 +1,5 @@
 name: core-api-stage-4
-entrypoint: ./4_distributed.py launcher
+entrypoint: python3 4_distributed.py launcher
 
 # NEW: configure multiple slots per trial.
 resources:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Stage 4: Let's do all the same things, but across multiple workers.
 
