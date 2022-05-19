@@ -55,7 +55,11 @@ def fit(train_ds, test_ds, steps, preview=0):
 
 
 def main():
-    path = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
+    import yaml
+
+    config = yaml.load(open("const.yaml", "r"), Loader=yaml.BaseLoader)
+    path, dataset_name = config["data"]["base"], config["data"]["dataset"]
+    path = download(path, dataset_name)
 
     train_dataset = load_dataset(path, 256, 256, "train", jitter=30, mirror=True)
     train_dataset = train_dataset.cache().shuffle(400).batch(40).repeat()

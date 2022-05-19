@@ -124,10 +124,13 @@ def load_dataset(path, height, width, set_="train", jitter=0, mirror=False):
 
 def main():
     import matplotlib.pyplot as plt
+    import yaml
 
-    PATH = download("http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/", "facades")
+    config = yaml.load(open("const.yaml", "r"), Loader=yaml.BaseLoader)
+    path, dataset_name = config["data"]["base"], config["data"]["dataset"]
+    path = download(path, dataset_name)
 
-    inp, re = _load(str(PATH / "train/100.jpg"))
+    inp, re = _load(str(path / "train/100.jpg"))
     plt.figure(figsize=(6, 6))
     for i in range(4):
         rj_inp, _ = _random_jitter(inp, re, 256, 256, 30, True)
