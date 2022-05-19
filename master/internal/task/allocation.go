@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -213,6 +212,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
 	case AllocationReady:
+		// AllocationReady only comes from the running container, so to
+		// avoid a race condition with the slower transition to running state
+		// which comes via polling for dispatcher RM, move the state to running now.
+		a.setMostProgressedModelState(model.AllocationStateRunning)
 		a.model.IsReady = ptrs.Ptr(true)
 		if err := a.db.UpdateAllocationState(a.model); err != nil {
 			a.Error(ctx, err)
@@ -483,8 +486,12 @@ func (a *Allocation) SetResourcesAsDaemon(
 		ctx.Respond(ErrStaleResources{ID: rID})
 		return nil
 	} else if len(a.resources) <= 1 {
-		ctx.Respond(api.AsValidationError(`ignoring set daemon request for allocation with a single
-			set of resources since this would just kill the allocation`))
+		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			Log: `Ignoring request to daemonize resources within an allocation for an allocation
+			with only one manageable set of resources, because this would just kill it. This is
+			expected in when using Slurm.`,
+			Level: ptrs.Ptr(model.LogLevelInfo),
+		}))
 		return nil
 	}
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Let's pretend our goal is to increment an integer over and over.  It'll be fun.
 

@@ -5,8 +5,11 @@ export const getSlotContainerStates = (
   resourceType: ResourceType,
   resourcePoolName?: string,
 ): ResourceState[] => {
+  // agents of k8s clusters do not have resource pool name
+  // assume that k8s clusters only have 1 resource pool named 'kubernetes'
   const slotContainerStates = agents
-    .filter(agent => resourcePoolName ? agent.resourcePool === resourcePoolName : true)
+    .filter(agent => resourcePoolName && resourcePoolName !== 'kubernetes' ?
+      agent.resourcePool === resourcePoolName : true)
     .map(agent => {
       return deviceTypes.has(resourceType)
         ? agent.resources.filter(res => res.type === resourceType)

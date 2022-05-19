@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Stage 1: Let's create the core_context, and use it to start logging metrics.
 This is just a few lines of code, and we'll be able to see the results in the

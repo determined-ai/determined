@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Stage 2: Let's add checkpointing and preemption support to our "training" code.  After this, we will
 be able to stop and restart training in two different ways: either by pausing and reactivating

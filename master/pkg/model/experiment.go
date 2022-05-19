@@ -172,7 +172,7 @@ var ExperimentTransitions = map[State]map[State]bool{
 		DeleteFailedState: true,
 	},
 	DeleteFailedState: {
-		DeletedState: true,
+		DeletingState: true,
 	},
 	DeletedState: {},
 }

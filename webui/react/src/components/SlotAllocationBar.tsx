@@ -217,9 +217,8 @@ const SlotAllocationBar: React.FC<Props> = ({
     }
     return !isAux && (
       <span>{
-        `${totalSlotsNum > stateTallies.RUNNING ?
-          totalSlotsNum - stateTallies.RUNNING : 0} ${
-          totalSlotsNum - stateTallies.RUNNING > 1 ? 'Slots' : 'Slot'} Free`
+        `${freeSlots} ${
+          freeSlots > 1 ? 'Slots' : 'Slot'} Free`
       }
       </span>
     );
@@ -257,14 +256,14 @@ const SlotAllocationBar: React.FC<Props> = ({
           {poolType === V1ResourcePoolType.K8S ? (
             <header>{`${isAux ?
               `${footer.auxContainersRunning} Aux Containers Running` :
-              `${stateTallies.RUNNING} ${title || 'Compute'} Slots Allocated`}`}
+              `${resourceStates.length} ${title || 'Compute'} Slots Allocated`}`}
             </header>
           )
             : (
               <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
-                `${stateTallies.RUNNING}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
+                `${resourceStates.length}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
           {renderFooterJobs()}

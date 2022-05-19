@@ -78,6 +78,7 @@ gobin
 
 # MacOS system files
 *.DS_Store
+.dccache
 
 # Hydra output
 model_hub/examples/mmdetection/hydra/outputs

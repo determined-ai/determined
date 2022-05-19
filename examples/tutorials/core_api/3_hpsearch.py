@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Stage 3: Let's add hyperparameter search to our model.
 """
