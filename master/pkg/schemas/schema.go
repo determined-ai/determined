@@ -96,7 +96,6 @@ func GetSanityValidator(url string) *jsonschema.Schema {
 	compiler.Extensions["union"] = extensions.UnionExtension()
 	compiler.Extensions["checks"] = extensions.ChecksExtension()
 	compiler.Extensions["compareProperties"] = extensions.ComparePropertiesExtension()
-	compiler.Extensions["conditional"] = extensions.ConditionalExtension()
 	compiler.Extensions["optionalRef"] = extensions.OptionalRefExtension()
 
 	validator, err := compiler.Compile(url)
@@ -133,7 +132,6 @@ func GetCompletenessValidator(url string) *jsonschema.Schema {
 	compiler.Extensions["union"] = extensions.UnionExtension()
 	compiler.Extensions["checks"] = extensions.ChecksExtension()
 	compiler.Extensions["compareProperties"] = extensions.ComparePropertiesExtension()
-	compiler.Extensions["conditional"] = extensions.ConditionalExtension()
 	compiler.Extensions["optionalRef"] = extensions.OptionalRefExtension()
 	compiler.Extensions["eventuallyRequired"] = extensions.EventuallyRequiredExtension()
 	compiler.Extensions["eventually"] = extensions.EventuallyExtension()

@@ -69,7 +69,6 @@ SUPPORTED_KEYWORDS_BY_TYPE = {
         "allOf",
         "optionalRef",
         "$comment",
-        "conditional",
     },
     "array": {"items", "default", "unionKey", "minLength", "checks", "$comment"},
     "string": {"pattern", "default", "unionKey", "checks", "$comment"},
@@ -279,23 +278,20 @@ def check_union(schema: dict, path: str, ctx: LintContext) -> Errors:
 
 
 @register_linter
-def check_conditional(schema: dict, path: str, ctx: LintContext) -> Errors:
-    if "conditional" not in schema:
+def check_if_then_else(schema: dict, path: str, ctx: LintContext) -> Errors:
+    if "if" not in schema and "then" not in schema and "else" not in schema:
         return []
 
-    conditional = schema["conditional"]
-    subpath = path + ".conditional"
+    if "if" not in schema:
+        return [(path, "found else or then clause without if clause")]
 
-    errors = []
+    if "then" not in schema and "else" in schema:
+        return [(path, "found if-else without then clause... don't be confusing")]
 
-    if "when" not in conditional and "unless" not in conditional:
-        errors.append((subpath, "has no when clause or until clause"))
-    if "when" in conditional and "unless" in conditional:
-        errors.append((subpath, "has both a when clause and an until clause"))
-    if "enforce" not in conditional:
-        errors.append((subpath, "has no enforce clause"))
+    if "then" not in schema:
+        return [(path, "found if clause with no then clause")]
 
-    return errors
+    return []
 
 
 @register_linter

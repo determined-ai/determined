@@ -243,44 +243,6 @@ def compareProperties(
     raise ValueError(f"unrecognized comparison {compare[typ]}")
 
 
-def conditional(
-    validator: jsonschema.Draft7Validator, conditional: Dict, instance: Any, schema: Dict
-) -> Iterator[jsonschema.ValidationError]:
-    """
-    conditional enforces one subschema only when some other schema is satisified.  The other schema
-    can be negated by marking it as "unless" insted of "when".
-
-    Only the error from the "enforce" clause is ever shown.
-
-    Example: when records per epoch not set, forbid epoch lengths:
-
-        "conditional": {
-            "when": {
-                ... (schema that checks if records_per_epoch is unset) ...
-            },
-            "enforce": {
-                ... (schema that checks that epoch lengths are not used) ...
-            }
-        }
-    """
-    when = conditional.get("when")
-    unless = conditional.get("unless")
-    enforce = conditional["enforce"]
-
-    if when is not None:
-        if list(validator.descend(instance, schema=when, schema_path="when")):
-            # "when" clause failed, return early.
-            return
-    else:
-        assert unless is not None, "invalid schema"
-        if not list(validator.descend(instance, schema=unless, schema_path="unless")):
-            # "unless" clause passed, returned early.
-            return
-
-    # Enforce the "enforce" clause.
-    yield from validator.descend(instance, schema=enforce, schema_path="enforce")
-
-
 def eventuallyRequired(
     validator: jsonschema.Draft7Validator,
     eventuallyRequired: Any,

@@ -294,27 +294,23 @@ schemas = {
                 },
                 "checks": {
                     "grid search is in use but count was not provided": {
-                        "conditional": {
-                            "$comment": "unless type is not double/log/int, expect non-null count",
-                            "unless": {
-                                "not": {
-                                    "properties": {
-                                        "type": {
-                                            "enum": [
-                                                "double",
-                                                "log",
-                                                "int"
-                                            ]
-                                        }
-                                    }
+                        "if": {
+                            "$comment": "if type is double/log/int, expect non-null count",
+                            "properties": {
+                                "type": {
+                                    "enum": [
+                                        "double",
+                                        "log",
+                                        "int"
+                                    ]
                                 }
-                            },
-                            "enforce": {
-                                "not": {
-                                    "properties": {
-                                        "count": {
-                                            "type": "null"
-                                        }
+                            }
+                        },
+                        "then": {
+                            "not": {
+                                "properties": {
+                                    "count": {
+                                        "type": "null"
                                     }
                                 }
                             }
@@ -356,38 +352,36 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json",
     "title": "CheckpointStorageConfig",
     "$comment": "this is a union of all possible properties, with validation for the common properties",
-    "conditional": {
-        "when": {
-            "required": [
-                "type"
+    "if": {
+        "required": [
+            "type"
+        ]
+    },
+    "then": {
+        "union": {
+            "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
+            "items": [
+                {
+                    "unionKey": "const:type=shared_fs",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
+                },
+                {
+                    "unionKey": "const:type=hdfs",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
+                },
+                {
+                    "unionKey": "const:type=s3",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
+                },
+                {
+                    "unionKey": "const:type=gcs",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                },
+                {
+                    "unionKey": "const:type=azure",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/azure.json"
+                }
             ]
-        },
-        "enforce": {
-            "union": {
-                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
-                "items": [
-                    {
-                        "unionKey": "const:type=shared_fs",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
-                    },
-                    {
-                        "unionKey": "const:type=hdfs",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
-                    },
-                    {
-                        "unionKey": "const:type=s3",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
-                    },
-                    {
-                        "unionKey": "const:type=gcs",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
-                    },
-                    {
-                        "unionKey": "const:type=azure",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/azure.json"
-                    }
-                ]
-            }
         }
     },
     "additionalProperties": false,
@@ -1229,51 +1223,47 @@ schemas = {
     },
     "allOf": [
         {
-            "conditional": {
+            "if": {
                 "$comment": "when grid search is in use, expect hp counts",
-                "when": {
-                    "properties": {
-                        "searcher": {
-                            "properties": {
-                                "name": {
-                                    "const": "grid"
-                                }
+                "properties": {
+                    "searcher": {
+                        "properties": {
+                            "name": {
+                                "const": "grid"
                             }
                         }
                     }
-                },
-                "enforce": {
-                    "properties": {
-                        "hyperparameters": {
-                            "additionalProperties": {
-                                "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
-                            }
+                }
+            },
+            "then": {
+                "properties": {
+                    "hyperparameters": {
+                        "additionalProperties": {
+                            "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
                     }
                 }
             }
         },
         {
-            "conditional": {
+            "if": {
                 "$comment": "when records per epoch not set, forbid epoch lengths",
-                "when": {
-                    "properties": {
-                        "records_per_epoch": {
-                            "maximum": 0
-                        }
+                "properties": {
+                    "records_per_epoch": {
+                        "maximum": 0
                     }
-                },
-                "enforce": {
-                    "properties": {
-                        "min_validation_period": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        },
-                        "min_checkpoint_period": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        },
-                        "searcher": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        }
+                }
+            },
+            "then": {
+                "properties": {
+                    "min_validation_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "min_checkpoint_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "searcher": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }
@@ -2917,53 +2907,51 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
     "$comment": "this is a union of all possible properties, with validation for the common properties",
-    "conditional": {
-        "when": {
-            "required": [
-                "name"
+    "if": {
+        "required": [
+            "name"
+        ]
+    },
+    "then": {
+        "union": {
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+            "items": [
+                {
+                    "unionKey": "const:name=single",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
+                },
+                {
+                    "unionKey": "const:name=random",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
+                },
+                {
+                    "unionKey": "const:name=grid",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                },
+                {
+                    "unionKey": "const:name=adaptive_asha",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
+                },
+                {
+                    "unionKey": "const:name=async_halving",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=adaptive",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=adaptive_simple",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=sync_halving",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
+                }
             ]
-        },
-        "enforce": {
-            "union": {
-                "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
-                "items": [
-                    {
-                        "unionKey": "const:name=single",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
-                    },
-                    {
-                        "unionKey": "const:name=random",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
-                    },
-                    {
-                        "unionKey": "const:name=grid",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
-                    },
-                    {
-                        "unionKey": "const:name=adaptive_asha",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
-                    },
-                    {
-                        "unionKey": "const:name=async_halving",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=adaptive",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=adaptive_simple",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=sync_halving",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
-                    }
-                ]
-            }
         }
     },
     "additionalProperties": false,

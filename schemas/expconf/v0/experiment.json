@@ -222,51 +222,47 @@
     },
     "allOf": [
         {
-            "conditional": {
+            "if": {
                 "$comment": "when grid search is in use, expect hp counts",
-                "when": {
-                    "properties": {
-                        "searcher": {
-                            "properties": {
-                                "name": {
-                                    "const": "grid"
-                                }
+                "properties": {
+                    "searcher": {
+                        "properties": {
+                            "name": {
+                                "const": "grid"
                             }
                         }
                     }
-                },
-                "enforce": {
-                    "properties": {
-                        "hyperparameters": {
-                            "additionalProperties": {
-                                "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
-                            }
+                }
+            },
+            "then": {
+                "properties": {
+                    "hyperparameters": {
+                        "additionalProperties": {
+                            "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
                         }
                     }
                 }
             }
         },
         {
-            "conditional": {
+            "if": {
                 "$comment": "when records per epoch not set, forbid epoch lengths",
-                "when": {
-                    "properties": {
-                        "records_per_epoch": {
-                            "maximum": 0
-                        }
+                "properties": {
+                    "records_per_epoch": {
+                        "maximum": 0
                     }
-                },
-                "enforce": {
-                    "properties": {
-                        "min_validation_period": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        },
-                        "min_checkpoint_period": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        },
-                        "searcher": {
-                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
-                        }
+                }
+            },
+            "then": {
+                "properties": {
+                    "min_validation_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "min_checkpoint_period": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                    },
+                    "searcher": {
+                        "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
                     }
                 }
             }
