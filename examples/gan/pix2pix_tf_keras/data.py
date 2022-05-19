@@ -1,17 +1,19 @@
 import pathlib
 from typing import Tuple
 
+import filelock
 import tensorflow as tf
 
 
 def download(base, dataset) -> str:
     filename = f"{dataset}.tar.gz"
     url = f"{base}/{filename}"
-    path_to_zip = tf.keras.utils.get_file(filename, origin=url, extract=True)
-    path_to_zip = pathlib.Path(path_to_zip)
+    with filelock.FileLock(f"{filename}.lock"):
+        path_to_zip = tf.keras.utils.get_file(filename, origin=url, extract=True)
+        path_to_zip = pathlib.Path(path_to_zip)
 
-    PATH = path_to_zip.parent / dataset
-    return PATH
+        PATH = path_to_zip.parent / dataset
+        return PATH
 
 
 def _load(image_file: str) -> Tuple[tf.Tensor, tf.Tensor]:
