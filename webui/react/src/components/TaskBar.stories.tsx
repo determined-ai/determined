@@ -11,8 +11,7 @@ export default {
 
 export const Default = (): React.ReactNode => (
   <TaskBar
-    // eslint-disable-next-line   @typescript-eslint/no-empty-function
-    handleViewLogsClick={() => {}}
+    handleViewLogsClick={() => { return; }}
     id="task id"
     name="task name"
     resourcePool="task-resource-pool"
