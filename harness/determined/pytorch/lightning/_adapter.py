@@ -130,7 +130,7 @@ class LightningAdapter(PyTorchTrial):
         lightning_module: pl.LightningModule,
         precision: Union[Literal[32], Literal[16]] = 32,
         amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
-        amp_level: Union[Literal["O0", "O1", "O2", "O3"]] = "O2",
+        amp_level: Literal["O0", "O1", "O2", "O3"] = "O2",
     ):
         """
         This performs the necessary initialization steps to:
