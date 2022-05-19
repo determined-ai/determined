@@ -1,5 +1,5 @@
 name: core-api-stage-3
-entrypoint: ./3_hpsearch.py
+entrypoint: python3 3_hpsearch.py
 
 # NEW: configure a single "increment_by" hyperparameter
 hyperparameters:
