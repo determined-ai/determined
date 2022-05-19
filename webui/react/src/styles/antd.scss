@@ -143,7 +143,7 @@ html {
   }
   .ant-select-multiple {
     .ant-select-selection-placeholder {
-      color: rgba(0, 0, 0, 0.65);
+      color: var(--theme-ix-on-weak);
       opacity: 1;
     }
     .ant-select-selector .ant-select-selection-search:first-child .ant-select-selection-search-input {
