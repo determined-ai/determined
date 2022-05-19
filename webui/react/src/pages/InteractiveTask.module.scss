@@ -6,10 +6,6 @@
     height: 32px;
   }
   .contentContainer {
-    height: 100%;
-    padding-bottom: 15px;
-  }
-  .frameContainer {
     height: calc(100vh - 32px);
   
     iframe {

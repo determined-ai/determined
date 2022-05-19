@@ -43,25 +43,23 @@ export const InteractiveTask: React.FC = () => {
           type={taskType}
         />
       </div>
-      {pageView === PageView.IFRAME && (
-        <div className={css.frameContainer}>
+      <div className={css.contentContainer}>
+        {pageView === PageView.IFRAME && (
           <iframe
             allowFullScreen
             src={decodeURIComponent(taskUrl)}
             title="Interactive Task"
           />
-        </div>
-      )}
-      {pageView === PageView.TASK_LOGS && (
-        <div className={css.contentContainer}>
+        )}
+        {pageView === PageView.TASK_LOGS && (
           <TaskLogs
             taskId={taskId}
             taskType={taskType}
             onCloseLogs={() => setPageView(PageView.IFRAME)}
           />
-        </div>
-      )
-      }
+        )
+        }
+      </div>
     </div>
   );
 };
