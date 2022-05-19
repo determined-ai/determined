@@ -63,7 +63,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const classes = [ css.state ];
 
   const maxRestarts = experiment.config.maxRestarts;
-  const restarts = (trial?.restarts ?? 0) > maxRestarts ? maxRestarts : trial?.restarts;
+  const restarts = Math.min(trial?.restarts ?? 0, maxRestarts);
 
   const isPausable = pausableRunStates.has(experiment.state);
   const isPaused = experiment.state === RunState.Paused;
@@ -320,12 +320,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <Link className={css.link} path={paths.jobs()}>{jobInfoLinkText}</Link>
               </div>
             )}
-            {restarts != null && (
-              <div className={css.foldableItem}>
-                <span className={css.foldableItemLabel}>Restarts:</span>
-                <span>{restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
-              </div>
-            )}
+            <div className={css.foldableItem}>
+              <span className={css.foldableItemLabel}>Restarts:</span>
+              <span>{restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+            </div>
             <TagList
               ghost={true}
               tags={experiment.config.labels || []}
