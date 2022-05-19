@@ -377,7 +377,7 @@ The master supports the following configuration settings:
 
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
-         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
+         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -912,7 +912,7 @@ The master supports the following configuration settings:
 
 -  ``fluent``: fluentd settings.
       -  ``image``: Docker image to use for the managed Fluent Bit daemon. Defaults to
-         ``fluent/fluent-bit:1.6``.
+         ``fluent/fluent-bit:1.9.3``.
       -  ``port``: TCP port for the Fluent Bit daemon to listen on. Defaults to 24224. When running
          multiple agents on the same node, should be unique.
       -  ``container_name``: Name for the Fluent Bit container. Defaults to ``determined-fluent``.
