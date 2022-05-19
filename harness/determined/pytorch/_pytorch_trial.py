@@ -564,11 +564,9 @@ class PyTorchTrialController(det.TrialController):
         )
 
         if self.context.distributed.size > 1 and any(
-            map(
-                lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-                or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
-                self.callbacks.values(),
-            )
+            util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
+            or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback)
+            for c in self.callbacks.values()
         ):
             logging.debug(
                 "Broadcasting metrics to all worker processes to execute a "

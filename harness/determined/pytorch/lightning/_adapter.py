@@ -58,9 +58,7 @@ def check_compatibility(lm: pl.LightningModule) -> None:
     }
 
     members = inspect.getmembers(lm, predicate=inspect.ismethod)
-    overridden_members = set(
-        map(lambda m: m[0], filter(lambda m: is_overridden(m[0], lm), members))
-    )
+    overridden_members = {m[0] for m in members if is_overridden(m[0], lm)}
 
     matches = unsupported_members & overridden_members
     if len(matches) > 0:
