@@ -61,9 +61,6 @@ Install Docker to run containerized workloads. If you do not already have Docker
 the :doc:`Installing Docker </sysadmin-deploy-on-prem/requirements>` instructions to install and run
 Docker on Linux or macOS.
 
-Environment Variables
-=====================
-
 ******************************
  Quickstart Training Examples
 ******************************
