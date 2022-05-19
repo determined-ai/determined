@@ -1,0 +1,2651 @@
+openapi: 3.0.1
+info:
+  description: The Dispatch Centre API is the execution layer for the Capsules framework.  It
+    handles all the details of launching and monitoring runtime environments.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Dispatch Centre API
+  version: 2.7.12
+servers:
+- url: /
+security:
+- BearerAuth: []
+tags:
+- description: Operations pertaining to launching environments
+  name: launch
+- description: Operations pertaining to monitoring environments
+  name: monitoring
+- description: Operations pertaining to running environments
+  name: running
+- description: Operations pertaining to terminated environments
+  name: terminated
+- description: Operations pertaining to Administering the warehouse
+  name: admin
+- description: Operations pertaining to System Information
+  name: info
+paths:
+  /info/version/api:
+    get:
+      operationId: getApiVersion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+            application/yaml:
+              schema:
+                type: string
+          description: API Version
+      security:
+      - {}
+      summary: Gets the API version
+      tags:
+      - info
+  /info/version/server:
+    get:
+      operationId: getServerVersion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+            application/yaml:
+              schema:
+                type: string
+          description: Server Version
+      security:
+      - {}
+      summary: Gets the Server version
+      tags:
+      - info
+  /info/version/revision:
+    get:
+      operationId: getServerRevision
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+            application/yaml:
+              schema:
+                type: string
+          description: Server Revision
+      security:
+      - {}
+      summary: Gets the Server revision
+      tags:
+      - info
+  /info/api:
+    get:
+      operationId: getApi
+      responses:
+        "200":
+          content:
+            application/yaml:
+              schema:
+                additionalProperties:
+                  type: object
+                type: object
+          description: API Definition
+      security:
+      - {}
+      summary: Gets the API definition
+      tags:
+      - info
+  /admin/log-level:
+    get:
+      operationId: getRootLogLevel
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogLevel'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/LogLevel'
+          description: Current root log level
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User is not permitted to read the log level
+      summary: Gets the current root log level
+      tags:
+      - admin
+    put:
+      operationId: setRootLogLevel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogLevel'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/LogLevel'
+        description: The log level to set
+        required: true
+      responses:
+        "204":
+          description: The root log level was updated
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Not a valid log level
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User is not permitted to set log level
+      summary: Sets the root log level
+      tags:
+      - admin
+  /admin/loggers:
+    get:
+      operationId: listAllLoggerLevels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  $ref: '#/components/schemas/LogLevel'
+                type: object
+            application/yaml:
+              schema:
+                additionalProperties:
+                  $ref: '#/components/schemas/LogLevel'
+                type: object
+          description: All loggers current log levels
+      summary: Gets the log level for all loggers
+      tags:
+      - admin
+    put:
+      operationId: setAllLoggerLevels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties:
+                $ref: '#/components/schemas/LogLevel'
+              type: object
+          application/yaml:
+            schema:
+              additionalProperties:
+                $ref: '#/components/schemas/LogLevel'
+              type: object
+        description: The loggers and levels to set for each logger
+        required: true
+      responses:
+        "204":
+          description: The requested log levels were updated
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Not a valid log level
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User is not permitted to set log levels
+      summary: Sets the log level for multiple loggers
+      tags:
+      - admin
+  /admin/loggers/{logger}:
+    get:
+      operationId: getLoggerLevel
+      parameters:
+      - description: The logger whose log level you wish to access
+        example: io.swagger.oas.inflector.controllers.OpenAPIOperationController
+        explode: false
+        in: path
+        name: logger
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogLevel'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/LogLevel'
+          description: Loggers current log level
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Not a valid logger
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User is not permitted to set log level
+      summary: Gets the log level for a specific logger
+      tags:
+      - admin
+    put:
+      operationId: setLoggerLevel
+      parameters:
+      - description: The logger whose log level you wish to access
+        example: io.swagger.oas.inflector.controllers.OpenAPIOperationController
+        explode: false
+        in: path
+        name: logger
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogLevel'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/LogLevel'
+        description: The log level to set
+        required: true
+      responses:
+        "204":
+          description: The logger level was updated
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Not a valid log level or logger
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User is not permitted to set logger level
+      summary: Sets the log level for a specific logger
+      tags:
+      - admin
+  /launch:
+    put:
+      operationId: launch
+      parameters:
+      - description: User to impersonate
+        explode: true
+        in: query
+        name: impersonate
+        required: false
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Manifest'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Manifest'
+        description: The manifest to launch
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+          description: Runtime environment was launched successfully
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: Invalid environment manifest
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to launch environments as the
+            specified impersonation user
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Runtime environment couldn't be launched
+      summary: Launches the runtime environment described by the provided manifest
+        in a synchronous manner
+      tags:
+      - launch
+  /launch/async:
+    put:
+      operationId: launchAsync
+      parameters:
+      - description: User to impersonate
+        explode: true
+        in: query
+        name: impersonate
+        required: false
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Manifest'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Manifest'
+        description: The manifest to launch
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+          description: Runtime environment was accepted for launch
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: Invalid environment manifest
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to launch environments as the
+            specified impersonation user
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Runtime environment couldn't be launched
+      summary: Launches the runtime environment described by the provided manifest
+        in an asynchronous manner
+      tags:
+      - launch
+  /launch/credentials/{owner}/{name}:
+    delete:
+      operationId: removeCredential
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The name of the resource that you wish to access
+        example: track-analysis
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: The specified credential was successfully removed
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage credentials for the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The specified credential does not exist
+      summary: Removes a credential
+      tags:
+      - launch
+    head:
+      operationId: hasCredential
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The name of the resource that you wish to access
+        example: track-analysis
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: The specified credential exists
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The specified credential does not exist
+      summary: Determines whether a given credential has been provided
+      tags:
+      - launch
+    put:
+      operationId: addCredential
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The name of the resource that you wish to access
+        example: track-analysis
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+        description: The credential data to store
+        required: true
+      responses:
+        "201":
+          description: Credential was created/updated
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage credentials for the
+            given owner
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Could not add credential
+      summary: Creates/updates a credential that the Dispatch Centre can use to launch
+        environments on behalf of the user
+      tags:
+      - launch
+  /monitoring/{owner}/environments/{environment}:
+    get:
+      operationId: getEnvironmentDetails
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+          description: Environment Manifest
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: The specified environment does not exist
+      summary: Gets the current details of the environment
+      tags:
+      - monitoring
+  /monitoring/{owner}/environments/{environment}/management:
+    delete:
+      operationId: deleteEnvironment
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Environment was deleted
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to delete environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: The specified environment does not exist
+      summary: Deletes an environment regardless of status (destructive) which is
+        not the same as terminating it, the environment may still be running but no
+        longer visible to the dispatch server after this operation succeeds
+      tags:
+      - monitoring
+    get:
+      operationId: canManageEnvironment
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchManagementStatus'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchManagementStatus'
+          description: Management Status report
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: The specified environment does not exist
+      summary: Gets the management status of the environment
+      tags:
+      - monitoring
+  /monitoring/{owner}/environments/{environment}/status:
+    get:
+      operationId: getEnvironmentStatus
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Number of events to limit to per DispatchInfo
+        explode: true
+        in: query
+        name: eventLimit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Whether to actively refresh information prior to returning it
+        explode: true
+        in: query
+        name: refresh
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+          description: The status of the environment
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The specified environment does not exist
+      summary: Gets the status of an environment
+      tags:
+      - monitoring
+  /monitoring/{owner}/environments/{environment}/logs:
+    delete:
+      operationId: deleteEnvironmentLogs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Log files were deleted
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage logs from environments
+            with the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: The given environment does not exist
+      summary: Deletes all available log files for the environment
+      tags:
+      - monitoring
+    get:
+      operationId: listEnvironmentLogs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EnvironmentLogSource'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EnvironmentLogSource'
+                type: array
+          description: List of log files
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view logs from environments
+            with the given owner
+      summary: Gets the available log files for the environment
+      tags:
+      - monitoring
+  /monitoring/{owner}/environments/{environment}/logs/{log}:
+    delete:
+      operationId: deleteEnvironmentLog
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The log file that you wish to access
+        example: output.log
+        explode: false
+        in: path
+        name: log
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Specified log file were deleted
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage logs from environments
+            with the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: The given environment or log file does not exist
+      summary: Deletes a specific log file for the environment
+      tags:
+      - monitoring
+    get:
+      operationId: loadEnvironmentLog
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The log file that you wish to access
+        example: output.log
+        explode: false
+        in: path
+        name: log
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Makes the request conditional on the resource having been modified
+          since the given date.  If the resource is unmodified a 304 Not Modified
+          is returned.
+        explode: false
+        in: header
+        name: If-Modified-Since
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: Makes the request conditional on the resource having not been
+          modified since the given date.  If the resource has been modified a 412
+          Precondition Failed is returned.
+        explode: false
+        in: header
+        name: If-Unmodified-Since
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: "Specifies a range of the resource to return instead of the full\
+          \ resource.\n\nByte based ranges per RFC 7233 are supported, additionally\
+          \ line based ranges are also permitted.  These\nsupport the same range syntax\
+          \ as byte ranges except using lines instead of bytes as the unit.  The main\n\
+          difference between byte and line ranges is that byte ranges use zero based\
+          \ indexing whereas line ranges\nuse 1 based indexing.  So a range of 1-5\
+          \ would be the 2nd through 6th bytes but the 1st through 5th \nlines.  Note\
+          \ that per the specification range boundaries are always inclusive.\n\n\
+          If a range is statisfiable you will receive a 206 Partial Content response\
+          \ with a Content-Range header\nindicating the portion of the resource returned.\
+          \  If the range is unsatisfiable then you will receive a\n416 Range Unsatisfiable\
+          \ response.  If the range matches the full size of the content then you\
+          \ will just\nreceive a 200 OK response with the full resource.\n\nRange\
+          \ specifications that are invalid are silently discarded and will just result\
+          \ in the server returning\na normal 200 OK response.\n\nRanges can be specified\
+          \ relative to the start/end of the content per RFC 7233.  Note that when\
+          \ line \nranges are used in this way the returned Content-Range header may\
+          \ not match the lines returned because\nthe server does not know in advance\
+          \ how many lines are in the resource.  However the starting line will\n\
+          always be correct and thus can be used by clients to display line numbers\
+          \ if they so wish.\n\nNote that ONLY a single range may be requested.  If\
+          \ multiple ranges are requested the server will just\nreturn the full resource.\n"
+        explode: false
+        in: header
+        name: Range
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: Make a Range request conditional on the resource having not been
+          modified since the given date.  If the resource has been modified since
+          the given date then the Range request will not be honoured and the full
+          resource will be returned instead.
+        explode: false
+        in: header
+        name: If-Range
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: Full log file contents (at time of the request)
+        "206":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+            multipart/byteranges:
+              schema:
+                format: binary
+                type: string
+          description: A subset of the log file contents, returned when a valid Range
+            request is made
+        "304":
+          description: The log file has not changed
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view logs from environments
+            with the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Log file or environment does not exist
+        "412":
+          description: The log file has changed
+        "416":
+          description: The requested ranges of bytes can not be satisifed for this
+            log file
+        "500":
+          description: Could not retrieve log
+      summary: Gets the available log files for the environment
+      tags:
+      - monitoring
+  /running:
+    get:
+      operationId: listAllRunning
+      parameters:
+      - description: Number of results to limit to, used in conjunction with offset
+          to page through results
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Number of results to offset by, used in conjunction with limit
+          to page through results
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Whether to reverse the default sort order in the returned results
+        explode: true
+        in: query
+        name: reverse
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Number of events to limit to per DispatchInfo
+        explode: true
+        in: query
+        name: eventLimit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Results must be in the given state(s)
+        explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/DispatchState'
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+          description: List of running environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments
+      summary: Gets all running environments that the user can view
+      tags:
+      - running
+  /running/{owner}:
+    delete:
+      operationId: terminateAllRunning
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Whether to force termination
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "204":
+          description: All running environments were terminated successfully
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to terminate environments with
+            the given owner
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Could not terminate all running environments
+      summary: Terminates all running environments owned by the given owner
+      tags:
+      - running
+    get:
+      operationId: listOwnedRunning
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Number of results to limit to, used in conjunction with offset
+          to page through results
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Number of results to offset by, used in conjunction with limit
+          to page through results
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Whether to reverse the default sort order in the returned results
+        explode: true
+        in: query
+        name: reverse
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Number of events to limit to per DispatchInfo
+        explode: true
+        in: query
+        name: eventLimit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Results must be in the given state(s)
+        explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/DispatchState'
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+          description: List of owned running environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+      summary: Gets all running environments launched by the given owner
+      tags:
+      - running
+  /running/{owner}/environments/{environment}:
+    delete:
+      operationId: terminateRunning
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Whether to force termination
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+          description: Runtime environment was terminated
+        "301":
+          description: The given environment has been terminated and can now be looked
+            up elsewhere
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to terminate environments with
+            the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist or has already been terminated
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Could not terminate running environment
+      summary: Terminates a running environment
+      tags:
+      - running
+    get:
+      operationId: getRunning
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+          description: A manifest describing the running environment
+        "301":
+          description: The given environment has been terminated and can now be looked
+            up elsewhere
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist or is no longer running
+      summary: Gets a specific running environment launched by the given owner
+      tags:
+      - running
+  /running/{owner}/environments/{environment}/async:
+    delete:
+      operationId: terminateRunningAsync
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Whether to force termination
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/DispatchInfo'
+          description: Runtime environment was accepted for termination
+        "301":
+          description: The given environment has already been terminated and can now
+            be looked up elsewhere
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to terminate environments with
+            the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist or has already been terminated
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: Could not terminate running environment
+      summary: Terminates a running environment in an asynchronous manner
+      tags:
+      - running
+  /running/{owner}/environments/{environment}/uis:
+    get:
+      operationId: getUserInterfaces
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserInterface'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserInterface'
+                type: array
+          description: A list of user interfaces available in the running environment
+        "301":
+          description: The given environment has been terminated and can now be looked
+            up elsewhere
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view environments with the
+            given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist
+      summary: Gets the User Interfaces associated with the running environment launched
+        by the given owner
+      tags:
+      - running
+  /running/{owner}/acls:
+    get:
+      operationId: getRunningACLs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ACLS'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/ACLS'
+          description: ACLs for the given owners running environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage running environment
+            ACLs with the given owner
+      summary: Gets the ACLs that control who can manage the running environments
+        belonging to the given owner
+      tags:
+      - running
+    put:
+      operationId: setRunningACLs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ACLS'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/ACLS'
+        description: The ACLs to set
+        required: true
+      responses:
+        "204":
+          description: ACLs were successfully updated
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage running environment
+            ACLs with the given owner
+      summary: Sets the ACLs that control who can manage the running environments
+        belonging to the given owner
+      tags:
+      - running
+  /terminated:
+    get:
+      operationId: listAllTerminated
+      parameters:
+      - description: Number of results to limit to, used in conjunction with offset
+          to page through results
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Number of results to offset by, used in conjunction with limit
+          to page through results
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Whether to reverse the default sort order in the returned results
+        explode: true
+        in: query
+        name: reverse
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Number of events to limit to per DispatchInfo
+        explode: true
+        in: query
+        name: eventLimit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Results must be in the given state(s)
+        explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/DispatchState'
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+          description: List of terminated environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view terminated environment
+            with the given owner
+      summary: Gets all terminated environments that the user can view
+      tags:
+      - terminated
+  /terminated/{owner}:
+    delete:
+      operationId: deleteAllTerminated
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: All owned environments were removed
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage terminated environment
+            with the given owner
+      summary: Removes all terminated environments belonging to the given owner
+      tags:
+      - terminated
+    get:
+      operationId: listOwnedTerminated
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Number of results to limit to, used in conjunction with offset
+          to page through results
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Number of results to offset by, used in conjunction with limit
+          to page through results
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Whether to reverse the default sort order in the returned results
+        explode: true
+        in: query
+        name: reverse
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Number of events to limit to per DispatchInfo
+        explode: true
+        in: query
+        name: eventLimit
+        required: false
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: form
+      - description: Results must be in the given state(s)
+        explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          items:
+            $ref: '#/components/schemas/DispatchState'
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+            application/yaml:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchInfo'
+                type: array
+          description: List of owned terminated environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view terminated environment
+            with the given owner
+      summary: Gets all terminated environments belonging to the given owner
+      tags:
+      - terminated
+  /terminated/{owner}/environments/{environment}:
+    delete:
+      operationId: deleteTerminated
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: The terminated environment was deleted
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage terminated environment
+            with the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist or has already been deleted
+            permanently
+      summary: Removes a terminated environment
+      tags:
+      - terminated
+    get:
+      operationId: getTerminated
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The environment that you wish to access
+        example: abcdef1234
+        explode: false
+        in: path
+        name: environment
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Manifest'
+          description: A manifest describing the terminated environment
+        "301":
+          description: The given environment is still running and should be looked
+            up elsewhere
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to view terminated environment
+            with the given owner
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ReferenceProblem'
+          description: The given environment does not exist or has an invalid state
+      summary: Gets a specific terminated environment launched by the given owner
+      tags:
+      - terminated
+  /terminated/{owner}/acls:
+    get:
+      operationId: getTerminatedACLs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ACLS'
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/ACLS'
+          description: ACLs for the given owners terminated environments
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage terminated environment
+            ACLs with the given owner
+      summary: Gets the ACLs that control who can manage the terminated environments
+        belonging to the given owner
+      tags:
+      - terminated
+    put:
+      operationId: setTerminatedACLs
+      parameters:
+      - description: The username of the user whose resources that you wish to access
+        example: lhamilton
+        explode: false
+        in: path
+        name: owner
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ACLS'
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/ACLS'
+        description: The ACLs to set
+        required: true
+      responses:
+        "204":
+          description: ACLs were successfully updated
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          description: User does not have permission to manage terminated environment
+            ACLs with the given owner
+      summary: Sets the ACLs that control who can manage the terminated environments
+        belonging to the given owner
+      tags:
+      - terminated
+components:
+  parameters:
+    OwnerParam:
+      description: The username of the user whose resources that you wish to access
+      example: lhamilton
+      explode: false
+      in: path
+      name: owner
+      required: true
+      schema:
+        type: string
+      style: simple
+    NameParam:
+      description: The name of the resource that you wish to access
+      example: track-analysis
+      explode: false
+      in: path
+      name: name
+      required: true
+      schema:
+        type: string
+      style: simple
+    EnvironmentParam:
+      description: The environment that you wish to access
+      example: abcdef1234
+      explode: false
+      in: path
+      name: environment
+      required: true
+      schema:
+        type: string
+      style: simple
+    LogParam:
+      description: The log file that you wish to access
+      example: output.log
+      explode: false
+      in: path
+      name: log
+      required: true
+      schema:
+        type: string
+      style: simple
+    ForceParam:
+      description: Whether to force termination
+      explode: true
+      in: query
+      name: force
+      required: false
+      schema:
+        default: false
+        type: boolean
+      style: form
+    EventLimitParam:
+      description: Number of events to limit to per DispatchInfo
+      explode: true
+      in: query
+      name: eventLimit
+      required: false
+      schema:
+        format: int32
+        minimum: 0
+        type: integer
+      style: form
+    LimitParam:
+      description: Number of results to limit to, used in conjunction with offset
+        to page through results
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        format: int32
+        minimum: 0
+        type: integer
+      style: form
+    OffsetParam:
+      description: Number of results to offset by, used in conjunction with limit
+        to page through results
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        format: int32
+        minimum: 0
+        type: integer
+      style: form
+    ReverseParam:
+      description: Whether to reverse the default sort order in the returned results
+      explode: true
+      in: query
+      name: reverse
+      required: false
+      schema:
+        default: false
+        type: boolean
+      style: form
+    StateParam:
+      description: Results must be in the given state(s)
+      explode: true
+      in: query
+      name: state
+      required: false
+      schema:
+        items:
+          $ref: '#/components/schemas/DispatchState'
+        type: array
+      style: form
+    RefreshParam:
+      description: Whether to actively refresh information prior to returning it
+      explode: true
+      in: query
+      name: refresh
+      required: false
+      schema:
+        default: false
+        type: boolean
+      style: form
+    ImpersonateParam:
+      description: User to impersonate
+      explode: true
+      in: query
+      name: impersonate
+      required: false
+      schema:
+        type: string
+      style: form
+    IfModifiedSinceHeader:
+      description: Makes the request conditional on the resource having been modified
+        since the given date.  If the resource is unmodified a 304 Not Modified is
+        returned.
+      explode: false
+      in: header
+      name: If-Modified-Since
+      required: false
+      schema:
+        type: string
+      style: simple
+    IfUnmodifiedSinceHeader:
+      description: Makes the request conditional on the resource having not been modified
+        since the given date.  If the resource has been modified a 412 Precondition
+        Failed is returned.
+      explode: false
+      in: header
+      name: If-Unmodified-Since
+      required: false
+      schema:
+        type: string
+      style: simple
+    RangeHeader:
+      description: "Specifies a range of the resource to return instead of the full\
+        \ resource.\n\nByte based ranges per RFC 7233 are supported, additionally\
+        \ line based ranges are also permitted.  These\nsupport the same range syntax\
+        \ as byte ranges except using lines instead of bytes as the unit.  The main\n\
+        difference between byte and line ranges is that byte ranges use zero based\
+        \ indexing whereas line ranges\nuse 1 based indexing.  So a range of 1-5 would\
+        \ be the 2nd through 6th bytes but the 1st through 5th \nlines.  Note that\
+        \ per the specification range boundaries are always inclusive.\n\nIf a range\
+        \ is statisfiable you will receive a 206 Partial Content response with a Content-Range\
+        \ header\nindicating the portion of the resource returned.  If the range is\
+        \ unsatisfiable then you will receive a\n416 Range Unsatisfiable response.\
+        \  If the range matches the full size of the content then you will just\n\
+        receive a 200 OK response with the full resource.\n\nRange specifications\
+        \ that are invalid are silently discarded and will just result in the server\
+        \ returning\na normal 200 OK response.\n\nRanges can be specified relative\
+        \ to the start/end of the content per RFC 7233.  Note that when line \nranges\
+        \ are used in this way the returned Content-Range header may not match the\
+        \ lines returned because\nthe server does not know in advance how many lines\
+        \ are in the resource.  However the starting line will\nalways be correct\
+        \ and thus can be used by clients to display line numbers if they so wish.\n\
+        \nNote that ONLY a single range may be requested.  If multiple ranges are\
+        \ requested the server will just\nreturn the full resource.\n"
+      explode: false
+      in: header
+      name: Range
+      required: false
+      schema:
+        type: string
+      style: simple
+    IfRangeHeader:
+      description: Make a Range request conditional on the resource having not been
+        modified since the given date.  If the resource has been modified since the
+        given date then the Range request will not be honoured and the full resource
+        will be returned instead.
+      explode: false
+      in: header
+      name: If-Range
+      required: false
+      schema:
+        type: string
+      style: simple
+    LoggerParam:
+      description: The logger whose log level you wish to access
+      example: io.swagger.oas.inflector.controllers.OpenAPIOperationController
+      explode: false
+      in: path
+      name: logger
+      required: true
+      schema:
+        type: string
+      style: simple
+  schemas:
+    DispatchState:
+      enum:
+      - UNKNOWN
+      - PENDING
+      - RUNNING
+      - TERMINATING
+      - TERMINATED
+      - COMPLETED
+      - FAILED
+      type: string
+      x-swagger-router-model: com.cray.analytics.capsules.model.DispatchState
+    DispatchInfo:
+      example:
+        lastUpdated: lastUpdated
+        payloadStates: {}
+        launchedCapsuleReference:
+          owner: owner
+          name: name
+          version: version
+        launchingUser: launchingUser
+        additionalProperties: '{}'
+        events:
+        - level: TRACE
+          reporter: reporter
+          additionalProperties: '{}'
+          message: message
+          timestamp: timestamp
+          extraInfo:
+            key: extraInfo
+        - level: TRACE
+          reporter: reporter
+          additionalProperties: '{}'
+          message: message
+          timestamp: timestamp
+          extraInfo:
+            key: extraInfo
+        dispatchId: dispatchId
+      properties:
+        launchedCapsuleReference:
+          $ref: '#/components/schemas/OwnedResourceReference'
+        launchingUser:
+          type: string
+        dispatchId:
+          type: string
+        state:
+          $ref: '#/components/schemas/DispatchState'
+        events:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+        lastUpdated:
+          type: string
+        payloadStates:
+          additionalProperties:
+            $ref: '#/components/schemas/DispatchState'
+          type: object
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.DispatchInfo
+    OwnedResourceReference:
+      example:
+        owner: owner
+        name: name
+        version: version
+      properties:
+        owner:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.OwnedResourceReference
+    Event:
+      example:
+        level: TRACE
+        reporter: reporter
+        additionalProperties: '{}'
+        message: message
+        timestamp: timestamp
+        extraInfo:
+          key: extraInfo
+      properties:
+        level:
+          enum:
+          - TRACE
+          - DEBUG
+          - INFO
+          - WARNING
+          - ERROR
+          type: string
+        timestamp:
+          type: string
+        reporter:
+          type: string
+        message:
+          type: string
+        extraInfo:
+          additionalProperties:
+            type: string
+          type: object
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.events.Event
+    DispatchManagementStatus:
+      example:
+        canManage: true
+        reason: reason
+        additionalProperties: '{}'
+        dispatcher: dispatcher
+        info:
+          lastUpdated: lastUpdated
+          payloadStates: {}
+          launchedCapsuleReference:
+            owner: owner
+            name: name
+            version: version
+          launchingUser: launchingUser
+          additionalProperties: '{}'
+          events:
+          - level: TRACE
+            reporter: reporter
+            additionalProperties: '{}'
+            message: message
+            timestamp: timestamp
+            extraInfo:
+              key: extraInfo
+          - level: TRACE
+            reporter: reporter
+            additionalProperties: '{}'
+            message: message
+            timestamp: timestamp
+            extraInfo:
+              key: extraInfo
+          dispatchId: dispatchId
+      properties:
+        info:
+          $ref: '#/components/schemas/DispatchInfo'
+        dispatcher:
+          type: string
+        reason:
+          type: string
+        canManage:
+          type: boolean
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.DispatchManagementStatus
+    ClientMetadata:
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.ClientMetadata
+    DispatchMetadata:
+      properties:
+        owner:
+          type: string
+        dispatcher:
+          type: string
+        carriers:
+          additionalProperties:
+            type: string
+          type: object
+        launched:
+          type: string
+        terminated:
+          type: string
+        userInterfaces:
+          items:
+            $ref: '#/components/schemas/UserInterface'
+          type: array
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.DispatchMetadata
+    Manifest:
+      example:
+        manifestVersion: v1
+        clientMetadata:
+          name: track-analysis
+          title: Track analysis
+          description: A track analysis environment
+        warehouseMetadata:
+          owner: lhamilton
+          created: 2019-03-25 11:40:59 Z
+          modified: 2019-03-25 11:41:32 Z
+          version: abc345d
+          tags:
+          - default
+          - latest
+          server: http://example.org/warehouse/
+        dispatchMetadata:
+          owner: vbottas
+          dispatcher: com.cray.analytics.capsules.dispatcher.k8s.KubernetesDispatcher
+          carriers:
+            track-analyser: com.cray.analytics.capsules.carriers.k8s.PodCarrier
+          launched: 2019-03-25 13:38:00 Z
+          userInterfaces:
+          - type: web
+            location: http://some-pod.kubernetes.svc.default
+        payloads:
+        - name: track-analyser
+          id: com.f1.analytics.tracks
+          version: 1
+          carriers:
+          - com.cray.analytics.capsules.carriers.k8s.PodCarrier
+          launchParameters:
+            mode: interactive
+            configuration:
+              track: bahrain
+            images:
+              default: track-analyser:latest
+            arguments:
+            - --g-force
+          resourceRequirements:
+            instances:
+              total: 1
+            cores:
+              total: 16
+            memory:
+              total: 128GiB
+            gpus:
+              total: 1
+        sharedData:
+        - mountLocations:
+          - master
+          - workers
+          name: Environmentdata
+          readOnly: false
+          source: /data/mydata
+          target: /var/data
+          type: Directory
+      properties:
+        manifestVersion:
+          type: string
+        clientMetadata:
+          $ref: '#/components/schemas/ClientMetadata'
+        warehouseMetadata:
+          $ref: '#/components/schemas/WarehouseMetadata'
+        dispatchMetadata:
+          $ref: '#/components/schemas/DispatchMetadata'
+        payloads:
+          items:
+            $ref: '#/components/schemas/Payload'
+          type: array
+        sharedData:
+          items:
+            $ref: '#/components/schemas/Data'
+          type: array
+        additionalProperties:
+          type: object
+      required:
+      - clientMetadata
+      - manifestVersion
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.EnvironmentManifest
+    LaunchParameters:
+      properties:
+        mode:
+          type: string
+        environment:
+          additionalProperties:
+            type: string
+          type: object
+        configuration:
+          additionalProperties:
+            type: string
+          type: object
+        data:
+          items:
+            $ref: '#/components/schemas/Data'
+          type: array
+        images:
+          additionalProperties:
+            type: string
+          type: object
+        dependencies:
+          items:
+            type: string
+          type: array
+        arguments:
+          items:
+            type: string
+          type: array
+        custom:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.LaunchParameters
+    ResourceRequirements:
+      properties:
+        instances:
+          additionalProperties:
+            type: integer
+          type: object
+        cores:
+          additionalProperties:
+            type: number
+          type: object
+        memory:
+          additionalProperties:
+            type: string
+          type: object
+        gpus:
+          additionalProperties:
+            type: integer
+          type: object
+        scratch:
+          additionalProperties:
+            type: string
+          type: object
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.ResourceRequirements
+    Payload:
+      example:
+        name: track-analyser
+        id: com.f1.analytics.tracks
+        version: 1
+        carriers:
+        - com.cray.analytics.capsules.carriers.k8s.PodCarrier
+        launchParameters:
+          mode: interactive
+          configuration:
+            track: bahrain
+          images:
+            default: track-analyser:latest
+          arguments:
+          - --g-force
+        resourceRequirements:
+          instances:
+            total: 1
+          cores:
+            total: 16
+          memory:
+            total: 128GiB
+          gpus:
+            total: 1
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+        version:
+          type: string
+        carriers:
+          items:
+            type: string
+          type: array
+        launchParameters:
+          $ref: '#/components/schemas/LaunchParameters'
+        resourceRequirements:
+          $ref: '#/components/schemas/ResourceRequirements'
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.Payload
+    UserInterface:
+      example:
+        type: web
+        location: http://example.org/service
+      properties:
+        type:
+          type: string
+        location:
+          type: string
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.UserInterface
+    ACLS:
+      example:
+        read:
+          allowed:
+          - aaron
+          - '*'
+          forbidden:
+          - danielle
+        write:
+          allowed:
+          - bob
+          - cindy
+          forbidden:
+          - danielle
+          - eve
+        admin:
+          allowed:
+          - bob
+      properties:
+        read:
+          $ref: '#/components/schemas/ACLInfo'
+        write:
+          $ref: '#/components/schemas/ACLInfo'
+        admin:
+          $ref: '#/components/schemas/ACLInfo'
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.security.ACL
+    ACLInfo:
+      properties:
+        allowed:
+          items:
+            type: string
+          type: array
+        forbidden:
+          items:
+            type: string
+          type: array
+        additionalProperties:
+          type: object
+      type: object
+    Data:
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        readOnly:
+          type: boolean
+        mountLocations:
+          items:
+            type: string
+          type: array
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.Data
+    WarehouseMetadata:
+      properties:
+        owner:
+          type: string
+        created:
+          type: string
+        modified:
+          type: string
+        version:
+          type: string
+        tags:
+          items:
+            type: string
+          type: array
+        server:
+          type: string
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.WarehouseMetadata
+    EnvironmentLogSource:
+      example:
+        king: king
+        name: name
+        length: 0
+        lastModified: lastModified
+        additionalProperties: '{}'
+      properties:
+        name:
+          type: string
+        king:
+          type: string
+        lastModified:
+          type: string
+        length:
+          format: int64
+          type: integer
+        additionalProperties:
+          type: object
+      type: object
+      x-swagger-router-model: com.cray.analytics.capsules.model.LogSource
+    Problem:
+      properties:
+        type:
+          default: about:blank
+          description: |
+            An absolute URI that identifies the problem type.  When dereferenced,
+            it SHOULD provide human-readable documentation for the problem type
+            (e.g., using HTML).
+          example: https://zalando.github.io/problem/constraint-violation
+          format: uri
+          type: string
+        title:
+          description: |
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
+          type: string
+        status:
+          description: |
+            The HTTP status code generated by the origin server for this occurrence
+            of the problem.
+          example: 503
+          exclusiveMaximum: true
+          format: int32
+          maximum: 600
+          minimum: 100
+          type: integer
+        detail:
+          description: |
+            A human readable explanation specific to this occurrence of the
+            problem.
+          example: Connection to database timed out
+          type: string
+        instance:
+          description: |
+            An absolute URI that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+          format: uri
+          type: string
+      type: object
+    ReferenceProblem:
+      properties:
+        type:
+          default: about:blank
+          description: |
+            An absolute URI that identifies the problem type.  When dereferenced,
+            it SHOULD provide human-readable documentation for the problem type
+            (e.g., using HTML).
+          example: https://zalando.github.io/problem/constraint-violation
+          format: uri
+          type: string
+        title:
+          description: |
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
+          type: string
+        status:
+          description: |
+            The HTTP status code generated by the origin server for this occurrence
+            of the problem.
+          example: 503
+          exclusiveMaximum: true
+          format: int32
+          maximum: 600
+          minimum: 100
+          type: integer
+        detail:
+          description: |
+            A human readable explanation specific to this occurrence of the
+            problem.
+          example: Connection to database timed out
+          type: string
+        instance:
+          description: |
+            An absolute URI that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
+          format: uri
+          type: string
+        reference:
+          description: The value of the reference resulting in the problem
+          example: myUsername/myResourceName:myResourceVersion
+          type: string
+      type: object
+    LogLevel:
+      enum:
+      - "false"
+      - ERROR
+      - WARN
+      - INFO
+      - DEBUG
+      - TRACE
+      type: string
+  securitySchemes:
+    BearerAuth:
+      scheme: Bearer
+      type: http
