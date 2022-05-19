@@ -49,10 +49,10 @@ MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node and t
 
 | Config File                | Accuracy (%) |
 |----------------------------|--------------|
-| `const_mnist.yaml`         | 98.7         |
-| `distributed_mnist.yaml`   | 98.8         |
-| `const_cifar10.yaml`       | 77.3         |
-| `distributed_cifar10.yaml` | 75.4         |
+| `const_mnist.yaml`         | 99.2         |
+| `distributed_mnist.yaml`   | 99.1         |
+| `const_cifar10.yaml`       | 81.7         |
+| `distributed_cifar10.yaml` | 84.4         |
 
 ### ImageNet
 

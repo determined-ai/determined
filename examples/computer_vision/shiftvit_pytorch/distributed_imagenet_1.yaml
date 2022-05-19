@@ -1,4 +1,4 @@
-name: shiftvit_imagenet_distributed
+name: shiftvit_imagenet_distributed_4gpu
 entrypoint: model_def:ShiftViTTrial
 reproducibility:
   experiment_seed: 42
@@ -16,7 +16,7 @@ data:
 records_per_epoch: 1281167
 hyperparameters:
   # ShiftViT ImageNet experiments use batch_size = 1024
-  global_batch_size: 1024
+  global_batch_size: 128
   # ShiftViT model args, using ShiftViT defaults
   model:
     n_div: 12
@@ -67,7 +67,7 @@ hyperparameters:
 min_validation_period:
   epochs: 5
 resources:
-  slots_per_trial: 8
+  slots_per_trial: 1
   shm_size: 17179869184 # 16 GiB
 searcher:
   name: single

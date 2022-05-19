@@ -93,19 +93,12 @@ class ShiftViTTrial(PyTorchTrial):
         training_data_loader = self._get_data_loader(train=True)
         self._training_loader_len = len(training_data_loader)
         num_workers = self.context.distributed.size
-        batches_per_epoch_from_dataloader = int(
-            math.ceil(self._training_loader_len / num_workers)
-        )
         # If records_per_epoch was not specified in the config, compute batches per epoch based on the dataloader len
         if self._records_per_epoch is None:
-            self._batches_per_epoch = batches_per_epoch_from_dataloader
-        elif batches_per_epoch_from_dataloader != self._batches_per_epoch:
-            warning_msg = (
-                f"The 'records_per_epoch' configuration yields {self._batches_per_epoch} batches-per-epoch, "
-                f"while the len of the training DataLoader yields {batches_per_epoch_from_dataloader}. Epoch "
-                "lengths are internally computed based on the latter number."
+            batches_per_epoch_from_dataloader = int(
+                math.ceil(self._training_loader_len / num_workers)
             )
-            warnings.warn(warning_msg)
+            self._batches_per_epoch = batches_per_epoch_from_dataloader
         return training_data_loader
 
     def build_validation_data_loader(self) -> DataLoader:
@@ -129,7 +122,7 @@ class ShiftViTTrial(PyTorchTrial):
         if is_last_batch_of_epoch:
             self._curr_epoch_idx += 1
             print(
-                f"LR SCHEDULER STEPPED AT EPOCH {epoch_idx}/{self._curr_epoch_idx} BATCH {batch_idx}"
+                f"LR SCHEDULER STEPPED AT EPOCH {epoch_idx} [det default]/{self._curr_epoch_idx} [my def] BATCH {batch_idx}"
             )
             print(f"LEN TRAIN LOADER: {self._training_loader_len}")
             print(f"BATCHES PER EPOCH {self._batches_per_epoch}")
