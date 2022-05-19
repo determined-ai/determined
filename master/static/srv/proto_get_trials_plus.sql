@@ -178,7 +178,7 @@ SELECT
         SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
     ) r
   ) AS total_checkpoint_size,
-  t.restarts - 1 as restarts
+  t.restarts as restarts
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
