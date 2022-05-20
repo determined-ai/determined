@@ -360,11 +360,11 @@ class v1AckAllocationPreemptionSignalRequest:
 class v1Agent:
     def __init__(
         self,
+        id: str,
         addresses: "typing.Optional[typing.Sequence[str]]" = None,
         containers: "typing.Optional[typing.Dict[str, v1Container]]" = None,
         draining: "typing.Optional[bool]" = None,
         enabled: "typing.Optional[bool]" = None,
-        id: "typing.Optional[str]" = None,
         label: "typing.Optional[str]" = None,
         registeredTime: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
@@ -385,7 +385,7 @@ class v1Agent:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
         return cls(
-            id=obj.get("id", None),
+            id=obj["id"],
             registeredTime=obj.get("registeredTime", None),
             slots={k: v1Slot.from_json(v) for k, v in obj["slots"].items()} if obj.get("slots", None) is not None else None,
             containers={k: v1Container.from_json(v) for k, v in obj["containers"].items()} if obj.get("containers", None) is not None else None,
@@ -399,7 +399,7 @@ class v1Agent:
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
+            "id": self.id,
             "registeredTime": self.registeredTime if self.registeredTime is not None else None,
             "slots": {k: v.to_json() for k, v in self.slots.items()} if self.slots is not None else None,
             "containers": {k: v.to_json() for k, v in self.containers.items()} if self.containers is not None else None,

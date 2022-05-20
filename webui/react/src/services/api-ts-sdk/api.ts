@@ -746,7 +746,7 @@ export interface V1Agent {
      * @type {string}
      * @memberof V1Agent
      */
-    id?: string;
+    id: string;
     /**
      * The time when the agent registered with the master.
      * @type {Date}
