@@ -40,7 +40,7 @@ import {
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { isEqual } from 'shared/utils/data';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';

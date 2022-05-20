@@ -5,7 +5,7 @@ import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { percent } from 'shared/utils/number';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { AnyTask, DetailedUser, ExperimentTask, RecentCommandTask, RecentEvent } from 'types';
 import { canBeOpened, isExperimentTask } from 'utils/task';
 import { openCommand } from 'wait';

@@ -7,7 +7,7 @@ import useCreateExperimentModal, {
 } from 'hooks/useModal/useModalExperimentCreate';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';

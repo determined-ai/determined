@@ -6,8 +6,8 @@ import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
-import Icon from 'tmp-shared/components/Icon/Icon';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner/Spinner';
 import {
   ExperimentBase,
   TrialDetails,

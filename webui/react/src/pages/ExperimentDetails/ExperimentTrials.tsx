@@ -21,7 +21,7 @@ import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import ActionDropdown from 'tmp-shared/components/ActionDropdown/ActionDropdown';
+import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,

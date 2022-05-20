@@ -9,7 +9,7 @@ import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'wait';

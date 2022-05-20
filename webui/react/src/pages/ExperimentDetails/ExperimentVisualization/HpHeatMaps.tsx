@@ -18,7 +18,7 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
   metricTypeParamMap,

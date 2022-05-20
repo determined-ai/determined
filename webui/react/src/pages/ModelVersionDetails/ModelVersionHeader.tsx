@@ -15,7 +15,7 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ModelVersion } from 'types';
 import { getDisplayName } from 'utils/user';
 

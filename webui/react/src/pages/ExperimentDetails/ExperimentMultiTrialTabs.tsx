@@ -6,7 +6,7 @@ import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
 

@@ -5,7 +5,7 @@ import { throttle } from 'throttle-debounce';
 
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import useResize from 'hooks/useResize';
-import Icon, { IconSize } from 'tmp-shared/components/Icon/Icon';
+import Icon, { IconSize } from 'shared/components/Icon/Icon';
 
 import css from './RadioGroup.module.scss';
 

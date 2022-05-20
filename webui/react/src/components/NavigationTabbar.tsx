@@ -8,7 +8,7 @@ import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettin
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
 
-import Icon from '../tmp-shared/components/Icon/Icon';
+import Icon from '../shared/components/Icon/Icon';
 
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';

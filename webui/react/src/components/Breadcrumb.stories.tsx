@@ -3,7 +3,7 @@ import React from 'react';
 
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 export default {
   component: Breadcrumb,

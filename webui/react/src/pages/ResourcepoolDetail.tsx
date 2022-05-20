@@ -19,7 +19,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { floatToPercent } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ResourceState } from 'types';
 import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';

@@ -9,7 +9,7 @@ import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 

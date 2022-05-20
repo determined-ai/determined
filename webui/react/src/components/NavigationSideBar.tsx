@@ -11,7 +11,7 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 
-import Icon from '../tmp-shared/components/Icon/Icon';
+import Icon from '../shared/components/Icon/Icon';
 
 import AvatarCard from './AvatarCard';
 import Dropdown, { Placement } from './Dropdown';

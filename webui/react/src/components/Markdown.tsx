@@ -2,7 +2,7 @@ import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useCallback } from 'react';
 
-import Spinner from '../tmp-shared/components/Spinner/Spinner';
+import Spinner from '../shared/components/Spinner/Spinner';
 
 import css from './Markdown.module.scss';
 

@@ -14,7 +14,7 @@ import {
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { capitalize } from 'shared/utils/string';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
@@ -23,7 +23,7 @@ import { isExperimentTask, isTaskKillable } from 'utils/task';
 import { openCommand } from 'wait';
 
 import { ErrorLevel, ErrorType } from '../shared/utils/error';
-import css from '../tmp-shared/components/ActionDropdown/ActionDropdown.module.scss';
+import css from '../shared/components/ActionDropdown/ActionDropdown.module.scss';
 
 import Link from './Link';
 

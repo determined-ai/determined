@@ -13,7 +13,7 @@ import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } fr
 import Message, { MessageType } from 'shared/components/message';
 import { isEqual } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ModelVersion } from 'types';
 import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { paths } from 'routes/utils';
 import { getStateColorCssVar } from 'themes';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ExperimentBase, TrialDetails } from 'types';
 
 import css from './TrialHeaderLeft.module.scss';

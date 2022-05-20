@@ -26,7 +26,7 @@ import { archiveModel, deleteModel, getModelLabels,
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { isBoolean, isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ArchiveFilter, ModelItem } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';

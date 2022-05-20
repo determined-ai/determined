@@ -6,7 +6,7 @@ import { Metadata } from 'types';
 import handleError from 'utils/error';
 
 import { ErrorType } from '../../shared/utils/error';
-import Spinner from '../../tmp-shared/components/Spinner/Spinner';
+import Spinner from '../../shared/components/Spinner/Spinner';
 
 import EditableMetadata from './EditableMetadata';
 

@@ -10,7 +10,7 @@ import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
   StartEndTimes, TrialItem,

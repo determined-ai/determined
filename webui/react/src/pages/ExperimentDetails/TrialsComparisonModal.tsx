@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { isNumber } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';

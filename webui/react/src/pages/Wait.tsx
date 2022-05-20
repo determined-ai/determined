@@ -9,7 +9,7 @@ import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import { capitalize } from 'shared/utils/string';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'wait';

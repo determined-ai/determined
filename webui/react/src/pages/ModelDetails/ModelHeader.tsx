@@ -12,7 +12,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ModelItem } from 'types';
 import { getDisplayName } from 'utils/user';
 

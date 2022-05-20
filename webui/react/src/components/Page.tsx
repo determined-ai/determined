@@ -4,9 +4,9 @@ import { Helmet } from 'react-helmet-async';
 import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
 import { BrandingType } from 'types';
+import { CommonProps } from '../shared/types';
 
-import Spinner from '../tmp-shared/components/Spinner/Spinner';
-import { CommonProps } from '../tmp-shared/types';
+import Spinner from '../shared/components/Spinner/Spinner';
 
 import css from './Page.module.scss';
 

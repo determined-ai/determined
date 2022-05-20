@@ -14,7 +14,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
 } from 'types';

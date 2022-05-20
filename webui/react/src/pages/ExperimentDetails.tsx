@@ -11,7 +11,7 @@ import {
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
 import { isEqual } from 'shared/utils/data';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 

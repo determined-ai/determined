@@ -18,8 +18,8 @@ import { GetJobsResponse } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import ActionDropdown, { Triggers } from 'tmp-shared/components/ActionDropdown/ActionDropdown';
-import Icon from 'tmp-shared/components/Icon/Icon';
+import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
+import Icon from 'shared/components/Icon/Icon';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,

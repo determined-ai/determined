@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 
-import Icon from '../tmp-shared/components/Icon/Icon';
+import Icon from '../shared/components/Icon/Icon';
 
 import Label from './Label';
 import css from './SelectFilter.module.scss';

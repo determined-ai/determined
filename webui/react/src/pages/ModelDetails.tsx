@@ -24,8 +24,8 @@ import {
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/message';
 import { isEqual } from 'shared/utils/data';
-import Icon from 'tmp-shared/components/Icon/Icon';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 

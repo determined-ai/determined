@@ -16,7 +16,7 @@ import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparamet
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import Message, { MessageType } from 'shared/components/message';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';

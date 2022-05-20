@@ -9,7 +9,7 @@ import useJupyterLab from 'hooks/useJupyterLab';
 import usePrevious from 'hooks/usePrevious';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import Spinner from 'tmp-shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { JupyterLabConfig, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 
