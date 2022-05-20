@@ -603,14 +603,14 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		}
 
 		for _, taskName := range nodeToTasks[node.Name] {
-			for i := 0; i < taskSlots[taskName]; i++ {
+			for i := int64(0); i < taskSlots[taskName]; i++ {
 				if curSlot >= int(numSlots) {
 					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
 					continue
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:      strconv.Itoa(i),
+					ID:      strconv.FormatInt(i, 10),
 					Device:  device.Device{Type: deviceType},
 					Enabled: true,
 					Container: &cproto.Container{
@@ -666,9 +666,9 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 	return nonDetPods
 }
 
-func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int) {
+func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
 	nodeToTasks := make(map[string][]string)
-	taskSlots := make(map[string]int)
+	taskSlots := make(map[string]int64)
 
 	nonDetPods := p.getNonDetPods()
 	if len(nonDetPods) == 0 {
@@ -678,22 +678,27 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 		nodeToTasks[node.Name] = []string{}
 	}
 
-	for _, p := range nonDetPods {
-		if _, ok := nodeToTasks[p.Spec.NodeName]; !ok {
+	for _, pod := range nonDetPods {
+		if _, ok := nodeToTasks[pod.Spec.NodeName]; !ok {
 			continue
 		}
-		reqs := 0
-		for _, c := range p.Spec.Containers {
+		reqs := int64(0)
+		for _, c := range pod.Spec.Containers {
 			if deviceType == device.CPU {
-				reqs += int(c.Resources.Requests.Cpu().Value())
+				reqs += p.getCPUReqs(c)
 			} else if deviceType == device.CUDA {
-				reqs += int(c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value())
+				reqs += c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value()
 			}
 		}
 		if reqs > 0 {
-			nodeToTasks[p.Spec.NodeName] = append(nodeToTasks[p.Spec.NodeName], p.Name)
-			taskSlots[p.Name] = reqs
+			nodeToTasks[pod.Spec.NodeName] = append(nodeToTasks[pod.Spec.NodeName], pod.Name)
+			taskSlots[pod.Name] = reqs
 		}
 	}
 	return nodeToTasks, taskSlots
+}
+
+func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
+	requested := float32(c.Resources.Requests.Cpu().MilliValue()) / (1000. * p.slotResourceRequests.CPU)
+	return int64(requested)
 }
