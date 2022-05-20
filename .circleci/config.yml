@@ -2139,7 +2139,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 2
           tf1: false
           tf2: true
           mark: managed_devcluster
