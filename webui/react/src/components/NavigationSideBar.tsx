@@ -16,6 +16,7 @@ import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
+import ThemeToggle from './ThemeToggle';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -136,6 +137,9 @@ const NavigationSideBar: React.FC = () => {
           <Dropdown
             content={(
               <Menu>
+                <Menu.Item key="theme-toggle" onClick={() => {console.log("clicked")}}>
+                  <ThemeToggle />
+                </Menu.Item>
                 <Menu.Item key="settings" onClick={() => openUserSettingsModal()}>
                   Settings
                 </Menu.Item>

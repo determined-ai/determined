@@ -1,0 +1,53 @@
+.base {
+
+    .container{
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        color: #000;
+
+        div{
+            display: inline-block;
+        }
+        
+    }
+    
+}
+
+.mode{
+    align-items: center;
+    vertical-align: center !important;
+    line-height: 100%;
+    display: inline-block;
+    text-align: center;
+    height: 100%;
+}
+
+.toggler{
+    border-radius: 50%;
+    height: 20px;
+    width: 20px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    background: #000;
+    border: none;
+    display: inline-block;
+}
+
+.system {
+    color: #fff;
+    background-color: gold;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    width: 10px;
+    border-radius: 0px 10px 10px 0;
+    margin-left: 10px;
+}
+
+.light{
+    background-color: gold;
+}
+  
+.dark{
+    color: #fff;
+    background-color: black;
+    box-shadow: inset -4.5px -4px 1px 1px #fff;
+}
