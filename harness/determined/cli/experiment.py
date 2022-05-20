@@ -204,7 +204,7 @@ def limit_offset_paginator(
     sess: session.Session,
     limit: int = 200,
     offset: Optional[int] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> List[Any]:
     all_objects: List[Any] = []
     internal_offset = offset or 0
@@ -440,7 +440,10 @@ def experiment_logs(args: Namespace) -> None:
     sess = setup_session(args)
     trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
     if len(trials) == 0:
-        print("No trials")
+        print(
+            f"No trials found for experiment {args.experiment_id}. "
+            "Try again after the experiment has a trial running."
+        )
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
 
