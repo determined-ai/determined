@@ -2,7 +2,7 @@ import { Button, Dropdown, Form, Input, Menu } from 'antd';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import React from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './EditableRow.module.scss';
 

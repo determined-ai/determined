@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonProps } from 'antd';
 import React, { PropsWithChildren, useMemo } from 'react';
 
-import Message, { Props as MessageProps, MessageType } from 'shared/components/message';
+import Message, { Props as MessageProps, MessageType } from 'shared/components/Message';
 import { isObject, validateEnum } from 'shared/utils/data';
 
 import css from './LoadingWrapper.module.scss';

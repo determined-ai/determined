@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
 import { glasbeyColor } from 'shared/utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';

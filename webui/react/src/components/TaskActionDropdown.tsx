@@ -5,7 +5,6 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import Icon from 'components/Icon';
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
 import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
@@ -14,6 +13,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
+import Icon from 'shared/components/Icon/Icon';
 import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
@@ -22,9 +22,9 @@ import handleError from 'utils/error';
 import { isExperimentTask, isTaskKillable } from 'utils/task';
 import { openCommand } from 'wait';
 
+import css from '../shared/components/ActionDropdown/ActionDropdown.module.scss';
 import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
-import css from './ActionDropdown.module.scss';
 import Link from './Link';
 
 interface Props {

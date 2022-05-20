@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Page from 'components/Page';
-import Spinner from 'components/Spinner';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
@@ -10,7 +9,8 @@ import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHe
 import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';

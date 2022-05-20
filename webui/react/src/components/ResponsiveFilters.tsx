@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import Dropdown, { Placement } from 'components/Dropdown';
 import useResize from 'hooks/useResize';
 
-import Icon from './Icon';
+import Icon from '../shared/components/Icon/Icon';
+
 import css from './ResponsiveFilters.module.scss';
 
 interface Props {

@@ -2,11 +2,11 @@ import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import Icon from 'components/Icon';
-import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
+import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { clone, isEqual } from 'shared/utils/data';
 import {
   ExperimentBase,

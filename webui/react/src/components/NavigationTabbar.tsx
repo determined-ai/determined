@@ -8,9 +8,10 @@ import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettin
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
 
+import Icon from '../shared/components/Icon/Icon';
+
 import ActionSheet from './ActionSheet';
 import AvatarCard from './AvatarCard';
-import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
 
