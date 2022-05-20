@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
-import Logo, { LogoType } from 'components/Logo';
+import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
@@ -116,7 +116,7 @@ const SignIn: React.FC = () => {
     <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
-          <Logo branding={info.branding} type={LogoType.OnLightVertical} />
+          <Logo branding={info.branding} orientation={Orientation.Vertical} />
           <DeterminedAuth canceler={canceler} />
           {info.ssoProviders?.map(ssoProvider => {
             const key = ssoProvider.name.toLowerCase();

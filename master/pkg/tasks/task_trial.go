@@ -120,8 +120,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"trial_id": strconv.Itoa(s.TrialID),
 	}
 
-	res.UseFluentLogging = true
-
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
 	}

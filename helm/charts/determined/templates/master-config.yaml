@@ -19,6 +19,7 @@ data:
       access_key: {{ .Values.checkpointStorage.accessKey | quote }}
       secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
       endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
+      prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "azure" }}
       {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url }}
       {{ required "Exactly one of .Values.checkpointStorage.connection_string or .Values.checkpointStorage.account_url must be specified!" "" }}

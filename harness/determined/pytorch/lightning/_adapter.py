@@ -58,9 +58,7 @@ def check_compatibility(lm: pl.LightningModule) -> None:
     }
 
     members = inspect.getmembers(lm, predicate=inspect.ismethod)
-    overridden_members = set(
-        map(lambda m: m[0], filter(lambda m: is_overridden(m[0], lm), members))
-    )
+    overridden_members = {m[0] for m in members if is_overridden(m[0], lm)}
 
     matches = unsupported_members & overridden_members
     if len(matches) > 0:
@@ -132,7 +130,7 @@ class LightningAdapter(PyTorchTrial):
         lightning_module: pl.LightningModule,
         precision: Union[Literal[32], Literal[16]] = 32,
         amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
-        amp_level: Union[Literal["O0", "O1", "O2", "O3"]] = "O2",
+        amp_level: Literal["O0", "O1", "O2", "O3"] = "O2",
     ):
         """
         This performs the necessary initialization steps to:

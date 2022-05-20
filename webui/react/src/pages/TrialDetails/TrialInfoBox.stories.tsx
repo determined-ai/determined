@@ -29,6 +29,7 @@ const sampleTrialItem: TrialItem = {
     stringVal: 'loss',
   },
   id: 1,
+  restarts: 0,
   startTime: Date.now.toString(),
   state: RunState.Completed,
   totalBatchesProcessed: 10000,

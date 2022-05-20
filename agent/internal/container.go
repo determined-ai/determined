@@ -166,11 +166,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case aproto.ContainerLog:
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
-		if c.spec.RunSpec.UseFluentLogging {
-			ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
-		} else {
-			ctx.Tell(ctx.Self().Parent(), msg)
-		}
+		ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
 	case actor.ChildStopped:
 
 	case actor.ChildFailed:

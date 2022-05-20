@@ -6,7 +6,8 @@
     margin-left: 8px;
   }
   :global(.ant-select-selection-overflow) { overflow: hidden; }
-  :global(.ant-select-selection-search-input) { width: auto; }
+  :global(.ant-select-selection-search-input),
+  :global(.ant-select-multiple .ant-select-selection-search-input) { width: auto; }
 }
 .disableTags {
   :global(.ant-select-multiple .ant-select-selection-item) {

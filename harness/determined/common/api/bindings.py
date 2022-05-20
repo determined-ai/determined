@@ -267,6 +267,7 @@ class trialv1Trial:
         experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
         id: int,
+        restarts: int,
         startTime: str,
         state: "determinedexperimentv1State",
         totalBatchesProcessed: int,
@@ -286,6 +287,7 @@ class trialv1Trial:
         self.startTime = startTime
         self.endTime = endTime
         self.state = state
+        self.restarts = restarts
         self.hparams = hparams
         self.totalBatchesProcessed = totalBatchesProcessed
         self.bestValidation = bestValidation
@@ -306,6 +308,7 @@ class trialv1Trial:
             startTime=obj["startTime"],
             endTime=obj.get("endTime", None),
             state=determinedexperimentv1State(obj["state"]),
+            restarts=obj["restarts"],
             hparams=obj["hparams"],
             totalBatchesProcessed=obj["totalBatchesProcessed"],
             bestValidation=v1MetricsWorkload.from_json(obj["bestValidation"]) if obj.get("bestValidation", None) is not None else None,
@@ -326,6 +329,7 @@ class trialv1Trial:
             "startTime": self.startTime,
             "endTime": self.endTime if self.endTime is not None else None,
             "state": self.state.value,
+            "restarts": self.restarts,
             "hparams": self.hparams,
             "totalBatchesProcessed": self.totalBatchesProcessed,
             "bestValidation": self.bestValidation.to_json() if self.bestValidation is not None else None,
@@ -360,11 +364,11 @@ class v1AckAllocationPreemptionSignalRequest:
 class v1Agent:
     def __init__(
         self,
+        id: str,
         addresses: "typing.Optional[typing.Sequence[str]]" = None,
         containers: "typing.Optional[typing.Dict[str, v1Container]]" = None,
         draining: "typing.Optional[bool]" = None,
         enabled: "typing.Optional[bool]" = None,
-        id: "typing.Optional[str]" = None,
         label: "typing.Optional[str]" = None,
         registeredTime: "typing.Optional[str]" = None,
         resourcePool: "typing.Optional[str]" = None,
@@ -385,7 +389,7 @@ class v1Agent:
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
         return cls(
-            id=obj.get("id", None),
+            id=obj["id"],
             registeredTime=obj.get("registeredTime", None),
             slots={k: v1Slot.from_json(v) for k, v in obj["slots"].items()} if obj.get("slots", None) is not None else None,
             containers={k: v1Container.from_json(v) for k, v in obj["containers"].items()} if obj.get("containers", None) is not None else None,
@@ -399,7 +403,7 @@ class v1Agent:
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
+            "id": self.id,
             "registeredTime": self.registeredTime if self.registeredTime is not None else None,
             "slots": {k: v.to_json() for k, v in self.slots.items()} if self.slots is not None else None,
             "containers": {k: v.to_json() for k, v in self.containers.items()} if self.containers is not None else None,
@@ -1467,6 +1471,7 @@ class v1GetExperimentTrialsRequestSortBy(enum.Enum):
     SORT_BY_LATEST_VALIDATION_METRIC = "SORT_BY_LATEST_VALIDATION_METRIC"
     SORT_BY_BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
     SORT_BY_DURATION = "SORT_BY_DURATION"
+    SORT_BY_RESTARTS = "SORT_BY_RESTARTS"
 
 class v1GetExperimentTrialsResponse:
     def __init__(

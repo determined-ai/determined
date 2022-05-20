@@ -3,12 +3,14 @@ import json
 import os
 import sys
 from collections import OrderedDict
+from operator import attrgetter
 from typing import Any, Callable, List
 
 from determined.cli import render
 from determined.cli import task as cli_task
+from determined.cli.session import setup_session
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, bindings
 from determined.common.check import check_false
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -19,25 +21,24 @@ def local_id(address: str) -> str:
 
 @authentication.required
 def list_agents(args: argparse.Namespace) -> None:
-    r = api.get(args.master, "agents")
+    resp = bindings.get_GetAgents(setup_session(args))
 
-    agents = r.json()
     agents = [
         OrderedDict(
             [
-                ("id", local_id(agent_id)),
-                ("version", agent["version"]),
-                ("registered_time", render.format_time(agent["registered_time"])),
-                ("num_slots", len(agent["slots"])),
-                ("num_containers", agent["num_containers"]),
-                ("resource_pool", agent["resource_pool"]),
-                ("enabled", agent.get("enabled")),
-                ("draining", agent.get("draining")),
-                ("label", agent["label"]),
-                ("addresses", ", ".join(agent["addresses"])),
+                ("id", local_id(a.id)),
+                ("version", a.version),
+                ("registered_time", render.format_time(a.registeredTime)),
+                ("num_slots", len(a.slots) if a.slots is not None else ""),
+                ("num_containers", len(a.containers) if a.containers is not None else ""),
+                ("resource_pool", a.resourcePool),
+                ("enabled", a.enabled),
+                ("draining", a.draining),
+                ("label", a.label),
+                ("addresses", ", ".join(a.addresses) if a.addresses is not None else ""),
             ]
         )
-        for agent_id, agent in sorted(agents.items())
+        for a in sorted(resp.agents or [], key=attrgetter("id"))
     ]
 
     if args.json:

@@ -413,6 +413,7 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.GetExperimentTrialsRequest_SORT_BY_LATEST_VALIDATION_METRIC: "latest_signed_search_metric",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:        "total_batches_processed",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:                 "duration",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_RESTARTS:                 "restarts",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",

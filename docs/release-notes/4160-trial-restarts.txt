@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Web: Trial restart count show on the experiment detail header for single trial experiments. For
+   multi-trial experiments, they are show in a new `Restarts` column under `Trials` table.
+
+   .. image:: https://user-images.githubusercontent.com/220971/169450333-c3dde9f4-abc0-4f8b-9e83-216e13ee2ca0.png
+
+   .. image:: https://user-images.githubusercontent.com/220971/169450323-d169f4ee-2698-4ae8-9b1a-c04460751310.png
