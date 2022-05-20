@@ -72,54 +72,81 @@
    :caption: Reference
    :hidden:
 
-   Command Line Interface (CLI) <reference/cli>
-   Configuration Files <reference/config/overview>
    Training APIs <reference/training/overview>
+   Configuration Files <reference/config/overview>
    Model Hub APIs <reference/modelhub/overview>
    Python API <reference/determined/python-api-reference>
    REST API <reference/determined/rest-api-reference>
-
-.. toctree::
-   :caption: Landing Page
-   :hidden:
-
+   Command Line Interface (CLI) <reference/cli>
    attributions
-   release-notes
 
-###############
- Determined AI
-###############
+#############################
+ Determined AI Documentation
+#############################
 
-|h3| *Welcome to Determined AI!*
+*****************************
+ *Welcome to Determined AI!*
+*****************************
 
-************************
- What is Determined AI?
-************************
+Release Notes
+=============
+
+:doc:`Latest release notes <release-notes>`
 
 Determined is an open source deep learning training platform that makes building models fast and
 easy.
 
-********************
- Why Determined AI?
-********************
-
 With Determined you can:
 
--  Train models faster using state-of-the-art :ref:`distributed training <multi-gpu-training>`,
-   without changing your model code.
--  Automatically find high-quality models using advanced :ref:`hyperparameter tuning
-   <hyperparameter-tuning>` from the creators of Hyperband.
--  Get more from your GPUs with smart scheduling, reducing cloud GPU costs by seamlessly using
-   preemptible instances.
+-  Use state-of-the-art distributed training to train models faster without changing your model
+   code.
+-  Automatically find high-quality models using advanced hyperparameter tuning.
+-  Get more from your GPUs with preemptible instances and smart scheduling to reduce cloud GPU costs.
 -  Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code
    versions, metrics, checkpoints, and hyperparameters.
 
 Determined integrates these features into an easy-to-use, high-performance deep learning
 environment. Spend your time building models instead of managing infrastructure. At the same time,
-Determined lets you continue using popular Deep Learning libraries, such as :doc:`TensorFlow Keras
-</training/apis-howto/api-keras-qs>` and :doc:`PyTorch </training/apis-howto/api-pytorch-qs>`.
-Simply integrate the Determined API with your existing model code.
+continue using popular deep learning libraries, such as TensorFlow , Keras, and PyTorch by simply
+integrating the Determined API with your existing model code.
 
-.. |h3| raw:: html
+|
 
-   <h3>
+.. raw:: html
+
+   <div class="landing">
+      <div class="tiles-flex">
+          <a class="tile" href="quickstart-mdldev.html">
+              <h2 class="tile-title">Start here ...</h2>
+              <p class="tile-description">Try these hands-on quickstart guides for a basic introduction to setting up your Determined environment and training models.</p>
+          </a>
+          <a class="tile" href="intro/features/list.html">
+              <h2 class="tile-title">Introduction to Determined</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="cluster-setup-guide/requirements.html">
+              <h2 class="tile-title">Cluster Setup Guide</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="training/setup-guide/overview.html">
+              <h2 class="tile-title">Training</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="tutorials/pytorch-mnist-tutorial.html">
+              <h2 class="tile-title">Tutorials</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="reference/training/overview.html">
+              <h2 class="tile-title">Reference</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="example-solutions/examples.html">
+              <h2 class="tile-title">Example Solutions</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+          <a class="tile" href="model-hub-library/transformers/overview.html">
+              <h2 class="tile-title">Model Hub Library</h2>
+              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          </a>
+      </div>
+   </div>
