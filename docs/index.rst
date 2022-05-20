@@ -109,7 +109,7 @@ With Determined you can:
    integrating the Determined API with your existing model code.
 
 Determined integrates these features into an easy-to-use, high-performance deep learning
-environment. Spend your time building models instead of managing infrastructure.
+environment so you can spend your time building models instead of managing infrastructure.
 
 |
 
