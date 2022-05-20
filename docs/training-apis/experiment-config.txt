@@ -39,36 +39,101 @@ example:
    For example, if your experiment loads data from Amazon S3, the ``data`` field might contain the
    S3 bucket name, object prefix, and AWS authentication credentials.
 
-************
- Entrypoint
-************
+**********
+Entrypoint
+**********
 
 **Required Fields**
 
-.. _experiment-config-entrypoint:
-
 ``entrypoint``
-   The location of the trial class in a user's model definition as an `entrypoint specification
-   string <https://packaging.python.org/specifications/entry-points/>`_. The entrypoint
-   specification is expected to take the form ``<module>:<object reference>``. ``<module>``
-   specifies the module containing the trial class within the model definition, relative to the
-   root. ``<object reference>`` specifies the naming of the trial class within the module. It may be
-   a nested object delimited by dots. Examples:
 
-   #. ``:MNistTrial`` expects an ``MNistTrial`` class that is exposed in a ``__init__.py`` file at
-      the top level of the context directory.
+A model definition trial class specification or Python launcher script,
+which is the model processing entrypoint. This field can have the
+following formats.
 
-   #. ``model_def:CIFAR10Trial`` expects a ``CIFAR10Trial`` class that is defined in a file
-      ``model_def.py`` at the top level of the context directory.
+Note:
 
-   #. ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class that is an
-      attribute of ``trial_classes``, where ``trial_classes`` is defined in a file
-      ``determined_lib/trial.py``.
+   Formats that specify a trial class have the form
+   ``<module>:<object_reference>``.
 
-   Note that this follows the `Entry points specification defined in the Python Packaging User Guide
-   <https://packaging.python.org/specifications/entry-points/>`_ with a single difference: the name
-   of the context directory is prefixed to ``<module>``, or used as the module if ``<module>`` is
-   empty.
+   The ``<module>`` field specifies the module containing the trial class
+   in the model definition, relative to root.
+
+   The ``<object_reference>`` specifies the trial class name in the
+   module, which can be a nested object delimited by a period (``.``).
+
+   Examples:
+
+      -  ``:MnistTrial`` expects an *MnistTrial* class exposed in a
+         ``__init__.py`` file at the top level of the context directory.
+      -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined
+         in the ``model_def.py`` file at the top level of the context
+         directory.
+      -  ``determined_lib.trial:trial_classes.NestedTrial`` expects a
+         ``NestedTrial`` class, which is an attirbute of ``trial_classes``
+         defined in the ``determined_lib/trial.py`` file.
+
+   These formats follow Python `Entry
+   points <https://packaging.python.org/specifications/entry-points/>`_ specification
+   except that the context directory name is prefixed by ``<module>`` or
+   used as the module if the ``<module>`` field is empty.
+
+Arbitrary Script
+====================
+
+An arbitrary entrypoint script name.
+
+Example:
+
+.. code:: yaml
+
+   entrypoint: ./hello.sh
+
+Preconfigured Launch Module with Script
+===========================================
+
+The name of a preconfigured launch module and script name.
+
+Example:
+
+.. code:: yaml
+
+   entrypoint: python3 -m (LAUNCH_MODULE) train.py
+
+``LAUNCH_MODULE`` options: [need literals for these]
+
+-  Horovod
+-  PyTorch
+-  Deepspeed
+
+Preconfigured Launch Module with Legacy Trial Definition
+============================================================
+
+The name of a preconfigured launch module and legacy trial class
+specification.
+
+Example:
+
+.. code:: yaml
+
+   entrypoint: python3 -m (LAUNCH_MODULE) --trial model_def:Trial
+
+``LAUNCH_MODULE`` options: [need literals for these]
+
+-  Horovod
+-  PyTorch
+-  Deepspeed
+
+Legacy Trial Definition
+===========================
+
+A legacy trial class specification.
+
+Example:
+
+.. code:: yaml
+
+   entrypoint: model_def:Trial
 
 *****************
  Basic Behaviors
