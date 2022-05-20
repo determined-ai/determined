@@ -56,6 +56,18 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
 
 .. toctree::
+   :caption: Reference
+   :hidden:
+
+   Training APIs <reference/training/overview>
+   Configuration Files <reference/config/overview>
+   Model Hub APIs <reference/modelhub/overview>
+   Python API <reference/determined/python-api-reference>
+   REST API <reference/determined/rest-api-reference>
+   Command Line Interface (CLI) <reference/determined/cli>
+   attributions
+
+.. toctree::
    :caption: Tutorials
    :hidden:
 
@@ -68,18 +80,6 @@
    :hidden:
 
    Examples <example-solutions/examples>
-
-.. toctree::
-   :caption: Reference
-   :hidden:
-
-   Training APIs <reference/training/overview>
-   Configuration Files <reference/config/overview>
-   Model Hub APIs <reference/modelhub/overview>
-   Python API <reference/determined/python-api-reference>
-   REST API <reference/determined/rest-api-reference>
-   Command Line Interface (CLI) <reference/determined/cli>
-   attributions
 
 #############################
  Determined AI Documentation
