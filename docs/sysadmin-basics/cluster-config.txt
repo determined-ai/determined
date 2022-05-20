@@ -780,6 +780,11 @@ The master supports the following configuration settings:
 
    -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
+-  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
+   :ref:`Prometheus <prometheus>` for details.
+
+   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
+
 -  ``logging``: Specifies configuration settings for the logging backend for trial logs.
 
    -  ``type: default``: Trial logs are shipped to the master and stored in Postgres. If nothing is
