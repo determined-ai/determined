@@ -1,11 +1,18 @@
 package agent
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -27,39 +34,28 @@ func (s slotEnabled) enabled() bool {
 }
 
 type slot struct {
-	device    device.Device
-	enabled   slotEnabled
-	container *cproto.Container
-}
-
-func (s *slot) summarize() model.SlotSummary {
-	return model.SlotSummary{
-		ID:        strconv.Itoa(int(s.device.ID)),
-		Device:    s.device,
-		Enabled:   s.enabled.enabled(),
-		Container: s.container,
-		Draining:  s.enabled.draining,
-	}
+	device      device.Device
+	enabled     slotEnabled
+	containerID *cproto.ID
 }
 
 // AgentState holds the scheduler state for an agent. The implementation of agent-related operations
 // (e.g., socket I/O) is deferred to the actor.
 type AgentState struct {
 	// Handler is agent actor reference.
-	Handler  *actor.Ref
-	Devices  map[device.Device]*cproto.ID
-	Label    string
-	enabled  bool
-	draining bool
+	Handler          *actor.Ref
+	Devices          map[device.Device]*cproto.ID
+	Label            string
+	resourcePoolName string
+	enabled          bool
+	draining         bool
+	uuid             uuid.UUID
 
-	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
-	// one container, we add one additional field to keep track of zero-slot containers.
-	// We need this field to know if the agent is idle.
-	ZeroSlotContainers    map[cproto.ID]bool
 	maxZeroSlotContainers int
 
-	slotStates map[device.ID]*slot
-	containers map[cproto.ID]*actor.Ref
+	slotStates          map[device.ID]*slot
+	containerAllocation map[cproto.ID]*actor.Ref
+	containerState      map[cproto.ID]*cproto.Container
 }
 
 // NewAgentState returns a new agent empty agent state backed by the handler.
@@ -68,16 +64,21 @@ func NewAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *AgentState {
 		Handler:               msg.Agent,
 		Label:                 msg.Label,
 		Devices:               make(map[device.Device]*cproto.ID),
-		ZeroSlotContainers:    make(map[cproto.ID]bool),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
 		slotStates:            make(map[device.ID]*slot),
-		containers:            make(map[cproto.ID]*actor.Ref),
+		containerAllocation:   make(map[cproto.ID]*actor.Ref),
+		containerState:        make(map[cproto.ID]*cproto.Container),
+		uuid:                  uuid.New(),
 	}
 }
 
 func (a *AgentState) string() string {
 	return a.Handler.Address().Local()
+}
+
+func (a *AgentState) agentID() AgentID {
+	return AgentID(a.string())
 }
 
 // NumSlots returns the total number of slots available.
@@ -114,7 +115,14 @@ func (a *AgentState) NumUsedSlots() (slots int) {
 
 // NumUsedZeroSlots returns the number of allocated zero-slot units.
 func (a *AgentState) NumUsedZeroSlots() int {
-	return len(a.ZeroSlotContainers)
+	result := 0
+	for _, container := range a.containerState {
+		if len(container.Devices) == 0 {
+			result++
+		}
+	}
+
+	return result
 }
 
 // NumZeroSlots returns the total number of zero-slot units.
@@ -144,13 +152,14 @@ func (a *AgentState) Idle() bool {
 	return a.NumUsedZeroSlots() == 0 && a.NumUsedSlots() == 0
 }
 
-// AllocateFreeDevices allocates devices.
-func (a *AgentState) AllocateFreeDevices(slots int, id cproto.ID) ([]device.Device, error) {
+// AllocateFreeDevices allocates container.
+func (a *AgentState) AllocateFreeDevices(slots int, cid cproto.ID) ([]device.Device, error) {
+	// TODO(ilia): Rename to AllocateContainer.
+	a.containerState[cid] = &cproto.Container{ID: cid}
 	if slots == 0 {
-		a.ZeroSlotContainers[id] = true
 		return nil, nil
 	}
-	cid := id
+
 	devices := make([]device.Device, 0, slots)
 	for d, dcid := range a.Devices {
 		if dcid == nil {
@@ -169,12 +178,14 @@ func (a *AgentState) AllocateFreeDevices(slots int, id cproto.ID) ([]device.Devi
 		a.Devices[d] = &cid
 	}
 
+	a.containerState[cid].Devices = devices
+
 	return devices, nil
 }
 
 // DeallocateContainer deallocates containers.
 func (a *AgentState) DeallocateContainer(id cproto.ID) {
-	delete(a.ZeroSlotContainers, id)
+	delete(a.containerState, id)
 	for d, cid := range a.Devices {
 		if cid != nil && *cid == id {
 			a.Devices[d] = nil
@@ -187,27 +198,13 @@ func (a *AgentState) DeepCopy() *AgentState {
 	copiedAgent := &AgentState{
 		Handler:               a.Handler,
 		Label:                 a.Label,
-		Devices:               make(map[device.Device]*cproto.ID),
-		ZeroSlotContainers:    make(map[cproto.ID]bool),
+		Devices:               maps.Clone(a.Devices),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
 		enabled:               a.enabled,
 		draining:              a.draining,
+		containerState:        maps.Clone(a.containerState),
 		// TODO(ilia): Deepcopy of `slotStates` may be necessary one day.
 		slotStates: a.slotStates,
-	}
-
-	for originalDevice, id := range a.Devices {
-		copiedDevice := device.Device{
-			ID:    originalDevice.ID,
-			Brand: originalDevice.Brand,
-			UUID:  originalDevice.UUID,
-			Type:  originalDevice.Type,
-		}
-		copiedAgent.Devices[copiedDevice] = id
-	}
-
-	for originalKey, originalValue := range a.ZeroSlotContainers {
-		copiedAgent.ZeroSlotContainers[originalKey] = originalValue
 	}
 
 	return copiedAgent
@@ -252,6 +249,10 @@ func (a *AgentState) agentStarted(ctx *actor.Context, agentStarted *aproto.Agent
 		a.slotStates[d.ID] = &slot{enabled: enabled, device: d}
 		a.updateSlotDeviceView(ctx, d.ID)
 	}
+
+	if err := a.persist(); err != nil {
+		ctx.Log().Warnf("agentStarted persist failure")
+	}
 }
 
 func (a *AgentState) containerStateChanged(ctx *actor.Context, msg aproto.ContainerStateChanged) {
@@ -262,10 +263,24 @@ func (a *AgentState) containerStateChanged(ctx *actor.Context, msg aproto.Contai
 			continue
 		}
 
-		s.container = &msg.Container
+		s.containerID = &msg.Container.ID
+
 		if msg.Container.State == cproto.Terminated {
-			s.container = nil
+			s.containerID = nil
 		}
+	}
+
+	a.containerState[msg.Container.ID] = &msg.Container
+	if msg.Container.State == cproto.Terminated {
+		delete(a.containerState, msg.Container.ID)
+	}
+
+	if err := a.persist(); err != nil {
+		ctx.Log().WithError(err).Warnf("containerStateChanged persist failure")
+	}
+
+	if err := updateContainerState(&msg.Container); err != nil {
+		ctx.Log().WithError(err).Warnf("containerStateChanged failed to update container state")
 	}
 }
 
@@ -280,33 +295,59 @@ func (a *AgentState) startContainer(ctx *actor.Context, msg sproto.StartTaskCont
 		if !s.enabled.enabled() {
 			return errors.New("container allocated but slot is not enabled")
 		}
-		if s.container != nil {
+		if s.containerID != nil {
 			return errors.New("container already allocated to slot")
 		}
 
-		s.container = &msg.StartContainer.Container
+		s.containerID = &msg.StartContainer.Container.ID
+		a.containerState[msg.StartContainer.Container.ID] = &msg.StartContainer.Container
 
 		return nil
 	}
 
 	for _, d := range msg.StartContainer.Container.Devices {
 		if err := inner(d.ID); err != nil {
-			return errors.Wrapf(err, "bad startedContainer on device: %d (%s)", d.ID, a.string())
+			return errors.Wrapf(err, "bad startContainer on device: %d (%s)", d.ID, a.string())
 		}
 	}
 
-	a.containers[msg.Container.ID] = msg.TaskActor
+	a.containerAllocation[msg.Container.ID] = msg.TaskActor
+
+	if err := a.persist(); err != nil {
+		ctx.Log().WithError(err).Warnf("startContainer persist failure")
+	}
+
+	if err := updateContainerState(&msg.StartContainer.Container); err != nil {
+		ctx.Log().WithError(err).Warnf("startContainer failed to update container state")
+	}
 
 	return nil
 }
 
 func (a *AgentState) getSlotsSummary(ctx *actor.Context) model.SlotsSummary {
 	summary := make(model.SlotsSummary, len(a.slotStates))
-	for deviceID, slotState := range a.slotStates {
-		summary[fmt.Sprintf("%s/slots/%d", ctx.Self().Address(), deviceID)] = slotState.summarize()
+	for deviceID := range a.slotStates {
+		summary[fmt.Sprintf("%s/slots/%d", ctx.Self().Address(), deviceID)] = a.getSlotSummary(deviceID)
 	}
 
 	return summary
+}
+
+func (a *AgentState) getSlotSummary(deviceID device.ID) model.SlotSummary {
+	s := a.slotStates[deviceID]
+	cid := s.containerID
+	var container *cproto.Container
+	if cid != nil {
+		container = a.containerState[*cid]
+	}
+
+	return model.SlotSummary{
+		ID:        strconv.Itoa(int(s.device.ID)),
+		Device:    s.device,
+		Enabled:   s.enabled.enabled(),
+		Container: container,
+		Draining:  s.enabled.draining,
+	}
 }
 
 func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID) {
@@ -320,12 +361,7 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 	if s.enabled.enabled() && !s.enabled.deviceAdded {
 		s.enabled.deviceAdded = true
 
-		var containerID *cproto.ID
-		if s.container != nil {
-			containerID = &s.container.ID
-		}
-
-		a.addDevice(ctx, s.device, containerID)
+		a.addDevice(ctx, s.device, s.containerID)
 	} else if !s.enabled.enabled() {
 		if !s.enabled.draining && s.enabled.deviceAdded {
 			s.enabled.deviceAdded = false
@@ -334,8 +370,8 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 
 		// On `PostStop`, draining will be already set to false, and we'll kill the container
 		// whether we have the device or not.
-		if !s.enabled.draining && s.container != nil {
-			ctx.Self().System().TellAt(s.container.Parent, task.Kill)
+		if !s.enabled.draining && s.containerID != nil {
+			ctx.Tell(a.containerAllocation[*s.containerID], task.Kill)
 		}
 	}
 }
@@ -350,7 +386,7 @@ func (a *AgentState) patchSlotStateInner(
 	}
 	a.updateSlotDeviceView(ctx, slotState.device.ID)
 
-	return slotState.summarize()
+	return a.getSlotSummary(slotState.device.ID)
 }
 
 func (a *AgentState) patchAllSlotsState(
@@ -377,4 +413,276 @@ func (a *AgentState) patchSlotState(
 			fmt.Sprintf("bad updateSlotDeviceView on device: %d (%s): not found", msg.ID, a.string()))
 	}
 	return a.patchSlotStateInner(ctx, msg, s), nil
+}
+
+func (a *AgentState) snapshot() *AgentSnapshot {
+	slotData := make([]SlotData, 0, len(a.slotStates))
+	for _, slotState := range a.slotStates {
+		slotData = append(slotData, SlotData{
+			Device:      slotState.device,
+			UserEnabled: slotState.enabled.userEnabled,
+			ContainerID: slotState.containerID,
+		})
+	}
+
+	containerIds := maps.Keys(a.containerState)
+
+	s := AgentSnapshot{
+		AgentID:          a.agentID(),
+		UUID:             a.uuid.String(),
+		ResourcePoolName: a.resourcePoolName,
+		Label:            a.Label,
+		// TODO(ilia): we need to disambiguate user setting (which needs to be saved)
+		// vs current state.
+		UserEnabled:           a.enabled,
+		UserDraining:          a.draining,
+		MaxZeroSlotContainers: a.maxZeroSlotContainers,
+		Slots:                 slotData,
+		Containers:            containerIds,
+	}
+
+	return &s
+}
+
+func (a *AgentState) persist() error {
+	snapshot := a.snapshot()
+	_, err := db.Bun().NewInsert().Model(snapshot).
+		On("CONFLICT (uuid) DO UPDATE").
+		On("CONFLICT (agent_id) DO UPDATE").
+		Exec(context.TODO())
+	return err
+}
+
+func (a *AgentState) restore() error {
+	snapshot := AgentSnapshot{}
+	err := db.Bun().NewSelect().Model(&snapshot).
+		Where("agent_id = ?", a.Handler.Address().Local()).
+		Scan(context.TODO())
+	if err != nil {
+		return err
+	}
+	log.Debugf("restored agent state snapshot: %v", snapshot)
+
+	return nil
+}
+
+func (a *AgentState) delete() error {
+	_, err := db.Bun().NewDelete().Model((*AgentSnapshot)(nil)).
+		Where("agent_id = ?", a.Handler.Address().Local()).
+		Exec(context.TODO())
+	return err
+}
+
+func (a *AgentState) clearUnlessRecovered(
+	recovered map[cproto.ID]aproto.ContainerReattachAck) error {
+	updated := false
+	for d := range a.Devices {
+		if cID := a.Devices[d]; cID != nil {
+			_, ok := recovered[*cID]
+			if !ok {
+				a.Devices[d] = nil
+				a.slotStates[d.ID].containerID = nil
+				updated = true
+			}
+		}
+	}
+
+	for _, slot := range a.slotStates {
+		if slot.containerID != nil {
+			_, ok := recovered[*slot.containerID]
+			if !ok {
+				slot.containerID = nil
+				updated = true
+			}
+		}
+	}
+
+	for cid := range a.containerState {
+		_, ok := recovered[cid]
+		if !ok {
+			delete(a.containerState, cid)
+			updated = true
+		}
+	}
+
+	for cid := range a.containerAllocation {
+		_, ok := recovered[cid]
+		if !ok {
+			delete(a.containerAllocation, cid)
+			updated = true
+		}
+	}
+
+	if updated {
+		return a.persist()
+	}
+
+	return nil
+}
+
+func listResourcePoolsWithReattachEnabled() []string {
+	rpConfigList := config.GetMasterConfig().ResourcePools
+	result := make([]string, 0, len(rpConfigList))
+	for _, rpConfig := range rpConfigList {
+		if rpConfig.AgentReattachEnabled {
+			result = append(result, rpConfig.PoolName)
+		}
+	}
+
+	return result
+}
+
+// retrieveAgentStates reconstructs AgentStates from the database for all resource pools that
+// have agent_container_reattachment enabled.
+func retrieveAgentStates() (map[AgentID]AgentState, error) {
+	rpNames := listResourcePoolsWithReattachEnabled()
+
+	if len(rpNames) == 0 {
+		return map[AgentID]AgentState{}, nil
+	}
+
+	snapshots := []AgentSnapshot{}
+	err := db.Bun().NewSelect().Model(&snapshots).
+		Where("resource_pool_name IN (?)", bun.In(rpNames)).
+		Scan(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[AgentID]AgentState, len(snapshots))
+
+	for _, s := range snapshots {
+		state, err := newAgentStateFromSnapshot(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to recreate agent state %s: %w", s.AgentID, err)
+		}
+
+		result[s.AgentID] = *state
+	}
+
+	return result, nil
+}
+
+func newAgentStateFromSnapshot(as AgentSnapshot) (*AgentState, error) {
+	parsedUUID, err := uuid.Parse(as.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	slotStates := make(map[device.ID]*slot)
+	devices := make(map[device.Device]*cproto.ID)
+
+	for _, sd := range as.Slots {
+		slotStates[sd.Device.ID] = &slot{
+			device:      sd.Device,
+			containerID: sd.ContainerID,
+			enabled: slotEnabled{
+				deviceAdded:  true,
+				agentEnabled: as.UserEnabled,
+				userEnabled:  as.UserEnabled,
+				draining:     as.UserDraining,
+			},
+		}
+		if sd.ContainerID != nil {
+			devices[sd.Device] = sd.ContainerID
+		} else {
+			devices[sd.Device] = nil
+		}
+	}
+
+	containerState := make(map[cproto.ID]*cproto.Container)
+
+	if len(as.Containers) > 0 {
+		containerSnapshots := make([]ContainerSnapshot, 0, len(as.Containers))
+		err := db.Bun().NewSelect().Model(&containerSnapshots).
+			Where("container_id IN (?)", bun.In(as.Containers)).
+			Scan(context.TODO())
+		if err != nil {
+			return nil, err
+		}
+
+		for _, containerSnapshot := range containerSnapshots {
+			container := containerSnapshot.ToContainer()
+			containerState[container.ID] = &container
+		}
+	}
+
+	result := AgentState{
+		maxZeroSlotContainers: as.MaxZeroSlotContainers,
+		resourcePoolName:      as.ResourcePoolName,
+		Label:                 as.Label,
+		uuid:                  parsedUUID,
+		enabled:               as.UserEnabled,
+		draining:              as.UserDraining,
+		slotStates:            slotStates,
+		Devices:               devices,
+		containerAllocation:   make(map[cproto.ID]*actor.Ref),
+		containerState:        containerState,
+	}
+
+	return &result, nil
+}
+
+func (a *AgentState) restoreContainersField() error {
+	containerIDs := maps.Keys(a.containerState)
+
+	c2a, err := loadContainersToAllocationIds(containerIDs)
+	if err != nil {
+		return err
+	}
+
+	containers := make(map[cproto.ID]*actor.Ref)
+	for contID, alloc := range c2a {
+		ref := task.GetAllocation(alloc)
+		if ref != nil {
+			containers[contID] = ref
+		}
+	}
+	log.WithField("agent-id", a.string()).Debugf("restored containers: %d", len(containers))
+
+	maps.Copy(a.containerAllocation, containers)
+
+	return nil
+}
+
+func clearAgentStates(agentIds []AgentID) error {
+	_, err := db.Bun().NewDelete().Where("agent_id in (?)", agentIds).Exec(context.TODO())
+
+	return err
+}
+
+func updateContainerState(c *cproto.Container) error {
+	snapshot := NewContainerSnapshot(c)
+	_, err := db.Bun().NewUpdate().Model(&snapshot).
+		Where("container_id = ?", snapshot.ID).
+		Column("state", "devices").
+		Exec(context.TODO())
+
+	return err
+}
+
+func loadContainersToAllocationIds(
+	containerIDs []cproto.ID) (map[cproto.ID]model.AllocationID, error) {
+	cs := []ContainerSnapshot{}
+	result := []map[string]interface{}{}
+	rr := map[cproto.ID]model.AllocationID{}
+
+	if len(containerIDs) == 0 {
+		return rr, nil
+	}
+
+	err := db.Bun().NewSelect().Model(&cs).
+		Join("JOIN allocation_resources al_res ON al_res.resource_id = rmac.resource_id").
+		Where("container_id IN (?)", bun.In(containerIDs)).
+		Column("container_id", "allocation_id").
+		Scan(context.TODO(), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, row := range result {
+		rr[cproto.ID(row["container_id"].(string))] = model.AllocationID(row["allocation_id"].(string))
+	}
+
+	return rr, nil
 }

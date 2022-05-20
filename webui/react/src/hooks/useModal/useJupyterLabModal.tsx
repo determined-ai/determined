@@ -10,8 +10,10 @@ import useJupyterLab from 'hooks/useJupyterLab';
 import usePrevious from 'hooks/usePrevious';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
+import { JupyterLabConfig, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
+
+import { RawJson } from '../../shared/types';
 
 import css from './useJupyterLabModal.module.scss';
 import useModal, { ModalHooks } from './useModal';
@@ -94,9 +96,7 @@ const useJupyterLabModal = (): ModalHooks => {
   }, [ fields, previewJupyterLab ]);
 
   const handleSecondary = useCallback(() => {
-    if (showFullConfig) {
-      setButtonDisabled(false);
-    }
+    if (showFullConfig) setButtonDisabled(false);
     setShowFullConfig(show => !show);
   }, [ showFullConfig ]);
 
@@ -115,6 +115,7 @@ const useJupyterLabModal = (): ModalHooks => {
   }, [ config, fields, launchJupyterLab, showFullConfig, modalClose ]);
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
+
   const formContent = useMemo(() => showFullConfig ? (
     <JupyterLabFullConfig
       config={config}
@@ -126,32 +127,28 @@ const useJupyterLabModal = (): ModalHooks => {
   ), [ config, dispatch, fields, handleConfigChange, showFullConfig ]);
 
   const content = useMemo(() => (
-    <div className={css.modalContent}>
+    <>
       {formContent}
       <div className={css.buttons}>
-        <Button
-          onClick={handleSecondary}>
+        <Button onClick={handleSecondary}>
           {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
         </Button>
         <Button
           disabled={buttonDisabled}
           type="primary"
-          onClick={handleCreateEnvironment}>Launch
+          onClick={handleCreateEnvironment}>
+          Launch
         </Button>
       </div>
-    </div>
+    </>
   ), [ formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig ]);
 
-  const modalProps: ModalFuncProps = useMemo(
-    () => (
-      {
-        className: css.noFooter,
-        content: content,
-        title: 'Launch JupyterLab',
-        width: 540,
-      })
-    , [ content ],
-  );
+  const modalProps: ModalFuncProps = useMemo(() => ({
+    className: css.noFooter,
+    content: content,
+    title: 'Launch JupyterLab',
+    width: 540,
+  }), [ content ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

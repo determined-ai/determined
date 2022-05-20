@@ -2,12 +2,12 @@
   .title {
     display: flex;
     justify-content: center;
-    margin-bottom: var(--theme-sizes-layout-tiny);
+    margin-bottom: 4px;
   }
   .gradient {
     border-radius: 3px;
-    height: var(--theme-sizes-layout-huge);
-    margin-bottom: var(--theme-sizes-layout-tiny);
+    height: 20px;
+    margin-bottom: 4px;
   }
   .labels {
     display: flex;

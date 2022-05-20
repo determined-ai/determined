@@ -1,5 +1,5 @@
 name: core-api-stage-0
-entrypoint: ./0_start.py
+entrypoint: python3 0_start.py
 
 # Use the single-searcher to run just one instance of the training script
 searcher:

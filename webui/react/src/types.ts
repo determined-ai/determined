@@ -1,19 +1,10 @@
 import * as Api from 'services/api-ts-sdk';
 
+import { Primitive, RawJson, RecordKey } from './shared/types';
+
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
 }
-
-export type RecordKey = string | number | symbol;
-export type UnknownRecord = Record<RecordKey, unknown>;
-export type Primitive = boolean | number | string;
-export type NullOrUndefined<T = undefined> = T | null | undefined;
-export type Point = { x: number; y: number };
-export type Range<T = Primitive> = [ T, T ];
-export type Eventually<T> = T | Promise<T>;
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export type RawJson = Record<string, any>;
 
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
@@ -81,6 +72,8 @@ export enum ResourceState { // This is almost CommandState
   Starting = 'STARTING',
   Running = 'RUNNING',
   Terminated = 'TERMINATED',
+  Warm = 'WARM',
+  Potential = 'POTENTIAL'
 }
 
 // High level Slot state
@@ -97,6 +90,7 @@ export const resourceStates: ResourceState[] = [
   ResourceState.Pulling,
   ResourceState.Starting,
   ResourceState.Running,
+  ResourceState.Warm,
   ResourceState.Terminated,
 ];
 
@@ -139,11 +133,6 @@ export interface EndTimes {
 
 export interface StartEndTimes extends EndTimes {
   startTime: string;
-}
-
-export interface Pagination {
-  limit: number;
-  offset: number;
 }
 
 /* Command */
@@ -287,6 +276,7 @@ export interface ExperimentConfig {
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];
+  maxRestarts: number;
   name: string;
   profiling?: {
     enabled: boolean;
@@ -444,6 +434,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
+  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }

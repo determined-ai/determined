@@ -7,7 +7,7 @@
 html,
 body,
 #root {
-  font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+  font-family: var(--font-family);
   font-size: 16px;
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
@@ -24,14 +24,14 @@ h6 { font-size: 18px; }
 }
 code {
   background-color: var(--theme-colors-monochrome-13);
-  border-radius: var(--theme-sizes-border-radius);
-  font-family: 'Source Code Pro', monospace;
-  padding: 0 var(--theme-sizes-layout-tiny);
+  border-radius: var(--theme-border-radius);
+  font-family: var(--font-family-code);
+  padding: 0 4px;
 }
 code.block {
   display: block;
-  margin: var(--theme-sizes-layout-medium) 0;
+  margin: 8px 0;
   overflow-x: scroll;
-  padding: var(--theme-sizes-layout-medium);
+  padding: 8px;
   white-space: pre;
 }

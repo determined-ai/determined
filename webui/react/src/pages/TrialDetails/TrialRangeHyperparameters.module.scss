@@ -1,10 +1,10 @@
 .base {
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
 
   .container {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--theme-sizes-layout-large);
+    gap: 12px;
     justify-content: center;
   }
   .hpContainer {
@@ -21,7 +21,7 @@
     display: flex;
     height: 300px;
     justify-content: center;
-    margin-top: var(--theme-sizes-layout-tiny);
+    margin-top: 4px;
   }
   .valuesTrack {
     display: flex;
@@ -48,7 +48,7 @@
     width: 5px;
   }
   .blueTrack {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
   }
   .grayTrack {
     background-color: lightgray;
@@ -57,7 +57,7 @@
     justify-content: center;
   }
   .trackOption {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
     border-radius: 100%;
     height: 10px;
     left: -50%;
@@ -65,7 +65,7 @@
     width: 10px;
   }
   .tick {
-    background-color: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
     height: 2px;
     left: -100%;
     position: relative;
@@ -90,7 +90,7 @@
     background-color: white;
     border-radius: 2px;
     box-shadow: 3px 2px 5px lightgray;
-    padding: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium);
+    padding: 2px 8px;
 
     &::after {
       background-color: white;

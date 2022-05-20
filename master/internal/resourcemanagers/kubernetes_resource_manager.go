@@ -617,7 +617,6 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 		newSpec.Labels = make(map[string]string)
 	}
 	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
-	fmt.Println(newSpec.Labels["determined-queue-position"])
 	spec.Environment.SetPodSpec(newSpec)
 }
 
@@ -626,4 +625,8 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 	ctx.Tell(p.podsActor, kubernetes.KillTaskPod{
 		PodID: p.containerID,
 	})
+}
+
+func (p k8sPodResources) Persist() error {
+	return nil
 }

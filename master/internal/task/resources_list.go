@@ -53,6 +53,19 @@ func WipeResourcesState() error {
 	return err
 }
 
+// CleanupResourcesState deletes resources for all closed allocations.
+func CleanupResourcesState() error {
+	// Potentially this may become expensive, however this is a subquery,
+	// not materialized in master, and this function only runs once on master startup.
+	closedAllocations := db.Bun().NewSelect().Model((*model.Allocation)(nil)).
+		Where("end_time IS NOT NULL").
+		Column("allocation_id")
+
+	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).
+		Where("allocation_id IN (?)", closedAllocations).Exec(context.TODO())
+	return err
+}
+
 // Persist saves the data to the database.
 func (r *ResourcesWithState) Persist() error {
 	_, err := db.Bun().NewInsert().Model(r).

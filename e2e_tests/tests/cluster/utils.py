@@ -63,6 +63,10 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
     return next((d for d in command_data if d["id"] == command_id), {})
 
 
+def command_succeeded(command_id: str) -> bool:
+    return "success" in get_command_info(command_id)["exitStatus"]
+
+
 def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
     for _ in range(ticks):
         info = get_command_info(command_id)

@@ -1,6 +1,5 @@
 import enum
 import logging
-import math
 from typing import Any, Dict, List, Optional, Set
 
 import determined as det
@@ -98,20 +97,11 @@ class TrainContext:
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
         non_serializable_metrics = set()
-        # NaN and bytes are not JSON serializable.  In the case of trial implementation bugs or
-        # numerical instability issues, validation metric functions may return None or NaN values.
-        # For now, immediately fail any trial that encounters such a None metric. For NaN metrics,
-        # if it's the target of the searcher, we set it to +/- max_float depending on if the
-        # searcher is optimizing for the max or min. NaN metrics which are not the target of the
-        # searcher are dropped.
-        # TODO (DET-2495): Do not replace NaN metric values.
-        for metric_name, metric_value in metrics.items():
-            metric_is_none = metric_value is None
-            metric_is_nan = tensorboard.metric_writers.util.is_numerical_scalar(
-                metric_value
-            ) and math.isnan(metric_value)
 
-            if metric_is_none or metric_is_nan:
+        # In the case of trial implementation bugs, validation metric functions may return None.
+        # Immediately fail any trial that encounters a None metric.
+        for metric_name, metric_value in metrics.items():
+            if metric_value is None:
                 raise RuntimeError(
                     "Validation metric '{}' returned "
                     "an invalid scalar value: {}".format(metric_name, metric_value)

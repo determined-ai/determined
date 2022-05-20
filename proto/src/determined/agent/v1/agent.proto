@@ -4,12 +4,16 @@ package determined.agent.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/agentv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
 // Agent is a pool of resources where containers are run.
 message Agent {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
   // The unique id of the agent.
   string id = 1;
   // The time when the agent registered with the master.

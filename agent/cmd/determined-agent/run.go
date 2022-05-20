@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/determined-ai/determined/agent/internal"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -149,6 +151,11 @@ func newRunCmd() *cobra.Command {
 		"TCP port for the Fluent Bit daemon to listen on")
 	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
 		"Name for the Fluent Bit container")
+
+	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",
+		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")
+	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
+		int(aproto.AgentReconnectBackoff/time.Second), "Time between agent reconnect attempts")
 
 	return cmd
 }

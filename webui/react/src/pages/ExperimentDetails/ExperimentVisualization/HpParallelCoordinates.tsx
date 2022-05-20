@@ -8,22 +8,25 @@ import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import useTheme from 'hooks/useTheme';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { clone, flattenObject } from 'shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import { clone, flattenObject } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
 
+import { Primitive, Range } from '../../../shared/types';
+import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
@@ -66,6 +69,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
+
+  const { theme } = useTheme();
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -116,8 +121,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [ chartData ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData?.metricRange, smallerIsBetter ]);
+    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData?.metricRange, smallerIsBetter, theme ]);
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(() => ({
     hooks: { onFilterChange: handleFilterChange },

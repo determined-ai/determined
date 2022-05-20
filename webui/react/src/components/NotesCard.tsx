@@ -3,7 +3,9 @@ import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorType } from '../shared/utils/error';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
@@ -68,7 +70,7 @@ const NotesCard: React.FC<Props> = ({ disabled = false, notes, onSave, style }: 
           </Tooltip>
         )
       )}
-      headStyle={{ paddingInline: 'var(--theme-sizes-layout-big)' }}
+      headStyle={{ paddingInline: '16px' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
       title="Notes">
       <Spinner spinning={isLoading}>

@@ -1,14 +1,19 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/pkg/errors"
@@ -40,6 +45,7 @@ type trial struct {
 	jobSubmissionTime time.Time
 	idSet             bool
 	experimentID      int
+	restored          bool
 
 	// System dependencies.
 	rm         *actor.Ref
@@ -85,6 +91,7 @@ func newTrial(
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
 	taskSpec *tasks.TaskSpec,
+	restored bool,
 ) *trial {
 	return &trial{
 		taskID:            taskID,
@@ -106,6 +113,7 @@ func newTrial(
 			"task-id":   taskID,
 			"task-type": model.TaskTypeTrial,
 		}),
+		restored: restored,
 	}
 }
 
@@ -122,6 +130,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			})
 		}
 		ctx.AddLabels(t.logCtx)
+
 		return t.maybeAllocateTask(ctx)
 	case actor.PostStop:
 		if !t.idSet {
@@ -206,7 +215,7 @@ func (t *trial) recover() error {
 	if err != nil {
 		return errors.Wrap(err, "restoring old trial state")
 	}
-	t.runID = runID + 1
+	t.runID = runID
 	t.restarts = restarts
 	return nil
 }
@@ -230,14 +239,49 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	}
 
 	ctx.Log().Info("decided to allocate trial")
-	t.runID++
 	t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-run-id": t.runID})
 	ctx.AddLabel("trial-run-id", t.runID)
 	if err := t.addTask(); err != nil {
 		return err
 	}
 
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, sproto.AllocateRequest{
+	restoredAllocation, err := t.maybeRestoreAllocation(ctx)
+	if err != nil {
+		ctx.Log().WithError(err).Warn("failed to restore trial allocation")
+	} else if restoredAllocation != nil {
+		ar := sproto.AllocateRequest{
+			AllocationID:      restoredAllocation.AllocationID,
+			TaskID:            t.taskID,
+			JobID:             t.jobID,
+			JobSubmissionTime: t.jobSubmissionTime,
+			IsUserVisible:     true,
+			Name:              name,
+			TaskActor:         ctx.Self(),
+			Group:             ctx.Self().Parent(),
+			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
+			Label:             t.config.Resources().AgentLabel(),
+			ResourcePool:      t.config.Resources().ResourcePool(),
+			FittingRequirements: sproto.FittingRequirements{
+				SingleAgent: false,
+			},
+
+			Preemptible: true,
+			Restore:     true,
+		}
+		ctx.Log().
+			WithField("allocation-id", ar.AllocationID).
+			Infof("starting restored trial allocation")
+		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, t.taskLogger))
+		return nil
+	}
+
+	if err := t.addTask(); err != nil {
+		return err
+	}
+
+	t.runID++
+
+	ar := sproto.AllocateRequest{
 		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:            t.taskID,
 		JobID:             t.jobID,
@@ -255,7 +299,16 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		},
 
 		Preemptible: true,
-	}, t.db, t.rm, t.taskLogger))
+	}
+
+	ctx.Log().
+		WithField("allocation-id", ar.AllocationID).
+		Debugf("starting new trial allocation")
+
+	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, t.taskLogger))
+	ctx.Ask(t.allocation, actor.Ping{}).Get()
+
 	return nil
 }
 
@@ -319,6 +372,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
 		}
+
 		t.id = modelTrial.ID
 		t.idSet = true
 		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
@@ -365,6 +419,8 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		ctx.Log().WithError(err).Error("trial allocation failed")
 	}
 	t.allocation = nil
+
+	prom.DisassociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
 
 	// Decide if this is permanent.
 	switch {
@@ -520,4 +576,55 @@ func mustParseTrialRunID(child *actor.Ref) int {
 		panic(errors.Wrapf(err, "could not parse run id %s", idStr))
 	}
 	return id
+}
+
+func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, error) {
+	if !t.restored || !config.IsReattachEnabled() {
+		return nil, nil
+	}
+
+	// Do we have an open allocation?
+	var allocations []model.Allocation
+	err := db.Bun().NewSelect().Model(&allocations).
+		Where("task_id = ?", t.taskID).
+		Where("start_time IS NOT NULL").
+		Where("end_time IS NULL").
+		Scan(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+
+	openAllocs := len(allocations)
+	switch {
+	case openAllocs == 0:
+		return nil, nil
+	case openAllocs == 1:
+		allocation := &allocations[0]
+		if !config.IsReattachEnabledForRP(allocation.ResourcePool) {
+			return nil, nil
+		}
+
+		return allocation, nil
+	case openAllocs > 1:
+		const maxAllocsToLog int = 3
+		allocIDs := make([]string, 0, maxAllocsToLog)
+		for _, alloc := range allocations[0:mathx.Min(len(allocations), maxAllocsToLog)] {
+			allocIDs = append(allocIDs, alloc.AllocationID.String())
+		}
+		return nil, errors.New(
+			fmt.Sprintf(
+				"discovered %d open allocations on restore: %s",
+				len(allocations),
+				strings.Join(allocIDs, " "),
+			),
+		)
+	default:
+		return nil, errors.New(
+			fmt.Sprintf(
+				"discovered %d open allocations on restore",
+				len(allocations),
+			),
+		)
+	}
 }

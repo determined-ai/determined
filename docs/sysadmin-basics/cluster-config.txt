@@ -377,7 +377,7 @@ The master supports the following configuration settings:
 
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
-         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
+         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -390,6 +390,13 @@ The master supports the following configuration settings:
 
    -  ``max_aux_containers_per_agent``: The maximum number of auxiliary or system containers that
       can be scheduled on each agent in this pool.
+
+   -  ``agent_reconnect_wait``: Maximum time the master should wait for a disconnected agent before
+      considering it dead.
+
+   -  ``agent_reattach_enabled`` (experimental): Whether master & agent try to recover running
+      containers after a restart. On master or agent process restart, the agent must reconnect
+      within ``agent_reconnect_wait`` period.
 
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
       overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
@@ -736,10 +743,24 @@ The master supports the following configuration settings:
 -  ``db``: Specifies the configuration of the database.
 
    -  ``user``: The database user to use when logging in the database. (*Required*)
+
    -  ``password``: The password to use when logging in the database. (*Required*)
+
    -  ``host``: The database host to use. (*Required*)
+
    -  ``port``: The database port to use. (*Required*)
+
    -  ``name``: The database name to use. (*Required*)
+
+   -  ``ssl_mode``: The SSL mode to use. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS>`__ for
+      the list of possible values and their meanings. Defaults to ``disable``. In order to ensure
+      that SSL is used, this should be set to ``require``, ``verify-ca``, or ``verify-full``.
+
+   -  ``ssl_root_cert``: The location of the root certificate file to use for verifying the server's
+      certificate. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBQ-SSL-CERTIFICATES>`__ for more
+      information about certificate verification. Defaults to ``~/.postgresql/root.crt``.
 
 -  ``security``: Specifies security-related configuration settings.
 
@@ -888,3 +909,20 @@ The master supports the following configuration settings:
       -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
          value of the ``master_host`` option is an IP address or is not contained in the
          certificate.
+
+-  ``fluent``: fluentd settings.
+      -  ``image``: Docker image to use for the managed Fluent Bit daemon. Defaults to
+         ``fluent/fluent-bit:1.9.3``.
+      -  ``port``: TCP port for the Fluent Bit daemon to listen on. Defaults to 24224. When running
+         multiple agents on the same node, should be unique.
+      -  ``container_name``: Name for the Fluent Bit container. Defaults to ``determined-fluent``.
+         When running multiple agents on the same node, should be unique.
+
+-  ``agent_reconnect_attempts``: Maximum number of times agent will attempt to reconnect to master
+   on connection failure. Defaults to 5.
+
+-  ``agent_reconnect_backoff``: Time interval between reconnection attempts, in seconds. Defaults to
+   5 seconds.
+
+-  ``container_auto_remove_disabled`` (debug): Whether to disable setting ``AutoRemove`` flag on
+   task containers. Defaults to false.

@@ -65,6 +65,17 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 	}, err
 }
 
+func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
+	u, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return err
+	}
+	if !u.Admin {
+		return grpcutil.ErrPermissionDenied
+	}
+	return nil
+}
+
 func (a *apiServer) GetUsers(
 	context.Context, *apiv1.GetUsersRequest) (*apiv1.GetUsersResponse, error) {
 	users, err := a.m.db.UserList()
@@ -89,15 +100,11 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
-
-	if err != nil {
+	if err := userShouldBeAdmin(ctx, a); err != nil {
 		return nil, err
 	}
-	if !curUser.Admin {
-		return nil, grpcutil.ErrPermissionDenied
-	}
-	if err = grpcutil.ValidateRequest(
+
+	if err := grpcutil.ValidateRequest(
 		func() (bool, string) { return req.User != nil, "no user specified" },
 		func() (bool, string) { return req.User.Username != "", "no username specified" },
 	); err != nil {
@@ -108,7 +115,7 @@ func (a *apiServer) PostUser(
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
-	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+	if err := user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
 	var agentUserGroup *model.AgentUserGroup
@@ -119,13 +126,14 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	switch err = a.m.db.AddUser(user, agentUserGroup); {
+	userID, err := a.m.db.AddUser(user, agentUserGroup)
+	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, status.Error(codes.InvalidArgument, "user already exists")
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(a.m.db, model.UserID(req.User.Id))
+	fullUser, err := getUser(a.m.db, userID)
 	return &apiv1.PostUserResponse{User: fullUser}, err
 }
 

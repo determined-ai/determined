@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import { hex2hsl, hsl2str } from 'utils/color';
-import md5 from 'utils/md5';
+import { hex2hsl, hsl2str } from 'shared/utils/color';
+import md5 from 'shared/utils/md5';
 import { getDisplayName } from 'utils/user';
 
 import css from './Avatar.module.scss';

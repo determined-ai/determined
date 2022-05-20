@@ -81,7 +81,6 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 		res.ShmSize = int64(*shm)
 	}
 
-	res.UseFluentLogging = true
 	res.TaskType = s.TaskType
 	return res
 }

@@ -25,13 +25,15 @@ import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import { validateDetApiEnum } from 'services/utils';
+import { isBoolean, isEqual } from 'shared/utils/data';
+import { capitalize } from 'shared/utils/string';
 import { ArchiveFilter, ModelItem } from 'types';
-import { isBoolean, isEqual } from 'utils/data';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { capitalize } from 'utils/string';
 import { getDisplayName } from 'utils/user';
+
+import { ErrorType } from '../shared/utils/error';
+import { validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, { Settings } from './ModelRegistry.settings';

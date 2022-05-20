@@ -4,7 +4,8 @@ import * as io from 'io-ts';
 import {
   CheckpointStorageType, ExperimentSearcherName, HyperparameterType, LogLevel, RunState,
 } from 'types';
-import { DetError, ErrorLevel, ErrorType } from 'utils/error';
+
+import { DetError, ErrorLevel, ErrorType } from './shared/utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -149,6 +150,7 @@ export const ioExperimentConfig = io.type({
   description: optional(io.string),
   hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
+  max_restarts: io.number,
   name: io.string,
   profiling: optional(io.type({ enabled: io.boolean })),
   resources: ioExpResources,

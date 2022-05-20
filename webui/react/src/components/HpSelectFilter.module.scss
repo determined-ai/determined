@@ -8,9 +8,9 @@
     justify-content: space-between;
   }
   .option > *:first-child > span {
-    margin-left: var(--theme-sizes-layout-big);
+    margin-left: 16px;
   }
   .option > *:nth-child(2) {
-    padding-left: var(--theme-sizes-layout-medium);
+    padding-left: 8px;
   }
 }

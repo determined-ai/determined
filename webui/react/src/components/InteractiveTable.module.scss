@@ -11,7 +11,7 @@
   }
   .dropTarget {
     // for debugging
-    // background: var(--theme-colors-action-normal);
+    // background-color: var(--theme-status-active);
     border-radius: 4px;
     bottom: 0;
     height: 250px;
@@ -25,7 +25,7 @@
     opacity: 0.2;
   }
   .dropTargetIndicator {
-    background: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
     border-radius: 4px;
     bottom: 0;
     margin: 0;
@@ -62,7 +62,7 @@
   z-index: 3;
 
   &:active {
-    background: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
 
     &::before {
       content: '';
@@ -75,18 +75,16 @@
     }
   }
   &:hover {
-    background: var(--theme-colors-action-normal);
+    background-color: var(--theme-status-active);
   }
 }
 .cell {
-  background: #fff;
-
   .rightClickableCellWrapper {
     display: inline;
   }
 }
 .headerFilterOn {
   :global(.ant-table-filter-column .ant-table-filter-trigger) {
-    color: var(--theme-colors-action-normal);
+    color: var(--theme-status-active);
   }
 }

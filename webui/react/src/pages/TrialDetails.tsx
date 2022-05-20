@@ -16,12 +16,14 @@ import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
-import { ApiState } from 'services/types';
-import { isAborted } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
 import { ExperimentBase, TrialDetails } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
+
+import { ApiState } from '../shared/types';
+import { ErrorType } from '../shared/utils/error';
+import { isAborted } from '../shared/utils/service';
 
 const { TabPane } = Tabs;
 

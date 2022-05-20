@@ -3,10 +3,10 @@ import React, { useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Section from 'components/Section';
+import { clamp } from 'shared/utils/number';
 import {
   ExperimentBase, HyperparameterType, TrialDetails,
 } from 'types';
-import { clamp } from 'utils/number';
 
 import css from './TrialRangeHyperparameters.module.scss';
 

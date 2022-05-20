@@ -4,7 +4,7 @@ import React from 'react';
 
 import {
   DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_SECOND, DURATION_YEAR,
-} from 'utils/datetime';
+} from 'shared/utils/datetime';
 
 import TimeAgo, { TimeAgoCase } from './TimeAgo';
 

@@ -12,18 +12,21 @@ import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { rgba2str, str2rgba } from 'shared/utils/color';
+import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  metricTypeParamMap,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { rgba2str, str2rgba } from 'utils/color';
-import { clone, flattenObject, isBoolean, isObject, isString } from 'utils/data';
 import { metricNameToStr } from 'utils/metric';
+
+import { Primitive, Range } from '../../../shared/types';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -86,6 +89,8 @@ const HpHeatMaps: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
 
+  const { theme } = useTheme();
+
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
         selectedMetric.name === experiment.config.searcher.metric) {
@@ -95,8 +100,8 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [ experiment.config.searcher, selectedMetric ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(chartData?.metricRange, smallerIsBetter);
-  }, [ chartData, smallerIsBetter ]);
+    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData, smallerIsBetter, theme ]);
 
   const chartProps = useMemo(() => {
     if (!chartData) return undefined;

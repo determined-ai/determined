@@ -1,6 +1,12 @@
-import { RouteConfig } from './types';
+import { RouteConfig } from '../shared/types';
 
 const routes: RouteConfig[] = [
+  {
+    id: 'interactive',
+    needAuth: true,
+    path: '/interactive/:taskId/:taskType/:taskName/:taskResourcePool/:taskUrl',
+    title: 'Interactive Task',
+  },
   {
     id: 'trialDetails',
     needAuth: true,
@@ -84,6 +90,11 @@ const routes: RouteConfig[] = [
     needAuth: true,
     path: '/clusters/:tab?',
     title: 'Cluster',
+  },
+  {
+    id: 'resourcepool',
+    needAuth: true,
+    path: '/resourcepool/:poolname/:tab?',
   },
   {
     icon: 'logs',

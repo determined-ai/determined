@@ -4,16 +4,18 @@ import uPlot, { AlignedData, Series } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import Message, { MessageType } from 'shared/components/message';
-import { glasbeyColor } from 'utils/color';
+import { glasbeyColor } from 'shared/utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {
-  groupBy: GroupBy,
-  height?: number;
+  chartKey?: number
+  groupBy?: GroupBy,
+  height?: number,
   hoursByLabel: Record<string, number[]>,
   hoursTotal?: number[],
+  label?: string,
   time: string[],
 }
 
@@ -22,9 +24,11 @@ const CHART_HEIGHT = 350;
 const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = ({
   groupBy,
   height = CHART_HEIGHT,
+  label,
   hoursByLabel,
   hoursTotal,
   time,
+  chartKey,
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
     const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
@@ -85,13 +89,14 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
             });
           },
         },
-        { label: 'GPU Hours' },
+        { label: label ? label : 'GPU Hours' },
       ],
       height,
+      key: chartKey,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
-  }, [ groupBy, height, hoursByLabel, hoursTotal ]);
+  }, [ groupBy, height, hoursByLabel, hoursTotal, label, chartKey ]);
   const hasData = useMemo(() => {
     return Object.keys(hoursByLabel)
       .reduce((agg, label) => agg || hoursByLabel[label].length > 0, false);

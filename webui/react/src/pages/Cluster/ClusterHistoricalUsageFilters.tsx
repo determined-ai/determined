@@ -9,7 +9,7 @@ import SelectFilter from 'components/SelectFilter';
 import {
   DEFAULT_RANGE_DAY, DEFAULT_RANGE_MONTH, MAX_RANGE_DAY, MAX_RANGE_MONTH,
 } from 'pages/Cluster/ClusterHistoricalUsage';
-import { capitalize } from 'utils/string';
+import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 

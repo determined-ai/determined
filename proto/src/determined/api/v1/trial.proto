@@ -178,6 +178,8 @@ message GetExperimentTrialsRequest {
     SORT_BY_BATCHES_PROCESSED = 9;
     // Return the trials sorted by the total duration.
     SORT_BY_DURATION = 10;
+    // Return the trials sorted by the number of restarts.
+    SORT_BY_RESTARTS = 11;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;
@@ -318,6 +320,18 @@ message AckAllocationPreemptionSignalRequest {
   // The allocation that is acknowledging the request.
   string allocation_id = 1;
 }
+// Allocation has been notified of a pending preemption
+message AllocationPendingPreemptionSignalRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id" ] }
+  };
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+
+// Response to AllocationPendingPreemptionSignalRequest
+message AllocationPendingPreemptionSignalResponse {}
+
 // Response to AckAllocationPreemptionSignalRequest.
 message AckAllocationPreemptionSignalResponse {}
 

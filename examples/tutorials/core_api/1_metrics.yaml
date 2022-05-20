@@ -1,5 +1,5 @@
 name: core-api-stage-1
-entrypoint: ./1_metrics.py
+entrypoint: python3 1_metrics.py
 
 # Remaining configuration is unchanged since stage 0.
 

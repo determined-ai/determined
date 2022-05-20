@@ -218,7 +218,7 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, taskID model.TaskID, fl
 		fmt.Sprintf("DET_ALLOCATION_ID=%s", *taskToAllocationID(taskID.String())),
 	}
 	cont := cproto.Container{ID: "goodcontainer"}
-	spec, err = overwriteSpec(cont, spec, env, nil, fluentPort)
+	spec, err = overwriteSpec(cont, spec, env, nil, fluentPort, true)
 	assert.NilError(t, err, "failed to overwrite spec")
 
 	// AND create a container with this env

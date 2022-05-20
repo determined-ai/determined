@@ -59,6 +59,21 @@ def test_noop_pause() -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_noop_nan_validations() -> None:
+    """
+    Ensure that NaN validation metric values don't prevent an experiment from completing.
+    """
+    experiment_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-nan-validations.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
+    exp.wait_for_experiment_state(
+        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+    )
+
+
+@pytest.mark.e2e_cpu
 def test_noop_load() -> None:
     """
     Load a checkpoint

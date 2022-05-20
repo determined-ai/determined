@@ -94,7 +94,7 @@ checkpointStorage:
   # accessKey: <access_key>
   # secretKey: <secret_key>
   # endpointUrl: <endpoint_url>
-
+  # prefix: <prefix>
 
   # For storing in Azure Blob Storage with a connection string.
   # Do NOT use if already using Azure Blob Storage with account URL

@@ -8,8 +8,8 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
+import { clone } from 'shared/utils/data';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
-import { clone } from 'utils/data';
 
 import Json from './Json';
 import Link from './Link';
@@ -112,7 +112,7 @@ const ResourcePoolCard: React.FC<Props> = ({
       </div>
       <div className={css.body}>
         <section className={descriptionClasses.join(' ')}>
-          <p className={css.fade}>{pool.description || 'No description.'}</p>
+          <p>{pool.description || 'No description.'}</p>
         </section>
         <hr />
         <section>
@@ -124,7 +124,7 @@ const ResourcePoolCard: React.FC<Props> = ({
             />
           )}
           {pool.auxContainerCapacityPerAgent > 0 && (
-            <div className={css.cpuContainers}>
+            <div className={css.spaceBetweenHorizontal}>
               <span>Aux containers running:</span>
               <span>{pool.auxContainersRunning}</span>
             </div>

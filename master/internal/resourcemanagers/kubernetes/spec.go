@@ -384,86 +384,84 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	var sidecars []k8sV1.Container
 	var fluentFiles map[string][]byte
 
-	if spec.UseFluentLogging {
-		p.containerNames[model.DeterminedK8FluentContainerName] = true
-		envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
-		asNonRoot := p.taskSpec.AgentUserGroup != nil &&
-			p.taskSpec.AgentUserGroup.User != rootUserName
+	p.containerNames[model.DeterminedK8FluentContainerName] = true
+	envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
+	asNonRoot := p.taskSpec.AgentUserGroup != nil &&
+		p.taskSpec.AgentUserGroup.User != rootUserName
 
-		loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
+	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
 
-		volumes = append(volumes, loggingVolumes...)
-		volumeMounts = append(volumeMounts, loggingMounts...)
+	volumes = append(volumes, loggingVolumes...)
+	volumeMounts = append(volumeMounts, loggingMounts...)
 
-		//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
-		modifyConfig := fluent.ConfigSection{
-			{"Name", "modify"},
-			{"Match", "*"},
-			{"Add", "agent_id k8agent"},
-			{"Add", "container_id " + string(p.container.ID)},
-		}
-		for k, v := range spec.LoggingFields {
-			modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})
-		}
-
-		var fluentArgs []string
-		//nolint:govet // Same as above.
-		fluentArgs, fluentFiles = fluent.ContainerConfig(
-			p.masterIP,
-			int(p.masterPort),
-			[]fluent.ConfigSection{
-				{
-					{"Name", "tail"},
-					{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
-					{"Refresh_Interval", "3"},
-					{"Read_From_Head", "true"},
-					{"Buffer_Max_Size", "1M"},
-					{"Skip_Long_Lines", "On"},
-					{"Tag", "stdout"},
-				},
-				{
-					{"Name", "tail"},
-					{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
-					{"Refresh_Interval", "3"},
-					{"Read_From_Head", "true"},
-					{"Buffer_Max_Size", "1M"},
-					{"Skip_Long_Lines", "On"},
-					{"Tag", "stderr"},
-				},
-			},
-			[]fluent.ConfigSection{
-				modifyConfig,
-				{
-					{"Name", "modify"},
-					{"Match", "stdout"},
-					{"Add", "stdtype stdout"},
-				},
-				{
-					{"Name", "modify"},
-					{"Match", "stderr"},
-					{"Add", "stdtype stderr"},
-				},
-			},
-			p.loggingConfig,
-			p.loggingTLSConfig,
-			asNonRoot,
-		)
-
-		var fluentSecCtx *k8sV1.SecurityContext
-		if asNonRoot {
-			fluentSecCtx = configureSecurityContext(&fluent.NonRootAgentUserGroup)
-		}
-
-		sidecars = append(sidecars, k8sV1.Container{
-			Name:            model.DeterminedK8FluentContainerName,
-			Command:         fluentArgs,
-			Image:           p.fluentConfig.Image,
-			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
-			SecurityContext: fluentSecCtx,
-			VolumeMounts:    loggingMounts,
-			WorkingDir:      fluentBaseDir,
-		})
+	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
+	modifyConfig := fluent.ConfigSection{
+		{"Name", "modify"},
+		{"Match", "*"},
+		{"Add", "agent_id k8agent"},
+		{"Add", "container_id " + string(p.container.ID)},
 	}
+	for k, v := range spec.LoggingFields {
+		modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})
+	}
+
+	var fluentArgs []string
+	//nolint:govet // Same as above.
+	fluentArgs, fluentFiles = fluent.ContainerConfig(
+		p.masterIP,
+		int(p.masterPort),
+		[]fluent.ConfigSection{
+			{
+				{"Name", "tail"},
+				{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
+				{"Refresh_Interval", "3"},
+				{"Read_From_Head", "true"},
+				{"Buffer_Max_Size", "1M"},
+				{"Skip_Long_Lines", "On"},
+				{"Tag", "stdout"},
+			},
+			{
+				{"Name", "tail"},
+				{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
+				{"Refresh_Interval", "3"},
+				{"Read_From_Head", "true"},
+				{"Buffer_Max_Size", "1M"},
+				{"Skip_Long_Lines", "On"},
+				{"Tag", "stderr"},
+			},
+		},
+		[]fluent.ConfigSection{
+			modifyConfig,
+			{
+				{"Name", "modify"},
+				{"Match", "stdout"},
+				{"Add", "stdtype stdout"},
+			},
+			{
+				{"Name", "modify"},
+				{"Match", "stderr"},
+				{"Add", "stdtype stderr"},
+			},
+		},
+		p.loggingConfig,
+		p.loggingTLSConfig,
+		asNonRoot,
+	)
+
+	var fluentSecCtx *k8sV1.SecurityContext
+	if asNonRoot {
+		fluentSecCtx = configureSecurityContext(&fluent.NonRootAgentUserGroup)
+	}
+
+	sidecars = append(sidecars, k8sV1.Container{
+		Name:            model.DeterminedK8FluentContainerName,
+		Command:         fluentArgs,
+		Image:           p.fluentConfig.Image,
+		ImagePullPolicy: configureImagePullPolicy(spec.Environment),
+		SecurityContext: fluentSecCtx,
+		VolumeMounts:    loggingMounts,
+		WorkingDir:      fluentBaseDir,
+	})
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,

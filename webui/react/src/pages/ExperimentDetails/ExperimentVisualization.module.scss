@@ -2,23 +2,23 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
 
   .radioGroup {
     background-color: var(--theme-colors-monochrome-13);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
+    border: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-border-radius);
     display: flex;
     justify-content: center;
-    margin-bottom: var(--theme-sizes-layout-big);
-    padding: var(--theme-sizes-layout-medium);
+    margin-bottom: 16px;
+    padding: 8px;
   }
 }
 .alert {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
 
   .alertSpinner { flex-grow: 1; }
 }

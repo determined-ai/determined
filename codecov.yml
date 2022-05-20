@@ -5,6 +5,13 @@ codecov:
 coverage:
   status:
     project:
-      informational: true
+      default:
+        informational: true
     patch:
-      informational: true
+      default:
+        informational: true
+
+github_checks:
+  annotations: false
+
+comment: false

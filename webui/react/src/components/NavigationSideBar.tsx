@@ -50,10 +50,12 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   if (isActive) classes.push(css.active);
   if (status) classes.push(css.hasStatus);
 
-  useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
+  useEffect(() => {
+    setIsActive(path ? location.pathname.startsWith(path) : false);
+  }, [ location.pathname, path ]);
 
   const link = (
-    <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
+    <Link className={classes.join(' ')} path={path} {...props}>
       <Icon name={props.icon} size="large" />
       <div className={css.label}>{props.label}</div>
       {status && <div className={css.status}>{status}</div>}
@@ -102,8 +104,6 @@ const NavigationSideBar: React.FC = () => {
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
-      { icon: 'queue', label: 'Job Queue', path: paths.jobs() },
-      { icon: 'logs', label: 'Cluster Logs', path: paths.clusterLogs() },
     ],
   }), [ info.branding ]);
 
@@ -158,10 +158,7 @@ const NavigationSideBar: React.FC = () => {
               </Button>
               {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon
-                    name={'add-small'}
-                    size="tiny"
-                  />
+                  <Icon name="add-small" size="tiny" />
                 </Button>
               ) : null}
             </div>

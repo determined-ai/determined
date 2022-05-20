@@ -1,5 +1,5 @@
 name: core-api-stage-2
-entrypoint: ./2_checkpoints.py
+entrypoint: python3 2_checkpoints.py
 
 # Remaining configuration is unchanged since stage 0.
 

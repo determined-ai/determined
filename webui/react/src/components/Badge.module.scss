@@ -1,17 +1,17 @@
 .base {
-  background-color: var(--theme-colors-monochrome-7);
-  border-radius: var(--theme-sizes-border-radius);
-  color: var(--theme-colors-monochrome-17);
+  background-color: var(--theme-ix);
+  border-radius: var(--theme-border-radius);
+  color: var(--theme-ix-on);
   display: inline-block;
-  font-size: var(--theme-sizes-font-tiny);
+  font-size: 11px;
   font-weight: bold;
-  line-height: var(--theme-sizes-font-big);
-  padding: 0 var(--theme-sizes-layout-small);
+  line-height: 18px;
+  padding: 0 6px;
   text-align: center;
 }
 .id {
-  font-family: 'Source Code Pro', monospace;
-  font-size: var(--theme-sizes-font-small);
+  font-family: var(--font-family-code);
+  font-size: 12px;
 }
 .header {
   background-color: #132231;

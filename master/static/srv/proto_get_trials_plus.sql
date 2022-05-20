@@ -11,7 +11,8 @@ WITH searcher_info AS (
           ELSE -1
         END
     ) AS sign,
-    t.id AS trial_id
+    t.id AS trial_id,
+  (config->>'max_restarts')::int AS max_restarts
   FROM experiments e
     INNER JOIN trials t ON t.experiment_id = e.id
   WHERE t.id IN (
@@ -137,6 +138,7 @@ latest_training AS (
           ORDER BY s.end_time DESC
         ) AS rank
       FROM steps s
+      INNER JOIN searcher_info ON s.trial_id = searcher_info.trial_id
       WHERE s.state = 'COMPLETED'
     ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
@@ -171,8 +173,15 @@ SELECT
   ) AS wall_clock_time,
   (
     SELECT sum((jsonb_each).value::text::int)
-    FROM (SELECT jsonb_each(resources) FROM checkpoints c WHERE c.trial_id = t.id) r
-  ) AS total_checkpoint_size
+    FROM (
+        SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
+        UNION ALL
+        SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
+    ) r
+  ) AS total_checkpoint_size,
+  -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
+  -- so trials in terminal state have restarts = max + 1
+  LEAST(t.restarts, max_restarts) as restarts
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

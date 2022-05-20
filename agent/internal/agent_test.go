@@ -3,9 +3,12 @@ package internal
 import (
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/golang-collections/collections/set"
+
+	"github.com/determined-ai/determined/master/pkg/aproto"
 )
 
 func TestNoAddProxy(t *testing.T) {
@@ -108,6 +111,8 @@ func defaultAgentConfig() Options {
 			Port:          24224,
 			ContainerName: "determined-fluent-test",
 		},
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  int(aproto.AgentReconnectBackoff / time.Second),
 	}
 }
 

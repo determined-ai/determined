@@ -9,7 +9,9 @@ import EditableTagList from 'components/TagList';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { Metadata } from 'types';
-import handleError, { ErrorType } from 'utils/error';
+import handleError from 'utils/error';
+
+import { ErrorType } from '../shared/utils/error';
 
 import css from './useCreateModelModal.module.scss';
 import useRegisterCheckpointModal from './useRegisterCheckpointModal';

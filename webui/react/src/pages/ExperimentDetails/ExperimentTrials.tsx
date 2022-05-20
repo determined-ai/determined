@@ -16,20 +16,23 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
+
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { routeToReactUrl } from '../../shared/utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from '../../shared/utils/service';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
@@ -98,6 +101,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       </Link>
     );
 
+    const restartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      const maxRestarts = experiment.config.maxRestarts ?? 0;
+      const className = record.restarts ? css.hasRestarts : undefined;
+      return (
+        <span className={className}>{record.restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+      );
+    };
+
     const validationRenderer = (key: string) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -152,6 +163,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
+        column.render = restartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }

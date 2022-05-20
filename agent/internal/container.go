@@ -122,10 +122,15 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		// Evict the spec from memory due to their potentially massive memory consumption.
 		c.spec = nil
 
+	case containerReattached:
+		c.containerInfo = &msg.containerInfo
+		// TODO(ilia): When do we need to start a checker for these containers?
+
 	case containerReady:
 		c.containerStarted(ctx, aproto.ContainerStarted{ContainerInfo: *c.containerInfo})
 
 	case containerTerminated:
+		ctx.Log().Debug("containerTerminated")
 		c.containerStopped(ctx, aproto.ContainerExited(msg.ExitCode))
 		ctx.Self().Stop()
 
@@ -152,6 +157,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 			ctx.Tell(ctx.Self(), msg)
 		case cproto.Running:
 			ctx.Log().Infof("sending signal to container: %s", msg.Signal)
+			ctx.Log().Debugf("docker: %v, contInfo: %v", c.docker, c.containerInfo)
 			ctx.Tell(c.docker, signalContainer{dockerID: c.containerInfo.ID, signal: msg.Signal})
 		case cproto.Terminated:
 			ctx.Log().Warnf("ignoring signal, container already terminated: %s", msg.Signal)
@@ -160,11 +166,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case aproto.ContainerLog:
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
-		if c.spec.RunSpec.UseFluentLogging {
-			ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
-		} else {
-			ctx.Tell(ctx.Self().Parent(), msg)
-		}
+		ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
 	case actor.ChildStopped:
 
 	case actor.ChildFailed:

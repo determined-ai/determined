@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import OverviewStats from 'components/OverviewStats';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -17,15 +16,18 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
+import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import {
   ClusterOverviewResource,
-  ClusterOverview as Overview, Pagination, ResourcePool, ResourceState, ResourceType,
+  ClusterOverview as Overview, ResourcePool, ResourceState, ResourceType,
 } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { percent } from 'utils/number';
+
+import { Pagination } from '../../shared/types';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
+import { ClusterOverallStats } from './ClusterOverallStats';
 import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
@@ -66,7 +68,7 @@ const ClusterOverview: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const { agents, resourcePools } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<GridListView>(() => {
     if (initView && Object.values(GridListView).includes(initView as GridListView)) return initView;
@@ -85,27 +87,6 @@ const ClusterOverview: React.FC = () => {
   }, [ resourcePools ]);
 
   usePolling(fetchResourcePools, { interval: 10000 });
-
-  const auxContainers = useMemo(() => {
-    const tally = {
-      running: 0,
-      total: 0,
-    };
-    resourcePools.forEach(rp => {
-      tally.total += rp.auxContainerCapacity;
-      tally.running += rp.auxContainersRunning;
-    });
-    return tally;
-  }, [ resourcePools ]);
-
-  /** theoretical max capacity for each slot type in the cluster */
-  const maxTotalSlots = useMemo(() => {
-    return resourcePools.reduce((acc, pool) => {
-      if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
-      acc[pool.slotType] += maxPoolSlotCapacity(pool);
-      return acc;
-    }, {} as { [key in ResourceType]: number });
-  }, [ resourcePools ]);
 
   const getSlotTypeOverview = useCallback((
     resPoolName: string,
@@ -197,29 +178,7 @@ const ClusterOverview: React.FC = () => {
 
   return (
     <>
-      <Section hideTitle title="Overview Stats">
-        <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
-          <OverviewStats title="Connected Agents">
-            {agents ? agents.length : '?'}
-          </OverviewStats>
-          {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
-            (maxTotalSlots[resType] > 0) ? (
-              <OverviewStats
-                key={resType}
-                title={`${resType} Slots Allocated`}>
-                {overview[resType].total - overview[resType].available}
-                <small>
-                  / {maxTotalSlots[resType]}
-                </small>
-              </OverviewStats>
-            ) : null))}
-          {auxContainers.total ? (
-            <OverviewStats title="Aux Containers Running">
-              {auxContainers.running} <small>/ {auxContainers.total}</small>
-            </OverviewStats>
-          ) : null}
-        </Grid>
-      </Section>
+      <ClusterOverallStats />
       <ClusterOverallBar />
       <Section
         options={<GridListRadioGroup value={selectedView} onChange={handleRadioChange} />}

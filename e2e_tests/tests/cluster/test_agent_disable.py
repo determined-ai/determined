@@ -10,44 +10,46 @@ from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
+from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
 
 
 @pytest.mark.e2e_cpu
 def test_disable_and_enable_slots() -> None:
-    command = [
-        "det",
-        "-m",
-        conf.make_master_url(),
-        "slot",
-        "list",
-        "--json",
-    ]
-    output = subprocess.check_output(command).decode()
-    slots = json.loads(output)
-    assert len(slots) == 1
+    with logged_in_user(ADMIN_CREDENTIALS):
+        command = [
+            "det",
+            "-m",
+            conf.make_master_url(),
+            "slot",
+            "list",
+            "--json",
+        ]
+        output = subprocess.check_output(command).decode()
+        slots = json.loads(output)
+        assert len(slots) == 1
 
-    command = [
-        "det",
-        "-m",
-        conf.make_master_url(),
-        "slot",
-        "disable",
-        slots[0]["agent_id"],
-        slots[0]["slot_id"],
-    ]
-    subprocess.check_call(command)
+        command = [
+            "det",
+            "-m",
+            conf.make_master_url(),
+            "slot",
+            "disable",
+            slots[0]["agent_id"],
+            slots[0]["slot_id"],
+        ]
+        subprocess.check_call(command)
 
-    command = [
-        "det",
-        "-m",
-        conf.make_master_url(),
-        "slot",
-        "enable",
-        slots[0]["agent_id"],
-        slots[0]["slot_id"],
-    ]
-    subprocess.check_call(command)
+        command = [
+            "det",
+            "-m",
+            conf.make_master_url(),
+            "slot",
+            "enable",
+            slots[0]["agent_id"],
+            slots[0]["slot_id"],
+        ]
+        subprocess.check_call(command)
 
 
 def _fetch_slots() -> List[Dict[str, Any]]:
@@ -83,10 +85,13 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
         + [agent_id]
     )
     try:
-        yield subprocess.check_output(command).decode()
+        with logged_in_user(ADMIN_CREDENTIALS):
+            out = subprocess.check_output(command).decode()
+        yield out
     finally:
-        command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
-        subprocess.check_call(command)
+        with logged_in_user(ADMIN_CREDENTIALS):
+            command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
+            subprocess.check_call(command)
 
 
 @pytest.mark.e2e_cpu

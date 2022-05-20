@@ -4,8 +4,8 @@ import React from 'react';
 
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
+import { generateAlphaNumeric } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
-import { generateAlphaNumeric } from 'utils/string';
 
 import * as src from './LogViewer';
 

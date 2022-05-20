@@ -20,6 +20,9 @@ import { throttle } from 'throttle-debounce';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 
+import css from './InteractiveTable.module.scss';
+import Spinner from './Spinner';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
@@ -35,13 +38,9 @@ export interface InteractiveTableSettings {
   tableOffset: number;
 }
 
-import css from './InteractiveTable.module.scss';
-import Spinner from './Spinner';
-
 export const WIDGET_COLUMN_WIDTH = 46;
 const DEFAULT_RESIZE_THROTTLE_TIME = 30;
-
-const type = 'DraggableColumn';
+const SOURCE_TYPE = 'DraggableColumn';
 
 type DndItem = {
   index?: number;
@@ -105,7 +104,9 @@ interface CellProps {
   isCellRightClickable?: boolean;
 }
 
-export const PAGE_PADDING = 16;
+const getAdjustedColumnWidthSum = (columnsWidths: number[]) => {
+  return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + 2 * 24;
+};
 
 const RightClickableRowContext = createContext({});
 
@@ -194,11 +195,11 @@ const HeaderCell = ({
   const [ , drag ] = useDrag({
     canDrag: () => !isResizing,
     item: { index },
-    type,
+    type: SOURCE_TYPE,
   });
 
   const [ { isOver }, drop ] = useDrop({
-    accept: type,
+    accept: SOURCE_TYPE,
     canDrop: (_, monitor) => {
       const dragItem = (monitor.getItem() || {});
       const dragIndex = dragItem?.index;
@@ -313,15 +314,6 @@ const InteractiveTable: InteractiveTable = ({
 
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
-  const getAdjustedColumnWidthSum = useCallback((columnsWidths: number[]) => {
-    let pagePadding = parseInt(
-      getComputedStyle(document.body)
-        ?.getPropertyValue('--theme-sizes-layout-big').slice(0, -2),
-    );
-    if (typeof pagePadding !== 'number') pagePadding = 16;
-    return columnsWidths.reduce((a, b) => a + b, 0) + 2 * WIDGET_COLUMN_WIDTH + pagePadding;
-  }, []);
-
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
       let newWidths = widths;
@@ -335,7 +327,7 @@ const InteractiveTable: InteractiveTable = ({
       }
       return newWidths.map(Math.round);
     },
-    [ pageWidth, getAdjustedColumnWidthSum ],
+    [ pageWidth ],
   );
 
   useLayoutEffect(() => {
@@ -423,7 +415,7 @@ const InteractiveTable: InteractiveTable = ({
         });
       });
     },
-    [ settings.columns, pageWidth, getAdjustedColumnWidthSum, columnDefs ],
+    [ settings.columns, pageWidth, columnDefs ],
   );
 
   const handleResizeStart = useCallback(

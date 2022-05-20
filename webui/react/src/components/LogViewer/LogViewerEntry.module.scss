@@ -7,25 +7,25 @@ $no-wrap-height: 20px;
 
   * { white-space: nowrap; }
   .number {
-    color: var(--theme-colors-monochrome-10);
+    color: var(--theme-stage-on);
     flex-shrink: 0;
     text-align: right;
     user-select: none;
   }
   .number::after { content: attr(data-label) '\00a0'; }
   .level {
-    color: var(--theme-colors-monochrome-10);
+    color: var(--theme-stage-on);
     flex-shrink: 0;
     padding: 2px;
   }
   .level > .levelLabel { font-size: 0; }
-  .critical { color: var(--theme-colors-states-failed); }
-  .debug { color: var(--theme-colors-states-active); }
-  .error { color: var(--theme-colors-states-failed); }
-  .trace { color: var(--theme-colors-states-active); }
-  .warning { color: var(--theme-colors-states-suspended); }
+  .critical { color: var(--theme-status-critical); }
+  .debug { color: var(--theme-status-active); }
+  .error { color: var(--theme-status-critical); }
+  .trace { color: var(--theme-status-active); }
+  .warning { color: var(--theme-status-warning); }
   .time {
-    color: var(--theme-colors-base-0);
+    color: var(--theme-stage-on-weak);
     flex-shrink: 0;
   }
   .time::after { content: '\00a0'; }

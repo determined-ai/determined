@@ -63,17 +63,25 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
-		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
-		return a.connect(ctx)
+		err := a.connect(ctx)
 
+		// Set up SIGINT and SIGTERM listeners after we try to connect to master.
+		// Ironically listening before we connect to master means we are unable
+		// to process signals during a.connect since this PreStart message blocks
+		// processing other messages (including the os.Signal messages). Without
+		// setting up listeners, Go will handle closing our program for us.
+		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
+		return err
 	case aproto.AgentMessage:
 		switch {
 		case msg.MasterSetAgentOptions != nil:
 			if a.MasterSetAgentOptions != nil {
-				ctx.Log().Debugf("received MasterStepAgentOptions more than once: %v",
+				ctx.Log().Debugf("received MasterSetAgentOptions more than once: %v",
 					*msg.MasterSetAgentOptions)
-				return nil
+				a.MasterSetAgentOptions = msg.MasterSetAgentOptions
+				return a.setupAfterMasterRestart(ctx)
 			}
+
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
 			return a.setup(ctx)
 		case msg.StartContainer != nil:
@@ -353,16 +361,16 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 	defer func() {
 		a.reconnecting = false
 	}()
-	for i := 0; i < aproto.AgentReconnectAttempts; i++ {
+	for i := 0; i < a.Options.AgentReconnectAttempts; i++ {
 		switch err := a.connect(ctx); {
 		case err == nil:
 			return true
 		case errors.Is(err, aproto.ErrAgentMustReconnect):
 			return false
 		default:
-			ctx.Log().WithError(err).Error("error to reconnecting to master")
+			ctx.Log().WithError(err).Error("error reconnecting to master")
 		}
-		time.Sleep(aproto.AgentReconnectBackoff)
+		time.Sleep(time.Duration(a.Options.AgentReconnectBackoff) * time.Second)
 	}
 	return false
 }
@@ -441,6 +449,28 @@ func (a *agent) setup(ctx *actor.Context) error {
 			ContainersReattached: res.ContainersReattached,
 		},
 	}})
+	return nil
+}
+
+func (a *agent) setupAfterMasterRestart(ctx *actor.Context) error {
+	// TODO(ilia): reinitialize fluent logging settings per the new master config,
+	// if possible.
+
+	res := ctx.Ask(a.cm, requestRevalidateContainers{
+		a.MasterSetAgentOptions.ContainersToReattach,
+	}).Get().(responseReattachContainers)
+
+	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
+		AgentStarted: &aproto.AgentStarted{
+			Version:              a.Version,
+			Devices:              a.Devices,
+			Label:                a.Label,
+			ContainersReattached: res.ContainersReattached,
+		},
+	}})
+
+	// TODO(ilia): buffer and resend pending network messages.
+
 	return nil
 }
 

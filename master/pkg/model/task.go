@@ -8,6 +8,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 
@@ -82,15 +84,17 @@ func (a AllocationID) String() string {
 
 // Allocation is the model for an allocation in the database.
 type Allocation struct {
-	AllocationID AllocationID     `db:"allocation_id"`
-	TaskID       TaskID           `db:"task_id"`
-	Slots        int              `db:"slots"`
-	AgentLabel   string           `db:"agent_label"`
-	ResourcePool string           `db:"resource_pool"`
-	StartTime    *time.Time       `db:"start_time"`
-	EndTime      *time.Time       `db:"end_time"`
-	State        *AllocationState `db:"state"`
-	IsReady      *bool            `db:"is_ready"`
+	bun.BaseModel `bun:"table:allocations"`
+
+	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,notnull,unique"`
+	TaskID       TaskID           `db:"task_id" bun:"task_id,notnull"`
+	Slots        int              `db:"slots" bun:"slots,notnull"`
+	AgentLabel   string           `db:"agent_label" bun:"agent_label,notnull"`
+	ResourcePool string           `db:"resource_pool" bun:"resource_pool,notnull"`
+	StartTime    *time.Time       `db:"start_time" bun:"start_time"`
+	EndTime      *time.Time       `db:"end_time" bun:"end_time"`
+	State        *AllocationState `db:"state" bun:"state"`
+	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
@@ -102,6 +106,14 @@ type TaskStats struct {
 	EventType    string
 	StartTime    *time.Time
 	EndTime      *time.Time
+}
+
+// ResourceAggregates is the model for resource_aggregates in the database.
+type ResourceAggregates struct {
+	Date            *time.Time
+	AggregationType string
+	AggregationKey  string
+	Seconds         float32
 }
 
 const (

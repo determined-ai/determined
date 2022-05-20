@@ -6,6 +6,7 @@ from urllib import parse
 
 import lomond
 import requests
+import urllib3
 
 import determined as det
 import determined.common.requests
@@ -73,6 +74,7 @@ def do_request(
     cert: Optional[certs.Cert] = None,
     stream: bool = False,
     timeout: Optional[Union[Tuple, float]] = None,
+    max_retries: Optional[urllib3.util.retry.Retry] = None,
 ) -> requests.Response:
     # If no explicit Authentication object was provided, use the cli's singleton Authentication.
     if auth is None:
@@ -109,6 +111,7 @@ def do_request(
             stream=stream,
             timeout=timeout,
             server_hostname=cert.name if cert else None,
+            max_retries=max_retries,
         )
     except requests.exceptions.SSLError:
         raise

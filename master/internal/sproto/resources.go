@@ -89,7 +89,7 @@ func FromContainerStarted(cs *aproto.ContainerStarted) *ResourcesStarted {
 
 // ResourcesStopped contains the information needed by tasks from container stopped.
 type ResourcesStopped struct {
-	Failure *ResourcesFailure
+	Failure *RestoreResourcesFailure
 }
 
 // FromContainerStopped converts an aproto.ContainerStopped message to ResourcesStopped.
@@ -100,7 +100,7 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 
 	rs := &ResourcesStopped{}
 	if f := cs.Failure; f != nil {
-		rs.Failure = &ResourcesFailure{
+		rs.Failure = &RestoreResourcesFailure{
 			FailureType: FromContainerFailureType(f.FailureType),
 			ErrMsg:      f.ErrMsg,
 			ExitCode:    FromContainerExitCode(f.ExitCode),
@@ -114,14 +114,14 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 	if err == nil {
 		return ResourcesStopped{
-			Failure: &ResourcesFailure{
+			Failure: &RestoreResourcesFailure{
 				FailureType: failureType,
 				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}
 	return ResourcesStopped{
-		Failure: &ResourcesFailure{
+		Failure: &RestoreResourcesFailure{
 			FailureType: failureType,
 			ErrMsg:      err.Error(),
 		},
@@ -135,23 +135,24 @@ func (r ResourcesStopped) String() string {
 	return r.Failure.Error()
 }
 
-// ResourcesFailure contains information about resources' failure.
-type ResourcesFailure struct {
+// RestoreResourcesFailure contains information about restored resources' failure.
+type RestoreResourcesFailure struct {
 	FailureType FailureType
 	ErrMsg      string
 	ExitCode    *ExitCode
 }
 
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
-func NewResourcesFailure(failureType FailureType, msg string, code *ExitCode) *ResourcesFailure {
-	return &ResourcesFailure{
+func NewResourcesFailure(
+	failureType FailureType, msg string, code *ExitCode) *RestoreResourcesFailure {
+	return &RestoreResourcesFailure{
 		FailureType: failureType,
 		ErrMsg:      msg,
 		ExitCode:    code,
 	}
 }
 
-func (f ResourcesFailure) Error() string {
+func (f RestoreResourcesFailure) Error() string {
 	if f.ExitCode == nil {
 		return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
 	}
@@ -198,6 +199,12 @@ const (
 
 	// AgentError denotes that the agent failed to launch the container.
 	AgentError = FailureType("agent failed to launch the container")
+
+	// RestoreError denotes a failure to restore a running allocation on master blip.
+	RestoreError = FailureType("RM failed to restore the allocation")
+
+	// UnknownError denotes an internal error that did not map to a know failure type.
+	UnknownError
 )
 
 // FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
@@ -244,7 +251,7 @@ func IsUnrecoverableSystemError(err error) bool {
 // shouldn't count against `max_restarts`.
 func IsTransientSystemError(err error) bool {
 	switch err := err.(type) {
-	case ResourcesFailure:
+	case RestoreResourcesFailure:
 		switch err.FailureType {
 		case ContainerFailed, TaskError:
 			return false

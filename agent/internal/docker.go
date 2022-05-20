@@ -56,6 +56,10 @@ type (
 		dockerID      string
 		containerInfo types.ContainerJSON
 	}
+	containerReattached struct {
+		dockerID      string
+		containerInfo types.ContainerJSON
+	}
 	containerTerminated struct {
 		ExitCode aproto.ExitCode
 	}
@@ -199,11 +203,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
-	useFluentLogging := msg.UseFluentLogging
-	if !useFluentLogging {
-		msg.HostConfig.AutoRemove = false
-	}
-
 	response, err := d.ContainerCreate(
 		context.Background(), &msg.ContainerConfig, &msg.HostConfig, &msg.NetworkingConfig, nil, "")
 	if err != nil {
@@ -213,16 +212,6 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	containerID := response.ID
 	for _, w := range response.Warnings {
 		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
-	}
-
-	if !useFluentLogging {
-		defer func() {
-			if err = d.Client.ContainerRemove(
-				context.Background(), containerID, types.ContainerRemoveOptions{},
-			); err != nil {
-				sendErr(ctx, errors.Wrap(err, "error removing container"))
-			}
-		}()
 	}
 
 	for _, copyArx := range msg.Archives {
@@ -266,11 +255,6 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 		containerStarted{dockerID: response.ID, containerInfo: containerInfo},
 	)
 
-	if !useFluentLogging {
-		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); lerr != nil {
-			sendErr(ctx, lerr)
-		}
-	}
 	select {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
@@ -311,6 +295,10 @@ func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
 				ctx.Sender(),
 				containerTerminated{ExitCode: aproto.ExitCode(containerInfo.State.ExitCode)})
 		} else {
+			ctx.Tell(
+				ctx.Sender(),
+				containerReattached{dockerID: cont.ID, containerInfo: containerInfo},
+			)
 			select {
 			case err = <-eerr:
 				sendErr(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))

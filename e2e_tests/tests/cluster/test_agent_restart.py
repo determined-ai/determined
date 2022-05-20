@@ -1,168 +1,22 @@
 import json
-import os
 import subprocess
 import time
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Tuple, Union, cast
+from typing import Any, Dict, Iterator, Tuple
 
 import pytest
 
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE
 from tests import config as conf
 from tests import experiment as exp
 
+from .managed_cluster import ManagedCluster
 from .utils import get_command_info, run_command, wait_for_command_state
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
-
-
-def _get_agent_data(master_url: str) -> List[Dict[str, Any]]:
-    command = ["det", "-m", master_url, "agent", "list", "--json"]
-    output = subprocess.check_output(command).decode()
-    agent_data = cast(List[Dict[str, Any]], json.loads(output))
-    return agent_data
-
-
-class ManagedCluster:
-    # This utility wrapper uses double agent yaml configurations,
-    # but provides helpers to run/kill a single agent setup.
-
-    def __init__(self, config: Union[str, Dict[str, Any]], reattach: bool) -> None:
-        # Strategically only import devcluster on demand to avoid having it as a hard dependency.
-        from devcluster import Devcluster
-
-        self.dc = Devcluster(config=config)
-        self.master_url = conf.make_master_url()
-        self.reattach = reattach
-
-    def __enter__(self) -> "ManagedCluster":
-        self.old_cd = os.getcwd()
-        os.chdir(str(conf.PROJECT_ROOT_PATH))
-        self.dc.__enter__()
-        return self
-
-    def __exit__(self, *_: Any) -> None:
-        os.chdir(self.old_cd)
-        self.dc.__exit__(*_)
-
-    def initial_startup(self) -> None:
-        self.dc.set_target("agent1", wait=True, timeout=3 * 60)
-
-    def kill_agent(self) -> None:
-        self.dc.kill_stage("agent1")
-
-        WAIT_FOR_KILL = 5
-        for _i in range(WAIT_FOR_KILL):
-            agent_data = _get_agent_data(self.master_url)
-            if len(agent_data) == 0:
-                break
-            if len(agent_data) == 1 and agent_data[0]["draining"] is True:
-                break
-            time.sleep(1)
-        else:
-            pytest.fail(f"Agent is still present after {WAIT_FOR_KILL} seconds")
-
-    def restart_agent(self, wait_for_amnesia: bool = True) -> None:
-        agent_data = _get_agent_data(self.master_url)
-        if len(agent_data) == 1 and agent_data[0]["enabled"]:
-            return
-
-        if wait_for_amnesia:
-            # Currently, we've got to wait for master to "forget" the agent before reconnecting.
-            WAIT_FOR_AMNESIA = 60
-            for _i in range(WAIT_FOR_AMNESIA):
-                agent_data = _get_agent_data(self.master_url)
-                if len(agent_data) == 0:
-                    break
-                time.sleep(1)
-            else:
-                pytest.fail(f"Agent is still not forgotten after {WAIT_FOR_AMNESIA} seconds")
-
-        self.dc.restart_stage("agent1", wait=True, timeout=10)
-
-        WAIT_FOR_STARTUP = 10
-        for _i in range(WAIT_FOR_STARTUP):
-            agent_data = _get_agent_data(self.master_url)
-            if (
-                len(agent_data) == 1
-                and agent_data[0]["enabled"] is True
-                and agent_data[0]["draining"] is False
-            ):
-                break
-            time.sleep(1)
-        else:
-            pytest.fail(f"Agent didn't restart after {WAIT_FOR_STARTUP} seconds")
-
-    def kill_proxy(self) -> None:
-        subprocess.run(["killall", "socat"])
-
-    def restart_proxy(self, wait_for_reconnect: bool = True) -> None:
-        self.dc.restart_stage("proxy")
-        if wait_for_reconnect:
-            for _i in range(25):
-                agent_data = _get_agent_data(self.master_url)
-                if (
-                    len(agent_data) == 1
-                    and agent_data[0]["enabled"] is True
-                    and agent_data[0]["draining"] is False
-                ):
-                    break
-                time.sleep(1)
-            else:
-                pytest.fail(f"Agent didn't reconnect after {_i} seconds")
-
-    def ensure_agent_ok(self) -> None:
-        agent_data = _get_agent_data(self.master_url)
-        assert len(agent_data) == 1
-        assert agent_data[0]["enabled"] is True
-        assert agent_data[0]["draining"] is False
-
-    def fetch_config(self) -> Dict:
-        master_config = json.loads(
-            subprocess.run(
-                ["det", "-m", self.master_url, "master", "config", "--json"],
-                stdout=subprocess.PIPE,
-                check=True,
-            ).stdout.decode()
-        )
-        return cast(Dict, master_config)
-
-    def fetch_config_reattach_wait(self) -> float:
-        s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
-        return float(s.rstrip("s"))
-
-    def log_marker(self, marker: str) -> None:
-        for log_path in DEVCLUSTER_LOG_PATH.glob("*.log"):
-            with log_path.open("a") as fout:
-                fout.write(marker)
-
-
-@pytest.fixture(scope="session", params=[False, True], ids=["reattach-off", "reattach-on"])
-def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
-    reattach = cast(bool, request.param)
-    if reattach:
-        config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
-    else:
-        config = str(DEVCLUSTER_REATTACH_OFF_CONFIG_PATH)
-
-    with ManagedCluster(config, reattach=reattach) as mc:
-        mc.initial_startup()
-        yield mc
-
-
-@pytest.fixture
-def managed_cluster(
-    managed_cluster_session: ManagedCluster, request: Any
-) -> Iterator[ManagedCluster]:
-    ts = datetime.now(timezone.utc).astimezone().isoformat()
-    nodeid = request.node.nodeid
-    managed_cluster_session.log_marker(f"pytest [{ts}] {nodeid} setup\n")
-    yield managed_cluster_session
-    managed_cluster_session.log_marker(f"pytest [{ts}] {nodeid} teardown\n")
 
 
 @pytest.mark.managed_devcluster
@@ -234,7 +88,7 @@ def test_agent_restart_exp_container_failure(managed_cluster: ManagedCluster) ->
         # As soon as the agent is back, the original allocation should be considered dead,
         # but the new one should be allocated.
         state = exp.experiment_state(exp_id)
-        assert state == determinedexperimentv1State.STATE_ACTIVE
+        assert state == EXP_STATE.STATE_ACTIVE
         tasks_data = _task_list_json(managed_cluster.master_url)
         assert len(tasks_data) == 1
         exp_task_after = list(tasks_data.values())[0]
@@ -242,7 +96,7 @@ def test_agent_restart_exp_container_failure(managed_cluster: ManagedCluster) ->
         assert exp_task_before["task_id"] == exp_task_after["task_id"]
         assert exp_task_before["allocation_id"] != exp_task_after["allocation_id"]
 
-        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
 
 
 @pytest.mark.managed_devcluster
@@ -372,7 +226,7 @@ def test_agent_restart_recover_experiment(managed_cluster: ManagedCluster, downt
             time.sleep(downtime)
             managed_cluster.restart_agent(wait_for_amnesia=False)
 
-        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1
@@ -399,7 +253,7 @@ def test_agent_reconnect_keep_experiment(managed_cluster: ManagedCluster) -> Non
         time.sleep(1)
         managed_cluster.restart_proxy()
 
-        exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED)
         trials = exp.experiment_trials(exp_id)
 
         assert len(trials) == 1

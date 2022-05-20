@@ -612,7 +612,6 @@ func TestMultipleContainersRunning(t *testing.T) {
 	}
 
 	containerMsg, ok := message.(sproto.ResourcesStateChanged)
-	fmt.Println("CONTAINER MESSAGE:", containerMsg)
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}

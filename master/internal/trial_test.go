@@ -229,6 +229,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 			AgentUserGroup: &model.AgentUserGroup{},
 			SSHRsaSize:     1024,
 		},
+		false,
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
 	return system, db, rID, tr, self

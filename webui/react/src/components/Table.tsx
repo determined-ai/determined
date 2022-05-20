@@ -9,14 +9,15 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
-  Pagination, StartEndTimes, TrialItem,
+  StartEndTimes, TrialItem,
 } from 'types';
-import { getDuration } from 'utils/datetime';
 import { canBeOpened } from 'utils/task';
-import { waitPageUrl } from 'wait';
+
+import { Pagination } from '../shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';
@@ -102,7 +103,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
       <ConditionalWrapper
         condition={canBeOpened(record)}
         wrapper={children => (
-          <Link path={waitPageUrl(record)}>
+          <Link path={paths.interactive(record)}>
             {children}
           </Link>
         )}>
@@ -125,7 +126,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
     <ConditionalWrapper
       condition={canBeOpened(record)}
       wrapper={ch => (
-        <Link path={waitPageUrl(record)} popout>
+        <Link path={paths.interactive(record)}>
           {ch}
         </Link>
       )}>

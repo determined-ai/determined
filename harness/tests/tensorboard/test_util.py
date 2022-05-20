@@ -65,6 +65,7 @@ def test_list_tb_files(tmp_path: pathlib.Path) -> None:
 
     manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
     test_files = [
+        "no_show.txt",
         "79375caf89e9.kernel_stats.pb",
         "79375caf89e9.memory_profile.json.gz",
         "events.out.tfevents.example",

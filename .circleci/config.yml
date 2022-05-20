@@ -89,6 +89,22 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
+  skip-if-docs-only:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for docs-only changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            if [ "$DIFF_DIRS" = "docs" ] ; then
+              echo "docs-only change detected, halting job now"
+              circleci-agent step halt
+            else
+              echo "detected non-docs-only changes: $DIFF_DIRS"
+            fi
+
   set-slack-user-id:
     steps:
       - run:
@@ -361,6 +377,9 @@ commands:
       managed-devcluster:
         type: boolean
         default: false
+      extra-pytest-flags:
+        type: string
+        default: ""
     steps:
       - run:
           name: Split tests
@@ -401,6 +420,7 @@ commands:
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
+            <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
       - upload-test-job:
           only_on_branch: master
@@ -930,6 +950,7 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
+      - run: make -C model_hub examples
       - run: make -C helm build
       - attach_workspace:
           at: .
@@ -962,9 +983,10 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: xlarge
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1016,6 +1038,10 @@ jobs:
                 make -C model_hub build-docker-dev
                 make -C model_hub publish-docker-dev
             fi
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   package-and-push-system-rc:
     docker:
@@ -1042,6 +1068,10 @@ jobs:
       - run: make -C agent publish
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   package-and-push-system-release:
     docker:
@@ -1067,6 +1097,10 @@ jobs:
       - run: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - store_artifacts:
+          path: master/dist/
+      - store_artifacts:
+          path: agent/dist/
 
   publish-helm:
     docker:
@@ -1099,6 +1133,7 @@ jobs:
       - image: cimg/openjdk:14.0.1
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - run: make -C bindings get-deps
@@ -1108,9 +1143,10 @@ jobs:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
+      - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           executor: <<pipeline.parameters.docker-image>>
-      - checkout
       - attach_workspace:
           at: .
       - run: make -C bindings force-gen
@@ -1131,6 +1167,7 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
@@ -1153,6 +1190,7 @@ jobs:
       - image: cimg/node:16.14.2
     steps:
       - checkout-with-sm
+      - skip-if-docs-only
       - react-get-deps
       - run: make -C webui/react check
 
@@ -1166,6 +1204,7 @@ jobs:
     resource_class: large
     steps:
       - checkout-with-sm
+      - skip-if-docs-only
       - react-get-deps
       - run: |
             if <<parameters.dev-mode>>; then
@@ -1186,6 +1225,7 @@ jobs:
     resource_class: large
     steps:
       - checkout-with-sm
+      - skip-if-docs-only
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
@@ -1201,6 +1241,7 @@ jobs:
       - image: cimg/node:16.14.2
     steps:
       - checkout-with-sm
+      - skip-if-docs-only
       - react-get-deps
       - run: make -C webui/react build-storybook
       - store_artifacts:
@@ -1214,6 +1255,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - skip-if-docs-only
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1228,6 +1270,7 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
+      - skip-if-docs-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1259,6 +1302,7 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
+      - skip-if-docs-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1273,6 +1317,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1291,6 +1336,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1308,6 +1354,7 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1349,6 +1396,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           model-hub: true
@@ -1370,6 +1418,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1389,6 +1438,7 @@ jobs:
       image: <<pipeline.parameters.gpu-machine-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1407,6 +1457,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
@@ -1425,6 +1476,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
@@ -1443,6 +1495,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           model-hub: true
@@ -1462,6 +1515,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: false
           model-hub: false
@@ -1483,6 +1537,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
@@ -1546,6 +1601,9 @@ jobs:
       agent-version:
         type: string
         default: ''
+      extra-pytest-flags:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1555,6 +1613,7 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
 
@@ -1585,6 +1644,7 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
           managed-devcluster: <<parameters.managed-devcluster>>
+          extra-pytest-flags: <<parameters.extra-pytest-flags>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -1675,6 +1735,7 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
+      - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
           determined: true
@@ -1725,7 +1786,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.6"
+        default: "1.21.11"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1766,6 +1827,7 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
+      - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
           determined: true
@@ -1808,7 +1870,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.6"
+        default: "1.21.11"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1850,6 +1912,7 @@ jobs:
       CUDA: 11
     steps:
       - checkout
+      - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
           determined: true
@@ -1895,6 +1958,7 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
+      - skip-if-docs-only
       - attach_workspace:
           at: .
       - run: docker load --input build/master.image
@@ -2063,6 +2127,9 @@ workflows:
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
+          # Managed devcluster restarts the master over the course of the tests,
+          # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
           name: test-e2e-cpu-elastic

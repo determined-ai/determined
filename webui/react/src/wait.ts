@@ -1,4 +1,6 @@
-import { openBlank, serverAddress } from 'routes/utils';
+import { serverAddress } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { windowOpenFeatures } from 'shared/utils/routes';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { isCommandTask } from 'utils/task';
 
@@ -38,13 +40,17 @@ export const waitPageUrl = (command: Command | CommandTask): string => {
     throw new Error('command cannot be opened');
   const kind = isCommandTask(command) ? command.type : command.kind;
 
-  const waitPath = `/wait/${kind.toLowerCase()}/${command.id}`;
+  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind.toLowerCase()}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   return waitPath + waitParams;
 };
 
-export const openCommand = (command: Command | CommandTask): void => {
-  openBlank(process.env.PUBLIC_URL + waitPageUrl(command));
+export const openCommand = (command: CommandTask): void => {
+  window.open(
+    process.env.PUBLIC_URL + paths.interactive(command),
+    '_blank',
+    windowOpenFeatures.join(','),
+  );
 };
 
 export interface WaitStatus {
