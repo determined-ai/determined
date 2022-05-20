@@ -60,7 +60,7 @@ const ExperimentDetails: React.FC = () => {
 
   const { stopPolling } = usePolling(fetchExperimentDetails);
 
-  const handleSingleTrialLoad = useCallback((trial: TrialDetails) => {
+  const handleSingleTrialUpdate = useCallback((trial: TrialDetails) => {
     setTrial(trial);
   }, []);
 
@@ -102,7 +102,7 @@ const ExperimentDetails: React.FC = () => {
         <ExperimentSingleTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
-          onTrialLoad={handleSingleTrialLoad}
+          onTrialUpdate={handleSingleTrialUpdate}
         />
       ) : (
         <ExperimentMultiTrialTabs

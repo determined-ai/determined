@@ -178,6 +178,8 @@ message GetExperimentTrialsRequest {
     SORT_BY_BATCHES_PROCESSED = 9;
     // Return the trials sorted by the total duration.
     SORT_BY_DURATION = 10;
+    // Return the trials sorted by the number of restarts.
+    SORT_BY_RESTARTS = 11;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;

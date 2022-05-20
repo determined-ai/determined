@@ -45,11 +45,11 @@ const ExperimentConfiguration = React.lazy(() => {
 export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  onTrialLoad?: (trial: TrialDetails) => void;
+  onTrialUpdate?: (trial: TrialDetails) => void;
 }
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { experiment, fetchExperimentDetails, onTrialLoad }: Props,
+  { experiment, fetchExperimentDetails, onTrialUpdate }: Props,
 ) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
@@ -72,7 +72,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       );
       const firstTrial = expTrials.trials[0];
       if (firstTrial) {
-        if (onTrialLoad) onTrialLoad(firstTrial);
+        onTrialUpdate?.(firstTrial);
         setFirstTrialId(firstTrial.id);
       } else if (isTerminalExp) {
         setWontHaveTrials(true);
@@ -85,13 +85,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, experiment.id, experiment.state, onTrialLoad ]);
+  }, [ canceler, experiment.id, experiment.state, onTrialUpdate ]);
 
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
-
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
+      onTrialUpdate?.(response);
       setTrialDetails(response);
     } catch (e) {
       handleError(e, {
