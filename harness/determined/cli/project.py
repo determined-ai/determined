@@ -123,8 +123,8 @@ def describe_project(args: Namespace) -> None:
 @authentication.required
 def delete_project(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
-        'Deleting project "' + args.project_name + '" will result in the \n'
-        "unrecoverable deletion of all associated experiments. For a recoverable \n"
+        'Deleting project "' + args.project_name + '" will delete all notes and move all \n'
+        "associated experiments to the Uncategorized workspace. For a less impactful \n"
         "alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
