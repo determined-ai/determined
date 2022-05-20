@@ -13,8 +13,8 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
-import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
 } from 'types';

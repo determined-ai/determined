@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { paths } from 'routes/utils';
-import { getStateColorCssVar } from 'themes';
 import Icon from 'shared/components/Icon/Icon';
+import { getStateColorCssVar } from 'themes';
 import { ExperimentBase, TrialDetails } from 'types';
 
 import css from './TrialHeaderLeft.module.scss';

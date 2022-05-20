@@ -14,8 +14,8 @@ import {
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
-import { hasObjectKeys } from 'shared/utils/data';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { hasObjectKeys } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,

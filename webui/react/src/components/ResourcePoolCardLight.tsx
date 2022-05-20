@@ -10,9 +10,9 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
+import Icon from 'shared/components/Icon/Icon';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
-import Icon from 'shared/components/Icon/Icon';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 

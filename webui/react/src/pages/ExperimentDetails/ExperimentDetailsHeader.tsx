@@ -27,10 +27,10 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { getDuration } from 'shared/utils/datetime';
-import { getStateColorCssVar } from 'themes';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { getDuration } from 'shared/utils/datetime';
+import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';

@@ -10,8 +10,8 @@ import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
-import { isEqual } from 'shared/utils/data';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 

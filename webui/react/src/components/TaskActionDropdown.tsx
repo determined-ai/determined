@@ -13,8 +13,8 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { capitalize } from 'shared/utils/string';
 import Icon from 'shared/components/Icon/Icon';
+import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
@@ -22,8 +22,8 @@ import handleError from 'utils/error';
 import { isExperimentTask, isTaskKillable } from 'utils/task';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../shared/utils/error';
 import css from '../shared/components/ActionDropdown/ActionDropdown.module.scss';
+import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import Link from './Link';
 

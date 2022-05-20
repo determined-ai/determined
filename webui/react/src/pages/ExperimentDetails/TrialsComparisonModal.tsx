@@ -11,9 +11,9 @@ import SelectFilter from 'components/SelectFilter';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
-import Spinner from 'shared/components/Spinner/Spinner';
 import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';

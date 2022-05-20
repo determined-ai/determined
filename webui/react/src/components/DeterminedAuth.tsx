@@ -6,8 +6,8 @@ import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { Storage } from 'shared/utils/storage';
 import Icon from 'shared/components/Icon/Icon';
+import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
 import { ErrorType } from '../shared/utils/error';

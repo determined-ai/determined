@@ -8,9 +8,9 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
-import Icon from 'shared/components/Icon/Icon';
 import {
   CommandTask, CommandType, ExperimentItem, ModelItem, ModelVersion,
   StartEndTimes, TrialItem,

@@ -13,9 +13,9 @@ import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
-import Icon from 'shared/components/Icon/Icon';
 import { ModelVersion } from 'types';
 import { getDisplayName } from 'utils/user';
 

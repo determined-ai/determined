@@ -39,8 +39,8 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { isEqual } from 'shared/utils/data';
 import Icon from 'shared/components/Icon/Icon';
+import { isEqual } from 'shared/utils/data';
 import {
   ExperimentAction as Action, CommandTask, ExperimentItem, RunState,
 } from 'types';

@@ -24,9 +24,9 @@ import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon/Icon';
 import { isBoolean, isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
-import Icon from 'shared/components/Icon/Icon';
 import { ArchiveFilter, ModelItem } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';

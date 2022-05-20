@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import { humanReadableNumber } from 'shared/utils/number';
+
 import { CommonProps } from '../shared/types';
 
 interface Props extends CommonProps {
