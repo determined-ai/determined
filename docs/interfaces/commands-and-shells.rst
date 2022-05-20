@@ -15,17 +15,18 @@ write code conforming to the trial APIs. Commands are useful for running existin
 manner; shells provide access to the cluster in the form of interactive `SSH
 <https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
 
-This document provides an overview of the most common CLI commands related to shells and commands;
-see :ref:`cli` for full documentation.
+This document provides an overview of the most common CLI commands related to shells and commands.
 
 ********
 Commands
 ********
 
-The :ref:`command-line interface (CLI) <cli>` is distributed as a Python wheel package. After the
+CLI Reference: :doc:`/reference/determined/cli`
+
+The Command-Line Interface (CLI) is distributed as a Python wheel package. After the
 wheel is installed, use the CLI ``det`` command to interact with the cluster.
 
-Command-related CLI commands start with ``det command`` (which can be abbreviated to ``det cmd``).
+CLI commands start with ``det command``, abbreviated as ``det cmd``.
 The main subcommand is ``det cmd run``, which runs a command in the cluster and streams its output.
 For example, the following CLI command uses ``nvidia-smi`` to display information about the GPUs
 available to tasks in the container:

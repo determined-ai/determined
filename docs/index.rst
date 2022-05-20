@@ -11,7 +11,17 @@
    Features <intro/features/list>
    Concepts <intro/concepts/overview>
    System Architecture <intro/architecture/overview>
-   Determined Interfaces <intro/det-if/overview>
+
+.. toctree::
+   :caption: Determined Interfaces
+   :hidden:
+
+   WebUI Interface <interfaces/webui-if>
+   Commands and Shells <interfaces/commands-and-shells>
+   Python API <interfaces/python-api>
+   REST API <interfaces/rest-api>
+   Jupyter Notebooks <interfaces/notebooks>
+   TensorBoards <interfaces/tensorboard>
 
 .. toctree::
    :caption: Cluster Setup Guide

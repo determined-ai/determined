@@ -4,6 +4,8 @@
  Python API
 ############
 
+Python API Reference: :doc:`/reference/determined/python-api-reference`
+
 You can interact with a Determined cluster with the Python API.
 
 The client module exposes many of the same capabilities as the det CLI tool directly to Python code with an object-oriented interface.

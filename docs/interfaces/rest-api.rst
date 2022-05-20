@@ -4,11 +4,11 @@
  REST API
 ############
 
+REST API Reference: :doc:`/reference/determined/rest-api-reference`
+
 Determined's REST APIs provide a way for users and external tools to interact with a Determined
 cluster programmatically. Determined includes detailed documentation about all of the REST endpoints
 provided by the API, alongside a playground for interacting with the API.
-
-You can view the REST API reference documentation at: :doc:`/reference/determined/rest-api-reference`.
 
 We use `protobuf <https://developers.google.com/protocol-buffers>`_ to define language-agnostic
 message structures. We use these type definitions with `gRPC-gateway
