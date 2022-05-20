@@ -62,3 +62,9 @@ export interface RouteConfig extends RouteProps {
   suffixIcon?: string;
   title?: string;
 }
+
+export type CommonProps = {
+  children?: React.ReactNode;
+  className?: string;
+  title?: string;
+};
