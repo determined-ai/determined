@@ -101,7 +101,8 @@ With Determined you can:
 -  Use state-of-the-art distributed training to train models faster without changing your model
    code.
 -  Automatically find high-quality models using advanced hyperparameter tuning.
--  Get more from your GPUs with preemptible instances and smart scheduling to reduce cloud GPU costs.
+-  Get more from your GPUs with preemptible instances and smart scheduling to reduce cloud GPU
+   costs.
 -  Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code
    versions, metrics, checkpoints, and hyperparameters.
 
