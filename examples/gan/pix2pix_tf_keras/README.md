@@ -36,10 +36,10 @@ python export.py --master-url <host:port> --trial-id <trial_id> [--latest]
 ```
 
 The following image was created using a model trained with `const.yaml`.
-![Example Generated Image](./generated_example.jpeg)
+![Example Generated Image](./images/generated_example.jpeg)
 
 ## Results
 The following plots show differences in performance made when utilizing GPUs with the Determined distributed system.
-![Cumulative Batches vs. Time](./batches_vs_time.png)
-![Training Loss vs. Time](./training_loss_vs_time.png)
-![Validation Loss vs. Time](./validation_loss_vs_time.png)
+![Cumulative Batches vs. Time](./images/batches_vs_time.png)
+![Training Loss vs. Time](./images/training_loss_vs_time.png)
+![Validation Loss vs. Time](./images/validation_loss_vs_time.png)
