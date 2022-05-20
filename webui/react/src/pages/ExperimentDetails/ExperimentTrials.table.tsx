@@ -51,6 +51,12 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'Duration',
   },
   {
+    dataIndex: 'restarts',
+    key: V1GetExperimentTrialsRequestSortBy.RESTARTS,
+    sorter: true,
+    title: 'Restarts',
+  },
+  {
     key: 'checkpoint',
     title: 'Checkpoint',
   },

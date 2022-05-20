@@ -276,6 +276,7 @@ export interface ExperimentConfig {
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];
+  maxRestarts: number;
   name: string;
   profiling?: {
     enabled: boolean;
@@ -433,6 +434,7 @@ export interface TrialItem extends StartEndTimes {
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
+  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }
