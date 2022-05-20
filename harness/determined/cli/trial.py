@@ -255,6 +255,7 @@ logs_args_description = [
         dest="level",
         help="show logs with this level or higher "
         + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     ),
     Arg(
         "--source",
