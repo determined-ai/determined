@@ -179,6 +179,8 @@ SELECT
         SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
     ) r
   ) AS total_checkpoint_size,
+  -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
+  -- so trials in terminal state have restarts = max + 1
   LEAST(t.restarts, max_restarts) as restarts
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id

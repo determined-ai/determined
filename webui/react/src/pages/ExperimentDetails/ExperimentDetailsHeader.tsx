@@ -63,7 +63,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const classes = [ css.state ];
 
   const maxRestarts = experiment.config.maxRestarts;
-  const restarts = Math.min(trial?.restarts ?? 0, maxRestarts);
+  const restarts = trial?.restarts ?? 0;
 
   const isPausable = pausableRunStates.has(experiment.state);
   const isPaused = experiment.state === RunState.Paused;

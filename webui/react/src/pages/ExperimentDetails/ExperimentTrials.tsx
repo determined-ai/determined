@@ -103,10 +103,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
     const restartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const maxRestarts = experiment.config.maxRestarts ?? 0;
-      const restarts = Math.min(record.restarts, maxRestarts);
-      const className = restarts ? css.hasRestarts : undefined;
+      const className = record.restarts ? css.hasRestarts : undefined;
       return (
-        <span className={className}>{restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+        <span className={className}>{record.restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
       );
     };
 
