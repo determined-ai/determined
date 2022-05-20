@@ -2,8 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"regexp"
-	"strconv"
 
 	"github.com/docker/docker/api/types"
 
@@ -47,38 +45,6 @@ func DefaultTaskContainerDefaults() *TaskContainerDefaultsConfig {
 	}
 }
 
-func validatePortRange(portRange string) []error {
-	var errs []error
-
-	if portRange == "" {
-		return errs
-	}
-
-	re := regexp.MustCompile("^([0-9]+):([0-9]+)$")
-	submatches := re.FindStringSubmatch(portRange)
-	if submatches == nil {
-		errs = append(
-			errs, errors.Errorf("expected port range of format \"MIN:MAX\" but got %q", portRange),
-		)
-		return errs
-	}
-
-	var min, max uint64
-	var err error
-	if min, err = strconv.ParseUint(submatches[1], 10, 16); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid minimum port value"))
-	}
-	if max, err = strconv.ParseUint(submatches[2], 10, 16); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid maximum port value"))
-	}
-
-	if min > max {
-		errs = append(errs, errors.Errorf("port range minimum exceeds maximum (%v > %v)", min, max))
-	}
-
-	return errs
-}
-
 // UnmarshalJSON implements the json.Unmarshaler interface.
 // Setting defaults here is necessary over our usual "Define a default struct and unmarshal into it"
 // strategy because there are places (resource pool configs) where we need to know if the task
@@ -104,14 +70,6 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 	errs := []error{
 		check.GreaterThan(c.ShmSizeBytes, int64(0), "shm_size_bytes must be >= 0"),
 		check.NotEmpty(string(c.NetworkMode), "network_mode must be set"),
-	}
-
-	if err := validatePortRange(c.NCCLPortRange); err != nil {
-		errs = append(errs, err...)
-	}
-
-	if err := validatePortRange(c.GLOOPortRange); err != nil {
-		errs = append(errs, err...)
 	}
 
 	errs = append(errs, validatePodSpec(c.CPUPodSpec)...)
