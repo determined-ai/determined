@@ -203,6 +203,74 @@ def create_json_file_in_dir(content: typing.Any, file_path: str) -> None:
         json.dump(content, f)
 
 
+logs_args_description = [
+    Arg(
+        "-f",
+        "--follow",
+        action="store_true",
+        help="follow the logs of a running trial, similar to tail -f",
+    ),
+    Group(
+        Arg(
+            "--head",
+            type=int,
+            help="number of lines to show, counting from the beginning "
+            "of the log (default is all)",
+        ),
+        Arg(
+            "--tail",
+            type=int,
+            help="number of lines to show, counting from the end " "of the log (default is all)",
+        ),
+    ),
+    Arg(
+        "--agent-id",
+        dest="agent_ids",
+        action="append",
+        help="agents to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--container-id",
+        dest="container_ids",
+        action="append",
+        help="containers to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--rank-id",
+        dest="rank_ids",
+        type=int,
+        action="append",
+        help="containers to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--timestamp-before",
+        help="show logs only from before (RFC 3339 format)," " e.g. '2021-10-26T23:17:12Z'",
+    ),
+    Arg(
+        "--timestamp-after",
+        help="show logs only from after (RFC 3339 format)," " e.g. '2021-10-26T23:17:12Z'",
+    ),
+    Arg(
+        "--level",
+        dest="level",
+        help="show logs with this level or higher "
+        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    ),
+    Arg(
+        "--source",
+        dest="sources",
+        action="append",
+        help="sources to show logs from (repeat for multiple values)",
+    ),
+    Arg(
+        "--stdtype",
+        dest="stdtypes",
+        action="append",
+        help="output stream to show logs from (repeat for multiple values)",
+    ),
+]  # type: List[Any]
+
 args_description = [
     Cmd(
         "t|rial",
@@ -299,74 +367,8 @@ args_description = [
                 "fetch trial logs",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
-                    Arg(
-                        "-f",
-                        "--follow",
-                        action="store_true",
-                        help="follow the logs of a running trial, similar to tail -f",
-                    ),
-                    Group(
-                        Arg(
-                            "--head",
-                            type=int,
-                            help="number of lines to show, counting from the beginning "
-                            "of the log (default is all)",
-                        ),
-                        Arg(
-                            "--tail",
-                            type=int,
-                            help="number of lines to show, counting from the end "
-                            "of the log (default is all)",
-                        ),
-                    ),
-                    Arg(
-                        "--agent-id",
-                        dest="agent_ids",
-                        action="append",
-                        help="agents to show logs from (repeat for multiple values)",
-                    ),
-                    Arg(
-                        "--container-id",
-                        dest="container_ids",
-                        action="append",
-                        help="containers to show logs from (repeat for multiple values)",
-                    ),
-                    Arg(
-                        "--rank-id",
-                        dest="rank_ids",
-                        type=int,
-                        action="append",
-                        help="containers to show logs from (repeat for multiple values)",
-                    ),
-                    Arg(
-                        "--timestamp-before",
-                        help="show logs only from before (RFC 3339 format),"
-                        " e.g. '2021-10-26T23:17:12Z'",
-                    ),
-                    Arg(
-                        "--timestamp-after",
-                        help="show logs only from after (RFC 3339 format),"
-                        " e.g. '2021-10-26T23:17:12Z'",
-                    ),
-                    Arg(
-                        "--level",
-                        dest="level",
-                        help="show logs with this level or higher "
-                        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-                    ),
-                    Arg(
-                        "--source",
-                        dest="sources",
-                        action="append",
-                        help="sources to show logs from (repeat for multiple values)",
-                    ),
-                    Arg(
-                        "--stdtype",
-                        dest="stdtypes",
-                        action="append",
-                        help="output stream to show logs from (repeat for multiple values)",
-                    ),
-                ],
+                ]
+                + logs_args_description,
             ),
             Cmd(
                 "kill", kill_trial, "forcibly terminate a trial", [Arg("trial_id", help="trial ID")]
