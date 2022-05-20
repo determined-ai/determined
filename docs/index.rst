@@ -17,7 +17,8 @@
    :caption: Cluster Setup Guide
    :hidden:
 
-   Requirements <cluster-setup-guide/requirements>
+   Getting Started <cluster-setup-guide/getting-started>
+   Network Requirements <cluster-setup-guide/requirements>
    General Environement Setup and Configuration <cluster-setup-guide/env-setup>
    Deploy a Cluster <cluster-setup-guide/deploy-cluster/overview>
    Cluster Configuration <cluster-setup-guide/cluster-config>
@@ -77,7 +78,7 @@
    Model Hub APIs <reference/modelhub/overview>
    Python API <reference/determined/python-api-reference>
    REST API <reference/determined/rest-api-reference>
-   Command Line Interface (CLI) <reference/cli>
+   Command Line Interface (CLI) <reference/determined/cli>
    attributions
 
 #############################
@@ -125,7 +126,7 @@ environment so you can spend your time building models instead of managing infra
               <h2 class="tile-title">Introduction to Determined</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
-          <a class="tile" href="cluster-setup-guide/requirements.html">
+          <a class="tile" href="cluster-setup-guide/getting-started.html">
               <h2 class="tile-title">Cluster Setup Guide</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
