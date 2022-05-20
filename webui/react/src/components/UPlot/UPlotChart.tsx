@@ -4,6 +4,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
+import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/Message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
@@ -49,7 +50,8 @@ const shouldRecreate = (
   const someAxisLabelHasChanged =
     prev.axes?.some((prevAxis, seriesIdx) => {
       const nextAxis = next.axes?.[seriesIdx];
-      return prevAxis.label !== nextAxis?.label;
+      return prevAxis.label !== nextAxis?.label
+      || (prevAxis.stroke !== nextAxis?.stroke);
     });
   if (someAxisLabelHasChanged) return true;
 
@@ -80,6 +82,7 @@ const UPlotChart: React.FC<Props> = ({
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
+  const { theme } = useTheme();
 
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
@@ -87,8 +90,8 @@ const UPlotChart: React.FC<Props> = ({
 
   const previousOptions = usePrevious(options, undefined);
 
-  const extendedOptions = useMemo(() =>
-    uPlot.assign(
+  const extendedOptions = useMemo(() => {
+    const extended = uPlot.assign(
       {
         hooks: {
           destroy: [ () => setIsReady(false), () => setZoomed(false) ],
@@ -99,7 +102,22 @@ const UPlotChart: React.FC<Props> = ({
       },
       boundsOptions || {},
       options || {},
-    ), [ options, boundsOptions, setZoomed ]) as uPlot.Options;
+    ) as Options;
+    if (theme && extended.axes) {
+      const borderColor = theme.surfaceBorderWeak;
+      const labelColor = theme.surfaceOn;
+      extended.axes = extended.axes.map(axis => {
+        return {
+          ...axis,
+          border: { stroke: borderColor },
+          grid: { stroke: borderColor },
+          stroke: labelColor,
+          ticks: { stroke: borderColor },
+        };
+      });
+    }
+    return extended;
+  }, [ options, boundsOptions, setZoomed ]) as uPlot.Options;
 
   useEffect(() => {
     return () => {
