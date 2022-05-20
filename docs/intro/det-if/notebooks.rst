@@ -4,6 +4,29 @@
  Jupyter Notebooks
 ##################
 
+`Jupyter Notebooks <https://jupyter.org/>`__ are a convenient way to develop and debug machine
+learning models, visualize the behavior of trained models, or even manage the training lifecycle of
+a model manually. Determined makes it easy to launch and manage notebooks.
+
+Determined Notebooks have the following benefits:
+
+-  Jupyter Notebooks run in containerized environments on the cluster. We can easily manage
+   dependencies using images and virtual environments. The HTTP requests are passed through the
+   master proxy from and to the container.
+
+-  Jupyter Notebooks are automatically terminated if they are idle for a configurable duration to
+   release resources. A notebook instance is considered to be idle if it is not receiving any HTTP
+   traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in the
+   :ref:`task configuration <command-notebook-configuration>`).
+
+After a Notebook is terminated, it is not possible to restore the files that are not stored in the
+persistent directories. **You need to ensure that the cluster is configured to mount persistent
+directories into the container and save files in the persistent directories in the container.**
+See :ref:`notebook-state` for more information.
+
+If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
+shut down automatically so you need to manually terminate the kernels.
+
 There are two ways to access notebooks in Determined: the command-line interface (CLI) and the
 WebUI. To install the CLI, see :ref:`install-cli`.
 

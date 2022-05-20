@@ -105,11 +105,11 @@ With Determined you can:
    costs.
 -  Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code
    versions, metrics, checkpoints, and hyperparameters.
+-  Continue using popular deep learning libraries, such as TensorFlow, Keras, and PyTorch by simply
+   integrating the Determined API with your existing model code.
 
 Determined integrates these features into an easy-to-use, high-performance deep learning
-environment. Spend your time building models instead of managing infrastructure. At the same time,
-continue using popular deep learning libraries, such as TensorFlow , Keras, and PyTorch by simply
-integrating the Determined API with your existing model code.
+environment. Spend your time building models instead of managing infrastructure.
 
 |
 
