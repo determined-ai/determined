@@ -117,7 +117,7 @@ const UPlotChart: React.FC<Props> = ({
       });
     }
     return extended;
-  }, [ options, boundsOptions, setZoomed ]) as uPlot.Options;
+  }, [ options, boundsOptions, setZoomed, theme ]) as uPlot.Options;
 
   useEffect(() => {
     return () => {
