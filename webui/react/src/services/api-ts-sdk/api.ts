@@ -5979,10 +5979,30 @@ export interface V1SummarizeTrialResponse {
     trial: Trialv1Trial;
     /**
      * The downsampled datapoints.
-     * @type {Array<V1DataPoint>}
+     * @type {Array<V1SummarizedMetric>}
      * @memberof V1SummarizeTrialResponse
      */
-    data: Array<V1DataPoint>;
+    metrics: Array<V1SummarizedMetric>;
+}
+
+/**
+ * Summarized Metric captures a metric's name and downsampled data points.
+ * @export
+ * @interface V1SummarizedMetric
+ */
+export interface V1SummarizedMetric {
+    /**
+     * Name of the selected metric.
+     * @type {string}
+     * @memberof V1SummarizedMetric
+     */
+    name?: string;
+    /**
+     * A possibly down-sampled series of metric readings through the progress of the trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1SummarizedMetric
+     */
+    data?: Array<V1DataPoint>;
 }
 
 /**

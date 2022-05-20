@@ -15,6 +15,19 @@ import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Summarized Metric captures a metric's name and downsampled data points.
+message SummarizedMetric {
+  // Name of the selected metric.
+  string name = 1;
+
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial.
+  repeated DataPoint data = 2;
+
+  // Type of metrics (training, validation, or unset).
+  MetricType type = 3;
+}
+
 // WorkloadContainer is a wrapper for Determined workloads to allow repeated
 // oneof types.
 message WorkloadContainer {
@@ -319,12 +332,12 @@ message SummarizeTrialRequest {
 // Response to SummarizeTrialRequest.
 message SummarizeTrialResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "data", "trial" ] }
+    json_schema: { required: [ "metrics", "trial" ] }
   };
   // The requested trial.
   determined.trial.v1.Trial trial = 1;
   // The downsampled datapoints.
-  repeated DataPoint data = 2;
+  repeated SummarizedMetric metrics = 2;
 }
 
 // Long poll for updates to the preemption status for an allocation.

@@ -520,65 +520,74 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) MultiTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
-	maxDatapoints int, startBatches int, endBatches int) (*apiv1.TrialsSampleResponse_Trial, error) {
+func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m apiv1.SummarizedMetric,
+	metricSeries []lttb.Point) []*apiv1.SummarizedMetric {
+	for _, in := range metricSeries {
+		out := apiv1.DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		m.Data = append(m.Data, &out)
+	}
+	if len(m.Data) > 0 {
+		return append(metrics, &m)
+	}
+	return metrics
+}
+
+func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
+	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
+	endBatches int) ([]*apiv1.SummarizedMetric, error) {
 	var metricSeries []lttb.Point
 	var startTime time.Time
-	var endTime time.Time
+	// var endTime time.Time
 	var err error
-	var trial apiv1.TrialsSampleResponse_Trial
-	trial.TrialId = trialID
-	trialCursors := make(map[int32]time.Time)
 
-	switch metricType {
-	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.MetricsSeries(trialID, startTime,
-			"training", metricName, startBatches, endBatches)
-	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.MetricsSeries(trialID, startTime,
-			"validation", metricName, startBatches, endBatches)
-	}
+	var metrics []*apiv1.SummarizedMetric
 
-	if err != nil {
-		return nil, errors.Wrapf(err, "error fetching time series of metrics")
-	}
-	if len(metricSeries) > 0 {
-		// if we get empty results, the endTime is incorrectly zero
-		trialCursors[trialID] = endTime
-	}
-	metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+	for _, name := range metricNames {
+		var metric apiv1.SummarizedMetric
+		metric.Name = name
 
-	var pts []*map[string]interface{}
-	for _, in := range metricSeries {
-		var out map[string]interface{}
-		out["Batches"] = int32(in.X)
-		out[metricName] = in.Y
-		append(pts, &out)
-		// trial.Data = append(trial.Data, &out)
+		if metricType != apiv1.MetricType_METRIC_TYPE_VALIDATION {
+			metricSeries, _, err = a.m.db.TrainingMetricsSeries(trialID, startTime, name, startBatches,
+				endBatches)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
+			}
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+			metrics = a.appendToMetrics(metrics, metric, metricSeries)
+		}
+		if metricType != apiv1.MetricType_METRIC_TYPE_TRAINING {
+			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,
+				endBatches)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+			}
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+			metrics = a.appendToMetrics(metrics, metric, metricSeries)
+		}
 	}
-	trial.Data = pts
-	return &trial, nil
+	return metrics, nil
 }
 
 func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto(
-		"proto_get_trials_plus",
-		resp.Trial,
-		"{"+strconv.Itoa(int(req.TrialId))+"}",
-	); {
+	switch err := a.m.db.QueryProto("get_trial", resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 
-	tsample, err := a.MultiTrialSample(req.TrialId, "loss", apiv1.MetricType_METRIC_TYPE_TRAINING,
+	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
 		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
-	resp.Data = tsample.Data
+	resp.Metrics = tsample
 
 	return resp, nil
 }

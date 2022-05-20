@@ -5124,23 +5124,45 @@ class v1Slot:
 class v1SummarizeTrialResponse:
     def __init__(
         self,
-        data: "typing.Sequence[v1DataPoint]",
+        metrics: "typing.Sequence[v1SummarizedMetric]",
         trial: "trialv1Trial",
     ):
         self.trial = trial
-        self.data = data
+        self.metrics = metrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            metrics=[v1SummarizedMetric.from_json(x) for x in obj["metrics"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "data": [x.to_json() for x in self.data],
+            "metrics": [x.to_json() for x in self.metrics],
+        }
+
+class v1SummarizedMetric:
+    def __init__(
+        self,
+        data: "typing.Optional[typing.Sequence[v1DataPoint]]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SummarizedMetric":
+        return cls(
+            name=obj.get("name", None),
+            data=[v1DataPoint.from_json(x) for x in obj["data"]] if obj.get("data", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+            "data": [x.to_json() for x in self.data] if self.data is not None else None,
         }
 
 class v1Task:
