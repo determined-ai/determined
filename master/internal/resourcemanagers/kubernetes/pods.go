@@ -699,6 +699,7 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 }
 
 func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
-	requested := float32(c.Resources.Requests.Cpu().MilliValue()) / (1000. * p.slotResourceRequests.CPU)
+	requested := float32(c.Resources.Requests.Cpu().MilliValue()) /
+		(1000. * p.slotResourceRequests.CPU)
 	return int64(requested)
 }

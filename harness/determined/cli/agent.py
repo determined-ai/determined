@@ -78,17 +78,21 @@ def list_slots(args: argparse.Namespace) -> None:
     }
 
     def get_task_name(containers: Dict[str, Any], slot: Dict[str, Any]) -> str:
+        if not slot["container"]:
+            return "FREE"
+
         container_id = slot["container"]["id"]
+
         if slot["container"] and container_id in containers:
             return str(containers[container_id]["name"])
+
         if slot["container"] and (
-            "determined-master-deployment" in container_id
-            or "determined-db-deployment" in container_id
+                "determined-master-deployment" in container_id
+                or "determined-db-deployment" in container_id
         ):
             return f"Determined System Task: {container_id}"
-        if slot["container"]:
-            return f"Non-Determined Task: {container_id}"
-        return "FREE"
+
+        return f"Non-Determined Task: {container_id}"
 
     slots = [
         OrderedDict(
@@ -101,8 +105,8 @@ def list_slots(args: argparse.Namespace) -> None:
                 (
                     "allocation_id",
                     c_names[slot["container"]["id"]]["allocation_id"]
-                    if slot["container"]
-                    else "FREE",
+                    if slot["container"] and slot["container"]["id"] in c_names
+                    else ("OCCUPIED" if slot["container"] else "FREE"),
                 ),
                 ("task_name", get_task_name(c_names, slot)),
                 ("type", slot["device"]["type"]),
