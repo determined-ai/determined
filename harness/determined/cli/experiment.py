@@ -443,7 +443,7 @@ def experiment_logs(args: Namespace) -> None:
         print("No trials")
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
-    
+
     api.pprint_trial_logs(
         args.master,
         first_trial_id,
@@ -832,7 +832,7 @@ main_cmd = Cmd(
         Cmd(
             "logs",
             experiment_logs,
-            "fetch experiment logs",
+            "fetch logs of the first trial of an experiment",
             [
                 experiment_id_arg("experiment ID"),
             ]

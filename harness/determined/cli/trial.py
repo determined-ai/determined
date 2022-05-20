@@ -202,7 +202,7 @@ def create_json_file_in_dir(content: typing.Any, file_path: str) -> None:
     with open(file_path, "w") as f:
         json.dump(content, f)
 
-        
+
 logs_args_description = [
     Arg(
         "-f",
@@ -268,8 +268,8 @@ logs_args_description = [
         action="append",
         help="output stream to show logs from (repeat for multiple values)",
     ),
-]
-        
+]  # type: List[Any]
+
 args_description = [
     Cmd(
         "t|rial",
@@ -375,4 +375,3 @@ args_description = [
         ],
     ),
 ]  # type: List[Any]
-
