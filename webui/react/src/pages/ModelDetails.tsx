@@ -22,7 +22,7 @@ import {
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
 import { isEqual } from 'shared/utils/data';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';

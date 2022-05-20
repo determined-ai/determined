@@ -16,7 +16,7 @@ import {
 } from 'services/api';
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
 import { isEqual, validateEnumList } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
 import {

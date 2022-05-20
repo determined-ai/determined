@@ -10,7 +10,7 @@ import Page from 'components/Page';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } from 'services/api';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
 import { isEqual } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
 import Spinner from 'shared/components/Spinner/Spinner';
