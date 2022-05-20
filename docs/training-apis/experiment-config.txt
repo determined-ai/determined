@@ -98,11 +98,11 @@ Example:
 
    entrypoint: python3 -m (LAUNCH_MODULE) train.py
 
-``LAUNCH_MODULE`` options: [need literals for these]
+``LAUNCH_MODULE`` options:
 
--  Horovod
--  PyTorch
--  Deepspeed
+-  Horovod (determined.launch.horovod)
+-  PyTorch (determined.launch.torch_distributed)
+-  Deepspeed (determined.launch.deepspeed)
 
 Preconfigured Launch Module with Legacy Trial Definition
 ========================================================
@@ -117,9 +117,9 @@ Example:
 
 ``LAUNCH_MODULE`` options: [need literals for these]
 
--  Horovod
--  PyTorch
--  Deepspeed
+-  Horovod (determined.launch.horovod)
+-  PyTorch (determined.launch.torch_distributed)
+-  Deepspeed (determined.launch.deepspeed)
 
 Legacy Trial Definition
 =======================
