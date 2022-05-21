@@ -21,12 +21,9 @@
 -  ``container-master-port``: Master port that containers started by this agent will connect to.
    Defaults to the value of ``master_port``.
 
--  ``resource_pool``: Which resource pool the agent should join. Defaults to the value of
-   ``default``, which will work if and only if there is a resource pool named ``default``. If you
-   are using the old version of the master configuration (which predates resource pools) a resource
-   pool named ``default`` is automatically created. If you are using the new version of the master
-   configuration and have specified resource pools, this field will need to be set correctly for the
-   agent to join successfully. For more information please see :ref:`resource-pools`.
+-  ``resource_pool``: Which resource pool the agent should join. Defaults to the
+      value of ``default``, which will work if and only if there is a resource pool named
+      ``default``. For more information please see :ref:`resource-pools`.
 
 -  ``label``: The label to assign to this agent. An agent with a label will only be assigned
    workloads that have been assigned the same label (e.g., via the :ref:`agent_label
@@ -76,3 +73,20 @@
       -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
          value of the ``master_host`` option is an IP address or is not contained in the
          certificate.
+
+-  ``fluent``: fluentd settings.
+      -  ``image``: Docker image to use for the managed Fluent Bit daemon. Defaults to
+         ``fluent/fluent-bit:1.9.3``.
+      -  ``port``: TCP port for the Fluent Bit daemon to listen on. Defaults to 24224. When running
+         multiple agents on the same node, should be unique.
+      -  ``container_name``: Name for the Fluent Bit container. Defaults to ``determined-fluent``.
+         When running multiple agents on the same node, should be unique.
+
+-  ``agent_reconnect_attempts``: Maximum number of times agent will attempt to reconnect to master
+   on connection failure. Defaults to 5.
+
+-  ``agent_reconnect_backoff``: Time interval between reconnection attempts, in seconds. Defaults to
+   5 seconds.
+
+-  ``container_auto_remove_disabled`` (debug): Whether to disable setting ``AutoRemove`` flag on
+   task containers. Defaults to false.

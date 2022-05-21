@@ -16,8 +16,8 @@ The master supports the following configuration settings:
 
 -  ``config_file``: Path to the master configuration file. Normally this should only be set via an
    environment variable or command-line option. Defaults to ``/etc/determined/master.yaml``.
--  ``port``: The TCP port on which the master accepts all incoming connections. Defaults to
-   ``8080``.
+-  ``port``: The TCP port on which the master accepts incoming connections. If TLS has been enabled,
+   defaults to ``8443``; otherwise defaults to ``8080``.
 
 .. _master-task-container-defaults:
 
@@ -63,10 +63,10 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12`` for
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` for
          NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.12`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12`` for
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for
          CPUs.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
@@ -140,7 +140,7 @@ The master supports the following configuration settings:
                   first.
 
                -  ``default_priority``: The priority that is assigned to tasks that do not specify a
-                  priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
+                  priority. Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
          -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
             cluster. Defaults to ``best``.
@@ -152,18 +152,18 @@ The master supports the following configuration settings:
 
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
-         resource pool is specified. Prior to 0.16.1, this field was called
-         ``default_cpu_resource_pool``.
+         resource pool is specified.
 
       -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
-         is specified. Prior to 0.16.1, this field was called ``default_gpu_resource_pool``.
+         is specified.
 
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
       cluster. The Determined master must be running within the Kubernetes cluster. When using the
-      ``kubernetes`` resource provider, we recommend deploying Determined using the :ref:`Determined
+      ``kubernetes`` resource manager, we recommend deploying Determined using the :ref:`Determined
       Helm Chart <install-on-kubernetes>`. When installed via Helm, the configuration settings below
-      will be set automatically.
+      will be set automatically. For more information on using Determined with Kubernetes, see the
+      :ref:`documentation <determined-on-kubernetes>`.
 
       -  ``namespace``: The namespace where Determined will deploy Pods and ConfigMaps.
 
@@ -185,15 +185,17 @@ The master supports the following configuration settings:
             ``slot_resource_requests.cpu`` option is required to specify the specific amount of the
             resources.
 
-      -  ``slot_resource_requests``: - ``cpu``: number of kubernetes CPUs to request per compute
-         slot.
+      -  ``slot_resource_requests``: Supports customizing the resource requests made when scheduling
+         Kubernetes pods.
+
+         -  ``cpu``: The number of Kubernetes CPUs to request per compute slot.
 
       -  ``master_service_name``: The service account Determined uses to interact with the
          Kubernetes API.
 
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
-            -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.6``.
+         -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -205,8 +207,14 @@ The master supports the following configuration settings:
    -  ``description``: The description of the resource pool.
 
    -  ``max_aux_containers_per_agent``: The maximum number of auxiliary or system containers that
-      can be scheduled on each agent in this pool. Prior to 0.16.1, this field was called
-      ``max_cpu_containers_per_agent``.
+      can be scheduled on each agent in this pool.
+
+   -  ``agent_reconnect_wait``: Maximum time the master should wait for a disconnected agent before
+      considering it dead.
+
+   -  ``agent_reattach_enabled`` (experimental): Whether master & agent try to recover running
+      containers after a restart. On master or agent process restart, the agent must reconnect
+      within ``agent_reconnect_wait`` period.
 
    -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
       overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
@@ -239,7 +247,7 @@ The master supports the following configuration settings:
                first.
 
             -  ``default_priority``: The priority that is assigned to tasks that do not specify a
-               priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
+               priority. Can be configured to 1 to 99 inclusively. Defaults to ``42``.
 
       -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
          cluster. Defaults to ``best``.
@@ -301,14 +309,14 @@ The master supports the following configuration settings:
          such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is
          ``20m``.
 
-      -  ``max_agent_starting_period``: How long to wait for agents starting before retrying. This
-         string is a sequence of decimal numbers, each with optional fraction and a unit suffix,
-         such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is
-         ``20m``.
+      -  ``max_agent_starting_period``: How long to wait for agents to start up before retrying.
+         This string is a sequence of decimal numbers, each with optional fraction and a unit
+         suffix, such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default
+         value is ``20m``.
 
-      -  ``min_instances``: Min number of Determined agent instances. Defaults to 0.
+      -  ``min_instances``: Min number of Determined agent instances. Defaults to ``0``.
 
-      -  ``max_instances``: Max number of Determined agent instances. Defaults to 5.
+      -  ``max_instances``: Max number of Determined agent instances. Defaults to ``5``.
 
       -  ``type: aws``: Specifies running dynamic agents on AWS. (*Required*)
 
@@ -329,7 +337,7 @@ The master supports the following configuration settings:
 
          -  ``custom_tags``: List of arbitrary user-defined tags that are added to the Determined
             agent instances and do not affect how Determined works. Each tag must specify ``key``
-            and ``value`` fields. Defaults to empty list.
+            and ``value`` fields. Defaults to the empty list.
 
             -  ``key``: Key of custom tag.
             -  ``value``: value of custom tag.
@@ -473,7 +481,7 @@ The master supports the following configuration settings:
             is ``5m``.
 
 -  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
-   on a per-experiment basis in the :ref:`experiment-config-reference`. A checkpoint contains the
+   on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the
    architecture and weights of the model being trained. Determined currently supports several kinds
    of checkpoint storage, ``gcs``, ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
    ``type`` subfield.
@@ -513,8 +521,8 @@ The master supports the following configuration settings:
       -  ``bucket``: The S3 bucket name to use.
       -  ``access_key``: The AWS access key to use.
       -  ``secret_key``: The AWS secret key to use.
-      -  ``prefix``: The optional path prefix to use. Must not contain `..`. Note: Prefix is
-         normalized, e.g., `/pre/.//fix` -> `/pre/fix`
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
       -  ``endpoint_url``: The optional endpoint to use for S3 clones, e.g.,
          ``http://127.0.0.1:8080/``.
 
@@ -553,10 +561,24 @@ The master supports the following configuration settings:
 -  ``db``: Specifies the configuration of the database.
 
    -  ``user``: The database user to use when logging in the database. (*Required*)
+
    -  ``password``: The password to use when logging in the database. (*Required*)
+
    -  ``host``: The database host to use. (*Required*)
+
    -  ``port``: The database port to use. (*Required*)
+
    -  ``name``: The database name to use. (*Required*)
+
+   -  ``ssl_mode``: The SSL mode to use. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS>`__ for
+      the list of possible values and their meanings. Defaults to ``disable``. In order to ensure
+      that SSL is used, this should be set to ``require``, ``verify-ca``, or ``verify-full``.
+
+   -  ``ssl_root_cert``: The location of the root certificate file to use for verifying the server's
+      certificate. See the `PostgreSQL documentation
+      <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBQ-SSL-CERTIFICATES>`__ for more
+      information about certificate verification. Defaults to ``~/.postgresql/root.crt``.
 
 -  ``security``: Specifies security-related configuration settings.
 
