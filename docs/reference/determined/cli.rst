@@ -4,6 +4,8 @@
  Command-line Interface (CLI) Reference
 #######################################
 
+CLI user guide: :doc:`/interfaces/commands-and-shells`
+
 .. code:: bash
 
    usage: det [-h] [-u username] [-m address] [-v] command ...

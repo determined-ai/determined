@@ -156,8 +156,8 @@ environment so you can spend your time building models instead of managing infra
               <h2 class="tile-title">Example Solutions</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
-          <a class="tile" href="model-hub-library/transformers/overview.html">
-              <h2 class="tile-title">Model Hub Library</h2>
+          <a class="tile" href="interfaces/python-api.html">
+              <h2 class="tile-title">Python API</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
       </div>

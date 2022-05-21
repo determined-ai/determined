@@ -2,6 +2,8 @@
  Estimator API Reference
 #########################
 
+Estimator user guide: :doc:`/training/apis-howto/api-estimator-qs`
+
 *****************************************
  ``determined.estimator.EstimatorTrial``
 *****************************************

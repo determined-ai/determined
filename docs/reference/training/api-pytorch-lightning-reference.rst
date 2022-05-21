@@ -2,8 +2,11 @@
  PyTorch Lightning API Reference
 #################################
 
+PyTorch Lightning user guide: :doc:`/training/apis-howto/api-pytorch-lightning-qs`
+
+*************************************************
 ``determined.pytorch.lightning.LightningAdapter``
-=================================================
+*************************************************
 
 .. autoclass:: determined.pytorch.lightning.LightningAdapter
    :members:

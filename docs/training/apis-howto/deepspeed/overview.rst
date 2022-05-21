@@ -2,6 +2,8 @@
 DeepSpeed API Quickstart
 ########################
 
+DeepSpeed API reference: :doc:`/reference/training/api-deepspeed-reference`
+
 `DeepSpeed <https://deepspeed.ai/>`_ is a Microsoft library that supports large-scale,
 distributed learning with sharded optimizer state training and pipeline parallelism.  Determined
 supports DeepSpeed with the :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` API.

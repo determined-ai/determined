@@ -4,6 +4,8 @@
 DeepSpeed API Reference
 #########################
 
+DeepSpeed user guide: :doc:`/training/apis-howto/deepspeed/overview`
+
 *************************************************
  ``determined.pytorch.deepspeed.DeepSpeedTrial``
 *************************************************

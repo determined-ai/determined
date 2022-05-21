@@ -4,7 +4,9 @@
  REST API Reference
 #####################
 
-REST API Reference: `Determined API <../../rest-api/index.html>`__.
+REST API Reference: `Determined API <../../rest-api/index.html>`__
+
+REST API User Guide: :doc:`/interfaces/rest-api`
 
 The documentation lists available endpoints grouped by workflow. Click on an endpoint method to see the expected input parameters and response. You can also the **Try it out** button to make an HTTP request against the endpoint. For an interactive request, you need to have the appropriate cookie set and a running cluster.
 

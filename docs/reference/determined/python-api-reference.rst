@@ -4,8 +4,7 @@
  Python API Reference
 #####################
 
-You can interact with a Determined cluster with the Python API. Here are the classes that we
-provide.
+Python API user guide: :doc:`/interfaces/python-api`
 
 ************
  ``Client``

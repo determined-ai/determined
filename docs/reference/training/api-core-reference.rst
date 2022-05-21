@@ -4,6 +4,8 @@
 Core API Reference
 #########################
 
+Core API user guide: :doc:`/training/apis-howto/api-core/overview`
+
 **************************
  ``determined.core.init``
 **************************

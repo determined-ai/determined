@@ -2,6 +2,8 @@
  PyTorch API Quickstart
 ########################
 
+PyTorch API reference: :doc:`/reference/training/api-pytorch-reference`
+
 This document guides you through training a PyTorch model in Determined. You need to implement a
 trial class that inherits :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint
 in the :doc:`experiment configuration </reference/config/experiment-config-reference>`.

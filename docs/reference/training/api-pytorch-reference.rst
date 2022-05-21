@@ -2,6 +2,8 @@
  PyTorch API Reference
 #######################
 
+PyTorch user guide: :doc:`/training/apis-howto/api-pytorch-qs`
+
 *************************************
  ``determined.pytorch.PyTorchTrial``
 *************************************
