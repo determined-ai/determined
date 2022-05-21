@@ -74,6 +74,8 @@
       categorical_hparam:
         type: categorical
         vals: [1, 2, 3, 4]
+    # pre-0.15.6 non-Native-API experiments emitted `internal: null` configs
+    internal: null
     labels: []
     max_restarts: 5
     min_validation_period:
