@@ -1103,6 +1103,11 @@ schemas = {
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
+        "internal": {
+            "$comment": "allow forking pre-0.15.6 non-Native-API experiments",
+            "type": "null",
+            "default": null
+        },
         "labels": {
             "type": [
                 "array",
