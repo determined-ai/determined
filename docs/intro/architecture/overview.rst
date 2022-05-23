@@ -125,8 +125,25 @@ Distributed Training - Logical View
 **************************************
 TBD
 
+Non-distributed Training
+========================
+
+TBD
+
+.. image:: /assets/images/arch01.png
+
+TBD: Talk about each of the boxes/connections.
+
+Distributed Training
+=========================
+
+TBD
+
+.. image:: /assets/images/arch02.png
+
+TBD: Talk about each of the boxes/connections.
+
 ***************************************
 Distributed Training - Development View
 ***************************************
 TBD
-
