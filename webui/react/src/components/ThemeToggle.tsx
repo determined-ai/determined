@@ -1,11 +1,10 @@
-import React, {useState} from 'react';
+import React, { useEffect } from 'react';
 
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import useSettings from 'hooks/useSettings';
 import css from './ThemeToggle.module.scss';
-import { string } from 'fp-ts';
-import { getDisplayName } from 'utils/user';
-
+import  useTheme from 'hooks/useTheme';
+import { DarkLight } from 'themes';
 interface Settings {
     theme: string;
 }
@@ -58,6 +57,8 @@ const ThemeToggle: React.FC = () => {
         settings,
         updateSettings,
       } = useSettings<Settings>(settingsConfig);
+    
+      const {setMode, mode} = useTheme();
 
     let theme = ThemeOptions[settings.theme];
     const classes=[css.toggler];
@@ -66,8 +67,16 @@ const ThemeToggle: React.FC = () => {
     const changeTheme = (e: React.MouseEvent) => {
         e.stopPropagation(); 
         e.preventDefault();
-        updateSettings({theme: theme.next});
+        const newThemeOption = theme.next;
+        updateSettings({theme: newThemeOption});
+        setMode(newThemeOption == ThemeClass.DARK ? DarkLight.Dark : DarkLight.Light)
     }
+
+    useEffect(() => {
+        if(mode !== DarkLight.Dark && settings.theme === ThemeClass.DARK){
+            setMode(DarkLight.Dark)
+        }
+    }, [])
 
 return (
     <div className={css.base} onClick={changeTheme}>

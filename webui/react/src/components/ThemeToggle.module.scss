@@ -7,7 +7,6 @@
 
     .container{
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        color: #000;
 
         div{
             display: inline-block;
@@ -23,6 +22,7 @@
     display: inline-block;
     text-align: center;
     padding-left: 10px;
+    color: var(--theme-colors-monochrome-9);
 }
 
 .toggler{
@@ -38,13 +38,13 @@
 }
 
 .system {
-    color: #fff;
     background-color: gold;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     width: 10px;
     border-radius: 0px 10px 10px 0;
     margin-left: 10px;
+    transform: rotate(45deg);
 }
 
 .light{
@@ -52,7 +52,6 @@
 }
   
 .dark{
-    color: #fff;
     background-color: black;
     box-shadow: inset -4.5px -4px 1px 1px #fff;
 }
