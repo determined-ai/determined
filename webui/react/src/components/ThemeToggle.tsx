@@ -53,6 +53,10 @@ const ThemeToggle: React.FC = () => {
   };
 
   useEffect(() => {
+    /**
+     * Ensure that the UI is loaded in Dark Mode if the user has 
+     * chosen it as their theme. 
+     */
     if(mode !== DarkLight.Dark && settings.theme === ThemeClass.DARK){
       setMode(DarkLight.Dark);
     }
