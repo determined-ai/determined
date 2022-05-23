@@ -208,10 +208,10 @@ export const generateTestExperimentData = ():
     projectName: 'project',
     resourcePool: 'default',
     startTime: '2021-06-09T15:26:57.610700Z',
-    workspaceName: 'workspace',
     state: RunState.Completed,
     userId: 2,
     workspaceId: 1,
+    workspaceName: 'workspace',
   };
 
   const checkpoint: CheckpointWorkloadExtended = {

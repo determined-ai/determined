@@ -51,8 +51,8 @@ interface Props {
   curUser?: DetailedUser;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  trial?: TrialDetails;
   name?: string;
+  trial?: TrialDetails;
   // TODO: separate components for
   // 1) displaying an abbreviated string as an Avatar and
   // 2) finding user by userId in the store and displaying string Avatar or profile image

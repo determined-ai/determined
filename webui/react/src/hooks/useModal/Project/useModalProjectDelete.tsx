@@ -35,7 +35,8 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
       <div className={css.base}>
         <p>Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?</p>
         <p>All notes will be deleted, and experiments moved to the Uncategorized workspace. This
-          cannot be undone.</p>
+          cannot be undone.
+        </p>
         <label className={css.label} htmlFor="name">Enter project name to confirm deletion</label>
         <Input id="name" value={name} onChange={handleNameInput} />
       </div>

@@ -80,7 +80,7 @@ const Markdown: React.FC<Props> = ({
       ) : (
         <MarkdownRender
           markdown={markdown}
-          placeholder="Add Notes..."
+          placeholder="add notes..."
           onClick={onClick}
         />
       )}
