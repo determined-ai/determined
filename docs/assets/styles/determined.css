@@ -3,6 +3,16 @@
 table.align-default {
     margin-left: inherit !important;
 }
+h4 {
+    font-weight: 400 !important;
+}
+h5 {
+    font-weight: 400 !important;
+}
+h6 {
+    font-weight: 400 !important;
+}
+
 /* landing page */
 .landing-main-content {
     padding-top: 2rem;

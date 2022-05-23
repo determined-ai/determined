@@ -47,7 +47,6 @@
    Training APIs <training/apis-howto/overview>
    Distributed Training <training/distributed/distributed>
    Hyperparameter Tuning <training/hyperparameter/overview>
-   Reproducibility <training/reproducibility/reproducibility>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
 

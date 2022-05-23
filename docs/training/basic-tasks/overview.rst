@@ -9,4 +9,5 @@ TBD
    :hidden:
 
    run-training-code
+   reproducibility
    job-queue
