@@ -274,7 +274,6 @@ class trialv1Trial:
         bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None,
         bestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         endTime: "typing.Optional[str]" = None,
-        latestTraining: "typing.Optional[v1MetricsWorkload]" = None,
         latestValidation: "typing.Optional[v1MetricsWorkload]" = None,
         runnerState: "typing.Optional[str]" = None,
         taskId: "typing.Optional[str]" = None,
@@ -293,7 +292,6 @@ class trialv1Trial:
         self.bestValidation = bestValidation
         self.latestValidation = latestValidation
         self.bestCheckpoint = bestCheckpoint
-        self.latestTraining = latestTraining
         self.runnerState = runnerState
         self.wallClockTime = wallClockTime
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
@@ -314,7 +312,6 @@ class trialv1Trial:
             bestValidation=v1MetricsWorkload.from_json(obj["bestValidation"]) if obj.get("bestValidation", None) is not None else None,
             latestValidation=v1MetricsWorkload.from_json(obj["latestValidation"]) if obj.get("latestValidation", None) is not None else None,
             bestCheckpoint=v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj.get("bestCheckpoint", None) is not None else None,
-            latestTraining=v1MetricsWorkload.from_json(obj["latestTraining"]) if obj.get("latestTraining", None) is not None else None,
             runnerState=obj.get("runnerState", None),
             wallClockTime=float(obj["wallClockTime"]) if obj.get("wallClockTime", None) is not None else None,
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
@@ -335,7 +332,6 @@ class trialv1Trial:
             "bestValidation": self.bestValidation.to_json() if self.bestValidation is not None else None,
             "latestValidation": self.latestValidation.to_json() if self.latestValidation is not None else None,
             "bestCheckpoint": self.bestCheckpoint.to_json() if self.bestCheckpoint is not None else None,
-            "latestTraining": self.latestTraining.to_json() if self.latestTraining is not None else None,
             "runnerState": self.runnerState if self.runnerState is not None else None,
             "wallClockTime": dump_float(self.wallClockTime) if self.wallClockTime is not None else None,
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
