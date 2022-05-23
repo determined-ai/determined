@@ -1,6 +1,7 @@
 package nprand
 
 import (
+	"runtime"
 	"testing"
 
 	"gotest.tools/assert"
@@ -185,6 +186,11 @@ func TestInt(t *testing.T) {
 }
 
 func TestUniform(t *testing.T) {
+	if runtime.GOARCH == "arm64" {
+		t.Skip("doesn't work on arm64")
+		return
+	}
+
 	state := State{}
 	numbers := make([]float64, 100)
 

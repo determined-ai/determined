@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -18,13 +19,14 @@ import (
 
 type commandManager struct {
 	db         *db.PgDB
+	rm         rm.ResourceManager
 	taskLogger *task.Logger
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, c.db, c.taskLogger, model.TaskTypeCommand)
+		tryRestoreCommandsByType(ctx, c.db, c.rm, c.taskLogger, model.TaskTypeCommand)
 
 	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
@@ -50,7 +52,8 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		if err := createGenericCommandActor(
-			ctx, c.db, c.taskLogger, taskID, model.TaskTypeCommand, jobID, model.JobTypeCommand, msg,
+			ctx, c.db, c.rm, c.taskLogger, taskID, model.TaskTypeCommand, jobID,
+			model.JobTypeCommand, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch command")
 			ctx.Respond(err)

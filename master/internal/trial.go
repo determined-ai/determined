@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -57,9 +58,9 @@ type trial struct {
 	restored          bool
 
 	// System dependencies.
-	rm         *actor.Ref
 	taskLogger *task.Logger
 	db         db.DB
+	rm         rm.ResourceManager
 
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
@@ -95,7 +96,8 @@ func newTrial(
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
-	rm *actor.Ref, taskLogger *task.Logger,
+	taskLogger *task.Logger,
+	rm rm.ResourceManager,
 	db db.DB,
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
@@ -110,9 +112,9 @@ func newTrial(
 		state:             initialState,
 		searcher:          searcher,
 
-		rm:         rm,
 		taskLogger: taskLogger,
 		db:         db,
+		rm:         rm,
 
 		config:              config,
 		taskSpec:            taskSpec,
@@ -284,7 +286,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			JobSubmissionTime: t.jobSubmissionTime,
 			IsUserVisible:     true,
 			Name:              name,
-			TaskActor:         ctx.Self(),
+			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
 			Label:             t.config.Resources().AgentLabel(),
@@ -299,7 +301,9 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		ctx.Log().
 			WithField("allocation-id", ar.AllocationID).
 			Infof("starting restored trial allocation")
-		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(t.logCtx, ar, t.db, t.rm, t.taskLogger))
+		t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(
+			t.logCtx, ar, t.db, t.rm, t.taskLogger,
+		))
 		return nil
 	}
 
@@ -316,7 +320,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		JobSubmissionTime: t.jobSubmissionTime,
 		IsUserVisible:     true,
 		Name:              name,
-		TaskActor:         ctx.Self(),
+		AllocationRef:     ctx.Self(),
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
@@ -405,9 +409,9 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		t.idSet = true
 		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{"trial-id": t.id})
 		ctx.AddLabel("trial-id", t.id)
-		ctx.Tell(t.rm, sproto.SetTaskName{
-			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
-			TaskHandler: t.allocation,
+		t.rm.SetAllocationName(ctx, sproto.SetAllocationName{
+			Name:          fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
+			AllocationRef: t.allocation,
 		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 	}
@@ -577,9 +581,9 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 		return t.maybeAllocateTask(ctx)
 	case t.state == model.PausedState:
 		if t.allocation != nil {
-			ctx.Log().Infof("decided to %s trial due to pause", task.Terminate)
-			ctx.Tell(t.allocation, task.AllocationSignalWithReason{
-				AllocationSignal:    task.Terminate,
+			ctx.Log().Infof("decided to %s trial due to pause", sproto.TerminateAllocation)
+			ctx.Tell(t.allocation, sproto.AllocationSignalWithReason{
+				AllocationSignal:    sproto.TerminateAllocation,
 				InformationalReason: s.InformationalReason,
 			})
 		}
@@ -592,13 +596,13 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 				InformationalReason: s.InformationalReason,
 			})
 		default:
-			if action, ok := map[model.State]task.AllocationSignal{
-				model.StoppingCanceledState: task.Terminate,
-				model.StoppingKilledState:   task.Kill,
-				model.StoppingErrorState:    task.Kill,
+			if action, ok := map[model.State]sproto.AllocationSignal{
+				model.StoppingCanceledState: sproto.TerminateAllocation,
+				model.StoppingKilledState:   sproto.KillAllocation,
+				model.StoppingErrorState:    sproto.KillAllocation,
 			}[t.state]; ok {
 				ctx.Log().Infof("decided to %s trial", action)
-				ctx.Tell(t.allocation, task.AllocationSignalWithReason{
+				ctx.Tell(t.allocation, sproto.AllocationSignalWithReason{
 					AllocationSignal:    action,
 					InformationalReason: s.InformationalReason,
 				})

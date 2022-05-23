@@ -17,7 +17,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -239,14 +238,14 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Weight != nil {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupWeight{Weight: *patch.Resources.Weight})
+				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
 			if resp.Error() != nil {
 				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
 			}
 		}
 		if patch.Resources.Priority != nil {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
-				job.SetGroupPriority{Priority: *patch.Resources.Priority})
+				sproto.SetGroupPriority{Priority: *patch.Resources.Priority})
 			if resp.Error() != nil {
 				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
 			}
@@ -271,9 +270,10 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 
 		taskID := model.NewTaskID()
-		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID,
-			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), checkpoints,
-			true, agentUserGroup, user, nil)
+		ckptGCTask := newCheckpointGCTask(
+			m.rm, m.db, m.taskLogger, taskID, dbExp.JobID, dbExp.StartTime, taskSpec, dbExp.ID,
+			dbExp.Config.AsLegacy(), checkpoints, true, agentUserGroup, user, nil,
+		)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			ckptGCTask)
 	}
@@ -323,7 +323,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	}
 
 	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
-	poolName, err := sproto.GetResourcePool(
+	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
 	if err != nil {
 		return nil, false, nil, errors.Wrapf(err, "invalid resource configuration")

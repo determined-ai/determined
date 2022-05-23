@@ -17,8 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -44,6 +43,7 @@ type terminateForGC struct{}
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
@@ -54,6 +54,7 @@ func createGenericCommandActor(
 	spec.TaskType = taskType
 	cmd := &command{
 		db:         db,
+		rm:         rm,
 		taskLogger: taskLogger,
 
 		GenericCommandSpec: spec,
@@ -85,6 +86,7 @@ func createGenericCommandActor(
 func commandFromSnapshot(
 	ctx *actor.Context,
 	db *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	snapshot *CommandSnapshot,
 ) *command {
@@ -93,6 +95,7 @@ func commandFromSnapshot(
 	jobID := snapshot.Task.Job.JobID
 	cmd := &command{
 		db:         db,
+		rm:         rm,
 		taskLogger: taskLogger,
 
 		GenericCommandSpec: snapshot.GenericCommandSpec,
@@ -117,6 +120,7 @@ func commandFromSnapshot(
 func remakeCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
@@ -136,7 +140,7 @@ func remakeCommandsByType(
 
 	results := []*command{}
 	for i := range snapshots {
-		cmd := commandFromSnapshot(ctx, pgDB, taskLogger, &snapshots[i])
+		cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
 		results = append(results, cmd)
 	}
 
@@ -146,10 +150,11 @@ func remakeCommandsByType(
 func restoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) error {
-	commands, err := remakeCommandsByType(ctx, pgDB, taskLogger, taskType)
+	commands, err := remakeCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
 	if err != nil {
 		return err
 	}
@@ -170,11 +175,12 @@ func restoreCommandsByType(
 func tryRestoreCommandsByType(
 	ctx *actor.Context,
 	pgDB *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
 	if config.IsReattachEnabled() {
-		err := restoreCommandsByType(ctx, pgDB, taskLogger, taskType)
+		err := restoreCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
 		}
@@ -184,6 +190,7 @@ func tryRestoreCommandsByType(
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
 	db          *db.PgDB
+	rm          rm.ResourceManager
 	eventStream *actor.Ref
 	taskLogger  *task.Logger
 
@@ -274,7 +281,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			JobSubmissionTime: c.registeredTime,
 			IsUserVisible:     true,
 			Name:              c.Config.Description,
-			TaskActor:         ctx.Self(),
+			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
@@ -288,10 +295,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ProxyPort:    proxyPortConf,
 			IdleTimeout:  idleWatcherConfig,
 			Restore:      c.restored,
-		}, c.db, sproto.GetRM(ctx.Self().System()), c.taskLogger)
+		}, c.db, c.rm, c.taskLogger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
-		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
+		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.RegisterJob{
 			JobID:    c.jobID,
 			JobActor: ctx.Self(),
 		})
@@ -300,7 +307,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if err := c.persist(); err != nil {
 			ctx.Log().WithError(err).Warnf("command persist failure")
 		}
-	case job.GetJob:
+	case sproto.GetJob:
 		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
@@ -309,7 +316,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
-		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
+		ctx.Self().System().TellAt(sproto.JobsActorAddr, sproto.UnregisterJob{
 			JobID: c.jobID,
 		})
 		if err := c.db.DeleteUserSessionByToken(c.GenericCommandSpec.Base.UserSessionToken); err != nil {
@@ -365,8 +372,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
-		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
-			AllocationSignal:    task.Kill,
+		// TODO(Brad): Do the same thing to allocations that we are doing to RMs.
+		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
@@ -388,8 +396,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
-			AllocationSignal:    task.Kill,
+		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
@@ -412,8 +420,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
-			AllocationSignal:    task.Kill,
+		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
@@ -436,8 +444,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
-			AllocationSignal:    task.Kill,
+		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			AllocationSignal:    sproto.KillAllocation,
 			InformationalReason: "user requested kill",
 		})
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
@@ -458,7 +466,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
-	case job.SetGroupWeight:
+	case sproto.SetGroupWeight:
 		err := c.setWeight(ctx, msg.Weight)
 		if err != nil {
 			ctx.Log().WithError(err).Info("setting command job weight")
@@ -467,7 +475,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 
-	case job.SetGroupPriority:
+	case sproto.SetGroupPriority:
 		err := c.setPriority(ctx, msg.Priority, true)
 		if err != nil {
 			ctx.Log().WithError(err).Info("setting command job priority")
@@ -476,13 +484,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(err)
 		}
 
-	case job.RegisterJobPosition:
+	case sproto.RegisterJobPosition:
 		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("persisting position for job %s failed", msg.JobID)
 		}
 
-	case job.SetResourcePool:
+	case sproto.SetResourcePool:
 		ctx.Respond(fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType))
 
 	default:
@@ -492,36 +500,38 @@ func (c *command) Receive(ctx *actor.Context) error {
 }
 
 func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) error {
-	if sproto.UseK8sRM(ctx.Self().System()) {
-		return fmt.Errorf("setting priority for job type %s in kubernetes is not supported",
-			c.jobType)
+	if forward {
+		switch err := c.rm.SetGroupPriority(ctx, sproto.SetGroupPriority{
+			Priority: priority,
+			Handler:  ctx.Self(),
+		}).(type) {
+		case nil:
+		case rm.ErrUnsupported:
+			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
+		default:
+			return fmt.Errorf("setting group priority for command: %w", err)
+		}
 	}
 
 	c.Config.Resources.Priority = &priority
-
-	if forward {
-		resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupPriority{
-			Priority: priority,
-			Handler:  ctx.Self(),
-		})
-		return resp.Error()
-	}
 
 	return nil
 }
 
 func (c *command) setWeight(ctx *actor.Context, weight float64) error {
-	if sproto.UseK8sRM(ctx.Self().System()) {
-		return fmt.Errorf("setting weight for job type %s in kubernetes is not supported",
-			c.jobType)
-	}
-	c.Config.Resources.Weight = weight
-	resp := ctx.Ask(sproto.GetRM(ctx.Self().System()), job.SetGroupWeight{
+	switch err := c.rm.SetGroupWeight(ctx, sproto.SetGroupWeight{
 		Weight:  weight,
 		Handler: ctx.Self(),
-	})
-	// TODO revert in case of error
-	return resp.Error()
+	}).(type) {
+	case nil:
+	case rm.ErrUnsupported:
+		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
+	default:
+		return fmt.Errorf("setting group weight for command: %w", err)
+	}
+
+	c.Config.Resources.Weight = weight
+	return nil
 }
 
 func (c *command) stringID() string {
@@ -652,11 +662,7 @@ func (c *command) toV1Job() *jobv1.Job {
 	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 
-	if config.IsUsingKubernetesRM() {
-		j.ResourcePool = resourcemanagers.KubernetesDummyResourcePool
-	} else {
-		j.ResourcePool = c.Config.Resources.ResourcePool
-	}
+	j.ResourcePool = c.Config.Resources.ResourcePool
 
 	return &j
 }
