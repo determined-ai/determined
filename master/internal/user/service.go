@@ -75,8 +75,8 @@ func GetService() *Service {
 // The middleware looks for a token in two places (in this order):
 // 1. The HTTP Authorization header.
 // 2. A cookie named "auth".
-func (s *Service) extractToken(c echo.Context) (string, error) {
-	authRaw := c.Request().Header.Get("Authorization")
+func (s *Service) extractToken(r *http.Request) (string, error) {
+	authRaw := r.Header.Get("Authorization")
 	if authRaw != "" {
 		// We attempt to parse out the token, which should be
 		// transmitted as a Bearer authentication token.
@@ -84,11 +84,22 @@ func (s *Service) extractToken(c echo.Context) (string, error) {
 			return "", echo.ErrUnauthorized
 		}
 		return strings.TrimPrefix(authRaw, "Bearer "), nil
-	} else if cookie, err := c.Cookie("auth"); err == nil {
+	} else if cookie, err := r.Cookie("auth"); err == nil {
 		return cookie.Value, nil
 	}
 	// If we found no token, then abort the request with an HTTP 401.
 	return "", echo.NewHTTPError(http.StatusUnauthorized)
+}
+
+// UserAndSessionFromRequest gets the user and session corresponding to the given request.
+func (s *Service) UserAndSessionFromRequest(
+	r *http.Request,
+) (*model.User, *model.UserSession, error) {
+	token, err := s.extractToken(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	return s.db.UserByToken(token, s.extConfig)
 }
 
 // ProcessAuthentication is a middleware processing function that attempts
@@ -105,14 +116,7 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 
 func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		token, err := s.extractToken(c)
-		if err != nil {
-			return err
-		}
-
-		var user *model.User
-		var session *model.UserSession
-		user, session, err = s.db.UserByToken(token, s.extConfig)
+		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
 			if !user.Active {
@@ -138,7 +142,7 @@ func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) e
 // ProcessProxyAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests coming through proxies.
 func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err error) {
-	token, err := s.extractToken(c)
+	token, err := s.extractToken(c.Request())
 	if err != nil {
 		return true, redirectToLogin(c)
 	}
@@ -235,16 +239,22 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	// The caller of this REST endpoint can request that the master set a cookie.
 	// This is used by the WebUI for persistence of sessions.
 	if c.QueryParam("cookie") == "true" {
-		cookie := new(http.Cookie)
-		cookie.Name = "auth"
-		cookie.Value = token
-		cookie.Expires = time.Now().Add(db.SessionDuration)
-		c.SetCookie(cookie)
+		c.SetCookie(NewCookieFromToken(token))
 	}
 
 	return response{
 		Token: token,
 	}, nil
+}
+
+// NewCookieFromToken creates a new cookie from the given token.
+func NewCookieFromToken(token string) *http.Cookie {
+	cookie := new(http.Cookie)
+	cookie.Name = "auth"
+	cookie.Value = token
+	cookie.Path = "/"
+	cookie.Expires = time.Now().Add(db.SessionDuration)
+	return cookie
 }
 
 // getMe returns information about the current authenticated user.
