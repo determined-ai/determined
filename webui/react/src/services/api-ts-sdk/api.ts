@@ -6041,13 +6041,19 @@ export interface V1SummarizedMetric {
      * @type {string}
      * @memberof V1SummarizedMetric
      */
-    name?: string;
+    name: string;
     /**
      * A possibly down-sampled series of metric readings through the progress of the trial.
      * @type {Array<V1DataPoint>}
      * @memberof V1SummarizedMetric
      */
-    data?: Array<V1DataPoint>;
+    data: Array<V1DataPoint>;
+    /**
+     * Type of metrics (training, validation, or unset).
+     * @type {V1MetricType}
+     * @memberof V1SummarizedMetric
+     */
+    type: V1MetricType;
 }
 
 /**

@@ -125,10 +125,13 @@ export const getTrialSummary = generateDetApi<
   Service.TrialSummaryParams, Api.V1SummarizeTrialResponse, Type.TrialSummary
 >(Config.getTrialSummary);
 
+<<<<<<< HEAD
 export const compareTrials = generateDetApi<
   Service.CompareTrialsParams, Api.V1CompareTrialsResponse, Type.TrialSummary[]
 >(Config.compareTrials);
 
+=======
+>>>>>>> 4a14bd7b9 (link chart to summarization strictly)
 export const createExperiment = generateDetApi<
   Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase
 >(Config.createExperiment);
