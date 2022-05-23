@@ -77,11 +77,11 @@ const PageHeaderFoldable: React.FC<Props> = (
             <Button
               className={css.optionsMainButton}
               disabled={option.disabled || !option.onClick}
+              ghost={i !== 0}
               icon={option?.icon}
               key={option.key}
               loading={option.isLoading}
               onClick={option.onClick}>{renderOptionLabel(option)}
-              ghost={i !== 0}
             </Button>
           ))}
           {dropdownOptions && (

@@ -4,11 +4,11 @@
   .controls {
     display: flex;
     justify-content: space-between;
-    margin-bottom: var(--theme-sizes-layout-big);
+    margin-bottom: 16px;
   }
   .grid {
     display: grid;
-    gap: var(--theme-sizes-layout-large);
+    gap: 12px;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }

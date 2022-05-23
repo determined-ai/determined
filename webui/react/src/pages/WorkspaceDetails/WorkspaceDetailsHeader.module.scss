@@ -11,19 +11,19 @@
   .nameRow {
     align-items: center;
     display: flex;
-    gap: var(--theme-sizes-layout-small);
+    gap: 6px;
     grid-column: 1/3;
     height: min-content;
     min-width: 0;
 
     .name {
-      font-size: var(--theme-sizes-font-big);
+      font-size: 20px;
       margin: 0;
       text-align: center;
     }
     .pinned {
       color: var(--theme-colors-monochrome-9);
-      font-size: var(--theme-sizes-icon-medium);
+      font-size: 20px;
       height: min-content;
       width: min-content;
     }

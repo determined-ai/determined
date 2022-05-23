@@ -39,8 +39,8 @@
     .noWorkspaces {
       align-self: center;
       color: #bfbfbf;
-      font-size: var(--theme-sizes-font-small);
-      padding: var(--theme-sizes-layout-small);
+      font-size: 12px;
+      padding: 6px;
     }
     .pinnedWorkspaces {
       list-style: none;
@@ -109,7 +109,7 @@
     align-items: center;
     display: flex;
     flex-wrap: nowrap;
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
 
     &.active {
       background-color: var(--theme-colors-base-0);
@@ -143,7 +143,7 @@
         height: 24px;
         line-height: 24px;
         overflow: hidden;
-        padding-right: var(--theme-sizes-layout-big);
+        padding-right: 16px;
         white-space: nowrap;
         // top: 12px;
         // left: 56px;
@@ -212,7 +212,7 @@
   }
   .noWorkspaces { opacity: 1; }
   .navItemContainer {
-    width: var(--theme-sizes-navigation-maxWidth);
+    width: var(--nav-side-bar-width-max);
 
     .action,
     .label { opacity: 1; }

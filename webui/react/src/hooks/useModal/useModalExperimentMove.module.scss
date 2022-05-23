@@ -1,21 +1,21 @@
 .base {
   display: flex;
   flex-direction: column;
-  gap: var(--theme-sizes-layout-big);
+  gap: 16px;
 
   .label {
     color: var(--theme-colors-monochrome-7)
   }
   .emptyContainer {
-    border: 1px solid var(--theme-colors-monochrome-10);
-    border-radius: var(--theme-sizes-border-radius);
+    border: 1px solid var(--theme-surface-weak);
+    border-radius: var(--theme-border-radius);
     display: grid;
     height: 200px;
     place-content: center;
   }
   .listContainer {
     border: 1px solid var(--theme-colors-monochrome-10);
-    border-radius: var(--theme-sizes-border-radius);
+    border-radius: var(--theme-border-radius);
       
     ul {
       height: 200px;
@@ -23,13 +23,13 @@
       margin-bottom: 0;
       overflow-y: auto;
       padding-left: 0;
-      padding-top: var(--theme-sizes-layout-small);
+      padding-top: 6px;
 
       li {
         cursor: pointer;
         display: flex;
         justify-content: space-between;
-        padding-inline: var(--theme-sizes-layout-small);
+        padding-inline: 6px;
 
         &:hover {
           background-color: var(--theme-colors-monochrome-16);

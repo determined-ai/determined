@@ -23,12 +23,12 @@
     flex-shrink: 0;
     max-width: 200px;
     overflow-y: auto;
-    padding: var(--theme-sizes-layout-big);
+    padding: 16px;
 
     .listContainer {
       display: flex;
       flex-direction: column;
-      gap: var(--theme-sizes-layout-tiny);
+      gap: 4px;
       list-style: none;
       margin: 0;
       padding: 0;
@@ -39,7 +39,7 @@
         border-radius: 5px;
         cursor: pointer;
         display: flex;
-        padding: var(--theme-sizes-layout-small);
+        padding: 6px;
         width: 100%;
 
         & > span {
@@ -72,7 +72,7 @@
 .emptyBase {
   display: grid;
   height: 100%;
-  padding: var(--theme-sizes-layout-mega);
+  padding: 40px;
   place-content: center;
   width: 100%;
 
@@ -80,7 +80,7 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    gap: var(--theme-sizes-layout-great);
+    gap: 18px;
 
     & > * {
       margin: 0;

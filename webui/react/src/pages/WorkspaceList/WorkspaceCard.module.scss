@@ -9,7 +9,7 @@
   grid-template-columns: 100px auto 25px;
   height: 100px;
   max-width: 325px;
-  padding: var(--theme-sizes-layout-big);
+  padding: 16px;
 
   .info {
     display: flex;
@@ -20,7 +20,7 @@
     .nameRow {
       align-items: center;
       display: flex;
-      gap: var(--theme-sizes-layout-small);
+      gap: 6px;
       grid-column: 1/3;
       height: min-content;
       min-width: 0;
@@ -60,7 +60,7 @@
   }
   .pinned {
     color: var(--theme-colors-monochrome-9);
-    font-size: var(--theme-sizes-icon-medium);
+    font-size: 20px;
     grid-column: 3/4;
     grid-row: 1/2;
     height: min-content;
@@ -75,7 +75,7 @@
     max-width: 100%;
 
     .info {
-      margin-left: var(--theme-sizes-layout-huge);
+      margin-left: 20px;
     }
   }
 }

@@ -190,7 +190,7 @@ const PaginatedNotesCard: React.FC<Props> = (
                 <CheckOutlined
                   className={css.currentPage}
                   style={{
-                    marginRight: 'var(--theme-sizes-layout-small)',
+                    marginRight: '6px',
                     visibility: idx === currentPage ? 'visible' : 'hidden',
                   }}
                 />
