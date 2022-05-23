@@ -17,13 +17,14 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Summarized Metric captures a metric's name and downsampled data points.
 message SummarizedMetric {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data", "name", "type" ] }
+  };
   // Name of the selected metric.
   string name = 1;
-
   // A possibly down-sampled series of metric readings through the progress of
   // the trial.
   repeated DataPoint data = 2;
-
   // Type of metrics (training, validation, or unset).
   MetricType type = 3;
 }
