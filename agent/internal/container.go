@@ -65,6 +65,12 @@ func getBaseTaskLog(spec *cproto.Spec) model.TaskLog {
 	}
 	for _, env := range spec.RunSpec.ContainerConfig.Env {
 		split := strings.SplitN(env, "=", 2)
+		// For container logging config, ignore environment variables of
+		// form 'DET_TASK_ID' when they should be 'DET_TASK_ID=x'.
+		if len(split) < 2 {
+			continue
+		}
+
 		value := split[1]
 		switch split[0] {
 		case agentIDEnvVar:
