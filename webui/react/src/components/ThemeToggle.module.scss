@@ -6,7 +6,6 @@
 
   .container {
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   }
 }
 .mode {
@@ -20,7 +19,7 @@
   border-radius: 50%;
   display: inline-block;
   height: 20px;
-  transition: all 0.3s ease-in-out;
+  transition: background-color 0.4s ease-in-out, padding 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
   vertical-align: middle;
   width: 20px;
 }
