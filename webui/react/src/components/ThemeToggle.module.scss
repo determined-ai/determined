@@ -1,5 +1,10 @@
 .base {
 
+    -webkit-user-select: none;    
+    -moz-user-select: none; 
+    -ms-user-select: none; 
+    user-select: none; 
+
     .container{
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
         color: #000;
@@ -14,11 +19,10 @@
 
 .mode{
     align-items: center;
-    vertical-align: center !important;
-    line-height: 100%;
+    vertical-align: middle !important;
     display: inline-block;
     text-align: center;
-    height: 100%;
+    padding-left: 10px;
 }
 
 .toggler{
@@ -30,6 +34,7 @@
     background: #000;
     border: none;
     display: inline-block;
+    vertical-align: middle;
 }
 
 .system {
