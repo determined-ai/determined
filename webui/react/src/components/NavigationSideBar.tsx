@@ -137,7 +137,7 @@ const NavigationSideBar: React.FC = () => {
           <Dropdown
             content={(
               <Menu>
-                <Menu.Item key="theme-toggle" onClick={() => {console.log("clicked")}}>
+                <Menu.Item key="theme-toggle">
                   <ThemeToggle />
                 </Menu.Item>
                 <Menu.Item key="settings" onClick={() => openUserSettingsModal()}>
