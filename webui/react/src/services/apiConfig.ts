@@ -407,6 +407,23 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+export const getTrialSummary: DetApi<
+  Service.TrialSummaryParams, Api.V1SummarizeTrialResponse, Type.TrialSummary
+> = {
+  name: 'getTrialSummary',
+  postProcess: (response: Api.V1SummarizeTrialResponse) => {
+    return decoder.decodeTrialSummary(response);
+  },
+  request: (params: Service.TrialSummaryParams) => detApi.Experiments.summarizeTrial(
+    params.trialId,
+    params.maxDatapoints,
+    params.metricNames.map(m => m.name),
+    params.startBatches,
+    params.endBatches,
+    Type.metricTypeParamMap[params.metricType],
+  ),
+};
+
 /* Tasks */
 
 export const getTask: DetApi<

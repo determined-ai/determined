@@ -444,6 +444,21 @@ export interface TrialDetails extends TrialItem {
   workloads: WorkloadGroup[];
 }
 
+export interface MetricDatapoint {
+  batches: number;
+  value: number;
+}
+
+export interface MetricContainer {
+  data: MetricDatapoint[];
+  name: string;
+  type: MetricType;
+}
+
+export interface TrialSummary extends TrialItem {
+  metrics: MetricContainer[];
+}
+
 export interface ExperimentItem {
   archived: boolean;
   description?: string;

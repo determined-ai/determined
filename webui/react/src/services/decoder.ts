@@ -512,6 +512,32 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
+const decodeSummaryMetrics = (
+  data: Sdk.V1SummarizedMetric[],
+): types.MetricContainer[] => {
+  return data.map(m => ({
+    data: m.data.map(pt => ({
+      batches: pt.batches,
+      value: pt.value,
+    })),
+    name: m.name,
+    type: m.type === Sdk.V1MetricType.TRAINING
+      ? types.MetricType.Training
+      : types.MetricType.Validation,
+  }));
+};
+
+export const decodeTrialSummary = (
+  data: Sdk.V1SummarizeTrialResponse,
+): types.TrialSummary => {
+  const trialItem = decodeV1TrialToTrialItem(data.trial);
+
+  return {
+    ...trialItem,
+    metrics: decodeSummaryMetrics(data.metrics),
+  };
+};
+
 export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {

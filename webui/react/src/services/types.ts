@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata } from 'types';
+import { DetailedUser, Job, Metadata, MetricName, MetricType } from 'types';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
 
@@ -18,6 +18,15 @@ export interface ApiSorter<T = string> {
 
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
+
+export interface TrialSummaryParams {
+  endBatches: number,
+  maxDatapoints: number,
+  metricNames: MetricName[],
+  metricType: MetricType,
+  startBatches?: number,
+  trialId: number,
+}
 
 export interface CommandIdParams {
   commandId: string;

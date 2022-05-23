@@ -4641,23 +4641,27 @@ class v1SummarizeTrialResponse:
 class v1SummarizedMetric:
     def __init__(
         self,
-        data: "typing.Optional[typing.Sequence[v1DataPoint]]" = None,
-        name: "typing.Optional[str]" = None,
+        data: "typing.Sequence[v1DataPoint]",
+        name: str,
+        type: "v1MetricType",
     ):
         self.name = name
         self.data = data
+        self.type = type
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
         return cls(
-            name=obj.get("name", None),
-            data=[v1DataPoint.from_json(x) for x in obj["data"]] if obj.get("data", None) is not None else None,
+            name=obj["name"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            type=v1MetricType(obj["type"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "name": self.name if self.name is not None else None,
-            "data": [x.to_json() for x in self.data] if self.data is not None else None,
+            "name": self.name,
+            "data": [x.to_json() for x in self.data],
+            "type": self.type.value,
         }
 
 class v1Task:
