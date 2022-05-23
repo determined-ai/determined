@@ -7,7 +7,7 @@ Two main components are required to use Determined:
 -  the :ref:`Determined CLI <install-cli>`
 -  a :ref:`Determined cluster <install-cluster>`.
 
-Install the Determined CLI on your local development machine and install the Determined cluster in your training environment. Your training environement can be a local development machine, an on-premise GPU cluster, or cloud resources.
+Install the Determined CLI on your local development machine and install the Determined cluster in your training environment. Your training environment can be a local development machine, an on-premise GPU cluster, or cloud resources.
 
 ****************************
  Install the Determined CLI

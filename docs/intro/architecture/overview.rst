@@ -70,7 +70,7 @@ The database commonly resides on the master.
 Additional Cloud Resources
 ==========================
 
-Additional resources are required for cloud environements. The following shows AWS and GCP core resource and peripheral resource requirements, for example. See the :doc:`/cluster-setup-guide/deploy-cluster/overview` for more detailed information about installing and setting up cloud environments.
+Additional resources are required for cloud environments. The following shows AWS and GCP core resource and peripheral resource requirements, for example. See the :doc:`/cluster-setup-guide/deploy-cluster/overview` for more detailed information about installing and setting up cloud environments.
 
 Core resources
 ^^^^^^^^^^^^^^

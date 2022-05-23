@@ -13,6 +13,18 @@
    System Architecture <intro/architecture/overview>
 
 .. toctree::
+   :caption: Reference
+   :hidden:
+
+   Training APIs <reference/training/overview>
+   Configuration Files <reference/config/overview>
+   Model Hub APIs <reference/modelhub/overview>
+   Python API <reference/determined/python-api-reference>
+   REST API <reference/determined/rest-api-reference>
+   Command Line Interface (CLI) <reference/determined/cli>
+   attributions
+
+.. toctree::
    :caption: Determined Interfaces
    :hidden:
 
@@ -29,7 +41,7 @@
 
    Getting Started <cluster-setup-guide/getting-started>
    Network Requirements <cluster-setup-guide/requirements>
-   General Environement Setup and Configuration <cluster-setup-guide/env-setup>
+   General Environment Setup and Configuration <cluster-setup-guide/env-setup>
    Deploy a Cluster <cluster-setup-guide/deploy-cluster/overview>
    Cluster Configuration <cluster-setup-guide/cluster-config>
    Upgrade <cluster-setup-guide/upgrade>
@@ -63,18 +75,6 @@
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
    Prometheus and Grafana <integrations/prometheus/prometheus>
-
-.. toctree::
-   :caption: Reference
-   :hidden:
-
-   Training APIs <reference/training/overview>
-   Configuration Files <reference/config/overview>
-   Model Hub APIs <reference/modelhub/overview>
-   Python API <reference/determined/python-api-reference>
-   REST API <reference/determined/rest-api-reference>
-   Command Line Interface (CLI) <reference/determined/cli>
-   attributions
 
 .. toctree::
    :caption: Tutorials

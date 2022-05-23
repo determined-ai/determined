@@ -4,6 +4,12 @@
  Cluster Configuration
 #######################
 
+Common configuration reference: :doc:`/reference/config/common-config-options`
+
+Master configuration reference: :doc:`/reference/config/master-config-reference`
+
+Agent configuration reference: :doc:`/reference/config/agent-config-reference`
+
 The behavior of the master and agent can be controlled by setting configuration variables; this can
 be done using a configuration file, environment variables, or command-line options. Although values
 from different sources will be merged, we generally recommend sticking to a single source for each
