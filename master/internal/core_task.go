@@ -1,18 +1,15 @@
 package internal
 
 import (
-	"net/http"
-
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	return m.system.Ask(m.rm, sproto.GetTaskSummaries{}).Get(), nil
+	return m.rm.GetAllocationSummaries(m.system, sproto.GetAllocationSummaries{})
 }
 
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
@@ -22,10 +19,7 @@ func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	id := model.AllocationID(args.AllocationID)
-	resp := m.system.Ask(m.rm, sproto.GetTaskSummary{ID: &id})
-	if resp.Empty() {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.AllocationID)
-	}
-	return resp.Get(), nil
+	return m.rm.GetAllocationSummary(m.system, sproto.GetAllocationSummary{
+		ID: model.AllocationID(args.AllocationID),
+	})
 }

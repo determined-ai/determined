@@ -13,6 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -36,12 +37,14 @@ var (
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	resp, err := a.m.rm.GetAllocationHandler(a.m.system, sproto.GetAllocationHandler{
+		ID: model.AllocationID(req.AllocationId),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), task.AllocationReady{}, nil); err != nil {
+	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.AllocationReadyResponse{}, nil
@@ -54,7 +57,12 @@ func (a *apiServer) AllocationAllGather(
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
 
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{
+			ID: model.AllocationID(req.AllocationId),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +100,12 @@ func (a *apiServer) PostAllocationProxyAddress(
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
 
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{
+			ID: model.AllocationID(req.AllocationId),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

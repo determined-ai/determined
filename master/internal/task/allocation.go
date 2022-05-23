@@ -13,7 +13,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -29,7 +32,7 @@ type (
 	Allocation struct {
 		// System dependencies.
 		db     db.DB
-		rm     *actor.Ref
+		rm     rm.ResourceManager
 		logger *Logger
 
 		// The request to create the allocation, essentially our configuration.
@@ -96,14 +99,6 @@ type (
 	// until it is needed (we save stuff to the DB and make SSH keys, doing this for 10k trials
 	// at once is real bad.
 	BuildTaskSpec struct{}
-	// AllocationSignal is an interface for signals that can be sent to an allocation.
-	AllocationSignal string
-	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
-	// along with an informational reason about why the signal was sent.
-	AllocationSignalWithReason struct {
-		AllocationSignal    AllocationSignal
-		InformationalReason string
-	}
 	// AllocationState requests allocation state. A copy is filled and returned.
 	AllocationState struct {
 		State     model.AllocationState
@@ -124,13 +119,6 @@ type (
 )
 
 const (
-	// Kill is the signal to kill an allocation; analogous to in SIGKILL.
-	Kill AllocationSignal = "kill"
-	// Terminate is the signal to kill an allocation; analogous to in SIGTERM.
-	Terminate AllocationSignal = "terminate"
-)
-
-const (
 	killCooldown       = 30 * time.Second
 	okExitMessage      = "allocation exited successfully"
 	missingExitMessage = ""
@@ -138,7 +126,8 @@ const (
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
-	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm *actor.Ref, logger *Logger,
+	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
+	logger *Logger,
 ) actor.Actor {
 	return &Allocation{
 		db:     db,
@@ -186,7 +175,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	// These messages handle interaction with the resource manager. The generally
 	// handle the primary allocation lifecycle/functionality.
 	case actor.PreStart:
-		RegisterAllocation(a.model.AllocationID, ctx.Self())
+		allocationmap.RegisterAllocation(a.model.AllocationID, ctx.Self())
 		ctx.AddLabels(a.logCtx)
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
@@ -201,10 +190,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		a.RestoreResourceFailure(ctx, msg)
 	case sproto.GetResourcesContainerState:
 		if v, ok := a.resources[msg.ResourcesID]; ok {
-			if v.container == nil {
+			if v.Container == nil {
 				ctx.Respond(fmt.Errorf("no container associated with %s", msg.ResourcesID))
 			} else {
-				ctx.Respond(*v.container)
+				ctx.Respond(*v.Container)
 			}
 		} else {
 			ctx.Respond(fmt.Errorf("unknown resources %s", msg.ResourcesID))
@@ -215,7 +204,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		a.Terminate(ctx, "allocation resource pool changed", false)
 	case actor.PostStop:
 		a.Cleanup(ctx)
-		UnregisterAllocation(a.model.AllocationID)
+		allocationmap.UnregisterAllocation(a.model.AllocationID)
 	case sproto.ContainerLog:
 		a.sendEvent(ctx, msg.ToEvent())
 
@@ -235,9 +224,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.SetResourcesAsDaemon(ctx, msg.AllocationID, msg.ResourcesID); err != nil {
 			a.Error(ctx, err)
 		}
-	case AllocationSignal:
-		a.HandleSignal(ctx, AllocationSignalWithReason{AllocationSignal: msg})
-	case AllocationSignalWithReason:
+	case sproto.AllocationSignal:
+		a.HandleSignal(ctx, sproto.AllocationSignalWithReason{AllocationSignal: msg})
+	case sproto.AllocationSignalWithReason:
 		a.HandleSignal(ctx, msg)
 	case AllocationState:
 		if ctx.ExpectingResponse() {
@@ -368,8 +357,8 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 		}
 	}
 
-	a.req.TaskActor = ctx.Self()
-	if err := ctx.Ask(a.rm, a.req).Error(); err != nil {
+	a.req.AllocationActor = ctx.Self()
+	if err := a.rm.Allocate(ctx, a.req); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
 	a.sendEvent(ctx, sproto.Event{ScheduledEvent: &a.model.AllocationID})
@@ -397,7 +386,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		}
 
 		a.sendEvent(ctx, sproto.Event{ExitedEvent: ptrs.Ptr("allocation did not exit correctly")})
-		ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
+		a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
 	}
 }
 
@@ -521,11 +510,11 @@ func (a *Allocation) SetResourcesAsDaemon(
 }
 
 // HandleSignal handles an external signal to kill or terminate the allocation.
-func (a *Allocation) HandleSignal(ctx *actor.Context, msg AllocationSignalWithReason) {
+func (a *Allocation) HandleSignal(ctx *actor.Context, msg sproto.AllocationSignalWithReason) {
 	switch msg.AllocationSignal {
-	case Kill:
+	case sproto.KillAllocation:
 		a.Kill(ctx, msg.InformationalReason)
-	case Terminate:
+	case sproto.TerminateAllocation:
 		a.Terminate(ctx, msg.InformationalReason, false)
 	}
 }
@@ -542,10 +531,8 @@ func (a *Allocation) ResourcesStateChanged(
 		return
 	}
 
-	a.resources[msg.ResourcesID].container = msg.Container
-	ctx.Log().Debugf("resources %v are %s [rank=%d, container=%+v]",
-		msg.ResourcesID, msg.ResourcesState, a.resources[msg.ResourcesID].Rank, msg.Container,
-	)
+	a.resources[msg.ResourcesID].Container = msg.Container
+	ctx.Log().Debugf("resources state changed: %+v", msg)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
@@ -588,7 +575,7 @@ func (a *Allocation) ResourcesStateChanged(
 
 		prom.AssociateAllocationTask(a.req.AllocationID,
 			a.req.TaskID,
-			a.req.TaskActor.Address(),
+			a.req.AllocationActor.Address(),
 			a.req.JobID)
 		prom.AddAllocationResources(a.resources[msg.ResourcesID].Summary(), msg.ResourcesStarted)
 
@@ -605,9 +592,9 @@ func (a *Allocation) ResourcesStateChanged(
 
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
-		ctx.Tell(a.rm, sproto.ResourcesReleased{
-			TaskActor:   ctx.Self(),
-			ResourcesID: &msg.ResourcesID,
+		a.rm.Release(ctx, sproto.ResourcesReleased{
+			AllocationRef: ctx.Self(),
+			ResourcesID:   &msg.ResourcesID,
 		})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
@@ -644,7 +631,7 @@ func (a *Allocation) ResourcesStateChanged(
 		for cID := range a.resources {
 			prom.DisassociateAllocationTask(a.req.AllocationID,
 				a.req.TaskID,
-				a.req.TaskActor.Address(),
+				a.req.AllocationActor.Address(),
 				a.req.JobID)
 			prom.RemoveAllocationResources(a.resources[cID].Summary())
 		}
@@ -798,8 +785,8 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 	// Once a job has been killed, resend the kill every 30s, in the event it is lost (has
 	// happened before due to network failures).
 	a.killCooldown = ptrs.Ptr(time.Now().UTC().Add(killCooldown))
-	actors.NotifyAfter(ctx, killCooldown, AllocationSignalWithReason{
-		AllocationSignal:    Kill,
+	actors.NotifyAfter(ctx, killCooldown, sproto.AllocationSignalWithReason{
+		AllocationSignal:    sproto.KillAllocation,
 		InformationalReason: "killing again after 30s without all container exits",
 	})
 }
@@ -892,7 +879,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 	a.exited = true
 	exitReason := fmt.Sprintf("allocation terminated after %s", reason)
 	defer ctx.Tell(ctx.Self().Parent(), exit)
-	defer ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
+	defer a.rm.Release(ctx, sproto.ResourcesReleased{AllocationRef: ctx.Self()})
 	defer a.unregisterProxies(ctx)
 	defer ctx.Self().Stop()
 	defer a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitReason})
@@ -981,7 +968,7 @@ func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 }
 
 func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
-	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).
+	_, err := db.Bun().NewDelete().Model((*taskmodel.ResourcesWithState)(nil)).
 		Where("allocation_id = ?", a.model.AllocationID).
 		Exec(context.TODO())
 
@@ -1054,8 +1041,8 @@ func (a *Allocation) State() AllocationState {
 			addresses[id] = a.containerProxyAddresses()
 		}
 
-		if r.container != nil {
-			containers[id] = append(containers[id], *r.container)
+		if r.Container != nil {
+			containers[id] = append(containers[id], *r.Container)
 		}
 	}
 

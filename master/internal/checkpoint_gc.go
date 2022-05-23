@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -22,8 +23,8 @@ import (
 )
 
 type checkpointGCTask struct {
-	rm *actor.Ref
 	db *db.PgDB
+	rm rm.ResourceManager
 
 	taskID       model.TaskID
 	allocationID model.AllocationID
@@ -38,7 +39,8 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
-func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
+func newCheckpointGCTask(
+	rm rm.ResourceManager, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
 	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
 	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context,
@@ -60,7 +62,6 @@ func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, ta
 			ToDelete:           deleteCheckpointsStr,
 			DeleteTensorboards: deleteTensorboards,
 		},
-		rm: rm,
 		db: db,
 
 		taskLogger: taskLogger,
@@ -98,8 +99,8 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskActor: ctx.Self(),
-		}, t.db, sproto.GetRM(ctx.Self().System()), t.taskLogger)
+			AllocationActor: ctx.Self(),
+		}, t.db, t.rm, t.taskLogger)
 
 		t.allocation, _ = ctx.ActorOf(t.allocationID, allocation)
 	case task.BuildTaskSpec:

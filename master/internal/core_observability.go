@@ -1,27 +1,23 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/prom"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (m *Master) getPrometheusTargets(c echo.Context) (interface{}, error) {
-	resourceManager := sproto.GetCurrentRM(m.system)
-	resp := m.system.Ask(resourceManager, &apiv1.GetAgentsRequest{})
-
-	if resp.Error() != nil {
-		return nil, resp.Error()
+	resp, err := m.rm.GetAgents(m.system, &apiv1.GetAgentsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("gather agent statuses: %w", err)
 	}
 
-	getAgentsResponse := resp.Get().(*apiv1.GetAgentsResponse)
-
 	var agentTargetsConfig []prom.TargetSDConfig
-	for _, agentSummary := range getAgentsResponse.Agents {
+	for _, agentSummary := range resp.Agents {
 		agentTargetConfig := prom.TargetSDConfig{
 			Labels: map[string]string{
 				prom.DetAgentIDLabel:      agentSummary.Id,

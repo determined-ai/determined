@@ -3,6 +3,8 @@ package actor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -56,4 +58,42 @@ func askAll(
 		close(results)
 	}()
 	return results
+}
+
+// UnpackResponse ... asks at addr the req and puts the response into what v points at. When
+// appropriate, errors are converted appropriate for an API response. Error cases are enumerated
+// below:
+//  * If v points to an unsettable value, a 500 is returned.
+//  * If the actor cannot be found, a 404 is returned.
+//  * If v is settable and the actor didn't respond or responded with nil, a 404 is returned.
+//  * If the actor returned an error and it is a well-known error type, it is coalesced to gRPC.
+//  * If the actor returned plain error, a 500 is returned.
+//  * Finally, if the response's type is OK, it is put into v.
+//  * Else, a 500 is returned.
+// TODO(Brad): use this.
+func UnpackResponse(resp Response, ref *Ref, req interface{}, v interface{}) error {
+	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
+		return fmt.Errorf(
+			"ask to actor %s contains valid but unsettable response holder %T", ref, v,
+		)
+	}
+	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
+	switch {
+	case resp.Source() == nil:
+		return fmt.Errorf("actor %s could not be found", ref)
+	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
+		return fmt.Errorf("actor %s did not respond", ref)
+	case resp.Error() != nil:
+		return resp.Error()
+	default:
+		if expectingResponse {
+			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
+				return fmt.Errorf(
+					"actor %s returned unexpected message (%T): %v", ref, resp, resp,
+				)
+			}
+			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
+		}
+		return nil
+	}
 }

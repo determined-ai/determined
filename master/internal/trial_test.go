@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 
 	"github.com/determined-ai/determined/master/internal/task"
 
@@ -188,7 +189,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 
 	// mock resource manager.
 	rmImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	rm := system.MustActorOf(actor.Addr("rm"), &rmImpl)
+	rm.SetTestingRM(rm.WrapRMActor(system.MustActorOf(actor.Addr("rm"), &rmImpl)))
 
 	// mock logger.
 	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
@@ -198,8 +199,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 	// mock allocation
 	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
 	taskAllocator = func(
-		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm *actor.Ref,
-		l *task.Logger,
+		logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, l *task.Logger,
 	) actor.Actor {
 		return &allocImpl
 	}
@@ -219,7 +219,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		1,
 		model.PausedState,
 		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
-		rm, logger,
+		logger,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{
 			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{

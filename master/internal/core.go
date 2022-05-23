@@ -49,9 +49,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -97,9 +99,9 @@ type Master struct {
 	logs          *logger.LogBuffer
 	system        *actor.System
 	echo          *echo.Echo
-	rm            *actor.Ref
 	rwCoordinator *actor.Ref
 	db            *db.PgDB
+	rm            rm.ResourceManager
 	proxy         *actor.Ref
 	taskLogger    *task.Logger
 	hpImportance  *actor.Ref
@@ -644,7 +646,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 }
 
 func (m *Master) closeOpenAllocations() error {
-	allocationIds := task.GetAllAllocationIds()
+	allocationIds := allocationmap.GetAllAllocationIds()
 	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
 		return err
 	}
@@ -819,7 +821,7 @@ func (m *Master) Run(ctx context.Context) error {
 		HTTPAuth: userService.ProcessProxyAuthentication,
 	})
 
-	task.InitAllocationMap()
+	allocationmap.InitAllocationMap()
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
 	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
@@ -894,11 +896,17 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	// Resource Manager.
-	agentOpts := &aproto.MasterSetAgentOptions{
-		MasterInfo:     m.Info(),
-		LoggingOptions: m.config.Logging,
-	}
-	m.rm = resourcemanagers.Setup(m.system, m.db, m.echo, m.config.ResourceConfig, agentOpts, cert)
+	m.rm = rm.New(
+		m.system,
+		m.db,
+		m.echo,
+		m.config.ResourceConfig,
+		&aproto.MasterSetAgentOptions{
+			MasterInfo:     m.Info(),
+			LoggingOptions: m.config.Logging,
+		},
+		cert,
+	)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
@@ -908,7 +916,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.rwCoordinator, _ = m.system.ActorOf(actor.Addr("rwCoordinator"), rwCoordinator)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-	m.system.ActorOf(job.JobsActorAddr, job.NewJobs(sproto.GetCurrentRM(m.system)))
+	m.system.ActorOf(sproto.JobsActorAddr, job.NewJobs(m.rm))
 
 	if err = m.restoreNonTerminalExperiments(); err != nil {
 		return err
@@ -918,7 +926,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err = task.CleanupResourcesState(); err != nil {
+	if err = taskmodel.CleanupResourcesState(); err != nil {
 		return err
 	}
 
@@ -926,6 +934,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.echo,
 		m.db,
+		m.rm,
 		m.taskLogger,
 		authFuncs...,
 	)

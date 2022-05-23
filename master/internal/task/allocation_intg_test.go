@@ -21,6 +21,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/allocationmap"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -269,11 +271,11 @@ func setup(t *testing.T) (
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	system := actor.NewSystem("system")
-	InitAllocationMap()
+	allocationmap.InitAllocationMap()
 
 	// mock resource manager.
 	rmImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	rm := system.MustActorOf(actor.Addr("rm"), &rmImpl)
+	rm.SetTestingRM(rm.WrapRMActor(system.MustActorOf(actor.Addr("rm"), &rmImpl)))
 
 	// mock trial
 	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
@@ -302,7 +304,6 @@ func setup(t *testing.T) (
 			// ...
 		},
 		pgDB,
-		rm,
 		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
@@ -310,5 +311,5 @@ func setup(t *testing.T) (
 	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)
 
-	return system, &rmImpl, rm, &trialImpl, trial, pgDB, a.(*Allocation), self
+	return system, &rmImpl, rm.Get().Ref(), &trialImpl, trial, pgDB, a.(*Allocation), self
 }
