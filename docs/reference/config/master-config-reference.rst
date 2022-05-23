@@ -593,10 +593,15 @@ The master supports the following configuration settings:
       -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
          size is 16384.
 
--  ``telemetry``: Specifies whether we collect and report anonymous information about the usage of
-   Determined. See :ref:`telemetry` for details on what kinds of information are reported.
+-  ``telemetry``: Specifies configuration settings related to telemetry collection and tracing.
 
-   -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
+   -  ``enabled``: Whether to collect and report anonymous information about the usage of this
+      Determined cluster. See :ref:`telemetry` for details on what kinds of information are
+      reported. Defaults to ``true``.
+
+   -  ``otel-enabled``: Whether OpenTelemetry is enabled. Defaults to ``false``.
+
+   -  ``otel-endpoint``: OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.
 
 -  ``logging``: Specifies configuration settings for the logging backend for trial logs.
 

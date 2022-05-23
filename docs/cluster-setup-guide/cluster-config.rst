@@ -65,6 +65,6 @@ host where the Postgres database is running can be done via a configuration file
 Equivalent behavior can be achieved by setting the ``DET_DB_HOST=the-db-host`` environment variable
 or ``--db-host the-db-host`` command-line option.
 
-Options are referred to by name in the configuration file.
+In the rest of this document, we will refer to options using their names in the configuration file.
 Periods (``.``) will be used to indicate nested options; for example, the option above would be
 indicated by ``db.host``.
