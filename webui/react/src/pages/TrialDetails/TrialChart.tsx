@@ -1,5 +1,5 @@
 import { Empty } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -12,7 +12,7 @@ import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { getTrialSummary } from 'services/api';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricContainer, MetricName, MetricType } from 'types';
+import { MetricContainer, MetricName } from 'types';
 
 interface Props {
   defaultMetricNames: MetricName[];
@@ -39,29 +39,17 @@ const TrialChart: React.FC<Props> = ({
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
 
-  const fetchTrialSummary = useCallback(async (trialId: number) => {
+  useMemo(async () => {
     if (trialId) {
-      const trainMetricNames = metricNames.filter(m => m.type === MetricType.Training);
       const summ = await getTrialSummary({
         endBatches: 100000,
         maxDatapoints: 45,
-        metricNames: trainMetricNames,
-        metricType: MetricType.Training,
+        metricNames: metricNames,
         trialId: trialId,
       });
       setTrialSummary(summ.metrics);
     }
-  }, [ metricNames ]);
-  if (trialId) {
-    fetchTrialSummary(trialId);
-  }
-  // import usePolling from 'hooks/usePolling';
-  // const { stopPolling } = usePolling(fetchTrialSummary);
-  // useEffect(() => {
-  //   if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
-  //     stopPolling();
-  //   }
-  // }, [ trialDetails.data, stopPolling ]);
+  }, [ metricNames, trialId ]);
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
