@@ -1,4 +1,4 @@
-package resourcemanagers
+package rm
 
 import (
 	"testing"

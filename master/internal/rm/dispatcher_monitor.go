@@ -1,4 +1,4 @@
-package resourcemanagers
+package rm
 
 // Follow launcher jobs to completion and report status back to Determined.
 

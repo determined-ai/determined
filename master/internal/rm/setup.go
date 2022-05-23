@@ -27,6 +27,8 @@ func New(
 		return agentrm.New(db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
 		return kubernetesrm.New(db, config, taskContainerDefaults, opts, cert)
+	case config.ResourceManager.DispatcherRM != nil:
+		return NewDispatcherResourceManager(system, db, echo, config, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")
 	}
