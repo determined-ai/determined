@@ -1,8 +1,8 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
+  background-color: var(--theme-surface);
   border: var(--theme-stroke-width) solid var(--theme-colors-monochrome-13);
   border-radius: 12px;
-  color: var(--theme-colors-monochrome-7);
+  color: var(--theme-surface-on);
   cursor: pointer;
   display: grid;
   font-size: 11px;
@@ -20,7 +20,7 @@
     min-width: 0;
 
     .name {
-      color: var(--theme-colors-monochrome-4);
+      color: var(--theme-surface-on-strong);
       font-size: 14px;
       margin: 0;
       overflow: hidden;
@@ -66,10 +66,13 @@
     place-self: end;
   }
   &:hover {
-    background-color: var(--theme-colors-monochrome-16);
+    background-color: var(--theme-surface-weak);
 
     .action {
       visibility: visible;
+      background-color: var(--theme-surface);
+      border-radius: 4px;
+      padding: 2px;
     }
   }
 }
