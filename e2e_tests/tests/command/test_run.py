@@ -250,6 +250,23 @@ def test_singleton_command() -> None:
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
+def test_environment_variables_command() -> None:
+    _run_and_verify_exit_code_zero(
+        [
+            "det",
+            "-m",
+            conf.make_master_url(),
+            "cmd",
+            "run",
+            "--config",
+            "environment.environment_variables='THISISTRUE=true','WONTCAUSEPANIC'",
+            'if [ "$THISISTRUE" != "true" ]; then exit 1; fi',
+        ]
+    )
+
+
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_absolute_bind_mount(tmp_path: Path) -> None:
     _run_and_verify_exit_code_zero(
         [
