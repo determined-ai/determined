@@ -2,7 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import { useStore } from 'contexts/Store';
-import BasePage, { Props as BasePageProps } from 'tmp-shared/components/Page';
+import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import { BrandingType } from 'types';
 
 export interface Props extends BasePageProps {
