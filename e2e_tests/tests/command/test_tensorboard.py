@@ -1,3 +1,5 @@
+import os
+import subprocess
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -161,6 +163,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
+@pytest.mark.slow
 @pytest.mark.e2e_cpu
 def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
@@ -174,6 +177,9 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
             str(config_path), conf.fixtures_path("no_op"), num_trials
         )
     command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
         "tensorboard",
         "start",
         str(experiment_id),
@@ -182,15 +188,21 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         "--config",
         "environment.image=alpine",
     ]
-    with cmd.interactive_command(*command) as tensorboard:
-        t_id = tensorboard.task_id
-        commandt = ["tensorboard", "config", t_id]
-        with cmd.interactive_command(*commandt, task_id=t_id) as tensorboard_config:
-            for line in tensorboard_config.stdout:
-                if "cpu" in line or "cuda" in line or "rocm" in line:
-                    if "alpine" in line:
-                        break
-                    else:
-                        raise AssertionError(f"Setting custom image not working properly: {line}")
-            else:
-                raise AssertionError("Did not find custom image in output")
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+    res = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+    assert res.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(res.stdout, res.stderr)
+    t_id = res.stdout.replace("\n", "")
+    command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
+    res = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+    assert res.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(res.stdout, res.stderr)
+    config = yaml.safe_load(res.stdout)
+    assert (
+        config["environment"]["image"]["cpu"] == "alpine"
+        and config["environment"]["image"]["cuda"] == "alpine"
+        and config["environment"]["image"]["rocm"] == "alpine"
+    ), "\nSetting custom image not working properly:\n{}".format(config["environment"]["image"])

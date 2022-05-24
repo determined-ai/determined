@@ -12,7 +12,7 @@ from tests import config as conf
 
 
 @contextmanager
-def interactive_command(*args: str, task_id: Optional[str] = None) -> Generator:
+def interactive_command(*args: str) -> Generator:
     """
     Runs a Determined CLI command in a subprocess. On exit, it kills the
     corresponding Determined task if possible before closing the subprocess.
@@ -26,14 +26,11 @@ def interactive_command(*args: str, task_id: Optional[str] = None) -> Generator:
     """
 
     class _InteractiveCommandProcess:
-        def __init__(
-            self, process: subprocess.Popen, detach: bool = False, task_id: Optional[str] = None
-        ):
+        def __init__(self, process: subprocess.Popen, detach: bool = False):
             self.process = process
             self.detach = detach
-            self.task_id = task_id  # type: Optional[str]
-            if task_id is not None:
-                return
+            self.task_id = None  # type: Optional[str]
+
             if self.detach:
                 iterator = iter(self.process.stdout)  # type: ignore
                 line = next(iterator)
@@ -67,7 +64,7 @@ def interactive_command(*args: str, task_id: Optional[str] = None) -> Generator:
         stdout=subprocess.PIPE,
         env={"PYTHONUNBUFFERED": "1", **os.environ},
     ) as p:
-        cmd = _InteractiveCommandProcess(p, detach="--detach" in args, task_id=task_id)
+        cmd = _InteractiveCommandProcess(p, detach="--detach" in args)
         if cmd.task_id is None:
             raise AssertionError(
                 "Task ID for '{}' could not be found. "
