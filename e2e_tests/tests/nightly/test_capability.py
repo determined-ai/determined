@@ -38,6 +38,14 @@ def test_gan_mnist_pytorch_const() -> None:
 
 
 @pytest.mark.nightly
+def test_pix2pix_facades_const() -> None:
+    config = conf.load_config(conf.gan_examples_path("pix2pix_tf_keras/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("pix2pix_tf_keras"), 1)
+
+
+@pytest.mark.nightly
 def test_detr_coco_pytorch_const() -> None:
     config = conf.load_config(conf.cv_examples_path("detr_coco_pytorch/const_fake.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

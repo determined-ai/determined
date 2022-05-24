@@ -123,6 +123,14 @@ def test_gan_mnist_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed
+def test_pix2pix_facades_distributed() -> None:
+    config = conf.load_config(conf.gan_examples_path("pix2pix_tf_keras/distributed.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("pix2pix_tf_keras"), 1)
+
+
+@pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_detr_coco_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("detr_coco_pytorch/const_fake.yaml"))
