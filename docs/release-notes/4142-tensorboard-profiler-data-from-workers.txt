@@ -3,13 +3,7 @@
 **New Features**
 
 -  TensorBoard:
-      -  In TFKerasTrial, the TensorBoard profiling data from all workers is uploaded to the
-         checkpoint storage.
-
-      -  In PyTorchTrial, the same result is obtained without modifying the file names.
-
-      -  A new argument to `core.init()`, `tensorboard_sync_mode`, controls the way files generated
-         for consumption by TensorBoard are handled by workers.
-
-      -  A new method, `TrainContext.upload_tb_files()`, copies those files to checkpoint storage
-         while optionally renaming them.
+      A new method, `TrainContext.upload_tensorboard_files()`, copies TensorBoard profiling data
+      files to checkpoint storage while optionally renaming them. It enables uploading profiling
+      data from non-chief workers (TensorBoard metrics and profiling data from chief is uploaded
+      automatically).

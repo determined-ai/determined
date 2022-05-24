@@ -20,6 +20,7 @@ class TrialContext(metaclass=abc.ABCMeta):
         self.env = env
 
         self.distributed = self._core.distributed
+        self.train = self._core.train
         self._stop_requested = False
 
     @classmethod

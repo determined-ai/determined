@@ -4,12 +4,7 @@ from determined.core._checkpoint import (
     DownloadMode,
     DummyCheckpointContext,
 )
-from determined.core._train import (
-    TrainContext,
-    DummyTrainContext,
-    EarlyExitReason,
-    TensorboardSyncMode,
-)
+from determined.core._train import TrainContext, DummyTrainContext, EarlyExitReason
 from determined.core._searcher import (
     DummySearcherContext,
     SearcherMode,

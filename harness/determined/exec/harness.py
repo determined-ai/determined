@@ -103,9 +103,7 @@ def main(train_entrypoint: str) -> int:
 
         # Step 4: Let core.init() create the core.Context.
         with core.init(
-            distributed=distributed,
-            preempt_mode=core.PreemptMode.ChiefOnly,
-            tensorboard_sync_mode=core.TensorboardSyncMode.ChiefAndWorkers,
+            distributed=distributed, preempt_mode=core.PreemptMode.ChiefOnly
         ) as core_context:
             trial_context = trial_class.trial_context_class(core_context, env)
 
