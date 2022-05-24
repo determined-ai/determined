@@ -59,12 +59,13 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
   }
   if (status) containerClasses.push(css.hasStatus);
 
-  useEffect(() => setIsActive(path ?
-    location.pathname.startsWith(path) : false), [ location.pathname, path ]);
+  useEffect(() => {
+    setIsActive(location.pathname === path);
+  }, [ location.pathname, path ]);
 
   const link = (
     <div className={containerClasses.join(' ')}>
-      <Link className={classes.join(' ')} disabled={isActive} path={path} {...props}>
+      <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ?
           <div className={css.icon}><Icon name={props.icon} size="large" /></div> :
           <div className={css.icon}>{props.icon}</div>}
@@ -72,7 +73,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
       </Link>
       <div className={css.navItemExtra}>
         {status && (
-          <Link disabled={isActive} path={path} {...props}>
+          <Link path={path} {...props}>
             <div className={css.status}>{status}</div>
           </Link>
         )}
