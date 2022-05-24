@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -40,7 +39,6 @@ func (a *apiServer) GetCheckpoint(
 func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
 	req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
-	log.Error(spew.Sdump(ctx))
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
@@ -110,24 +108,12 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, err
 		}
 
-<<<<<<< HEAD
-		CUUIDS := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
-		if len(CUUIDS) <= 0 {
-			return nil, status.Errorf(codes.Internal, "did not group checkpoint uuids by experiment ID: %v correctly", expIDcUUIDs.ExperimentID)
-		}
-
-		jsonVCheckpoints, err := json.Marshal(CUUIDS)
-
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not marshal checkpoint uuids")
-=======
 		CUUIDsStr := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
 		var cUUIDsToDelete []uuid.UUID
 
 		for _, cStr := range CUUIDsStr {
 			cUUID, _ := uuid.Parse(cStr)
 			cUUIDsToDelete = append(cUUIDsToDelete, cUUID)
->>>>>>> 957d8afae (changes for cli, gcraw, ToDelete)
 		}
 
 		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
