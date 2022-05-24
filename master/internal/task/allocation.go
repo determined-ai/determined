@@ -709,6 +709,7 @@ func (a *Allocation) allNonDaemonsExited() bool {
 
 func (a *Allocation) preempt(ctx *actor.Context) {
 	ctx.Log().Info("decided to gracefully terminate allocation")
+	a.exitReason = fmt.Errorf("preempted for one with higher priority")
 	a.preemption.Preempt()
 	actors.NotifyAfter(ctx, preemptionTimeoutDuration, PreemptionTimeout{a.model.AllocationID})
 }
