@@ -20,7 +20,7 @@ export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
 export interface TrialSummaryParams {
-  endBatches: number,
+  endBatches?: number,
   maxDatapoints: number,
   metricNames: MetricName[],
   metricType?: MetricType,

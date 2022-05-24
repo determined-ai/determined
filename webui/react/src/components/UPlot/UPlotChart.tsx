@@ -23,6 +23,7 @@ interface Props {
   options?: Partial<Options>;
   style?: React.CSSProperties;
   title?: string;
+  // onZoom?: (min: number, max: number) => void;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -76,6 +77,7 @@ const UPlotChart: React.FC<Props> = ({
   style,
   noDataMessage,
   title,
+  // onZoom,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);

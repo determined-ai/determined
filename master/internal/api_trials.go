@@ -588,6 +588,8 @@ func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialR
 		return nil, errors.Wrapf(err, "failed sampling")
 	}
 	resp.Metrics = tsample
+	// resp.EarliestBatch = req.StartBatches
+	// resp.LatestBatch = int32(latestBatch)
 
 	return resp, nil
 }
