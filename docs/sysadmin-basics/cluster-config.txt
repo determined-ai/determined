@@ -339,6 +339,11 @@ The master supports the following configuration settings:
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
          is specified.
 
+      -  ``require_authentication``: Whether to require that agent connections be verified using
+         mutual TLS.
+
+      -  ``client_ca``: Certificate authority file to use for verifying agent certificates.
+
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
       cluster. The Determined master must be running within the Kubernetes cluster. When using the
       ``kubernetes`` resource manager, we recommend deploying Determined using the :ref:`Determined
@@ -818,6 +823,9 @@ The master supports the following configuration settings:
             -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed
                if the certificate is not signed by a well-known CA; cannot be specified if
                ``skip_verify`` is enabled.
+
+            -  ``client_cert``/``client_key``: Paths to files containing the client TLS certificate
+               and key to use when connecting to the master.
 
 -  ``scim``: (EE-only) Specifies whether the SCIM service is enabled and the credentials for clients
    to use it.
