@@ -1,8 +1,8 @@
 import React, { MutableRefObject } from 'react';
 
-import PageHeader from 'components/PageHeader';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { CommonProps } from 'shared/types';
+import PageHeader from 'tmp-shared/components/PageHeader/PageHeader';
 
 import css from './Page.module.scss';
 
