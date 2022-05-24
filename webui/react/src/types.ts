@@ -444,6 +444,11 @@ export interface TrialDetails extends TrialItem {
   workloads: WorkloadGroup[];
 }
 
+export enum Scale {
+  Linear = 'linear',
+  Log = 'log',
+}
+
 export interface MetricDatapoint {
   batches: number;
   value: number;

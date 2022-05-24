@@ -312,6 +312,14 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
+// Scale options available in metrics charts.
+enum Scale {
+  // Downsample points with closeness plotted on a linear y-axis.
+  SCALE_LINEAR = 0;
+  // Downsample points with closeness plotted on a logarithmic y-axis.
+  SCALE_LOG = 1;
+}
+
 // Get downsampled metrics from a trial.
 message SummarizeTrialRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -330,7 +338,7 @@ message SummarizeTrialRequest {
   // Type of metrics.
   MetricType metric_type = 6;
   // Scale of metric visualization (linear or log scale).
-  int32 scale = 7;
+  Scale scale = 7;
 }
 // Response to SummarizeTrialRequest.
 message SummarizeTrialResponse {
