@@ -6,10 +6,10 @@
     padding: 6px 0;
   }
   .search :global(.ant-input-prefix) {
-    color: var(--theme-colors-monochrome-8);
+    color: var(--theme-float);
   }
   .footer {
-    border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-13);
+    border-top: solid var(--theme-stroke-width) var(--theme-float-border);
     display: flex;
     justify-content: flex-end;
     padding: 8px;

@@ -2,7 +2,6 @@ import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import Icon from 'components/Icon';
 import Json from 'components/Json';
 import Page from 'components/Page';
 import { poolLogo } from 'components/ResourcePoolCard';
@@ -15,6 +14,7 @@ import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon/Icon';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence } from 'shared/utils/string';

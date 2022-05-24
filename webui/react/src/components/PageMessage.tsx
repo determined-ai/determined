@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 
-import Logo, { LogoType } from 'components/Logo';
+import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 
@@ -16,7 +16,7 @@ const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
     <Page docTitle={title}>
       <div className={css.base}>
         <div className={css.content}>
-          <Logo branding={info.branding} type={LogoType.OnLightVertical} />
+          <Logo branding={info.branding} orientation={Orientation.Vertical} />
           {children}
         </div>
       </div>

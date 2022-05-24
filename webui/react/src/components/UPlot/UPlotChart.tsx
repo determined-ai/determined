@@ -4,7 +4,7 @@ import uPlot, { AlignedData } from 'uplot';
 
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 

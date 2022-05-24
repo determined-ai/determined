@@ -3,10 +3,12 @@ import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
-import { BrandingType, CommonProps } from 'types';
+import { BrandingType } from 'types';
+
+import Spinner from '../shared/components/Spinner/Spinner';
+import { CommonProps } from '../shared/types';
 
 import css from './Page.module.scss';
-import Spinner from './Spinner';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;

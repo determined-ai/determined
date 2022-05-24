@@ -1,20 +1,16 @@
 .determined {
-  &.onDarkHorizontal,
-  &.onLightHorizontal {
+  &.horizontal {
     height: 30px;
     width: 192px;
   }
-  &.onDarkVertical,
-  &.onLightVertical {
+  &.vertical {
     height: 64.95px;
     width: 120px;
   }
 }
 .hpe {
-  &.onDarkHorizontal,
-  &.onLightHorizontal,
-  &.onDarkVertical,
-  &.onLightVertical {
+  &.horizontal,
+  &.vertical {
     height: 33px;
     width: 190px;
   }

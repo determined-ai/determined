@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import Icon from 'components/Icon';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase, TrialDetails } from 'types';
 

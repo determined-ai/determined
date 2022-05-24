@@ -1,10 +1,10 @@
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import Icon from 'shared/components/Icon/Icon';
 import { percent } from 'shared/utils/number';
 import { AnyTask, DetailedUser, ExperimentTask, RecentCommandTask, RecentEvent } from 'types';
 import { canBeOpened, isExperimentTask } from 'utils/task';

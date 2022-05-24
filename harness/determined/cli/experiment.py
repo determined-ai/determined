@@ -26,6 +26,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined, session
 
 from .checkpoint import render_checkpoint
+from .trial import logs_args_description
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
@@ -203,7 +204,7 @@ def limit_offset_paginator(
     sess: session.Session,
     limit: int = 200,
     offset: Optional[int] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> List[Any]:
     all_objects: List[Any] = []
     internal_offset = offset or 0
@@ -432,6 +433,35 @@ def describe(args: Namespace) -> None:
         outfile = args.outdir.joinpath("workloads.csv")
     values = sorted(wl_output.values(), key=lambda a: int(a[1]))
     render.tabulate_or_csv(headers, values, args.csv, outfile)
+
+
+@authentication.required
+def experiment_logs(args: Namespace) -> None:
+    sess = setup_session(args)
+    trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
+    if len(trials) == 0:
+        print(
+            f"No trials found for experiment {args.experiment_id}. "
+            "Try again after the experiment has a trial running."
+        )
+        return
+    first_trial_id = sorted(t_id.id for t_id in trials)[0]
+
+    api.pprint_trial_logs(
+        args.master,
+        first_trial_id,
+        head=args.head,
+        tail=args.tail,
+        follow=args.follow,
+        agent_ids=args.agent_ids,
+        container_ids=args.container_ids,
+        rank_ids=args.rank_ids,
+        sources=args.sources,
+        stdtypes=args.stdtypes,
+        level_above=args.level,
+        timestamp_before=args.timestamp_before,
+        timestamp_after=args.timestamp_after,
+    )
 
 
 @authentication.required
@@ -801,6 +831,15 @@ main_cmd = Cmd(
                     Arg("--outdir", type=Path, help="directory to save output"),
                 ),
             ],
+        ),
+        Cmd(
+            "logs",
+            experiment_logs,
+            "fetch logs of the first trial of an experiment",
+            [
+                experiment_id_arg("experiment ID"),
+            ]
+            + logs_args_description,
         ),
         Cmd(
             "download-model-def",

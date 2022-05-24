@@ -5,11 +5,11 @@ import yaml from 'js-yaml';
 import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 import Link from 'components/Link';
-import Spinner from 'components/Spinner';
 import useJupyterLab from 'hooks/useJupyterLab';
 import usePrevious from 'hooks/usePrevious';
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { JupyterLabConfig, ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 

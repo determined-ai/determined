@@ -94,7 +94,7 @@ checkpointStorage:
   # accessKey: <access_key>
   # secretKey: <secret_key>
   # endpointUrl: <endpoint_url>
-
+  # prefix: <prefix>
 
   # For storing in Azure Blob Storage with a connection string.
   # Do NOT use if already using Azure Blob Storage with account URL
@@ -160,6 +160,10 @@ taskContainerDefaults:
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true
+
+## Configure Prometheus endpoints for monitoring.
+# observability:
+#   enable_prometheus: true
 
 ## A user-friendly name to identify this cluster by.
 # clusterName: Dev

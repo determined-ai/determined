@@ -5,8 +5,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
+import Spinner from '../../shared/components/Spinner/Spinner';
 import { ErrorType } from '../../shared/utils/error';
-import Spinner from '../Spinner';
 
 import EditableMetadata from './EditableMetadata';
 

@@ -328,6 +328,46 @@ the Helm chart to include S3, no keys or endpoint urls are needed. Additionally,
 tainted nodes, be sure to add pod tolerations to the experiment spec to ensure they will get
 scheduled.
 
+.. _aws-lb:
+
+************************************
+ Using AWS Load Balancer (optional)
+************************************
+
+It is possible to use `ALB <https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/>`_
+with the Determined EKS cluster instead of :ref:`nginx <tls-on-kubernetes>`. Determined expects the
+health check to be on ``/det/``, so the `config
+<https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/#health-check>`_
+of ``alb.ingress.kubernetes.io/healthcheck-path`` must be set to ``/det/`` in the master ingress
+yaml. An example of a master ingress yaml is shown here:
+
+.. code:: yaml
+
+   apiVersion: extensions/v1beta1
+   kind: Ingress
+   metadata:
+     annotations:
+       alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+       alb.ingress.kubernetes.io/scheme: internal
+       alb.ingress.kubernetes.io/healthcheck-path: "/det/"
+       kubernetes.io/ingress.class: alb
+     name: determined-master-ingress
+   spec:
+     rules:
+      - host: yourhost.com
+        http:
+         paths:
+         - backend:
+             serviceName: determined-master-service-determined
+             servicePort: 8080
+           path: /*
+           pathType: ImplementationSpecific
+
+In order for this ingress to work as expected the Helm parameter of ``useNodePortForMaster`` must be
+set to ``true`` and the AWS Load Balancer Controller must be `installed in the cluster
+<https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html>`_.
+
 #########################
  Managing an EKS Cluster
 #########################

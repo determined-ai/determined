@@ -1,7 +1,6 @@
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -22,6 +21,7 @@ import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
@@ -141,6 +141,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         ]}
         id={experiment.id + ''}
         kind="experiment"
+        onError={handleError}
         onTrigger={dropDownOnTrigger(record)}
       />
     );

@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ActionDropdown, { Triggers } from 'components/ActionDropdown';
 import Grid, { GridMode } from 'components/Grid';
-import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
@@ -17,6 +15,8 @@ import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import { GetJobsResponse } from 'services/types';
+import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
+import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
@@ -181,6 +181,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
                   }}
                   id={record.name}
                   kind="job"
+                  onError={handleError}
                   onTrigger={dropDownOnTrigger(record)}
                 />
               </div>

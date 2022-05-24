@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
-import Spinner from 'components/Spinner';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
 

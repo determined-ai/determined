@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'shared/components/Icon/Icon';
 import { ansiToHtml } from 'shared/utils/dom';
 import { capitalize } from 'shared/utils/string';
 import { LogLevel } from 'types';

@@ -191,6 +191,8 @@ Determined itself is deployed. If this is undesirable, users can configure the H
 external Postgres database by setting ``db.hostAddress`` to the IP address of their database. If
 ``db.hostAddress`` is configured, the Determined Helm chart will not deploy a database.
 
+.. _tls-on-kubernetes:
+
 TLS (Optional)
 ==============
 
@@ -252,6 +254,9 @@ by default:
              backend:
                serviceName: determined-master-service-<name for your deployment>
                servicePort: masterPort configured in values.yaml
+
+To see information about using AWS Load Balancer instead of nginx visit :ref:`Using AWS Load
+Balancer <aws-lb>`.
 
 Default Scheduler (Optional)
 ============================

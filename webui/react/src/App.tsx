@@ -8,7 +8,6 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import Spinner from 'components/Spinner';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
@@ -20,6 +19,7 @@ import useTelemetry from 'hooks/useTelemetry';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';

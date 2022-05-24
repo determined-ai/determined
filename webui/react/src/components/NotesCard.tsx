@@ -5,11 +5,11 @@ import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError from 'utils/error';
 
+import Spinner from '../shared/components/Spinner/Spinner';
 import { ErrorType } from '../shared/utils/error';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
-import Spinner from './Spinner';
 
 interface Props {
   disabled?: boolean;
