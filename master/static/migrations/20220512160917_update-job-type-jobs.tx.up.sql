@@ -1,8 +1,4 @@
-ALTER TABLE public.jobs
-    ALTER COLUMN job_type TYPE VARCHAR(255);
-
-DROP TYPE public.job_type;
-
+ALTER TYPE public.job_type RENAME TO _job_type; 
 CREATE TYPE public.job_type AS ENUM (
     'EXPERIMENT',
     'NOTEBOOK',
@@ -11,7 +7,7 @@ CREATE TYPE public.job_type AS ENUM (
     'TENSORBOARD', 
     'CHECKPOINT_GC'
 );
-
 ALTER TABLE public.jobs 
     ALTER COLUMN job_type TYPE public.job_type
     USING (job_type::job_type);
+DROP TYPE public._job_type;

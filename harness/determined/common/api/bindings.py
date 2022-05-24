@@ -161,7 +161,7 @@ class determinedjobv1Type(enum.Enum):
     TYPE_TENSORBOARD = "TYPE_TENSORBOARD"
     TYPE_SHELL = "TYPE_SHELL"
     TYPE_COMMAND = "TYPE_COMMAND"
-    TYPE_CHECKPOINTGC = "TYPE_CHECKPOINTGC"
+    TYPE_CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
 
 class determinedtaskv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -949,19 +949,19 @@ class v1CurrentUserResponse:
 class v1DeleteCheckpointsRequest:
     def __init__(
         self,
-        checkpointUuids: "typing.Optional[typing.Sequence[str]]" = None,
+        checkpointUuids: "typing.Sequence[str]",
     ):
         self.checkpointUuids = checkpointUuids
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeleteCheckpointsRequest":
         return cls(
-            checkpointUuids=obj.get("checkpointUuids", None),
+            checkpointUuids=obj["checkpointUuids"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpointUuids": self.checkpointUuids if self.checkpointUuids is not None else None,
+            "checkpointUuids": self.checkpointUuids,
         }
 
 class v1Device:
