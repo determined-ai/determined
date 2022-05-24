@@ -62,12 +62,10 @@ classifying the release note according to one of the following categories:
 
      **Note:** For a release note that might have particular significance for the user, use an `Important` admonition and highlight it. For example:
 
-         ```
          **Bug Fixes**
 
          -  CLI: **Important:** API requests executed through the Python bindings have been erroneously using the SSL
             "noverify" option since version 0.17.6, making them potentially insecure. The option is now disabled.
-         ```
 
    * In one or more list items, provide additional information. Describe:
 
