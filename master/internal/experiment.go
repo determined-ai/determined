@@ -398,7 +398,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *apiv1.PauseExperimentRequest:
 		ctx.TellAll(model.TaskLog{
 			Log:   "Someone is requesting to pause this experiment",
-			Level: ptrs.Ptr("WARNING"),
+			Level: ptrs.Ptr(model.LogLevelWarning),
 		}, ctx.Children()...)
 		switch ok := e.updateState(ctx, model.PausedState); ok {
 		case true:
@@ -411,7 +411,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *apiv1.CancelExperimentRequest:
 		ctx.TellAll(model.TaskLog{
 			Log:   "Someone is requesting to cancel this experiment",
-			Level: ptrs.Ptr("WARNING"),
+			Level: ptrs.Ptr(model.LogLevelWarning),
 		}, ctx.Children()...)
 		switch {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
@@ -433,7 +433,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		default:
 			ctx.TellAll(model.TaskLog{
 				Log:   "Someone is trying to kill this experiment",
-				Level: ptrs.Ptr("WARNING"),
+				Level: ptrs.Ptr(model.LogLevelWarning),
 			}, ctx.Children()...)
 			if ok := e.updateState(ctx, model.StoppingKilledState); !ok {
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,

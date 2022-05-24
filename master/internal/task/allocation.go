@@ -660,6 +660,11 @@ func (a *Allocation) Terminate(ctx *actor.Context) {
 		if msg.ForcePreemption {
 			forcePreemption = true
 		}
+
+		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			Log:   "The scheduler is trying to preempt this trial for one of a higher priority",
+			Level: ptrs.Ptr(model.LogLevelWarning),
+		}))
 		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
 	}
 
@@ -715,6 +720,10 @@ func (a *Allocation) kill(ctx *actor.Context) {
 	}
 
 	ctx.Log().Info("decided to kill allocation")
+	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+		Log:   "The scheduler is trying to kill this",
+		Level: ptrs.Ptr(model.LogLevelWarning),
+	}))
 	if len(a.resources.exited()) == 0 {
 		a.killedWhileRunning = true
 	}

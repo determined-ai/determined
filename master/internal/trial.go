@@ -156,7 +156,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTrialRequest:
 		ctx.Tell(ctx.Self(), model.TaskLog{
 			Log:   fmt.Sprintf("Someone is requesting to kill this trial"),
-			Level: ptrs.Ptr("WARNING"),
+			Level: ptrs.Ptr(model.LogLevelWarning),
 		})
 		return t.patchState(ctx, model.StoppingKilledState)
 	case model.State:
