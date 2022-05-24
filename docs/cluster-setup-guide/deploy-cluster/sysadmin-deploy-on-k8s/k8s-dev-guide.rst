@@ -150,5 +150,4 @@ to build and ``make -C tools run`` to start the Master.
  Next Steps
 ************
 
--  :ref:`determined-on-kubernetes`
 -  :ref:`custom-pod-specs`

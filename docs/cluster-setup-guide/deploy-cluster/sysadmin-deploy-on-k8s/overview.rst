@@ -167,7 +167,6 @@ Useful steps for debugging this include:
    :maxdepth: 1
    :hidden:
 
-   helm-config
    install-on-kubernetes
    custom-pod-specs
    k8s-dev-guide

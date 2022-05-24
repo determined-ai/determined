@@ -4,10 +4,13 @@
  Install Determined on Kubernetes
 ##################################
 
-This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. The
-installation is performed using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
-For general information about using Determined with Kubernetes, refer to the
-:ref:`determined-on-kubernetes` guide.
+Helm chart reference: :doc:`/reference/config/helm-config-reference`
+
+This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
+
+When installing :ref:`Determined on Kubernetes <install-on-kubernetes>` using Helm, the deployment
+should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in the
+:download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
 ***************
  Prerequisites
@@ -409,10 +412,12 @@ To uninstall Determined run:
    # pause all experiments prior to upgrading or uninstalling Determined.
    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
-************
- Next Steps
-************
+**********
+Next Steps
+**********
 
--  :ref:`helm-config`
--  :ref:`determined-on-kubernetes`
--  :ref:`custom-pod-specs`
+:doc:`custom-pod-specs`
+:doc:`k8s-dev-guide`
+:doc:`setup-aks-cluster`
+:doc:`setup-eks-cluster`
+:doc:`setup-gke-cluster`

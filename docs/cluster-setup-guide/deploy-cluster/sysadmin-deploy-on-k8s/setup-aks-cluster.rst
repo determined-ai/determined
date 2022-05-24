@@ -156,3 +156,10 @@ To delete the AKS cluster, please use the following Azure CLI command:
 .. code:: bash
 
    az aks delete --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
+
+************
+ Next Steps
+************
+
+-  :ref:`install-on-kubernetes`
+-  :ref:`k8s-dev-guide`
