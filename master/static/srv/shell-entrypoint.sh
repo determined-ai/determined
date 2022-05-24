@@ -2,7 +2,6 @@
 
 source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
-trap 'source /run/determined/task-logging-teardown.sh' EXIT
 
 set -e
 

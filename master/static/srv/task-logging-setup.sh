@@ -69,3 +69,5 @@ exec > >(
 )
 
 ((DET_LOG_WAIT_COUNT += 2))
+
+trap 'source /run/determined/task-logging-teardown.sh' EXIT
