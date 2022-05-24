@@ -19,6 +19,16 @@ export interface ApiSorter<T = string> {
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
+export interface TrialSummaryParams {
+  endBatches?: number,
+  maxDatapoints: number,
+  metricNames: MetricName[],
+  metricType?: MetricType,
+  scale?: number,
+  startBatches?: number,
+  trialId: number,
+}
+
 export interface CommandIdParams {
   commandId: string;
 }

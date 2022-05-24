@@ -46,7 +46,21 @@ type Point struct {
 }
 
 // Downsample selects the most visually significant points from a series.
-func Downsample(data []Point, threshold int) (sampled []Point) {
+func Downsample(indata []Point, threshold int, scale int) (sampled []Point) {
+	// Filter NaNs and Infinite values from data; apply log scale before downsampling.
+	var data []Point
+	var dreference []int
+	for d := range indata {
+		modpt := Point{X: indata[d].X, Y: indata[d].Y}
+		if scale == 3 {
+			modpt.Y = math.Log(modpt.Y)
+		}
+		if !math.IsNaN(modpt.Y) && !math.IsInf(modpt.Y, 0) {
+			data = append(data, modpt)
+			dreference = append(dreference, d)
+		}
+	}
+
 	dataLength := len(data)
 	if threshold >= dataLength || threshold == 0 {
 		return data // Nothing to do
@@ -59,7 +73,7 @@ func Downsample(data []Point, threshold int) (sampled []Point) {
 	var a, nextA int // Initially a is the first point in the triangle
 	var maxArea, area float64
 
-	sampled[0] = data[a] // Always add the first point
+	sampled[0] = indata[a] // Always add the first point
 	sampledIndex := 1
 	for i := 0; i < threshold-2; i++ {
 		// Calculate point average for next bucket (containing c)
@@ -88,7 +102,7 @@ func Downsample(data []Point, threshold int) (sampled []Point) {
 
 		maxArea = -1.0
 
-		var maxAreaPoint Point
+		var maxAreaPoint int
 		for ; rangeOffs < rangeTo; rangeOffs++ {
 			// Calculate triangle area over three buckets
 			area = math.Abs(
@@ -96,17 +110,17 @@ func Downsample(data []Point, threshold int) (sampled []Point) {
 					(pointAX-data[rangeOffs].X)*(avgY-pointAY)) * 0.5
 			if area > maxArea {
 				maxArea = area
-				maxAreaPoint = data[rangeOffs]
+				maxAreaPoint = rangeOffs
 				nextA = rangeOffs // Next a is this b
 			}
 		}
 
-		sampled[sampledIndex] = maxAreaPoint // Pick this point from the bucket
+		sampled[sampledIndex] = indata[dreference[maxAreaPoint]] // Pick this point from the original bucket
 		sampledIndex++
 		a = nextA // This a is the next a (chosen b)
 	}
 
-	sampled[sampledIndex] = data[dataLength-1] // Always add last
+	sampled[sampledIndex] = indata[len(indata)-1] // Always add last
 
 	return sampled
 }

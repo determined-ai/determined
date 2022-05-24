@@ -29,6 +29,10 @@ const getChartMetricLabel = (metric: MetricName): string => {
   return metric.name;
 };
 
+const numerizeScale = (scale: Scale): number => {
+  return scale === Scale.Log ? 3 : 1;
+};
+
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
   metricNames,
@@ -81,7 +85,7 @@ const TrialChart: React.FC<Props> = ({
       key: trialId,
       legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
+      scales: { x: { time: false }, y: { distr: numerizeScale(scale) } },
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({
