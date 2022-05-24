@@ -42,14 +42,26 @@ const TrialChart: React.FC<Props> = ({
   useMemo(async () => {
     if (trialId) {
       const summ = await getTrialSummary({
-        endBatches: 100000,
-        maxDatapoints: 45,
+        maxDatapoints: 30,
         metricNames: metricNames,
         trialId: trialId,
       });
       setTrialSummary(summ.metrics);
     }
   }, [ metricNames, trialId ]);
+
+  // const resetZoom = async (min: number, max: number) => {
+  //   if (trialId) {
+  //     const summ = await getTrialSummary({
+  //       endBatches: Math.ceil(max),
+  //       maxDatapoints: 30,
+  //       metricNames: metricNames,
+  //       startBatches: Math.floor(min),
+  //       trialId: trialId,
+  //     });
+  //     setTrialSummary(summ.metrics);
+  //   }
+  // };
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
