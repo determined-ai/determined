@@ -176,7 +176,7 @@ SELECT
     WHERE a.task_id = t.task_id
   ) AS wall_clock_time,
   (
-    SELECT sum((jsonb_each).value::text::int)
+    SELECT sum((jsonb_each).value::text::bigint)
     FROM (
         SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
         UNION ALL
