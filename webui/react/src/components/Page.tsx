@@ -1,33 +1,12 @@
-import React, { MutableRefObject } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
-import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
+import BasePage, { Props as BasePageProps } from 'tmp-shared/components/Page';
 import { BrandingType } from 'types';
 
-import Spinner from '../shared/components/Spinner/Spinner';
-import { CommonProps } from '../shared/types';
-
-import css from './Page.module.scss';
-
-export interface BreadCrumbRoute {
-  breadcrumbName: string;
-  breadcrumbTooltip?: string;
-  path: string;
-}
-
-export interface Props extends CommonProps {
-  bodyNoPadding?: boolean;
-  breadcrumb?: BreadCrumbRoute[];
-  containerRef?: MutableRefObject<HTMLElement | null>,
+export interface Props extends BasePageProps {
   docTitle?: string;
-  headerComponent?: React.ReactNode,
-  id?: string;
-  loading?: boolean;
-  options?: React.ReactNode;
-  stickyHeader?: boolean;
-  subTitle?: React.ReactNode;
-  title?: string;
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -42,10 +21,7 @@ const getFullDocTitle = (branding: string, title?: string, clusterName?: string)
 };
 
 const Page: React.FC<Props> = (props: Props) => {
-  const classes = [ props.className, css.base ];
   const { info } = useStore();
-
-  const showHeader = !props.headerComponent && (props.breadcrumb || props.title);
   const brandingPath = `${process.env.PUBLIC_URL}/${info.branding}`;
 
   const docTitle = getFullDocTitle(
@@ -54,11 +30,8 @@ const Page: React.FC<Props> = (props: Props) => {
     info.clusterName,
   );
 
-  if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
-  if (props.stickyHeader) classes.push(css.stickyHeader);
-
   return (
-    <main className={classes.join(' ')} id={props.id} ref={props.containerRef}>
+    <BasePage {...props}>
       <Helmet>
         <title>{docTitle}</title>
         {info.checked && (
@@ -73,20 +46,7 @@ const Page: React.FC<Props> = (props: Props) => {
           </>
         )}
       </Helmet>
-      {props.headerComponent}
-      {showHeader && (
-        <PageHeader
-          breadcrumb={props.breadcrumb}
-          options={props.options}
-          sticky={props.stickyHeader}
-          subTitle={props.subTitle}
-          title={props.title}
-        />
-      )}
-      <div className={css.body}>
-        <Spinner spinning={!!props.loading}>{props.children}</Spinner>
-      </div>
-    </main>
+    </BasePage>
   );
 };
 

@@ -1,10 +1,11 @@
 import { Breadcrumb, Tooltip } from 'antd';
 import React from 'react';
 
+import { BreadCrumbRoute } from 'tmp-shared/components/Page';
+
 import { CommonProps } from '../shared/types';
 
 import Link from './Link';
-import { BreadCrumbRoute } from './Page';
 import css from './PageHeader.module.scss';
 
 export interface Props extends CommonProps {
