@@ -49,18 +49,18 @@ func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []string) error {
 
 // ExperimentCheckpointGrouping represents a mapping of checkpoint uuids to experiment id.
 type ExperimentCheckpointGrouping struct {
-	EID          int
-	CUUIDsString string
+	ExperimentID       int
+	CheckpointUUIDSStr string
 }
 
-// GetExpIDsUsingCheckpointUUIDs creates the mapping of checkpoint uuids to experiment id.
+// GroupCheckpointUUIDsByExperimentID creates the mapping of checkpoint uuids to experiment id.
 // The checkpount uuids grouped together are comma separated.
-func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) (
+func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []string) (
 	[]*ExperimentCheckpointGrouping, error) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
-		`SELECT e.id AS EID, array_agg(c.uuid::text) AS CUUIDsString
+		`SELECT e.id AS ExperimentID, array_agg(c.uuid::text) AS CheckpointUUIDSStr
 	FROM experiments e
 	JOIN checkpoints_view c ON c.experiment_id = e.id
 	WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))
@@ -69,7 +69,6 @@ func (db *PgDB) GetExpIDsUsingCheckpointUUIDs(checkpoints []string) (
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
 	}
 
-	print(rows)
 	for rows.Next() {
 		var eIDcUUIDs ExperimentCheckpointGrouping
 		err = rows.StructScan(&eIDcUUIDs)
