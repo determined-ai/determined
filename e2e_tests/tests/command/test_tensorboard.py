@@ -163,19 +163,18 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
-@pytest.mark.slow
 @pytest.mark.e2e_cpu
 def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
-    Start a random experiment configured with the shared_fs backend, start a
-    TensorBoard instance pointed to the experiment with custom image, verify
-    the image has been set, and kill the TensorBoard instance.
+    Start a random experiment, start a TensorBoard instance pointed 
+    to the experiment with custom image, verify the image has been set, 
+    and kill the TensorBoard instance.
     """
-    with FileTree(tmp_path, {"config.yaml": shared_fs_config(1)}) as tree:
-        config_path = tree.joinpath("config.yaml")
-        experiment_id = exp.run_basic_test(
-            str(config_path), conf.fixtures_path("no_op"), num_trials
-        )
+    experiment_id = exp.run_basic_test(
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
+    )
     command = [
         "det",
         "-m",
@@ -188,21 +187,17 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         "--config",
         "environment.image=alpine",
     ]
-    env = os.environ.copy()
-    env["DET_DEBUG"] = "true"
     res = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        command, universal_newlines=True, stdout=subprocess.PIPE, check=True
     )
-    assert res.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(res.stdout, res.stderr)
-    t_id = res.stdout.replace("\n", "")
+    t_id = res.stdout.strip('\n')
     command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
     res = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+        command, universal_newlines=True, stdout=subprocess.PIPE, check=True
     )
-    assert res.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(res.stdout, res.stderr)
     config = yaml.safe_load(res.stdout)
     assert (
         config["environment"]["image"]["cpu"] == "alpine"
         and config["environment"]["image"]["cuda"] == "alpine"
         and config["environment"]["image"]["rocm"] == "alpine"
-    ), "\nSetting custom image not working properly:\n{}".format(config["environment"]["image"])
+    ), config
