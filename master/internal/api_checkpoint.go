@@ -40,7 +40,7 @@ func (a *apiServer) GetCheckpoint(
 func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
 	req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
-	spew.Dump(ctx)
+	log.Error(spew.Sdump(ctx))
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
