@@ -1217,13 +1217,6 @@ jobs:
           paths:
             - webui/react/build
 
-  test-shared-web:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - checkout
-      - run: make -C webui/react/src/shared test
-
   test-unit-react:
     docker:
       - image: cimg/node:16.14.2
