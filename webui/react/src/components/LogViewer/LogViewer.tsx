@@ -8,6 +8,7 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
@@ -503,14 +504,15 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleFullScreen}
           />
         </Tooltip>
-        {handleCloseLogs && (
-          <Tooltip placement="bottomRight" title="Close Logs">
-            <Button
+        {true && (
+
+          <Link onClick={handleCloseLogs}>
+            <Icon
               aria-label="Close Logs"
-              className={css.transparentButton}
-              onClick={handleCloseLogs}> X
-            </Button>
-          </Tooltip>
+              name="close"
+              title="Close Logs"
+            />
+          </Link>
         )}
         {onDownload && (
           <Tooltip placement="bottomRight" title="Download Logs">

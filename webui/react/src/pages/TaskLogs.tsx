@@ -22,10 +22,10 @@ interface Params {
 }
 
 interface Props {
+  headerComponent?: React.ReactNode;
   onCloseLogs?: () => void;
   taskId: string;
   taskType: string;
-  headerComponent?: React.ReactNode;
 }
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
