@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
-import { resourceStateToLabel } from 'constants/states';
+import { allocatedResourceStates, resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import history from 'shared/routes/history';
@@ -101,8 +101,10 @@ const SlotAllocationBar: React.FC<Props> = ({
     return tally;
   }, [ resourceStates, totalSlots, slotsPotential ]);
 
-  const freeSlots = (totalSlots - resourceStates.length);
-  const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
+  const allocatedSlots = resourceStates.filter(state => allocatedResourceStates.has(state)).length;
+
+  const freeSlots = (totalSlots - allocatedSlots);
+  const pendingSlots = (allocatedSlots - stateTallies.RUNNING);
 
   const barParts = useMemo(() => {
     if (isAux && footer) {
@@ -232,8 +234,8 @@ const SlotAllocationBar: React.FC<Props> = ({
           <header>{title || 'Compute'} Slots Allocated</header>
           {totalSlots === 0 ? <span>0/0</span> : (
             <span>
-              {resourceStates.length}/{totalSlots}
-              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length / totalSlots, 2)})` : ''}
+              {allocatedSlots}/{totalSlots}
+              {totalSlots > 0 ? ` (${floatToPercent(allocatedSlots / totalSlots, 2)})` : ''}
             </span>
           )}
         </div>
@@ -256,14 +258,14 @@ const SlotAllocationBar: React.FC<Props> = ({
           {poolType === V1ResourcePoolType.K8S ? (
             <header>{`${isAux ?
               `${footer.auxContainersRunning} Aux Containers Running` :
-              `${resourceStates.length} ${title || 'Compute'} Slots Allocated`}`}
+              `${allocatedSlots} ${title || 'Compute'} Slots Allocated`}`}
             </header>
           )
             : (
               <header>{`${isAux ?
                 `${footer.
                   auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running` :
-                `${resourceStates.length}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
+                `${allocatedSlots}/${totalSlotsNum} ${title || 'Compute'} Slots Allocated`}`}
               </header>
             )}
           {renderFooterJobs()}

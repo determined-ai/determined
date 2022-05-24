@@ -157,3 +157,14 @@ export function stateToLabel(
     || slotStateToLabel[state as SlotState]
     || state as string;
 }
+
+export const allocatedResourceStates: Set<ResourceState> = new Set([
+  ResourceState.Unspecified,
+  ResourceState.Assigned,
+  ResourceState.Pulling,
+  ResourceState.Starting,
+  ResourceState.Running,
+  ResourceState.Terminated,
+  ResourceState.Warm,
+  ResourceState.Potential,
+]);
