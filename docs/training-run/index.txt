@@ -150,15 +150,25 @@ Format:
 
 ``determined.launch.deepspeed [[DEEPSPEED_ARGS...] --] (--trial TRIAL)|(SCRIPT...)``
 
-The DeepSpeed launcher launches a training script under deepspeed with automatic handling of IP
-addresses, node and container communication, and fault tolerance. See the official DeepSpeed
-documentation for information about how to use the DeepSpeed launcher.
+The DeepSpeed launcher launches a training script under ``deepspeed`` with automatic handling of:
+
+-  IP addresses
+-  sshd containers
+-  shutdown
+
+See the official DeepSpeed documentation for information about how to use the DeepSpeed launcher.
 
 Example:
 
 .. code:: bash
 
    python3 -m determined.launch.deepspeed --trial model_def:MyTrial
+
+Use the help option to get the latest usage:
+
+.. code:: bash
+
+   python3 -m determined.launch.deepspeed -h
 
 Legacy Launcher
 ===============
@@ -253,10 +263,10 @@ takes a few seconds.
  Pause and Activate
 ********************
 
-Trials can be paused and reactivated without losing training progress. The scheduler can stop
-running a trial to allow a trial from another experiment to run, but you can also manually pause an
-experiment at any time, which causes all of its trials to stop. After a trial is set to stop, it
-takes a checkpoint at the next available opportunity, such as after the current workload completes,
-and stops running. This frees the slots used by the trial. When the trial resumes running, because
-more slots become available in the cluster or when you activate the experiment, it loads the saved
-checkpoint, continuing training from the saved state.
+A trial can be paused and reactivated without losing training progress. Pausing a trial preserves
+its progress by saving a checkpoint before exiting the cluster.
+
+The scheduler can pause a trial to free its resources for another task. Also, you can manually pause
+an experiment, which pauses all trials in the experiment. This frees the slots used by the trial.
+When the trial resumes, because more slots become available or because you activate an experiment,
+the saved checkpoint is loaded and training continues from the saved state.
