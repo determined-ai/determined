@@ -151,7 +151,7 @@ export enum Determinedjobv1State {
 }
 
 /**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINTGC: CheckpointGC Job.
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
  * @export
  * @enum {string}
  */
@@ -162,7 +162,7 @@ export enum Determinedjobv1Type {
     TENSORBOARD = <any> 'TYPE_TENSORBOARD',
     SHELL = <any> 'TYPE_SHELL',
     COMMAND = <any> 'TYPE_COMMAND',
-    CHECKPOINTGC = <any> 'TYPE_CHECKPOINTGC'
+    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
 }
 
 /**
@@ -1421,11 +1421,11 @@ export interface V1CurrentUserResponse {
  */
 export interface V1DeleteCheckpointsRequest {
     /**
-     * The list of uuids for the requested checkpoint.
+     * 
      * @type {Array<string>}
      * @memberof V1DeleteCheckpointsRequest
      */
-    checkpointUuids?: Array<string>;
+    checkpointUuids: Array<string>;
 }
 
 /**
