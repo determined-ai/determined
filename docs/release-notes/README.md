@@ -59,6 +59,17 @@ classifying the release note according to one of the following categories:
      * other component.
 
    * Provide a short, descriptive, summary title.
+
+     **Note:** For a release note that might have particular significance for the user, use an ``Important`` admonition and highlight it. For example:
+
+     .. code-block::
+
+         **Bug Fixes**
+
+         -  CLI: **Important:** API requests executed through the Python bindings have been erroneously using the SSL
+            "noverify" option since version 0.17.6, making them potentially insecure. The option is now
+            disabled.
+
    * In one or more list items, provide additional information. Describe:
 
      * what changed
@@ -80,18 +91,18 @@ classifying the release note according to one of the following categories:
 
 ### Release Note Example
 
-```
-:orphan:
+.. code-block::
 
-**New Features**
+   :orphan:
 
--  GCP: Add support for provisioning Nvidia A100 GPU instances.
+   **New Features**
 
-   -  Running workloads on A100 chips currently requires building a custom task
-      environment with CUDA 11, because the default task environments provided by
-      Determined contain either CUDA 10.0 or CUDA 10.1. The default task
-      environments will be upgraded to CUDA 11 in a future release of Determined.
-```
+   -  GCP: Add support for provisioning Nvidia A100 GPU instances.
+
+      -  Running workloads on A100 chips currently requires building a custom task
+         environment with CUDA 11, because the default task environments provided by
+         Determined contain either CUDA 10.0 or CUDA 10.1. The default task
+         environments will be upgraded to CUDA 11 in a future release of Determined.
 
 ## How to Collect and Publish the Release Notes for a Release
 
