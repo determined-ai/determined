@@ -53,6 +53,7 @@ export const InteractiveTask: React.FC = () => {
         )}
         {pageView === PageView.TASK_LOGS && (
           <TaskLogs
+            headerComponent={<div />}
             taskId={taskId}
             taskType={taskType}
             onCloseLogs={() => setPageView(PageView.IFRAME)}
