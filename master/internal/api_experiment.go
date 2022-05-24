@@ -1104,7 +1104,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 		trialCursors[trialID] = endTime
 	}
 	if !seenBefore {
-		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, 0)
+		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
 	}
 
 	for _, in := range metricSeries {

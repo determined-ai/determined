@@ -46,13 +46,14 @@ type Point struct {
 }
 
 // Downsample selects the most visually significant points from a series.
-func Downsample(indata []Point, threshold int, scale int) (sampled []Point) {
-	// Filter NaNs and Infinite values from data; apply log scale before downsampling.
+func Downsample(indata []Point, threshold int, log_scale bool) (sampled []Point) {
+	// Filter NaNs and Infinite values from data.
 	var data []Point
 	var dreference []int
 	for d := range indata {
 		modpt := Point{X: indata[d].X, Y: indata[d].Y}
-		if scale == 3 {
+		// Apply log scale before downsampling or checking for NaN/Infinite values.
+		if log_scale {
 			modpt.Y = math.Log(modpt.Y)
 		}
 		if !math.IsNaN(modpt.Y) && !math.IsInf(modpt.Y, 0) {
@@ -63,7 +64,7 @@ func Downsample(indata []Point, threshold int, scale int) (sampled []Point) {
 
 	dataLength := len(data)
 	if threshold >= dataLength || threshold == 0 {
-		return data // Nothing to do
+		return indata // Nothing to do
 	}
 	sampled = make([]Point, threshold)
 

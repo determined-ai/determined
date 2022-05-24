@@ -4,14 +4,18 @@ import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
+import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { glasbeyColor } from 'shared/utils/color';
+<<<<<<< HEAD
 import { MetricName, MetricType, WorkloadGroup } from 'types';
+=======
+import { MetricContainer, MetricName, Scale } from 'types';
+>>>>>>> a23f8193d (pass scale type as enum, handle points < maxdatapoints)
 
 interface Props {
   defaultMetricNames: MetricName[];
@@ -27,10 +31,6 @@ const getChartMetricLabel = (metric: MetricName): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
-};
-
-const numerizeScale = (scale: Scale): number => {
-  return scale === Scale.Log ? 3 : 1;
 };
 
 const TrialChart: React.FC<Props> = ({
@@ -85,7 +85,7 @@ const TrialChart: React.FC<Props> = ({
       key: trialId,
       legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales: { x: { time: false }, y: { distr: numerizeScale(scale) } },
+      scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'Batch' },
         ...metrics.map((metric, index) => ({

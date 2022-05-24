@@ -4810,6 +4810,10 @@ class v1SSOProvider:
             "ssoUrl": self.ssoUrl,
         }
 
+class v1Scale(enum.Enum):
+    SCALE_LINEAR = "SCALE_LINEAR"
+    SCALE_LOG = "SCALE_LOG"
+
 class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     SCHEDULER_TYPE_PRIORITY = "SCHEDULER_TYPE_PRIORITY"
@@ -8444,7 +8448,7 @@ def get_SummarizeTrial(
     maxDatapoints: "typing.Optional[int]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
-    scale: "typing.Optional[int]" = None,
+    scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "v1SummarizeTrialResponse":
     _params = {
@@ -8452,7 +8456,7 @@ def get_SummarizeTrial(
         "maxDatapoints": maxDatapoints,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
-        "scale": scale,
+        "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
     }
     _resp = session._do_request(
