@@ -3,7 +3,7 @@ import { ButtonType } from 'antd/es/button';
 import { TooltipPlacement } from 'antd/es/tooltip';
 import React, { useCallback } from 'react';
 
-import Icon, { IconSize } from 'components/Icon';
+import Icon, { IconSize } from 'shared/components/Icon/Icon';
 
 interface Props {
   className?: string;

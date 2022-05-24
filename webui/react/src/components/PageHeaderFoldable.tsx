@@ -1,7 +1,7 @@
 import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
 import React, { useState } from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import { isMouseEvent } from '../shared/utils/routes';
 

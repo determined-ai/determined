@@ -133,6 +133,11 @@ data:
       enabled: {{ .Values.telemetry.enabled }}
     {{- end }}
 
+    {{- if .Values.observability }}
+    observability:
+      enable_prometheus: {{ required "A valid .Values.observability.enable_prometheus must be provided if setting .Values.observability!" .Values.observability.enable_prometheus }}
+    {{- end }}
+
     {{- if .Values.clusterName }}
     cluster_name: {{ .Values.clusterName }}
     {{- end }}

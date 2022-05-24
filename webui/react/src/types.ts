@@ -605,12 +605,6 @@ export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   users?: string[];
 }
 
-export type CommonProps = {
-  children?: React.ReactNode;
-  className?: string;
-  title?: string;
-};
-
 export enum LogLevel {
   Critical = 'critical',
   Debug = 'debug',

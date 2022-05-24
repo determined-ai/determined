@@ -5,7 +5,6 @@ package db
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -53,10 +52,12 @@ func TestProtoGetTrial(t *testing.T) {
 	}
 
 	var trResp trialv1.Trial
-	err = db.QueryProto(
+	err = db.QueryProtof(
 		"proto_get_trials_plus",
+		[]any{"($1::int, $2::int)"},
 		&trResp,
-		"{"+strconv.Itoa(int(tr.ID))+"}",
+		tr.ID,
+		1,
 	)
 	require.NoError(t, err, "failed to query trial")
 	require.Equal(t, trResp.WallClockTime, float64(3), "wall clock time is wrong")

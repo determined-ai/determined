@@ -191,6 +191,11 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
 
    -  ``enabled``: Whether collection is enabled. Defaults to ``true``.
 
+-  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
+   :ref:`Prometheus <prometheus>` for details.
+
+   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
+
 -  ``defaultPassword``: Specifies a string containing the default password for the admin and
    determined user accounts.
 

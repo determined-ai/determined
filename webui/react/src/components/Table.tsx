@@ -5,10 +5,10 @@ import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
-import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {

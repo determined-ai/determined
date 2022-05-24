@@ -3,13 +3,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
-import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 

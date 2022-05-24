@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 
-import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -11,6 +10,7 @@ import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
+import Icon from 'shared/components/Icon/Icon';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';

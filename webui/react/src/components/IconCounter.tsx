@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Icon from 'components/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './IconCounter.module.scss';
 

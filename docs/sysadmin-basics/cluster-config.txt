@@ -173,12 +173,11 @@ reporting will not affect the functionality of Determined in any way.
 OpenTelemetry
 =============
 
-Separate from the telemetry reporting mentioned above we also provide functionality to use
-opentelemetry to collect traces. By default, this is disabled. To enable this start the master with
-the ``--telemetry-otel-enabled=true``. This can also be done by editing the master config file or
-setting an environment variable, as with any other configuration option. By default, the
-opentelemetry collector starts with this endpoint = "localhost:4317". To change this endpoint, set
-telemetry-otel-enabled to the endpoint you would like.
+Separate from the telemetry reporting mentioned above, Determined also supports `OpenTelemetry
+<https://opentelemetry.io/>`__ to collect traces. This is disabled by default; to enable it, use the
+master configuration setting ``telemetry.otel-enabled``. When enabled, the master will send
+OpenTelemetry traces to a collector running at ``localhost:4317``. A different endpoint can be set
+via the ``telemetry.otel-endpoint`` configuration setting.
 
 .. _master-configuration:
 
@@ -775,10 +774,20 @@ The master supports the following configuration settings:
       -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
          size is 16384.
 
--  ``telemetry``: Specifies whether we collect and report anonymous information about the usage of
-   Determined. See :ref:`telemetry` for details on what kinds of information are reported.
+-  ``telemetry``: Specifies configuration settings related to telemetry collection and tracing.
 
-   -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
+   -  ``enabled``: Whether to collect and report anonymous information about the usage of this
+      Determined cluster. See :ref:`telemetry` for details on what kinds of information are
+      reported. Defaults to ``true``.
+
+   -  ``otel-enabled``: Whether OpenTelemetry is enabled. Defaults to ``false``.
+
+   -  ``otel-endpoint``: OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.
+
+-  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
+   :ref:`Prometheus <prometheus>` for details.
+
+   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
 
 -  ``logging``: Specifies configuration settings for the logging backend for trial logs.
 

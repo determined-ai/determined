@@ -8,10 +8,10 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
 import {

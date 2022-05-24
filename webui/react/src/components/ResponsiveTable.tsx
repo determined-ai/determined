@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
-import Spinner from './Spinner';
+import Spinner from '../shared/components/Spinner/Spinner';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;

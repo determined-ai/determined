@@ -3,7 +3,6 @@ import { ColumnsType } from 'antd/lib/table';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
@@ -25,6 +24,7 @@ import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon/Icon';
 import { isBoolean, isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import { ArchiveFilter, ModelItem } from 'types';

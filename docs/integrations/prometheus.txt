@@ -51,6 +51,8 @@ other tools can differ, depending on the format and organization of the returned
 -  A Grafana installation for dashboard monitoring.
 -  An on-cluster Prometheus instance for time-series data collection.
 
+.. _prometheus:
+
 **********************
  Configure Determined
 **********************

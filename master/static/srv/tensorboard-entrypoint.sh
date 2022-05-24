@@ -2,10 +2,8 @@
 
 source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
-trap 'source /run/determined/task-logging-teardown.sh' EXIT
 
 set -e
-set -x
 
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"

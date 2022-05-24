@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 import React from 'react';
 
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase } from 'types';
 
 import css from './ExperimentConfiguration.module.scss';

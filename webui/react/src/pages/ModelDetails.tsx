@@ -5,14 +5,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import DownloadModelModal from 'components/DownloadModelModal';
-import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
-import Spinner from 'components/Spinner';
 import { getFullPaginationConfig, modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
@@ -24,7 +22,9 @@ import {
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/message';
+import Icon from 'shared/components/Icon/Icon';
+import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';

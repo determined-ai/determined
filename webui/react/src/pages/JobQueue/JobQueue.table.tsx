@@ -4,11 +4,11 @@ import React, { ReactNode } from 'react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
+import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
