@@ -32,7 +32,6 @@ def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) 
         "union": extensions.union,
         "checks": extensions.checks,
         "compareProperties": extensions.compareProperties,
-        "conditional": extensions.conditional,
         "optionalRef": extensions.optionalRef,
     }
     if complete:

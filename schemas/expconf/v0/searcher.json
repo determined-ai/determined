@@ -3,53 +3,51 @@
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
     "$comment": "this is a union of all possible properties, with validation for the common properties",
-    "conditional": {
-        "when": {
-            "required": [
-                "name"
+    "if": {
+        "required": [
+            "name"
+        ]
+    },
+    "then": {
+        "union": {
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+            "items": [
+                {
+                    "unionKey": "const:name=single",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
+                },
+                {
+                    "unionKey": "const:name=random",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
+                },
+                {
+                    "unionKey": "const:name=grid",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                },
+                {
+                    "unionKey": "const:name=adaptive_asha",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
+                },
+                {
+                    "unionKey": "const:name=async_halving",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=adaptive",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=adaptive_simple",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=sync_halving",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
+                }
             ]
-        },
-        "enforce": {
-            "union": {
-                "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
-                "items": [
-                    {
-                        "unionKey": "const:name=single",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
-                    },
-                    {
-                        "unionKey": "const:name=random",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
-                    },
-                    {
-                        "unionKey": "const:name=grid",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
-                    },
-                    {
-                        "unionKey": "const:name=adaptive_asha",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
-                    },
-                    {
-                        "unionKey": "const:name=async_halving",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=adaptive",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=adaptive_simple",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-                    },
-                    {
-                        "$comment": "this is an EOL searcher, not to be used in new experiments",
-                        "unionKey": "const:name=sync_halving",
-                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
-                    }
-                ]
-            }
         }
     },
     "additionalProperties": false,

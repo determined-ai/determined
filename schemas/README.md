@@ -1,7 +1,7 @@
 # Experiment Config Development Guide
 
-- We use [JSON Schema](https://json-schema.org/) to define the schema of 
-  the experiment configuration. This helps apply cross-language policies 
+- We use [JSON Schema](https://json-schema.org/) to define the schema of
+  the experiment configuration. This helps apply cross-language policies
   for validation, null handling, default values, and some custom rules.
 
 - To make changes to the configuration schema, change the according files below:
@@ -10,7 +10,7 @@
     - See `master/pkg/schemas/expconf` for go struct definitions.
     - See `harness/determined/common/schemas/expconf` for python class definitions.
 
-- We generate code that contains the definitions and utility functions of 
+- We generate code that contains the definitions and utility functions of
   structs.  See `schemas/gen.py`.
 
 - Validation:
@@ -23,8 +23,8 @@
       inclusion of a single `eventuallyRequired` schema in the latter.
 
 - Null handling:
-    - Null values are treated as they are not present. 
-    - Reason: there is no pythonic or golangic way to represent values which were 
+    - Null values are treated as they are not present.
+    - Reason: there is no pythonic or golangic way to represent values which were
       provided in the configuration as literal nulls, rather than values which
       were not provided at all.  In theory, you could have singleton
       "NotProvided" pointers, which you would check for every time that you
@@ -33,7 +33,7 @@
       not-present values a nil values anyway.
 
 - Default values:
-    - Default values are defined in JSON Schema. 
+    - Default values are defined in JSON Schema.
     - However, other default values might be populated on the master side.
 
 - Customization rules:
@@ -43,14 +43,13 @@
     - We have json-schema extensions for the following keywords:
         - `checks`: Custom messages for arbitrary validation logic
         - `compareProperties`: Support customizable value comparisons
-        - `conditional`: Enforce a schema whenever some condition is met.
         - `disallowProperties`: Custom messages when disallowing properties
         - `eventuallyRequired`: Support two-step validation
         - `union`: Excellent error messages when validating union types
         - `optionalRef`: like $ref, but only enforced for non-null values
         - `eventually`: Defer validation of inner clause till completeness validation phase
     - The canonical implementations (with thorough comments) may be found in
-      `determined/common/schemas/extensions.py`.
+      `harness/determined/common/schemas/extensions.py`.
 
 - Migration and Versioning:
     - Migration logics are implemented in the master. See `pkg/schemas/expconf/parse.go`.

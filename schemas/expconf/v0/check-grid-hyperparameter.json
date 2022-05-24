@@ -43,27 +43,23 @@
                 },
                 "checks": {
                     "grid search is in use but count was not provided": {
-                        "conditional": {
-                            "$comment": "unless type is not double/log/int, expect non-null count",
-                            "unless": {
-                                "not": {
-                                    "properties": {
-                                        "type": {
-                                            "enum": [
-                                                "double",
-                                                "log",
-                                                "int"
-                                            ]
-                                        }
-                                    }
+                        "if": {
+                            "$comment": "if type is double/log/int, expect non-null count",
+                            "properties": {
+                                "type": {
+                                    "enum": [
+                                        "double",
+                                        "log",
+                                        "int"
+                                    ]
                                 }
-                            },
-                            "enforce": {
-                                "not": {
-                                    "properties": {
-                                        "count": {
-                                            "type": "null"
-                                        }
+                            }
+                        },
+                        "then": {
+                            "not": {
+                                "properties": {
+                                    "count": {
+                                        "type": "null"
                                     }
                                 }
                             }
