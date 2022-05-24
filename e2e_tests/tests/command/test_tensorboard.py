@@ -1,4 +1,3 @@
-import os
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
@@ -166,8 +165,8 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
 @pytest.mark.e2e_cpu
 def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
     """
-    Start a random experiment, start a TensorBoard instance pointed 
-    to the experiment with custom image, verify the image has been set, 
+    Start a random experiment, start a TensorBoard instance pointed
+    to the experiment with custom image, verify the image has been set,
     and kill the TensorBoard instance.
     """
     experiment_id = exp.run_basic_test(
@@ -187,14 +186,10 @@ def test_start_tensorboard_with_custom_image(tmp_path: Path) -> None:
         "--config",
         "environment.image=alpine",
     ]
-    res = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, check=True
-    )
-    t_id = res.stdout.strip('\n')
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    t_id = res.stdout.strip("\n")
     command = ["det", "-m", conf.make_master_url(), "tensorboard", "config", t_id]
-    res = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, check=True
-    )
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
     config = yaml.safe_load(res.stdout)
     assert (
         config["environment"]["image"]["cpu"] == "alpine"
