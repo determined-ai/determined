@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-type connKey struct {}
+type connKey struct{}
 
 func SaveConn(ctx context.Context, c net.Conn) context.Context {
 	return context.WithValue(ctx, connKey{}, c)
