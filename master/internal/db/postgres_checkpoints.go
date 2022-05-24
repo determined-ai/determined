@@ -34,14 +34,14 @@ func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []uuid.UUID) ([
 func (db *PgDB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
 	_, err := db.sql.Exec(`UPDATE raw_checkpoints c
     SET state = 'DELETED'
-    WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))`, deleteCheckpoints)
+    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
 	if err != nil {
 		return fmt.Errorf("deleting checkpoints from raw_checkpoints: %w", err)
 	}
 
 	_, err = db.sql.Exec(`UPDATE checkpoints_v2 c
     SET state = 'DELETED'
-    WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))`, deleteCheckpoints)
+    WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))`, deleteCheckpoints)
 	if err != nil {
 		return fmt.Errorf("deleting checkpoints from checkpoints_v2: %w", err)
 	}
@@ -62,10 +62,10 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
-		`SELECT e.id AS ExperimentID, array_agg(c.uuid::text) AS CheckpointUUIDSStr
+		`SELECT e.id AS ExperimentID, array_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
 	FROM experiments e
 	JOIN checkpoints_view c ON c.experiment_id = e.id
-	WHERE c.uuid::text IN (SELECT UNNEST($1::text[]))
+	WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))
 	GROUP BY e.id`, checkpoints)
 	if err != nil {
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
