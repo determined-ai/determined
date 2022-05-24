@@ -24,6 +24,7 @@ export interface TrialSummaryParams {
   maxDatapoints: number,
   metricNames: MetricName[],
   metricType?: MetricType,
+  scale?: number,
   startBatches?: number,
   trialId: number,
 }

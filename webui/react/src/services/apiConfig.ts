@@ -421,6 +421,7 @@ export const getTrialSummary: DetApi<
     params.startBatches,
     params.endBatches,
     params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
+    params.scale || 1,
   ),
 };
 
