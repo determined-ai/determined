@@ -13,18 +13,6 @@
    System Architecture <intro/architecture/overview>
 
 .. toctree::
-   :caption: Reference
-   :hidden:
-
-   Training APIs <reference/training/overview>
-   Configuration Files <reference/config/overview>
-   Model Hub APIs <reference/modelhub/overview>
-   Python API <reference/determined/python-api-reference>
-   REST API <reference/determined/rest-api-reference>
-   Command Line Interface (CLI) <reference/determined/cli>
-   attributions
-
-.. toctree::
    :caption: Determined Interfaces
    :hidden:
 
@@ -63,6 +51,18 @@
    Best Practices <training/best-practices/overview>
 
 .. toctree::
+   :caption: Reference
+   :hidden:
+
+   Training APIs <reference/training/overview>
+   Configuration Files <reference/config/overview>
+   Helm Chart Reference <reference/config/helm-config-reference>
+   Model Hub APIs <reference/modelhub/overview>
+   Python API <reference/determined/python-api-reference>
+   REST API <reference/determined/rest-api-reference>
+   Command Line Interface (CLI) <reference/determined/cli>
+
+.. toctree::
    :caption: Model Hub Library
    :hidden:
 
@@ -89,6 +89,11 @@
    :hidden:
 
    Examples <example-solutions/examples>
+
+.. toctree::
+   :hidden:
+
+   attributions
 
 #############################
  Determined AI Documentation
