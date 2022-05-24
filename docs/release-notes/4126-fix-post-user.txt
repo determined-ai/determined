@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  API: Fix an issue where the ``POST /users`` endpoint always returned an error instead of the
-   user's information. This error was returned even when the user was created successfully.

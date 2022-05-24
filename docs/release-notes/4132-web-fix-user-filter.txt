@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Web: Fix the user filtering for migrating from `0.17.15` to `0.18.0`.
