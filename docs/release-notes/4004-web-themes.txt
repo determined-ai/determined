@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Web: introduction of web themes. Styles adjusted to support various themes in the web. Theme
-   switching is currently limited to dark/light mode through first OS level preferences, followed by
-   browser level preference. In app controllers will be following soon in an upcoming release.

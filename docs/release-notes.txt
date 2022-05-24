@@ -8,6 +8,67 @@
  Version 0.18
 **************
 
+Version 0.18.1
+==============
+
+**Release Date:** May 24, 2022
+
+**New Features**
+
+-  Web: Themes have been introduced and styles have been adjusted to support various themes. Theme
+   switching is currently limited to dark/light mode and is set first through OS-level preferences,
+   then through browser-level preference. In-app controllers will be coming soon.
+
+-  Add experimental support for recovering live trials on master process restart. Users can restart
+   the master (with updated configuration options or an upgraded software version), and the current
+   running trials will continue running using the original configuration and harness versions. This
+   requires the agent to reconnect within a configurable ``agent_reconnect_wait`` period. This is
+   only available for the ``agent`` resource manager, and can be enabled for resource pools using
+   the ``agent_reattach_enabled`` flag. May only be available for patch-level releases.
+
+-  Web: A trial restart counter has been added to the experiment detail header for single-trial
+   experiments. For multi-trial experiments, trial restart counts are shown in a new `Restarts`
+   column in the `Trials` table.
+
+   .. image:: https://user-images.githubusercontent.com/220971/169450333-c3dde9f4-abc0-4f8b-9e83-216e13ee2ca0.png
+
+   .. image:: https://user-images.githubusercontent.com/220971/169450323-d169f4ee-2698-4ae8-9b1a-c04460751310.png
+
+**Improvements**
+
+-  Security: Improved security by requiring admin privileges for the following actions.
+
+   -  Reading master config.
+   -  Enabling or disabling an agent.
+   -  Enabling or disabling a slot.
+
+-  Logging: Ensure logs for very short tasks are not truncated in Kubernetes.
+
+**Breaking Changes**
+
+-  Security: The following routes and CLI commands now need admin privileges.
+
+   -  ``/config``
+   -  ``/api/v1/master/config``
+   -  ``/api/v1/agents/:agent_id/enable``
+   -  ``/api/v1/agents/:agent_id/disable``
+   -  ``/agents/:agent_id/slots/:slot_id``
+   -  ``/api/v1/agents/:agent_id/slots/:slot_id/enable``
+   -  ``/api/v1/agents/:agent_id/slots/:slot_id/disable``
+   -  ``det master config```
+   -  ``det agent enable``
+   -  ``det agent disable``
+   -  ``det slot enable``
+   -  ``det slot disable``
+
+-  Logging: The default Fluent Bit version in all deployment modes is now 1.9.3, changed from 1.6.
+
+**Bug Fixes**
+
+-  Web: Fix the user filtering for migrating from Determined `0.17.15` to Determined `0.18.0`.
+-  API: Fix an issue where the ``POST /users`` endpoint always returned an error instead of the
+   user's information, even when the user was created successfully.
+
 Version 0.18.0
 ==============
 
