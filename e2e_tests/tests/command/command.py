@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 from contextlib import contextmanager
-from typing import IO, Any, Generator, Optional
+from typing import IO, Any, Iterator, Optional
 
 import requests
 
@@ -11,8 +11,42 @@ from determined.common.api import authentication, certs
 from tests import config as conf
 
 
+class _InteractiveCommandProcess:
+	def __init__(self, process: subprocess.Popen, detach: bool = False):
+		self.process = process
+		self.detach = detach
+		self.task_id = None  # type: Optional[str]
+
+		if self.detach:
+			iterator = iter(self.process.stdout)  # type: ignore
+			line = next(iterator)
+			self.task_id = line.decode().strip()
+		else:
+			iterator = iter(self.process.stdout)  # type: ignore
+			line = next(iterator)
+			m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
+			assert m is not None
+			self.task_id = m.group(1).decode() if m else None
+
+	@property
+	def stdout(self) -> Iterator[str]:
+		assert self.process.stdout is not None
+		for line in self.process.stdout:
+			yield line.decode()
+
+	@property
+	def stderr(self) -> Iterator[str]:
+		assert self.process.stderr is not None
+		return (line.decode() for line in self.process.stderr)
+
+	@property
+	def stdin(self) -> IO:
+		assert self.process.stdin is not None
+		return self.process.stdin
+
+
 @contextmanager
-def interactive_command(*args: str) -> Generator:
+def interactive_command(*args: str) -> Iterator[_InteractiveCommandProcess]:
     """
     Runs a Determined CLI command in a subprocess. On exit, it kills the
     corresponding Determined task if possible before closing the subprocess.
@@ -25,38 +59,6 @@ def interactive_command(*args: str) -> Generator:
                 break
     """
 
-    class _InteractiveCommandProcess:
-        def __init__(self, process: subprocess.Popen, detach: bool = False):
-            self.process = process
-            self.detach = detach
-            self.task_id = None  # type: Optional[str]
-
-            if self.detach:
-                iterator = iter(self.process.stdout)  # type: ignore
-                line = next(iterator)
-                self.task_id = line.decode().strip()
-            else:
-                iterator = iter(self.process.stdout)  # type: ignore
-                line = next(iterator)
-                m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
-                assert m is not None
-                self.task_id = m.group(1).decode() if m else None
-
-        @property
-        def stdout(self) -> Generator[str, None, None]:
-            assert self.process.stdout is not None
-            for line in self.process.stdout:
-                yield line.decode()
-
-        @property
-        def stderr(self) -> Generator[str, None, None]:
-            assert self.process.stderr is not None
-            return (line.decode() for line in self.process.stderr)
-
-        @property
-        def stdin(self) -> IO:
-            assert self.process.stdin is not None
-            return self.process.stdin
 
     with subprocess.Popen(
         ("det", "-m", conf.make_master_url()) + args,

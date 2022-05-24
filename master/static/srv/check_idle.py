@@ -15,6 +15,8 @@ class IdleType(enum.Enum):
     ACTIVITY = 3
 
 
+REPORT_IDLE_INTERVAL = 30
+
 last_activity = None
 
 
@@ -45,7 +47,7 @@ def is_idle(request_address, mode):
         kernels = requests.get(request_address + "/api/kernels").json()
         terminals = requests.get(request_address + "/api/terminals").json()
         sessions = requests.get(request_address + "/api/sessions").json()
-    except Exception as err:
+    except Exception:
         logging.warning("Cannot get notebook kernel status", exc_info=True)
         return False
 
@@ -90,9 +92,9 @@ def main():
                 {"notebook_id": notebook_id, "idle": idle},
                 cert=cert,
             )
-        except Exception as e:
+        except Exception:
             logging.warning("ignoring error communicating with master", exc_info=True)
-        time.sleep(1)
+        time.sleep(REPORT_IDLE_INTERVAL)
 
 
 if __name__ == "__main__":

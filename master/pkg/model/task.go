@@ -64,13 +64,18 @@ const (
 
 // Task is the model for a task in the database.
 type Task struct {
-	TaskID    TaskID     `db:"task_id"`
+	bun.BaseModel `bun:"table:tasks"`
+
+	TaskID    TaskID     `db:"task_id" bun:"task_id,pk"`
 	JobID     *JobID     `db:"job_id"`
 	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
 	// LogVersion indicates how the logs were stored.
 	LogVersion TaskLogVersion `db:"log_version"`
+
+	// Relations.
+	Job *Job `bun:"rel:belongs-to,join:job_id=job_id"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form
@@ -86,7 +91,7 @@ func (a AllocationID) String() string {
 type Allocation struct {
 	bun.BaseModel `bun:"table:allocations"`
 
-	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,notnull,unique"`
+	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,pk"`
 	TaskID       TaskID           `db:"task_id" bun:"task_id,notnull"`
 	Slots        int              `db:"slots" bun:"slots,notnull"`
 	AgentLabel   string           `db:"agent_label" bun:"agent_label,notnull"`

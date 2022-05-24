@@ -80,8 +80,8 @@ func JobTypeFromProto(t jobv1.Type) JobType {
 
 // Job is the model for a job in the database.
 type Job struct {
-	JobID   JobID           `db:"job_id"`
+	JobID   JobID           `db:"job_id" bun:"job_id,pk"`
 	JobType JobType         `db:"job_type"`
 	OwnerID *UserID         `db:"owner_id"`
-	QPos    decimal.Decimal `db:"q_position"`
+	QPos    decimal.Decimal `db:"q_position" bun:"q_position"`
 }

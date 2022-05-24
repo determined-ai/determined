@@ -44,7 +44,7 @@ type (
 		// Behavioral configuration.
 		Preemptible  bool
 		IdleTimeout  *IdleTimeoutConfig
-		ProxyPort    *PortProxyConfig
+		ProxyPort    *ProxyPortConfig
 		StreamEvents *EventStreamConfig
 		Restore      bool
 	}
@@ -58,8 +58,8 @@ type (
 		Debug           bool
 	}
 
-	// PortProxyConfig configures a proxy the allocation should start.
-	PortProxyConfig struct {
+	// ProxyPortConfig configures a proxy the allocation should start.
+	ProxyPortConfig struct {
 		ServiceID       string
 		Port            int
 		ProxyTCP        bool
@@ -192,6 +192,10 @@ type ResourcesSummary struct {
 
 	// Available if the RM can give information on the container level.
 	ContainerID *cproto.ID `json:"container_id"`
+
+	// Available if the RM knows the resource is already started / exited.
+	Started *ResourcesStarted
+	Exited  *ResourcesStopped
 }
 
 // Resources is an interface that provides function for task actors

@@ -71,7 +71,7 @@ func (c *command) summary(ctx *actor.Context) summary {
 		ID:             c.taskID,
 		Config:         c.Config,
 		State:          state.State.String(),
-		ServiceAddress: c.serviceAddress,
+		ServiceAddress: ptrs.Ptr(c.serviceAddress()),
 		Addresses:      addresses,
 		ExitStatus:     exitStatus,
 		Misc:           c.Metadata,

@@ -23,7 +23,10 @@ type commandManager struct {
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+	case actor.PreStart:
+		tryRestoreCommandsByType(ctx, c.db, c.taskLogger, model.TaskTypeCommand)
+
+	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetCommandsRequest:
 		resp := &apiv1.GetCommandsResponse{}
