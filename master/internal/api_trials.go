@@ -537,7 +537,7 @@ func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m apiv1.S
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int) ([]*apiv1.SummarizedMetric, error) {
+	endBatches int, scale int) ([]*apiv1.SummarizedMetric, error) {
 	var metricSeries []lttb.Point
 	var startTime time.Time
 	// var endTime time.Time
@@ -556,7 +556,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, scale)
 			metrics = a.appendToMetrics(metrics, metric, metricSeries)
 		}
 		if metricType != apiv1.MetricType_METRIC_TYPE_TRAINING {
@@ -566,7 +566,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, scale)
 			metrics = a.appendToMetrics(metrics, metric, metricSeries)
 		}
 	}
@@ -583,7 +583,7 @@ func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialR
 	}
 
 	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
-		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches))
+		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches), int(req.Scale))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed sampling")
 	}

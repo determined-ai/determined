@@ -7467,6 +7467,7 @@ def get_SummarizeTrial(
     maxDatapoints: "typing.Optional[int]" = None,
     metricNames: "typing.Optional[typing.Sequence[str]]" = None,
     metricType: "typing.Optional[v1MetricType]" = None,
+    scale: "typing.Optional[int]" = None,
     startBatches: "typing.Optional[int]" = None,
 ) -> "v1SummarizeTrialResponse":
     _params = {
@@ -7474,6 +7475,7 @@ def get_SummarizeTrial(
         "maxDatapoints": maxDatapoints,
         "metricNames": metricNames,
         "metricType": metricType.value if metricType is not None else None,
+        "scale": scale,
         "startBatches": startBatches,
     }
     _resp = session._do_request(
