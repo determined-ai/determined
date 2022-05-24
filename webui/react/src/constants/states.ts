@@ -165,6 +165,4 @@ export const allocatedResourceStates: Set<ResourceState> = new Set([
   ResourceState.Starting,
   ResourceState.Running,
   ResourceState.Terminated,
-  ResourceState.Warm,
-  ResourceState.Potential,
 ]);
