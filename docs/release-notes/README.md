@@ -40,6 +40,7 @@ classifying the release note according to one of the following categories:
    * Specify one or more of the following categories, depending on the scope of the change:
 
      * `**Bug Fixes**`
+     * `**Security Fixes**`
      * `**Breaking Changes**`
      * `**Improvements**`
      * `**New Features**`
@@ -62,7 +63,7 @@ classifying the release note according to one of the following categories:
 
      **Note:** For a release note that might have particular significance for the user, use an `Important` admonition and highlight it. For example:
 
-         **Bug Fixes**
+         **Security Fixes**
 
          -  CLI: **Important:** API requests executed through the Python bindings have been erroneously using the SSL
             "noverify" option since version 0.17.6, making them potentially insecure. The option is now disabled.
