@@ -1,20 +1,18 @@
 .base {
+  color: var(--theme-float-on);
   display: flex;
   flex-direction: column;
   gap: 16px;
 
-  .label {
-    color: var(--theme-colors-monochrome-7)
-  }
   .emptyContainer {
-    border: 1px solid var(--theme-surface-weak);
+    border: 1px solid var(--theme-surface-border-weak);
     border-radius: var(--theme-border-radius);
     display: grid;
     height: 200px;
     place-content: center;
   }
   .listContainer {
-    border: 1px solid var(--theme-colors-monochrome-10);
+    border: 1px solid var(--theme-surface-border-weak);
     border-radius: var(--theme-border-radius);
       
     ul {
@@ -30,13 +28,19 @@
         display: flex;
         justify-content: space-between;
         padding-inline: 6px;
-
-        &:hover {
-          background-color: var(--theme-colors-monochrome-16);
+      }
+      li.selected {
+        background-color: var(--theme-ix-active);
+      }
+      li.disabled {
+        cursor: not-allowed;
+        i {
+          color: var(--theme-ix-on-inactive);
         }
-        mark {
-          background-color: #faed27;
-          padding: 0;
+      }
+      li.default {
+        &:hover {
+          background-color: var(--theme-ix-strong);
         }
       }
     }
@@ -47,6 +51,6 @@
   justify-content: space-between;
 
   span {
-    color: var(--theme-colors-monochrome-10);
+    color: var(--theme-surface-on-weak);
   }
 }

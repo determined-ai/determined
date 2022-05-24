@@ -56,6 +56,8 @@
     .action {
       background-color: var(--theme-surface);
       display: flex;
+      border-radius: 4px;
+      padding: 2px;
     }
   }
   .pinned {
@@ -71,9 +73,14 @@
 
 @media only screen and (max-width: $breakpoint-mobile) {
   .base {
-    grid-template-columns: 74px auto 50px;
+    grid-template-columns: 74px auto 10px;
     max-width: 100%;
 
+    .projects {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .info {
       margin-left: 20px;
     }

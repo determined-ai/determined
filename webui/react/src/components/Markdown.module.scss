@@ -1,7 +1,7 @@
 //adapted from this repo: https://github.com/sindresorhus/github-markdown-css
 
 .base {
-  color: #24292e;
+  // color: #24292e;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
   font-size: 16px;
   height: 100%;
@@ -758,9 +758,11 @@
   }
 }
 .render {
+  color: var(--theme-stage-on);
+  font-size: 14px;
   height: 100%;
   padding: 16px;
-
+  
   .placeholder {
     color: var(--theme-stage-on-weak);
     font-size: 14px;

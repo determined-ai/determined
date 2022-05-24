@@ -38,7 +38,8 @@
 
     .noWorkspaces {
       align-self: center;
-      color: #bfbfbf;
+      // color: #bfbfbf;
+      color: var(--theme-stage-on-weak);
       font-size: 12px;
       padding: 6px;
     }
@@ -113,7 +114,7 @@
     background-color: var(--theme-stage);
 
     &.active {
-      background-color: var(--theme-stage-strong);      
+      background-color: var(--theme-stage-strong);
       cursor: default;
     }
     &:hover {
@@ -151,7 +152,7 @@
         width: auto
       }
     }
-    .navItem.active, 
+    .navItem.active,
     .navItem.active:hover {
       background-color: var(--theme-stage-strong);
       color: var(--theme-stage-on-strong);
@@ -330,7 +331,7 @@
   flex-basis: var(--nav-side-bar-width-min);
 
   section.launch {
-    width: var(--nav-side-bar-width-min); 
+    width: var(--nav-side-bar-width-min);
   }
   .logo {
     height: 24px;

@@ -36,7 +36,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <div className={css.nameRow}>
             <h6 className={css.name}>
               <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                <Typography.Paragraph ellipsis={true}>
                   {workspace.name}
                 </Typography.Paragraph>
               </Link>
