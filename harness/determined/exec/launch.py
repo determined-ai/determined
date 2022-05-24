@@ -11,7 +11,6 @@ from typing import Dict
 import determined as det
 import determined.common
 from determined.common import api, constants, storage
-from determined.exec import prep_container
 
 
 # Signal handler to intercept SLURM SIGTERM notification of pending preemption
@@ -43,7 +42,7 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
     if isinstance(entrypoint, str):
         entrypoint = ["sh", "-c", entrypoint]
 
-    if os.environ.get("DET_RESOURCES_TYPE") == prep_container.RESOURCES_TYPE_SLURM_JOB:
+    if os.environ.get("DET_RESOURCES_TYPE") == constants.RESOURCES_TYPE_SLURM_JOB:
         # SLURM sends SIGTERM to notify of pending preemption
         signal.signal(signal.SIGTERM, trigger_preemption)
 

@@ -60,3 +60,8 @@ CONTAINER_STDOUT = "/run/determined/train/logs/stdout.log"
 CONTAINER_STDERR = "/run/determined/train/logs/stderr.log"
 
 MANAGED_TRAINING_MODEL_COPY = "/run/determined/train/model"
+
+# The canonical definitions of these consts live in Go code.
+RESOURCES_TYPE_K8S_POD = "k8s-pod"
+RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
+RESOURCES_TYPE_SLURM_JOB = "slurm-job"

@@ -13,13 +13,15 @@ import time
 from typing import List, Tuple
 
 import determined as det
-from determined import horovod, util
+from determined import constants, horovod, util
 from determined.common import api
 from determined.common.api import certs
 from determined.constants import DTRAIN_SSH_PORT
 
 
-def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[str], List[str]]:
+def create_sshd_worker_cmd(
+    allocation_id: str, num_slot_ids: int, debug: bool = False
+) -> Tuple[List[str], List[str]]:
     # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
     # TODO: After the upstream horovod bugfix (github.com/horovod/horovod/pull/3060) is in a
     # widely-used release of horovod, we should remove this pid_server layer, which just adds
@@ -45,6 +47,9 @@ def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[
         "/run/determined/ssh/sshd_config",
         "-D",
     ]
+    if debug:
+        run_sshd_command.append("-e")
+
     return pid_server_cmd, run_sshd_command
 
 
@@ -159,6 +164,8 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # TODO: remove this (very old) hack when we have a configurable launch layer.
     hvd_optional_args = experiment_config.get("data", {}).get("__det_dtrain_args", [])
     hvd_optional_args += hvd_args
+    if debug:
+        hvd_optional_args += ["--mpi-args=-v --display-map"]
 
     hvd_cmd = horovod.create_run_command(
         num_proc_per_machine=len(info.slot_ids),
@@ -172,8 +179,20 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     worker_wrapper_cmd = create_worker_wrapper_cmd(info.allocation_id)
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
-
     os.environ["USE_HOROVOD"] = "1"
+
+    if os.environ.get("DET_RESOURCES_TYPE") == constants.RESOURCES_TYPE_SLURM_JOB:
+        # We now have environment images with built-in OpenMPI. When invoked the SLURM_JOBID
+        # variable triggers integration with SLURM, however, we are running in a singularity
+        # container and slurm may or may not have compatible configuration enabled.  We therefore
+        # clear the SLURM_JOBID variable before invoking mpi so that mpirun will honor the args
+        # passed to it via horovodrun describing the hosts and process topology. Otherwise, mpi ends
+        # up wanting to launch all -np# processes on the local causing an oversubscription error:
+        # "There are not enough slots available in the system".
+        slurm_vars_to_clear = ["SLURM_JOBID"]
+        for k, _ in os.environ.items():
+            if k in slurm_vars_to_clear:
+                os.environ.pop(k)
 
     return subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script).wait()
 

@@ -157,12 +157,6 @@ def get_eth_interface_name() -> Optional[str]:
     return None
 
 
-# The canonical definitions of these consts live in Go code.
-RESOURCES_TYPE_K8S_POD = "k8s-pod"
-RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
-RESOURCES_TYPE_SLURM_JOB = "slurm-job"
-
-
 def do_rendezvous(sess: Session, allocation_id: str) -> None:
     r_id = os.environ.get("DET_RESOURCES_ID")
     assert r_id, "Unable to complete rendezvous info without DET_RESOURCES_ID"
@@ -171,9 +165,12 @@ def do_rendezvous(sess: Session, allocation_id: str) -> None:
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
     rendezvous_info = None
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if (
+        r_type == constants.RESOURCES_TYPE_DOCKER_CONTAINER
+        or r_type == constants.RESOURCES_TYPE_K8S_POD
+    ):
         rendezvous_info = do_rendezvous_rm_provided(sess, allocation_id, r_id)
-    elif r_type == RESOURCES_TYPE_SLURM_JOB:
+    elif r_type == constants.RESOURCES_TYPE_SLURM_JOB:
         rendezvous_info = do_rendezvous_slurm(sess, allocation_id, r_id)
     else:
         raise ValueError(f"unsupported resources type: {r_type}")
@@ -219,9 +216,12 @@ def do_proxy(sess: Session, allocation_id: str) -> None:
     r_type = os.environ.get("DET_RESOURCES_TYPE")
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if (
+        r_type == constants.RESOURCES_TYPE_DOCKER_CONTAINER
+        or r_type == constants.RESOURCES_TYPE_K8S_POD
+    ):
         return
-    elif r_type == RESOURCES_TYPE_SLURM_JOB:
+    elif r_type == constants.RESOURCES_TYPE_SLURM_JOB:
         set_proxy_address(sess, allocation_id)
     else:
         raise ValueError(f"unsupported resources type: {r_type}")
