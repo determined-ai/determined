@@ -78,4 +78,10 @@
 }
 .options {
   padding: 8px 8px 0 0;
+
+  .transparentButton {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }

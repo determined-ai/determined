@@ -21,11 +21,20 @@ interface Params {
   taskType: string;
 }
 
+interface Props {
+  headerComponent?: React.ReactNode;
+  onCloseLogs?: () => void;
+  taskId: string;
+  taskType: string;
+}
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
-const TaskLogs: React.FC = () => {
-  const [ filterOptions, setFilterOptions ] = useState<Filters>({});
+export const TaskLogsWrapper: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
+  return <TaskLogs taskId={taskId} taskType={taskType} />;
+};
+const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
+  const [ filterOptions, setFilterOptions ] = useState<Filters>({});
 
   const queries = queryString.parse(location.search);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
@@ -132,10 +141,12 @@ const TaskLogs: React.FC = () => {
         { breadcrumbName: 'Tasks', path: paths.taskList() },
         { breadcrumbName: `${taskTypeLabel} ${taskId.substr(0, 8)}`, path: '#' },
       ]}
+      headerComponent={headerComponent}
       id="task-logs"
       title={title}>
       <LogViewer
         decoder={mapV1LogsResponse}
+        handleCloseLogs={onCloseLogs}
         title={logFilters}
         onFetch={handleFetch}
       />

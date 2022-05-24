@@ -14,13 +14,20 @@ import Icon from '../shared/components/Icon/Icon';
 
 import css from './TaskBar.module.scss';
 interface Props{
+  handleViewLogsClick: () => void;
   id: string;
   name: string;
   resourcePool: string;
   type: CommandType
 }
 
-export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Props) => {
+export const TaskBar: React.FC<Props> = ({
+  handleViewLogsClick,
+  id,
+  name,
+  resourcePool,
+  type,
+} : Props) => {
 
   const task = useMemo(() => {
     const commandTask = { id, name, resourcePool, type } as CommandTask;
@@ -52,11 +59,11 @@ export const TaskBar: React.FC<Props> = ({ id, name, resourcePool, type } : Prop
       </Menu.Item>
       <Menu.Item
         key="viewLogs"
-        onClick={() => routeToReactUrl(paths.taskLogs(task))}>
+        onClick={handleViewLogsClick}>
         View Logs
       </Menu.Item>
     </Menu>
-  ), [ task, deleteTask ]);
+  ), [ task, deleteTask, handleViewLogsClick ]);
 
   return (
     <div className={css.base}>

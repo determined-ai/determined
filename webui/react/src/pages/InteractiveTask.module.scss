@@ -1,16 +1,17 @@
 .base {
   height: 100%;
   overflow: hidden;
-}
-.barContainer {
-  height: 32px;
-}
-.frameContainer {
-  height: calc(100vh - 32px);
+
+  .barContainer {
+    height: 32px;
+  }
+  .contentContainer {
+    height: calc(100vh - 32px);
   
-  iframe {
-    border: none;
-    height: 100%;
-    width: 100%;
+    iframe {
+      border: none;
+      height: 100%;
+      width: 100%;
+    }
   }
 }
