@@ -7,21 +7,21 @@ import (
 )
 
 // FilterForRegisteredCheckpoints gets the deleted checkpoints provided in the model registry.
-func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []uuid.UUID) ([]string, error) {
+func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []uuid.UUID) ([]uuid.UUID, error) {
 	var checkpointIDRows []struct {
-		ID string
+		ID uuid.UUID
 	}
 
 	if err := db.queryRows(`
-	SELECT DISTINCT(c.uuid::text) AS ID FROM checkpoints_view AS c 
+	SELECT DISTINCT(c.uuid) AS ID FROM checkpoints_view AS c 
 	JOIN model_versions AS mv ON mv.checkpoint_uuid = c.uuid
-	WHERE c.uuid::text IN (SELECT UNNEST($1::text[])); 
+	WHERE c.uuid IN (SELECT UNNEST($1::uuid[])); 
 `, &checkpointIDRows, deleteCheckpoints); err != nil {
 		return nil, fmt.Errorf(
 			"querying for all requested delete checkpoints registered in model registry: %w", err)
 	}
 
-	var checkpointIDs []string
+	var checkpointIDs []uuid.UUID
 
 	for _, cRow := range checkpointIDRows {
 		checkpointIDs = append(checkpointIDs, cRow.ID)

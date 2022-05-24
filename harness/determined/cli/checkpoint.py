@@ -136,6 +136,7 @@ def describe(args: Namespace) -> None:
     checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
+@authentication.required
 def delete_checkpoints(args: Namespace) -> None: 
     if args.yes or render.yes_or_no(
         "Deleting checkpoints will result in deletion of all data associated\n"
