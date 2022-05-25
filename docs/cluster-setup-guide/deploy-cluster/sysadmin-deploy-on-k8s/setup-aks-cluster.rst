@@ -1,8 +1,8 @@
 .. _setup-aks-cluster:
 
-######################################################
- Setting up an Azure Kubernetes Service (AKS) Cluster
-######################################################
+#############################################################
+ Set up and Manage an Azure Kubernetes Service (AKS) Cluster
+#############################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `AKS
 <https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This document describes how to
@@ -19,7 +19,7 @@ Determined requires GPU-enabled nodes and the Kubernetes cluster to be running v
 ***************
 
 To deploy an AKS cluster, the user must have a resource group to manage the resources consumed by
-the cluster. To create one, please follow the instructions found in the `Azure Resource Groups
+the cluster. To create one, follow the instructions found in the `Azure Resource Groups
 Documentation
 <https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#create-resource-groups>`_.
 
@@ -27,11 +27,11 @@ Additionally, users must have the `Azure CLI
 <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
 <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
-Finally, please authenticate with the Azure CLI using ``az login`` in order to have access to your
+Finally, authenticate with the Azure CLI using ``az login`` in order to have access to your
 Azure subscription.
 
 ************************
- Setting Up the Cluster
+ Set up the Cluster
 ************************
 
 .. code:: bash
@@ -63,7 +63,7 @@ Azure subscription.
     --enable-cluster-autoscaler --min-count 0 --max-count 4
 
 *******************************
- Creating a kubeconfig for AKS
+ Create a kubeconfig for AKS
 *******************************
 
 After creating the cluster, ``kubectl`` should be used to deploy apps. In order for ``kubectl`` to
@@ -75,43 +75,34 @@ command:
    az aks get-credentials --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
 
 **********************
- Enabling GPU Support
+ Enable GPU Support
 **********************
 
-To allow the AKS cluster to recognize GPU hardware resources, please refer to the instructions
+To allow the AKS cluster to recognize GPU hardware resources, refer to the instructions
 provided by Azure on the `Install NVIDIA Device Plugin
 <https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
 
 With this, the cluster is fully set up, and Determined can be deployed onto it.
 
-************
- Next Steps
-************
+***********************
+ Manage an AKS Cluster
+***********************
 
--  :ref:`install-on-kubernetes`
--  :ref:`k8s-dev-guide`
+Update the Autoscaler
+=========================
 
-#########################
- Managing an AKS Cluster
-#########################
-
-*************************
- Updating the Autoscaler
-*************************
-
-To update the cluster autoscaler, please use the following Azure CLI command:
+To update the cluster autoscaler, use the following Azure CLI command:
 
 .. code:: bash
 
    az aks nodepool update --update-cluster-autoscaler --min-count <new_min_count> \
-    --max-count <new_max_count> --resource-group ${AKS_RESOURCE_GROUP} \
-    --cluster-name ${AKS_CLUSTER_NAME} --name ${AKS_GPU_NODE_POOL_NAME}
+   --max-count <new_max_count> --resource-group ${AKS_RESOURCE_GROUP} \
+   --cluster-name ${AKS_CLUSTER_NAME} --name ${AKS_GPU_NODE_POOL_NAME}
 
-*************
- Node Taints
-*************
+Add Taints and Tolerations to Nodes
+=====================================
 
-For general instructions on adding taints and tolerations to nodes, please see the :ref:`Taints and
+For general instructions on adding taints and tolerations to nodes, see the :ref:`Taints and
 Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
 <install-on-kubernetes>`. There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
@@ -147,11 +138,10 @@ effect.
    --node-taints sku=gpu:NoSchedule \
    --no-wait
 
-**********************
- Deleting the Cluster
-**********************
+Delete the Cluster
+====================
 
-To delete the AKS cluster, please use the following Azure CLI command:
+To delete the AKS cluster, use the following Azure CLI command:
 
 .. code:: bash
 

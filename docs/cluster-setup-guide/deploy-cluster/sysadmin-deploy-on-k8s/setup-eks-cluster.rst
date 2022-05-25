@@ -1,8 +1,8 @@
 .. _setup-eks-cluster:
 
-############################################
- Setting up an AWS Kubernetes (EKS) Cluster
-############################################
+######################################################
+ Set up and Manage an AWS Kubernetes (EKS) Cluster
+######################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as
 `Amazon EKS <https://aws.amazon.com/eks/>`_. This document describes how to set up an EKS cluster
@@ -28,7 +28,7 @@ Additionally, make sure to be subscribed to the `EKS-optimized AMI with GPU supp
 creation to fail.
 
 *********************
- Making an S3 Bucket
+ Create an S3 Bucket
 *********************
 
 One resource that ``eksctl`` does not automatically create is an S3 bucket, which is necessary for
@@ -44,7 +44,7 @@ Determined Helm chart.
 .. _cluster-creation:
 
 **********************
- Creating the Cluster
+ Create the Cluster
 **********************
 
 The quickest and easiest way to deploy an EKS cluster is with ``eksctl``. ``eksctl`` supports
@@ -179,7 +179,7 @@ To launch the cluster with ``eksctl``, run:
    :ref:`custom-pod-specs` guide.
 
 *******************************
- Creating a kubeconfig for EKS
+ Create a kubeconfig for EKS
 *******************************
 
 After creating the cluster, ``kubectl`` should be used to deploy apps. In order for ``kubectl`` to
@@ -191,7 +191,7 @@ command:
    aws eks --region <region-code> update-kubeconfig --name <cluster_name>
 
 **********************
- Enabling GPU support
+ Enable GPU support
 **********************
 
 To use GPU instances, the NVIDIA Kubernetes device plugin needs to be installed. Use the following
@@ -203,7 +203,7 @@ command to install the plugin:
    kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml
 
 *********************
- Enabling Autoscaler
+ Enable Autoscaler
 *********************
 
 Lastly, EKS requires manual deployment of an autoscaler. Save the following configuration in a new
@@ -291,9 +291,9 @@ first, then apply the custom ``determined-autoscaler.yaml``.
 
 .. _changes-to-experiment-config:
 
-******************************
- Changes to Experiment Config
-******************************
+*************************************
+ Change the Experiment Configuration
+*************************************
 
 To run an experiment with EKS, two additions must be made to the experiment config. A service
 account must be specified in order to allow Determined to save checkpoints to S3 and tolerances, if
@@ -317,9 +317,9 @@ necessary changes is shown here:
 
 Details about pod configuration can be found in :ref:`per-task-pod-specs`.
 
-***********************
- Changes to Determined
-***********************
+****************************
+ Make Changes to Determined
+****************************
 
 Following the deployment of EKS, make sure that the necessary changes to Determined have been
 applied in order to successfully run experiments. These changes include adding the created S3 bucket
@@ -331,7 +331,7 @@ scheduled.
 .. _aws-lb:
 
 ************************************
- Using AWS Load Balancer (optional)
+ Use an AWS Load Balancer (optional)
 ************************************
 
 It is possible to use `ALB <https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/>`_
@@ -368,15 +368,11 @@ In order for this ingress to work as expected the Helm parameter of ``useNodePor
 set to ``true`` and the AWS Load Balancer Controller must be `installed in the cluster
 <https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html>`_.
 
-#########################
- Managing an EKS Cluster
-#########################
+***********************
+ Manage an EKS Cluster
+***********************
 
-*************
- Node Taints
-*************
-
-For general instructions on adding taints and tolerations to nodes, please see the :ref:`Taints and
+For general instructions on adding taints and tolerations to nodes, see the :ref:`Taints and
 Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
 <install-on-kubernetes>`. There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.

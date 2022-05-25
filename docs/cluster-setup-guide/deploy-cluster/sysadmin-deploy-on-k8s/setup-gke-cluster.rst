@@ -1,8 +1,8 @@
 .. _setup-gke-cluster:
 
-#####################################################
- Setting up a Google Kubernetes Engine (GKE) Cluster
-#####################################################
+############################################################
+ Set up and Manage a Google Kubernetes Engine (GKE) Cluster
+############################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `GKE
 <https://cloud.google.com/kubernetes-engine>`_. This document describes how to set up a GKE cluster
@@ -23,7 +23,7 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
 <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
 ************************
- Setting Up the Cluster
+ Set up the Cluster
 ************************
 
 .. code:: bash
@@ -71,15 +71,11 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
    # Create a GCS bucket to store checkpoints.
    gsutil mb gs://${GCS_BUCKET_NAME}
 
-########################
- Managing a GKE Cluster
-########################
+************************
+ Manage a GKE Cluster
+************************
 
-*************
- Node Taints
-*************
-
-For general instructions on adding taints and tolerations to nodes, please see the :ref:`Taints and
+For general instructions on adding taints and tolerations to nodes, see the :ref:`Taints and
 Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
 <install-on-kubernetes>`. There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.

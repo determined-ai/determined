@@ -22,6 +22,7 @@
    REST API <interfaces/rest-api>
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
+   Interactive Job Configuration <training/interactive-job-config>
 
 .. toctree::
    :caption: Cluster Setup Guide
@@ -49,7 +50,6 @@
    Distributed Training <training/distributed/distributed>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Model Management <training/model-management/overview>
-   Interactive Job Configuration <training/interactive-job-config>
    Best Practices <training/best-practices/overview>
 
 .. toctree::

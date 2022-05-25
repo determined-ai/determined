@@ -168,9 +168,9 @@ Useful steps for debugging this include:
    :hidden:
 
    install-on-kubernetes
-   helm-commands
-   custom-pod-specs
-   k8s-dev-guide
    setup-aks-cluster
    setup-eks-cluster
    setup-gke-cluster
+   k8s-dev-guide
+   custom-pod-specs
+   helm-commands
