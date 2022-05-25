@@ -17,7 +17,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetProjectFromID(id int32) (*projectv1.Project, error) {
+func (a *apiServer) GetProjectByID(id int32) (*projectv1.Project, error) {
 	p := &projectv1.Project{}
 	switch err := a.m.db.QueryProto("get_project", p, id); err {
 	case db.ErrNotFound:
