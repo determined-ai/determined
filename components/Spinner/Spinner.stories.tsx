@@ -1,15 +1,11 @@
 import React from 'react';
 
-import HelmetDecorator from 'storybook/HelmetDecorator';
-import StoreDecorator from 'storybook/StoreDecorator';
-
-import Page from '../../../components/Page';
+import Page from 'shared/components/Page';
 
 import Spinner from './Spinner';
 
 export default {
   component: Spinner,
-  decorators: [ HelmetDecorator, StoreDecorator ],
   title: 'Spinner',
 };
 
