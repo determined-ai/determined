@@ -14,6 +14,8 @@ p AS (
 )
 SELECT w.id, w.name, w.archived, w.immutable,
   u.username, w.user_id, p.num_projects,
+  (SELECT COUNT(*) FROM experiments WHERE project_id IN (SELECT id FROM p))
+    AS num_experiments,
   (SELECT COUNT(*) > 0 FROM workspace_pins
     WHERE workspace_id = $1 AND user_id = $3
   ) AS pinned
