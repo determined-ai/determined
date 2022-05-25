@@ -83,7 +83,7 @@ func (a *apiServer) DeleteCheckpoints(
 		JobType: model.JobTypeCheckpointGC,
 		OwnerID: &curUser.ID,
 	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "persisting new job: %w", err)
+		return nil, fmt.Errorf("persisting new job: %w", err)
 	}
 
 	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(checkpointsToDelete)
@@ -99,10 +99,14 @@ func (a *apiServer) DeleteCheckpoints(
 
 		CUUIDS := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
 		if len(CUUIDS) <= 0 {
-			return nil, errors.Errorf("did not group checkpoint uuids by experiment ID: %v correctly", expIDcUUIDs.ExperimentID)
+			return nil, status.Errorf(codes.Internal, "did not group checkpoint uuids by experiment ID: %v correctly", expIDcUUIDs.ExperimentID)
 		}
 
-		jsonVCheckpoints, _ := json.Marshal(CUUIDS)
+		jsonVCheckpoints, err := json.Marshal(CUUIDS)
+
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not marshal checkpoint uuids")
+		}
 
 		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
 			taskID:            model.NewTaskID(),

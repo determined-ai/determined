@@ -7,7 +7,5 @@ CREATE TYPE public.job_type AS ENUM (
     'TENSORBOARD', 
     'CHECKPOINT_GC'
 );
-ALTER TABLE public.jobs 
-    ALTER COLUMN job_type TYPE public.job_type
-    USING (job_type::job_type);
-DROP TYPE public._job_type;
+ALTER TABLE public.jobs ALTER COLUMN job_type TYPE public.job_type USING (job_type::text::job_type);
+DROP TYPE _job_type;
