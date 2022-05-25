@@ -226,14 +226,12 @@ const NavigationSideBar: React.FC = () => {
                             <WorkspaceIcon
                               name={workspace.name}
                               size={24}
-                              style={{ color: 'black' }}
                             />
                           )}
                           label={workspace.name}
                           labelRender={(
                             <Typography.Paragraph
-                              ellipsis={{ rows: 1, tooltip: true }}
-                              style={{ color: 'var(--theme-colors-monochrome-17)' }}>
+                              ellipsis={{ rows: 1, tooltip: true }}>
                               {workspace.name}
                             </Typography.Paragraph>
                           )}
