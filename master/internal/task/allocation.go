@@ -234,10 +234,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 	case AllocationSignal:
-		panic("We don't want to call this ever")
-		// TODO find out all the places where we call this
-		// We likely want to just forward this with no reason
-		// a.HandleSignal(ctx, msg)
+		a.HandleSignal(ctx, AllocationSignalWithReason{AllocationSignal: msg})
 	case AllocationSignalWithReason:
 		a.HandleSignal(ctx, msg)
 	case AllocationState:
@@ -687,7 +684,7 @@ func (a *Allocation) Terminate(ctx *actor.Context) {
 		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
 		a.exitReasons = append(a.exitReasons, "allocation being preempted by the scheduler")
 	case sproto.ChangeRP:
-		a.exitReasons = append(a.exitReasons, "allocation resource pool changed\n")
+		a.exitReasons = append(a.exitReasons, "allocation resource pool changed")
 	}
 
 	if exited := a.Exit(ctx); exited {

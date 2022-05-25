@@ -489,7 +489,7 @@ func (e *experiment) processOperations(
 		ctx.Log().Error(err)
 		e.updateState(ctx, model.StateWithReason{
 			State:               model.StoppingErrorState,
-			InformationalReason: err.Error(), // TODO does it make sense to expose errors?
+			InformationalReason: "encountering error",
 		})
 		return
 	}

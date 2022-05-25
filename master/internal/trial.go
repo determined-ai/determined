@@ -530,7 +530,6 @@ func (t *trial) patchState(ctx *actor.Context, s model.StateWithReason) error {
 func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	if t.state != s.State {
 		ctx.Log().Infof("trial changed from state %s to %s", t.state, s.State)
-		// TODO send a message to trial logs
 		if t.idSet {
 			if err := t.db.UpdateTrial(t.id, s.State); err != nil {
 				return errors.Wrap(err, "updating trial with end state")
@@ -565,7 +564,6 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 				model.StoppingKilledState:   task.Kill,
 				model.StoppingErrorState:    task.Kill,
 			}[t.state]; ok {
-				// TODO pass reason along
 				ctx.Log().Infof("decided to %s trial", action)
 				ctx.Tell(t.allocation, task.AllocationSignalWithReason{
 					AllocationSignal:    action,
