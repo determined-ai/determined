@@ -1,0 +1,5 @@
+:orphan:
+
+**Security Fixes**
+
+-  API: Endpoints under `/debug/pprof` now require authentication.

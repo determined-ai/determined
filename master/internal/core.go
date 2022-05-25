@@ -974,11 +974,23 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
-	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
-	m.echo.Any("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
-	m.echo.Any("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
-	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
-	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)), authFuncs...)
+	m.echo.Any(
+		"/debug/pprof/cmdline",
+		echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)),
+		authFuncs...,
+	)
+	m.echo.Any(
+		"/debug/pprof/profile",
+		echo.WrapHandler(http.HandlerFunc(pprof.Profile)),
+		authFuncs...,
+	)
+	m.echo.Any(
+		"/debug/pprof/symbol",
+		echo.WrapHandler(http.HandlerFunc(pprof.Symbol)),
+		authFuncs...,
+	)
+	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)), authFuncs...)
 
 	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
