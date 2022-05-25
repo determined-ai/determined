@@ -366,7 +366,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 				errors.New("workspace and project must both be included in config if one is provided")
 		}
 		if config.Workspace() != "" && config.Project() != "" {
-			projectID, err = m.db.ProjectFromNames(config.Workspace(), config.Project())
+			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
 			if err != nil {
 				return nil, false, nil, errors.Wrapf(
 					err, "unable to find parent workspace and project")

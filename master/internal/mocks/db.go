@@ -1256,8 +1256,8 @@ func (_m *DB) PeriodicTelemetryInfo() ([]byte, error) {
 	return r0, r1
 }
 
-// ProjectFromNames provides a mock function with given fields: workspaceName, projectName
-func (_m *DB) ProjectFromNames(workspaceName string, projectName string) (int, error) {
+// ProjectByName provides a mock function with given fields: workspaceName, projectName
+func (_m *DB) ProjectByName(workspaceName string, projectName string) (int, error) {
 	ret := _m.Called(workspaceName, projectName)
 
 	var r0 int

@@ -28,8 +28,8 @@ const (
 	min  = "min"
 )
 
-// ProjectFromNames returns a project's ID if it exists in the given workspace.
-func (db *PgDB) ProjectFromNames(workspaceName string, projectName string) (int, error) {
+// ProjectByName returns a project's ID if it exists in the given workspace.
+func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, error) {
 	w := workspacev1.Workspace{}
 	err := db.Query("get_workspace_from_name", &w, workspaceName)
 	if err != nil {

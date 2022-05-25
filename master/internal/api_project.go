@@ -29,7 +29,7 @@ func (a *apiServer) GetProjectByID(id int32) (*projectv1.Project, error) {
 	}
 }
 
-func (a *apiServer) ConfirmParentWorkspaceUnarchived(pid int32) error {
+func (a *apiServer) CheckParentWorkspaceUnarchived(pid int32) error {
 	w := &workspacev1.Workspace{}
 	err := a.m.db.QueryProto("get_workspace_from_project", w, pid)
 	if err != nil {
@@ -46,7 +46,7 @@ func (a *apiServer) ConfirmParentWorkspaceUnarchived(pid int32) error {
 
 func (a *apiServer) GetProject(
 	_ context.Context, req *apiv1.GetProjectRequest) (*apiv1.GetProjectResponse, error) {
-	p, err := a.GetProjectFromID(req.Id)
+	p, err := a.GetProjectByID(req.Id)
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
@@ -54,7 +54,7 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
 	error) {
 	// Verify that project exists.
-	if _, err := a.GetProjectFromID(req.Id); err != nil {
+	if _, err := a.GetProjectByID(req.Id); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (a *apiServer) PostProject(
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceFromID(req.WorkspaceId, 0)
+	w, err := a.GetWorkspaceByID(req.WorkspaceId, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (a *apiServer) PostProject(
 
 func (a *apiServer) AddProjectNote(
 	_ context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
-	p, err := a.GetProjectFromID(req.ProjectId)
+	p, err := a.GetProjectByID(req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (a *apiServer) PutProjectNotes(
 func (a *apiServer) PatchProject(
 	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
 	// Verify current project exists and can be edited.
-	currProject, err := a.GetProjectFromID(req.Id)
+	currProject, err := a.GetProjectByID(req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (a *apiServer) DeleteProject(
 func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error) {
-	w, err := a.GetWorkspaceFromID(req.DestinationWorkspaceId, 0)
+	w, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (a *apiServer) ArchiveProject(
 		return nil, err
 	}
 
-	err = a.ConfirmParentWorkspaceUnarchived(req.Id)
+	err = a.CheckParentWorkspaceUnarchived(req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func (a *apiServer) UnarchiveProject(
 		return nil, err
 	}
 
-	err = a.ConfirmParentWorkspaceUnarchived(req.Id)
+	err = a.CheckParentWorkspaceUnarchived(req.Id)
 	if err != nil {
 		return nil, err
 	}
