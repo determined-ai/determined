@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/determined-ai/determined/master/pkg/cproto"
+
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -22,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	k8sV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -555,6 +558,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
+	nodeToTasks, taskSlots := p.getNonDetSlots(p.slotType)
+
 	summary := make(map[string]model.AgentSummary)
 	for _, node := range p.currentNodes {
 		var numSlots int64
@@ -597,6 +602,28 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 			}
 		}
 
+		for _, taskName := range nodeToTasks[node.Name] {
+			for i := int64(0); i < taskSlots[taskName]; i++ {
+				if curSlot >= int(numSlots) {
+					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
+					continue
+				}
+
+				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
+					ID:      strconv.FormatInt(i, 10),
+					Device:  device.Device{Type: deviceType},
+					Enabled: true,
+					Container: &cproto.Container{
+						Parent:  actor.Addr(""),
+						ID:      cproto.ID(taskName),
+						State:   "RUNNING",
+						Devices: []device.Device{},
+					},
+				}
+				curSlot++
+			}
+		}
+
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
 				ID:      strconv.Itoa(i),
@@ -614,11 +641,65 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 			ID:             node.Name,
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
-			NumContainers:  len(podByNode[node.Name]),
+			NumContainers:  len(podByNode[node.Name]) + len(nodeToTasks[node.Name]),
 			ResourcePool:   "",
 			Addresses:      addrs,
 		}
 	}
 
 	return summary
+}
+
+func (p *pods) getNonDetPods() []k8sV1.Pod {
+	var nonDetPods []k8sV1.Pod
+	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{})
+	if err != nil {
+		return nonDetPods
+	}
+	for _, p := range pList.Items {
+		if _, ok := p.Labels["determined"]; !ok {
+			if p.Spec.NodeName != "" {
+				nonDetPods = append(nonDetPods, p)
+			}
+		}
+	}
+	return nonDetPods
+}
+
+func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
+	nodeToTasks := make(map[string][]string)
+	taskSlots := make(map[string]int64)
+
+	nonDetPods := p.getNonDetPods()
+	if len(nonDetPods) == 0 {
+		return nodeToTasks, taskSlots
+	}
+	for _, node := range p.currentNodes {
+		nodeToTasks[node.Name] = []string{}
+	}
+
+	for _, pod := range nonDetPods {
+		if _, ok := nodeToTasks[pod.Spec.NodeName]; !ok {
+			continue
+		}
+		reqs := int64(0)
+		for _, c := range pod.Spec.Containers {
+			if deviceType == device.CPU {
+				reqs += p.getCPUReqs(c)
+			} else if deviceType == device.CUDA {
+				reqs += c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value()
+			}
+		}
+		if reqs > 0 {
+			nodeToTasks[pod.Spec.NodeName] = append(nodeToTasks[pod.Spec.NodeName], pod.Name)
+			taskSlots[pod.Name] = reqs
+		}
+	}
+	return nodeToTasks, taskSlots
+}
+
+func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
+	requested := float32(c.Resources.Requests.Cpu().MilliValue()) /
+		(1000. * p.slotResourceRequests.CPU)
+	return int64(requested)
 }
