@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from time import sleep
 from typing import Any, List, Sequence
 
 from determined.cli.session import setup_session
@@ -128,12 +129,48 @@ def describe_workspace(args: Namespace) -> None:
 def delete_workspace(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
-        "in the unrecoverable deletion of all associated projects. For a \n"
+        "in the unrecoverable deletion of all associated projects and experiments. For a \n"
         "recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
         sess = setup_session(args)
         w = workspace_by_name(sess, args.workspace_name)
+
+        current_user = authentication.must_cli_auth().get_session_user()
+        if current_user != w.username:
+            raise Exception("Workspace is owned by another user.")
+        if w.immutable:
+            raise Exception("Workspace is immutable and cannot be deleted.")
+
+        projs = bindings.get_GetWorkspaceProjects(sess, id=w.id, limit=100, offset=0).projects
+        for p in projs:
+            loops = 0
+            print(f"Deletion in progress - deleting project {p.name} within workspace {w.name}.")
+            exps = bindings.get_GetProjectExperiments(
+                sess, id=p.id, limit=100, offset=0
+            ).experiments
+            while len(exps) > 0:
+                pending_experiments: List[int] = []
+                for e in exps:
+                    try:
+                        pending_experiments.append(e.id)
+                        bindings.delete_DeleteExperiment(sess, experimentId=e.id)
+                    except:
+                        sleep(0.05)
+                sleep(1)
+                exps = bindings.get_GetProjectExperiments(
+                    sess, id=p.id, limit=100, offset=0
+                ).experiments
+                loops += 1
+                if loops > 120:
+                    print(pending_experiments)
+                    raise Exception(
+                        "Failed to delete above experiment ids after two minutes. "
+                        + "An experiment may have failed to delete."
+                    )
+            bindings.delete_DeleteProject(sess, id=p.id)
+            print(f"Deletion in progress - deleted project {p.name} within workspace {w.name}.")
+
         bindings.delete_DeleteWorkspace(sess, id=w.id)
         print(f"Successfully deleted workspace {args.workspace_name}.")
     else:
