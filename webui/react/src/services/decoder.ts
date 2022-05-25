@@ -622,6 +622,7 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
     id: data.id,
     immutable: data.immutable,
     name: data.name,
+    numExperiments: data.numExperiments,
     numProjects: data.numProjects,
     pinned: data.pinned,
     username: data.username,
