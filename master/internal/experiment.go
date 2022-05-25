@@ -283,11 +283,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case model.StateWithReason:
 		e.updateState(ctx, msg)
 	case model.State:
-		panic("We don't want to call this ever")
-		// TODO find out all the places where we call this
-		// We likely want to just forward this with no reason
-		//return t.patchState(ctx, msg)
-		//e.updateState(ctx, msg)
+		e.updateState(ctx, model.StateWithReason{State: msg})
 	case config.ExperimentConfigPatch:
 		e.Config.SetName(expconf.Name{RawString: msg.Name})
 	case sproto.SetGroupMaxSlots:
@@ -550,7 +546,7 @@ func (e *experiment) processOperations(
 	}
 
 	for requestID := range updatedTrials {
-		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID]) // TODO here should we send a reason???
+		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
 	}
 }
 

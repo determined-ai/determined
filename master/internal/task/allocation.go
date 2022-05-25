@@ -42,7 +42,7 @@ type (
 		// Separates the existence of resources from us having started them.
 		resourcesStarted bool
 		// Tracks an informatative reason for container exit.
-		exitReason string
+		exitReasons []string
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
 		exitErr error
 		// Marks that we intentionally killed the allocation so we can know to
@@ -98,7 +98,7 @@ type (
 	BuildTaskSpec struct{}
 	// AllocationSignal is an interface for signals that can be sent to an allocation.
 	AllocationSignal string
-	// AllocationSignal is an message for signals that can be sent to an allocation
+	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
 	// along with an informational reason about why the signal was sent.
 	AllocationSignalWithReason struct {
 		AllocationSignal    AllocationSignal
@@ -382,9 +382,9 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 func (a *Allocation) Cleanup(ctx *actor.Context) {
 	// These messages must be sent when the actor is closing since it
 	// closes all websockets listening for these events.
-	if a.exitReason != "" {
+	for _, r := range a.exitReasons {
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-			Log:   "Ended due to " + a.exitReason,
+			Log:   "Ended due to " + r,
 			Level: ptrs.Ptr(model.LogLevelWarning),
 		}))
 	}
@@ -530,7 +530,7 @@ func (a *Allocation) SetResourcesAsDaemon(
 // HandleSignal handles an external signal to kill or terminate the allocation.
 func (a *Allocation) HandleSignal(ctx *actor.Context, msg AllocationSignalWithReason) {
 	if msg.InformationalReason != "" {
-		a.exitReason += msg.InformationalReason + "\n"
+		a.exitReasons = append(a.exitReasons, msg.InformationalReason)
 	}
 
 	switch msg.AllocationSignal {
@@ -679,11 +679,15 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
 	forcePreemption := false
-	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
+	switch msg := ctx.Message().(type) {
+	case sproto.ReleaseResources:
 		if msg.ForcePreemption {
 			forcePreemption = true
 		}
 		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
+		a.exitReasons = append(a.exitReasons, "allocation being preempted by the scheduler")
+	case sproto.ChangeRP:
+		a.exitReasons = append(a.exitReasons, "allocation resource pool changed\n")
 	}
 
 	if exited := a.Exit(ctx); exited {

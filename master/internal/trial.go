@@ -157,10 +157,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 
 	case model.State:
-		panic("We don't want to call this ever")
-		// TODO find out all the places where we call this
-		// We likely want to just forward this with no reason
-		//return t.patchState(ctx, msg)
+		return t.patchState(ctx, model.StateWithReason{State: msg})
 	case model.StateWithReason:
 		return t.patchState(ctx, msg)
 	case trialSearcherState:
@@ -439,18 +436,18 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.ErrorState,
-				InformationalReason: "trial encountered an error exiting", // TODO give error?
+				InformationalReason: "trial encountered an error exiting",
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.StoppingToTerminalStates[t.state],
-			InformationalReason: "trial exited sucessfully",
+			InformationalReason: "trial exited successfully",
 		})
 	case t.searcher.Complete && t.searcher.Closed:
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.ErrorState,
-				InformationalReason: "trial encountered an error exiting", // TODO give error?
+				InformationalReason: "trial encountered an error exiting",
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{

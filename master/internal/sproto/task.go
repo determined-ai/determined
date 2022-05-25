@@ -140,7 +140,8 @@ type (
 		ResourcePool string
 		// If specified as true (default false), Requestor wants to force
 		// a preemption attempt instead of an immediate kill.
-		ForcePreemption bool
+		ForcePreemption     bool
+		InformationalReason string
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
