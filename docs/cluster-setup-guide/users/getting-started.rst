@@ -116,6 +116,13 @@ An admin can also change another user's password:
  Listing assets
 ****************
 
+WebUI
+=====
+
+Just as in the CLI, by default the WebUI will only show assets created by the current user. To see
+assets belonging to all users, uncheck the "Show only mine" checkbox in the filter panel found in
+the tab for each asset type.
+
 .. _cli-1:
 
 CLI
@@ -133,13 +140,6 @@ belonging to the current user. It is possible to show assets owned by all users 
    det tensorboard list -a  # List all TensorBoards.
 
 .. _webui-1:
-
-WebUI
-=====
-
-Just as in the CLI, by default the WebUI will only show assets created by the current user. To see
-assets belonging to all users, uncheck the "Show only mine" checkbox in the filter panel found in
-the tab for each asset type.
 
 *******************************
  Activating/deactivating users
