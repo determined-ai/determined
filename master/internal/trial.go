@@ -524,7 +524,6 @@ func (t *trial) patchState(ctx *actor.Context, s model.StateWithReason) error {
 		return nil
 	default:
 		ctx.Log().Debugf("patching state after request (%s)", s.State)
-		// TODO log here if a state has a reason to it?
 		return t.transition(ctx, s)
 	}
 }
@@ -550,7 +549,10 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 	case t.state == model.PausedState:
 		if t.allocation != nil {
 			ctx.Log().Infof("decided to %s trial due to pause", task.Terminate)
-			ctx.Tell(t.allocation, task.Terminate) // TODO pass reason along
+			ctx.Tell(t.allocation, task.AllocationSignalWithReason{
+				AllocationSignal:    task.Terminate,
+				InformationalReason: s.InformationalReason,
+			})
 		}
 	case model.StoppingStates[t.state]:
 		switch {
@@ -568,15 +570,17 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 			}[t.state]; ok {
 				// TODO pass reason along
 				ctx.Log().Infof("decided to %s trial", action)
-				ctx.Tell(t.allocation, action)
+				ctx.Tell(t.allocation, task.AllocationSignalWithReason{
+					AllocationSignal:    action,
+					InformationalReason: s.InformationalReason,
+				})
 			}
 		}
 	case model.TerminalStates[t.state]:
 		if t.state == model.ErrorState {
-			// TODO do we need to pass our reason along?
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 				requestID: t.searcher.Create.RequestID,
-				reason:    model.Errored,
+				reason:    model.Errored, // TODO do we need to pass our reason along?
 			})
 		}
 		ctx.Self().Stop()
