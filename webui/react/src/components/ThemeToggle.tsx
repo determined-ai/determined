@@ -64,7 +64,7 @@ const ThemeToggle: React.FC = () => {
 
   useEffect(() => {
     /**
-     * Ensure that the chosen UI theme is used when the OS or 
+     * Ensure that the chosen UI theme is used when the OS or
      * browser appearance settings are updated.
      */
     if(scheme === DarkLight.Dark && settings.theme === ThemeClass.DARK){
@@ -72,9 +72,9 @@ const ThemeToggle: React.FC = () => {
     } else if(scheme === DarkLight.Light && settings.theme === ThemeClass.LIGHT){
       setMode(DarkLight.Light);
     } else if(scheme === DarkLight.Light && settings.theme === ThemeClass.SYSTEM){
-      setMode(DarkLight.Light)
+      setMode(DarkLight.Light);
     }
-  }, [scheme]);
+  }, [ scheme, setMode, settings.theme ]);
 
   return (
     <div className={css.base} onClick={changeTheme}>

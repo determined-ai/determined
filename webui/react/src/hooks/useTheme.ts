@@ -7,10 +7,10 @@ import { BrandingType } from 'types';
 
 type ThemeHook = {
   mode: DarkLight,
+  scheme: DarkLight,
   setBranding: Dispatch<SetStateAction<BrandingType>>,
   setMode: Dispatch<SetStateAction<DarkLight>>,
   theme: Theme,
-  scheme: DarkLight | undefined;
 };
 
 const STYLESHEET_ID = 'antd-stylesheet';
@@ -52,9 +52,10 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): ThemeHook => {
+  const currentTheme = (() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
   const [ branding, setBranding ] = useState(BrandingType.Determined);
-  const [ mode, setMode ] = useState(() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
-  const [scheme, setScheme] = useState<DarkLight>();
+  const [ mode, setMode ] = useState(currentTheme);
+  const [ scheme, setScheme ] = useState<DarkLight>(currentTheme);
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
@@ -89,7 +90,7 @@ export const useTheme = (): ThemeHook => {
     updateAntDesignTheme(themeConfig[mode].antd);
   }, [ mode ]);
 
-  return { mode, setBranding, setMode, theme, scheme };
+  return { mode, scheme, setBranding, setMode, theme };
 };
 
 export default useTheme;
