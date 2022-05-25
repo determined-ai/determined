@@ -24,6 +24,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
+// StateWithReason is the run state of an experiment with
+// an informational reason used for logging purposes.
+type StateWithReason struct {
+	State               State
+	InformationalReason string
+}
+
 // State is the run state of an experiment / trial / step / etc.
 type State string
 

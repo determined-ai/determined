@@ -137,7 +137,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if !model.TerminalStates[t.state] {
-			return t.transition(ctx, model.ErrorState)
+			return t.transition(ctx, model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: "trial did not finish properly",
+			})
 		}
 		return nil
 	case actor.ChildStopped:
@@ -154,6 +157,11 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 
 	case model.State:
+		panic("We don't want to call this ever")
+		// TODO find out all the places where we call this
+		// We likely want to just forward this with no reason
+		//return t.patchState(ctx, msg)
+	case model.StateWithReason:
 		return t.patchState(ctx, msg)
 	case trialSearcherState:
 		t.searcher = msg
@@ -161,7 +169,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		case !t.searcher.Complete:
 			return t.maybeAllocateTask(ctx)
 		case t.searcher.Complete && t.searcher.Closed:
-			return t.patchState(ctx, model.StoppingCompletedState)
+			return t.patchState(ctx, model.StateWithReason{
+				State:               model.StoppingCompletedState,
+				InformationalReason: "hp search is complete and closed",
+			})
 		}
 		return nil
 	case sproto.ChangeRP:
@@ -426,19 +437,34 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	switch {
 	case model.StoppingStates[t.state]:
 		if exit.Err != nil {
-			return t.transition(ctx, model.ErrorState)
+			return t.transition(ctx, model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: "trial encountered an error exiting", // TODO give error?
+			})
 		}
-		return t.transition(ctx, model.StoppingToTerminalStates[t.state])
+		return t.transition(ctx, model.StateWithReason{
+			State:               model.StoppingToTerminalStates[t.state],
+			InformationalReason: "trial exited sucessfully",
+		})
 	case t.searcher.Complete && t.searcher.Closed:
 		if exit.Err != nil {
-			return t.transition(ctx, model.ErrorState)
+			return t.transition(ctx, model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: "trial encountered an error exiting", // TODO give error?
+			})
 		}
-		return t.transition(ctx, model.CompletedState)
+		return t.transition(ctx, model.StateWithReason{
+			State:               model.CompletedState,
+			InformationalReason: "hp search is complete and closed",
+		})
 	case exit.Err != nil && sproto.IsUnrecoverableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial encountered unrecoverable failure")
-		return t.transition(ctx, model.ErrorState)
+		return t.transition(ctx, model.StateWithReason{
+			State:               model.ErrorState,
+			InformationalReason: "trial encountered unrecoverable failure",
+		})
 	case exit.Err != nil && sproto.IsTransientSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
@@ -452,20 +478,29 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return err
 		}
 		if t.restarts > t.config.MaxRestarts() {
-			return t.transition(ctx, model.ErrorState)
+			return t.transition(ctx, model.StateWithReason{
+				State:               model.ErrorState,
+				InformationalReason: "trial exceeded max restarts",
+			})
 		}
 	case exit.UserRequestedStop:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
 			reason:    model.UserCanceled,
 		})
-		return t.transition(ctx, model.CompletedState)
+		return t.transition(ctx, model.StateWithReason{
+			State:               model.CompletedState,
+			InformationalReason: "trial completed due to a user requested stop",
+		})
 	case t.userInitiatedExit != nil:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
 			reason:    *t.userInitiatedExit,
 		})
-		return t.transition(ctx, model.CompletedState)
+		return t.transition(ctx, model.StateWithReason{
+			State:               model.CompletedState,
+			InformationalReason: "trial completed due to a user initiated exit",
+		})
 	}
 
 	// Maybe reschedule.
@@ -473,37 +508,39 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 }
 
 // patchState decide if the state patch is valid. If so, we'll transition the trial.
-func (t *trial) patchState(ctx *actor.Context, state model.State) error {
+func (t *trial) patchState(ctx *actor.Context, s model.StateWithReason) error {
 	switch {
 	case model.TerminalStates[t.state]:
-		ctx.Log().Infof("ignoring transition in terminal state (%s -> %s)", t.state, state)
+		ctx.Log().Infof("ignoring transition in terminal state (%s -> %s)", t.state, s.State)
 		return nil
-	case model.TerminalStates[state]:
-		ctx.Log().Infof("ignoring patch to terminal state %s", state)
+	case model.TerminalStates[s.State]:
+		ctx.Log().Infof("ignoring patch to terminal state %s", s.State)
 		return nil
-	case t.state == state: // Order is important, else below will prevent re-sending kills.
+	case t.state == s.State: // Order is important, else below will prevent re-sending kills.
 		ctx.Log().Infof("resending actions for transition for %s", t.state)
-		return t.transition(ctx, state)
-	case model.StoppingStates[t.state] && !model.TrialTransitions[t.state][state]:
-		ctx.Log().Infof("ignoring patch to less severe stopping state (%s)", state)
+		return t.transition(ctx, s)
+	case model.StoppingStates[t.state] && !model.TrialTransitions[t.state][s.State]:
+		ctx.Log().Infof("ignoring patch to less severe stopping state (%s)", s.State)
 		return nil
 	default:
-		ctx.Log().Debugf("patching state after request (%s)", state)
-		return t.transition(ctx, state)
+		ctx.Log().Debugf("patching state after request (%s)", s.State)
+		// TODO log here if a state has a reason to it?
+		return t.transition(ctx, s)
 	}
 }
 
 // transition the trial by rectifying the desired state with our actual state to determined
 // a target state, and then propogating the appropriate signals to the allocation if there is any.
-func (t *trial) transition(ctx *actor.Context, state model.State) error {
-	if t.state != state {
-		ctx.Log().Infof("trial changed from state %s to %s", t.state, state)
+func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
+	if t.state != s.State {
+		ctx.Log().Infof("trial changed from state %s to %s", t.state, s.State)
+		// TODO send a message to trial logs
 		if t.idSet {
-			if err := t.db.UpdateTrial(t.id, state); err != nil {
+			if err := t.db.UpdateTrial(t.id, s.State); err != nil {
 				return errors.Wrap(err, "updating trial with end state")
 			}
 		}
-		t.state = state
+		t.state = s.State
 	}
 
 	// Rectify our state and the allocation state with the transition.
@@ -513,25 +550,30 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 	case t.state == model.PausedState:
 		if t.allocation != nil {
 			ctx.Log().Infof("decided to %s trial due to pause", task.Terminate)
-			ctx.Tell(t.allocation, task.Terminate)
+			ctx.Tell(t.allocation, task.Terminate) // TODO pass reason along
 		}
 	case model.StoppingStates[t.state]:
 		switch {
 		case t.allocation == nil:
 			ctx.Log().Info("stopping trial before resources are requested")
-			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
+			return t.transition(ctx, model.StateWithReason{
+				State:               model.StoppingToTerminalStates[t.state],
+				InformationalReason: s.InformationalReason,
+			})
 		default:
 			if action, ok := map[model.State]task.AllocationSignal{
 				model.StoppingCanceledState: task.Terminate,
 				model.StoppingKilledState:   task.Kill,
 				model.StoppingErrorState:    task.Kill,
 			}[t.state]; ok {
+				// TODO pass reason along
 				ctx.Log().Infof("decided to %s trial", action)
 				ctx.Tell(t.allocation, action)
 			}
 		}
 	case model.TerminalStates[t.state]:
 		if t.state == model.ErrorState {
+			// TODO do we need to pass our reason along?
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 				requestID: t.searcher.Create.RequestID,
 				reason:    model.Errored,
