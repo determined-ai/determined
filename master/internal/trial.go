@@ -575,7 +575,7 @@ func (t *trial) transition(ctx *actor.Context, s model.StateWithReason) error {
 		if t.state == model.ErrorState {
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 				requestID: t.searcher.Create.RequestID,
-				reason:    model.Errored, // TODO do we need to pass our reason along?
+				reason:    model.Errored,
 			})
 		}
 		ctx.Self().Stop()
