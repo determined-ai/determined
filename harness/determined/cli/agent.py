@@ -87,8 +87,8 @@ def list_slots(args: argparse.Namespace) -> None:
             return str(containers[container_id]["name"])
 
         if slot["container"] and (
-                "determined-master-deployment" in container_id
-                or "determined-db-deployment" in container_id
+            "determined-master-deployment" in container_id
+            or "determined-db-deployment" in container_id
         ):
             return f"Determined System Task: {container_id}"
 
