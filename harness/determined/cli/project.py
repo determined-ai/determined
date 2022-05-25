@@ -9,7 +9,7 @@ from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import session
 
 from . import render
-from .workspace import list_workspace_projects, workspace_by_name
+from .workspace import list_workspace_projects, pagination_args, workspace_by_name
 
 
 def render_experiments(args: Namespace, experiments: Sequence[v1Experiment]) -> None:
@@ -172,22 +172,6 @@ def unarchive_project(args: Namespace) -> None:
     print(f"Successfully un-archived project {args.project_name}.")
 
 
-# do not use util.py's pagination_args because behavior here is
-# to hide pagination and unify all pages of experiments into one output
-pagination_args = [
-    Arg(
-        "--limit",
-        type=int,
-        default=200,
-        help="Maximum items per page of results",
-    ),
-    Arg(
-        "--offset",
-        type=int,
-        default=None,
-        help="Number of items to skip before starting page of results",
-    ),
-]
 args_description = [
     Cmd(
         "p|roject",
@@ -214,6 +198,7 @@ args_description = [
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
+                    *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
