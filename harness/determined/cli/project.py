@@ -1,6 +1,5 @@
 import json
 from argparse import Namespace
-from time import sleep
 from typing import Any, Dict, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
@@ -130,43 +129,18 @@ def describe_project(args: Namespace) -> None:
 
 @authentication.required
 def delete_project(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    if p.numExperiments > 0:
+        raise Exception(
+            "Projects with associated experiments currently cannot be deleted. Use archive to hide projects."
+        )
     if args.yes or render.yes_or_no(
         'Deleting project "' + args.project_name + '" will result in the \n'
-        "unrecoverable deletion of all associated experiments. For a recoverable \n"
+        "unrecoverable deletion of this project and notes. For a recoverable \n"
         "alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        sess = setup_session(args)
-        (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-
-        current_user = authentication.must_cli_auth().get_session_user()
-        if current_user not in [w.username, p.username]:
-            raise Exception("Workspace and Project are owned by another user.")
-        if p.immutable:
-            raise Exception("Project is immutable and cannot be deleted.")
-
-        loops = 0
-        exps = bindings.get_GetProjectExperiments(sess, id=p.id, limit=100, offset=0).experiments
-        while len(exps) > 0:
-            pending_experiments: List[int] = []
-            for e in exps:
-                try:
-                    pending_experiments.append(e.id)
-                    bindings.delete_DeleteExperiment(sess, experimentId=e.id)
-                except:
-                    sleep(0.05)
-            sleep(1)
-            exps = bindings.get_GetProjectExperiments(
-                sess, id=p.id, limit=100, offset=0
-            ).experiments
-            loops += 1
-            if loops > 120:
-                print(pending_experiments)
-                raise Exception(
-                    "Failed to delete above experiment ids after two minutes. "
-                    + "An experiment may have failed to delete."
-                )
-
         bindings.delete_DeleteProject(sess, id=p.id)
         print(f"Successfully deleted project {args.project_name}.")
     else:
