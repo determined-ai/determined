@@ -24,16 +24,14 @@
   width: 20px;
 }
 .system {
-  background-color: gold;
-  border-color: var(--theme-stage-border);
-  border-style: solid;
-  border-width: 1px;
-  box-shadow: inset -4.5px -4px 1px 1px #fff;
+  background-color: black;
+  box-shadow: inset -9px -8px 1px 1px gold;
+  border: solid 1px black;
 }
 .light {
   background-color: gold;
 }
 .dark {
   background-color: black;
-  box-shadow: inset -4.5px -4px 1px 1px gold;
+  box-shadow: inset -3.75px -2.5px 1px 1px gold;
 }
