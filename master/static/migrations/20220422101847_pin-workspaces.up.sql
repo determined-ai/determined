@@ -1,7 +1,7 @@
 CREATE TABLE workspace_pins (
   id SERIAL PRIMARY KEY,
-  workspace_id INT REFERENCES workspaces(id),
-  user_id INT REFERENCES users(id),
+  workspace_id INT REFERENCES workspaces(id) ON DELETE CASCADE,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP with time zone NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, workspace_id)
 );
