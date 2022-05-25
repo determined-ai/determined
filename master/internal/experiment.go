@@ -280,8 +280,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.trialClosed(ctx, msg.requestID)
 
 	// Patch experiment messages.
-	case model.State:
+	case model.StateWithReason:
 		e.updateState(ctx, msg)
+	case model.State:
+		panic("We don't want to call this ever")
+		// TODO find out all the places where we call this
+		// We likely want to just forward this with no reason
+		//return t.patchState(ctx, msg)
+		//e.updateState(ctx, msg)
 	case config.ExperimentConfigPatch:
 		e.Config.SetName(expconf.Name{RawString: msg.Name})
 	case sproto.SetGroupMaxSlots:
@@ -387,7 +393,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("experiment shut down successfully")
 
 	case *apiv1.ActivateExperimentRequest:
-		switch ok := e.updateState(ctx, model.ActiveState); ok {
+		switch ok := e.updateState(ctx, model.StateWithReason{
+			State:               model.ActiveState,
+			InformationalReason: "user requested activation",
+		}); ok {
 		case true:
 			ctx.Respond(&apiv1.ActivateExperimentResponse{})
 		default:
@@ -396,7 +405,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.PauseExperimentRequest:
-		switch ok := e.updateState(ctx, model.PausedState); ok {
+		switch ok := e.updateState(ctx, model.StateWithReason{
+			State:               model.PausedState,
+			InformationalReason: "user requested pause",
+		}); ok {
 		case true:
 			ctx.Respond(&apiv1.PauseExperimentResponse{})
 		default:
@@ -409,12 +421,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.CancelExperimentResponse{})
 		default:
-			if ok := e.updateState(ctx, model.StoppingCanceledState); !ok {
+			switch ok := e.updateState(ctx, model.StateWithReason{
+				State:               model.StoppingCanceledState,
+				InformationalReason: "user requested cancellation",
+			}); ok {
+			case true:
+				ctx.Respond(&apiv1.CancelExperimentResponse{})
+			default:
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,
 					"experiment in incompatible state %s", e.State,
 				))
-			} else {
-				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
 
@@ -423,12 +439,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
-			if ok := e.updateState(ctx, model.StoppingKilledState); !ok {
+			switch ok := e.updateState(ctx, model.StateWithReason{
+				State:               model.StoppingCanceledState,
+				InformationalReason: "user requested kill",
+			}); ok {
+			case true:
+				ctx.Respond(&apiv1.KillExperimentResponse{})
+			default:
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,
 					"experiment in incompatible state %s", e.State,
 				))
-			} else {
-				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
 
@@ -453,7 +473,10 @@ func (e *experiment) restoreTrials(ctx *actor.Context) {
 	for _, state := range e.TrialSearcherState {
 		checkpoint, err := e.checkpointForCreate(state.Create)
 		if err != nil {
-			e.updateState(ctx, model.StoppingErrorState)
+			e.updateState(ctx, model.StateWithReason{
+				State:               model.StoppingErrorState,
+				InformationalReason: "failed getting checkpoint to restore restoring",
+			})
 			ctx.Log().Error(err)
 			return
 		}
@@ -468,7 +491,10 @@ func (e *experiment) processOperations(
 	}
 	if err != nil {
 		ctx.Log().Error(err)
-		e.updateState(ctx, model.StoppingErrorState)
+		e.updateState(ctx, model.StateWithReason{
+			State:               model.StoppingErrorState,
+			InformationalReason: err.Error(), // TODO does it make sense to expose errors?
+		})
 		return
 	}
 
@@ -481,7 +507,10 @@ func (e *experiment) processOperations(
 		case searcher.Create:
 			checkpoint, err := e.checkpointForCreate(op)
 			if err != nil {
-				e.updateState(ctx, model.StoppingErrorState)
+				e.updateState(ctx, model.StateWithReason{
+					State:               model.StoppingErrorState,
+					InformationalReason: "hp searcher unable to get checkpoint",
+				})
 				ctx.Log().Error(err)
 				return
 			}
@@ -505,9 +534,15 @@ func (e *experiment) processOperations(
 			updatedTrials[op.RequestID] = true
 		case searcher.Shutdown:
 			if op.Failure {
-				e.updateState(ctx, model.StoppingErrorState)
+				e.updateState(ctx, model.StateWithReason{
+					State:               model.StoppingErrorState,
+					InformationalReason: "hp searcher failure",
+				})
 			} else {
-				e.updateState(ctx, model.StoppingCompletedState)
+				e.updateState(ctx, model.StateWithReason{
+					State:               model.StoppingCompletedState,
+					InformationalReason: "hp searcher shutdown",
+				})
 			}
 		default:
 			panic(fmt.Sprintf("unexpected operation: %v", op))
@@ -515,7 +550,7 @@ func (e *experiment) processOperations(
 	}
 
 	for requestID := range updatedTrials {
-		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
+		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID]) // TODO here should we send a reason???
 	}
 }
 
@@ -541,8 +576,8 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	return checkpoint, nil
 }
 
-func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
-	if wasPatched, err := e.Transition(state); err != nil {
+func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason) bool {
+	if wasPatched, err := e.Transition(state.State); err != nil {
 		ctx.Log().Errorf("error transitioning experiment state: %s", err)
 		return false
 	} else if !wasPatched {
@@ -550,7 +585,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
-	ctx.Log().Infof("experiment state changed to %s", state)
+	ctx.Log().Infof("experiment state changed to %s", state.State)
 	ctx.TellAll(state, ctx.Children()...)
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Errorf("error saving experiment state: %s", err)
