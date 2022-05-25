@@ -101,7 +101,7 @@ func (g *allGather) checkTimeout(msg allGatherTimeout) error {
 	if g.alreadyDone {
 		return nil
 	}
-	if g.id != msg.id {
+	if g.id == msg.id {
 		return ErrTimeoutExceeded{Message: AllGatherTimeoutMessage}
 	}
 	return nil
