@@ -43,7 +43,7 @@ export const SyncProvider: React.FC = ({ children }) => {
   );
 };
 
-export const useSyncableBounds = (): SyncableBounds => {
+export const useSyncableBounds = (onZoom?: (min: number, max: number) => void): SyncableBounds => {
   const [ zoomed, setZoomed ] = useState(false);
   const mouseX = useRef<number|undefined>(undefined);
   const syncContext = useContext(SyncContext);
@@ -66,10 +66,16 @@ export const useSyncableBounds = (): SyncableBounds => {
               return handler(e);
             };
           },
-          mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
+          mouseup: (u: uPlot, _target: EventTarget, handler: (e: MouseEvent) => null) => {
             return (e: MouseEvent) => {
               if (mouseX.current != null && Math.abs(e.clientX - mouseX.current) > 5) {
                 zoomSetter(true);
+                const minX = u.posToVal(0, 'x');
+                const maxX = u.posToVal(u.bbox.width, 'x');
+                console.log([minX, maxX]);
+                if (onZoom) {
+                  onZoom(minX, maxX);
+                }
               }
               mouseX.current = undefined;
               return handler(e);

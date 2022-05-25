@@ -23,7 +23,7 @@ interface Props {
   options?: Partial<Options>;
   style?: React.CSSProperties;
   title?: string;
-  // onZoom?: (min: number, max: number) => void;
+  onZoom?: (min: number, max: number) => void;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -77,13 +77,13 @@ const UPlotChart: React.FC<Props> = ({
   style,
   noDataMessage,
   title,
-  // onZoom,
+  onZoom,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
 
-  const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
+  const { zoomed, boundsOptions, setZoomed } = useSyncableBounds(onZoom);
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
