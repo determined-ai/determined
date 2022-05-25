@@ -65,7 +65,7 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 	}
 	stateFilterExpr := strings.Join(allStates, ",")
 	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0)
+	userIds := make([]string, 0, len(req.UserIds))
 	for _, userID := range req.UserIds {
 		userIds = append(userIds, strconv.Itoa(int(userID)))
 	}
