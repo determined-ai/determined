@@ -2,7 +2,11 @@
  PyTorch Lightning API Quickstart
 ##################################
 
-PyTorch Lightning API reference: :doc:`/reference/training/api-pytorch-lightning-reference`
++------------------------------------------------------------+
+| API reference                                              |
++============================================================+
+| :doc:`/reference/training/api-pytorch-lightning-reference` |
++------------------------------------------------------------+
 
 This document guides you through training a PyTorch Lightning model in Determined. You need to
 implement a trial class that inherits :class:`~determined.pytorch.lightning.LightningAdapter` and

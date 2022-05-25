@@ -4,7 +4,11 @@
  Install Determined on Kubernetes
 ##################################
 
-Helm chart reference: :doc:`/reference/config/helm-config-reference`
++------------------------------------------------+
+| Configuration Reference                        |
++================================================+
+| :doc:`/reference/config/helm-config-reference` |
++------------------------------------------------+
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
@@ -174,7 +178,7 @@ are started in a Determined cluster running on Kubernetes, the Determined master
 execute these tasks. The Determined helm chart makes it possible to set default pod specs for all
 CPU and GPU tasks. The defaults can be defined in ``values.yaml`` under
 ``taskContainerDefaults.cpuPodSpec`` and ``taskContainerDefaults.gpuPodSpec``. For examples of how
-to do this and a description of permissible fields please see the :ref:`specifying custom pod specs
+to do this and a description of permissible fields, see the :ref:`specifying custom pod specs
 <custom-pod-specs>` guide.
 
 Default Password (Optional)
@@ -364,7 +368,7 @@ ready to be installed. To install Determined run:
 
 ``determined-helm-chart`` is a relative path to where the :download:`Determined Helm Chart
 </helm/determined-latest.tgz>` is located. It may take a few minutes for all resources to come up.
-If you encounter issues during installation please refer to our list of :ref:`useful kubectl
+If you encounter issues during installation, refer to our list of :ref:`useful kubectl
 commands <useful-kubectl-commands>`. Helm will install Determined within the default namespace. If
 you wish to install Determined into a non-default namespace, add ``-n <namespace name>`` to the
 command shown above.
@@ -377,7 +381,7 @@ When installing Determined on Kubernetes, I get an ``ImagePullBackOff`` error
 =============================================================================
 
 You may be trying to install a non-released version of Determined or a version in a private registry
-without the right secret. Please see the documentation on how to configure which :ref:`version of
+without the right secret. See the documentation on how to configure which :ref:`version of
 Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
 
 **********************

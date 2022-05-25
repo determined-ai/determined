@@ -4,7 +4,11 @@
  Helm Chart Configuration Reference
 ###################################
 
-Kubernetes installation guide: :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/install-on-kubernetes`
++-----------------------------------------------------------------------------------------+
+| Installation Guide                                                                      |
++=========================================================================================+
+| :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/install-on-kubernetes` |
++-----------------------------------------------------------------------------------------+
 
 *************************
  ``Chart.yaml`` Settings

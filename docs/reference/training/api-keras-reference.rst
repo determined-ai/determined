@@ -2,7 +2,11 @@
  Keras API Reference
 #####################
 
-PyTorch user guide: :doc:`/training/apis-howto/api-keras-qs`
++------------------------------------------+
+| User Guide                               |
++==========================================+
+| :doc:`/training/apis-howto/api-keras-qs` |
++------------------------------------------+
 
 ***********************************
  ``determined.keras.TFKerasTrial``

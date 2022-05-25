@@ -1783,9 +1783,9 @@ Version 0.13.4
 **Improvements**
 
 -  Support configuring default values for the task image, Docker pull policy, and Docker registry
-   credentials via the :ref:`master-config-reference` and the :ref:`helm-config-reference`. In previous
-   versions of Determined, these values had to be specified on a per-task basis (e.g., in the
-   experiment configuration). Per-task configuration is still supported and will overwrite the
+   credentials via the :ref:`master-config-reference` and the :ref:`helm-config-reference`. In
+   previous versions of Determined, these values had to be specified on a per-task basis (e.g., in
+   the experiment configuration). Per-task configuration is still supported and will overwrite the
    default value (if any).
 
 -  Add connection checks for dynamic agents. A dynamically provisioned agent will be terminated if

@@ -2,7 +2,11 @@
  Keras API Quickstart
 ######################
 
-Keras API reference: :doc:`/reference/training/api-keras-reference`
++--------------------------------------------------+
+| API reference                                    |
++==================================================+
+| :doc:`/reference/training/api-keras-reference`   |
++--------------------------------------------------+
 
 This document guides you through training a Keras model in Determined. You need to implement a trial
 class that inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the

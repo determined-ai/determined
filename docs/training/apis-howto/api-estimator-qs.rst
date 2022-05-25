@@ -2,7 +2,11 @@
  Estimator API Quickstart
 ##########################
 
-Estimator API reference: :doc:`/reference/training/api-estimator-reference`
++----------------------------------------------------+
+| API reference                                      |
++====================================================+
+| :doc:`/reference/training/api-estimator-reference` |
++----------------------------------------------------+
 
 This document guides you through training a Estimator model in Determined. You need to implement a
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
