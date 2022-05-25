@@ -1386,7 +1386,7 @@ func (a *apiServer) GetModelDef(
 
 func (a *apiServer) MoveExperiment(
 	_ context.Context, req *apiv1.MoveExperimentRequest) (*apiv1.MoveExperimentResponse, error) {
-	p, err := a.GetProjectFromID(req.DestinationProjectId)
+	p, err := a.GetProjectByID(req.DestinationProjectId)
 	if err != nil {
 		return nil, err
 	}

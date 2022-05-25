@@ -35,30 +35,56 @@ def workspace_by_name(sess: session.Session, name: str) -> v1Workspace:
 
 @authentication.required
 def list_workspaces(args: Namespace) -> None:
-    # limit, name, offset, users
+    sess = setup_session(args)
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
     sortArg = bindings.v1GetWorkspacesRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
-    workspaces = bindings.get_GetWorkspaces(
-        setup_session(args), orderBy=orderArg, sortBy=sortArg
-    ).workspaces
+    internal_offset = args.offset or 0
+    all_workspaces: List[bindings.v1Workspace] = []
+    while True:
+        workspaces = bindings.get_GetWorkspaces(
+            sess,
+            limit=args.limit,
+            offset=internal_offset,
+            orderBy=orderArg,
+            sortBy=sortArg,
+        ).workspaces
+        all_workspaces += workspaces
+        internal_offset += len(workspaces)
+        if args.offset or len(workspaces) < args.limit:
+            break
+
     if args.json:
-        print(json.dumps([w.to_json() for w in workspaces], indent=2))
+        print(json.dumps([w.to_json() for w in all_workspaces], indent=2))
     else:
-        render_workspaces(workspaces)
+        render_workspaces(all_workspaces)
 
 
 @authentication.required
 def list_workspace_projects(args: Namespace) -> None:
     sess = setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-
     orderArg = bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"]
     sortArg = bindings.v1GetWorkspaceProjectsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"]
-    projects = bindings.get_GetWorkspaceProjects(
-        sess, id=w.id, orderBy=orderArg, sortBy=sortArg
-    ).projects
+    internal_offset = args.offset if ("offset" in args and args.offset) else 0
+    limit = args.limit if "limit" in args else 200
+    all_projects: List[bindings.v1Project] = []
+
+    while True:
+        projects = bindings.get_GetWorkspaceProjects(
+            sess,
+            id=w.id,
+            limit=limit,
+            offset=internal_offset,
+            orderBy=orderArg,
+            sortBy=sortArg,
+        ).projects
+        all_projects += projects
+        internal_offset += len(projects)
+        if ("offset" in args and args.offset) or len(projects) < limit:
+            break
+
     if args.json:
-        print(json.dumps([p.to_json() for p in projects], indent=2))
+        print(json.dumps([p.to_json() for p in all_projects], indent=2))
     else:
         values = [
             [
@@ -68,7 +94,7 @@ def list_workspace_projects(args: Namespace) -> None:
                 p.numExperiments,
                 p.numActiveExperiments,
             ]
-            for p in projects
+            for p in all_projects
         ]
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
@@ -93,18 +119,9 @@ def describe_workspace(args: Namespace) -> None:
     else:
         render_workspaces([w])
         print("\nAssociated Projects")
-        projects = bindings.get_GetWorkspaceProjects(sess, id=w.id).projects
-        values = [
-            [
-                p.id,
-                p.name,
-                p.description,
-                p.numExperiments,
-                p.numActiveExperiments,
-            ]
-            for p in projects
-        ]
-        render.tabulate_or_csv(PROJECT_HEADERS, values, False)
+        vars(args)["order_by"] = "asc"
+        vars(args)["sort_by"] = "id"
+        list_workspace_projects(args)
 
 
 @authentication.required
@@ -153,6 +170,22 @@ def edit_workspace(args: Namespace) -> None:
         render_workspaces([w])
 
 
+# do not use util.py's pagination_args because behavior here is
+# to hide pagination and unify all pages of experiments into one output
+pagination_args = [
+    Arg(
+        "--limit",
+        type=int,
+        default=200,
+        help="Maximum items per page of results",
+    ),
+    Arg(
+        "--offset",
+        type=int,
+        default=None,
+        help="Number of items to skip before starting page of results",
+    ),
+]
 args_description = [
     Cmd(
         "w|orkspace",
@@ -178,6 +211,7 @@ args_description = [
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
+                    *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,
@@ -202,6 +236,7 @@ args_description = [
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
+                    *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
