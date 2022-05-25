@@ -172,7 +172,7 @@ func (r rendezvous) push() bool {
 
 // checkTimeout checks if the task should timeout waiting for rendezvous.
 func (r *rendezvous) checkTimeout(msg rendezvousTimeout) error {
-	if r == nil {
+	if r == nil || r.allReadySucceeded {
 		return nil
 	}
 
