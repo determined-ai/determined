@@ -26,7 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // A trial is a task actor which is responsible for handling:
@@ -153,12 +152,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				Err: errors.Wrapf(msg.Error, "trial allocation failed"),
 			})
 		}
-	case *apiv1.KillTrialRequest:
-		ctx.Tell(ctx.Self(), model.TaskLog{
-			Log:   fmt.Sprintf("Someone is requesting to kill this trial"),
-			Level: ptrs.Ptr(model.LogLevelWarning),
-		})
-		return t.patchState(ctx, model.StoppingKilledState)
+
 	case model.State:
 		return t.patchState(ctx, msg)
 	case trialSearcherState:
