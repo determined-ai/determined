@@ -1,64 +1,12 @@
-.. _env-setup-config:
-
 #############################################
- General Environment Setup and Configuration
+ IDE Integration
 #############################################
-
-*********************
- Context Directories
-*********************
-
-By using the ``-c <directory>`` option, files are transferred from a directory on the local machine
-(the "context directory") to the container. The contents of the context directory are placed into
-the working directory within the container before the command or shell starts running, so files in
-the context can be easily accessed using relative paths.
-
-.. code::
-
-   $ mkdir context
-   $ echo 'print("hello world")' > context/run.py
-   $ det cmd run -c context python run.py
-
-The total size of the files in the context directory must be less than 95 MB. Larger files, such as
-datasets, must be mounted into the container (see next section), downloaded after the container
-starts, or included in a :ref:`custom Docker image <custom-docker-images>`.
-
-*********************
-Environment Variables
-*********************
-
--  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
-   be overridden using the ``-m`` flag.
-
-************************
- Advanced Configuration
-************************
-
-:ref:`Additional configuration settings <command-notebook-configuration>` for both commands and
-shells can be set using the ``--config`` and ``--config-file`` options. Commonly useful settings
-include:
-
--  ``bind_mounts``: Specifies directories to be bind-mounted into the container from the host
-   machine. (Due to the structured values required for this setting, it needs to be specified in a
-   config file.)
-
--  ``resources.slots``: Specifies the number of slots the container will have access to.
-   (Distributed commands and shells are not supported; all slots will be on one machine and
-   attempting to use more slots than are available on one machine will prevent the container from
-   being scheduled.)
-
--  ``environment.image``: Specifies a custom Docker image to use for the container.
-
--  ``description``: Specifies a description for the command or shell to distinguish it from others.
-
-*****************
- IDE integration
-*****************
 
 Determined shells can be used in the popular IDEs similarly to a common remote SSH host.
 
+******************
 Visual Studio Code
-==================
+******************
 
 #. Make sure `Visual Studio Code Remote - SSH
    <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh>`__ extension is
@@ -83,8 +31,9 @@ Visual Studio Code
 #. The remote host will now be available in the VS Code **Remote Explorer**. For further detail,
    please refer to the `official documentation <https://code.visualstudio.com/docs/remote/ssh>`__.
 
+******************
 PyCharm
-=======
+******************
 
 #. **PyCharm Professional** is required for `remote Python interpreters via SSH
    <https://www.jetbrains.com/help/pycharm/configuring-remote-interpreters-via-ssh.html>`__.

@@ -1,7 +1,7 @@
 .. _k8s-dev-guide:
 
 #####################################
- Determined on K8s Development Guide
+ Development Guide
 #####################################
 
 ***************

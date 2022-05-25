@@ -1,7 +1,7 @@
 .. _aws-spot:
 
 ####################
- AWS Spot Instances
+ Use Spot Instances
 ####################
 
 This document describes how to use AWS spot instances with Determined. Spot instances can be much

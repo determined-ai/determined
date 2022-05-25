@@ -1,7 +1,7 @@
 .. _custom-pod-specs:
 
 ##################
- Custom Pod Specs
+ Customize a Pod
 ##################
 
 In a :ref:`Determined cluster running on Kubernetes <determined-on-kubernetes>`, tasks (e.g.,

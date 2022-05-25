@@ -1,7 +1,7 @@
 .. _install-on-kubernetes:
 
 ##################################
- Install Determined on Kubernetes
+ Install Determined
 ##################################
 
 +------------------------------------------------+
@@ -11,6 +11,19 @@
 +------------------------------------------------+
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
+
+When the Determined Helm chart is installed, the following entities will be created:
+
+-  Deployment of the Determined master.
+-  ConfigMap containing configurations for the Determined master.
+-  LoadBalancer service to make the Determined master accessible. Later in this guide, we describe
+   how it is possible to replace this with a NodePort service.
+-  ServiceAcccount which will be used by the Determined master.
+-  Deployment of a Postgres database. Later in this guide, we describe how an external database can
+   be used instead.
+-  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
+-  Service to allow the Determined master to communicate with the Postgres database. Omitted if
+   using an external database.
 
 When installing :ref:`Determined on Kubernetes <install-on-kubernetes>` using Helm, the deployment
 should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in the
@@ -51,23 +64,6 @@ Engine (GKE) <https://cloud.google.com/kubernetes-engine>`__ on GCP or `Elastic 
 Determined, refer to our :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`. For
 info on configuring EKS, refer to our :ref:`Instructions for setting up an EKS cluster
 <setup-eks-cluster>`.
-
-*********************
- What Gets Installed
-*********************
-
-When the Determined Helm chart is installed, the following entities will be created:
-
-#. Deployment of the Determined master.
-#. ConfigMap containing configurations for the Determined master.
-#. LoadBalancer service to make the Determined master accessible. Later in this guide, we describe
-   how it is possible to replace this with a NodePort service.
-#. ServiceAcccount which will be used by the Determined master.
-#. Deployment of a Postgres database. Later in this guide, we describe how an external database can
-   be used instead.
-#. PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
-#. Service to allow the Determined master to communicate with the Postgres database. Omitted if
-   using an external database.
 
 ***************
  Configuration

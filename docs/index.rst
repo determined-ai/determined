@@ -28,12 +28,13 @@
    :hidden:
 
    Getting Started <cluster-setup-guide/getting-started>
-   Network Requirements <cluster-setup-guide/requirements>
-   General Environment Setup and Configuration <cluster-setup-guide/env-setup>
-   Deploy a Cluster <cluster-setup-guide/deploy-cluster/overview>
-   Cluster Configuration <cluster-setup-guide/cluster-config>
+   Deploy on Prem <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/overview>
+   Deploy on AWS <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-aws/overview>
+   Deploy on GCP <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-gcp/overview>
+   Deploy on Kubernetes <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/overview>
    Upgrade <cluster-setup-guide/upgrade>
    User Teams <cluster-setup-guide/users/overview>
+   IDE Integration <cluster-setup-guide/ide-integration>
    Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
    Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
    Troubleshooting <cluster-setup-guide/troubleshooting>
@@ -48,6 +49,7 @@
    Distributed Training <training/distributed/distributed>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Model Management <training/model-management/overview>
+   Interactive Job Configuration <training/interactive-job-config>
    Best Practices <training/best-practices/overview>
 
 .. toctree::

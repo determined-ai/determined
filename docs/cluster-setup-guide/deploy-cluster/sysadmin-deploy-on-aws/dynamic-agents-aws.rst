@@ -1,8 +1,8 @@
 .. _dynamic-agents-aws:
 
-#######################
- Dynamic Agents on AWS
-#######################
+#######################################
+ Deploy Determined with Dynamic Agents
+#######################################
 
 This document describes how to install, configure, and upgrade a deployment of Determined with
 dynamic agents on AWS. See :ref:`elastic-infrastructure` for an overview of using elastic
@@ -110,10 +110,79 @@ See `Using an IAM Role to Grant Permissions to Applications Running on Amazon EC
 
 .. _aws-network-requirements:
 
-Network Requirements
-====================
+Set up Internet Access
+======================
 
-See :ref:`network-requirements` for details.
+-  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
+   Hub for such tasks as building new images for user workloads.
+
+-  If packages, data, or other resources needed by user workloads are hosted on the public Internet,
+   Determined agents need to be able to access them. Note that agents can be :ref:`configured
+   to use proxies <agent-network-proxy>` when accessing network resources.
+
+-  For best performance, it is recommended that the Determined master and agents use the same physical
+   network or VPC. When using VPCs on a public cloud provider, additional steps might need to be taken to ensure that instances in the VPC can access the Internet:
+
+   -  On GCP, the instances need to have an external IP address, or a `GCP Cloud NAT
+      <https://cloud.google.com/nat/docs/overview>`_ should be configured for the VPC.
+
+   -  On AWS, the instances need to have a public IP address, and a `VPC Internet Gateway
+      <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>`_ should be
+      configured for the VPC.
+
+Set up Firewall Rules
+=====================
+
+The firewall rules must satisfy the following network access requirements for the master and agents.
+
+Master
+^^^^^^
+
+-  Inbound TCP to the master's network port from the Determined agent instances, as well as all
+   machines where developers want to use the Determined CLI or WebUI. The default port is ``8443``
+   if TLS is enabled and ``8080`` if not.
+
+-  Outbound TCP to all ports on the Determined agents.
+
+Agents
+^^^^^^
+
+-  Inbound TCP from all ports on the master to all ports on the agent.
+
+-  Outbound TCP from all ports on the agent to the master's network port.
+
+-  Outbound TCP to the services that host the Docker images, packages, data, and other resources
+   that need to be accessed by user workloads.
+
+   -  For example, if your data is stored on Amazon S3, ensure the firewall rules allow access to
+      this data.
+
+-  Inbound and outbound TCP on all ports to and from each Determined agent. The details are as
+   follows:
+
+   -  Inbound and outbound TCP ports 1734 and 1750 are used for synchronization between trial
+      containers.
+
+   -  Inbound and outbound TCP port 12350 is used for internal SSH-based communication between trial
+      containers.
+
+   -  Inbound and outbound TCP port 12355 is used for GLOO rendezvous between trial containers.
+
+   -  Inbound and outbound ephemeral TCP ports in the range 1024-65536 are used for communication
+      between trials via GLOO. This range is configured by the configuration parameter
+      ``task_container_defaults.gloo_port_range`` inside ``master.yaml`` as described in the
+      :ref:`cluster-configuration` guide.
+
+   -  For every GPU on each agent machine, an inbound and outbound ephemeral TCP port in the range
+      1024-65536 is used for communication between trials via NCCL. This range is configured by the
+      configuration parameter ``task_container_defaults.nccl_port_range`` inside ``master.yaml`` as
+      described in the :ref:`cluster-configuration` guide.
+
+   -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial
+      communication between trial containers.
+
+   -  For Tensorboards, an inbound and outbound TCP port between 2600-2900 is used to connect the
+      master and the tensorboard container.
 
 .. _aws-cluster-configuration:
 
@@ -155,7 +224,7 @@ follow the instructions below:
    metadata and checkpoints.
 
 #. Configure Security Group: choose or create a security group according to
-   :ref:`aws-network-requirements`.
+   `Set up Internet Access`_.
 
 #. Review and launch the instance.
 

@@ -338,13 +338,7 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 ************
 
 For detailed information on administrator tasks and how to install Determined on different
-platforms, see:
-
--  :doc:`/cluster-setup-guide/deploy-cluster/overview` for administrator setup tasks.
--  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/overview` for local setup and deployment tasks.
--  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-aws/overview` for AWS deployment.
--  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-gcp/overview` for GCP deployment.
--  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/overview` for installation and running Determined on Kubernetes.
+platforms, see :doc:`/cluster-setup-guide/getting-started`.
 
 In the :doc:`example-solutions/examples` documentation, you can find machine learning models that have been ported to the Determined APIs. Each example includes a model definition and one or more experiment
 configuration files, and instructions on how to run the example.

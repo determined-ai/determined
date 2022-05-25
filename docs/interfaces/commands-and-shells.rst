@@ -117,41 +117,6 @@ Each noun also provides a ``help`` verb that describes the possible verbs for th
 provide ``-h`` or ``--help`` as an argument anywhere will cause the CLI to exit after printing help
 text for the object or action specified up to that point.
 
-Setting the Master
-==================
-
-The CLI should be installed on any machine where a user would like to access Determined. The ``-m``
-or ``--master`` flag determines the network address of the Determined master that the CLI connects
-to. If this flag is not specified, the value of the ``DET_MASTER`` environment variable is used; if
-that environment variable is not set, the default address is ``localhost``. The master address can
-be specified in three different formats:
-
--  ``example.org:port`` (if ``port`` is omitted, it defaults to ``8080``)
--  ``http://example.org:port`` (if ``port`` is omitted, it defaults to ``80``)
--  ``https://example.org:port`` (if ``port`` is omitted, it defaults to ``443``)
-
-Examples:
-
-.. code:: bash
-
-   # Connect to localhost, port 8080.
-   $ det experiment list
-
-   # Connect to example.org, port 8888.
-   $ det -m example.org:8888 e list
-
-   # Connect to example.org, port 80.
-   $ det -m http://example.org e list
-
-   # Connect to example.org, port 443.
-   $ det -m https://example.org e list
-
-   # Connect to example.org, port 8080.
-   $ det -m example.org e list
-
-   # Set default Determined master address to example.org, port 8888.
-   $ export DET_MASTER="example.org:8888"
-
 Examples
 ========
 
@@ -180,39 +145,6 @@ Examples
 
 -  ``det version``: Show detailed information about the CLI and master. Note that this command does
    not take both an object and an action.
-
-.. _command-notebook-configuration:
-
-*******************************
- Interactive Job Configuration
-*******************************
-
-The behavior of interactive jobs, such as :ref:`TensorBoards <tensorboards>`, :ref:`notebooks
-<notebooks>`, :ref:`commands, and shells <commands-and-shells>`, can be influenced by setting a
-variety of configuration variables. These configuration variables are similar but not identical to
-the configuration options supported by :ref:`experiments <experiment-config-reference>`.
-
-Configuration settings can be specified by passing a YAML configuration file when launching the
-workload via the Determined CLI:
-
-.. code::
-
-   $ det tensorboard start experiment_id --config-file=my_config.yaml
-   $ det notebook start --config-file=my_config.yaml
-   $ det cmd run --config-file=my_config.yaml ...
-   $ det shell start --config-file=my_config.yaml
-
-Configuration variables can also be set directly on the command line when any Determined task,
-except a TensorBoard, is launched:
-
-.. code::
-
-   $ det notebook start --config resources.slots=2
-   $ det cmd run --config description="determined_command" ...
-   $ det shell start --config resources.priority=1
-
-Options set via ``--config`` take precedence over values specified in the configuration file.
-Configuration settings are compatible with any Determined task unless otherwise specified.
 
 ******
 Shells

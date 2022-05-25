@@ -1,7 +1,7 @@
 .. _install-aws:
 
 ###########################
- Install Determined on AWS
+ Install Determined
 ###########################
 
 This document describes how to deploy a Determined cluster on Amazon Web Services (AWS). The :ref:`det deploy <determined-deploy>` tool makes it easy to create and install these resources.
