@@ -59,7 +59,7 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 	}
 
 	// Construct the experiment filtering expression.
-	var allStates []string
+	allStates := make([]string, 0, len(req.States))
 	for _, state := range req.States {
 		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
 	}
