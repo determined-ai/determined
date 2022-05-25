@@ -51,19 +51,19 @@ const TrialChart: React.FC<Props> = ({
     }
   }, [ metricNames, scale, trialId ]);
 
-  // const resetZoom = async (min: number, max: number) => {
-  //   if (trialId) {
-  //     const summ = await getTrialSummary({
-  //       endBatches: Math.ceil(max),
-  //       maxDatapoints: 30,
-  //       metricNames: metricNames,
-  //       scale: scale,
-  //       startBatches: Math.floor(min),
-  //       trialId: trialId,
-  //     });
-  //     setTrialSummary(summ.metrics);
-  //   }
-  // };
+  const resetZoom = async (min: number, max: number) => {
+    if (trialId) {
+      const summ = await getTrialSummary({
+        endBatches: Math.ceil(max),
+        maxDatapoints: 30,
+        metricNames: metricNames,
+        scale: scale,
+        startBatches: Math.floor(min),
+        trialId: trialId,
+      });
+      setTrialSummary(summ.metrics);
+    }
+  };
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
@@ -136,7 +136,7 @@ const TrialChart: React.FC<Props> = ({
       <div className={css.base}>
         {chartData[0].length === 0 ?
           <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} /> :
-          <UPlotChart data={chartData} options={chartOptions} />}
+          <UPlotChart data={chartData} options={chartOptions} onZoom={resetZoom} />}
       </div>
     </Section>
   );
