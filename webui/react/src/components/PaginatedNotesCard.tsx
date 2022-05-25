@@ -178,28 +178,6 @@ const PaginatedNotesCard: React.FC<Props> = (
           </ul>
         </div>
       )}
-      <div className={css.pageSelectRow}>
-        <SelectFilter
-          className={css.pageSelect}
-          size="large"
-          value={currentPage}
-          onSelect={handleSwitchPage}>
-          {notes.map((note, idx) => {
-            return (
-              <Option className={css.selectOption} key={idx} value={idx}>
-                <CheckOutlined
-                  className={css.currentPage}
-                  style={{
-                    marginRight: '6px',
-                    visibility: idx === currentPage ? 'visible' : 'hidden',
-                  }}
-                />
-                <span>{note.name}</span>
-              </Option>
-            );
-          })}
-        </SelectFilter>
-      </div>
       <div className={css.notesContainer}>
         <NotesCard
           disabled={disabled}

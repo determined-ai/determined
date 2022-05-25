@@ -3,21 +3,6 @@
   height: 100%;
   overflow: auto;
 
-  .pageSelectRow {
-    background-color: var(--theme-colors-monochrome-17);
-    display: none;
-
-    .pageSelect {
-      width: 100%;
-
-      & > div {
-        width: 100%;
-      }
-      .currentPage {
-        display: none;
-      }
-    }
-  }
   .sidebar {
     flex-basis: 30%;
     flex-shrink: 0;
