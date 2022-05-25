@@ -81,13 +81,19 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == t.allocationID.String() {
 			t.completeTask(ctx)
+			return errors.Wrapf(msg.Error, "checkpoint GC task failed (actor.ChildFailed)")
 		}
-		return errors.Errorf("checkpoint GC task failed (actor.ChildFailed)")
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
+	t.markCheckpointsDeleted(ctx)
+
+	return nil
+}
+
+func (t *checkpointGCTask) markCheckpointsDeleted(ctx *actor.Context) {
 	var deleteCheckpoints []uuid.UUID
 	if err := json.Unmarshal(t.ToDelete, &deleteCheckpoints); err != nil {
 		ctx.Log().WithError(err).Error("unmarshalling ToDelete in checkpoint GC task")
@@ -101,8 +107,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	if err := t.db.MarkCheckpointsDeleted(deleteCheckpointsStr); err != nil {
 		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 	}
-
-	return nil
 }
 
 func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
