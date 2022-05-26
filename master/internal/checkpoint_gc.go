@@ -85,29 +85,14 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
-<<<<<<< HEAD
-	t.markCheckpointsDeleted(ctx)
-
-	return nil
-}
-
-func (t *checkpointGCTask) markCheckpointsDeleted(ctx *actor.Context) {
-	var deleteCheckpoints []uuid.UUID
-	if err := json.Unmarshal(t.ToDelete, &deleteCheckpoints); err != nil {
-		ctx.Log().WithError(err).Error("unmarshalling ToDelete in checkpoint GC task")
-	}
-
-	var deleteCheckpointsStr []string
-	for _, dC := range deleteCheckpoints {
-		deleteCheckpointsStr = append(deleteCheckpointsStr, dC.String())
-	}
-=======
 	deleteCheckpoints := t.ToDelete
->>>>>>> 957d8afae (changes for cli, gcraw, ToDelete)
 
 	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
 		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+		return err
 	}
+
+	return nil
 }
 
 func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
