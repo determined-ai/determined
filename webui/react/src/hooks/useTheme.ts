@@ -7,9 +7,9 @@ import { BrandingType } from 'types';
 
 type ThemeHook = {
   mode: DarkLight,
-  scheme: DarkLight,
   setBranding: Dispatch<SetStateAction<BrandingType>>,
   setMode: Dispatch<SetStateAction<DarkLight>>,
+  systemMode: DarkLight,
   theme: Theme,
 };
 
@@ -55,11 +55,11 @@ export const useTheme = (): ThemeHook => {
   const currentMode = (() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
   const [ branding, setBranding ] = useState(BrandingType.Determined);
   const [ mode, setMode ] = useState(currentMode);
-  const [ scheme, setScheme ] = useState<DarkLight>(currentMode);
+  const [ systemMode, setSystemMode ] = useState<DarkLight>(currentMode);
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    setScheme(event.matches ? DarkLight.Dark : DarkLight.Light);
+    setSystemMode(event.matches ? DarkLight.Dark : DarkLight.Light);
   }, []);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export const useTheme = (): ThemeHook => {
     updateAntDesignTheme(themeConfig[mode].antd);
   }, [ mode ]);
 
-  return { mode, scheme, setBranding, setMode, theme };
+  return { mode, systemMode, setBranding, setMode, theme };
 };
 
 export default useTheme;
