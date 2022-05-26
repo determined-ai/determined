@@ -1,6 +1,6 @@
 import inspect
 from abc import abstractmethod
-from typing import Any, Dict, List, Sequence, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
 import torch
@@ -9,6 +9,7 @@ from pytorch_lightning.trainer.optimizers import (
     _validate_scheduler_optimizer,
 )
 from pytorch_lightning.utilities.model_helpers import is_overridden
+from torch.nn.utils import clip_grad_norm_, clip_grad_value_
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
@@ -131,6 +132,8 @@ class LightningAdapter(PyTorchTrial):
         precision: Union[Literal[32], Literal[16]] = 32,
         amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
         amp_level: Literal["O0", "O1", "O2", "O3"] = "O2",
+        gradient_clip_val: Union[int, float, None] = None,
+        gradient_clip_algorithm: Union[Literal["norm"], Literal["value"]] = "norm",
     ):
         """
         This performs the necessary initialization steps to:
@@ -167,11 +170,19 @@ class LightningAdapter(PyTorchTrial):
                 Apex amp optimization level.
                 Accepted values are "O0", "O1", "O2", and "O3".
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
-
+            gradient_clip_val (Union[int, float], optional):
+                Total norm or value at which to clip gradients.
+                If using amp, the gradients will be unscaled before.
+            gradient_clip_algorithm (str, default="norm"):
+                Gradient clipping algorithm to use.
+                Accepted values are "norm", and "value".
         """
 
         check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
         check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
+        check.check_in(
+            gradient_clip_algorithm, {"norm", "value"}, 'only "norm", and "value" are supported'
+        )
 
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
@@ -204,6 +215,9 @@ class LightningAdapter(PyTorchTrial):
         use_amp = context.experimental._auto_amp or context._use_apex
         pls.lm.use_amp = use_amp
         pls.lm.precision = "mixed" if use_amp else precision  # type: ignore
+
+        self._gradient_clip_val = gradient_clip_val
+        self._gradient_clip_algorithm = gradient_clip_algorithm
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         """
@@ -366,6 +380,18 @@ class LightningAdapter(PyTorchTrial):
         opt_metrics: List[Metric] = []
         metrics: Metric = {}
 
+        clip_grads = None
+        if self._gradient_clip_val is not None:
+            if self._gradient_clip_algorithm == "norm":
+
+                def clip_grads(params: Iterable[torch.Tensor]) -> None:
+                    clip_grad_norm_(params, self._gradient_clip_val)
+
+            elif self._gradient_clip_algorithm == "value":
+
+                def clip_grads(params: Iterable[torch.Tensor]) -> None:
+                    clip_grad_value_(params, self._gradient_clip_val)
+
         for opt_idx, opt in enumerate(self._pls.optimizers):
             with monkey_patch(
                 self._pls.lm, "optimizers", lambda *args, **kwargs: self._pls.optimizers
@@ -381,7 +407,7 @@ class LightningAdapter(PyTorchTrial):
 
             self._pls.context.backward(metrics["loss"])
             self._pls.lm.on_after_backward()
-            self._pls.context.step_optimizer(opt, auto_zero_grads=False)
+            self._pls.context.step_optimizer(opt, clip_grads, auto_zero_grads=False)
             self._pls.lm.on_before_zero_grad(opt)
             opt.zero_grad()
 
