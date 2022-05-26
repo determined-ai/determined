@@ -1,4 +1,5 @@
 from argparse import ONE_OR_MORE, REMAINDER, FileType, Namespace
+from functools import partial
 from pathlib import Path
 from typing import Any, List
 
@@ -32,7 +33,7 @@ def run_command(args: Namespace) -> None:
 
 args_description = [
     Cmd("command cmd", None, "manage commands", [
-        Cmd("list ls", command.list_tasks, "list commands", [
+        Cmd("list ls", partial(command.list_tasks), "list commands", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
@@ -42,7 +43,7 @@ args_description = [
                 Arg("--json", action="store_true", help="print as JSON"),
             ),
         ], is_default=True),
-        Cmd("config", command.config,
+        Cmd("config", partial(command.config),
             "display command config", [
                 Arg("command_id", type=str, help="command ID"),
             ]),
@@ -60,11 +61,11 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
-        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs), "fetch command logs", [
+        Cmd("logs", partial(task.logs), "fetch command logs", [
             Arg("task_id", help="command ID", metavar="command_id"),
             *task.common_log_options,
         ]),
-        Cmd("kill", command.kill, "forcibly terminate a command", [
+        Cmd("kill", partial(command.kill), "forcibly terminate a command", [
             Arg("command_id", help="command ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
