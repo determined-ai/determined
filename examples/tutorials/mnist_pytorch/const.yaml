@@ -15,3 +15,6 @@ searcher:
       batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
+bind_mounts:
+  - host_path: /home/nblaskey/Desktop/ # determined-ai-691bd652d5fe.json'
+    container_path: /home/gcs/
