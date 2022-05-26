@@ -53,7 +53,7 @@ const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>
 };
 
 const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
-  const { mode } = useTheme();
+  const { themeMode } = useTheme();
   const classes = [ css[branding], css[orientation] ];
 
   const alt = useMemo(() => {
@@ -70,7 +70,7 @@ const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
     <img
       alt={alt}
       className={classes.join(' ')}
-      src={logos[branding][orientation][mode]}
+      src={logos[branding][orientation][themeMode]}
     />
   );
 };

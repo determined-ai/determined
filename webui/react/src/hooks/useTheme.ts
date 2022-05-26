@@ -2,15 +2,15 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } f
 
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
-import themes, { DarkLight, globalCssVars, Theme } from 'themes';
+import themes, {globalCssVars, Theme, DarkLight } from 'themes';
 import { BrandingType } from 'types';
 import { Mode } from 'components/ThemeToggle.settings';
 
 type ThemeHook = {
-  mode: DarkLight,
+  themeMode: DarkLight,
+  mode: Mode,
   setBranding: Dispatch<SetStateAction<BrandingType>>,
-  setMode: Dispatch<SetStateAction<DarkLight>>,
-  systemMode: DarkLight,
+  setMode: Dispatch<SetStateAction<Mode>>,
   theme: Theme,
 };
 
@@ -20,9 +20,11 @@ const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 const themeConfig = {
-  [DarkLight.Dark]: { antd: 'antd.dark.min.css' },
-  [DarkLight.Light]: { antd: 'antd.min.css' },
+  [Mode.DARK]: { antd: 'antd.dark.min.css' },
+  [Mode.LIGHT]: { antd: 'antd.min.css' },
 };
+
+const getThemeType = (mode: Mode): DarkLight => mode === Mode.LIGHT ? DarkLight.Light : DarkLight.Dark; 
 
 const createStylesheetLink = () => {
   const link = document.createElement('link');
@@ -53,6 +55,8 @@ const updateAntDesignTheme = (path: string) => {
   link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
 };
 
+
+
 /*
  * `useTheme` hook takes a `themeId` and converts the theme object and translates into
  * CSS variables that are applied throughout various component CSS modules. Upon a change
@@ -61,14 +65,15 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): ThemeHook => {
-  const currentMode = (() => getSystemMode() ? DarkLight.Dark : DarkLight.Light);
+  const currentMode = getSystemMode();
   const [ branding, setBranding ] = useState(BrandingType.Determined);
-  const [ mode, setMode ] = useState(currentMode);
-  const [ systemMode, setSystemMode ] = useState<DarkLight>(currentMode);
-  const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
+  const [ mode, setMode ] = useState<Mode>(currentMode);
+  const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
+  const  themeMode = getThemeType(mode === Mode.SYSTEM ? systemMode === Mode.SYSTEM ? Mode.LIGHT : systemMode : mode);
+  const theme = useMemo(() => themes[branding][themeMode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    setSystemMode(event.matches ? DarkLight.Dark : DarkLight.Light);
+    setSystemMode(event.matches ? Mode.DARK : Mode.LIGHT);
   }, []);
 
   useEffect(() => {
@@ -96,10 +101,10 @@ export const useTheme = (): ThemeHook => {
 
   // When mode changes update theme.
   useEffect(() => {
-    updateAntDesignTheme(themeConfig[mode].antd);
-  }, [ mode ]);
+    updateAntDesignTheme(themeConfig[themeMode].antd);
+  }, [ themeMode ]);
 
-  return { mode, systemMode, setBranding, setMode, theme };
+  return { mode, themeMode, setBranding, setMode, theme };
 };
 
 export default useTheme;
