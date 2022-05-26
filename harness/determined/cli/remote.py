@@ -46,7 +46,7 @@ args_description = [
         Cmd("config", partial(command.config),
             "display command config", [
                 Arg("command_id", type=str, help="command ID"),
-            ]),
+        ]),
         Cmd("run", run_command, "create command", [
             Arg("entrypoint", type=str, nargs=REMAINDER,
                 help="entrypoint command and arguments to execute"),

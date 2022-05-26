@@ -201,7 +201,7 @@ args_description = [
         Cmd("config", partial(command.config),
             "display shell config", [
                 Arg("shell_id", type=str, help="shell ID"),
-            ]),
+        ]),
         Cmd("start", start_shell, "start a new shell", [
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
             Arg("--config-file", default=None, type=FileType("r"),

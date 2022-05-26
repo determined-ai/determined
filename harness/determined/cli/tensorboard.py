@@ -100,7 +100,7 @@ args_description = [
         Cmd("config", partial(command.config),
             "display TensorBoard config", [
                 Arg("tensorboard_id", type=str, help="TensorBoard ID")
-            ]),
+        ]),
         Cmd("open", open_tensorboard,
             "open existing TensorBoard instance", [
                 Arg("tensorboard_id", help="TensorBoard ID")

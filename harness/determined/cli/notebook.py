@@ -77,7 +77,7 @@ args_description = [
         Cmd("config", partial(command.config),
             "display notebook config", [
                 Arg("notebook_id", type=str, help="notebook ID"),
-            ]),
+        ]),
         Cmd("start", start_notebook, "start a new notebook", [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
