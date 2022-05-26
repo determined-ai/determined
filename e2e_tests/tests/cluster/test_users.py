@@ -15,7 +15,7 @@ import pytest
 from pexpect import spawn
 
 from determined.common import constants, yaml
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import session
 from tests import command
 from tests import config as conf
@@ -875,3 +875,36 @@ def test_experiment_delete() -> None:
                 return
             elif time.time() > experiment_delete_deadline:
                 pytest.fail("experiment didn't delete after timeout")
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_postgres
+def test_change_displayname(clean_auth: None) -> None:
+    u_patch = create_test_user(ADMIN_CREDENTIALS, False)
+    original_name = u_patch.username
+
+    master_url = conf.make_master_url()
+    certs.cli_cert = certs.default_load(master_url)
+    authentication.cli_auth = authentication.Authentication(
+        conf.make_master_url(), requested_user=original_name, password="", try_reauth=True
+    )
+    sess = session.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
+
+    all_users = bindings.get_GetUsers(sess).users
+    assert all_users is not None
+    current_user = list(filter(lambda u: u.username == original_name, all_users))[0]
+    assert current_user is not None and current_user.id
+
+    patch_user = bindings.v1PatchUser(displayName="renamed")
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    assert modded_user.displayName == "renamed"
+
+    patch_user.displayName = ""
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    assert modded_user.displayName == original_name
