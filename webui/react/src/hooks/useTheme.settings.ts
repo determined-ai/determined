@@ -10,7 +10,6 @@ export interface Settings {
   theme: Mode;
 }
 
-
 export const config: SettingsConfig = {
   settings: [
     {

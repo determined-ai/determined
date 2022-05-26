@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import useTheme from 'hooks/useTheme';
-import {Mode} from 'hooks/useTheme.settings';
+import { Mode } from 'hooks/useTheme.settings';
 
 import css from './ThemeToggle.module.scss';
 
@@ -32,7 +32,7 @@ const ThemeOptions: {[theme: string] : ThemeOption} = {
 
 const ThemeToggle: React.FC = () => {
 
-  const { mode,  updateTheme } = useTheme();
+  const { mode, updateTheme } = useTheme();
 
   const classes = [ css.toggler ];
   const currentThemeOption = ThemeOptions[mode];
