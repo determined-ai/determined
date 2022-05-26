@@ -19,7 +19,7 @@ for all of your experiments.
 
 Each of these quickstart examples uses the same model code and example dataset, differing only in
 their configuration settings. For a list of all experiment configuration settings and more detailed
-information about each, see :doc:`/training-apis/experiment-config`.
+information about each, see :doc:`/reference/config/experiment-config-reference`.
 
 ***************
  Prerequisites
@@ -58,7 +58,7 @@ Docker
 ======
 
 Install Docker to run containerized workloads. If you do not already have Docker installed, follow
-the :doc:`Installing Docker </sysadmin-deploy-on-prem/requirements>` instructions to install and run
+the :doc:`Installing Docker </cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>` instructions to install and run
 Docker on Linux or macOS.
 
 ******************************
@@ -340,18 +340,17 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
 For detailed information on administrator tasks and how to install Determined on different
 platforms, see:
 
--  :doc:`/sysadmin-basics/index` for administrator setup tasks.
--  :doc:`/sysadmin-deploy-on-prem/index` for local setup and deployment tasks.
--  :doc:`/sysadmin-deploy-on-aws/index` for AWS deployment.
--  :doc:`/sysadmin-deploy-on-gcp/index` for GCP deployment.
--  :doc:`/sysadmin-deploy-on-k8s/index` for installation and running Determined on Kubernetes.
+-  :doc:`/cluster-setup-guide/deploy-cluster/overview` for administrator setup tasks.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/overview` for local setup and deployment tasks.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-aws/overview` for AWS deployment.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-gcp/overview` for GCP deployment.
+-  :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/overview` for installation and running Determined on Kubernetes.
 
-In the :doc:`/examples` documentation, you can find machine learning models that have been ported to
-the Determined APIs. Each example includes a model definition and one or more experiment
+In the :doc:`example-solutions/examples` documentation, you can find machine learning models that have been ported to the Determined APIs. Each example includes a model definition and one or more experiment
 configuration files, and instructions on how to run the example.
 
 To learn more about the hyperparameter search algorithm, see the :doc:`Hyperparameter Tuning
-</training-hyperparameter/index>` section.
+</training/hyperparameter/overview>` section.
 
 For faster, less structured ways to run a Determined cluster without writing a model, see:
 

@@ -103,5 +103,6 @@ Configuration settings are compatible with any Determined task unless otherwise 
    webui-if
    commands-and-shells
    python-api
+   rest-api
    notebooks
    tensorboard

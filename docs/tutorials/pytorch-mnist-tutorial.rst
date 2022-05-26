@@ -182,8 +182,6 @@ datasets, respectively. Both methods should return a :ref:`determined.pytorch.Da
            validation_data, batch_size=self.context.get_per_slot_batch_size()
        )
 
-For more information on loading data in Determined, refer to the :ref:`prepare-data` document.
-
 Defining ``train_batch``
 ========================
 
@@ -239,9 +237,9 @@ default, metric values are averaged but this behavior can be customized by overr
 ********************
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single
-instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial
-<concept-trial>` is a training task that consists of a dataset, a deep learning model, and values
-for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of
+instance of the model or to do a hyperparameter search. In Determined, a trial
+is a training task that consists of a dataset, a deep learning model, and values
+for all of the model's hyperparameters. An experiment is a collection of
 one or more trials: an experiment can either train a single model (with a single trial), or can
 define a search over a user-defined hyperparameter space.
 

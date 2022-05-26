@@ -18,6 +18,7 @@ configuration </reference/config/experiment-config-reference>` to configure how 
 If you have existing model code that you'd like to train with Determined, continue to one of the API
 docs below depending on your ML Framework.
 
+-  :doc:`/training/apis-howto/api-core/overview`
 -  :doc:`/training/apis-howto/api-pytorch-qs`
 -  :doc:`/training/apis-howto/api-pytorch-lightning-qs`
 -  :doc:`/training/apis-howto/api-keras-qs`
@@ -84,7 +85,9 @@ Known limitations:
    :caption: Training
    :hidden:
 
+   api-core/overview
    api-pytorch-qs
    api-pytorch-lightning-qs
    api-keras-qs
    deepspeed/overview
+   api-estimator-qs

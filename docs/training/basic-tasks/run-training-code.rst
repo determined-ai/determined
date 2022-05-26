@@ -11,9 +11,9 @@ and run them as experiments. We will go over the whole cycle of it.
  Create an Experiment
 **********************
 
-Currently, we only support use the CLI to create an experiment from scratch. You can alternatively
-create an experiment from an existing experiment or trial on the WebUI. The CLI command to create an
-experiment is as follows:
+Currently, we only support the use of the CLI to create an experiment from scratch. You can
+alternatively create an experiment from an existing experiment or trial on the WebUI. The CLI
+command to create an experiment is as follows:
 
 .. code::
 

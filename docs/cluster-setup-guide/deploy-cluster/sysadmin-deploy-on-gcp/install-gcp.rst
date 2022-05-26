@@ -4,8 +4,7 @@
  Install Determined on GCP
 ###########################
 
-This document describes how to deploy a Determined cluster on Google Cloud Platform (GCP). We
-provide the ``det deploy`` tool for easy creation and deployment of these resources in GCP. The
+This document describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The ``det deploy`` tool makes it easy to create and deploy these resources in GCP. The
 ``det deploy`` tool uses `Terraform
 <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and
 configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up
@@ -409,5 +408,5 @@ This command line will spin up a cluster of up to 2 A100s in the ``us-central1-c
       --compute-agent-instance-type a2-highgpu-1g --gpu-num 1 \
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
-      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12 \
-      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12
+      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15 \
+      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15

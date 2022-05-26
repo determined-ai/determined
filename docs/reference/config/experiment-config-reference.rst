@@ -84,17 +84,19 @@ example:
    preemption, in the unit of batches. The number of records in a batch is controlled by the
    :ref:`global_batch_size <config-global-batch-size>` hyperparameter. Defaults to ``100``.
 
-   -  Setting this to be a small number can reduce the overhead of system operations.
-   -  Setting this to be too large might prevent the system to preempt the resources of this trial
-      to run other tasks.
-   -  As a rule of thumb, it should be set to make each step take 60--180 seconds.
+   -  Setting this value too small can increase the overhead of system operations and decrease
+      training throughput.
+   -  Setting this value too large might prevent the system from reallocating resources from this
+      workload to another, potentially more important, workload.
+   -  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
+      60--180 seconds.
 
 .. _config-records-per-epoch:
 
 ``records_per_epoch``
    The number of records in the training data set. It must be configured if you want to specify
-   ``min_validation_period``, ``min_checkpoint_period``, ``searcher.max_length``, and
-   ``searcher.length_per_round`` in units of ``epochs``.
+   ``min_validation_period``, ``min_checkpoint_period``, and ``searcher.max_length`` in units of
+   ``epochs``.
 
    -  The system does not attempt to determine the size of an epoch automatically, because the size
       of the training set might vary based on data augmentation, changes to external storage, or
@@ -474,27 +476,45 @@ example:
 
    hyperparameters:
      global_batch_size: 64
-     optimizer:
-       type: categorical
-       vals:
-         - SGD
-         - Adam
-         - RMSprop
+     optimizer_config:
+       optimizer:
+         type: categorical
+         vals:
+           - SGD
+           - Adam
+           - RMSprop
+       learning_rate:
+         type: log
+         minval: -5.0
+         maxval: 1.0
+         base: 10.0
+     num_layers:
+       type: int
+       minval: 1
+       maxval: 3
      layer1_dropout:
        type: double
        minval: 0.2
        maxval: 0.5
-     learning_rate:
-       type: log
-       minval: -5.0
-       maxval: 1.0
-       base: 10.0
 
-This configuration defines four hyperparameters: ``global_batch_size``, ``optimizer``,
-``layer1_dropout``, and ``learning_rate``. ``global_batch_size`` is set to a constant value; the
-other hyperparameters can take on a range of possible values. A hyperparameter's range is configured
-by the ``type`` field of the map; it must be one of ``categorical``, ``double``, ``int``, or
-``log``. More details on these types are given below.
+This configuration defines the following hyperparameters:
+
+-  ``global_batch_size``: a constant value
+
+-  ``optimizer_config``: a top level nested hyperparameter with two child hyperparameters:
+
+   -  ``optimizer``: a categorical hyperparameter
+   -  ``learning_rate``: a log scale hyperparameter
+
+-  ``num_layers``: an integer hyperparameter
+
+-  ``layer1_dropout``: a double hyperparameter
+
+The field ``optimizer_config`` demonstrates how nesting can be used to organize hyperparameters.
+Arbitrary levels of nesting are supported with all types of hyperparameters. Aside from
+hyperparameters with constant values, the four types of hyperparameters -- ``categorical``,
+``double``, ``int``, and ``log`` -- can take on a range of possible values. The following sections
+cover how to configure the hyperparameter range for each type of hyperparameter.
 
 Categorical
 ===========
@@ -791,77 +811,6 @@ experiments with hundreds or thousands of trials.
    Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to initialize weights.
    At most one of ``source_trial_id`` or ``source_checkpoint_uuid`` should be set.
 
-PBT
-===
-
-The ``pbt`` search method uses `population-based training
-<https://deepmind.com/blog/population-based-training-neural-networks/>`__, which maintains a
-population of active trials to train. After each trial has been trained the length specified by
-``length_per_round``, all the trials are validated. The searcher then closes some trials and
-replaces them with altered copies of other trials. This process makes up one "round"; the searcher
-runs some number of rounds to execute a complete search. The model definition class must be able to
-restore from a checkpoint that was created with a different set of hyperparameters; in particular,
-you will not be able to vary any hyperparameters that change the sizes of weight matrices without
-taking special steps to save or restore models.
-
-**Required Fields**
-
-``metric``
-   Specifies the name of the validation metric used to evaluate the performance of a hyperparameter
-   configuration.
-
-``population_size``
-   The number of trials (i.e., different hyperparameter configurations) to keep active at a time.
-
-.. _experiment-configuration_length-per-round:
-
-``length_per_round``
-   The length to train each trial during a round.
-
-   -  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-      example:
-
-      .. code:: yaml
-
-         length_per_round:
-            epochs: 2
-
-   -  If this is in the unit of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must be
-      specified.
-
-``num_rounds``
-   The total number of rounds to execute.
-
-``replace_function``
-   How to choose which trials to close and which trials to copy at the end of each round. At
-   present, only a single replacement function is supported:
-
-   ``truncate_fraction``
-      Defines *truncation selection*, in which the worst ``truncate_fraction`` (multiplied by the
-      population size) trials, ranked by validation metric, are closed and the same number of top
-      trials are copied.
-
-``explore_function``
-   How to alter a set of hyperparameters when a copy of a trial is made. Each parameter is either
-   resampled (i.e., its value is chosen from the configured distribution) or perturbed (i.e., its
-   value is computed based on the value in the original set). ``explore_function`` has two required
-   sub-fields:
-
-   ``resample_probability``
-      The probability that a parameter is replaced with a new value sampled from the original
-      distribution specified in the configuration.
-
-   ``perturb_factor``
-      The amount by which parameters that are not resampled are perturbed. Each numerical
-      hyperparameter is multiplied by either ``1 + perturb_factor`` or ``1 - perturb_factor`` with
-      equal probability; ``categorical`` and ``const`` hyperparameters are left unchanged.
-
-**Optional Fields**
-
-``smaller_is_better``
-   Whether to minimize or maximize the metric defined above. The default value is ``true``
-   (minimize).
-
 .. _exp-config-resources:
 
 ***********
@@ -892,7 +841,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
    If set, tasks launched for this experiment will *only* be scheduled on agents that have the given
    label set. If this is not set (the default behavior), tasks launched for this experiment will
    only be scheduled on unlabeled agents. An agent's label can be configured via the ``label`` field
-   in the :ref:`agent configuration <agent-config-reference>`.
+   in the agent configuration.
 
 ``max_slots``
    The maximum number of scheduler slots that this experiment is allowed to use at any one time. The
@@ -919,7 +868,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
 ``priority``
    The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.
    Experiments with smaller priority values are scheduled before experiments with higher priority
-   values. If using Kubernetes, the opposite is true; experiments with higher priorites are
+   values. If using Kubernetes, the opposite is true; experiments with higher priorities are
    scheduled before those with lower priorities. Refer to :ref:`scheduling` for more information.
 
 ``resource_pool``
@@ -1009,10 +958,10 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12`` for
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` for
       NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.12`` for ROCm.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for CPUs.
+   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15`` for ROCm.
 
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to
@@ -1145,95 +1094,6 @@ The ``profiling`` section specifies configuration options related to profiling e
       timing as ended. Defaults to 'true'. Applies only for frameworks that collect timing metrics
       (currently just PyTorch).
 
-.. _data-layer_exp_config:
-
-************
- Data Layer
-************
-
-The ``data_layer`` section specifies configuration options related to the data-layer.
-Determined currently supports three types of storage for the ``data_layer``: ``s3``, ``gcs``, and
-``shared_fs``, identified by the ``type`` subfield. Defaults to ``shared_fs``.
-
-Shared File System
-==================
-
-If ``type: shared_fs`` is specified, the cache will be stored in a directory on an agent's file
-system.
-
-**Optional Fields**
-
-``host_storage_path``
-   The file system path on each agent to use.
-
-``container_storage_path``
-   The file system path to use as the mount point in the trial runner container.
-
-Amazon S3
-=========
-
-If ``type: s3`` is specified, the cache will be stored on Amazon S3 or an S3-compatible object store
-such as `MinIO <https://min.io/>`__.
-
-**Required Fields**
-
-``bucket``
-   The S3 bucket name to use.
-
-``bucket_directory_path``
-   The path in the S3 bucket to store the cache.
-
-**Optional Fields**
-
-``local_cache_host_path``
-   The file system path to store a local copy of the cache, which is synchronized with the S3 cache.
-
-``local_cache_container_path``
-   The file system path to use as the mount point in the trial runner container for storing the
-   local cache.
-
-``access_key``
-   The AWS access key to use.
-
-``secret_key``
-   The AWS secret key to use.
-
-``endpoint_url``
-   The endpoint to use for S3 clones, e.g., ``http://127.0.0.1:8080/``.
-
-Google Cloud Storage
-====================
-
-If ``type: gcs`` is specified, the cache will be stored on Google Cloud Storage (GCS).
-Authentication is done using GCP's "`Application Default Credentials
-<https://googleapis.dev/python/google-api-core/latest/auth.html>`__" approach. When using Determined
-inside Google Compute Engine (GCE), the simplest approach is to ensure that the VMs used by
-Determined are running in a service account that has the "Storage Object Admin" role on the GCS
-bucket being used for checkpoints. As an alternative (or when running outside of GCE), you can add
-the appropriate `service account credentials
-<https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
-to your container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
-environment variable to the container path where the credentials are located. See
-:ref:`environment-variables` for more details on how to set environment variables in containers.
-
-**Required Fields**
-
-``bucket``
-   The GCS bucket name to use.
-
-``bucket_directory_path``
-   The path in GCS bucket to store the cache.
-
-**Optional Fields**
-
-``local_cache_host_path``
-   The file system path to store a local copy of the cache, which is synchronized with the GCS
-   cache.
-
-``local_cache_container_path``
-   The file system path to use as the mount point in the trial runner container for storing the
-   local cache.
-
 .. _experiment-configuration_training_units:
 
 ****************
@@ -1261,9 +1121,10 @@ would read as shown below.
    max_length:
      batches: 900
 
-To express it terms of records or epochs, ``records`` or ``epochs`` would be specified in place of
-``batches``. In the case of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also be
-specified. Below is an example that configures a ``single`` searcher to train a model for 64 epochs.
+To express it in terms of records or epochs, ``records`` or ``epochs`` would be specified in place
+of ``batches``. In the case of epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also
+be specified. Below is an example that configures a ``single`` searcher to train a model for 64
+epochs.
 
 .. code:: yaml
 

@@ -201,7 +201,7 @@ Socket Activation
 
 The master can be configured to use `systemd socket activation
 <https://0pointer.de/blog/projects/socket-activation.html>`__, allowing it to be started
-automatically on demand (i.e., when a client makes a network connection to the port) and restarted
+automatically on demand (e.g., when a client makes a network connection to the port) and restarted
 with reduced loss of connection state. To switch to socket activation, run the following commands:
 
 .. code::
@@ -211,7 +211,8 @@ with reduced loss of connection state. To switch to socket activation, run the f
 
 When socket activation is in use, the port on which the master listens is configured differently;
 the port listed in the master config file is not used, since systemd manages the listening socket.
-Instead, run
+The default socket unit for Determined is configured to listen on port 8080. To use a different
+port, run:
 
 .. code::
 
@@ -225,6 +226,9 @@ the port number substituted appropriately) into the editor and then exit the edi
    [Socket]
    ListenStream=
    ListenStream=0.0.0.0:<port>
+
+For example, you might want to configure the master to listen on port 80 for HTTP traffic or on port
+443 if using :ref:`TLS <tls>`.
 
 After updating the configuration, run the following commands to put the change into effect (this
 will restart the master):

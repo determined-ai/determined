@@ -4,8 +4,15 @@
  Scheduling
 ############
 
-This document covers the two different scheduling policies that are supported in Determined.
-Administrators can configure the desired scheduler in :ref:`master-config-reference`. It is also
+This document covers the different scheduling policies supported by Determined. In the first section
+below, we describe the native scheduling capabilities supported by Determined. In the second
+section, we describe how Determined schedules tasks when running on Kubernetes.
+
+******************
+ Native Scheduler
+******************
+
+Administrators can configure the desired scheduler in master configuration file. It is also
 possible to configure different scheduling behavior for different :ref:`resource pools
 <resource-pools>`.
 
@@ -25,9 +32,8 @@ scheduling behavior of an individual task is influenced by several task configur
    zero-slot tasks on a FIFO basis. The priority scheduler schedules zero-slot tasks based on
    priority.
 
-************
- Fair-Share
-************
+Fair-Share
+==========
 
 The master allocates cluster resources (*slots*) among the active experiments using a weighted
 fair-share scheduling policy. Slots are divided among the active experiments according to the
@@ -43,17 +49,15 @@ lower weight. The default weight is ``1``. For example, in the scenario above, i
 first experiment is set to 3 and the weight of the second experiment is set to 1, each experiment
 will be assigned four slots.
 
-**********
- Priority
-**********
+Priority
+========
 
 The master allocates cluster resources (*slots*) to active tasks based on their *priority*.
 High-priority tasks are preferred to low-priority tasks. Low-priority tasks will be preempted to
 make space for pending high-priority tasks if possible. Tasks of equal priority are scheduled in the
 order in which they were created.
 
-By default, the priority scheduler does not use preemption. If preemption is enabled
-(:ref:`master-config-reference`), when a higher priority task is pending and cannot be scheduled
+By default, the priority scheduler does not use preemption. If preemption is enabled in the master configuration file, when a higher priority task is pending and cannot be scheduled
 because no idle resources are available, the scheduler will attempt to schedule it by preempting
 lower priority tasks, starting with the task with the lowest priority. If there are no tasks to
 preempt, lower priority tasks might be backfilled on the idle resources. When a trial is preempted,
@@ -109,14 +113,24 @@ Here is an example of how the priority scheduler behaves with preemption enabled
    priority 1 distributed training experiment starts running. Once that experiment is complete,
    distributed training experiment with priority 2 restarts.
 
-The priority scheduler can be used with Determined's :ref:`job-queue`, which allows more insight
+The priority scheduler can be used with Determined's job queue, which allows more insight
 into scheduling decisions.
+
+.. _scheduling-on-kubernetes:
+
+****************************
+ Scheduling with Kubernetes
+****************************
+
+When using Determined on Kubernetes, Determined workloads such as
+experiments, notebooks, and shells are executed by launching Kubernetes pods. Hence, the scheduling
+behavior that applies to those workloads depends on how the Kubernetes scheduler has been
+configured.
 
 .. _gang-scheduling-on-kubernetes:
 
-*******************************
- Gang Scheduling on Kubernetes
-*******************************
+Gang Scheduling on Kubernetes
+=============================
 
 By default, the Kubernetes scheduler does not perform gang scheduling or support preemption of pods.
 While it does take pod priority into account, it greedily schedules pods without consideration for
@@ -178,20 +192,19 @@ a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 
 .. _priority-scheduling-on-kubernetes:
 
-***************************************************
- Priority Scheduling with Preemption on Kubernetes
-***************************************************
+Priority Scheduling with Preemption on Kubernetes
+=================================================
 
-Determined also makes available a priority scheduler with preemption that extends the Kubernetes
-scheduler to support preemption with backfilling. This plugin will preempt existing pods if higher
-priority pods are submitted. If there is still space in the cluster, backfilling will attempt to
-fill the nodes by scheduling lower priority jobs. Additionally, if there are leftover slots on
-partially-filled nodes, the scheduler will attempt to assign single-slot tasks until the space is
-filled. This packing behavior only occurs with single-slot tasks.
+Determined also makes available a priority scheduler that extends the Kubernetes scheduler to
+support preemption with backfilling. This plugin will preempt existing pods if higher priority pods
+are submitted. If there is still space in the cluster, backfilling will attempt to fill the nodes by
+scheduling lower priority jobs. Additionally, if there are leftover slots on partially-filled nodes,
+the scheduler will attempt to assign single-slot tasks until the space is filled. This packing
+behavior only occurs with single-slot tasks.
 
-This plugin is also in beta and is not enabled by default. Similar to the coscheduling plugin, it is
-enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is not supported
-and Determined can only automatically set labels for GPU experiments.
+This plugin is also in beta and is not enabled by default. To enable it, edit ``values.yaml`` in the
+Determined Helm chart to set the ``defaultScheduler`` field to ``preemption``. Autoscaling is not
+supported and Determined can only automatically set labels for GPU experiments.
 
 Determined provides a default priority class, ``determined-medium-priority`` that has a priority of
 ``50`` and is used for all tasks. If users want to set a different priority level for an experiment,
@@ -224,5 +237,5 @@ Below is an example that illustrates how to set priorities, tolerations, and nod
                value: "value"
                effect: "NoSchedule"
 
-The Kubernetes priority scheduler can be used with Determined's :ref:`job-queue`, which allows more
-insight into scheduling decisions.
+The Kubernetes priority scheduler can be used with Determined's job queue feature, which
+allows more insight into scheduling decisions.

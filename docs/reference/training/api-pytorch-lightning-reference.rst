@@ -2,9 +2,8 @@
  PyTorch Lightning API Reference
 #################################
 
-*************************************************
 ``determined.pytorch.lightning.LightningAdapter``
-*************************************************
+=================================================
 
 .. autoclass:: determined.pytorch.lightning.LightningAdapter
    :members:

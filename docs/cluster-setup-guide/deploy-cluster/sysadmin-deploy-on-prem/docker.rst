@@ -58,7 +58,7 @@ pass ``--network host`` instead of ``-p 5432:5432``.
 Determined Master
 =================
 
-Determined master :ref:`configuration values <master-config-reference>` can come from a file,
+Determined master configuration values can come from a file,
 environment variables, or command-line arguments.
 
 To start the master with a configuration file, we recommend starting from our `default master
@@ -99,8 +99,7 @@ machine, you may specify the loopback interface in the published port mapping, i
 Determined Agents
 =================
 
-As is the case for the master, Determined agent :ref:`configuration values <agent-config-reference>`
-can come from a file, environment variables, or command-line arguments.
+As is the case for the master, Determined agent configuration values can come from a file, environment variables, or command-line arguments.
 
 To start the agent with a configuration file, we recommend starting from our `default agent
 configuration file
@@ -154,10 +153,10 @@ inside and outside of docker containers (since the Fluentbit container will alwa
 networking).
 
 Determined internally makes use of `Fluent Bit <https://fluentbit.io>`__. The agent uses the
-``fluent/fluent-bit:1.5`` Docker image at runtime. It will attempt to pull the image automatically;
-if the agent machines in the cluster are not able to connect to Docker Hub, the image must be
-manually placed on them before Determined can run. In order to specify a different image to use for
-running Fluent Bit (generally to make use of a custom Docker registry---the image should not
+``fluent/fluent-bit:1.9.3`` Docker image at runtime. It will attempt to pull the image
+automatically; if the agent machines in the cluster are not able to connect to Docker Hub, the image
+must be manually placed on them before Determined can run. In order to specify a different image to
+use for running Fluent Bit (generally to make use of a custom Docker registry---the image should not
 normally need to be changed otherwise), use the agent's ``--fluent-logging-image`` command-line
 option or ``fluent_logging_image`` config file option.
 

@@ -25,7 +25,7 @@
  ``determined.pytorch.PyTorchTrialContext.distributed``
 ********************************************************
 
-.. autoclass:: determined._core._distributed.DistributedContext
+.. autoclass:: determined.core._distributed.DistributedContext
    :members:
    :inherited-members:
    :member-order: bysource

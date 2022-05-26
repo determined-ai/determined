@@ -8,11 +8,11 @@ Determined launches workloads using Docker containers. By default, workloads exe
 Determined-provided container that includes common deep learning libraries and frameworks.
 
 If your model code has additional dependencies, the easiest way to install them is to specify a
-:ref:`startup hook <startup-hooks>`. For more complex dependencies, you can also use a :ref:`custom
-Docker image <custom-docker-images>`.
+:ref:`startup hook <startup-hooks>`. For more complex dependencies, use a :ref:`custom Docker image
+<custom-docker-images>`.
 
-If you're using Determined on Kubernetes, review the supplementary :ref:`Custom Pod Specs
-<custom-pod-specs>` guide.
+If you are using Determined on Kubernetes, review the :ref:`Custom Pod Specs <custom-pod-specs>`
+guide.
 
 .. _environment-variables:
 
@@ -20,10 +20,10 @@ If you're using Determined on Kubernetes, review the supplementary :ref:`Custom 
  Environment Variables
 ***********************
 
-For both trial runners and commands, Determined allows users to configure the environment variables
-inside the container through the ``environment.environment_variables`` configuration field of the
-:ref:`experiment <experiment-config-reference>` or :ref:`task <command-notebook-configuration>` config.
-The format is a list of strings in the format ``NAME=VALUE``:
+For both trial runners and commands, you can configure the environment variables inside the
+container using the :ref:`experiment <experiment-configuration>` or :ref:`task
+<command-notebook-configuration>` ``environment.environment_variables`` configuration field. The
+format is a list of ``NAME=VALUE`` strings. For example:
 
 .. code:: yaml
 
@@ -32,15 +32,15 @@ The format is a list of strings in the format ``NAME=VALUE``:
        - A=hello world
        - B=$A
        - C=${B}
-       # `A`, `B`, and `C` will each have the value `hello_world` in the container.
 
 Variables are set sequentially, which affect variables that depend on the expansion of other
-variables.
+variables. In the example, names `A`, `B`, and `C` each have the value `hello_world` in the
+container.
 
-Proxy variables set in this way will take precedent over those set using the :ref:`agent
-configuration <agent-config-reference>`.
+Proxy variables set in this way take precedent over variables set in the :ref:`agent configuration
+<agent-config-reference>`.
 
-It is also possible to set these variables for each accelerator type separately:
+You can also set variables for each accelerator type, separately:
 
 .. code:: yaml
 
@@ -59,27 +59,24 @@ It is also possible to set these variables for each accelerator type separately:
  Startup Hooks
 ***************
 
-If a file named ``startup-hook.sh`` exists at the top level of your model definition directory,
-Determined will automatically execute this file during the startup of every Docker container. This
-occurs before any Python interpreters are launched or any deep learning operations are performed;
-this allows the startup hook to customize the container environment, install additional
-dependencies, download data sets, or do practically anything else that you can do in a shell script.
+If a ``startup-hook.sh`` file exists in the top level of your model definition directory, this file
+is automatically run with every Docker container startup. This occurs before any Python interpreters
+are launched or deep learning operations are performed. The startup hook can be used to customize
+the container environment, install additional dependencies, and download data sets among other shell
+script commands.
 
-.. note::
+Startup hooks are not cached and run before the start of every workload so expensive or long-running
+operations in a startup hook can result in poor performance.
 
-   Startup hooks are not cached and run before the start of every workload. Hence, performing
-   expensive or long-running operations in a startup hook can result in poor performance.
-
-Here is an example of a startup hook that installs the ``wget`` utility and the Python package
-``pandas``:
+Example startup hook that installs the ``wget`` utility and the ``pandas`` Python package:
 
 .. code:: bash
 
    apt-get update && apt-get install -y wget
    python3 -m pip install pandas
 
-The :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model that
-uses a startup hook to install an additional Python dependency.
+And, this :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow Keras model
+that uses a startup hook to install an additional Python dependency.
 
 .. _container-images:
 
@@ -87,48 +84,29 @@ uses a startup hook to install an additional Python dependency.
  Container Images
 ******************
 
-Determined provides a set of officially supported Docker images. These are the default images used
-to launch containers for experiments, commands, and any other workflow in the Determined system.
+Officially supported, default Docker images are provided to launch containers for experiments,
+commands, and other workflows.
+
+All trial runner containers are launched with additional Determined-specific harness code, which
+orchestrates model training and evaluation in the container. Trial runner containers are also loaded
+with the experiment model definition and hyperparameter values for the current trial.
+
+GPU-specific versions of each library are automatically selected when running on agents with GPUs.
 
 .. _default-environment:
 
 Default Images
 ==============
 
-In the current version of Determined, experiments and tasks are executed in containers with the
-following:
-
--  Ubuntu 18.04
--  CUDA 11.1
--  Python 3.8.x
--  TensorFlow 2.4.x
--  PyTorch 1.9.x
-
-Determined will automatically select GPU-specific versions of each library when running on agents
-with GPUs.
-
-In addition to the above settings, all trial runner containers are launched with additional
-Determined-specific harness code that orchestrates model training and evaluation in the container.
-Trial runner containers are also loaded with the experiment's model definition and values of the
-hyperparameters for the current trial.
-
-.. note::
-
-   The default images are
-   ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12`` and
-   ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12`` for GPU and
-   CPU respectively.
-
-Older Images
-============
-
-Images that provide older versions of the frameworks are still available and supported. Note that
-the performance of some models can vary with different CUDA versions.
-
--  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b``
--  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b``
--  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b``
--  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b``
++-------------+---------------------------------------------------------------------------------------+
+| Environment | File Name                                                                             |
++=============+=======================================================================================+
+| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15``    |
++-------------+---------------------------------------------------------------------------------------+
+| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` |
++-------------+---------------------------------------------------------------------------------------+
+| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15``                |
++-------------+---------------------------------------------------------------------------------------+
 
 .. _custom-docker-images:
 
@@ -136,24 +114,25 @@ Custom Images
 =============
 
 While the official images contain all the dependencies needed for basic deep learning workloads,
-many workloads have extra dependencies. If those extra dependencies are quick to install, you may
-want to consider using a :ref:`startup hook <startup-hooks>`. For situations where installing
-dependencies via ``startup-hook.sh`` would take too long, we suggest building your own Docker image
-and publishing to a Docker registry like `Docker Hub <https://hub.docker.com/>`__.
+many workloads have additional dependencies. If the extra dependencies are quick to install, you
+might consider using a :ref:`startup hook <startup-hooks>`. Where installing dependencies using
+``startup-hook.sh`` takes too long, it is recommended that you build your own Docker image and
+publish to a Docker registry, such as `Docker Hub <https://hub.docker.com/>`__.
 
 .. warning::
 
-   It is important to not install the TensorFlow, PyTorch, Horovod, or Apex packages as doing so
-   will conflict with the base packages that are installed into Determined's official environments.
+   Do NOT install TensorFlow, PyTorch, Horovod, or Apex packages, which conflict with
+   Determined-installed packages.
 
-We recommend that custom images use one of the official Determined images as a base image (using the
-``FROM`` instruction). Here is an example of a Dockerfile that installs custom ``conda``-, ``pip``-
-and ``apt``-based dependencies.
+It is recommended that custom images use one of the official Determined images as a base image,
+using the ``FROM`` instruction.
+
+Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based dependencies:
 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12
+   FROM determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15
 
    # Custom Configuration
    RUN apt-get update && \
@@ -167,8 +146,8 @@ and ``apt``-based dependencies.
       conda activate base && \
       pip install --requirement /tmp/pip_requirements.txt
 
-Assuming this image has been published to a public repository on Docker Hub, you can configure an
-experiment, command, or notebook to use the image as follows:
+Assuming that this image is published to a public repository on Docker Hub, use the following
+declaration format to configure an experiment, command, or notebook:
 
 .. code:: yaml
 
@@ -176,10 +155,10 @@ experiment, command, or notebook to use the image as follows:
      image: "my-user-name/my-repo-name:my-tag"
 
 where ``my-user-name`` is your Docker Hub user, ``my-repo-name`` is the name of the Docker Hub
-repository, and ``my-tag`` is the image tag to use (e.g., ``latest``).
+repository, and ``my-tag`` is the image tag to use, such as ``latest``.
 
-If your image has been published to a private Docker Hub repository, you can also specify the
-credentials to use to access the repository:
+If you publish your image to a private Docker Hub repository, you can specify the credentials needed
+to access the repository:
 
 .. code:: yaml
 
@@ -189,21 +168,20 @@ credentials to use to access the repository:
        username: my-user-name
        password: my-password
 
-If your image has been published to a private `Docker Registry
-<https://docs.docker.com/registry/>`__, specify the registry path as part of the ``image`` field:
+If you publish the image to a private `Docker Registry <https://docs.docker.com/registry/>`__,
+specify the registry path as part of the ``image`` field:
 
 .. code:: yaml
 
    environment:
      image: "myregistry.local:5000/my-user-name/my-repo-name:my-tag"
 
-Images will be fetched via HTTPS by default. An HTTPS proxy can be configured using the
-``https_proxy`` field as part of the :ref:`agent configuration <agent-config-reference>`.
+Images are fetched using HTTPS by default. An HTTPS proxy can be configured using the
+``https_proxy`` field in the :ref:`agent configuration <agent-config-reference>`.
 
-Your custom image and credentials can also be set as the defaults for all tasks launched in
-Determined. This can be done under ``image`` and ``registry_auth`` in the
-:ref:`master-config-reference`. Please note that for this to take effect you will have to restart the
-master.
+The custom image and credentials can be set as the defaults for all tasks launched in Determined,
+using the ``image`` and ``registry_auth`` fields in the :ref:`master-config-reference`. Make sure to
+restart the master for this to take effect.
 
 .. _virtual-env:
 
@@ -211,15 +189,13 @@ master.
  Virtual Environments
 **********************
 
-Virtual environments are commonly used by model developers.
-
-To configure virtual environments using :ref:`custom images <custom-docker-images>`, see an example
-below:
+Model developers commonly use virtual environments. The following example configures virtual
+environments using :ref:`custom images <custom-docker-images>`:
 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12
+   FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.6
@@ -230,13 +206,11 @@ below:
    # Set the default virtual environment
    RUN echo 'eval "$(conda shell.bash hook)" && conda activate myenv' >> ~/.bashrc
 
-.. note::
+To ensure that a virtual environment is activated every time a new interactive terminal session is
+created, in JupyterLab or using Determined Shell, update ``~/.bashrc`` with the scripts to activate
+the virtual environment you want.
 
-   If we need to ensure the desired virtual environment is activated every time we create a new
-   interactive terminal session in JupyterLab or using Determined Shell, we should update
-   ``~/.bashrc`` with the scripts to activate the desired virtual environment.
-
-To switch to a virtual environment using :ref:`startup hook <startup-hooks>`, see an example below:
+This example switches to a virtual environment using a :ref:`startup hook <startup-hooks>`:
 
 .. code:: bash
 
