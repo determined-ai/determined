@@ -52,10 +52,10 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): ThemeHook => {
-  const currentTheme = (() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
+  const currentMode = (() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
   const [ branding, setBranding ] = useState(BrandingType.Determined);
-  const [ mode, setMode ] = useState(currentTheme);
-  const [ scheme, setScheme ] = useState<DarkLight>(currentTheme);
+  const [ mode, setMode ] = useState(currentMode);
+  const [ scheme, setScheme ] = useState<DarkLight>(currentMode);
   const theme = useMemo(() => themes[branding][mode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
