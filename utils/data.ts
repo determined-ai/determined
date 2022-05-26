@@ -43,6 +43,8 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   }
   if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
   if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
+  if (Array.isArray(a) && Array.isArray(b))
+    return a.length === b.length && a.every((x, i) => isEqual(x, b[i]));
   return a === b;
 };
 
