@@ -4,6 +4,7 @@ import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes, { DarkLight, globalCssVars, Theme } from 'themes';
 import { BrandingType } from 'types';
+import { Mode } from 'components/ThemeToggle.settings';
 
 type ThemeHook = {
   mode: DarkLight,
@@ -14,7 +15,9 @@ type ThemeHook = {
 };
 
 const STYLESHEET_ID = 'antd-stylesheet';
+
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
+const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 const themeConfig = {
   [DarkLight.Dark]: { antd: 'antd.dark.min.css' },
@@ -35,8 +38,14 @@ const getStylesheetLink = () => {
   return document.getElementById(STYLESHEET_ID) as HTMLLinkElement || createStylesheetLink();
 };
 
-const getIsDarkMode = (): boolean => {
-  return matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
+const getSystemMode = (): Mode => {
+  const isDark = matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
+  if (isDark) return Mode.DARK;
+
+  const isLight = matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).matches;
+  if (isLight) return Mode.LIGHT;
+
+  return Mode.SYSTEM;
 };
 
 const updateAntDesignTheme = (path: string) => {
@@ -52,7 +61,7 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): ThemeHook => {
-  const currentMode = (() => getIsDarkMode() ? DarkLight.Dark : DarkLight.Light);
+  const currentMode = (() => getSystemMode() ? DarkLight.Dark : DarkLight.Light);
   const [ branding, setBranding ] = useState(BrandingType.Determined);
   const [ mode, setMode ] = useState(currentMode);
   const [ systemMode, setSystemMode ] = useState<DarkLight>(currentMode);
