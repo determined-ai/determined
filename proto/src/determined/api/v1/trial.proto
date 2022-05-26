@@ -350,6 +350,46 @@ message SummarizeTrialResponse {
   repeated SummarizedMetric metrics = 2;
 }
 
+// Container for a requested trial and its metrics.
+message ComparableTrial {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "metrics", "trial" ] }
+  };
+
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+  // The downsampled datapoints.
+  repeated SummarizedMetric metrics = 2;
+}
+
+// Get downsampled metrics from multiple trials.
+message CompareTrialsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "max_datapoints", "trial_ids" ] }
+  };
+  // The requested trial ids.
+  repeated int32 trial_ids = 1;
+  // The maximum number of data points to return after downsampling.
+  int32 max_datapoints = 2;
+  // The names of selected metrics.
+  repeated string metric_names = 3;
+  // Sample from metrics after this batch number.
+  int32 start_batches = 4;
+  // Sample from metrics before this batch number.
+  int32 end_batches = 5;
+  // Type of metrics.
+  MetricType metric_type = 6;
+  // Scale of metric visualization (linear or log scale).
+  Scale scale = 7;
+}
+// Response to CompareTrialsRequest.
+message CompareTrialsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trials" ] }
+  };
+  repeated ComparableTrial trials = 1;
+}
+
 // Long poll for updates to the preemption status for an allocation.
 message AllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

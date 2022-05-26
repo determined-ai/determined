@@ -593,6 +593,30 @@ func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialR
 	return resp, nil
 }
 
+func (a *apiServer) CompareTrials(_ context.Context,
+	req *apiv1.CompareTrialsRequest) (*apiv1.CompareTrialsResponse, error) {
+	trials := make([]*apiv1.ComparableTrial, 0)
+	for _, trial_id := range req.TrialIds {
+		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
+		switch err := a.m.db.QueryProto("get_trial", container.Trial, trial_id); {
+		case err == db.ErrNotFound:
+			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trial_id)
+		case err != nil:
+			return nil, errors.Wrapf(err, "failed to get trial %d", trial_id)
+		}
+
+		tsample, err := a.MultiTrialSample(trial_id, req.MetricNames, req.MetricType,
+			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
+			(req.Scale == apiv1.Scale_SCALE_LOG))
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed sampling")
+		}
+		container.Metrics = tsample
+		trials = append(trials, container)
+	}
+	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
+}
+
 func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
