@@ -148,6 +148,16 @@ def test_zmq_server_client() -> None:
 def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
     size = cross_size * local_size
 
+    # Make sure `make test` doesn't hang on macbook's default values.  Avoid skipping on linux
+    # because it's not a common default, and to avoid false positives in CI.
+    if sys.platform == "darwin" and size == 16:
+        import resource
+
+        if resource.getrlimit(resource.RLIMIT_NOFILE)[0] < 1024:
+            pytest.skip(
+                "increase the open fd limit with `ulimit -n 1024` or greater to run this test"
+            )
+
     with parallel.Execution(size, local_size=local_size, make_distributed_context=False) as pex:
 
         @pex.run
