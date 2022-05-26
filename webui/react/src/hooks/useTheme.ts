@@ -1,17 +1,20 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
-
+import useSettings from 'hooks/useSettings';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes, {globalCssVars, Theme, DarkLight } from 'themes';
 import { BrandingType } from 'types';
-import { Mode } from 'components/ThemeToggle.settings';
+
+import { config, Settings, Mode } from './useTheme.settings';
 
 type ThemeHook = {
-  themeMode: DarkLight,
-  mode: Mode,
   setBranding: Dispatch<SetStateAction<BrandingType>>,
   setMode: Dispatch<SetStateAction<Mode>>,
+  mode: Mode,
   theme: Theme,
+  themeMode: DarkLight,
+  themeSetting: string,
+  updateTheme:  (mode: Mode) => void
 };
 
 const STYLESHEET_ID = 'antd-stylesheet';
@@ -65,16 +68,29 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): ThemeHook => {
+  
+  const {
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(config);
+
   const currentMode = getSystemMode();
   const [ branding, setBranding ] = useState(BrandingType.Determined);
-  const [ mode, setMode ] = useState<Mode>(currentMode);
+  const [ mode, setMode ] = useState<Mode>(settings.theme);
   const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
+
   const  themeMode = getThemeType(mode === Mode.SYSTEM ? systemMode === Mode.SYSTEM ? Mode.LIGHT : systemMode : mode);
   const theme = useMemo(() => themes[branding][themeMode], [ branding, mode ]);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    setSystemMode(event.matches ? Mode.DARK : Mode.LIGHT);
+      setSystemMode(getSystemMode());
   }, []);
+
+  const themeSetting = settings.theme;
+  const updateTheme = (mode: Mode) => {
+    setMode(mode);
+    updateSettings({theme: mode});
+  };
 
   useEffect(() => {
     // Set global CSS variables shared across themes.
@@ -104,7 +120,7 @@ export const useTheme = (): ThemeHook => {
     updateAntDesignTheme(themeConfig[themeMode].antd);
   }, [ themeMode ]);
 
-  return { mode, themeMode, setBranding, setMode, theme };
+  return { themeMode, mode, updateTheme, setBranding, setMode, theme, themeSetting};
 };
 
 export default useTheme;

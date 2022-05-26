@@ -1,14 +1,15 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export interface Settings {
-  theme: string;
-}
-
 export enum Mode {
   SYSTEM = 'system',
   LIGHT = 'light',
   DARK = 'dark'
 }
+
+export interface Settings {
+  theme: Mode;
+}
+
 
 export const config: SettingsConfig = {
   settings: [
