@@ -446,6 +446,16 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+  // Return downsampled metrics from multiple trials to compare them
+  // side-by-side.
+  rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/compare"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Experiments" ]
+    };
+  }
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {
