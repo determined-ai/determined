@@ -880,35 +880,31 @@ def test_experiment_delete() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
 def test_change_displayname(clean_auth: None) -> None:
+    u_patch = create_test_user(ADMIN_CREDENTIALS, False)
+    original_name = u_patch.username
+
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(master_url)
-    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
-    u_patch = create_test_user(ADMIN_CREDENTIALS, True)
+    authentication.cli_auth = authentication.Authentication(
+        conf.make_master_url(), requested_user=original_name, password="", try_reauth=True
+    )
+    sess = session.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
+
     all_users = bindings.get_GetUsers(sess).users
-
     assert all_users is not None
+    current_user = list(filter(lambda u: u.username == original_name, all_users))[0]
+    assert current_user is not None and current_user.id
 
-    patch_user = list(filter(lambda u: u.username == u_patch.username, all_users))[0]
-
-    current_user = list(filter(lambda u: u.username == u_patch.username, all_users))[0]
-
-    patch_user = bindings.v1PatchUser(displayName="determined")
-
+    patch_user = bindings.v1PatchUser(displayName="renamed")
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
-    patch_user.displayName = "determined"
-
-    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
-
-    patched_user = bindings.get_GetUser(sess, userId=current_user.id).user
-
-    assert patched_user.displayName == "determined"
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    assert modded_user.displayName == "renamed"
 
     patch_user.displayName = ""
-
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
-    patched_user = bindings.get_GetUser(sess, userId=current_user.id).user
-
-    assert patched_user.displayName == "admin"
+    modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
+    assert modded_user is not None
+    assert modded_user.displayName == original_name
