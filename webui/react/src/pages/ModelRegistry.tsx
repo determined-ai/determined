@@ -324,7 +324,7 @@ const ModelRegistry: React.FC = () => {
       />
     );
 
-    const tableColumns: ColumnDef<ModelItem>[] = [
+    return [
       {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
@@ -402,9 +402,7 @@ const ModelRegistry: React.FC = () => {
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
-    ];
-
-    return tableColumns;
+    ] as ColumnDef<ModelItem>[];
   }, [ nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
@@ -518,19 +516,6 @@ const ModelRegistry: React.FC = () => {
             </p>
           </div>
         ) : (
-      // <ResponsiveTable
-      //   columns={columns}
-      //   dataSource={models}
-      //   loading={isLoading}
-      //   pagination={getFullPaginationConfig({
-      //     limit: settings.tableLimit,
-      //     offset: settings.tableOffset,
-      //   }, total)}
-      //   rowKey="id"
-      //   showSorterTooltip={false}
-      //   size="small"
-      //   onChange={handleTableChange}
-      // />
           <InteractiveTable
             columns={columns}
             containerRef={pageRef}
@@ -542,7 +527,7 @@ const ModelRegistry: React.FC = () => {
               offset: settings.tableOffset,
             }, total)}
             rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="id"
+            rowKey="name"
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"

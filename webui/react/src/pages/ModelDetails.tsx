@@ -1,22 +1,22 @@
 import { Button, Dropdown, Menu, Modal } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
 import { SorterResult } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import DownloadModelModal from 'components/DownloadModelModal';
 import InlineEditor from 'components/InlineEditor';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import ResponsiveTable from 'components/ResponsiveTable';
-import { getFullPaginationConfig, modelVersionNameRenderer, modelVersionNumberRenderer,
+import { defaultRowClassName, getFullPaginationConfig,
+  modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
   archiveModel, deleteModel, deleteModelVersion, getModelDetails, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
@@ -48,6 +48,7 @@ const ModelDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
   const history = useHistory();
+  const pageRef = useRef<HTMLElement>(null);
 
   const {
     settings,
@@ -138,9 +139,27 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        return e;
+        return e as Error;
       }
     }, [ modelName ]);
+
+  const ModelVersionActionMenu = useCallback((record: ModelVersion) => {
+    const isDeletable = user?.isAdmin
+        || user?.id === model?.model.userId
+        || user?.id === record.userId;
+    return (
+      <Menu>
+        {useActionRenderer(record)}
+        <Menu.Item
+          danger
+          key="delete-version"
+          onClick={() => isDeletable ?
+            showConfirmDelete(record) : showModalItemCannotDelete()}>
+          Delete Version
+        </Menu.Item>
+      </Menu>
+    );
+  }, [ model?.model.userId, showConfirmDelete, user?.id, user?.isAdmin ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
@@ -152,28 +171,13 @@ const ModelDetails: React.FC = () => {
       />
     );
 
-    const OverflowRenderer = (_:string, record: ModelVersion) => {
-      const isDeletable = user?.isAdmin
-        || user?.id === model?.model.userId
-        || user?.id === record.userId;
+    const actionRenderer = (_:string, record: ModelVersion) => {
       return (
         <Dropdown
-          overlay={(
-            <Menu>
-              {useActionRenderer(_, record)}
-              <Menu.Item
-                danger
-
-                key="delete-version"
-                onClick={() => isDeletable ?
-                  showConfirmDelete(record) : showModalItemCannotDelete()}>
-                Delete Version
-              </Menu.Item>
-            </Menu>
-          )}
+          overlay={() => ModelVersionActionMenu(record)}
           trigger={[ 'click' ]}>
           <Button className={css.overflow} type="text">
-            <Icon name="overflow-vertical" size="tiny" />
+            <Icon name="overflow-vertical" />
           </Button>
         </Dropdown>
       );
@@ -188,7 +192,7 @@ const ModelDetails: React.FC = () => {
       />
     );
 
-    const tableColumns: ColumnsType<ModelVersion> = [
+    return [
       {
         dataIndex: 'version',
         key: V1GetModelVersionsRequestSortBy.VERSION,
@@ -199,12 +203,12 @@ const ModelDetails: React.FC = () => {
       },
       {
         dataIndex: 'name',
+        defaultWidth: 250,
         render: modelVersionNameRenderer,
         title: 'Name',
-        width: 250,
       },
       {
-        dataIndex: 'comment',
+        dataIndex: 'description',
         render: descriptionRenderer,
         title: 'Description',
       },
@@ -216,29 +220,16 @@ const ModelDetails: React.FC = () => {
         width: 140,
       },
       {
+        dataIndex: 'user',
         key: 'user',
         render: userRenderer,
         title: 'User',
         width: 1,
       },
-      { dataIndex: 'labels', render: tagsRenderer, title: 'Tags', width: 120 },
-      { render: OverflowRenderer, title: '', width: 1 },
-    ];
-
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
-  }, [ showConfirmDelete,
-    model?.model.userId,
-    saveModelVersionTags,
-    user,
-    settings.sortKey,
-    settings.sortDesc,
-    saveVersionDescription ]);
+      { dataIndex: 'tags', render: tagsRenderer, title: 'Tags', width: 120 },
+      { dataIndex: 'action', render: actionRenderer, title: '', width: 1 },
+    ] as ColumnDef<ModelVersion>[];
+  }, [ saveModelVersionTags, ModelVersionActionMenu, saveVersionDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -302,7 +293,7 @@ const ModelDetails: React.FC = () => {
         silent: false,
         type: ErrorType.Api,
       });
-      return e;
+      return e as Error;
     }
   }, [ modelName ]);
 
@@ -352,6 +343,18 @@ const ModelDetails: React.FC = () => {
     history.push('/det/models');
   }, [ history, modelName ]);
 
+  const ModelVersionActionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <Dropdown
+        overlay={() => ModelVersionActionMenu(record)}
+        trigger={[ 'contextMenu' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+    ),
+    [ ModelVersionActionMenu ],
+  );
+
   if (!modelName) {
     return <Message title="Model name is empty" />;
   } else if (pageError) {
@@ -365,6 +368,7 @@ const ModelDetails: React.FC = () => {
 
   return (
     <Page
+      containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={(
         <ModelHeader
@@ -386,17 +390,35 @@ const ModelDetails: React.FC = () => {
             </p>
           </div>
         ) : (
-          <ResponsiveTable
+          // <ResponsiveTable
+          //   columns={columns}
+          //   dataSource={model.modelVersions}
+          //   loading={isLoading}
+          //   pagination={getFullPaginationConfig({
+          //     limit: settings.tableLimit,
+          //     offset: settings.tableOffset,
+          //   }, total)}
+          //   rowKey="id"
+          //   showSorterTooltip={false}
+          //   size="small"
+          //   onChange={handleTableChange}
+          // />
+          <InteractiveTable
             columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ModelVersionActionDropdown}
             dataSource={model.modelVersions}
             loading={isLoading}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
-            rowKey="id"
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="version"
+            settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
             onChange={handleTableChange}
           />
         )}
@@ -415,7 +437,7 @@ const ModelDetails: React.FC = () => {
   );
 };
 
-const useActionRenderer = (_:string, record: ModelVersion) => {
+const useActionRenderer = (record: ModelVersion) => {
   const [ showModal, setShowModal ] = useState(false);
 
   return (
