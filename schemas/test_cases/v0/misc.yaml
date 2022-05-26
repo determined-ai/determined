@@ -283,7 +283,7 @@
 
 - name: gcs checkpoint storage (valid, prefix single dot)
   sane_as:
-    - http://determined.ai/schemas/expconf/v0/s3.json
+    - http://determined.ai/schemas/expconf/v0/gcs.json
     - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
   case:
     type: gcs
@@ -292,7 +292,7 @@
 
 - name: gcs checkpoint storage (valid, prefix mangled looking)
   sane_as:
-    - http://determined.ai/schemas/expconf/v0/s3.json
+    - http://determined.ai/schemas/expconf/v0/gcs.json
     - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
   case:
     type: gcs
