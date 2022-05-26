@@ -31,7 +31,7 @@ const Page: React.FC<Props> = (props: Props) => {
   );
 
   return (
-    <BasePage {...props}>
+    <>
       <Helmet>
         <title>{docTitle}</title>
         {info.checked && (
@@ -46,7 +46,8 @@ const Page: React.FC<Props> = (props: Props) => {
           </>
         )}
       </Helmet>
-    </BasePage>
+      <BasePage {...props} />
+    </>
   );
 };
 
