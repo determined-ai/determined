@@ -19,14 +19,20 @@
   border-radius: 50%;
   display: inline-block;
   height: 20px;
-  transition: background-color 0.4s ease-in-out, padding 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+  transition: width ease-in-out 0.6s, height ease-in-out 0.6s, border ease-in-out 0.6s, background-color ease-in-out 0.6s, ease-in-out 0.6s;
   vertical-align: middle;
   width: 20px;
 }
 .system {
-  background-color: black;
-  border: solid 1px black;
-  box-shadow: inset -8.5px -7.75px 1px 1px gold;
+  border-bottom-color: gold;
+  border-left-color: black;
+  border-radius: 10px;
+  border-right-color: gold;
+  border-style: solid;
+  border-top-color: black;
+  border-width: 10px;
+  height: 0;
+  width: 0;
 }
 .light {
   background-color: gold;
