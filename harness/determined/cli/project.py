@@ -133,7 +133,8 @@ def delete_project(args: Namespace) -> None:
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     if p.numExperiments > 0:
         raise Exception(
-            "Projects with associated experiments currently cannot be deleted. Use archive to hide projects."
+            "Projects with associated experiments currently cannot be deleted. "
+            "Use archive to hide projects."
         )
     if args.yes or render.yes_or_no(
         'Deleting project "' + args.project_name + '" will result in the \n'

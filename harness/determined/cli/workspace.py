@@ -130,7 +130,8 @@ def delete_workspace(args: Namespace) -> None:
     w = workspace_by_name(sess, args.workspace_name)
     if w.numExperiments > 0:
         raise Exception(
-            "Workspaces with associated experiments currently cannot be deleted. Use archive to hide workspaces."
+            "Workspaces with associated experiments currently cannot be deleted. "
+            "Use archive to hide workspaces."
         )
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
