@@ -3,9 +3,12 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import SelectFilter from 'components/SelectFilter';
-import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
-
 const { Option } = Select;
+import { UpdateSettings } from 'hooks/useSettings';
+
+import { AvailableSeriesType } from '../types';
+
+import { Settings } from './SystemMetricChart';
 
 export interface FiltersInterface {
   agentId?: string;
@@ -13,25 +16,32 @@ export interface FiltersInterface {
   name?: string;
 }
 
-const SystemMetricFilter: React.FC = () => {
-  const { settings, systemSeries, updateSettings } = useProfilesFilterContext();
+interface Props {
+  settings: Settings;
+  systemSeries: AvailableSeriesType;
+  updateSettings?: UpdateSettings<Settings>
+}
+
+const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSettings }) => {
 
   const handleChangeAgentId = useCallback((newAgentId: SelectValue) => {
-    updateSettings({ agentId: newAgentId as unknown as string });
+    updateSettings?.({ agentId: newAgentId as unknown as string });
   }, [ updateSettings ]);
 
   const handleChangeGpuUuid = useCallback((newGpuUuid: SelectValue) => {
-    updateSettings({ gpuUuid: newGpuUuid as unknown as string });
+    updateSettings?.({ gpuUuid: newGpuUuid as unknown as string });
   }, [ updateSettings ]);
 
   const handleChangeName = useCallback((newName: SelectValue) => {
-    updateSettings({ name: newName as unknown as string });
+    updateSettings?.({ name: newName as unknown as string });
   }, [ updateSettings ]);
 
   const uuidOptions = useMemo(() => {
     if (!settings.name || !settings.agentId) return [];
     return systemSeries?.[settings.name]?.[settings.agentId]?.filter(uuid => !!uuid) || [];
   }, [ settings, systemSeries ]);
+
+  if (!settings || !updateSettings) return null;
 
   return (
     <>
