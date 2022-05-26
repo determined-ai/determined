@@ -37,7 +37,7 @@ const ModelVersionHeader: React.FC<Props> = (
 ) => {
   const { auth: { user }, users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
-  const { modalOpen: openModalDownload } = useModalDownloadModel({});
+  const { modalOpen: openModelDownload } = useModalDownloadModel({ modelVersion });
 
   const isDeletable = user?.isAdmin
         || user?.id === modelVersion.userId;
@@ -57,8 +57,8 @@ const ModelVersionHeader: React.FC<Props> = (
   }, [ onDeregisterVersion, modelVersion.version ]);
 
   const handleDownloadModel = useCallback(() => {
-    openModalDownload({ version: modelVersion });
-  }, [ modelVersion, openModalDownload ]);
+    openModelDownload({});
+  }, [ openModelDownload ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -119,6 +119,7 @@ const ModelVersionHeader: React.FC<Props> = (
       },
       {
         danger: true,
+        disabled: false,
         key: 'deregister-version',
         onClick: () => isDeletable ?
           showConfirmDelete() : showModalItemCannotDelete(),

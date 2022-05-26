@@ -1,5 +1,5 @@
 import { Input, ModalFuncProps } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import CopyButton from 'components/CopyButton';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -9,25 +9,24 @@ import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalDownloadModel.module.scss';
 
 interface Props {
+  modelVersion: ModelVersion;
   onClose?: () => void;
 }
 
 export interface ShowModalProps {
   initialModalProps?: ModalFuncProps;
-  version: ModelVersion;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalDownloadModel = ({ onClose }: Props): ModalHooks => {
+const useModalDownloadModel = ({ modelVersion, onClose }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose });
-  const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
 
   const downloadCommand = useMemo(() => {
-    return `det checkpoint download ${modelVersion?.checkpoint.uuid}`;
-  }, [ modelVersion?.checkpoint.uuid ]);
+    return `det checkpoint download ${modelVersion.checkpoint.uuid}`;
+  }, [ modelVersion.checkpoint.uuid ]);
 
   const handleCopy = useCallback(async () => {
     await copyToClipboard(downloadCommand);
@@ -63,8 +62,7 @@ const useModalDownloadModel = ({ onClose }: Props): ModalHooks => {
     };
   }, [ modalContent ]);
 
-  const modalOpen = useCallback(({ version, initialModalProps }: ShowModalProps) => {
-    setModelVersion(version);
+  const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
