@@ -14,6 +14,7 @@ data:
       host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
       {{- else if eq .Values.checkpointStorage.type "gcs" }}
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
+      prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "s3" }}
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       access_key: {{ .Values.checkpointStorage.accessKey | quote }}

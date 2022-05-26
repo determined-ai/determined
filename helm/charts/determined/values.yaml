@@ -87,7 +87,8 @@ checkpointStorage:
   # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
-
+  # prefix: <prefix>
+  
   # For storing in S3.
   # type: s3
   # bucket: <bucket_name>
