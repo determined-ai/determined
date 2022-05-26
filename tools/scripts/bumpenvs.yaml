@@ -2,38 +2,38 @@ ap_northeast_1_agent_ami:
   new: ami-0e51573e00fb73fad
   old: ami-09b858b9faff207a9
 ap_northeast_1_bastion_ami:
-  new: ami-0d40f290731382e9c
-  old: ami-0ec4d40472158dbd2
+  new: ami-00912e8eafdcafd36
+  old: ami-0d40f290731382e9c
 ap_northeast_1_master_ami:
-  new: ami-0d40f290731382e9c
-  old: ami-0ec4d40472158dbd2
+  new: ami-00912e8eafdcafd36
+  old: ami-0d40f290731382e9c
 ap_northeast_2_agent_ami:
   new: ami-0fd06d3bdb9e89fba
   old: ami-015ab3e5a38ea8658
 ap_northeast_2_bastion_ami:
-  new: ami-07cc75e9e8f9300eb
-  old: ami-077c1171fcf5593ec
+  new: ami-08d0e13d30abef253
+  old: ami-07cc75e9e8f9300eb
 ap_northeast_2_master_ami:
-  new: ami-07cc75e9e8f9300eb
-  old: ami-077c1171fcf5593ec
+  new: ami-08d0e13d30abef253
+  old: ami-07cc75e9e8f9300eb
 ap_southeast_1_agent_ami:
   new: ami-0e284df9fbbc17157
   old: ami-0a93cc0d839604673
 ap_southeast_1_bastion_ami:
-  new: ami-06004dc0577827979
-  old: ami-042f884c037e74d76
+  new: ami-059fcf742de12af88
+  old: ami-06004dc0577827979
 ap_southeast_1_master_ami:
-  new: ami-06004dc0577827979
-  old: ami-042f884c037e74d76
+  new: ami-059fcf742de12af88
+  old: ami-06004dc0577827979
 ap_southeast_2_agent_ami:
   new: ami-0102c15eb8e9d1056
   old: ami-0c70420cc468cff2b
 ap_southeast_2_bastion_ami:
-  new: ami-0e1310e493e66914a
-  old: ami-0154c902f0267d0ce
+  new: ami-04af8b67163f654af
+  old: ami-0e1310e493e66914a
 ap_southeast_2_master_ami:
-  new: ami-0e1310e493e66914a
-  old: ami-0154c902f0267d0ce
+  new: ami-04af8b67163f654af
+  old: ami-0e1310e493e66914a
 deepspeed_gpu_hashed:
   new: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-deepspeed-0.5.10-gpu-6e45071
   old: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-deepspeed-0.5.10-gpu-ed66d8a
@@ -44,29 +44,29 @@ eu_central_1_agent_ami:
   new: ami-05f4c27d26768d7bb
   old: ami-00c3bdcf86fef0569
 eu_central_1_bastion_ami:
-  new: ami-0243761267e52b9ce
-  old: ami-05b308c240ae70bb6
+  new: ami-092f628832a8d22a5
+  old: ami-0243761267e52b9ce
 eu_central_1_master_ami:
-  new: ami-0243761267e52b9ce
-  old: ami-05b308c240ae70bb6
+  new: ami-092f628832a8d22a5
+  old: ami-0243761267e52b9ce
 eu_west_1_agent_ami:
   new: ami-03a1febbba7c934e7
   old: ami-004336f1e6d7af72c
 eu_west_1_bastion_ami:
-  new: ami-015afd151917a362d
-  old: ami-081ff4b9aa4e81a08
+  new: ami-0551bf2a5bb48bc5c
+  old: ami-015afd151917a362d
 eu_west_1_master_ami:
-  new: ami-015afd151917a362d
-  old: ami-081ff4b9aa4e81a08
+  new: ami-0551bf2a5bb48bc5c
+  old: ami-015afd151917a362d
 eu_west_2_agent_ami:
   new: ami-080c06cec1af6118e
   old: ami-0792151eff6317968
 eu_west_2_bastion_ami:
-  new: ami-0b2537c6147faa3e2
-  old: ami-0d19fa6f37a659a28
+  new: ami-0b0c271bc281923cc
+  old: ami-0b2537c6147faa3e2
 eu_west_2_master_ami:
-  new: ami-0b2537c6147faa3e2
-  old: ami-0d19fa6f37a659a28
+  new: ami-0b0c271bc281923cc
+  old: ami-0b2537c6147faa3e2
 gcp_env:
   new: det-environments-6e45071
   old: det-environments-ed66d8a
@@ -158,38 +158,38 @@ us_east_1_agent_ami:
   new: ami-0b02aaf6e4087c8fd
   old: ami-05b2885aabd00770b
 us_east_1_bastion_ami:
-  new: ami-000722651477bd39b
-  old: ami-01b996646377b6619
+  new: ami-01f18be4e32df20e2
+  old: ami-000722651477bd39b
 us_east_1_master_ami:
-  new: ami-000722651477bd39b
-  old: ami-01b996646377b6619
+  new: ami-01f18be4e32df20e2
+  old: ami-000722651477bd39b
 us_east_2_agent_ami:
   new: ami-0f54a7ddadc097262
   old: ami-0e66fcef272135c97
 us_east_2_bastion_ami:
-  new: ami-0f597975071f4c4ec
-  old: ami-039af3bfc52681cd5
+  new: ami-05fe6b9afe7657b76
+  old: ami-0f597975071f4c4ec
 us_east_2_master_ami:
-  new: ami-0f597975071f4c4ec
-  old: ami-039af3bfc52681cd5
+  new: ami-05fe6b9afe7657b76
+  old: ami-0f597975071f4c4ec
 us_gov_east_1_agent_ami:
   new: ami-0604033ca40492c04
   old: ami-051f9a1abb1859f78
 us_gov_east_1_master_ami:
-  new: ami-002a7501b87593bdd
-  old: ami-0e1e4f0f5c274fb48
+  new: ami-0eb7ef4cc0594fa04
+  old: ami-002a7501b87593bdd
 us_gov_west_1_agent_ami:
   new: ami-0a9404d73fb6d8f88
   old: ami-0a61312baa06095a2
 us_gov_west_1_master_ami:
-  new: ami-0b152eed9cb83f2bd
-  old: ami-047d3c53ce8db1f52
+  new: ami-029a634618d6c0300
+  old: ami-0b152eed9cb83f2bd
 us_west_2_agent_ami:
   new: ami-091a8a0157d603e0f
   old: ami-059453aebcb2d4a14
 us_west_2_bastion_ami:
-  new: ami-0d37fe5ba03a9ac43
-  old: ami-0637e7dc7fcc9a2d9
+  new: ami-077ee47512dc6f3ca
+  old: ami-0d37fe5ba03a9ac43
 us_west_2_master_ami:
-  new: ami-0d37fe5ba03a9ac43
-  old: ami-0637e7dc7fcc9a2d9
+  new: ami-077ee47512dc6f3ca
+  old: ami-0d37fe5ba03a9ac43
