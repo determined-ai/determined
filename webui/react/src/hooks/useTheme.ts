@@ -113,9 +113,11 @@ export const useTheme = (): ThemeHook => {
   // Detect browser/OS level dark/light mode changes.
   useEffect(() => {
     matchMedia?.(MATCH_MEDIA_SCHEME_DARK).addEventListener('change', handleSchemeChange);
+    matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
 
     return () => {
       matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
+      matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
     };
 
   }, [ handleSchemeChange ]);
