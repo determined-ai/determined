@@ -91,6 +91,8 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
 
    -  ``type: s3``: Checkpoints are stored in Amazon S3.
 
