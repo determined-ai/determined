@@ -4,7 +4,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Avatar from 'components/Avatar';
 import CopyButton from 'components/CopyButton';
-import DownloadModelModal from 'components/DownloadModelModal';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
@@ -12,6 +11,7 @@ import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
+import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -37,7 +37,7 @@ const ModelVersionHeader: React.FC<Props> = (
 ) => {
   const { auth: { user }, users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
-  const [ showDownloadModel, setShowDownloadModel ] = useState(false);
+  const { modalOpen: openModalDownload } = useModalDownloadModel({});
 
   const isDeletable = user?.isAdmin
         || user?.id === modelVersion.userId;
@@ -55,6 +55,10 @@ const ModelVersionHeader: React.FC<Props> = (
       title: 'Confirm Delete',
     });
   }, [ onDeregisterVersion, modelVersion.version ]);
+
+  const handleDownloadModel = useCallback(() => {
+    openModalDownload({ version: modelVersion });
+  }, [ modelVersion, openModalDownload ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -103,7 +107,7 @@ const ModelVersionHeader: React.FC<Props> = (
         danger: false,
         disabled: false,
         key: 'download-model',
-        onClick: () => setShowDownloadModel(true),
+        onClick: handleDownloadModel,
         text: 'Download',
       },
       {
@@ -121,7 +125,7 @@ const ModelVersionHeader: React.FC<Props> = (
         text: 'Deregister Version',
       },
     ];
-  }, [ isDeletable, showConfirmDelete ]);
+  }, [ handleDownloadModel, isDeletable, showConfirmDelete ]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -224,11 +228,6 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
-      <DownloadModelModal
-        modelVersion={modelVersion}
-        visible={showDownloadModel}
-        onClose={() => setShowDownloadModel(false)}
-      />
       <Modal
         className={css.useNotebookModal}
         footer={null}

@@ -3,7 +3,6 @@ import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import DownloadModelModal from 'components/DownloadModelModal';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import MetadataCard from 'components/Metadata/MetadataCard';
@@ -29,6 +28,7 @@ import { isEqual } from 'shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
+import useModalDownloadModel from '../hooks/useModal/useModalDownloadModel';
 import { ErrorType } from '../shared/utils/error';
 import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
@@ -49,6 +49,7 @@ const ModelDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const history = useHistory();
   const pageRef = useRef<HTMLElement>(null);
+  const { modalOpen: openModalDownload } = useModalDownloadModel({});
 
   const {
     settings,
@@ -143,13 +144,21 @@ const ModelDetails: React.FC = () => {
       }
     }, [ modelName ]);
 
+  const handleDownloadModel = useCallback((version: ModelVersion) => {
+    openModalDownload({ version });
+  }, [ openModalDownload ]);
+
   const ModelVersionActionMenu = useCallback((record: ModelVersion) => {
     const isDeletable = user?.isAdmin
         || user?.id === model?.model.userId
         || user?.id === record.userId;
     return (
       <Menu>
-        {useActionRenderer(record)}
+        <Menu.Item
+          key="download"
+          onClick={() => handleDownloadModel(record)}>
+          Download
+        </Menu.Item>
         <Menu.Item
           danger
           key="delete-version"
@@ -159,7 +168,7 @@ const ModelDetails: React.FC = () => {
         </Menu.Item>
       </Menu>
     );
-  }, [ model?.model.userId, showConfirmDelete, user?.id, user?.isAdmin ]);
+  }, [ handleDownloadModel, model?.model.userId, showConfirmDelete, user?.id, user?.isAdmin ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
@@ -434,25 +443,6 @@ const ModelDetails: React.FC = () => {
         />
       </div>
     </Page>
-  );
-};
-
-const useActionRenderer = (record: ModelVersion) => {
-  const [ showModal, setShowModal ] = useState(false);
-
-  return (
-    <>
-      <Menu.Item
-        key="download"
-        onClick={() => setShowModal(true)}>
-        Download
-      </Menu.Item>
-      <DownloadModelModal
-        modelVersion={record}
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-      />
-    </>
   );
 };
 
