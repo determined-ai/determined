@@ -24,6 +24,13 @@ import Spinner from '../shared/components/Spinner/Spinner';
 
 import css from './InteractiveTable.module.scss';
 
+/*
+ * This indicates that the cell contents are rightClickable
+ * and we should disable custom context menu on cell context hover
+ */
+export const onRightClickableCell = (): React.HTMLAttributes<HTMLElement> =>
+  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
@@ -52,6 +59,7 @@ interface ContextMenuProps {
 }
 
 export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+  dataIndex: string;
   defaultWidth: number;
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   isFiltered?: (s: any) => boolean; // any extends Settings

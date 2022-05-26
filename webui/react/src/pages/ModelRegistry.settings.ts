@@ -7,7 +7,7 @@ export type ModelColumnName =
   | 'action'
   | 'archived'
   | 'description'
-  | 'lastUpdated'
+  | 'lastUpdatedTime'
   | 'name'
   | 'tags'
   | 'numVersions'
@@ -17,18 +17,17 @@ export const DEFAULT_COLUMNS: ModelColumnName[] = [
   'name',
   'description',
   'numVersions',
-  'lastUpdated',
+  'lastUpdatedTime',
   'tags',
   'archived',
   'user',
-  'action',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<ModelColumnName, number> = {
   action: 46,
   archived: 75,
   description: 147,
-  lastUpdated: 117,
+  lastUpdatedTime: 117,
   name: 150,
   numVersions: 74,
   tags: 106,

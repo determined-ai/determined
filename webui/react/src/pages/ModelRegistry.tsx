@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings,
+  onRightClickableCell } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
@@ -36,19 +37,11 @@ import { validateDetApiEnum } from '../shared/utils/service';
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
-  DEFAULT_COLUMNS,
   ModelColumnName,
   Settings,
 } from './ModelRegistry.settings';
 
 const filterKeys: Array<keyof Settings> = [ 'tags', 'name', 'users', 'description' ];
-
-/*
- * This indicates that the cell contents are rightClickable
- * and we should disable custom context menu on cell context hover
- */
-const onRightClickableCell = () =>
-  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 const ModelRegistry: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -316,7 +309,7 @@ const ModelRegistry: React.FC = () => {
           overlay={() => ModelActionMenu(record)}
           trigger={[ 'click' ]}>
           <Button className={css.overflow} type="text">
-            <Icon name="overflow-vertical" size="tiny" />
+            <Icon name="overflow-vertical" />
           </Button>
         </Dropdown>
       );
@@ -365,14 +358,14 @@ const ModelRegistry: React.FC = () => {
       },
       {
         dataIndex: 'lastUpdatedTime',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdated'],
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdatedTime'],
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
         render: (date: string) => relativeTimeRenderer(new Date(date)),
         sorter: true,
         title: 'Last updated',
       },
       {
-        dataIndex: 'labels',
+        dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: tags.map(tag => ({ text: tag, value: tag })),
@@ -389,6 +382,7 @@ const ModelRegistry: React.FC = () => {
         title: 'Archived',
       },
       {
+        dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
@@ -398,8 +392,12 @@ const ModelRegistry: React.FC = () => {
         title: 'User',
       },
       {
+        align: 'right',
+        className: 'fullCell',
+        dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
+        key: 'action',
         render: actionRenderer,
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
@@ -417,27 +415,6 @@ const ModelRegistry: React.FC = () => {
     setModelTags,
     ModelActionMenu,
     saveModelDescription ]);
-
-  useEffect(() => {
-    // This is the failsafe for when column settings get into a bad shape.
-    if (!settings.columns?.length || !settings.columnWidths?.length) {
-      updateSettings({
-        columns: DEFAULT_COLUMNS,
-        columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
-      });
-    } else {
-      const columnNames = columns.map(column => column.dataIndex as ModelColumnName);
-      const actualColumns = settings.columns.filter(name => columnNames.includes(name));
-      const newSettings: Partial<Settings> = {};
-      if (actualColumns.length < settings.columns.length) {
-        newSettings.columns = actualColumns;
-      }
-      if (settings.columnWidths.length !== actualColumns.length) {
-        newSettings.columnWidths = actualColumns.map(name => DEFAULT_COLUMN_WIDTHS[name]);
-      }
-      if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
-    }
-  }, [ settings.columns, settings.columnWidths, columns, updateSettings ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
