@@ -93,12 +93,6 @@ data:
       {{- if .Values.taskContainerDefaults.dtrainNetworkInterface }}
       dtrain_network_interface: {{ .Values.taskContainerDefaults.dtrainNetworkInterface }}
       {{- end }}
-      {{- if .Values.taskContainerDefaults.ncclPortRange }}
-      nccl_port_range: {{ .Values.taskContainerDefaults.ncclPortRange }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.glooPortRange }}
-      gloo_port_range: {{ .Values.taskContainerDefaults.glooPortRange }}
-      {{- end }}
       {{- if .Values.taskContainerDefaults.cpuPodSpec }}
       cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec | toJson }}
       {{- end }}
