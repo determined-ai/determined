@@ -1303,6 +1303,37 @@ schemas = {
             ],
             "default": null
         },
+        "prefix": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "checks": {
+                "prefix cannot contain /../": {
+                    "not": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "/\\.\\./"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "^\\.\\./"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "/\\.\\.$"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "^\\.\\.$"
+                            }
+                        ]
+                    }
+                }
+            },
+            "default": null
+        },
         "save_experiment_best": {
             "type": [
                 "integer",

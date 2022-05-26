@@ -214,8 +214,13 @@ func (a *apiServer) LaunchTensorboard(
 			logBasePath = "azure://" + c.Container()
 
 		case expconf.GCSConfig:
-			logBasePath = "gs://" + c.Bucket()
-
+			prefix := c.Prefix()
+			if prefix != nil {
+				logBasePath = fmt.Sprintf("gs://%s", filepath.Join(c.Bucket(), *prefix))
+			} else {
+				logBasePath = fmt.Sprintf("gs://%s", c.Bucket())
+			}
+			//logBasePath = "gs://" + c.Bucket()
 		case expconf.HDFSConfig:
 			logBasePath = "hdfs://" + c.Path()
 
