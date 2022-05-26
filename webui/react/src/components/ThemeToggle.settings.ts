@@ -4,7 +4,7 @@ export interface Settings {
   theme: string;
 }
 
-export enum ThemeClass {
+export enum Mode {
   SYSTEM = 'system',
   LIGHT = 'light',
   DARK = 'dark'
@@ -13,7 +13,7 @@ export enum ThemeClass {
 export const config: SettingsConfig = {
   settings: [
     {
-      defaultValue: ThemeClass.SYSTEM,
+      defaultValue: Mode.SYSTEM,
       key: 'theme',
       storageKey: 'theme',
       type: { baseType: BaseType.String },

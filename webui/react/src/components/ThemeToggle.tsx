@@ -5,29 +5,29 @@ import useTheme from 'hooks/useTheme';
 import { DarkLight } from 'themes';
 
 import css from './ThemeToggle.module.scss';
-import { config, Settings, ThemeClass } from './ThemeToggle.settings';
+import { config, Settings, Mode } from './ThemeToggle.settings';
 
 interface ThemeOption {
-  className: ThemeClass;
+  className: Mode;
   displayName: string;
-  next: ThemeClass
+  next: Mode
 }
 
 const ThemeOptions: {[theme: string] : ThemeOption} = {
-  [ThemeClass.LIGHT]: {
-    className: ThemeClass.LIGHT,
+  [Mode.LIGHT]: {
+    className: Mode.LIGHT,
     displayName: 'Light Mode',
-    next: ThemeClass.DARK,
+    next: Mode.DARK,
   },
-  [ThemeClass.DARK]: {
-    className: ThemeClass.DARK,
+  [Mode.DARK]: {
+    className: Mode.DARK,
     displayName: 'Dark Mode',
-    next: ThemeClass.SYSTEM,
+    next: Mode.SYSTEM,
   },
-  [ThemeClass.SYSTEM]: {
-    className: ThemeClass.SYSTEM,
+  [Mode.SYSTEM]: {
+    className: Mode.SYSTEM,
     displayName: 'System Mode',
-    next: ThemeClass.LIGHT,
+    next: Mode.LIGHT,
   },
 };
 
@@ -49,7 +49,7 @@ const ThemeToggle: React.FC = () => {
     e.preventDefault();
     const newThemeOption = theme.next;
     updateSettings({ theme: newThemeOption });
-    setMode(newThemeOption === ThemeClass.DARK ? DarkLight.Dark : DarkLight.Light);
+    setMode(newThemeOption === Mode.DARK ? DarkLight.Dark : DarkLight.Light);
   };
 
   useEffect(() => {
@@ -57,7 +57,7 @@ const ThemeToggle: React.FC = () => {
      * Ensure that the UI is loaded in Dark Mode if the user has
      * chosen it as their theme.
      */
-    if(mode !== DarkLight.Dark && settings.theme === ThemeClass.DARK){
+    if(mode !== DarkLight.Dark && settings.theme === Mode.DARK){
       setMode(DarkLight.Dark);
     }
   });
@@ -67,11 +67,11 @@ const ThemeToggle: React.FC = () => {
      * Ensure that the chosen UI theme is used when the OS or
      * browser appearance settings are updated.
      */
-    if(systemMode === DarkLight.Dark && settings.theme === ThemeClass.DARK){
+    if(systemMode === DarkLight.Dark && settings.theme === Mode.DARK){
       setMode(DarkLight.Dark);
-    } else if(systemMode === DarkLight.Light && settings.theme === ThemeClass.LIGHT){
+    } else if(systemMode === DarkLight.Light && settings.theme === Mode.LIGHT){
       setMode(DarkLight.Light);
-    } else if(systemMode === DarkLight.Light && settings.theme === ThemeClass.SYSTEM){
+    } else if(systemMode === DarkLight.Light && settings.theme === Mode.SYSTEM){
       setMode(DarkLight.Light);
     }
   }, [ systemMode, setMode, settings.theme ]);
