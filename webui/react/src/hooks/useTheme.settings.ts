@@ -1,9 +1,9 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
 export enum Mode {
-  SYSTEM = 'system',
-  LIGHT = 'light',
-  DARK = 'dark'
+  System = 'system',
+  Light = 'light',
+  Dark = 'dark'
 }
 
 export interface Settings {
@@ -13,7 +13,7 @@ export interface Settings {
 export const config: SettingsConfig = {
   settings: [
     {
-      defaultValue: Mode.SYSTEM,
+      defaultValue: Mode.System,
       key: 'theme',
       storageKey: 'theme',
       type: { baseType: BaseType.String },

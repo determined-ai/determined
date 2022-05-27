@@ -24,12 +24,12 @@ const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
 
 const themeConfig = {
-  [Mode.DARK]: { antd: 'antd.dark.min.css' },
-  [Mode.LIGHT]: { antd: 'antd.min.css' },
+  [Mode.Dark]: { antd: 'antd.dark.min.css' },
+  [Mode.Light]: { antd: 'antd.min.css' },
 };
 
 const getThemeType = (mode: Mode): DarkLight =>
-  mode === Mode.LIGHT ? DarkLight.Light : DarkLight.Dark;
+  mode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
 
 const createStylesheetLink = () => {
   const link = document.createElement('link');
@@ -47,12 +47,12 @@ const getStylesheetLink = () => {
 
 const getSystemMode = (): Mode => {
   const isDark = matchMedia?.(MATCH_MEDIA_SCHEME_DARK).matches;
-  if (isDark) return Mode.DARK;
+  if (isDark) return Mode.Dark;
 
   const isLight = matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).matches;
-  if (isLight) return Mode.LIGHT;
+  if (isLight) return Mode.Light;
 
-  return Mode.SYSTEM;
+  return Mode.System;
 };
 
 const updateAntDesignTheme = (path: string) => {
@@ -80,7 +80,7 @@ export const useTheme = (): ThemeHook => {
   const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
 
   const themeMode = getThemeType(
-    mode === Mode.SYSTEM ? systemMode === Mode.SYSTEM ? Mode.LIGHT : systemMode : mode,
+    mode === Mode.System ? systemMode === Mode.System ? Mode.Light : systemMode : mode,
   );
   const theme = useMemo(() => themes[branding][themeMode], [ branding, themeMode ]);
 

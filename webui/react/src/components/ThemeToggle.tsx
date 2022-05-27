@@ -12,21 +12,21 @@ interface ThemeOption {
 }
 
 const ThemeOptions: {[theme: string] : ThemeOption} = {
-  [Mode.LIGHT]: {
-    className: Mode.LIGHT,
+  [Mode.Light]: {
+    className: Mode.Light,
     displayName: 'Light Mode',
-    next: Mode.DARK,
+    next: Mode.Dark,
 
   },
-  [Mode.DARK]: {
-    className: Mode.DARK,
+  [Mode.Dark]: {
+    className: Mode.Dark,
     displayName: 'Dark Mode',
-    next: Mode.SYSTEM,
+    next: Mode.System,
   },
-  [Mode.SYSTEM]: {
-    className: Mode.SYSTEM,
+  [Mode.System]: {
+    className: Mode.System,
     displayName: 'System Mode',
-    next: Mode.LIGHT,
+    next: Mode.Light,
   },
 };
 
