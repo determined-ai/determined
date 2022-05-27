@@ -83,7 +83,7 @@ type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => J
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
 interface RowProps {
-  ContextMenu: React.FC<ContextMenuProps>;
+  ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
@@ -149,7 +149,7 @@ const Row = ({
   if (rowContextMenuTriggerableOrOpen) {
     classes.push('ant-table-row-selected');
   }
-  return record ? (
+  return (record && ContextMenu) ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr

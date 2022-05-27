@@ -1,9 +1,9 @@
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
 import React, { ReactNode } from 'react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';
@@ -15,6 +15,7 @@ import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'wait';
 
 import css from './JobQueue.module.scss';
+import { DEFAULT_COLUMN_WIDTHS } from './JobQueue.settings';
 
 type Renderer<T> = (_: unknown, record: T) => ReactNode;
 export type JobTypeRenderer = Renderer<Job>;
@@ -59,8 +60,12 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
   }
 };
 
-export const columns: ColumnType<Job>[] = [
-  { key: 'jobsAhead' },
+export const columns: ColumnDef<Job>[] = [
+  {
+    dataIndex: 'preemptible',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['preemptible'],
+    key: 'jobsAhead',
+  },
   // { // We might want to show the entityId here instead.
   //   dataIndex: 'jobId',
   //   key: 'jobId',
@@ -72,6 +77,7 @@ export const columns: ColumnType<Job>[] = [
   // },
   {
     dataIndex: 'type',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
     key: 'type',
     render: (_: unknown, record: Job): ReactNode => {
       const title = jobTypeLabel(record.type);
@@ -87,6 +93,8 @@ export const columns: ColumnType<Job>[] = [
     title: 'Type',
   },
   {
+    dataIndex: 'name',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
     key: 'name',
     render: (_: unknown, record: Job): ReactNode => {
       let label: ReactNode = null;
@@ -111,17 +119,21 @@ export const columns: ColumnType<Job>[] = [
   },
   {
     dataIndex: 'priority',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['priority'],
     key: SCHEDULING_VAL_KEY,
     title: 'Priority',
   },
   {
     dataIndex: 'submissionTime',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
     render: (_: unknown, record: Job): ReactNode =>
       record.submissionTime && relativeTimeRenderer(record.submissionTime),
     title: 'Submitted',
   },
   {
+    dataIndex: 'slots',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['slots'],
     key: 'slots',
     render: (_: unknown, record: Job): ReactNode => {
       const cell = (
@@ -136,6 +148,8 @@ export const columns: ColumnType<Job>[] = [
     title: 'Slots',
   },
   {
+    dataIndex: 'status',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['status'],
     key: 'state',
     render: (_: unknown, record: Job): ReactNode => {
       return (
@@ -148,6 +162,8 @@ export const columns: ColumnType<Job>[] = [
     title: 'Status',
   },
   {
+    dataIndex: 'user',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
     key: 'user',
     render: (_: unknown, record: Job): ReactNode => {
       const cell = <Avatar userId={record.userId} />;
@@ -158,9 +174,10 @@ export const columns: ColumnType<Job>[] = [
   {
     align: 'right',
     className: 'fullCell',
+    dataIndex: 'action',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
     fixed: 'right',
     key: 'actions',
     title: '',
-    width: 40,
   },
 ];
