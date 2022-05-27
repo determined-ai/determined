@@ -30,9 +30,10 @@ class GCSTensorboardManager(base.TensorboardManager):
     def sync(self) -> None:
         for path in self.to_sync():
             blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
-            blob = self.bucket.blob(os.path.join(self.prefix, blob_name))
-            logging.debug(f"Uploading to GCS: {blob_name}")
+            to_path = os.path.join(self.prefix, blob_name)
+            blob = self.bucket.blob(to_path)
 
+            logging.debug(f"Uploading {path} to GCS: {to_path}")
             blob.upload_from_filename(str(path))
 
     def delete(self) -> None:
