@@ -220,7 +220,7 @@ func (a *apiServer) LaunchTensorboard(
 			} else {
 				logBasePath = fmt.Sprintf("gs://%s", c.Bucket())
 			}
-			//logBasePath = "gs://" + c.Bucket()
+
 		case expconf.HDFSConfig:
 			logBasePath = "hdfs://" + c.Path()
 
