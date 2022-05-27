@@ -868,7 +868,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		ctx.Log().Info("allocation successfully stopped early")
 		return
 	case a.exitErr != nil:
-		switch err := a.exitReason.(type) {
+		switch err := a.exitErr.(type) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ContainerFailed, sproto.TaskError:
