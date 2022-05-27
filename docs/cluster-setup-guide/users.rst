@@ -1,7 +1,7 @@
 .. _users:
 
 ################
- Getting Started
+ User Accounts
 ################
 
 Initially, a Determined installation has two user accounts: ``admin`` and ``determined``. Both of

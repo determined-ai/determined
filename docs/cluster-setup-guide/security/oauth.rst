@@ -1,8 +1,10 @@
 .. _oauth:
 
 ################################
- OAuth 2.0 (Enterprise Edition)
+ OAuth 2.0
 ################################
+
+OAuth 2.0 applies to Determined Enterprise Edition.
 
 Determined EE allows requests to certain endpoints to be authenticated using OAuth 2.0 with the
 authorization code flow. Currently, only the SCIM endpoints are supported.

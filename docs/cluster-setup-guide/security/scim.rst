@@ -1,8 +1,10 @@
 .. _scim:
 
 #######################################
- SCIM Integration (Enterprise Edition)
+ SCIM Integration
 #######################################
+
+SCIM integration applies to Determined Enterprise Edition.
 
 Determined EE provides a System for Cross-domain Identity Management (SCIM) integration to allow
 administrators to easily and securely provision users and groups through their standard identity

@@ -1,7 +1,7 @@
 .. _install-on-kubernetes:
 
 ##################################
- Install Determined
+ Install Determined on Kubernetes
 ##################################
 
 +------------------------------------------------+

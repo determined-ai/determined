@@ -33,11 +33,12 @@
    Deploy on AWS <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-aws/overview>
    Deploy on GCP <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-gcp/overview>
    Deploy on Kubernetes <cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/overview>
-   Upgrade <cluster-setup-guide/upgrade>
-   User Teams <cluster-setup-guide/users/overview>
-   IDE Integration <cluster-setup-guide/ide-integration>
+   Security <cluster-setup-guide/security/overview>
+   User Accounts <cluster-setup-guide/users>
    Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
    Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   IDE Integration <cluster-setup-guide/ide-integration>
+   Upgrade <cluster-setup-guide/upgrade>
    Troubleshooting <cluster-setup-guide/troubleshooting>
 
 .. toctree::
