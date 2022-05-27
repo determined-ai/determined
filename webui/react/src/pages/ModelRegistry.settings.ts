@@ -54,6 +54,7 @@ const config: SettingsConfig = {
     {
       defaultValue: DEFAULT_COLUMNS,
       key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: {
         baseType: BaseType.String,

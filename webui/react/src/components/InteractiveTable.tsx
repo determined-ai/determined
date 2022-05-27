@@ -39,7 +39,7 @@ type RecordType = any;
 export interface InteractiveTableSettings {
   columnWidths: number[];
   columns: string[];
-  row?: number[];
+  row?: number[] | string[];
   sortDesc: boolean;
   sortKey: Comparable;
   tableLimit: number;
