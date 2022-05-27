@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import uPlot from 'uplot';
 
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { Options } from 'components/UPlot/UPlotChart';
 import { glasbeyColor } from 'shared/utils/color';
 import { TrialDetails } from 'types';
@@ -21,6 +22,22 @@ export interface Props {
 /*
  * Shared uPlot chart options.
  */
+
+const getOptionsForMetrics =
+    (metricName: string, seriesNames: string[]): Partial<Options> => {
+      return {
+        axes: [ timeAxis, getAxisForMetricName(metricName) ],
+        height: CHART_HEIGHT,
+        scales: { x: { time: false } },
+        series: [
+          baseSeries.time,
+          baseSeries.batch,
+          ...seriesNames.slice(1).map(getSeriesForSeriesName), // 0th is batch
+        ],
+        tzDate,
+      };
+    };
+
 export const tzDate = (ts: number): Date => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC');
 
 export const timeAxis: uPlot.Axis = {
@@ -70,44 +87,12 @@ export const getSeriesForSeriesName = (name: string, index: number): uPlot.Serie
 });
 
 const Profiler: React.FC<Props> = ({ trial }) => {
-  const sync = useRef(uPlot.sync('x'));
-
-  const getOptionsForMetrics = useCallback(
-    (metricName: string, seriesNames: string[]): Partial<Options> => {
-      return {
-        axes: [ timeAxis, getAxisForMetricName(metricName) ],
-        /**
-         * The only 'mutable' thing here is chartSyncKey.current.key, but it doesnt change
-         * we need the ref to sync object for subscription purposes
-         */
-        cursor: {
-          focus: { prox: 16 },
-          lock: true,
-          sync: {
-            key: sync.current.key,
-            scales: [ sync.current.key, null ],
-            setSeries: false,
-          },
-        },
-        height: CHART_HEIGHT,
-        scales: { x: { time: false } },
-        series: [
-          baseSeries.time,
-          baseSeries.batch,
-          ...seriesNames.slice(1).map(getSeriesForSeriesName), // 0th is batch
-        ],
-        tzDate,
-      };
-    },
-    [],
-  );
-
   return (
-    <div>
+    <SyncProvider>
       <ThroughputMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
       <TimingMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
       <SystemMetricChart getOptionsForMetrics={getOptionsForMetrics} trial={trial} />
-    </div>
+    </SyncProvider>
   );
 };
 
