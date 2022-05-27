@@ -5,6 +5,12 @@ const CHARACTERS = `0123456789${LETTERS}`;
 
 export const DEFAULT_ALPHA_NUMERIC_LENGTH = 8;
 
+export const snakeCaseToTitleCase = (text: string): string => {
+  const words = text.split('_');
+  const capitalizedWords = words.map(word => capitalize(word));
+  return capitalizedWords.join(' ');
+};
+
 export const camelCaseToKebab = (text: string): string => {
   return text.trim().split('').map((char, index) => {
     return char === char.toUpperCase() ? `${index !== 0 ? '-' : ''}${char.toLowerCase()}` : char;
