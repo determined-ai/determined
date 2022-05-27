@@ -7,6 +7,7 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
+import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
@@ -27,6 +28,7 @@ import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from
 
 export interface Props {
   decoder: (data: unknown) => Log;
+  handleCloseLogs?: () => void;
   initialLogs?: unknown[];
   onDownload?: () => void;
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
@@ -106,6 +108,7 @@ const LogViewer: React.FC<Props> = ({
   onDownload,
   onFetch,
   sortKey = 'time',
+  handleCloseLogs,
   ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
@@ -501,6 +504,16 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleFullScreen}
           />
         </Tooltip>
+        {true && (
+
+          <Link onClick={handleCloseLogs}>
+            <Icon
+              aria-label="Close Logs"
+              name="close"
+              title="Close Logs"
+            />
+          </Link>
+        )}
         {onDownload && (
           <Tooltip placement="bottomRight" title="Download Logs">
             <Button

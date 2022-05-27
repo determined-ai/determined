@@ -223,14 +223,6 @@ The master supports the following configuration settings:
       detection is not finding the appropriate interface, the ``dtrain_network_interface`` option
       can be used to set it explicitly (e.g., ``eth11``).
 
-   -  ``nccl_port_range``: The range of ports that NCCL is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the NCCL port range.
-
-   -  ``gloo_port_range``: The range of ports that Gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the Gloo port range.
-
    -  ``cpu_pod_spec``: Defines the default pod spec which will be applied to all CPU-only tasks
       when running on Kubernetes. See :ref:`custom-pod-specs` for details.
 
@@ -244,11 +236,10 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` for
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` for
          NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for
-         CPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment

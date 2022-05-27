@@ -1,4 +1,9 @@
-WITH searcher_info AS (
+WITH trial_ids_ordering(trial_id, ordering) AS (
+  -- of the format "VALUES (trial_id_1, 1), (trial_id_2, 2), ... (trial_id_N, N)"
+  -- warning, this query cannot be run with no input.
+  VALUES %s
+),
+searcher_info AS (
   SELECT config->'searcher'->>'metric' AS metric_name,
     (
       SELECT CASE
@@ -11,13 +16,12 @@ WITH searcher_info AS (
           ELSE -1
         END
     ) AS sign,
+    (config->>'max_restarts')::int AS max_restarts,
     t.id AS trial_id,
-  (config->>'max_restarts')::int AS max_restarts
+    t_ordering AS ordering
   FROM experiments e
-    INNER JOIN trials t ON t.experiment_id = e.id
-  WHERE t.id IN (
-      SELECT unnest($1::int [])::int
-    )
+  JOIN trials t ON t.experiment_id = e.id
+  JOIN trial_ids_ordering t_ordering ON t.id = t_ordering.trial_id
 ),
 trial_validations AS (
   SELECT v.trial_id,
@@ -172,7 +176,7 @@ SELECT
     WHERE a.task_id = t.task_id
   ) AS wall_clock_time,
   (
-    SELECT sum((jsonb_each).value::text::int)
+    SELECT sum((jsonb_each).value::text::bigint)
     FROM (
         SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
         UNION ALL
@@ -189,12 +193,8 @@ FROM searcher_info
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
   -- Using `public.checkpoints_view` directly here results in the query planner being unable to push
   -- filters into the union all, resulting in costly scans of steps, validations and checkpoints.
-  LEFT JOIN checkpoints_old_view old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
-  LEFT JOIN checkpoints_new_view new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
+  -- additionally, it joins a lot of stuff we don't need, so just fallback to the actual tables.
+  LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
+  LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
-  -- Return the same ordering of IDs given by $1.
-  JOIN (
-    SELECT *
-    FROM unnest($1::int []) WITH ORDINALITY
-  ) AS x (id, ordering) ON t.id = x.id
-  ORDER BY x.ordering;
+  ORDER BY searcher_info.ordering

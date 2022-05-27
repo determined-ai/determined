@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -451,20 +450,28 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found:", req.ExperimentId)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	case len(resp.Trials) == 0:
+		return resp, nil
 	}
 
-	trialIds := make([]string, 0)
-	for _, trial := range resp.Trials {
-		trialIds = append(trialIds, strconv.Itoa(int(trial.Id)))
+	// Of the form "($1, $2), ($3, $4), ... ($N, $N+1)". Used in a VALUES expression in Postgres.
+	valuesExpr := make([]string, 0)
+	trialIDsWithOrdering := make([]any, 0)
+	trialIDs := make([]int32, 0)
+	for i, trial := range resp.Trials {
+		valuesExpr = append(valuesExpr, fmt.Sprintf("($%d::int, $%d::int)", i*2+1, i*2+2))
+		trialIDsWithOrdering = append(trialIDsWithOrdering, trial.Id, i)
+		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err := a.m.db.QueryProto(
+	switch err := a.m.db.QueryProtof(
 		"proto_get_trials_plus",
+		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
-		"{"+strings.Join(trialIds, ",")+"}",
+		trialIDsWithOrdering...,
 	); {
 	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIds)
+		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
 	}
@@ -476,10 +483,12 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
 	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto(
+	switch err := a.m.db.QueryProtof(
 		"proto_get_trials_plus",
+		[]any{"($1::int, $2::int)"},
 		resp.Trial,
-		"{"+strconv.Itoa(int(req.TrialId))+"}",
+		req.TrialId,
+		1,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)

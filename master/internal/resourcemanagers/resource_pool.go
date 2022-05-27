@@ -133,21 +133,12 @@ func (rp *ResourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	if msg.Restore {
 		err := rp.restoreResources(ctx, &msg)
 		if err != nil {
-			if err != nil {
-				log.WithError(err).Error("error restoring resources")
-			} else {
-				log.Info("failed to restore resources")
-			}
+			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			errMsg := "failed to restore"
-			if err != nil {
-				errMsg = err.Error()
-			}
-
-			rf := sproto.RestoreResourcesFailure{
+			rf := sproto.ResourcesFailure{
 				FailureType: sproto.RestoreError,
-				ErrMsg:      errMsg,
+				ErrMsg:      err.Error(),
 				ExitCode:    nil,
 			}
 			ctx.Tell(msg.TaskActor, rf)

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"crypto/tls"
 	"encoding/json"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -92,6 +93,8 @@ type TLSOptions struct {
 	SkipVerify     bool   `json:"skip_verify"`
 	MasterCert     string `json:"master_cert"`
 	MasterCertName string `json:"master_cert_name"`
+	ClientCert     string `json:"client_cert"`
+	ClientKey      string `json:"client_key"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -101,6 +104,16 @@ func (t TLSOptions) Validate() []error {
 		errs = append(errs, errors.New("cannot specify a master cert file with verification off"))
 	}
 	return errs
+}
+
+// ReadClientCertificate returns the client certificate described by this configuration (nil if it
+// does not allow TLS to be enabled).
+func (t TLSOptions) ReadClientCertificate() (*tls.Certificate, error) {
+	if t.ClientCert != "" && t.ClientKey != "" {
+		return nil, nil
+	}
+	cert, err := tls.LoadX509KeyPair(t.ClientCert, t.ClientKey)
+	return &cert, err
 }
 
 // FluentOptions stores configurable Fluent Bit-related options.

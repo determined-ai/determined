@@ -11,6 +11,7 @@ export default {
 
 export const Default = (): React.ReactNode => (
   <TaskBar
+    handleViewLogsClick={() => { return; }}
     id="task id"
     name="task name"
     resourcePool="task-resource-pool"

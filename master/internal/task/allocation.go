@@ -197,7 +197,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 	case sproto.ResourcesStateChanged:
 		a.ResourcesStateChanged(ctx, msg)
-	case sproto.RestoreResourcesFailure:
+	case sproto.ResourcesFailure:
 		a.RestoreResourceFailure(ctx, msg)
 	case sproto.GetResourcesContainerState:
 		if v, ok := a.resources[msg.ResourcesID]; ok {
@@ -637,7 +637,7 @@ func (a *Allocation) ResourcesStateChanged(
 
 // RestoreResourceFailure handles the restored resource failures.
 func (a *Allocation) RestoreResourceFailure(
-	ctx *actor.Context, msg sproto.RestoreResourcesFailure) {
+	ctx *actor.Context, msg sproto.ResourcesFailure) {
 	ctx.Log().Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -868,8 +868,8 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		ctx.Log().Info("allocation successfully stopped early")
 		return
 	case a.exitErr != nil:
-		switch err := a.exitErr.(type) {
-		case sproto.RestoreResourcesFailure:
+		switch err := a.exitReason.(type) {
+		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ContainerFailed, sproto.TaskError:
 				ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)

@@ -265,10 +265,12 @@ func (a *apiServer) LaunchTensorboard(
 
 	spec.Base.ExtraEnvVars = uniqEnvVars
 
-	spec.Config.Environment.Image = model.RuntimeItem{
-		CPU:  expConf.Environment().Image().CPU(),
-		CUDA: expConf.Environment().Image().CUDA(),
-		ROCM: expConf.Environment().Image().ROCM(),
+	if !model.UsingCustomImage(req) {
+		spec.Config.Environment.Image = model.RuntimeItem{
+			CPU:  expConf.Environment().Image().CPU(),
+			CUDA: expConf.Environment().Image().CUDA(),
+			ROCM: expConf.Environment().Image().ROCM(),
+		}
 	}
 	// Prefer RegistryAuth already present over the one from inferred from the experiment.
 	if spec.Config.Environment.RegistryAuth == nil {

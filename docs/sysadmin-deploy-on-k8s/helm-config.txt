@@ -154,12 +154,6 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
       interface, the ``dtrainNetworkInterface`` option can be used to set it explicitly (e.g.,
       ``eth11``).
 
-   -  ``ncclPortRange``: The range of ports that nccl is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
-
-   -  ``glooPortRange``: The range of ports that gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
-
    -  ``forcePullImage``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
       config <exp-environment-image>` this default is overriden. Please note that as of November
@@ -176,11 +170,11 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
       Defaults to:
-      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15``.
+      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15``.
+      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 

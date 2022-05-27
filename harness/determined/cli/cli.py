@@ -1,4 +1,5 @@
 import hashlib
+import os
 import socket
 import ssl
 import sys
@@ -161,6 +162,10 @@ def make_parser() -> ArgumentParser:
 def main(
     args: List[str] = sys.argv[1:],
 ) -> None:
+    if sys.platform == "win32":
+        # Magic incantation to make a Windows 10 cmd.exe process color-related ANSI escape codes.
+        os.system("")
+
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
     parser = make_parser()
 

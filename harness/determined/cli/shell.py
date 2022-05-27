@@ -1,11 +1,14 @@
+import contextlib
 import getpass
+import logging
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
-from typing import IO, Any, Dict, List, Union
+from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union
 
 import appdirs
 from termcolor import colored
@@ -86,17 +89,33 @@ def show_ssh_command(args: Namespace) -> None:
     _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
 
 
-def _prepare_key(retention_dir: Union[Path, None]) -> IO:
+def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], str]:
     if retention_dir:
-        retention_dir = retention_dir
-
         key_path = retention_dir / "key"
         keyfile = key_path.open("w")
         key_path.chmod(0o600)
 
-        return keyfile
+        return keyfile, str(key_path)
+
     else:
-        return tempfile.NamedTemporaryFile("w")
+
+        # Avoid using tempfile.NamedTemporaryFile, which does not produce a file that can be opened
+        # by name on Windows, which prevents the ssh process from reading it.
+        fd, path = tempfile.mkstemp(text=True)
+        f = open(fd, "w")
+
+        @contextlib.contextmanager
+        def file_closer() -> Iterator[IO]:
+            try:
+                yield f
+            finally:
+                f.close()
+                try:
+                    os.remove(path)
+                except Exception as e:
+                    logging.warning(f"failed to cleanup {path}: {e}")
+
+        return file_closer(), path
 
 
 def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, None]:
@@ -122,7 +141,8 @@ def _open_shell(
         if not cache_dir.exists():
             cache_dir.mkdir(parents=True)
 
-    with _prepare_key(cache_dir) as keyfile:
+    f, keypath = _prepare_key(cache_dir)
+    with f as keyfile:
         keyfile.write(shell["privateKey"])
         keyfile.flush()
 
@@ -152,7 +172,7 @@ def _open_shell(
             "-o",
             "IdentitiesOnly=yes",
             "-i",
-            str(keyfile.name),
+            str(keypath),
             "{}@{}".format(username, shell["id"]),
             *additional_opts,
         ]

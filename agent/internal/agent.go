@@ -285,11 +285,20 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 		}
 	}
 
+	var certs []tls.Certificate
+	switch cert, err := a.Options.Security.TLS.ReadClientCertificate(); {
+	case err != nil:
+		return nil, errors.Wrap(err, "failed to read agent certificate file")
+	case cert != nil:
+		certs = append(certs, *cert)
+	}
+
 	return &tls.Config{
 		InsecureSkipVerify: a.Options.Security.TLS.SkipVerify, //nolint:gosec
 		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
 		ServerName:         a.Options.Security.TLS.MasterCertName,
+		Certificates:       certs,
 	}, nil
 }
 

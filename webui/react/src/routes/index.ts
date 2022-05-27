@@ -16,7 +16,7 @@ import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
-import TaskLogs from 'pages/TaskLogs';
+import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 
@@ -41,7 +41,7 @@ const routeComponentMap: Record<string, FC> = {
   signIn: SignIn,
   signOut: SignOut,
   taskList: TaskList,
-  taskLogs: TaskLogs,
+  taskLogs: TaskLogsWrapper,
   trialDetails: TrialDetails,
   wait: Wait,
 };

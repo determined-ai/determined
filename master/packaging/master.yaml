@@ -1,14 +1,10 @@
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
 ## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
-## network interface used by distributed (multi-machine) training and ports used by the NCCL and
-## GLOO libraries during distributed training are configurable. These default to auto-discovery and
-## random non-privileged ports, respectively.
+## network interface used by distributed (multi-machine) training is configurable.
 #task_container_defaults:
 #  shm_size_bytes: 4294967296
 #  network_mode: bridge
 #  dtrain_network_interface: <network interface name>
-#  nccl_port_range: <MIN:MAX>
-#  gloo_port_range: <MIN:MAX>
 
 ## Resource manager configuration. Defaults to using the agent resource manager.
 #resource_manager:
