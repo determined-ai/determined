@@ -285,6 +285,7 @@ const TaskList: React.FC = () => {
     return [
       {
         dataIndex: 'id',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: 'id',
         render: taskIdRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
@@ -292,6 +293,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'type',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
         filterDropdown: typeFilterDropdown,
         filters: Object.values(CommandType).map(value => ({
           text: (
@@ -310,6 +312,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         isFiltered: (settings: Settings) => !!settings.search,
@@ -320,6 +323,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'startTime',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: 'startTime',
         render: (_: number, record: CommandTask): React.ReactNode => {
           return relativeTimeRenderer(new Date(record.startTime));
@@ -331,6 +335,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'state',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: Object.values(CommandState)
           .map((value) => ({
@@ -345,6 +350,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'resourcePool',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
         key: 'resourcePool',
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(a.resourcePool, b.resourcePool),
@@ -352,6 +358,7 @@ const TaskList: React.FC = () => {
       },
       {
         dataIndex: 'user',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
@@ -369,6 +376,7 @@ const TaskList: React.FC = () => {
         align: 'right',
         className: 'fullCell',
         dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
         render: actionRenderer,

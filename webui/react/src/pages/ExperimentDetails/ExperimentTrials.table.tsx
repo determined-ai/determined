@@ -1,21 +1,25 @@
-import { ColumnType } from 'antd/es/table';
 import { ReactNode } from 'react';
 
+import { ColumnDef } from 'components/InteractiveTable';
 import {
   durationRenderer, relativeTimeRenderer, stateRenderer,
 } from 'components/Table';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { TrialItem } from 'types';
 
-export const columns: ColumnType<TrialItem>[] = [
+import { DEFAULT_COLUMN_WIDTHS } from './ExperimentTrials.settings';
+
+export const columns: ColumnDef<TrialItem>[] = [
   {
     dataIndex: 'id',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
     key: V1GetExperimentTrialsRequestSortBy.ID,
     sorter: true,
     title: 'ID',
   },
   {
     dataIndex: 'state',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
     key: V1GetExperimentTrialsRequestSortBy.STATE,
     render: stateRenderer,
     sorter: true,
@@ -23,21 +27,28 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     dataIndex: 'totalBatchesProcessed',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['totalBatchesProcessed'],
     key: V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED,
     sorter: true,
     title: 'Batches',
   },
   {
+    dataIndex: 'bestValidationMetric',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['bestValidationMetric'],
     key: V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC,
     sorter: true,
     title: 'Best Validation Metric',
   },
   {
+    dataIndex: 'latestValidationMetric',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['latestValidationMetric'],
     key: V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC,
     sorter: true,
     title: 'Latest Validation Metric',
   },
   {
+    dataIndex: 'startTime',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
     key: V1GetExperimentTrialsRequestSortBy.STARTTIME,
     render: (_: string, record: TrialItem): ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
@@ -45,6 +56,8 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'Start Time',
   },
   {
+    dataIndex: 'duration',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
     key: V1GetExperimentTrialsRequestSortBy.DURATION,
     render: (_: string, record: TrialItem): ReactNode => durationRenderer(record),
     sorter: true,
@@ -52,20 +65,25 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     dataIndex: 'restarts',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['restarts'],
     key: V1GetExperimentTrialsRequestSortBy.RESTARTS,
     sorter: true,
     title: 'Restarts',
   },
   {
+    dataIndex: 'checkpoint',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
     key: 'checkpoint',
     title: 'Checkpoint',
   },
   {
     align: 'right',
     className: 'fullCell',
+    dataIndex: 'action',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
     fixed: 'right',
     key: 'actions',
     title: '',
-    width: 40,
+    width: DEFAULT_COLUMN_WIDTHS['action'],
   },
 ];

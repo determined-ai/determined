@@ -1,12 +1,12 @@
+import { Dropdown, Menu } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
-import ResponsiveTable from 'components/ResponsiveTable';
-import tableCss from 'components/ResponsiveTable.module.scss';
 import Section from 'components/Section';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { Renderer } from 'components/Table';
@@ -14,7 +14,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
@@ -41,6 +41,7 @@ import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
+  pageRef: React.RefObject<HTMLElement>;
 }
 
 enum TrialAction {
@@ -48,7 +49,7 @@ enum TrialAction {
   ViewLogs = 'View Logs',
 }
 
-const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
+const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ total, setTotal ] = useState(0);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
@@ -81,16 +82,20 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     />
   ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
 
+  const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
+    openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
+  }, []);
+
+  const handleViewLogs = useCallback((trial: TrialItem) => {
+    routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
+  }, [ experiment.id ]);
+
   const dropDownOnTrigger = useCallback((trial: TrialItem) => {
     return {
-      [TrialAction.OpenTensorBoard]: async () => {
-        openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
-      },
-      [TrialAction.ViewLogs]: () => {
-        routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
-      },
+      [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
+      [TrialAction.ViewLogs]: () => handleViewLogs(trial),
     };
-  }, [ experiment.id ]);
+  }, [ handleOpenTensorBoard, handleViewLogs ]);
 
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
@@ -158,7 +163,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         column.render = validationRenderer('latestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
-        column.onHeaderCell = () => settings.state ? { className: tableCss.headerFilterOn } : {},
+        column.isFiltered = (settings: Settings) => !!settings.state;
         column.filters = ([ 'ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR' ] as RunState[])
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
@@ -297,6 +302,30 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     updateSettings({ row: trialIds });
   }, [ settings.row, updateSettings ]);
 
+  const TrialActionDropdown = useCallback(({ record, onVisibleChange, children }) => {
+    return (
+      <Dropdown
+        overlay={(
+          <Menu>
+            <Menu.Item
+              key="open-tensorboard"
+              onClick={() => handleOpenTensorBoard(record)}>
+              {TrialAction.OpenTensorBoard}
+            </Menu.Item>
+            <Menu.Item
+              key="view-logs"
+              onClick={() => handleViewLogs(record)}>
+              {TrialAction.ViewLogs}
+            </Menu.Item>
+          </Menu>
+        )}
+        trigger={[ 'contextMenu' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+    );
+  }, [ handleOpenTensorBoard, handleViewLogs ]);
+
   return (
     <div className={css.base}>
       <Section>
@@ -309,8 +338,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           onAction={action => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
-        <ResponsiveTable
+        <InteractiveTable
           columns={columns}
+          containerRef={pageRef}
+          ContextMenu={TrialActionDropdown}
           dataSource={trials}
           loading={isLoading}
           pagination={getFullPaginationConfig({
@@ -324,8 +355,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
+          settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
           onChange={handleTableChange}
         />
       </Section>

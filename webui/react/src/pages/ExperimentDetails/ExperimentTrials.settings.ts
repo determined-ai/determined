@@ -1,9 +1,48 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
-export interface Settings {
+export type TrialColumnName =
+  | 'action'
+  | 'id'
+  | 'state'
+  | 'totalBatchesProcessed'
+  | 'bestValidationMetric'
+  | 'latestValidationMetric'
+  | 'startTime'
+  | 'duration'
+  | 'restarts'
+  | 'checkpoint';
+
+export const DEFAULT_COLUMNS: TrialColumnName[] = [
+  'id',
+  'state',
+  'totalBatchesProcessed',
+  'bestValidationMetric',
+  'latestValidationMetric',
+  'startTime',
+  'duration',
+  'restarts',
+  'checkpoint',
+];
+
+export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
+  action: 46,
+  bestValidationMetric: 150,
+  checkpoint: 150,
+  duration: 117,
+  id: 85,
+  latestValidationMetric: 150,
+  restarts: 117,
+  startTime: 117,
+  state: 117,
+  totalBatchesProcessed: 74,
+};
+
+export interface Settings extends InteractiveTableSettings {
+  columns: TrialColumnName[];
   compare: boolean;
   row?: number[];
   sortDesc: boolean;
@@ -15,6 +54,26 @@ export interface Settings {
 
 const config: SettingsConfig = {
   settings: [
+    {
+      defaultValue: DEFAULT_COLUMNS,
+      key: 'columns',
+      skipUrlEncoding: true,
+      storageKey: 'columns',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map((col: TrialColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+      key: 'columnWidths',
+      skipUrlEncoding: true,
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true,
+      },
+    },
     {
       defaultValue: false,
       key: 'compare',
