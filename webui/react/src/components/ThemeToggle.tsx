@@ -38,7 +38,7 @@ const ThemeToggle: React.FC = () => {
   const currentThemeOption = ThemeOptions[mode];
   classes.push(css[currentThemeOption.className]);
 
-  const changeTheme = (e: React.MouseEvent) => {
+  const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     const newThemeOption = currentThemeOption.next;
@@ -46,7 +46,7 @@ const ThemeToggle: React.FC = () => {
   };
 
   return (
-    <div className={css.base} onClick={changeTheme}>
+    <div className={css.base} onClick={newThemeMode}>
       <div className={css.container}>
         <div className={classes.join(' ')} />
         <div className={css.mode}>
