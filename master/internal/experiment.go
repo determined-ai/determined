@@ -471,7 +471,7 @@ func (e *experiment) restoreTrials(ctx *actor.Context) {
 		if err != nil {
 			e.updateState(ctx, model.StateWithReason{
 				State:               model.StoppingErrorState,
-				InformationalReason: "failed getting checkpoint to restore restoring",
+				InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
 			})
 			ctx.Log().Error(err)
 			return
@@ -489,7 +489,7 @@ func (e *experiment) processOperations(
 		ctx.Log().Error(err)
 		e.updateState(ctx, model.StateWithReason{
 			State:               model.StoppingErrorState,
-			InformationalReason: "encountering error",
+			InformationalReason: fmt.Sprintf("encountered error %v", err),
 		})
 		return
 	}
@@ -503,9 +503,10 @@ func (e *experiment) processOperations(
 		case searcher.Create:
 			checkpoint, err := e.checkpointForCreate(op)
 			if err != nil {
+				r := fmt.Sprintf("hp search unable to get checkpoint for new trial with error %v", err)
 				e.updateState(ctx, model.StateWithReason{
 					State:               model.StoppingErrorState,
-					InformationalReason: "hp searcher unable to get checkpoint",
+					InformationalReason: r,
 				})
 				ctx.Log().Error(err)
 				return
@@ -532,12 +533,12 @@ func (e *experiment) processOperations(
 			if op.Failure {
 				e.updateState(ctx, model.StateWithReason{
 					State:               model.StoppingErrorState,
-					InformationalReason: "hp searcher failure",
+					InformationalReason: "hp search failed",
 				})
 			} else {
 				e.updateState(ctx, model.StateWithReason{
 					State:               model.StoppingCompletedState,
-					InformationalReason: "hp searcher shutdown",
+					InformationalReason: "hp search completed",
 				})
 			}
 		default:

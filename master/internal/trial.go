@@ -168,7 +168,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		case t.searcher.Complete && t.searcher.Closed:
 			return t.patchState(ctx, model.StateWithReason{
 				State:               model.StoppingCompletedState,
-				InformationalReason: "hp search is complete and closed",
+				InformationalReason: "hp search is finished",
 			})
 		}
 		return nil
@@ -436,7 +436,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.ErrorState,
-				InformationalReason: "trial encountered an error exiting",
+				InformationalReason: fmt.Sprintf("trial encountered an error exiting %v", exit.Err),
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{
@@ -447,7 +447,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
 				State:               model.ErrorState,
-				InformationalReason: "trial encountered an error exiting",
+				InformationalReason: fmt.Sprintf("trial encountered an error exiting %v", exit.Err),
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{
@@ -460,7 +460,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			Errorf("trial encountered unrecoverable failure")
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.ErrorState,
-			InformationalReason: "trial encountered unrecoverable failure",
+			InformationalReason: fmt.Sprintf("trial encountered unrecoverable failure exiting %v", exit.Err),
 		})
 	case exit.Err != nil && sproto.IsTransientSystemError(exit.Err):
 		ctx.Log().

@@ -379,9 +379,10 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 func (a *Allocation) Cleanup(ctx *actor.Context) {
 	// These messages must be sent when the actor is closing since it
 	// closes all websockets listening for these events.
-	for _, r := range a.exitReasons {
+	exitReasons := strings.Join(a.exitReasons, ", ")
+	if exitReasons != "" {
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-			Log:   "Ended due to " + r,
+			Log:   "Ended due to " + exitReasons,
 			Level: ptrs.Ptr(model.LogLevelWarning),
 		}))
 	}
