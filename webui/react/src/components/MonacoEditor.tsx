@@ -18,7 +18,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<ReactMonacoEditor>(null);
   const resize = useResize(containerRef);
-  const { mode } = useTheme();
+  const { themeMode } = useTheme();
 
   const handleEditorDidMount = useCallback((editor) => editor.focus(), []);
 
@@ -40,7 +40,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
           ...options,
         }}
         ref={editorRef}
-        theme={mode === DarkLight.Dark ? 'vs-dark' : 'vs-light'}
+        theme={themeMode === DarkLight.Dark ? 'vs-dark' : 'vs-light'}
         {...props}
       />
     </div>
