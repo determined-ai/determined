@@ -140,7 +140,7 @@ environment so you can spend your time building models instead of managing infra
               <p class="tile-description">Try these hands-on quickstart guides for a basic introduction to setting up your Determined environment and training models.</p>
           </a>
           <a class="tile" href="intro/features/list.html">
-              <h2 class="tile-title">Introduction to Determined</h2>
+              <h2 class="tile-title">Introducing Determined</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
           <a class="tile" href="cluster-setup-guide/getting-started.html">

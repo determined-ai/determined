@@ -245,7 +245,7 @@ display: none;
     background-color: #fff;
     box-shadow: .5px 2px 4px 0 #bdbdbd;
     /* sizing/boxing */
-    width: 160px;
+    width: 25%;
     height: 220px;
     margin: 10px;
     padding: 10px;
@@ -286,7 +286,7 @@ display: none;
     letter-spacing: .4px;
     color: #676363;
     /* sizing/boxing */
-    height: 89px;
+    height: 30%;
     width: 100%;
     margin: 0px;
     padding: 0px 20px;
@@ -316,7 +316,8 @@ display: none;
 
 .tile .tile-description {
     /* looks */
-    font-size: 14px;
+/*    font-size: 14px; */
+    font-size: 100%;
     letter-spacing: .2px;
     line-height: 1.25;
     color: #757575;
