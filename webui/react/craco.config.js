@@ -23,6 +23,18 @@ module.exports = {
       ],
     ],
   },
+  devServer: {
+    proxy:
+    /**
+     * ideally, we could proxy all {serverAddress}:3000/{api|proxy}
+     * to {serverAddress}:8080{api|proxy}. devServer only intercepts
+     * requests to the server itself though
+     */
+    {
+      '/api': { target: 'http://localhost:8080' },
+      '/proxy': { target: 'http://localhost:8080' },
+    },
+  },
   eslint: { enable: false },
   plugins: [
     {
