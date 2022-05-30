@@ -8,7 +8,6 @@ import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
-import Spinner from 'components/Spinner';
 import { checkmarkRenderer, GenericRenderer,
   getFullPaginationConfig, userRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
@@ -19,7 +18,8 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Message, { MessageType } from 'shared/components/message';
+import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';

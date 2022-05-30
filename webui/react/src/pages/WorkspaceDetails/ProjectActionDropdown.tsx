@@ -1,12 +1,12 @@
 import { Dropdown, Menu } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
-import css from 'components/ActionDropdown.module.scss';
-import Icon from 'components/Icon';
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
 import { archiveProject, unarchiveProject } from 'services/api';
+import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import Icon from 'shared/components/Icon/Icon';
 import { DetailedUser, Project } from 'types';
 import handleError from 'utils/error';
 

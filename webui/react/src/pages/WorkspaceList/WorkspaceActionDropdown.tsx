@@ -1,12 +1,12 @@
 import { Dropdown, Menu } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
-import css from 'components/ActionDropdown.module.scss';
-import Icon from 'components/Icon';
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
+import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import Icon from 'shared/components/Icon/Icon';
 import { DetailedUser, Workspace } from 'types';
 import handleError from 'utils/error';
 

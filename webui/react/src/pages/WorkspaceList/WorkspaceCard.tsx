@@ -3,10 +3,10 @@ import { Tooltip, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import WorkspaceIcon from 'components/WorkspaceIcon';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Workspace } from 'types';
 

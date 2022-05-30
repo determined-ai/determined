@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 
 import Icon from '../shared/components/Icon/Icon';
+
 import Label, { LabelTypes } from './Label';
 import css from './SelectFilter.module.scss';
 

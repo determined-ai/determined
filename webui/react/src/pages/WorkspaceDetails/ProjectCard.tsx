@@ -2,10 +2,10 @@ import { Tooltip, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
-import Icon from 'components/Icon';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import { paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Project } from 'types';
 

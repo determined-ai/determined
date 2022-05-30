@@ -3,12 +3,13 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import Icon from 'components/Icon';
 import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
+import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
+import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import {
@@ -19,8 +20,6 @@ import {
   getActionsForExperiment,
 } from 'utils/experiment';
 import { openCommand } from 'wait';
-
-import css from './ActionDropdown.module.scss';
 
 interface Props {
   curUser?: DetailedUser;

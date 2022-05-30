@@ -3,9 +3,6 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren } from 'react';
 
-import { cancellableRunStates, deletableRunStates, pausableRunStates,
-  terminalRunStates } from 'constants/states';
-import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
 import { paths } from 'routes/utils';
 import {
   killTask,

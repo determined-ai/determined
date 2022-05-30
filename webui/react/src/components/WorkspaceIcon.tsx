@@ -3,7 +3,7 @@ import React, { CSSProperties, useMemo } from 'react';
 import useTheme from 'hooks/useTheme';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
-import { DarkLight } from 'themes';
+// import { DarkLight } from 'themes';
 
 import css from './WorkspaceIcon.module.scss';
 
@@ -29,7 +29,7 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     }
     const hexColor = md5(name).substring(0, 6);
     const hslColor = hex2hsl(hexColor);
-    return hsl2str({ ...hslColor, l: mode === DarkLight.Light ? 90 : 10 });
+    return hsl2str({ ...hslColor, l: mode ? 90 : 10 });
   }, [ name, mode ]);
 
   const fontSize = useMemo(() => {
