@@ -1,7 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
-  gap: var(--theme-sizes-layout-big);
+  gap: 16px;
 
   :global(p) {
     margin: 0;

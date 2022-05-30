@@ -693,6 +693,7 @@ export interface Workspace {
   id: number;
   immutable: boolean;
   name: string;
+  numExperiments: number;
   numProjects: number;
   pinned: boolean;
   username: string;

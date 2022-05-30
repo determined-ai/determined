@@ -73,10 +73,11 @@ const PageHeaderFoldable: React.FC<Props> = (
           />
         )}
         <Space className={css.options}>
-          {options?.slice(0, 3).map(option => (
+          {options?.slice(0, 3).map((option, i) => (
             <Button
               className={css.optionsMainButton}
               disabled={option.disabled || !option.onClick}
+              ghost={i !== 0}
               icon={option?.icon}
               key={option.key}
               loading={option.isLoading}

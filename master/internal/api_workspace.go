@@ -16,7 +16,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetWorkspaceFromID(id int32, userID int32) (*workspacev1.Workspace,
+func (a *apiServer) GetWorkspaceByID(id int32, userID int32) (*workspacev1.Workspace,
 	error) {
 	w := &workspacev1.Workspace{}
 	switch err := a.m.db.QueryProto("get_workspace", w, id, userID); err {
@@ -36,7 +36,7 @@ func (a *apiServer) GetWorkspace(
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceFromID(req.Id, user.User.Id)
+	w, err := a.GetWorkspaceByID(req.Id, user.User.Id)
 	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
@@ -179,7 +179,7 @@ func (a *apiServer) PatchWorkspace(
 	}
 
 	// Verify current workspace exists and can be edited.
-	currWorkspace, err := a.GetWorkspaceFromID(req.Id, user.User.Id)
+	currWorkspace, err := a.GetWorkspaceByID(req.Id, user.User.Id)
 	if err != nil {
 		return nil, err
 	}

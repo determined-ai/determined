@@ -15,6 +15,7 @@ message Workspace {
         "id",
         "immutable",
         "name",
+        "num_experiments",
         "num_projects",
         "pinned",
         "username",
@@ -40,6 +41,8 @@ message Workspace {
   bool pinned = 7;
   // ID of the user who created this project.
   int32 user_id = 8;
+  // Number of experiments associated with this workspace.
+  int32 num_experiments = 9;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.

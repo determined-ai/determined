@@ -1,26 +1,26 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  border: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-13);
+  background-color: var(--theme-surface);
+  border: var(--theme-stroke-width) solid var(--theme-colors-monochrome-13);
   border-radius: 12px;
-  color: var(--theme-colors-monochrome-7);
+  color: var(--theme-surface-on);
   cursor: pointer;
   display: grid;
   font-size: 11px;
   grid-template-columns: 50px auto 25px;
   grid-template-rows: 40px auto 40px;
   max-width: 325px;
-  padding: var(--theme-sizes-layout-huge);
+  padding: 20px;
 
   .nameRow {
     align-items: center;
     display: flex;
-    gap: var(--theme-sizes-layout-small);
+    gap: 6px;
     grid-column: 1/3;
     height: min-content;
     min-width: 0;
 
     .name {
-      color: var(--theme-colors-monochrome-4);
+      color: var(--theme-surface-on-strong);
       font-size: 14px;
       margin: 0;
       overflow: hidden;
@@ -48,17 +48,17 @@
     align-items: flex-end;
     align-self: end;
     display: flex;
-    gap: var(--theme-sizes-layout-tiny);
+    gap: 4px;
     grid-column: 1/3;
     grid-row: 3/4;
 
     & > span {
       display: flex;
-      gap: var(--theme-sizes-layout-tiny);
+      gap: 4px;
     }
   }
   .lastExperiment {
-    margin-left: var(--theme-sizes-layout-small);
+    margin-left: 6px;
   }
   .avatar {
     grid-column: 3/4;
@@ -66,9 +66,12 @@
     place-self: end;
   }
   &:hover {
-    background-color: var(--theme-colors-monochrome-16);
+    background-color: var(--theme-surface-weak);
 
     .action {
+      background-color: var(--theme-surface);
+      border-radius: 4px;
+      padding: 2px;
       visibility: visible;
     }
   }

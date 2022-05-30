@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
+import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
-import { isEqual } from 'utils/data';
 import handleError from 'utils/error';
 
 import css from './BreadcrumbBar.module.scss';
@@ -95,7 +95,7 @@ const BreadcrumbBar: React.FC<Props> = (
       fetchProject(), fetchWorkspace(), fetchExperiment(), fetchTrial() ]);
   }, [ fetchProject, fetchWorkspace, fetchExperiment, fetchTrial ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchWorkspace();

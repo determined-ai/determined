@@ -95,7 +95,7 @@ const ModelRegistry: React.FC = () => {
     await Promise.allSettled([ fetchModels(), fetchTags(), fetchUsers() ]);
   }, [ fetchModels, fetchTags, fetchUsers ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   /*
    * Get new models based on changes to the

@@ -6726,6 +6726,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     userId: number;
+    /**
+     * Number of experiments associated with this workspace.
+     * @type {number}
+     * @memberof V1Workspace
+     */
+    numExperiments: number;
 }
 
 

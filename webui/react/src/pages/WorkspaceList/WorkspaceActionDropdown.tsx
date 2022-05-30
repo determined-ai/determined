@@ -106,7 +106,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
             {workspace.archived ? 'Unarchive' : 'Archive'}
           </Menu.Item>
         )}
-        {(userHasPermissions) && (
+        {(userHasPermissions && workspace.numExperiments === 0) && (
           <>
             <Menu.Divider />
             <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>
@@ -117,6 +117,7 @@ const WorkspaceActionDropdown: React.FC<Props> = (
   }, [ handlePinClick,
     workspace.pinned,
     workspace.archived,
+    workspace.numExperiments,
     userHasPermissions,
     handleEditClick,
     handleArchiveClick,

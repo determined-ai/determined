@@ -103,8 +103,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ canceler, trialId, onTrialUpdate ]);
 
-  const { stopPolling } = usePolling(fetchTrialDetails);
-  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
+  const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
+  const { stopPolling: stopPollingFirstTrialId } = usePolling(
+    fetchFirstTrialId,
+    { rerunOnNewFn: true },
+  );
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);

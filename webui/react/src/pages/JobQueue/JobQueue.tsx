@@ -100,7 +100,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
     }
   }, [ canceler.signal, selectedRp?.name, settings, jobState ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   const dropDownOnTrigger = useCallback((job: Job) => {
     const triggers: Triggers<JobAction> = {

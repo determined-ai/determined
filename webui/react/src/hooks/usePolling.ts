@@ -12,6 +12,7 @@ interface PollingHooks {
 
 interface PollingOptions {
   interval?: number;
+  rerunOnNewFn?: boolean
   runImmediately?: boolean;
 }
 
@@ -27,6 +28,7 @@ interface StopOptions {
 
 const DEFAULT_OPTIONS: PollingOptions = {
   interval: 5000,
+  rerunOnNewFn: false,
   runImmediately: true,
 };
 
@@ -42,6 +44,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
   const timer = useRef<NodeJS.Timeout>();
   const isPolling = useRef(false);
   const isPollingBeforeHidden = useRef(false);
+  const pollingFnIndicator = pollingOptions.current.rerunOnNewFn ? pollingFn : undefined;
   const { ui } = useStore();
 
   const clearTimer = useCallback(() => {
@@ -81,7 +84,7 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
   useEffect(() => {
     startPolling();
     return () => stopPolling();
-  }, [ startPolling, stopPolling, pollingFn ]);
+  }, [ startPolling, stopPolling, pollingFnIndicator ]);
 
   useEffect(() => {
     if (ui.isPageHidden) {

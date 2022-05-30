@@ -128,8 +128,11 @@ const NotesCard: React.FC<Props> = (
       </Spinner>
       <Prompt
         message={(newLocation) => {
+          const isSameExperiment =
+          location.pathname.split('/')[0] === 'experiment' &&
+            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
           return (
-            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/')) ?
+            isSameExperiment ?
               true :
               'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
           );

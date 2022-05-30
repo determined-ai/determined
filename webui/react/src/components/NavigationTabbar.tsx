@@ -6,9 +6,8 @@ import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
-import { handlePath, paths, routeToReactUrl } from 'routes/utils';
-import { ResourceType } from 'types';
-import { percent } from 'utils/number';
+import { handlePath, paths } from 'routes/utils';
+import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 
 import Icon from '../shared/components/Icon/Icon';
 
@@ -98,14 +97,16 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'workspaces',
             label: 'Workspaces',
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceList()),
             path: paths.workspaceList(),
           },
-          ...pinnedWorkspaces.map(workspace => (
-            {
-              icon: <WorkspaceIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-              label: workspace.name,
-              path: paths.workspaceDetails(workspace.id),
-            })),
+          ...pinnedWorkspaces.map((workspace) => ({
+            icon: <WorkspaceIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            label: workspace.name,
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+          })),
         ]}
         show={isShowingPinnedWorkspaces}
         onCancel={handleActionSheetCancel}
@@ -121,7 +122,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'user',
             label: 'Sign out',
-            onClick: e => handlePathUpdate(e, paths.logout()),
+            onClick: (e) => handlePathUpdate(e, paths.logout()),
           },
           {
             icon: 'jupyter-lab',
@@ -131,7 +132,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'logs',
             label: 'Cluster Logs',
-            onClick: e => handlePathUpdate(e, paths.clusterLogs()),
+            onClick: (e) => handlePathUpdate(e, paths.clusterLogs()),
           },
           {
             external: true,

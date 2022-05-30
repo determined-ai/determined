@@ -5755,6 +5755,7 @@ class v1Workspace:
         id: int,
         immutable: bool,
         name: str,
+        numExperiments: int,
         numProjects: int,
         pinned: bool,
         userId: int,
@@ -5768,6 +5769,7 @@ class v1Workspace:
         self.numProjects = numProjects
         self.pinned = pinned
         self.userId = userId
+        self.numExperiments = numExperiments
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -5780,6 +5782,7 @@ class v1Workspace:
             numProjects=obj["numProjects"],
             pinned=obj["pinned"],
             userId=obj["userId"],
+            numExperiments=obj["numExperiments"],
         )
 
     def to_json(self) -> typing.Any:
@@ -5792,6 +5795,7 @@ class v1Workspace:
             "numProjects": self.numProjects,
             "pinned": self.pinned,
             "userId": self.userId,
+            "numExperiments": self.numExperiments,
         }
 
 def post_AckAllocationPreemptionSignal(

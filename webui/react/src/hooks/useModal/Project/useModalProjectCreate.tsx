@@ -3,9 +3,11 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
 

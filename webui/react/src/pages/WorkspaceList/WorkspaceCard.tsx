@@ -6,7 +6,8 @@ import Avatar from 'components/Avatar';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import WorkspaceIcon from 'components/WorkspaceIcon';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { DetailedUser, Workspace } from 'types';
 
 import WorkspaceActionDropdown from './WorkspaceActionDropdown';
@@ -35,7 +36,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <div className={css.nameRow}>
             <h6 className={css.name}>
               <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                <Typography.Paragraph ellipsis={true}>
                   {workspace.name}
                 </Typography.Paragraph>
               </Link>
@@ -51,7 +52,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <p className={css.projects}>
             {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
-          <div className={css.avatar}><Avatar username={workspace.username} /></div>
+          <div className={css.avatar}><Avatar name={workspace.username} /></div>
         </div>
         {workspace.pinned && <PushpinOutlined className={css.pinned} />}
         {!workspace.immutable && (

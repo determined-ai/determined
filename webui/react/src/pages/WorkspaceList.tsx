@@ -19,11 +19,11 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import { validateDetApiEnum } from 'services/utils';
 import Message, { MessageType } from 'shared/components/message';
+import { isEqual } from 'shared/utils/data';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
-import { isEqual } from 'utils/data';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
@@ -99,7 +99,7 @@ const WorkspaceList: React.FC = () => {
     settings.tableOffset,
     settings.user ]);
 
-  usePolling(fetchWorkspaces);
+  usePolling(fetchWorkspaces, { rerunOnNewFn: true });
 
   const handleViewSelect = useCallback((value) => {
     setWorkspaceFilter(value as WorkspaceFilters);

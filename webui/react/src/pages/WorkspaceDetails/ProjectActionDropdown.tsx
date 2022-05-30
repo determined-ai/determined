@@ -86,7 +86,7 @@ const ProjectActionDropdown: React.FC<Props> = (
           {project.archived ? 'Unarchive' : 'Archive'}
         </Menu.Item>));
     }
-    if (userHasPermissions && !project.archived) {
+    if (userHasPermissions && !project.archived && project.numExperiments === 0) {
       items.push(<Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>);
     }
     return items;
@@ -95,6 +95,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     handleEditClick,
     handleMoveClick,
     project.archived,
+    project.numExperiments,
     userHasPermissions,
     workspaceArchived ]);
 

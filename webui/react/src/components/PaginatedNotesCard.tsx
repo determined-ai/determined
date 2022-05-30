@@ -1,17 +1,13 @@
-import { CheckOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Select } from 'antd';
+import { Button, Dropdown, Menu, Modal } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Icon from 'components/Icon';
 import usePrevious from 'hooks/usePrevious';
 import { Note } from 'types';
 
-import Icon from './Icon';
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
-import SelectFilter from './SelectFilter';
-
-const { Option } = Select;
 
 interface Props {
   disabled?: boolean;
@@ -92,11 +88,11 @@ const PaginatedNotesCard: React.FC<Props> = (
     setEditedName(newName);
     await onSave(notes.map((note, idx) => {
       if (idx === currentPage) {
-        return { ...note, name: newName } as Note;
+        return { contents: editedContents ?? note?.contents, name: newName } as Note;
       }
       return note;
     }));
-  }, [ currentPage, notes, onSave ]);
+  }, [ currentPage, notes, onSave, editedContents ]);
 
   const handleDeletePage = useCallback((deletePageNumber: number) => {
     onDelete(deletePageNumber);
@@ -178,28 +174,6 @@ const PaginatedNotesCard: React.FC<Props> = (
           </ul>
         </div>
       )}
-      <div className={css.pageSelectRow}>
-        <SelectFilter
-          className={css.pageSelect}
-          size="large"
-          value={currentPage}
-          onSelect={handleSwitchPage}>
-          {notes.map((note, idx) => {
-            return (
-              <Option className={css.selectOption} key={idx} value={idx}>
-                <CheckOutlined
-                  className={css.currentPage}
-                  style={{
-                    marginRight: 'var(--theme-sizes-layout-small)',
-                    visibility: idx === currentPage ? 'visible' : 'hidden',
-                  }}
-                />
-                <span>{note.name}</span>
-              </Option>
-            );
-          })}
-        </SelectFilter>
-      </div>
       <div className={css.notesContainer}>
         <NotesCard
           disabled={disabled}

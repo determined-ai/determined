@@ -3,10 +3,12 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
-import { paths, routeToReactUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { deleteWorkspace } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { Workspace } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import css from './useModalWorkspaceDelete.module.scss';
 
@@ -32,7 +34,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <p>Are you sure you want to delete <strong>&quot;{workspace.name}&quot;</strong>?</p>
-        <p>All projects and experiments within it will also be deleted. This cannot be undone.</p>
+        <p>All projects and notes within it will also be deleted. This cannot be undone.</p>
         <label className={css.label} htmlFor="name">Enter workspace name to confirm deletion</label>
         <Input id="name" value={name} onChange={handleNameInput} />
       </div>

@@ -90,7 +90,7 @@ const ResourcepoolDetail: React.FC = () => {
     }
   }, [ canceler.signal, poolname ]);
 
-  usePolling(fetchStats);
+  usePolling(fetchStats, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchStats();

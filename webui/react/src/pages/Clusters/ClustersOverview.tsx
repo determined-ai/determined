@@ -29,7 +29,7 @@ const ClusterOverview: React.FC = () => {
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
-  usePolling(fetchResourcePools, { interval: 10000 });
+  usePolling(fetchResourcePools, { interval: 10000, rerunOnNewFn: true });
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 

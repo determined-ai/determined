@@ -42,13 +42,20 @@ import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment
 import { Determinedexperimentv1State,
   V1GetProjectExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
-import { isNotFound, validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/message';
-import { ExperimentAction as Action, CommandTask, ExperimentItem,
-  Note, Project, ProjectExperiment, RecordKey, RunState } from 'types';
 import { isEqual } from 'shared/utils/data';
-import handleError, { ErrorLevel } from 'utils/error';
+import { isNotFound } from 'shared/utils/service';
+import {
+  ExperimentAction as Action,
+  CommandTask,
+  ExperimentItem,
+  Note,
+  Project,
+  ProjectExperiment,
+  RunState,
+} from 'types';
+import handleError from 'utils/error';
 import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
@@ -60,8 +67,8 @@ import { openCommand } from 'wait';
 import { RecordKey } from '../shared/types';
 import { ErrorLevel } from '../shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from '../shared/utils/service';
-import css from './ProjectDetails.module.scss';
 
+import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
@@ -206,7 +213,7 @@ const ProjectDetails: React.FC = () => {
       fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
   }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   const experimentTags = useExperimentTags(fetchAll);
 

@@ -16,7 +16,6 @@ import {
   HyperparameterType,
   Project,
   ProjectExperiment,
-  RawJson,
   RunState,
   TrialHyperparameters,
 } from 'types';
@@ -133,7 +132,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.ContinueTrial]: isExperimentModifiable,
 
   [ExperimentAction.Delete]: (experiment, user) =>
-    !!user && (user.isAdmin || user.username === experiment.username)
+    !!user && (user.isAdmin || user.id === experiment.userId)
       ? deletableRunStates.has(experiment.state)
       : false,
 
@@ -146,7 +145,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.Move]: (experiment, user) =>
     !!user &&
-    (user.isAdmin || user.username === experiment.username) &&
+    (user.isAdmin || user.id === experiment.userId) &&
     !experiment?.parentArchived &&
     !experiment.archived,
 

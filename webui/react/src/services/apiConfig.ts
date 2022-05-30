@@ -30,6 +30,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Internal: new Api.InternalApi(config),
     Models: new Api.ModelsApi(config),
     Notebooks: new Api.NotebooksApi(config),
+    Projects: new Api.ProjectsApi(config),
     Shells: new Api.ShellsApi(config),
     StreamingCluster: Api.ClusterApiFetchParamCreator(config),
     StreamingExperiments: Api.ExperimentsApiFetchParamCreator(config),
@@ -40,6 +41,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
     Users: new Api.UsersApi(config),
+    Workspaces: new Api.WorkspacesApi(config),
   };
 };
 
@@ -408,7 +410,7 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
-export const moveExperiment: Service.DetApi<
+export const moveExperiment: DetApi<
   Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
 > = {
   name: 'moveExperiment',
@@ -609,7 +611,7 @@ export const postModelVersion: DetApi<
 
 /* Workspaces */
 
-export const getWorkspaces: Service.DetApi<
+export const getWorkspaces: DetApi<
   Service.GetWorkspacesParams,
   Api.V1GetWorkspacesResponse,
   Type.WorkspacePagination
@@ -636,7 +638,7 @@ export const getWorkspaces: Service.DetApi<
   },
 };
 
-export const getWorkspace: Service.DetApi<
+export const getWorkspace: DetApi<
   Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
 > = {
   name: 'getWorkspace',
@@ -648,7 +650,7 @@ export const getWorkspace: Service.DetApi<
   ),
 };
 
-export const createWorkspace: Service.DetApi<
+export const createWorkspace: DetApi<
   Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
 > = {
   name: 'createWorkspace',
@@ -660,7 +662,7 @@ export const createWorkspace: Service.DetApi<
   ),
 };
 
-export const getWorkspaceProjects: Service.DetApi<
+export const getWorkspaceProjects: DetApi<
   Service.GetWorkspaceProjectsParams,
   Api.V1GetWorkspaceProjectsResponse,
   Type.ProjectPagination
@@ -687,7 +689,7 @@ export const getWorkspaceProjects: Service.DetApi<
   },
 };
 
-export const deleteWorkspace: Service.DetApi<
+export const deleteWorkspace: DetApi<
   Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
 > = {
   name: 'deleteWorkspace',
@@ -697,7 +699,7 @@ export const deleteWorkspace: Service.DetApi<
   ),
 };
 
-export const patchWorkspace: Service.DetApi<
+export const patchWorkspace: DetApi<
   Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
 > = {
   name: 'patchWorkspace',
@@ -709,7 +711,7 @@ export const patchWorkspace: Service.DetApi<
   },
 };
 
-export const archiveWorkspace: Service.DetApi<
+export const archiveWorkspace: DetApi<
   Service.ArchiveWorkspaceParams, Api.V1ArchiveWorkspaceResponse, void
 > = {
   name: 'archiveWorkspace',
@@ -717,7 +719,7 @@ export const archiveWorkspace: Service.DetApi<
   request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
 };
 
-export const unarchiveWorkspace: Service.DetApi<
+export const unarchiveWorkspace: DetApi<
   Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
 > = {
   name: 'unarchiveWorkspace',
@@ -725,7 +727,7 @@ export const unarchiveWorkspace: Service.DetApi<
   request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
 };
 
-export const pinWorkspace: Service.DetApi<
+export const pinWorkspace: DetApi<
   Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void
 > = {
   name: 'pinWorkspace',
@@ -733,7 +735,7 @@ export const pinWorkspace: Service.DetApi<
   request: (params) => detApi.Workspaces.pinWorkspace(params.id),
 };
 
-export const unpinWorkspace: Service.DetApi<
+export const unpinWorkspace: DetApi<
   Service.UnpinWorkspaceParams, Api.V1UnpinWorkspaceResponse, void
 > = {
   name: 'unpinWorkspace',
@@ -743,7 +745,7 @@ export const unpinWorkspace: Service.DetApi<
 
 /* Projects */
 
-export const getProject: Service.DetApi<
+export const getProject: DetApi<
   Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
 > = {
   name: 'getProject',
@@ -755,7 +757,7 @@ export const getProject: Service.DetApi<
   ),
 };
 
-export const getProjectExperiments: Service.DetApi<
+export const getProjectExperiments: DetApi<
   Service.GetProjectExperimentsParams,
   Api.V1GetProjectExperimentsResponse,
   Type.ExperimentPagination
@@ -786,7 +788,7 @@ export const getProjectExperiments: Service.DetApi<
   },
 };
 
-export const addProjectNote: Service.DetApi<
+export const addProjectNote: DetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 > = {
   name: 'addProjectNote',
@@ -802,7 +804,7 @@ export const addProjectNote: Service.DetApi<
   ),
 };
 
-export const setProjectNotes: Service.DetApi<
+export const setProjectNotes: DetApi<
   Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
 > = {
   name: 'setProjectNotes',
@@ -818,7 +820,7 @@ export const setProjectNotes: Service.DetApi<
   ),
 };
 
-export const createProject: Service.DetApi<
+export const createProject: DetApi<
   Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
 > = {
   name: 'createProject',
@@ -835,7 +837,7 @@ export const createProject: Service.DetApi<
   ),
 };
 
-export const patchProject: Service.DetApi<
+export const patchProject: DetApi<
   Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
 > = {
   name: 'patchProject',
@@ -851,7 +853,7 @@ export const patchProject: Service.DetApi<
   ),
 };
 
-export const deleteProject: Service.DetApi<
+export const deleteProject: DetApi<
   Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
 > = {
   name: 'deleteProject',
@@ -859,7 +861,7 @@ export const deleteProject: Service.DetApi<
   request: (params) => detApi.Projects.deleteProject(params.id),
 };
 
-export const moveProject: Service.DetApi<
+export const moveProject: DetApi<
   Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
 > = {
   name: 'moveProject',
@@ -873,7 +875,7 @@ export const moveProject: Service.DetApi<
   ),
 };
 
-export const archiveProject: Service.DetApi<
+export const archiveProject: DetApi<
   Service.ArchiveProjectParams, Api.V1ArchiveProjectResponse, void
 > = {
   name: 'archiveProject',
@@ -881,7 +883,7 @@ export const archiveProject: Service.DetApi<
   request: (params) => detApi.Projects.archiveProject(params.id),
 };
 
-export const unarchiveProject: Service.DetApi<
+export const unarchiveProject: DetApi<
   Service.UnarchiveProjectParams, Api.V1UnarchiveProjectResponse, void
 > = {
   name: 'unarchiveProject',

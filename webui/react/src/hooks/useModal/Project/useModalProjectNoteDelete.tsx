@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { setProjectNotes } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import css from './useModalProjectNoteDelete.module.scss';
 

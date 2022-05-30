@@ -109,7 +109,7 @@ const TrialDetailsComp: React.FC = () => {
     history.replace(`${basePath}/${TabType.Logs}?tail`);
   }, [ basePath, history ]);
 
-  const { stopPolling } = usePolling(fetchTrialDetails);
+  const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
     setTrialId(parseInt(routeParams.trialId));

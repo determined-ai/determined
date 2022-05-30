@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { cancellableRunStates, deletableRunStates, pausableRunStates,
   terminalRunStates } from 'constants/states';
@@ -15,8 +15,7 @@ import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser,
 } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { capitalize } from 'utils/string';
+import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
 import css from '../shared/components/ActionDropdown/ActionDropdown.module.scss';

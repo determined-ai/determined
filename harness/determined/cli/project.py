@@ -9,7 +9,7 @@ from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import session
 
 from . import render
-from .workspace import list_workspace_projects, workspace_by_name
+from .workspace import list_workspace_projects, pagination_args, workspace_by_name
 
 
 def render_experiments(args: Namespace, experiments: Sequence[v1Experiment]) -> None:
@@ -80,11 +80,23 @@ def list_project_experiments(args: Namespace) -> None:
     if not args.all:
         kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
         kwargs["archived"] = "false"
-    experiments = bindings.get_GetProjectExperiments(sess, **kwargs).experiments
+
+    all_experiments: List[bindings.v1Experiment] = []
+    internal_offset = args.offset if ("offset" in args and args.offset) else 0
+    limit = args.limit if "limit" in args else 200
+    while True:
+        experiments = bindings.get_GetProjectExperiments(
+            sess, limit=limit, offset=internal_offset, **kwargs
+        ).experiments
+        all_experiments += experiments
+        internal_offset += len(experiments)
+        if ("offset" in args and args.offset) or len(experiments) < limit:
+            break
+
     if args.json:
-        print(json.dumps([e.to_json() for e in experiments], indent=2))
+        print(json.dumps([e.to_json() for e in all_experiments], indent=2))
     else:
-        render_experiments(args, experiments)
+        render_experiments(args, all_experiments)
 
 
 @authentication.required
@@ -110,26 +122,26 @@ def describe_project(args: Namespace) -> None:
     else:
         render_project(p)
         print("\nAssociated Experiments")
-        kwargs: Dict[str, Any] = {
-            "id": p.id,
-        }
-        if not args.all:
-            kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
-            kwargs["archived"] = "false"
-        experiments = bindings.get_GetProjectExperiments(sess, **kwargs).experiments
-        render_experiments(args, experiments)
+        vars(args)["order_by"] = "asc"
+        vars(args)["sort_by"] = "id"
+        list_project_experiments(args)
 
 
 @authentication.required
 def delete_project(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    if p.numExperiments > 0:
+        raise Exception(
+            "Projects with associated experiments currently cannot be deleted. "
+            "Use archive to hide projects."
+        )
     if args.yes or render.yes_or_no(
         'Deleting project "' + args.project_name + '" will result in the \n'
-        "unrecoverable deletion of all associated experiments. For a recoverable \n"
+        "unrecoverable deletion of this project and notes. For a recoverable \n"
         "alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        sess = setup_session(args)
-        (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
         bindings.delete_DeleteProject(sess, id=p.id)
         print(f"Successfully deleted project {args.project_name}.")
     else:
@@ -191,6 +203,7 @@ args_description = [
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
+                    *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -222,6 +235,7 @@ args_description = [
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
+                    *pagination_args,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),

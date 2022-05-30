@@ -8,9 +8,10 @@ import Link from 'components/Link';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { getWorkspaces, moveProject } from 'services/api';
+import { isEqual } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';
-import { isEqual } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import css from './useModalProjectMove.module.scss';
 

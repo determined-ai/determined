@@ -10,9 +10,10 @@ import SelectFilter from 'components/SelectFilter';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
+import { isEqual } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';
-import { isEqual } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError from 'utils/error';
 
 import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalExperimentMove.module.scss';
@@ -144,17 +145,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const renderRow = useCallback(({ index, style }) => {
     const disabled = projects[index].archived || projects[index].id === sourceProjectId;
+    const selected = projects[index].id === destSettings.projectId;
     return (
       <li
-        style={{
-          ...style,
-          backgroundColor: projects[index].id === destSettings.projectId ?
-            '#e6f7ff' :
-            undefined,
-          color: disabled ?
-            'var(--theme-colors-monochrome-10)' :
-            undefined,
-        }}
+        className={disabled ? css.disabled : selected ? css.selected : css.default}
+        style={style}
         onClick={() => handleProjectSelect(projects[index])}>
         <Typography.Text
           disabled={disabled}
