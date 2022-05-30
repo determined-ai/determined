@@ -45,10 +45,10 @@
    :caption: Training
    :hidden:
 
-   Training Setup Guide <training/setup-guide/overview>
-   Basic Tasks <training/basic-tasks/overview>
-   Training APIs <training/apis-howto/overview>
-   Distributed Training <training/distributed/distributed>
+   Introduction to Distributed Training <training/dtrain-intro>
+   Prepare Environment <training/setup-guide/overview>
+   Basic Workflow <training/basic-workflow>
+   Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
@@ -147,7 +147,7 @@ environment so you can spend your time building models instead of managing infra
               <h2 class="tile-title">Cluster Setup Guide</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>
-          <a class="tile" href="training/setup-guide/overview.html">
+          <a class="tile" href="training/dtrain-intro.html">
               <h2 class="tile-title">Training</h2>
               <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
           </a>

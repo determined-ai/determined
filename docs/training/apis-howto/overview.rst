@@ -19,9 +19,9 @@ If you have existing model code that you'd like to train with Determined, contin
 docs below depending on your ML Framework.
 
 -  :doc:`/training/apis-howto/api-core/overview`
--  :doc:`/training/apis-howto/api-pytorch-qs`
--  :doc:`/training/apis-howto/api-pytorch-lightning-qs`
--  :doc:`/training/apis-howto/api-keras-qs`
+-  :doc:`/training/apis-howto/api-pytorch-ug`
+-  :doc:`/training/apis-howto/api-pytorch-lightning-ug`
+-  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
 If you'd like a review of implementing the Determined APIs on example models, please take a look
@@ -36,7 +36,7 @@ If you'd like a review of implementing the Determined APIs on example models, pl
 TensorFlow Core Models
 ======================
 
-Determined has support for TensorFlow models that use the :doc:`/training/apis-howto/api-keras-qs` API.
+Determined has support for TensorFlow models that use the :doc:`/training/apis-howto/api-keras-ug` API.
 
 TensorFlow 1 vs 2
 =================
@@ -86,8 +86,8 @@ Known limitations:
    :hidden:
 
    api-core/overview
-   api-pytorch-qs
-   api-pytorch-lightning-qs
-   api-keras-qs
+   api-pytorch-ug
+   api-pytorch-lightning-ug
+   api-keras-ug
    deepspeed/overview
-   api-estimator-qs
+   api-estimator-ug

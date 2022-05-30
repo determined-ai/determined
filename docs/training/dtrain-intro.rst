@@ -2,9 +2,9 @@
 
 .. _multi-gpu-training:
 
-######################
- Distributed Training
-######################
+######################################
+ Introduction to Distributed Training
+######################################
 
 Determined provides three main methods to take advantage of multiple GPUs:
 
@@ -28,6 +28,19 @@ This document focuses on the third approach, demonstrating how to perform optimi
 training with Determined to speed up the training of a single trial.
 
 ***************
+Connectivity
+***************
+
+Multi-machine training requires that all machines are able to connect to each other directly. There
+may be firewall rules or network configuration that prevent machines in your cluster from
+communicating. Please check if agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
+
+More rarely, if agents have multiple network interfaces and some of them are not routable,
+Determined may pick one of those interfaces rather than one that allows one agent to contact
+another. In this case, it is possible to set the network interface used for distributed training
+explicitly in the :ref:`cluster-configuration`.
+
+***************
  Configuration
 ***************
 
@@ -35,9 +48,9 @@ Setting Slots Per Trial
 =======================
 
 In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the number
-of GPUs that will be used to train a single trial.
+of GPUs used to train a single trial.
 
-The default value is 1, which disables distributed training. Setting ``slots_per_trial`` to a larger
+The default value is ``1``, which disables distributed training. Setting ``slots_per_trial`` to a larger
 value enables multi-GPU training automatically. Note that these GPUs might be on a single machine or
 across multiple machines; the experiment configuration simply defines how many GPUs should be used
 for training, and the Determined job scheduler decides whether to schedule the task on a single
@@ -56,21 +69,20 @@ Example configuration with distributed training:
    resources:
      slots_per_trial: N
 
-.. warning::
+For distributed multi-machine training, Determined automatically detects a common network interface shared by the agent machines. If your cluster has multiple common network interfaces, please specify the fastest one in :ref:`cluster-configuration` under ``task_container_defaults.dtrain_network_interface``.
 
-   For distributed multi-machine training, Determined automatically detects a common network
-   interface shared by the agent machines. If your cluster has multiple common network interfaces,
-   please specify the fastest one in :ref:`cluster-configuration` under
-   ``task_container_defaults.dtrain_network_interface``.
+When the ``slots_per_trial`` option is changed, the per-slot batch size is set to ``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be accessed via the context using :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
-.. note::
+If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than the number of slots
+on a single agent, Determined will schedule it over multiple machines. When scheduling a
+multi-machine distributed training job, Determined requires that the job uses all of the slots
+(GPUs) on an agent. For example, in a cluster that consists of 8-GPU agents, an experiment with
+:ref:`slots_per_trial <exp-config-resources-slots-per-trial>` set to ``12`` will never be scheduled
+and will instead wait indefinitely. The :ref:`distributed training documentation
+<dtrain-scheduling>` describes this scheduling behavior in more detail.
 
-   When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
-   ``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be
-   accessed via the context using :func:`context.get_per_slot_batch_size()
-   <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
-   <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
-   evenly divisible by ``slots_per_trial``, the remainder is dropped.
+There might also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
+single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots in your cluster.
 
 Setting Global Batch Size
 =========================
@@ -220,35 +232,3 @@ batch inference job, create a new PyTorchTrial and follow these steps:
 Once the new PyTorchTrial object is created, use the experiment configuration to distribute
 inference in the same way as training. cifar10_pytorch_inference_ is an example of distributed batch
 inference.
-
-*****
- FAQ
-*****
-
-Why do my distributed training experiments never start?
-=======================================================
-
-If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than the number of slots
-on a single agent, Determined will schedule it over multiple machines. When scheduling a
-multi-machine distributed training job, Determined requires that the job uses all of the slots
-(GPUs) on an agent. For example, in a cluster that consists of 8-GPU agents, an experiment with
-:ref:`slots_per_trial <exp-config-resources-slots-per-trial>` set to ``12`` will never be scheduled
-and will instead wait indefinitely. The :ref:`distributed training documentation
-<dtrain-scheduling>` describes this scheduling behavior in more detail.
-
-There may also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
-single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free up
-slots in your cluster.
-
-Why do my multi-machine training experiments appear to be stuck?
-================================================================
-
-Multi-machine training requires that all machines are able to connect to each other directly. There
-may be firewall rules or network configuration that prevent machines in your cluster from
-communicating. Please check if agent machines can access each other outside of Determined (e.g.,
-using the ``ping`` or ``netcat`` tools).
-
-More rarely, if agents have multiple network interfaces and some of them are not routable,
-Determined may pick one of those interfaces rather than one that allows one agent to contact
-another. In this case, it is possible to set the network interface used for distributed training
-explicitly in the :ref:`cluster-configuration`.

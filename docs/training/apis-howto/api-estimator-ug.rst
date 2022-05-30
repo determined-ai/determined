@@ -1,5 +1,5 @@
 ##########################
- Estimator API Quickstart
+ Estimator API
 ##########################
 
 +----------------------------------------------------+
@@ -22,7 +22,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with    different sources of data.
+   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with    different sources of data.
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and

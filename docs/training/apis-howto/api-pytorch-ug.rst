@@ -1,5 +1,5 @@
 ########################
- PyTorch API Quickstart
+ PyTorch API
 ########################
 
 +--------------------------------------------------+
@@ -59,7 +59,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with
+   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with
    different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
@@ -96,7 +96,7 @@ directories on different ranks. See the following code example:
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/setup-guide/load-model-data` to understand how to work with
+   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data into :class:`~determined.pytorch.PyTorchTrial` models is done by defining two

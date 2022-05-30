@@ -1,6 +1,6 @@
-#####################
- Prepare Environment
-#####################
+########################
+ Set Environment Images
+########################
 
 Determined launches workloads using Docker containers. By default, workloads execute inside a
 Determined-provided container that includes common deep learning libraries and frameworks. The
