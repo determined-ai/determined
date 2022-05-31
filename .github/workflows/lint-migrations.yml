@@ -1,0 +1,15 @@
+name: "Lint migrations"
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  lint-migrations:
+    steps:
+      - name: Run migration lint
+        run: ./.github/scripts/lint-migrations.sh
+        shell: bash
