@@ -136,8 +136,9 @@ def describe(args: Namespace) -> None:
     checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
+
 @authentication.required
-def delete_checkpoints(args: Namespace) -> None: 
+def delete_checkpoints(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting checkpoints will result in deletion of all data associated\n"
         "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
@@ -146,7 +147,7 @@ def delete_checkpoints(args: Namespace) -> None:
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=cUUIDS)
         bindings.delete_DeleteCheckpoints(setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
-    else: 
+    else:
         print("Aborting deletion of checkpoints.")
 
 
@@ -181,12 +182,11 @@ main_cmd = Cmd(
             "describe checkpoint",
             [Arg("uuid", type=str, help="checkpoint uuid to describe")],
         ),
-
         Cmd(
             "delete",
-            delete_checkpoints, 
+            delete_checkpoints,
             "delete checkpoints",
-             [
+            [
                 Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
                 Arg(
                     "--yes",
@@ -195,7 +195,7 @@ main_cmd = Cmd(
                     help="automatically answer yes to prompts",
                 ),
             ],
-        )
+        ),
     ],
 )
 args_description = [main_cmd]  # type: List[Any]
