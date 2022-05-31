@@ -571,7 +571,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 
 func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto("get_trial", resp.Trial, req.TrialId); {
+	switch err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
