@@ -19,6 +19,14 @@ func (g *GCSConfigV0) SetBucket(val string) {
 	g.RawBucket = &val
 }
 
+func (g GCSConfigV0) Prefix() *string {
+	return g.RawPrefix
+}
+
+func (g *GCSConfigV0) SetPrefix(val *string) {
+	g.RawPrefix = val
+}
+
 func (g GCSConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedGCSConfigV0()
 }

@@ -1,7 +1,7 @@
 import os
 import uuid
 from pathlib import Path
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Optional
 
 import google.auth.exceptions
 import google.cloud.storage
@@ -43,9 +43,12 @@ def prep_gcs_test_creds(tmp_path: Path) -> Iterator[None]:
         del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
 
 
-@pytest.fixture
-def live_gcs_manager(
-    tmp_path: Path, prep_gcs_test_creds: None, require_secrets: bool
+# @pytest.fixture
+def get_live_gcs_manager(
+    tmp_path: Path,
+    prefix: Optional[str],
+    prep_gcs_test_creds: None,
+    require_secrets: bool,
 ) -> storage.GCSStorageManager:
     """
     Skip when we have no gcs access, unless --require-secrets was set, in which case fail.
@@ -57,7 +60,11 @@ def live_gcs_manager(
     # Instantiating a google.cloud.storage.Client() takes a few seconds, so we speed up test by
     # reusing the one created for the storage manager.
     try:
-        manager = storage.GCSStorageManager(bucket=BUCKET_NAME, temp_dir=str(tmp_path))
+        manager = storage.GCSStorageManager(
+            bucket=BUCKET_NAME,
+            prefix=prefix,
+            temp_dir=str(tmp_path),
+        )
         blob = manager.bucket.blob(CHECK_ACCESS_KEY)
         assert blob.download_as_string() == CHECK_KEY_CONTENT
     except google.auth.exceptions.DefaultCredentialsError:
@@ -70,10 +77,18 @@ def live_gcs_manager(
 
 
 @pytest.mark.cloud
-def test_gcs_lifecycle(live_gcs_manager: storage.GCSStorageManager) -> None:
+@pytest.mark.parametrize("prefix", [None, "test/prefix/"])
+def test_gcs_lifecycle(
+    require_secrets: bool,
+    tmp_path: Path,
+    prefix: Optional[str],
+) -> None:
+    live_gcs_manager = get_live_gcs_manager(tmp_path, prefix, None, require_secrets)
+
     def post_delete_cb(storage_id: str) -> None:
         """Search gcs directly to ensure that a checkpoint is actually deleted."""
-        found = [blob.name for blob in live_gcs_manager.bucket.list_blobs(prefix=storage_id)]
+        storage_prefix = live_gcs_manager.get_storage_prefix(storage_id)
+        found = [blob.name for blob in live_gcs_manager.bucket.list_blobs(prefix=storage_prefix)]
         if found:
             file_list = "    " + "\n    ".join(found)
             raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")

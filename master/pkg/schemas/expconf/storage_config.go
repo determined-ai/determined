@@ -138,20 +138,28 @@ type S3ConfigV0 struct {
 // Validate implements the check.Validatable interface.
 func (c S3ConfigV0) Validate() []error {
 	var errs []error
-	if c.RawPrefix != nil {
-		rawPrefix := *c.RawPrefix
-		if rawPrefix == ".." || strings.HasPrefix(rawPrefix, "../") ||
-			strings.HasSuffix(rawPrefix, "/..") || strings.Contains(rawPrefix, "/../") {
-			errs = append(errs, errors.New("'prefix' must not contain /../"))
-		}
+	if err := validateStoragePrefix(c.RawPrefix); err != nil {
+		errs = append(errs, err)
 	}
 	return errs
+}
+
+func validateStoragePrefix(prefix *string) error {
+	if prefix != nil {
+		rawPrefix := *prefix
+		if rawPrefix == ".." || strings.HasPrefix(rawPrefix, "../") ||
+			strings.HasSuffix(rawPrefix, "/..") || strings.Contains(rawPrefix, "/../") {
+			return errors.New("'prefix' must not contain /../")
+		}
+	}
+	return nil
 }
 
 //go:generate ../gen.sh
 // GCSConfigV0 configures storing checkpoints on GCS.
 type GCSConfigV0 struct {
 	RawBucket *string `json:"bucket"`
+	RawPrefix *string `json:"prefix"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -159,6 +167,9 @@ func (c GCSConfigV0) Validate() []error {
 	var errs []error
 	if c.RawBucket == nil {
 		errs = append(errs, errors.New("'bucket' must be specified"))
+	}
+	if err := validateStoragePrefix(c.RawPrefix); err != nil {
+		errs = append(errs, err)
 	}
 	return errs
 }
