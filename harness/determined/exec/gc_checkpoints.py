@@ -102,9 +102,7 @@ def main(argv: List[str]) -> None:
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
     logging.info(f"This is args.delete: {args.delete}")
-    checkpoints_uuids = args.delete.split(",")
-    storage_ids = [c for c in checkpoints_uuids]
-
+    storage_ids = args.delete.split(",")
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
     if args.delete_tensorboards:

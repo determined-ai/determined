@@ -36,9 +36,9 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
-// function called new checkpoint GC task and make it explicit it what it wants
-func newCheckpointGCTask(master *Master, jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec,
-	expID int, legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string, agentUserGroup *model.AgentUserGroup, owner *model.User) *checkpointGCTask {
+func newCheckpointGCTask(master *Master, jobID model.JobID, jobSubmissionTime time.Time,
+	taskSpec tasks.TaskSpec, expID int, legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string,
+	agentUserGroup *model.AgentUserGroup, owner *model.User) *checkpointGCTask {
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = owner
 	return &checkpointGCTask{

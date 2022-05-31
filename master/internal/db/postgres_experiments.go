@@ -1142,9 +1142,9 @@ FROM experiments
 WHERE id = $1`, id)
 }
 
-//  ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints that should be GCed
-// according to the given GC policy parameters. If the delete parameter is true, the returned
-// checkpoints are also marked as deleted in the database.
+// ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints
+// that should be GCed according to the given GC policy parameters. If the delete parameter is true,
+// the returned checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
@@ -1227,7 +1227,8 @@ WITH const AS (
 		ID uuid.UUID
 	}
 
-	if err := db.queryRows(ctes+query, &checkpointIDRows, id, experimentBest, trialBest, trialLatest); err != nil {
+	if err := db.queryRows(ctes+query, &checkpointIDRows,
+		id, experimentBest, trialBest, trialLatest); err != nil {
 		return "", fmt.Errorf(
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
 	}
