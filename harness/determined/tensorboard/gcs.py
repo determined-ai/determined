@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from typing import Any, Optional
 
 from determined.common import util
@@ -26,13 +27,13 @@ class GCSTensorboardManager(base.TensorboardManager):
         self.bucket = self.client.bucket(bucket)
         self.prefix = normalize_prefix(prefix)
 
-    def get_storage_prefix(self, storage_id: str) -> str:
+    def get_storage_prefix(self, storage_id: Path) -> str:
         return os.path.join(self.prefix, storage_id)
 
     @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
-            blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
+            blob_name = self.sync_path.joinpath(path.relative_to(self.base_path))
             to_path = self.get_storage_prefix(blob_name)
             blob = self.bucket.blob(to_path)
 
