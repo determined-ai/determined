@@ -156,7 +156,7 @@ The DeepSpeed launcher launches a training script under ``deepspeed`` with autom
 -  sshd containers
 -  shutdown
 
-See the official DeepSpeed documentation for information about how to use the DeepSpeed launcher.
+See the DeepSpeed `Launching DeepSpeed Training <https://www.deepspeed.ai/getting-started/#launching-deepspeed-training>`_ documentation for information about how to use the DeepSpeed launcher.
 
 Example:
 
@@ -213,8 +213,8 @@ Example:
  Create an Experiment
 **********************
 
-Currently, the CLI is the only supported mechanism for creating an experiment, although, you can
-create an experiment from an existing experiment or trial using the WebUI. To create an experiment:
+The CLI is the recommended way to create an experiment, although you can also use the WebUI to
+create from an existing experiment or trial. To create an experiment:
 
 .. code::
 
@@ -244,8 +244,7 @@ searcher specified in the experiment configuration file defines a set of hyperpa
 configurations. Each hyperparameter configuration corresponds to a single trial.
 
 After the context and experiment configuration reach the master, the experiment waits for the
-scheduler to assign slots. If there are insufficient idle slots available, the master automatically
-scales up the resource pools.
+scheduler to assign slots. The master handles allocating necessary resources as defined in the cluster configuration.
 
 When a trial is ready to run, the master communicates with the agent, or :ref:`distributed training
 <multi-gpu-training>` agents, which create(s) containers that have the configured environment and
