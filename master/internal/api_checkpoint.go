@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -46,11 +46,10 @@ func (a *apiServer) DeleteCheckpoints(
 
 	checkpointsToDeleteStr := req.CheckpointUuids
 
-	var checkpointsToDelete []uuid.UUID
-
-	for _, cStr := range checkpointsToDeleteStr {
-		cUUID, _ := uuid.Parse(cStr)
-		checkpointsToDelete = append(checkpointsToDelete, cUUID)
+	conv := &protoconverter.ProtoConverter{}
+	checkpointsToDelete := conv.ToUUIDList(checkpointsToDeleteStr)
+	if err := conv.Error(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", err)
 	}
 
 	registeredCheckpointUUIDs, err := a.m.db.FilterForRegisteredCheckpoints(checkpointsToDelete)
@@ -87,6 +86,7 @@ func (a *apiServer) DeleteCheckpoints(
 	}
 
 	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = curUser
 
 	jobID := model.NewJobID()
 	if err = a.m.db.AddJob(&model.Job{
@@ -108,14 +108,6 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, err
 		}
 
-		CUUIDsStr := strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")
-		var cUUIDsToDelete []uuid.UUID
-
-		for _, cStr := range CUUIDsStr {
-			cUUID, _ := uuid.Parse(cStr)
-			cUUIDsToDelete = append(cUUIDsToDelete, cUUID)
-		}
-
 		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
 			taskID:            model.NewTaskID(),
 			jobID:             jobID,
@@ -124,7 +116,7 @@ func (a *apiServer) DeleteCheckpoints(
 				Base:         taskSpec,
 				ExperimentID: exp.ID,
 				LegacyConfig: exp.Config.AsLegacy(),
-				ToDelete:     cUUIDsToDelete,
+				ToDelete:     expIDcUUIDs.CheckpointUUIDSStr,
 			},
 			rm: a.m.rm,
 			db: a.m.db,

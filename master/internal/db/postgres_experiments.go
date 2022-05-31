@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -1141,13 +1142,13 @@ FROM experiments
 WHERE id = $1`, id)
 }
 
-// ExperimentCheckpointsToGCRaw returns a JSON string describing checkpoints that should be GCed
+//  ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints that should be GCed
 // according to the given GC policy parameters. If the delete parameter is true, the returned
 // checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-) ([]uuid.UUID, error) {
+) (string, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
@@ -1220,34 +1221,26 @@ WITH const AS (
                    IS NULL))
 )`
 
-	query := `
-SELECT row_to_json(x)
-FROM (
-    SELECT const.metric_name,
-           (SELECT coalesce(
-                       jsonb_agg(to_jsonb(selected_checkpoints.*)
-                           #- '{experiment_rank}' #- '{trial_rank}' #- '{trial_order_rank}'
-                       ORDER BY id ASC), '[]'::jsonb)
-            FROM selected_checkpoints
-           ) AS checkpoints
-    FROM const
-) x
-`
+	query := `SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
-	checkpointsBytes, err := db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
-
-	if err != nil {
-		return nil, err
+	var checkpointIDRows []struct {
+		ID uuid.UUID
 	}
 
-	print(checkpointsBytes)
-	/*
-		var checkpointsGCRaw []uuid.UUID
+	if err := db.queryRows(ctes+query, &checkpointIDRows, id, experimentBest, trialBest, trialLatest); err != nil {
+		return "", fmt.Errorf(
+			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
+	}
 
-		for _, cB := range checkpointsBytes {
-			cUUID, _ := uuid.ParseBytes(cB)
-			checkpointsGCRaw = append(checkpointsGCRaw, cUUID)
-		}*/
+	checkpointIDsStr := ""
 
-	return nil, nil
+	for _, cRow := range checkpointIDRows {
+		if checkpointIDsStr == "" {
+			checkpointIDsStr = cRow.ID.String()
+		} else {
+			checkpointIDsStr = checkpointIDsStr + "," + cRow.ID.String()
+		}
+	}
+
+	return checkpointIDsStr, nil
 }
