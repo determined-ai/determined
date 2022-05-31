@@ -1280,7 +1280,7 @@ export interface V1ComparableTrial {
  */
 export interface V1CompareTrialsResponse {
     /**
-     * 
+     * A list of objects containing trial and metrics information.
      * @type {Array<V1ComparableTrial>}
      * @memberof V1CompareTrialsResponse
      */
@@ -5134,11 +5134,12 @@ export interface V1SSOProvider {
 }
 
 /**
- * Scale options available in metrics charts.   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+ * Scale options available in metrics charts.   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
  * @export
  * @enum {string}
  */
 export enum V1Scale {
+    UNSPECIFIED = <any> 'SCALE_UNSPECIFIED',
     LINEAR = <any> 'SCALE_LINEAR',
     LOG = <any> 'SCALE_LOG'
 }
@@ -8575,11 +8576,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9326,11 +9327,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
@@ -9630,11 +9631,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -9965,11 +9966,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10098,11 +10099,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
             return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
@@ -10289,11 +10290,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
             return ExperimentsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
@@ -10393,12 +10394,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
         return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
@@ -10616,12 +10617,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
         return ExperimentsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
@@ -17575,11 +17576,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -17829,11 +17830,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
@@ -18039,11 +18040,11 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -18148,11 +18149,11 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -18232,11 +18233,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
             return TrialsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
@@ -18296,11 +18297,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
          * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-         * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+         * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
             return TrialsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
@@ -18354,12 +18355,12 @@ export class TrialsApi extends BaseAPI {
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
         return TrialsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
@@ -18428,12 +18429,12 @@ export class TrialsApi extends BaseAPI {
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
      * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} [metricType] Type of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
-     * @param {'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
+     * @param {'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG'} [scale] Scale of metric visualization (linear or log scale).   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
         return TrialsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
