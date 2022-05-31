@@ -20,10 +20,10 @@ interface Props {
   data?: AlignedData | FacetedData;
   focusIndex?: number;
   noDataMessage?: string;
+  onZoom?: (min: number, max: number) => void;
   options?: Partial<Options>;
   style?: React.CSSProperties;
   title?: string;
-  onZoom?: (min: number, max: number) => void;
 }
 
 const SCROLL_THROTTLE_TIME = 500;

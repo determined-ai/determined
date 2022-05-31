@@ -38,31 +38,44 @@ const TrialChart: React.FC<Props> = ({
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
+  const [ zooms, setZooms ] = useState<number[]>([ 0, 1000000 ]);
+
+  if (window.location.search.includes('compare=')) {
+    defaultMetricNames = defaultMetricNames.concat(defaultMetricNames.map(nm => ({
+      ...nm,
+      name: `t2_${nm.name}`,
+    })));
+    metricNames = metricNames.concat(metricNames.map(nm => ({
+      ...nm,
+      name: `t2_${nm.name}`,
+    })));
+  }
 
   useMemo(async () => {
+    const [ min, max ] = zooms;
     if (trialId) {
-      const summ = await compareTrials({
-        maxDatapoints: 30,
-        metricNames: metricNames,
-        scale: scale,
-        trialIds: [trialId],
-      });
-      setTrialSummary(summ[0].metrics);
-    }
-  }, [ metricNames, scale, trialId ]);
-
-  const resetZoom = async (min: number, max: number) => {
-    if (trialId) {
+      const last = window.location.search.substring(window.location.search.indexOf('compare='));
+      const extraIDs = (last || '0').match(/\d+/);
       const summ = await compareTrials({
         endBatches: Math.ceil(max),
         maxDatapoints: 30,
         metricNames: metricNames,
         scale: scale,
         startBatches: Math.floor(min),
-        trialIds: [trialId],
+        trialIds: extraIDs ? [ trialId, Number(extraIDs[0]) ] : [ trialId ],
       });
+      if (summ.length > 1) {
+        summ[0].metrics = summ[0].metrics.concat(summ[1].metrics.map(m => ({
+          ...m,
+          name: `t2_${m.name}`,
+        })));
+      }
       setTrialSummary(summ[0].metrics);
     }
+  }, [ metricNames, scale, trialId, zooms ]);
+
+  const resetZoom = (min: number, max: number) => {
+    setZooms([ min, max ]);
   };
 
   const chartData: AlignedData = useMemo(() => {

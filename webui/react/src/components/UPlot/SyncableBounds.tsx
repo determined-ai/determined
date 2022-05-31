@@ -72,7 +72,7 @@ export const useSyncableBounds = (onZoom?: (min: number, max: number) => void): 
                 zoomSetter(true);
                 const minX = u.posToVal(0, 'x');
                 const maxX = u.posToVal(u.bbox.width, 'x');
-                console.log([minX, maxX]);
+                console.log([ minX, maxX ]);
                 if (onZoom) {
                   onZoom(minX, maxX);
                 }
@@ -91,7 +91,7 @@ export const useSyncableBounds = (onZoom?: (min: number, max: number) => void): 
         },
       },
     };
-  }, [ zoomSetter, syncRef ]) as Partial<uPlot.Options>;
+  }, [ onZoom, zoomSetter, syncRef ]) as Partial<uPlot.Options>;
 
   return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
 };
