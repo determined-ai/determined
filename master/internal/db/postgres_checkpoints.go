@@ -62,7 +62,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
-		`SELECT e.id AS ExperimentID, array_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
+		`SELECT e.id AS ExperimentID, string_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
 	FROM experiments e
 	JOIN checkpoints_view c ON c.experiment_id = e.id
 	WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))

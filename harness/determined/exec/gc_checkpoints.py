@@ -22,6 +22,8 @@ def delete_checkpoints(
     logging.info("Deleting {} checkpoints".format(len(to_delete)))
 
     for storage_id in to_delete:
+        if storage_id == "": 
+            raise ValueError("checkpoint uuid to delete is empty")
         if not dry_run:
             logging.info(f"Deleting checkpoint {storage_id}")
             manager.delete(storage_id)
@@ -69,9 +71,9 @@ def main(argv: List[str]) -> None:
     )
     parser.add_argument(
         "--delete",
-        type=json_file_arg,
-        default=os.getenv("DET_DELETE", []),
-        help="Checkpoints to delete (JSON-formatted file)",
+        type=str,
+        default=os.getenv("DET_DELETE", ""),
+        help="comma-separated list of checkpoints to delete",
     )
     parser.add_argument(
         "--delete-tensorboards",
@@ -99,7 +101,9 @@ def main(argv: List[str]) -> None:
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
-    storage_ids = [c["uuid"] for c in args.delete["checkpoints"]]
+    logging.info(f"This is args.delete: {args.delete}" )
+    checkpoints_uuids = args.delete.split(",")
+    storage_ids = [c for c in checkpoints_uuids]
 
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
