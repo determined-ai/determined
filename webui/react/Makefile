@@ -37,7 +37,7 @@ clean:
 
 .PHONY: live
 live:
-	SERVER_ADDRESS=http://localhost:8080 npm start
+	npm start
 
 .PHONY: check-js
 check-js:
