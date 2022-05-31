@@ -840,8 +840,9 @@ class TFKerasTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+
             # upload tb
-            self.context._core.train.upload_tb_profile(self.context.distributed.rank)
+            self.context._core.train._auto_upload_tb_files()
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -946,7 +947,7 @@ class TFKerasTrialController(det.TrialController):
         self.train_response_func(response)
         self.train_response_func = None
 
-        self.context._core.train.upload_tb_profile(self.context.distributed.rank)
+        self.context._core.train._auto_upload_tb_files()
 
         self._control_loop()
 

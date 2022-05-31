@@ -2,10 +2,9 @@ import logging
 import os
 import pathlib
 import shutil
-from typing import Any
+from typing import Any, Callable
 
 from determined.tensorboard import base
-from determined.tensorboard.util import get_rank_aware_path
 
 logger = logging.getLogger("determined.core")
 
@@ -29,15 +28,20 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         # Restore the original umask.
         os.umask(old_umask)
 
-    def sync(self, rank: int = 0) -> None:
-        for path in self.to_sync():
-            logger.debug(
-                f"SharedFSTensorboardManager({self.base_path}, {self.sync_path}) saving {path}"
-            )
-            shared_fs_path = self.shared_fs_base.joinpath(path.relative_to(self.base_path))
-            pathlib.Path.mkdir(shared_fs_path.parent, parents=True, exist_ok=True)
-            rank_aware_path = get_rank_aware_path(shared_fs_path, rank)
-            shutil.copy(path, rank_aware_path)
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.shared_fs_base.joinpath(mangled_relative_path)
+            pathlib.Path.mkdir(mangled_path.parent, parents=True, exist_ok=True)
+            logger.debug(f"SharedFSTensorboardManager saving {path} to {mangled_path}")
+
+            shutil.copy(path, mangled_path)
 
     def delete(self) -> None:
         shutil.rmtree(self.shared_fs_base, False)

@@ -1,11 +1,11 @@
 import logging
-from typing import Any, Optional
+import pathlib
+from typing import Any, Callable, Optional
 
 from hdfs.client import InsecureClient
 
 from determined.common import util
 from determined.tensorboard import base
-from determined.tensorboard.util import get_rank_aware_path
 
 
 class HDFSTensorboardManager(base.TensorboardManager):
@@ -31,12 +31,17 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.client.makedirs(str(self.sync_path))
 
     @util.preserve_random_state
-    def sync(self, rank: int = 0) -> None:
-        for path in self.to_sync():
-            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            rank_aware_path = get_rank_aware_path(canonical_path, rank)
-            file_name = str(rank_aware_path)
-
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.sync_path.joinpath(mangled_relative_path)
+            file_name = str(mangled_path)
             logging.debug(f"Uploading {path} to {self.hdfs_path}")
 
             self.client.upload(file_name, str(path))

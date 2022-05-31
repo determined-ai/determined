@@ -1,11 +1,11 @@
 import logging
 import os
-from typing import Any, Optional
+import pathlib
+from typing import Any, Callable, Optional
 
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
-from determined.tensorboard.util import get_rank_aware_path
 
 
 class S3TensorboardManager(base.TensorboardManager):
@@ -43,11 +43,17 @@ class S3TensorboardManager(base.TensorboardManager):
         self.prefix = normalize_prefix(prefix)
 
     @util.preserve_random_state
-    def sync(self, rank: int = 0) -> None:
-        for path in self.to_sync():
-            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            rank_aware_path = get_rank_aware_path(canonical_path, rank)
-            tbd_filename = str(rank_aware_path)
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.sync_path.joinpath(mangled_relative_path)
+            tbd_filename = str(mangled_path)
             key_name = os.path.join(self.prefix, tbd_filename)
 
             url = f"s3://{self.bucket}/{key_name}"

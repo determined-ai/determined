@@ -1,8 +1,8 @@
-from typing import Any, Optional
+import pathlib
+from typing import Any, Callable, Optional
 
 from determined.common import util
 from determined.tensorboard import base
-from determined.tensorboard.util import get_rank_aware_path
 
 
 class AzureTensorboardManager(base.TensorboardManager):
@@ -28,13 +28,19 @@ class AzureTensorboardManager(base.TensorboardManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def sync(self, rank: int = 0) -> None:
-        for path in self.to_sync():
-            whole_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            rank_aware_path = get_rank_aware_path(whole_path, rank)
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.sync_path.joinpath(mangled_relative_path)
             self.client.put(
-                "{}/{}".format(self.container, str(rank_aware_path.parent)),
-                rank_aware_path.name,
+                f"{self.container}/{mangled_path.parent}",
+                mangled_path.name,
                 path,
             )
 

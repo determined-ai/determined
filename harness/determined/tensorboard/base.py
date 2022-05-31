@@ -2,7 +2,7 @@ import abc
 import logging
 import pathlib
 import time
-from typing import List
+from typing import Callable, List
 
 from determined import tensorboard
 
@@ -28,7 +28,11 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         self.sync_path = sync_path
         self.last_sync = 0.0
 
-    def list_tb_files(self, since: float) -> List[pathlib.Path]:
+    def list_tb_files(
+        self,
+        since: float,
+        selector: Callable[[pathlib.Path], bool],
+    ) -> List[pathlib.Path]:
         """
         list_files returns Tensorboard-relevant file names located in the base_path directory
         and all sub-directories that have been modified since a certain time.
@@ -42,18 +46,29 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         if not self.base_path.exists():
             logging.warning(f"{self.base_path} directory does not exist.")
             return []
-        tb_files = [file for file in self.base_path.rglob("*") if file.is_file()]
-        return list(filter(lambda file: file.stat().st_mtime > since, tb_files))
+        return [
+            file
+            for file in self.base_path.rglob("*")
+            if file.stat().st_mtime > since and file.is_file() and selector(file)
+        ]
 
-    def to_sync(self) -> List[pathlib.Path]:
+    def to_sync(
+        self,
+        selector: Callable[[pathlib.Path], bool],
+    ) -> List[pathlib.Path]:
         sync_start = time.time()
-        sync_paths = self.list_tb_files(self.last_sync)
+        sync_paths = self.list_tb_files(self.last_sync, selector)
         self.last_sync = sync_start
 
         return sync_paths
 
     @abc.abstractmethod
-    def sync(self, rank: int = 0) -> None:
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
         """
         Save the object to the backing persistent storage.
         """

@@ -74,7 +74,7 @@ def test_list_tb_files(tmp_path: pathlib.Path) -> None:
     ]
 
     test_filepaths = [BASE_PATH.joinpath("tensorboard-", test_file) for test_file in test_files]
-    tb_files = manager.list_tb_files(0)
+    tb_files = manager.list_tb_files(0, lambda _: True)
 
     assert set(test_filepaths) == set(tb_files)
 
@@ -86,7 +86,7 @@ def test_list_tb_files_nonexistent_directory(tmp_path: pathlib.Path) -> None:
     manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
 
     assert not pathlib.Path(base_path).exists()
-    assert manager.list_tb_files(0) == []
+    assert manager.list_tb_files(0, lambda _: True) == []
 
 
 test_data = [

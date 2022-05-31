@@ -101,6 +101,7 @@ def init(
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
+    tensorboard_sync_mode: core.TensorboardSyncMode = core.TensorboardSyncMode.ChiefOnly,
 ) -> Context:
     """
     ``core.init()`` builds a :class:`core.Context <determined.core.Context>` for use with the Core
@@ -120,9 +121,12 @@ def init(
             required for multi-slot training, but unnecessary for single-slot training.  Defaults to
             ``None``.
         preempt_mode (``core.PreemptMode``, optional): Configure the calling pattern for the
-            ``core_context.preempt.should_preempt()`` method.  See
-            :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
+            ``core_context.preempt.should_preempt()`` method. See
+            :class:`~determined.core.PreemptMode` for more detail. Defaults to ``WorkersAskChief``.
         storage_manager: Internal use only.
+        tensorboard_sync_mode (``core.TensorboardSyncMode``, optional): Define how Tensorboard
+            metrics and profiling data are retained. See
+            :class:`~determined.core.TensorboardSyncMode`` for more detail.
     """
     info = det.get_cluster_info()
     if info is None:
@@ -163,6 +167,8 @@ def init(
             info.trial.trial_id,
             info.trial._trial_run_id,
             info.trial.experiment_id,
+            distributed,
+            tensorboard_sync_mode,
             tbd_mgr,
             tbd_writer,
         )

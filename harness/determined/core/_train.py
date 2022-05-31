@@ -1,11 +1,14 @@
 import enum
 import logging
-from typing import Any, Dict, List, Optional, Set
+import pathlib
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
+from determined.core import DistributedContext
+from determined.tensorboard.util import get_rank_aware_path
 
 logger = logging.getLogger("determined.core")
 
@@ -14,6 +17,27 @@ class EarlyExitReason(enum.Enum):
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     # This is generally unnecessary; just exit early.
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
+
+
+class TensorboardSyncMode(enum.Enum):
+    """
+    ```TensorboardSyncMode`` defines how Tensorboard metrics and profiling data are retained.
+
+    In ``ChiefOnly`` mode only the chief uploads its metrics and profiling data to checkpoint
+    storage. This is the same behavior that existed prior to 0.18.2.
+
+    In ``ChiefAndWorkers`` mode the chief uploads it metrics and profiling data to checkpoint
+    storage, and the workers upload their profiling data. The profiling data file names are
+    altered to include the workers' rank in order to avoid collision and allow displaying each
+    worker's profile under a separate host in Tensorboard.
+
+    In ``Manual`` mode neither metrics nor profiling data are reported. It is up to the user
+    to call ``TrainContext.upload_tb_files()``
+    """
+
+    ChiefOnly = "CHIEF_ONLY"
+    ChiefAndWorkers = "CHIEF_AND_WORKERS"
+    Manual = "MANUAL"
 
 
 class TrainContext:
@@ -28,6 +52,8 @@ class TrainContext:
         trial_id: int,
         run_id: int,
         exp_id: int,
+        distributed: DistributedContext,
+        tbd_sync_mode: TensorboardSyncMode,
         tbd_mgr: Optional[tensorboard.TensorboardManager],
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
@@ -35,6 +61,8 @@ class TrainContext:
         self._trial_id = trial_id
         self._run_id = run_id
         self._exp_id = exp_id
+        self._distributed = distributed
+        self._tbd_sync_mode = tbd_sync_mode
         self._tbd_mgr = tbd_mgr
         self._tbd_writer = tbd_writer
 
@@ -89,20 +117,44 @@ class TrainContext:
             data=det.util.json_encode(body),
         )
 
-        # Sync tensorboard (metrics only; profile sync is in control loop)
         if self._tbd_writer:
             logger.info("write metrics to tb")
-            self._tbd_writer.on_train_step_end(
-                steps_completed,
-                metrics,
-                batch_metrics,
-            )
+            self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
 
-    def upload_tb_profile(self, rank: int = 0) -> None:
-        logger.info("upload tb profile")
+    def _auto_upload_tb_files(self) -> None:
+        """
+        Uploader for use by Trial classes
+        """
+        if self._tbd_sync_mode == TensorboardSyncMode.ChiefOnly:
+            if self._distributed.rank == 0:
+                self.upload_tb_files()  # no filtering and no mangling
+        elif self._tbd_sync_mode == TensorboardSyncMode.ChiefAndWorkers:
+            if self._distributed.rank == 0:
+                self.upload_tb_files(
+                    selector=lambda _: True,  # upload metrics and profiling data
+                    mangler=get_rank_aware_path,
+                )
+            else:
+                self.upload_tb_files(
+                    selector=lambda p: not p.match("*tfevents*"),
+                    mangler=get_rank_aware_path,
+                )
+
+    def upload_tb_files(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+    ) -> None:
+        """
+        Upload files generated for consumption by Tensorboard to checkpoint storage.
+        :param selector: optional function returning True for a file that should be included.
+        If not provided, all files are uploaded.
+        :param mangler: optional function modifying
+        :return:
+        """
         if self._tbd_mgr:
-            logger.debug("for real")
-            self._tbd_mgr.sync(rank)
+            logger.info("upload tb profile")
+            self._tbd_mgr.sync(selector, mangler, self._distributed.rank)
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
@@ -230,8 +282,15 @@ class DummyTrainContext(TrainContext):
             f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
         )
 
-    def upload_tb_profile(self, rank: int = 0) -> None:
-        logger.info(f"upload_tb_profile({rank})")
+    def _auto_upload_tb_files(self) -> None:
+        logger.info("_auto_upload_tb_files")
+
+    def upload_tb_files(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+    ) -> None:
+        logger.info("upload_tb_files()")
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")
