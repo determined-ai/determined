@@ -313,10 +313,12 @@ message PostTrialProfilerMetricsBatchResponse {}
 
 // Scale options available in metrics charts.
 enum Scale {
+  // Unknown scale.
+  SCALE_UNSPECIFIED = 0;
   // Downsample points with closeness plotted on a linear y-axis.
-  SCALE_LINEAR = 0;
+  SCALE_LINEAR = 1;
   // Downsample points with closeness plotted on a logarithmic y-axis.
-  SCALE_LOG = 1;
+  SCALE_LOG = 2;
 }
 
 // Get downsampled metrics from a trial.
@@ -387,6 +389,7 @@ message CompareTrialsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials" ] }
   };
+  // A list of objects containing trial and metrics information.
   repeated ComparableTrial trials = 1;
 }
 

@@ -4851,6 +4851,7 @@ class v1SSOProvider:
         }
 
 class v1Scale(enum.Enum):
+    SCALE_UNSPECIFIED = "SCALE_UNSPECIFIED"
     SCALE_LINEAR = "SCALE_LINEAR"
     SCALE_LOG = "SCALE_LOG"
 
