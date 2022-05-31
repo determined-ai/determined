@@ -55,7 +55,7 @@ const TrialChart: React.FC<Props> = ({
     const [ min, max ] = zooms;
     if (trialId) {
       const last = window.location.search.substring(window.location.search.indexOf('compare='));
-      const extraIDs = (last || '0').match(/\d+/);
+      const extraIDs = window.location.search.includes('compare=') ? (last || '0').match(/\d+/) : 0;
       const summ = await compareTrials({
         endBatches: Math.ceil(max),
         maxDatapoints: 30,
