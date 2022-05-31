@@ -4,7 +4,11 @@
  Python API Reference
 #####################
 
-Python API user guide: :doc:`/interfaces/python-api`
++--------------------------------------------------+
+| Python API User Guide                            |
++==================================================+
+| :doc:`/interfaces/python-api`                    |
++--------------------------------------------------+
 
 ************
  ``Client``

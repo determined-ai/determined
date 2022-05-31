@@ -106,66 +106,48 @@
  *Welcome to Determined AI!*
 *****************************
 
-Release Notes
-=============
-
-:doc:`Latest release notes <release-notes>`
-
-Determined is an open source deep learning training platform that makes building models fast and
-easy.
-
-With Determined you can:
-
--  Use state-of-the-art distributed training to train models faster without changing your model
-   code.
--  Automatically find high-quality models using advanced hyperparameter tuning.
--  Get more from your GPUs with preemptible instances and smart scheduling to reduce cloud GPU
-   costs.
--  Leverage experiment tracking out-of-the-box to track and reproduce your work, tracking code
-   versions, metrics, checkpoints, and hyperparameters.
--  Continue using popular deep learning libraries, such as TensorFlow, Keras, and PyTorch by simply
-   integrating the Determined API with your existing model code.
-
-Determined integrates these features into an easy-to-use, high-performance deep learning
-environment so you can spend your time building models instead of managing infrastructure.
-
-|
-
 .. raw:: html
+
+   <div>
+      <p class="landing-text">
+         New features, upgrades, deprecation notices, known issues, and bug fixes:
+         <a href=release-notes.html>Release Notes</a>
+      </p>
+   </div>
 
    <div class="landing">
       <div class="tiles-flex">
           <a class="tile" href="quickstart-mdldev.html">
               <h2 class="tile-title">Start here ...</h2>
-              <p class="tile-description">Try these hands-on quickstart guides for a basic introduction to setting up your Determined environment and training models.</p>
+              <p class="tile-description">Learn the basics steps needed to set up your Determined environment and train models.</p>
           </a>
           <a class="tile" href="intro/features/list.html">
               <h2 class="tile-title">Introducing Determined</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Understand core concepts, key features, and the Determined architecture to get helpful context before diving into more detailed information.</p>
           </a>
           <a class="tile" href="cluster-setup-guide/getting-started.html">
               <h2 class="tile-title">Cluster Setup Guide</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Get started with setting up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
           </a>
           <a class="tile" href="training/dtrain-intro.html">
               <h2 class="tile-title">Training</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Learn how to use Determined features and APIs in your workflow, and how to configure your distributed training experiments.</p>
           </a>
           <a class="tile" href="tutorials/pytorch-mnist-tutorial.html">
               <h2 class="tile-title">Tutorials</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
           </a>
           <a class="tile" href="reference/training/overview.html">
               <h2 class="tile-title">Reference</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Explore the Determined and integrated training APIs along with configuration and CLI reference documentation.</p>
           </a>
           <a class="tile" href="example-solutions/examples.html">
               <h2 class="tile-title">Example Solutions</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Explore example machine learning models that have been ported to the Determined APIs.</p>
           </a>
           <a class="tile" href="interfaces/python-api.html">
               <h2 class="tile-title">Python API</h2>
-              <p class="tile-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="tile-description">Use the Python API to interface with Determined to get many of the same capabilities available through the CLI.</p>
           </a>
       </div>
    </div>

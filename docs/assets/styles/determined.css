@@ -187,7 +187,7 @@ ul.menu-right li a, a:hover, a:focus, a:active {
 .landing {
     width: 100%;
     max-width: 800px; /* Force to a maximum of 3 tiles wide */
-    margin: 0 auto;
+    margin-top: 30px;
     text-align: center;
 }
 
@@ -337,6 +337,13 @@ display: none;
     flex-direction:column;
     -ms-flex-pack:distribute;
     /* justify-content:space-around; */
+}
+
+.landing-text {
+    font-size: 100%;
+    letter-spacing: .2px;
+    line-height: 1.25;
+    color: #757575;
 }
 
 /* fonts */

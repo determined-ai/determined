@@ -4,7 +4,11 @@
  Command-line Interface (CLI) Reference
 #######################################
 
-CLI user guide: :doc:`/interfaces/commands-and-shells`
++--------------------------------------------------+
+| CLI User Guide                                   |
++==================================================+
+| :doc:`/interfaces/commands-and-shells`           |
++--------------------------------------------------+
 
 .. code:: bash
 
