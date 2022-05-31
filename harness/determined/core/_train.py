@@ -231,6 +231,9 @@ class DummyTrainContext(TrainContext):
             f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
         )
 
+    def upload_tb_profile(self, rank: int = 0) -> None:
+        logger.info(f"upload_tb_profile({rank})")
+
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")
 

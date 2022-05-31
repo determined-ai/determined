@@ -6,6 +6,7 @@ from typing import Any, Optional
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class GCSTensorboardManager(base.TensorboardManager):
@@ -33,8 +34,9 @@ class GCSTensorboardManager(base.TensorboardManager):
     @util.preserve_random_state
     def sync(self, rank: int = 0) -> None:
         for path in self.to_sync():
-            blob_name = self.sync_path.joinpath(path.relative_to(self.base_path))
-            to_path = self.get_storage_prefix(blob_name)
+            canonical_path = self.sync_path.joinpath(path.relative_to(self.base_path))
+            rank_aware_path = get_rank_aware_path(canonical_path, rank)
+            to_path = self.get_storage_prefix(rank_aware_path)
             blob = self.bucket.blob(to_path)
 
             logging.debug(f"Uploading {path} to GCS: {to_path}")
