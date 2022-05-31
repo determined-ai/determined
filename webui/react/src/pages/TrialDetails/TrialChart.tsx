@@ -10,7 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
-import { getTrialSummary } from 'services/api';
+import { compareTrials } from 'services/api';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricContainer, MetricName, Scale } from 'types';
 
@@ -41,27 +41,27 @@ const TrialChart: React.FC<Props> = ({
 
   useMemo(async () => {
     if (trialId) {
-      const summ = await getTrialSummary({
+      const summ = await compareTrials({
         maxDatapoints: 30,
         metricNames: metricNames,
         scale: scale,
-        trialId: trialId,
+        trialIds: [trialId],
       });
-      setTrialSummary(summ.metrics);
+      setTrialSummary(summ[0].metrics);
     }
   }, [ metricNames, scale, trialId ]);
 
   const resetZoom = async (min: number, max: number) => {
     if (trialId) {
-      const summ = await getTrialSummary({
+      const summ = await compareTrials({
         endBatches: Math.ceil(max),
         maxDatapoints: 30,
         metricNames: metricNames,
         scale: scale,
         startBatches: Math.floor(min),
-        trialId: trialId,
+        trialIds: [trialId],
       });
-      setTrialSummary(summ.metrics);
+      setTrialSummary(summ[0].metrics);
     }
   };
 
