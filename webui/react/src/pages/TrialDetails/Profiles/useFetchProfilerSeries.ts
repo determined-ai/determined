@@ -7,7 +7,7 @@ import { readStream } from 'services/utils';
 
 import { AvailableSeries } from './types';
 
-export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
+export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
   const { ui } = useStore();
   const [ availableSeries, setAvailableSeries ] = useState<AvailableSeries>({});
 
