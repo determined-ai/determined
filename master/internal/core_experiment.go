@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -227,30 +226,15 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 
 		taskSpec := *m.taskSpec
-		taskSpec.AgentUserGroup = agentUserGroup
-		taskSpec.Owner = &model.User{
+		user := &model.User{
 			ID:       ownerFullUser.ID,
 			Username: ownerFullUser.Username,
 		}
 
+		ckptGCTask := newCheckpointGCTask(m, dbExp.JobID, dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(),
+			checkpoints, agentUserGroup, user)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-			&checkpointGCTask{
-				taskID:            model.NewTaskID(),
-				jobID:             dbExp.JobID,
-				jobSubmissionTime: dbExp.StartTime,
-				GCCkptSpec: tasks.GCCkptSpec{
-					Base:               taskSpec,
-					ExperimentID:       dbExp.ID,
-					LegacyConfig:       dbExp.Config.AsLegacy(),
-					ToDelete:           checkpoints,
-					DeleteTensorboards: true,
-				},
-				rm: m.rm,
-				db: m.db,
-
-				taskLogger: m.taskLogger,
-				logCtx:     logger.Context{"experiment-id": dbExp.ID},
-			})
+			ckptGCTask)
 	}
 
 	return nil, nil

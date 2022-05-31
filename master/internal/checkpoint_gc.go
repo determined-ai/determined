@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/pkg/errors"
 
@@ -36,6 +37,26 @@ type checkpointGCTask struct {
 }
 
 // function called new checkpoint GC task and make it explicit it what it wants
+func newCheckpointGCTask(master *Master, jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec,
+	expID int, legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string, agentUserGroup *model.AgentUserGroup, owner *model.User) *checkpointGCTask {
+	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = owner
+	return &checkpointGCTask{
+		taskID:            model.NewTaskID(),
+		jobID:             jobID,
+		jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
+		GCCkptSpec: tasks.GCCkptSpec{
+			Base:         taskSpec,
+			ExperimentID: expID,
+			LegacyConfig: legacyConfig,
+			ToDelete:     toDeleteCheckpoints,
+		},
+		rm: master.rm,
+		db: master.db,
+
+		taskLogger: master.taskLogger,
+	}
+}
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {

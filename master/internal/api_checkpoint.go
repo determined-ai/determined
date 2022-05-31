@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
@@ -64,14 +63,9 @@ func (a *apiServer) DeleteCheckpoints(
 			registeredCheckpointUUIDs)
 	}
 
-	taskSpec := *a.m.taskSpec
-
 	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))
 
-	if err != nil {
-		return nil, err
-	}
-
+	taskSpec := *a.m.taskSpec
 	agentUserGroup, err := a.m.db.AgentUserGroup(curUser.ID)
 	if err != nil {
 		return nil, status.Errorf(
@@ -84,9 +78,6 @@ func (a *apiServer) DeleteCheckpoints(
 	if agentUserGroup == nil {
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
-
-	taskSpec.AgentUserGroup = agentUserGroup
-	taskSpec.Owner = curUser
 
 	jobID := model.NewJobID()
 	if err = a.m.db.AddJob(&model.Job{
@@ -108,21 +99,11 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, err
 		}
 
-		if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-			taskID:            model.NewTaskID(),
-			jobID:             jobID,
-			jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
-			GCCkptSpec: tasks.GCCkptSpec{
-				Base:         taskSpec,
-				ExperimentID: exp.ID,
-				LegacyConfig: exp.Config.AsLegacy(),
-				ToDelete:     expIDcUUIDs.CheckpointUUIDSStr,
-			},
-			rm: a.m.rm,
-			db: a.m.db,
-
-			taskLogger: a.m.taskLogger,
-		}).AwaitTermination(); gcErr != nil {
+		jobSubmissionTime := time.Now().UTC().Truncate(time.Millisecond)
+		ckptGCTask := newCheckpointGCTask(a.m, jobID, jobSubmissionTime, taskSpec, exp.ID, exp.Config.AsLegacy(),
+			expIDcUUIDs.CheckpointUUIDSStr, agentUserGroup, curUser)
+		if gcErr := a.m.system.MustActorOf(addr,
+			ckptGCTask).AwaitTermination(); gcErr != nil {
 			return nil, fmt.Errorf("failed to create GC task: %w", gcErr)
 		}
 	}
