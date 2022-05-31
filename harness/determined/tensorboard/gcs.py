@@ -26,16 +26,19 @@ class GCSTensorboardManager(base.TensorboardManager):
         self.bucket = self.client.bucket(bucket)
         self.prefix = normalize_prefix(prefix)
 
+    def get_storage_prefix(self, storage_id: str) -> str:
+        return os.path.join(self.prefix, storage_id)
+
     @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
             blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
-            to_path = os.path.join(self.prefix, blob_name)
+            to_path = self.get_storage_prefix(blob_name)
             blob = self.bucket.blob(to_path)
 
             logging.debug(f"Uploading {path} to GCS: {to_path}")
             blob.upload_from_filename(str(path))
 
     def delete(self) -> None:
-        prefix_path = os.path.join(self.prefix, self.sync_path)
+        prefix_path = self.get_storage_prefix(self.sync_path)
         self.bucket.delete_blobs(blobs=list(self.bucket.list_blobs(prefix=prefix_path)))

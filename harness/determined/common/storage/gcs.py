@@ -81,15 +81,15 @@ class GCSStorageManager(storage.CloudStorageManager):
     @util.preserve_random_state
     def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
         dst = os.fspath(dst)
-        prefix = self.get_storage_prefix(src)
-        logging.info(f"Downloading {prefix} from GCS")
+        path = self.get_storage_prefix(src)
+        logging.info(f"Downloading {path} from GCS")
         found = False
         # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
         # you include a `delimiter="/"` you will get only the file-like blobs inside of a
         # directory-like blob.
-        for blob in self.bucket.list_blobs(prefix=prefix):
+        for blob in self.bucket.list_blobs(prefix=path):
             found = True
-            _dst = os.path.join(dst, os.path.relpath(blob.name, prefix))
+            _dst = os.path.join(dst, os.path.relpath(blob.name, path))
             dst_dir = os.path.dirname(_dst)
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir, exist_ok=True)
@@ -105,7 +105,7 @@ class GCSStorageManager(storage.CloudStorageManager):
             blob.download_to_filename(_dst)
 
         if not found:
-            raise errors.CheckpointNotFound(f"Did not find checkpoint {prefix} in GCS")
+            raise errors.CheckpointNotFound(f"Did not find checkpoint {path} in GCS")
 
     @util.preserve_random_state
     def delete(self, storage_id: str) -> None:
