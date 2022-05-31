@@ -82,19 +82,17 @@ func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 
 	// Send a list of delete checkpoints uuids the user wants to delete and check if it's in model registry.
-	requestedDeleteCheckpoints := []string{checkpoint1.UUID.String(), checkpoint3.UUID.String()}
-	var expectedDeleteInModelRegistryCheckpoints []string
-	expectedDeleteInModelRegistryCheckpoints = append(expectedDeleteInModelRegistryCheckpoints, checkpoint1.UUID.String())
+	requestedDeleteCheckpoints := []uuid.UUID{checkpoint1.UUID, checkpoint3.UUID}
+	var expectedDeleteInModelRegistryCheckpoints []uuid.UUID
+	expectedDeleteInModelRegistryCheckpoints = append(expectedDeleteInModelRegistryCheckpoints, checkpoint1.UUID)
 	dCheckpointsInRegistry, err := db.FilterForRegisteredCheckpoints(requestedDeleteCheckpoints)
 	require.NoError(t, err)
 	require.Equal(t, expectedDeleteInModelRegistryCheckpoints, dCheckpointsInRegistry)
 
-	validDeleteCheckpoint := checkpoint3.UUID.String()
-	fmt.Println("valid DeleteCheckpoint")
-	fmt.Println(validDeleteCheckpoint)
+	validDeleteCheckpoint := checkpoint3.UUID
 	numValidDCheckpoints := 1
 
-	db.MarkCheckpointsDeleted([]string{validDeleteCheckpoint})
+	db.MarkCheckpointsDeleted([]uuid.UUID{validDeleteCheckpoint})
 
 	var numDStateCheckpoints int
 

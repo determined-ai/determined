@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/google/uuid"
-
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -23,7 +21,7 @@ type GCCkptSpec struct {
 
 	ExperimentID       int
 	LegacyConfig       expconf.LegacyConfig
-	ToDelete           []uuid.UUID
+	ToDelete           string
 	DeleteTensorboards bool
 }
 
@@ -86,7 +84,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 		"--storage-config",
 		"/run/determined/checkpoint_gc/storage_config.json",
 		"--delete",
-		"/run/determined/checkpoint_gc/checkpoints_to_delete.json",
+		g.ToDelete,
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")

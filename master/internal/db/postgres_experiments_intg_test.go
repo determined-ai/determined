@@ -26,6 +26,37 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+func TestExperimentCheckpointsToGCRaw(t *testing.T) {
+	etc.SetRootPath(rootFromDB)
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, migrationsFromDB)
+
+	user := requireMockUser(t, db)
+	exp := requireMockExperiment(t, db, user)
+	tr := requireMockTrial(t, db, exp)
+	a := requireMockAllocation(t, db, tr.TaskID)
+	expectedCheckpoints := ""
+	for i := 1; i <= 3; i++ {
+		ckptUuid := uuid.New()
+		if expectedCheckpoints == "" {
+			expectedCheckpoints = ckptUuid.String()
+		} else {
+			expectedCheckpoints = expectedCheckpoints + "," + ckptUuid.String()
+		}
+		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
+		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+		require.NoError(t, err)
+	}
+
+	checkpoints, err := db.ExperimentCheckpointsToGCRaw(
+		exp.ID,
+		0,
+		0,
+		0,
+	)
+	require.NoError(t, err)
+	require.Equal(t, expectedCheckpoints, checkpoints)
+}
 func TestGetExperiments(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
@@ -234,6 +265,27 @@ func TestGetExperiments(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
+	stepsCompleted := int32(10)
+	ckpt := model.CheckpointV2{
+		UUID:         ckptUuid,
+		TaskID:       tr.TaskID,
+		AllocationID: a.AllocationID,
+		ReportTime:   time.Now().UTC(),
+		State:        model.CompletedState,
+		Resources: map[string]int64{
+			"ok": 1.0,
+		},
+		Metadata: map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(stepsCompleted),
+		},
+	}
+
+	return ckpt
 }
 
 func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) model.Experiment {

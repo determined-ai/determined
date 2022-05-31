@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -32,6 +34,8 @@ type checkpointGCTask struct {
 
 	logCtx logger.Context
 }
+
+// function called new checkpoint GC task and make it explicit it what it wants
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -73,7 +77,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		t.completeTask(ctx)
-		return errors.Errorf("checkpoint GC task exited (*task.AllocationExited)")
 	case actor.ChildStopped:
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == t.allocationID.String() {
@@ -85,8 +88,12 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
-	deleteCheckpoints := t.ToDelete
-
+	conv := &protoconverter.ProtoConverter{}
+	deleteCheckpointsStr := strings.Split(t.ToDelete, ",")
+	deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStr)
+	if err := conv.Error(); err != nil {
+		return err
+	}
 	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
 		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 		return err
