@@ -11,7 +11,7 @@ organization's identity provider (IdP) and to provide system administrators bett
 access to resources. Currently, the only officially supported identity provider is Okta.
 
 **********************
- Configuring your IdP
+ Configure Your IdP
 **********************
 
 When configuring your IdP to allow users to SSO to Determined, you will need to specify the location
@@ -23,7 +23,7 @@ set to the username of the user attempting SSO (e.g., for Okta, this is the attr
 ``user.login``).
 
 ************************
- Configuring Determined
+ Configure Determined
 ************************
 
 Determined requires your IdP's SSO URL, descriptor SSO URL, public certificate, and name as well as

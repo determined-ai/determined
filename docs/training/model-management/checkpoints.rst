@@ -18,7 +18,7 @@ The Checkpoint Export API is a subset of the features found in the
 :mod:`~determined.experimental.client` module.
 
 **********************
- Querying Checkpoints
+ Query Checkpoints
 **********************
 
 The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
@@ -101,9 +101,9 @@ The following snippet showcases how to use the different modes for selecting che
 
    specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
-****************************
- Using the Checkpoint Class
-****************************
+******************************
+ Use the ``Checkpoint`` Class
+******************************
 
 The :class:`~determined.experimental.client.Checkpoint` class can both download the checkpoint from
 persistent storage and load it into memory in a Python process.
@@ -219,9 +219,9 @@ deleted.
    checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.remove_metadata(["metrics"])
 
-**********************************
- Download Checkpoints via the CLI
-**********************************
+************************************
+ Download Checkpoints using the CLI
+************************************
 
 The Determined CLI can be used to view all the checkpoints associated with an experiment:
 
@@ -377,9 +377,9 @@ checkpoints.
               |                                      |     }
               |                                      | }
 
-***************************
- Loading From a Local Path
-***************************
+*************************************
+ Load a Checkpoint From a Local Path
+*************************************
 
 :class:`~determined.experimental.client.Checkpoint` contains a static method,
 :meth:`~determined.experimental.client.Checkpoint.load_from_path`, that loads a checkpoint from a

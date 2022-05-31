@@ -13,14 +13,14 @@ implements a minimal working subset of the protocol as specified by :RFC:`7644` 
 work with most IdPs that adhere to this RFC.
 
 ************************
- Configuring Determined
+ Configure Determined
 ************************
 
 Determined only requires you to enable SCIM and set your authentication mode and any necessary
 credentials.
 
 **********************
- Configuring your IdP
+ Configure Your IdP
 **********************
 
 When configuring your IdP to automatically push users and groups to Determined, you will need to

@@ -66,8 +66,9 @@ using:
 
    det user logout
 
+************************
 Temporary authentication
-------------------------
+************************
 
 In some cases, it may be useful to execute a single command as a specific user without starting a
 persistent session for that user (think of the ``sudo`` command on a Unix-like system). In
@@ -87,7 +88,7 @@ be discarded using the ``user logout`` subcommand:
    det -u <username> user logout
 
 ********************
- Changing passwords
+ Change Passwords
 ********************
 
 Users have blank passwords by default. This might be sufficient for low-security or experimental
@@ -113,7 +114,7 @@ An admin can also change another user's password:
    passwords, and passwords used with Determined should not be reused for other purposes.
 
 ****************
- Listing assets
+ List Assets
 ****************
 
 WebUI
@@ -142,7 +143,7 @@ belonging to the current user. It is possible to show assets owned by all users 
 .. _webui-1:
 
 *******************************
- Activating/deactivating users
+ Activate and Deactivate Users
 *******************************
 
 When a user is created, they are designated as active by default. Only active users can interact
@@ -163,7 +164,7 @@ To reactivate a user, ``user activate`` can be used:
 .. _run-as-user:
 
 *****************************************
- Running tasks as particular agent users
+ Run Tasks as Specific Agent Users
 *****************************************
 
 If an experiment, notebook, or command task uses the ``bind_mount`` option in its
@@ -204,7 +205,7 @@ user and group on an agent can be configured in the ``master.yaml`` file located
        gid: 0
 
 ***************************************
- Running unprivileged tasks by default
+ Run Unprivileged Tasks by Default
 ***************************************
 
 Some administrators of Determined may wish to run tasks as unprivileged users by default. In Linux,

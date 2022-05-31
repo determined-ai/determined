@@ -14,10 +14,6 @@ can easily take advantage of Determined Ai’s open-source platform.
 We suggest you follow along using the source code found on `Determined’s GitHub repo
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/imagenet_pytorch>`_.
 
-**********
- Overview
-**********
-
 While all codebases are different, code to perform deep learning training tends to follow a typical
 pattern. Usually, there is a model, optimizer, data, and a learning rate scheduler.
 :class:`determined.pytorch.PyTorchTrial` follows this pattern to reduce porting friction. To port,
@@ -35,14 +31,15 @@ We will port each section following the same steps: First, we copy all the relev
 we will remove boilerplate code, and update all relevant objects to use the context object. Finally,
 we will replace all configurations or hyperparameters.
 
-Prep
-====
+***********************
+Preparation
+***********************
 
 Before we begin, we need to create our core files. Determined requires two files to be defined: the
 model definition and the experiment configuration.
 
 Model Definition
-----------------
+================
 
 The model definition contains the trial class, which contains the model definition and training
 loop. Your deep learning framework defines which ``Determined.Trial()`` class to inherit. In our
@@ -76,7 +73,7 @@ starting template can be found below:
            return {}
 
 Experiment Configuration
-------------------------
+========================
 
 We also need to create an experiment configuration file. This file defines specific experiment
 information such as: number of samples, training length, and hyperparameters.
@@ -117,8 +114,9 @@ For now, we don’t have to worry much about the other fields; however, we sugge
 on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.
 
+***********************
 Model
-=====
+***********************
 
 Now that we’ve finished the prep work, we can begin porting by creating the model. Model code will
 be placed in the Trial’s ``__init__()`` function.
@@ -130,7 +128,7 @@ To refresh, as we work on the model, we want to follow this checklist:
    -  Replace all configurations or hyperparameters.
 
 Remove Boilerplate Code and Copy All Relevant Code
---------------------------------------------------
+==================================================
 
 Based on the checklist, we want to first remove all boilerplate code, such as code related to
 distributed training or device management. As we remove boilerplate code, we can immediately copy
@@ -216,7 +214,7 @@ distributed training automatically, this code is unnecessary. When we create the
 it with ``self.context.wrap_model(model)``, which will convert the model to distributed if needed.
 
 Update Objects and Replace HP Configurations
---------------------------------------------
+============================================
 
 We have copied all relevant code over and now need to clean it up. Our current ``__init__`` function
 looks something like this:
@@ -263,13 +261,13 @@ After all of these changes, we are left with the code below:
        self.model = self.context.wrap_model(model)
 
 Optimizer/Loss
---------------
+==============
 
 Next, we will port the optimizer and loss functions. The optimizer and loss will be placed in the
 __init__() function.
 
 Remove Boilerplate Code and Copy All Relevant Code
---------------------------------------------------
+==================================================
 
 Once again, we copy the relevant optimizer and loss definitions. In the original model, the
 optimizer is defined with one line, which we copy over directly:
@@ -288,7 +286,7 @@ line.
    self.criterion = nn.CrossEntropyLoss()
 
 Update Objects and Replace HP Configurations
---------------------------------------------
+============================================
 
 Now we update the arguments to reference the experiment configuration.
 
@@ -324,8 +322,9 @@ The init function should now look something like this.
 
 We have been able to remove over 80 lines of code by porting to Determined!
 
+***********************
 Data
-====
+***********************
 
 Now, we can fill out ``build_train_data_loader()`` and ``build_validation_data_loader()``. Both of
 these data loading functions return a ``determined.DataLoader``. A ``determined.DataLoader`` expects
@@ -335,7 +334,7 @@ The original script handles the data in lines 202 - 233. For the data loaders, w
 procedure for porting.
 
 Remove Boilerplate Code and Copy All Relevant Code
---------------------------------------------------
+==================================================
 
 In the original code, the data is loaded based on the path, and prepared for distributed training as
 seen below:
@@ -364,7 +363,7 @@ We will bring all the code over except the ``if args.distribued`` clause since D
 automatically do the right thing when running a distributed training job.
 
 Update Objects and Replace HP Configurations
---------------------------------------------
+============================================
 
 There are a few pieces that need to be changed. First, the data location should be set to a class
 variable: self.download_directory. During distributed training, the data should be downloaded to
@@ -415,8 +414,9 @@ CIFAR-10 dataset can be accessed with the code below:
        )
        return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
+************************
 Train / Validation Batch
-========================
+************************
 
 It’s time to set up the ``train_batch`` function. Typically in PyTorch, you loop through the
 DataLoader to access and train your model one batch at a time. You can usually identify this code by
@@ -424,7 +424,7 @@ finding the common code snippet: ``for batch in dataloader``. In Determined, ``t
 provides one batch at a time, so we can copy the code directly into our function.
 
 Remove Boilerplate Code and Copy All Relevant Code
---------------------------------------------------
+==================================================
 
 In the original implementation, we find the core training loop.
 
@@ -466,7 +466,7 @@ displays the metrics returned in ``train_batch`` allowing us to remove print fre
 metric arrays.
 
 Update Objects and Replace HP Configurations
---------------------------------------------
+============================================
 
 Now, we will convert some PyTorch functions to now use Determined’s equivalent. We need to change
 ``loss.backward()``, ``optim.zero_grad()``, and ``optim.step()``. The ``self.context`` object will
@@ -493,15 +493,17 @@ The final ``train_batch`` will look like:
 
        return {"loss": loss.item(), 'top1': acc1[0], 'top5': acc5[0]}
 
+***********************
 Code Check Point
-================
+***********************
 
 At this point, you should be able to run your Determined model. Confirm that your model weights are
 loaded correctly, it can functionally run a batch, and all your hyperparameters are correctly
 accessing experiment configuration.
 
+***********************
 Learning Rate Scheduler
-=======================
+***********************
 
 Determined has a few ways of managing the learning rate. Determined can automatically update every
 batch or epoch, or you can manage it yourself. In this case, we are doing the latter by using a
@@ -521,16 +523,18 @@ rate to use ``torch.optim.StepLR()`` and wrap it with ``self.context.wrap_lr_sch
        lr_sch = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=.1, step_size=2)
        self.lr_sch = self.context.wrap_lr_scheduler(lr_sch, step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH)
 
+***********************
 Other Functionality
-===================
+***********************
 
 At this point, you can begin adding other features of your model. This may include using 16 FP
 (automatic mixed precision) or gradient clipping. It’s best to add one at a time to make it easier
 to check that each component is properly working. Determined has a wide range of examples to
 demonstrate several real-world use cases. Examples can be found on Determined’s github:
 
+***********************
 Helpful Hints
-=============
+***********************
 
 During porting, most of the time you can remove distributed training code.
 

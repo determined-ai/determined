@@ -38,8 +38,9 @@ definition. The ``.detignore`` file uses the same syntax as `.gitignore
 <https://git-scm.com/docs/gitignore>`__. Note that byte-compiled Python files (e.g., ``.pyc`` files
 or ``__pycache__`` directories) are always ignored.
 
+***************
 Local Test Mode
-===============
+***************
 
 The local test mode is to sanity-check your training code and run a compressed version of the full
 experiment circle. It can help you debug the errors in your code without running the full experiment

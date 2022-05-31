@@ -17,7 +17,7 @@ In this topic guide, we will cover:
 -  Debugging performance bottlenecks in distributed training.
 
 **********************************************
- How Distributed Training in Determined Works
+ How Determined Distributed Training Works
 **********************************************
 
 Distributed training in Determined utilizes data-parallelism. Data-parallelism for deep-learning
@@ -38,7 +38,7 @@ After initialization is completed, distributed training in Determined follows a 
 #. Return to step 1.
 
 **************************************************
- Reducing Computation and Communication Overheads
+ Reduce Computation and Communication Overhead
 **************************************************
 
 Of the steps involved in the distributed training loop in Determined, which are described above,
@@ -85,7 +85,7 @@ These techniques often require hyperparameter modifications. To automate this pr
 users to utilize the :ref:`hyperparameter-tuning` capabilities in Determined.
 
 ***********************************************************************
- Model Characteristics that Affect Performance of Distributed Training
+ Model Characteristics that Affect Performance
 ***********************************************************************
 
 Deep learning models typically perform dense updates, where every model parameter is updated for
@@ -97,7 +97,7 @@ train more efficiently in distributed settings than models with more parameters 
 distributed training, we encourage users to be mindful of their model size when designing models.
 
 ***********************************
- Debugging Performance Bottlenecks
+ Debug Performance Bottlenecks
 ***********************************
 
 When scaling up distributed training, it's fairly common to see non-linear speed up when scaling

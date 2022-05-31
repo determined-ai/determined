@@ -149,9 +149,6 @@ Agents
 
 .. _gcp-gpu-requirements:
 
-Supported GPU Types
--------------------
-
 The following GPU types are supported by Determined:
 
 -  ``nvidia-tesla-t4``
@@ -174,7 +171,7 @@ agents in each resource pool. See :ref:`cluster-configuration` for details.
 .. _gcp-attach-disk:
 
 ****************************************
- Attaching A Disk To Each Dynamic Agent
+ Attach a Disk To Each Dynamic Agent
 ****************************************
 
 If your input data set is on a persistent disk, you can attach that disk to each dynamic agent by
@@ -226,7 +223,7 @@ You can use the following command to validate if Determined tasks can read from 
 .. _gcp-pull-gcr:
 
 **********************************
- Securely Pulling Images from GCR
+ Securely Pull Images from GCR
 **********************************
 
 If you have expensive operations to perform at startup, it can be useful to :ref:`add custom layers

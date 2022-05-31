@@ -1,8 +1,8 @@
 .. _tls:
 
-##########################
- Transport Layer Security
-##########################
+####################################
+ Configure Transport Layer Security
+####################################
 
 **Transport Layer Security** (TLS) is a protocol for secure network communication. TLS prevents the
 data being transmitted from being modified or read while it is in transit and allows clients to
@@ -13,14 +13,16 @@ Communication between agents that occur as part of :ref:`distributed training <m
 will not use TLS, nor will proxied connections from the master to a :ref:`TensorBoards
 <tensorboards>` or :ref:`notebook <notebooks>` instance.
 
-*****************
- Configuring TLS
-*****************
+After the master and agent are configured to use TLS, no additional configuration is needed for tasks
+run in the cluster. In shells and notebooks, the Determined Python libraries
+automatically make connections to the master using TLS with the appropriate
+certificate.
 
-Master
-======
+**********************
+Master Configuration
+**********************
 
-In order to :ref:`configure the master <master-config-reference>` to use TLS, set the
+To :ref:`configure the master <master-config-reference>` to use TLS, set the
 ``security.tls.cert`` and ``security.tls.key`` options to paths to a TLS certificate file and key
 file.
 
@@ -31,8 +33,9 @@ When TLS is in use, the master will listen on TCP port 8443 by default, rather t
    If the master's certificate is not signed by a well-known CA, then the configured certificate
    file must contain a full certificate chain that goes all the way to a root certificate.
 
-Agents
-======
+**********************
+Agents Configuration
+**********************
 
 When the Determined master is using TLS, set the ``security.tls.enabled`` :ref:`agent configuration
 option <agent-config-reference>` to ``true``. If the master's certificate is signed by a well-known CA,
@@ -61,10 +64,11 @@ the option should be set to the DNS name contained in the certificate.
 When :ref:`dynamic agents <elastic-infrastructure>` and TLS are both in use, the dynamic agents that
 the master creates will automatically be configured to connect securely to the master over TLS.
 
-CLI
-===
+**********************
+CLI Configuration
+**********************
 
-In order to use TLS, the CLI must be configured with a master address starting with ``https://``
+To use TLS, the CLI must be configured with a master address starting with ``https://``
 using either the ``-m`` flag or ``DET_MASTER`` environment variable.
 
 If the master's certificate is signed by a well-known CA, then the connection should proceed
@@ -73,11 +77,3 @@ untrusted certificate and display a hash of the certificate. You may wish to con
 your system administrator; in any case, if you confirm the connection to the master, the certificate
 will be stored on the computer where the CLI is being run and future connections to the master will
 be made without confirmation.
-
-Tasks
-=====
-
-Once the master and agent are configured to use TLS, no further configuration is required for tasks
-that are run in the cluster. In shells and notebooks, the Determined Python libraries
-will automatically make connections to the master using TLS with the appropriate
-certificate.

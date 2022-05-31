@@ -6,22 +6,6 @@ This tutorial describes how to port an existing PyTorch model to Determined. We 
 image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch
 MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
 
-***************
- Prerequisites
-***************
-
--  Access to a Determined cluster. If you have not yet installed Determined, refer to the
-   :ref:`installation instructions <install-cluster>`.
-
--  Access to the Determined CLI on your local machine. See :ref:`the installation instructions
-   <install-cli>` if you do not already have it installed. After installing the CLI, configure it to
-   connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
-   hostname or IP address where Determined is running.
-
-**********
- Overview
-**********
-
 To use a PyTorch model in Determined, you need to port the model to Determined's API. For most
 models, this porting process is straightforward, and once the model has been ported, all of the
 features of Determined will then be available: for example, you can do :ref:`distributed training
@@ -56,8 +40,20 @@ file, and ``cd`` into the ``mnist_pytorch`` directory:
 
 We suggest you follow along with the code as you read through this tutorial.
 
+***************
+ Prerequisites
+***************
+
+-  Access to a Determined cluster. If you have not yet installed Determined, refer to the
+   :ref:`installation instructions <install-cluster>`.
+
+-  Access to the Determined CLI on your local machine. See :ref:`the installation instructions
+   <install-cli>` if you do not already have it installed. After installing the CLI, configure it to
+   connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
+   hostname or IP address where Determined is running.
+
 ***********************************
- Building a ``PyTorchTrial`` Class
+ Build a ``PyTorchTrial`` Class
 ***********************************
 
 Here is what the skeleton of our trial class looks like:
@@ -147,7 +143,7 @@ can be accessed via the :func:`~determined.TrialContext.get_hparam` method of th
            )
        )
 
-Loading Data
+Load Data
 ============
 
 The next two methods we need to define are ``build_training_data_loader`` and
@@ -182,7 +178,7 @@ datasets, respectively. Both methods should return a :ref:`determined.pytorch.Da
            validation_data, batch_size=self.context.get_per_slot_batch_size()
        )
 
-Defining ``train_batch``
+Define ``train_batch``
 ========================
 
 The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is passed a single batch of data
@@ -208,7 +204,7 @@ the gradients and there will be no need to call ``optim.zero_grad()``.
 
        return {"loss": loss}
 
-Defining ``evaluate_batch``
+Define ``evaluate_batch``
 ===========================
 
 The :func:`~determined.pytorch.PyTorchTrial.evaluate_batch` method is passed a single batch of data
@@ -233,7 +229,7 @@ default, metric values are averaged but this behavior can be customized by overr
        return {"validation_loss": validation_loss, "accuracy": accuracy}
 
 ********************
- Training the Model
+ Train the Model
 ********************
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single
@@ -277,7 +273,7 @@ For more information on experiment configuration, see the :ref:`experiment confi
 <experiment-configuration>`.
 
 ***********************
- Running an Experiment
+ Run an Experiment
 ***********************
 
 The Determined CLI can be used to create a new experiment, which will immediately start running on
@@ -301,7 +297,7 @@ Once the experiment is started, you will see a notification:
    Created experiment xxx
 
 **********************
- Evaluating the Model
+ Evaluate the Model
 **********************
 
 Model evaluation is done automatically for you by Determined. To access information on both training

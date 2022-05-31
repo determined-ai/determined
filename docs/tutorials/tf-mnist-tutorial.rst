@@ -7,22 +7,6 @@ simple image classification model for the Fashion MNIST dataset. This tutorial i
 official `TensorFlow Basic Image Classification Tutorial
 <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
-***************
- Prerequisites
-***************
-
--  Access to a Determined cluster. If you have not yet installed Determined, refer to the
-   :ref:`installation instructions <install-cluster>`.
-
--  The Determined CLI should be installed on your local machine. For installation instructions, see
-   :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined
-   cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where
-   Determined is running.
-
-**********
- Overview
-**********
-
 To use a TensorFlow model in Determined, you need to port the model to Determined's API. For most
 models, this porting process is straightforward, and once the model has been ported, all of the
 features of Determined will then be available: for example, you can do :ref:`distributed training
@@ -56,8 +40,20 @@ extract the file, and ``cd`` into the ``fashion_mnist_tf_keras`` directory:
 
 We suggest you follow along with the code as you read through this tutorial.
 
+***************
+ Prerequisites
+***************
+
+-  Access to a Determined cluster. If you have not yet installed Determined, refer to the
+   :ref:`installation instructions <install-cluster>`.
+
+-  The Determined CLI should be installed on your local machine. For installation instructions, see
+   :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined
+   cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where
+   Determined is running.
+
 ************************
- Building a Trial Class
+ Build a Trial Class
 ************************
 
 Here is what the skeleton of our trial class looks like:
@@ -104,7 +100,7 @@ but we assign it to an instance variable so that we can use it later:
        # Store trial context for later use.
        self.context = context
 
-Building the Model
+Build the Model
 ==================
 
 The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a compiled ``tf.keras.Model``
@@ -140,7 +136,7 @@ be wrapped by calling :func:`self.context.wrap_optimizer()
        )
        return model
 
-Loading Data
+Load Data
 ============
 
 The last two methods we need to define are
@@ -173,7 +169,7 @@ The implementation of ``build_validation_data_loader`` is similar:
        return test_images, test_labels
 
 ********************
- Training the Model
+ Train the Model
 ********************
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single
@@ -214,7 +210,7 @@ For more information on experiment configuration, see the :ref:`experiment confi
 <experiment-configuration>`.
 
 ***********************
- Running an Experiment
+ Run an Experiment
 ***********************
 
 The Determined CLI can be used to create a new experiment, which will immediately start running on
@@ -238,7 +234,7 @@ Once the experiment is started, you will see a notification:
    Created experiment xxx
 
 **********************
- Evaluating the Model
+ Evaluate the Model
 **********************
 
 Model evaluation is done automatically for you by Determined. To access information on both training

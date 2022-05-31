@@ -85,7 +85,7 @@ default session configuration:
    understand and accept this trade-off.
 
 *********************
- Pausing Experiments
+ Pause Experiments
 *********************
 
 TensorFlow does not fully support the extraction or restoration of a single, global RNG state.

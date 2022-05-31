@@ -12,7 +12,7 @@ TensorBoard instances can be launched via the WebUI or the CLI. To launch Tensor
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
 ***********************
- Analyzing Experiments
+ Analyze Experiments
 ***********************
 
 To launch TensorBoard to analyze a single Determined experiment, use ``det tensorboard start
@@ -51,7 +51,7 @@ experiments use ``det tensorboard start <experiment-id> <experiment-id> ...``.
    It may take up to 5 minutes for TensorBoard to receive data and render visualizations.
 
 **************************
- Customizing TensorBoards
+ Customize TensorBoards
 **************************
 
 Determined supports initializing TensorBoard with a YAML configuration file. For example, this
@@ -76,7 +76,7 @@ To view the configuration of a running Tensorboard instance, use ``det tensorboa
 <tensorboard_id>``.
 
 ***************************
- Analyzing Specific Trials
+ Analyze Specific Trials
 ***************************
 
 Determined also supports using TensorBoard to analyze specific trials from one or more experiments.
@@ -109,8 +109,9 @@ Determined-supported ``logdir`` is ``/tmp/tensorboard``. All tfevent files writt
 ``/tmp/tensorboard`` in a trial are uploaded to persistent storage when a trial is configured with
 Determined TensorBoard support.
 
+************************
 Determined Batch Metrics
-========================
+************************
 
 At the end of every training workload, batch metrics are collected and stored in the database,
 providing a granular view of model metrics over time. Batch metrics will appear in TensorBoard under

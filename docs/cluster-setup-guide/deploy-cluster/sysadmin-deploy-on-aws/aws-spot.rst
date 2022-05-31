@@ -94,9 +94,6 @@ reductions when using V100s, without specifying a ``spot_max_price``.
  Troubleshooting
 *****************
 
-Missing service-linked role
-===========================
-
 Some users may encounter the following error in the Determined master logs the first time they try
 to use spot instances:
 

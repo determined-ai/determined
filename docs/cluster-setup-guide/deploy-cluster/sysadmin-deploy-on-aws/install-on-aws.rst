@@ -610,8 +610,7 @@ The master node should be deployed on an EC2 instance with at least 4 CPUs (Inte
 later), 8GB of RAM, and 200GB of disk storage. This roughly corresponds to an EC2 t2.large instance
 or better. The AMI should be the default Ubuntu 18.04 AMI.
 
-Running Determined
-------------------
+To run Determined:
 
 #. Install Docker and create the ``determined`` Docker network.
 

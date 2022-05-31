@@ -17,7 +17,7 @@ To learn about this API, you can start by reading the trial definitions from the
 -  :download:`MNIST example </examples/mnist_estimator.tgz>`
 
 *********************************
- Defining Optimizer and Datasets
+ Define Optimizer and Datasets
 *********************************
 
 .. note::
@@ -33,7 +33,7 @@ object where these functions will be found will be in
 .. _estimators-custom-reducers:
 
 ******************
- Reducing Metrics
+ Reduce Metrics
 ******************
 
 Determined supports proper reduction of arbitrary validation metrics during distributed training by

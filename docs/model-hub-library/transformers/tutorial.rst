@@ -47,7 +47,7 @@ After this tutorial, if you want to further customize a trial for your own use, 
 qa_beam_search_trial.py_ for an example.
 
 **************************
- Initializing the QATrial
+ Initialize the QATrial
 **************************
 
 The ``__init__`` for ``QATrial`` is responsible for creating and processing the dataset; building
@@ -62,7 +62,7 @@ Note that ``context.get_hparams()`` and ``context.get_data_config()`` returns th
 ``hyperparameters`` and ``data`` section respectively of the :ref:`experiment configuration
 <experiment-config-reference>` file squad.yaml_.
 
-Building **transformers** config, tokenizer, and model
+Build **transformers** config, tokenizer, and model
 ======================================================
 
 First, we build the **transformer** config, tokenizer, and model objects by calling
@@ -89,7 +89,7 @@ before creating the **transformers** objects (see ner_trial.py_ for example).
    tokenizer, and model objects. See qa_beam_search_trial.py_ for an example of a trial directly
    calling transformers methods.
 
-Building the optimizer and LR scheduler
+Build the optimizer and LR scheduler
 =======================================
 
 The :py:meth:`model_Hub.huggingface.BaseTransformerTrial.__init__` also parses the hyperparameters
@@ -106,7 +106,7 @@ at the associated class definitions for the Kwargs objects to see the fields you
    easily override the parent ``__init__`` methods to use whatever optimizer and LR scheduler you
    want.
 
-Loading the Dataset
+Load the Dataset
 ===================
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
@@ -152,7 +152,7 @@ no prescription for how you should process your data but all the provided exampl
    pitfall to watch out for that prevents efficient caching is passing a function to ``Dataset.map``
    that contains unserializable objects.
 
-Defining metrics
+Define metrics
 ================
 
 Next, we define the metrics that we wish to compute over the predictions generated for the
@@ -170,7 +170,7 @@ Determined supports parallel evaluation via :ref:`custom reducers <pytorch-custo
 ``qa_utils.compute_metrics`` function to the result.
 
 *************************************
- Filling in the Rest of PyTorchTrial
+ Fill in the Rest of PyTorchTrial
 *************************************
 
 The remaining class methods we must implement are
@@ -178,7 +178,7 @@ The remaining class methods we must implement are
 :py:meth:`determined.harness.pytorch.PyTorchTrial.build_validation_data_loader`, and
 :py:meth:`determined.harness.pytorch.PyTorchTrial.evaluate_batch`.
 
-Building the Dataloaders
+Build the Dataloaders
 ========================
 
 The two functions below are responsible for building the dataloaders used for training and
@@ -197,7 +197,7 @@ There are two things to note:
    signature as PyTorch dataloaders but automatically handles data sharding and resuming dataloader
    state when recovering from a fault.
 
-Defining the Training Routine
+Define the Training Routine
 =============================
 
 The ``train_batch`` method below for :py:class:`model_hub.huggingface.BaseTransformerTrial` is
@@ -207,7 +207,7 @@ sufficient for this example.
    :language: python
    :pyobject: BaseTransformerTrial.train_batch
 
-Defining the Evaluation Routine
+Define the Evaluation Routine
 ===============================
 
 Finally, we can define the evaluation routine for this example.

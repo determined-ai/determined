@@ -83,8 +83,9 @@ configuration file.
 For more information on how to write the notebook configuration file, see
 :ref:`notebook-configuration`.
 
-Other Useful Commands
-=====================
+*******************
+Useful CLI Commands
+*******************
 
 A full list of notebook-related commands can be found by running:
 
@@ -180,7 +181,7 @@ metrics of a previously trained model). To launch a notebook that does not use a
 .. _notebook-state:
 
 *************************************
- Saving and Restoring Notebook State
+ Save and Restore Notebook State
 *************************************
 
 .. warning::
@@ -230,7 +231,7 @@ functionality.
    Manager``.
 
 ***************************************
- Using the Determined CLI in Notebooks
+ Use the Determined CLI in Notebooks
 ***************************************
 
 The Determined CLI is installed into notebook containers by default. This allows users to interact

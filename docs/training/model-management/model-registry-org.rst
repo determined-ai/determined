@@ -1,7 +1,7 @@
 .. _organizing-models:
 
 #########################################
- Organizing Models in the Model Registry
+ Organize Models in the Model Registry
 #########################################
 
 Determined includes built-in support for a *model registry*, which makes it easy to organize trained
@@ -29,7 +29,7 @@ approach would be to register a model named "FasterRCNN", and ensure that each v
 uses that network architecture.
 
 *****************
- Managing Models
+ Manage Models
 *****************
 
 A *model* has a unique name, an optional description, user-defined metadata, and zero or more *model
@@ -49,8 +49,8 @@ example JSON representation of a model for illustration.
      }
    }
 
-WebUI
-=====
+Use the WebUI
+=============
 
 Models can be created and edited through the WebUI. Some features can only be accessed through the
 WebUI, such as writing longform notes in Markdown.
@@ -63,7 +63,7 @@ specified before registering the model version. A new model can also be created 
 Once a model and/or version is created, notes, metadata, and other information can be added and
 edited through the Model Registry page after selecting the model or model version in question.
 
-Registering Models
+Register Models
 ==================
 
 A model can be added to the registry via the WebUI, Python API, REST API, or CLI. This guide will
@@ -91,7 +91,7 @@ Similarly, you can create a model from the CLI using the following command.
 
    det model create <model_name>
 
-Querying Models
+Query Models
 ===============
 
 The following example returns models registered in Determined as a list of
@@ -138,7 +138,7 @@ version of the model by default as well.
 
    det model describe <model_name>
 
-Modifying Model Metadata
+Modify Model Metadata
 ========================
 
 Currently, model metadata can only be edited via the WebUI and Python API. The following example
@@ -167,7 +167,7 @@ demonstrates how to use this API.
    # Result: {"metrics": {"test_set_acc": 0.97}}.
 
 *************************
- Managing Model Versions
+ Manage Model Versions
 *************************
 
 Once a model has been added to the registry, you can add one or more checkpoints to it. These
@@ -206,7 +206,7 @@ For illustration, this JSON document illustrates an example model with a single 
      }
    }
 
-Creating Versions
+Create Versions
 =================
 
 The following snippet registers a new version of a model.
@@ -231,7 +231,7 @@ Similarly, a new model version can be registered using the CLI as follows:
 
    det model register-version <model_name> <checkpoint_uuid>
 
-Accessing Versions
+Access Versions
 ==================
 
 The example below demonstrates how to retrieve versions of a model from the registry. If no version

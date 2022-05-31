@@ -20,41 +20,6 @@ configuration template.
 A single configuration file can use at most one configuration template. A configuration template
 cannot itself use another configuration template.
 
-***********************************
- Working with Templates in the CLI
-***********************************
-
-The :ref:`Determined command-line interface <install-cli>` can be used to list, create, update, and
-delete configuration templates. This functionality can be accessed through the ``det template``
-sub-command. This command can be abbreviated as ``det tpl``.
-
-To list all the templates stored in Determined, use ``det template list``. You can also use the
-``-d`` or ``--detail`` option to show additional details.
-
-.. code::
-
-   $ det tpl list
-   Name
-   -------------------------
-   template-s3-tf-gpu
-   template-s3-pytorch-gpu
-   template-s3-keras-gpu
-
-To create or update a template, use ``det tpl set template_name template_file``.
-
-.. code::
-
-   $ cat > template-s3-keras-gpu.yaml << EOL
-   description: template-s3-keras-gpu
-   checkpoint_storage:
-     type: s3
-     access_key: my-access-key
-     secret_key: my-secret-key
-     bucket: my-bucket-name
-   EOL
-   $ det tpl set template-s3-keras-gpu template-s3-keras-gpu.yaml
-   Set template template-s3-keras-gpu
-
 *******************************************************
  Using Templates to Simplify Experiment Configurations
 *******************************************************
@@ -134,6 +99,41 @@ To launch the experiment with the template:
 .. code:: bash
 
    $ det experiment create --template template-tf-gpu mnist_tf_const.yaml <model_code>
+
+***********************************
+Use the CLI to Work with Templates
+***********************************
+
+The :ref:`Determined command-line interface <install-cli>` can be used to list, create, update, and
+delete configuration templates. This functionality can be accessed through the ``det template``
+sub-command. This command can be abbreviated as ``det tpl``.
+
+To list all the templates stored in Determined, use ``det template list``. You can also use the
+``-d`` or ``--detail`` option to show additional details.
+
+.. code::
+
+   $ det tpl list
+   Name
+   -------------------------
+   template-s3-tf-gpu
+   template-s3-pytorch-gpu
+   template-s3-keras-gpu
+
+To create or update a template, use ``det tpl set template_name template_file``.
+
+.. code::
+
+   $ cat > template-s3-keras-gpu.yaml << EOL
+   description: template-s3-keras-gpu
+   checkpoint_storage:
+     type: s3
+     access_key: my-access-key
+     secret_key: my-secret-key
+     bucket: my-bucket-name
+   EOL
+   $ det tpl set template-s3-keras-gpu template-s3-keras-gpu.yaml
+   Set template template-s3-keras-gpu
 
 ****************
  Merge Behavior

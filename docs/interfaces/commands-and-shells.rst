@@ -21,7 +21,11 @@ This document provides an overview of the most common CLI commands related to sh
 Commands
 ********
 
-CLI Reference: :doc:`/reference/determined/cli`
++----------------------------------------------------+
+| CLI Reference                                      |
++====================================================+
+| :doc:`/reference/determined/cli`                   |
++----------------------------------------------------+
 
 The Command-Line Interface (CLI) is distributed as a Python wheel package. After the
 wheel is installed, use the CLI ``det`` command to interact with the cluster.

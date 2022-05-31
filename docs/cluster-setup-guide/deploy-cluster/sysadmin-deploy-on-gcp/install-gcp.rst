@@ -76,7 +76,7 @@ relatively low; you may wish to request a quota increase.
       pip install determined
 
 *********************
- Deploying A Cluster
+ Deploy a Cluster
 *********************
 
 We recommend creating a new directory and running the commands below inside that directory.
@@ -245,7 +245,7 @@ availability in your desired region and zone:
    gcloud compute accelerator-types list --filter=zone:<zone>
 
 ********************
- Updating A Cluster
+ Update a Cluster
 ********************
 
 If you need to make changes to your cluster, you can rerun ``det deploy gcp up [args]`` in the same
@@ -258,7 +258,7 @@ need to be replaced based on the changes you've made in the updated execution.
    recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
 
 **********************
- Destroying A Cluster
+ Destroy a Cluster
 **********************
 
 To bring down the cluster, run the following in the same directory where you ran ``det deploy gcp
@@ -345,14 +345,11 @@ Example workflow:
    ``sudo journalctl -u google-startup-scripts.service``, ``/var/log/cloud-init-output.log``, or
    ``sudo docker logs determined-master``.
 
-**********
- Appendix
-**********
-
 .. _gcp-service-account-credentials:
 
-Using Service Account Credentials
-=================================
+***************************
+Service Account Credentials
+***************************
 
 For more security controls, you can create a `service account
 <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing service
@@ -383,8 +380,9 @@ Once you have the ``keypath`` you can use it to deploy a GCP cluster by continui
 
 .. _gcp-det-deploy-a100:
 
-Running Determined on NVIDIA A100 GPUs
-======================================
+**********************************
+Run Determined on NVIDIA A100 GPUs
+**********************************
 
 Determined makes it possible to try out your models on latest NVIDIA A100 GPUs; however, there are a
 few considerations:

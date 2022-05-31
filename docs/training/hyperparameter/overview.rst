@@ -1,4 +1,5 @@
 .. _hyperparameter-tuning:
+.. _topic-guides_hp-tuning-basics:
 
 #######################
  Hyperparameter Tuning
@@ -9,20 +10,70 @@ the data, model architecture, and learning algorithm to yield an effective model
 tuning is a :ref:`challenging problem <topic-guides_hp-tuning-basics-difficulty>` in deep learning
 given the potentially large number of hyperparameters to consider.
 
+In machine learning, hyperparameter tuning is the process of selecting the features, model
+architecture, and learning process parameters that yield an effective model.
+
+.. _topic-guides_hp-tuning-basics-example-hyperparameters:
+
+Why Do Hyperparameters Matter? During the model development lifecycle, a machine learning engineer makes a wide range of decisions
+impacting model performance. For example, a computer vision model requires decisions on sample
+features, model architecture, and training algorithm parameters, e.g.:
+
+-  Should we consider features aside from the raw images in the training set?
+
+   -  Would synthetic data augmentation techniques like image rotation or horizontal flipping yield
+      a better performing model?
+   -  Should we populate additional features via advanced image processing techniques such as shape
+      edge extraction?
+
+-  What model architecture works best?
+
+   -  How many layers?
+   -  What kind of layers (e.g., dense, dropout, pooling)?
+   -  How should we parameterize each layer (e.g., size, activation function)?
+
+-  What learning algorithm hyperparameters should we use?
+
+   -  What gradient descent batch size should we set?
+   -  What optimizer should we utilize, and how should we parameterize it (e.g., learning rate)?
+
+A machine learning engineer can manually guess and test hyperparameters, or they might narrow the
+search space by using a pretrained model. However, even if the machine learning engineer achieves
+seemingly good model performance, they're left wondering how much better they might do with
+additional tuning.
+
+Hyperparameter tuning is a crucial phase in the model development lifecycle. However, it is rife
+with obstacles covered in the next section.
+
+.. _topic-guides_hp-tuning-basics-difficulty:
+
+Tuning deep learning models is difficult because:
+
+-  A deep learning model's objective (e.g., validation loss) as a function of the hyperparameters is
+   non-continuous and noisy, so we can't apply analytical or continuous optimization techniques to
+   calculate the validation objective given a set of hyperparameters. Thus, hyperparameter tuning is
+   a black box optimization problem in that we must train a model under a set of hyperparameters in
+   order to evaluate the objective.
+
+-  Hyperparameter tuning suffers from the curse of dimensionality, as the number of possible
+   hyperparameter configurations is exponential in the number of hyperparameters. For instance, even
+   if a model has just ten categorical hyperparameters with five values per hyperparameter, and each
+   hyperparameter configuration takes one minute to train on average, it would take 5^10 minutes, or
+   nearly 20 years, to evaluate all possible hyperparameter configurations.
+
+-  Deep learning model training is computationally expensive. It's not uncommon for a model to
+   require hours or days to train on expensive hardware.
+
+Fortunately, there are automatic hyperparameter tuning techniques that the machine learning engineer
+can leverage to find an effective model.
 Determined provides support for hyperparameter search as a first-class workflow that is tightly
 integrated with Determined's job scheduler, which allows for efficient execution of state-of-the-art
 early-stopping based approaches as well as seamless parallelization of these methods.
 
-An intuitive interface is provided to use hyperparameter searching. This document covers the
-following things:
-
-#. Specify a searcher to find effective hyperparameter settings within the predefined ranges.
-#. Configure hyperparameter ranges to search.
-#. Instrument model code to use hyperparameters from the experiment configuration.
-#. Handle Trial Errors and Early Stopping Requests
+An intuitive interface is provided to use hyperparameter searching as described in the following sections.
 
 *********************************
- Specifying the Search Algorithm
+ Specify the Search Algorithm
 *********************************
 
 Determined supports a :ref:`variety of hyperparameter search algorithms <hyperparameter-tuning>`.
@@ -84,7 +135,7 @@ Determined also supports other common hyperparameter search algorithms:
    high-performing points in the hyperparameter space.
 
 ***********************************
- Configuring Hyperparameter Ranges
+ Configure Hyperparameter Ranges
 ***********************************
 
 The first step toward automatic hyperparameter tuning is to define the hyperparameter space, e.g.,
@@ -115,7 +166,7 @@ The :ref:`experiment configuration reference <experiment-configuration_hyperpara
 these data types and their associated options.
 
 **************************
- Instrumenting Model Code
+ Instrument Model Code
 **************************
 
 Determined injects hyperparameters from the experiment configuration into model code via a context
@@ -133,7 +184,7 @@ To see hyperparameter injection throughout a complete trial implementation, refe
 :doc:`/training/apis-howto/overview`.
 
 ***************************************************
- Handling Trial Errors and Early Stopping Requests
+ Handle Trial Errors and Early Stopping Requests
 ***************************************************
 
 When a trial encounters an error or fails unexpectedly, Determined will restart it from the latest
@@ -160,10 +211,9 @@ that are stopped early are considered to be "completed", whereas trials that fai
    :maxdepth: 1
    :hidden:
 
-   hp-adaptive-asha
    hp-constraints-det
+   hp-adaptive-asha
    hp-grid
    hp-pbt
    hp-random
    hp-single
-   hp-tuning-defined

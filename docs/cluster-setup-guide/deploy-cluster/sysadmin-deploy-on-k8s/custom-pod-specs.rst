@@ -119,7 +119,7 @@ Example of configuring default pod specs in ``values.yaml``:
 .. _per-task-pod-specs:
 
 ********************
- Per-Task Pod Specs
+ Per-task Pod Specs
 ********************
 
 In addition to default pod specs, it is also possible to configure custom pod specs for individual

@@ -4,7 +4,11 @@
  Python API
 ############
 
-Python API Reference: :doc:`/reference/determined/python-api-reference`
++----------------------------------------------------+
+| Python API Reference                               |
++====================================================+
+| :doc:`/reference/determined/python-api-reference`  |
++----------------------------------------------------+
 
 You can interact with a Determined cluster with the Python API.
 

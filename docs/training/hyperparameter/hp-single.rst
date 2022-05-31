@@ -1,7 +1,7 @@
 .. _topic-guides_hp-tuning-det_single:
 
 ###############################
- Hyperparameter Search: Single
+Single Search Method
 ###############################
 
 The ``single`` search method does a very minimal "search": it trains a single hyperparameter
@@ -9,8 +9,4 @@ configuration for the number of units specified by ``max_length`` (see :ref:`Tra
 <experiment-configuration_training_units>`) and then performs validation. This method is useful for
 testing or for training a single model configuration until convergence.
 
-************
- Next Steps
-************
-
--  :ref:`Experiment Configuration <experiment-configuration_searcher>`
+See :ref:`Experiment Configuration <experiment-configuration_searcher>`.

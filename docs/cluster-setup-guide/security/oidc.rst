@@ -14,7 +14,7 @@ Note that users can only login in via OpenID Connect if they have already been p
 Determined. This can be done manually, or via SCIM.
 
 **********************
- Configuring your IdP
+ Configure Your IdP
 **********************
 
 When configuring your IdP to allow users to SSO to Determined, you will need to specify the location
@@ -25,7 +25,7 @@ The callback URL should be set to the Determined master's base URL with a path o
 ``/oidc/callback``.
 
 ************************
- Configuring Determined
+ Configure Determined
 ************************
 
 Determined requires your IdP's SSO URL and name, the client id and client secret provided to you by

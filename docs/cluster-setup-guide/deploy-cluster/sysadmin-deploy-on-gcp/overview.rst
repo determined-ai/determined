@@ -18,10 +18,6 @@ database, which can be queried by the user via the Determined WebUI or CLI. All 
 communicate with each other internally within the Virtual Private Cloud (VPC) and the user interacts
 with the master via a designated port configured during installation.
 
-**********************
- Architecture Diagram
-**********************
-
 The diagram below outlines the high level architecture of a Determined cluster in GCP.
 
 .. image:: /assets/images/det-cloud-architecture.png
@@ -34,17 +30,14 @@ Following the diagram, a standard execution would be:
 #. Agent completes experiment and communicates completion to master
 #. Master shuts down agents that are no longer needed
 
-**********************
- Architecture Details
-**********************
-
 There are two types of resources used to run Determined: core resources that enable the Determined
 platform, and periphery resources that add optional functionality. The section below provides
 additional detail on these resources, and users can deploy these resources in GCP by following the
 :ref:`install-gcp` guide.
 
+**************
 Core Resources
-==============
+**************
 
 -  **Master Node**: A single Google Compute Engine (GCE) instance is designated as the `master`. The
    master's primary function is to:
@@ -67,8 +60,9 @@ Core Resources
 -  **Firewall Rules**: Firewall rules are set to ensure each node in the cluster can communicate
    with each other.
 
+*******************
 Periphery Resources
-===================
+*******************
 
 -  **Network/Subnetwork**: The Determined cluster can be configured inside an existing VPC or be set
    to create a new VPC.

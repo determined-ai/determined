@@ -1,7 +1,7 @@
 .. _topic-guides_hp-tuning-det_grid:
 
 #############################
- Hyperparameter Search: Grid
+Grid Method
 #############################
 
 The ``grid`` search method generates trials on a "grid" of hyperparameter configurations and trains

@@ -1,7 +1,7 @@
 .. _topic-guides_hp-tuning-det_adaptive-asha:
 
 ################################################
- Hyperparameter Search: Adaptive (Asynchronous)
+Adaptive (Asynchronous) Method
 ################################################
 
 The state-of-the-art ``adaptive_asha`` search method employs an asynchronous version of successive

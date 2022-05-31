@@ -4,7 +4,11 @@
  REST API
 ############
 
-REST API Reference: :doc:`/reference/determined/rest-api-reference`
++----------------------------------------------------+
+| REST API Reference                                 |
++====================================================+
+| :doc:`/reference/determined/rest-api-reference`    |
++----------------------------------------------------+
 
 Determined's REST APIs provide a way for users and external tools to interact with a Determined
 cluster programmatically. Determined includes detailed documentation about all of the REST endpoints

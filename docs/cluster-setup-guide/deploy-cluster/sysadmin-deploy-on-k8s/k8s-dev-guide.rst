@@ -14,7 +14,7 @@ Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`G
 <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
 **************************************
- Setting up a Development Environment
+ Set up a Development Environment
 **************************************
 
 To deploy a custom version of the Determined Master, we deploy a long-running pod in Kubernetes,
@@ -45,7 +45,7 @@ Next apply the Determined Helm chart and exec into the pod containing Master.
    kubectl exec -it <master-pod-name> -- /bin/bash
 
 *************************************
- Setting up a Determined Environment
+ Set up a Determined Environment
 *************************************
 
 Before installing Determined, you will need to install the dependencies specified in the
@@ -98,7 +98,7 @@ After completing these steps, clone the Determined repository and create and act
 environment for Determined.
 
 ************************************
- Preparing to run Determined Master
+ Prepare to run Determined Master
 ************************************
 
 After the dependencies have been installed, some changes need to be made within the Determined

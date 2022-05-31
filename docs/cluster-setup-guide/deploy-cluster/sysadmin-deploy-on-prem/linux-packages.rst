@@ -24,7 +24,7 @@ Docker container or your Linux distribution's package and service.
 If you are using an existing PostgreSQL installation, we recommend confirming that
 ``max_connections`` is at least 96, which is sufficient for Determined.
 
-Running PostgreSQL in Docker
+Run PostgreSQL in Docker
 ----------------------------
 
 #. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
@@ -55,7 +55,7 @@ Running PostgreSQL in Docker
    debugging purposes. In order to expose the port only on the master machine's loopback network
    interface, pass ``-p 127.0.0.1:5432:5432`` instead of ``-p 5432:5432``.
 
-Installing PostgreSQL via ``apt`` or ``yum``
+Install PostgreSQL using ``apt`` or ``yum``
 --------------------------------------------
 
 #. Install PostgreSQL 10.
@@ -121,7 +121,7 @@ Master and Agent
    <validate-nvidia-container-toolkit>` is working as expected.
 
 **************************************
- Configuring and Starting the Cluster
+ Configure and Start the Cluster
 **************************************
 
 #. Ensure that an instance of PostgreSQL is running and accessible from the machine where the master
@@ -196,8 +196,9 @@ Master and Agent
 
 .. _socket-activation:
 
+*****************
 Socket Activation
-=================
+*****************
 
 The master can be configured to use `systemd socket activation
 <https://0pointer.de/blog/projects/socket-activation.html>`__, allowing it to be started
@@ -243,7 +244,7 @@ See the systemd documentation on `socket unit files
 <https://www.freedesktop.org/software/systemd/man/systemctl.html>`__ for more information.
 
 **********************
- Managing the Cluster
+ Manage the Cluster
 **********************
 
 To configure a service to start running automatically when its machine boots up, run ``sudo

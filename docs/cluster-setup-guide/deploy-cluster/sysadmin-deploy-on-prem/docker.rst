@@ -33,7 +33,7 @@
       docker pull determinedai/determined-agent:VERSION
 
 **************************************
- Configuring and Starting the Cluster
+ Configure and Start the Cluster
 **************************************
 
 PostgreSQL
@@ -160,9 +160,6 @@ use for running Fluent Bit (generally to make use of a custom Docker registry---
 normally need to be changed otherwise), use the agent's ``--fluent-logging-image`` command-line
 option or ``fluent_logging_image`` config file option.
 
-Selecting GPUs
---------------
-
 The ``--gpus`` flag should be used to specify which GPUs the agent container will have access to;
 without it, the agent will not have access to any GPUs. For example:
 
@@ -207,7 +204,7 @@ name, as the workload containers will not be in the correct docker network to re
 that name.
 
 **********************
- Managing the Cluster
+ Manage the Cluster
 **********************
 
 By default, ``docker run`` will run in the foreground, so that a container can be stopped simply by
