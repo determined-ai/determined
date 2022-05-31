@@ -546,10 +546,9 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	var metrics []*apiv1.SummarizedMetric
 
 	for _, name := range metricNames {
-		var metric apiv1.SummarizedMetric
-		metric.Name = name
-
 		if metricType != apiv1.MetricType_METRIC_TYPE_VALIDATION {
+			var metric apiv1.SummarizedMetric
+			metric.Name = name
 			metricSeries, _, err = a.m.db.TrainingMetricsSeries(trialID, startTime, name, startBatches,
 				endBatches)
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
@@ -560,6 +559,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
 		if metricType != apiv1.MetricType_METRIC_TYPE_TRAINING {
+			var metric apiv1.SummarizedMetric
+			metric.Name = name
 			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,
 				endBatches)
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
