@@ -11,11 +11,7 @@ import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { glasbeyColor } from 'shared/utils/color';
-<<<<<<< HEAD
 import { MetricName, MetricType, WorkloadGroup } from 'types';
-=======
-import { MetricContainer, MetricName, Scale } from 'types';
->>>>>>> a23f8193d (pass scale type as enum, handle points < maxdatapoints)
 
 interface Props {
   defaultMetricNames: MetricName[];
