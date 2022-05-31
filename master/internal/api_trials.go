@@ -520,7 +520,7 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
-func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m apiv1.SummarizedMetric,
+func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.SummarizedMetric,
 	metricSeries []lttb.Point) []*apiv1.SummarizedMetric {
 	for _, in := range metricSeries {
 		out := apiv1.DataPoint{
@@ -530,7 +530,7 @@ func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m apiv1.S
 		m.Data = append(m.Data, &out)
 	}
 	if len(m.Data) > 0 {
-		return append(metrics, &m)
+		return append(metrics, m)
 	}
 	return metrics
 }
@@ -557,7 +557,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
 			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, log_scale)
-			metrics = a.appendToMetrics(metrics, metric, metricSeries)
+			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
 		if metricType != apiv1.MetricType_METRIC_TYPE_TRAINING {
 			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,
@@ -567,13 +567,14 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
 			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, log_scale)
-			metrics = a.appendToMetrics(metrics, metric, metricSeries)
+			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
 	}
 	return metrics, nil
 }
 
-func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
+func (a *apiServer) SummarizeTrial(_ context.Context,
+	req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
 	switch err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
@@ -598,16 +599,16 @@ func (a *apiServer) SummarizeTrial(_ context.Context, req *apiv1.SummarizeTrialR
 func (a *apiServer) CompareTrials(_ context.Context,
 	req *apiv1.CompareTrialsRequest) (*apiv1.CompareTrialsResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0)
-	for _, trial_id := range req.TrialIds {
+	for _, trialId := range req.TrialIds {
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
-		switch err := a.m.db.QueryProto("get_trial", container.Trial, trial_id); {
+		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialId); {
 		case err == db.ErrNotFound:
-			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trial_id)
+			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialId)
 		case err != nil:
-			return nil, errors.Wrapf(err, "failed to get trial %d", trial_id)
+			return nil, errors.Wrapf(err, "failed to get trial %d", trialId)
 		}
 
-		tsample, err := a.MultiTrialSample(trial_id, req.MetricNames, req.MetricType,
+		tsample, err := a.MultiTrialSample(trialId, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			(req.Scale == apiv1.Scale_SCALE_LOG))
 		if err != nil {
