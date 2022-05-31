@@ -32,10 +32,10 @@ message PostCheckpointMetadataResponse {
 
 // Request to Delete the list of checkpoints
 message DeleteCheckpointsRequest {
-  // The list of uuids for the requested checkpoint.
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "checkpoint_uuids" ] }
   };
+  // The list of checkpoint_uuids for the requested checkpoint.
   repeated string checkpoint_uuids = 1;
 }
 
