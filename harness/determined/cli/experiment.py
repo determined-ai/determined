@@ -26,8 +26,8 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined, session
 
 from .checkpoint import render_checkpoint
-from .trial import logs_args_description
 from .project import project_by_name
+from .trial import logs_args_description
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
