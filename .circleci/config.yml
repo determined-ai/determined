@@ -1,0 +1,23 @@
+version: 2.1
+
+# Define the jobs
+jobs:
+  build:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout
+      - run: echo "this is the build job"
+  test:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout
+      - run: echo "this is the test job"
+
+# Orchestrate our job run sequence
+workflows:
+  build_and_test:
+    jobs:
+      - build
+      - test
