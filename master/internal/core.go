@@ -812,8 +812,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
-	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
-	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAdminAuthentication}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
 		HTTPAuth: userService.ProcessProxyAuthentication,
@@ -881,6 +879,8 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
+	m.echo.Use(userService.ProcessAuthentication)
+
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
@@ -899,7 +899,7 @@ func (m *Master) Run(ctx context.Context) error {
 		LoggingOptions: m.config.Logging,
 	}
 	m.rm = resourcemanagers.Setup(m.system, m.db, m.echo, m.config.ResourceConfig, agentOpts, cert)
-	tasksGroup := m.echo.Group("/tasks", authFuncs...)
+	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
 
@@ -994,52 +994,49 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig), adminAuthFuncs...)
-	m.echo.GET("/info", api.Route(m.getInfo))
-	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
+	m.echo.GET("/config", api.Route(m.getConfig))
+	m.echo.GET("/info", api.Route(m.getInfo)) //unauthenticated
+	m.echo.GET("/logs", api.Route(m.getMasterLogs))
 
-	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
+	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
-	searcherGroup := m.echo.Group("/searcher", authFuncs...)
+	searcherGroup := m.echo.Group("/searcher")
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
-	trialsGroup := m.echo.Group("/trials", authFuncs...)
+	trialsGroup := m.echo.Group("/trials")
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources", authFuncs...)
+	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
-	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
+	m.echo.POST("/task-logs", api.Route(m.postTaskLogs)) //unauthenticated, but we want?
 
 	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
 	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
 	m.echo.GET("/ws/data-layer/*",
-		api.WebSocketRoute(m.rwCoordinatorWebSocket))
+		api.WebSocketRoute(m.rwCoordinatorWebSocket)) //unauthenticated
 
-	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)), authFuncs...)
+	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	m.echo.Any(
 		"/debug/pprof/cmdline",
 		echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)),
-		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/profile",
 		echo.WrapHandler(http.HandlerFunc(pprof.Profile)),
-		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/symbol",
 		echo.WrapHandler(http.HandlerFunc(pprof.Symbol)),
-		authFuncs...,
 	)
-	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)), authFuncs...)
+	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
 	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
@@ -1053,9 +1050,9 @@ func (m *Master) Run(ctx context.Context) error {
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
-
-	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
-	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
+	
+	user.RegisterAPIHandler(m.echo, userService)
+	template.RegisterAPIHandler(m.echo, m.db)
 
 	telemetry.Setup(
 		m.system,

@@ -29,6 +29,23 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
+// UnauthenticatedFuncs are the paths that are exempted from authentication.
+var UnauthenticatedFuncs = map[string]bool{
+	"/info":             true,
+	"/task-logs":        true,
+	"/ws/data-layer/*":  true,
+	"/agents*":          true,
+	"/det/*":            true,
+	"/login":            true,
+	"/api/v1/*":         true,
+	"/proxy/:service/*": true,
+}
+
+// AdminAuthenticatedFuncs are the paths that require admin authentication.
+var AdminAuthenticatedFuncs = map[string]bool{
+	"/config": true,
+}
+
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
 	GID   *int   `json:"gid,omitempty"`
@@ -111,17 +128,23 @@ func (s *Service) UserAndSessionFromRequest(
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next, false)
+	return s.processAuthentication(next)
 }
 
 // ProcessAdminAuthentication is a middleware processing function that authenticates requests much
 // like ProcessAuthentication but requires the user to be an admin.
 func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next, true)
+	return s.processAuthentication(next)
 }
 
-func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
+func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		adminOnly := false
+		if _, ok := AdminAuthenticatedFuncs[c.Path()]; ok {
+			adminOnly = true
+		} else if _, ok := UnauthenticatedFuncs[c.Path()]; ok {
+			return next(c)
+		}
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
