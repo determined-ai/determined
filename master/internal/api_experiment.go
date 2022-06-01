@@ -167,8 +167,12 @@ func (a *apiServer) ExperimentLineage(
 	rootId := req.ExperimentId
 	if len(exp.Lineage) > 0 {
 		rootId = exp.Lineage[0]
-		if rootId == 0 && len(exp.Lineage) > 1 {
-			rootId = exp.Lineage[1]
+		if rootId == 0 {
+			if len(exp.Lineage) > 1 {
+				rootId = exp.Lineage[1]
+			} else {
+				rootId = req.ExperimentId
+			}
 		}
 	}
 

@@ -22,6 +22,6 @@ SELECT
     ) x
   ) AS children
 FROM experiments
-JOIN c ON c.parent_id = experiments.id
+LEFT JOIN c ON c.parent_id = experiments.id
 WHERE experiments.id = $1
 GROUP BY experiments.id, c.*
