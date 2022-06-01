@@ -1673,6 +1673,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     progress?: number;
+    /**
+     * The ancestor IDs of this experiment.
+     * @type {Array<number>}
+     * @memberof V1Experiment
+     */
+    lineage: Array<number>;
 }
 
 /**

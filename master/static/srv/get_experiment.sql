@@ -18,6 +18,7 @@ SELECT
     e.progress AS progress,
     e.job_id AS job_id,
     e.parent_id AS forked_from,
+    array_to_json(e.lineage) AS lineage,
     e.owner_id AS user_id,
     u.username AS username,
     (SELECT json_agg(id) FROM trial_ids) AS trial_ids,

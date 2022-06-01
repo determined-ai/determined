@@ -1075,6 +1075,7 @@ class v1Experiment:
         archived: bool,
         id: int,
         jobId: str,
+        lineage: "typing.Sequence[int]",
         name: str,
         numTrials: int,
         searcherType: str,
@@ -1111,6 +1112,7 @@ class v1Experiment:
         self.jobId = jobId
         self.forkedFrom = forkedFrom
         self.progress = progress
+        self.lineage = lineage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1134,6 +1136,7 @@ class v1Experiment:
             jobId=obj["jobId"],
             forkedFrom=obj.get("forkedFrom", None),
             progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+            lineage=obj["lineage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1157,6 +1160,7 @@ class v1Experiment:
             "jobId": self.jobId,
             "forkedFrom": self.forkedFrom if self.forkedFrom is not None else None,
             "progress": dump_float(self.progress) if self.progress is not None else None,
+            "lineage": self.lineage,
         }
 
 class v1ExperimentSimulation:

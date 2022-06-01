@@ -45,6 +45,7 @@ message Experiment {
     json_schema: {
       required: [
         "id",
+        "lineage",
         "name",
         "start_time",
         "state",
@@ -94,6 +95,8 @@ message Experiment {
   google.protobuf.Int32Value forked_from = 16;
   // The current progress of a running experiment.
   google.protobuf.DoubleValue progress = 17;
+  // The ancestor IDs of this experiment.
+  repeated int32 lineage = 21;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.
