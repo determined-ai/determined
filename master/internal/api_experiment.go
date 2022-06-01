@@ -157,6 +157,57 @@ func (a *apiServer) ExperimentLineage(
 			"error fetching experiment from database: %d", rootId)
 	}
 
+	var amendedChildren []*apiv1.ChildNode
+	var detachedChildren []*apiv1.ChildNode
+	for _, child := range rt.Children {
+		if child.ParentId != nil && child.ParentId.Value == rt.Id {
+			amendedChildren = append(amendedChildren, child)
+		} else {
+			detachedChildren = append(detachedChildren, child)
+		}
+	}
+	for _, child := range detachedChildren {
+		for _, firstgen := range amendedChildren {
+			if child.ParentId != nil && child.ParentId.Value == firstgen.Id {
+				firstgen.Children = append(firstgen.Children, child)
+			}
+		}
+	}
+	for _, child := range detachedChildren {
+		for _, firstgen := range amendedChildren {
+			for _, secondgen := range firstgen.Children {
+				if child.ParentId != nil && child.ParentId.Value == secondgen.Id {
+					secondgen.Children = append(secondgen.Children, child)
+				}
+			}
+		}
+	}
+	for _, child := range detachedChildren {
+		for _, firstgen := range amendedChildren {
+			for _, secondgen := range firstgen.Children {
+				for _, thirdgen := range secondgen.Children {
+					if child.ParentId != nil && child.ParentId.Value == thirdgen.Id {
+						thirdgen.Children = append(thirdgen.Children, child)
+					}
+				}
+			}
+		}
+	}
+	for _, child := range detachedChildren {
+		for _, firstgen := range amendedChildren {
+			for _, secondgen := range firstgen.Children {
+				for _, thirdgen := range secondgen.Children {
+					for _, fourthgen := range thirdgen.Children {
+						if child.ParentId != nil && child.ParentId.Value == fourthgen.Id {
+							fourthgen.Children = append(fourthgen.Children, child)
+						}
+					}
+				}
+			}
+		}
+	}
+	rt.Children = amendedChildren
+
 	resp := &apiv1.ExperimentLineageResponse{Root: rt}
 	return resp, nil
 }
