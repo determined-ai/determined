@@ -72,7 +72,7 @@ const TrialChart: React.FC<Props> = ({
       }
       setTrialSummary(summ[0].metrics);
     }
-  }, [ metricNames, scale, trialId, zooms ]);
+  }, [ metricNames, scale, trialId ]);
 
   const resetZoom = (min: number, max: number) => {
     setZooms([ min, max ]);
