@@ -132,6 +132,35 @@ func (a *apiServer) GetExperiment(
 	return &resp, nil
 }
 
+func (a *apiServer) ExperimentLineage(
+	_ context.Context, req *apiv1.ExperimentLineageRequest,
+) (*apiv1.ExperimentLineageResponse, error) {
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	rootId := req.ExperimentId
+	if len(exp.Lineage) > 0 {
+		rootId = exp.Lineage[0]
+		if rootId == 0 && len(exp.Lineage) > 1 {
+			rootId = exp.Lineage[1]
+		}
+	}
+
+	rt := &apiv1.ChildNode{}
+	switch err := a.m.db.QueryProto("get_root_node", rt, rootId); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", rootId)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching experiment from database: %d", rootId)
+	}
+
+	resp := &apiv1.ExperimentLineageResponse{Root: rt}
+	return resp, nil
+}
+
 func (a *apiServer) DeleteExperiment(
 	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {

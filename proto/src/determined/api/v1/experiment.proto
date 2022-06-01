@@ -118,6 +118,30 @@ message DeleteExperimentRequest {
 // Response to DeleteExperimentRequest.
 message DeleteExperimentResponse {}
 
+// Get an experiment's root and lineage.
+message ExperimentLineageRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id" ] }
+  };
+  // The ID of the experiment.
+  int32 experiment_id = 1;
+}
+
+message ChildNode {
+  // Unique ID of the experiment.
+  int32 id = 1;
+  // Human-readable name of the experiment.
+  string name = 2;
+  // Any children of the experiment.
+  repeated ChildNode children = 3;
+}
+
+// Response to ExperimentLineageRequest.
+message ExperimentLineageResponse {
+  // The root of this experiment's lineage.
+  ChildNode root = 1;
+}
+
 // Get the best searcher validation.
 message GetBestSearcherValidationMetricRequest {
   // The ID of the experiment.

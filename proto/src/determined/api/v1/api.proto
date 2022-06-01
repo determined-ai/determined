@@ -392,6 +392,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the lineage of the experiment root.
+  rpc ExperimentLineage(ExperimentLineageRequest)
+      returns (ExperimentLineageResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/lineage"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Delete the requested experiment.
   rpc DeleteExperiment(DeleteExperimentRequest)
       returns (DeleteExperimentResponse) {

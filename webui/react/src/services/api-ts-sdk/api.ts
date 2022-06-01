@@ -1200,6 +1200,32 @@ export interface V1CheckpointWorkload {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1ChildNode
+ */
+export interface V1ChildNode {
+    /**
+     * Unique ID of the experiment.
+     * @type {number}
+     * @memberof V1ChildNode
+     */
+    id?: number;
+    /**
+     * Human-readable name of the experiment.
+     * @type {string}
+     * @memberof V1ChildNode
+     */
+    name?: string;
+    /**
+     * Any children of the experiment.
+     * @type {Array<V1ChildNode>}
+     * @memberof V1ChildNode
+     */
+    children?: Array<V1ChildNode>;
+}
+
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1679,6 +1705,20 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     lineage: Array<number>;
+}
+
+/**
+ * Response to ExperimentLineageRequest.
+ * @export
+ * @interface V1ExperimentLineageResponse
+ */
+export interface V1ExperimentLineageResponse {
+    /**
+     * The root of this experiment's lineage.
+     * @type {V1ChildNode}
+     * @memberof V1ExperimentLineageResponse
+     */
+    root?: V1ChildNode;
 }
 
 /**
@@ -8521,6 +8561,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get the lineage of the experiment root.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentLineage(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling experimentLineage.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/lineage`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9425,6 +9502,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the lineage of the experiment root.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentLineage(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ExperimentLineageResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).experimentLineage(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -9834,6 +9930,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get the lineage of the experiment root.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentLineage(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).experimentLineage(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
@@ -10095,6 +10201,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public deleteExperiment(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the lineage of the experiment root.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public experimentLineage(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).experimentLineage(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
