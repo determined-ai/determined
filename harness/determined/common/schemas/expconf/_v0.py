@@ -288,6 +288,24 @@ class RegistryAuthConfigV0(schemas.SchemaBase):
         return super().to_dict(explicit_nones=False)
 
 
+class ProxyPortV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/proxy-port.json"
+    proxy_port: Optional[int] = None
+    proxy_tcp: Optional[bool] = None
+    unauthenticated: Optional[bool] = None
+    default_service_id: Optional[bool] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        proxy_port: Optional[int] = None,
+        proxy_tcp: Optional[bool] = None,
+        unauthenticated: Optional[bool] = None,
+        default_service_id: Optional[bool] = None,
+    ) -> None:
+        pass
+
+
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"
     add_capabilities: Optional[List[str]] = None
@@ -298,6 +316,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
+    proxy_ports: Optional[List[ProxyPortV0]] = None
 
     @schemas.auto_init
     def __init__(
@@ -310,6 +329,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
+        proxy_ports: Optional[List[ProxyPortV0]] = None,
     ) -> None:
         pass
 

@@ -39,6 +39,7 @@
     pod_spec: '*'
     ports:
       asdf: 1
+    proxy_ports: []
     registry_auth:
       username: samiam
       password: eggsnham
@@ -88,6 +89,7 @@
     pod_spec: '*'
     ports:
       asdf: 1
+    proxy_ports: []
     registry_auth:
       username: samiam
       password: eggsnham

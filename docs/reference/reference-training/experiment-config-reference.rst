@@ -1124,6 +1124,9 @@ workloads for this experiment. For more information on customizing the trial env
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
 
+``proxy_ports``: Expose configured network ports on the chief task container. See :ref:`proxy-ports`
+for details.
+
 ***************
  Optimizations
 ***************
