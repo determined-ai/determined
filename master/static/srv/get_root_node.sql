@@ -14,10 +14,11 @@ SELECT
         (SELECT
             json_build_object(
                 'id', c.id,
-                'name', c.name
+                'name', c.name,
+                'parent_id', c.parent_id
             ) as fmted
         FROM c
-        GROUP by c.id, c.name)
+        GROUP by c.id, c.name, c.parent_id)
     ) x
   ) AS children
 FROM experiments

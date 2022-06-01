@@ -1223,6 +1223,12 @@ export interface V1ChildNode {
      * @memberof V1ChildNode
      */
     children?: Array<V1ChildNode>;
+    /**
+     * Optional parent ID.
+     * @type {number}
+     * @memberof V1ChildNode
+     */
+    parentId?: number;
 }
 
 /**

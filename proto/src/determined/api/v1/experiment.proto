@@ -134,6 +134,8 @@ message ChildNode {
   string name = 2;
   // Any children of the experiment.
   repeated ChildNode children = 3;
+  // Optional parent ID.
+  google.protobuf.Int32Value parent_id = 4;
 }
 
 // Response to ExperimentLineageRequest.

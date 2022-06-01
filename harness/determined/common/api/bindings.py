@@ -767,10 +767,12 @@ class v1ChildNode:
         children: "typing.Optional[typing.Sequence[v1ChildNode]]" = None,
         id: "typing.Optional[int]" = None,
         name: "typing.Optional[str]" = None,
+        parentId: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.name = name
         self.children = children
+        self.parentId = parentId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ChildNode":
@@ -778,6 +780,7 @@ class v1ChildNode:
             id=obj.get("id", None),
             name=obj.get("name", None),
             children=[v1ChildNode.from_json(x) for x in obj["children"]] if obj.get("children", None) is not None else None,
+            parentId=obj.get("parentId", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -785,6 +788,7 @@ class v1ChildNode:
             "id": self.id if self.id is not None else None,
             "name": self.name if self.name is not None else None,
             "children": [x.to_json() for x in self.children] if self.children is not None else None,
+            "parentId": self.parentId if self.parentId is not None else None,
         }
 
 class v1Command:
