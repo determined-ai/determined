@@ -698,9 +698,13 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		}
 		err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
-	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
+	(state, config, model_definition, start_time, end_time, archived, lineage, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
-	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
+	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
+		array_prepend(
+			coalesce(:parent_id, 0),
+			(SELECT lineage FROM experiments WHERE id = :parent_id)
+		), :parent_id, 0,
 					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
 					:notes, :job_id)
 	RETURNING id`, experiment)
