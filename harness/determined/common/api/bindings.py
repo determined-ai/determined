@@ -764,10 +764,10 @@ class v1CheckpointWorkload:
 class v1ChildNode:
     def __init__(
         self,
-        children: "typing.Optional[typing.Sequence[v1ChildNode]]" = None,
-        id: "typing.Optional[int]" = None,
-        name: "typing.Optional[str]" = None,
-        parentId: "typing.Optional[int]" = None,
+        children: "typing.Sequence[v1ChildNode]",
+        id: int,
+        name: str,
+        parentId: int,
     ):
         self.id = id
         self.name = name
@@ -777,18 +777,18 @@ class v1ChildNode:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ChildNode":
         return cls(
-            id=obj.get("id", None),
-            name=obj.get("name", None),
-            children=[v1ChildNode.from_json(x) for x in obj["children"]] if obj.get("children", None) is not None else None,
-            parentId=obj.get("parentId", None),
+            id=obj["id"],
+            name=obj["name"],
+            children=[v1ChildNode.from_json(x) for x in obj["children"]],
+            parentId=obj["parentId"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "id": self.id if self.id is not None else None,
-            "name": self.name if self.name is not None else None,
-            "children": [x.to_json() for x in self.children] if self.children is not None else None,
-            "parentId": self.parentId if self.parentId is not None else None,
+            "id": self.id,
+            "name": self.name,
+            "children": [x.to_json() for x in self.children],
+            "parentId": self.parentId,
         }
 
 class v1Command:

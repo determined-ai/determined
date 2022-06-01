@@ -128,6 +128,10 @@ message ExperimentLineageRequest {
 }
 
 message ChildNode {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "children", "id", "name", "parent_id" ] }
+  };
+
   // Unique ID of the experiment.
   int32 id = 1;
   // Human-readable name of the experiment.

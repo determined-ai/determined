@@ -1210,25 +1210,25 @@ export interface V1ChildNode {
      * @type {number}
      * @memberof V1ChildNode
      */
-    id?: number;
+    id: number;
     /**
      * Human-readable name of the experiment.
      * @type {string}
      * @memberof V1ChildNode
      */
-    name?: string;
+    name: string;
     /**
      * Any children of the experiment.
      * @type {Array<V1ChildNode>}
      * @memberof V1ChildNode
      */
-    children?: Array<V1ChildNode>;
+    children: Array<V1ChildNode>;
     /**
      * Optional parent ID.
      * @type {number}
      * @memberof V1ChildNode
      */
-    parentId?: number;
+    parentId: number;
 }
 
 /**
