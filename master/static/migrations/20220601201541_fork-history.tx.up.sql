@@ -1,5 +1,5 @@
 ALTER TABLE experiments ADD COLUMN lineage integer[];
-UPDATE experiments SET lineage = ARRAY[] WHERE parent_id IS NULL;
+UPDATE experiments SET lineage = ARRAY[]::integer[] WHERE parent_id IS NULL;
 UPDATE experiments SET lineage = ARRAY[parent_id] WHERE parent_id IS NOT NULL;
 
 CREATE OR REPLACE FUNCTION find_exp_parents (exp_id int)
