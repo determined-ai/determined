@@ -7,12 +7,14 @@ import argparse
 import logging
 import os
 import pathlib
+import socket
 import subprocess
 import sys
 import tempfile
 import time
 from typing import List
 
+import psutil
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
 import determined as det
@@ -20,7 +22,59 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
-hostfile_path = None
+# When the task container uses "/tmp" from the host, having a file with a
+# well-known name in a world writable directory is not only a security issue,
+# but it can also cause a user's experiment to fail due to the file being owned
+# by another user.  Create the file securely with a random name to avoid
+# file name clashes between two different experiments.
+temp_hostfile = tempfile.NamedTemporaryFile(prefix="/tmp/hostfile-", suffix=".txt", delete=False)
+hostfile_path = temp_hostfile.name
+temp_hostfile.close()
+
+
+# Given a destination address and port, returns the name of the network
+# interface on the client that the OS chose to connect to the destination
+# address.  For example, "ipogif0", "eth0", etc.
+def get_network_interface_used_in_route_to_host(dst_addr: str, dst_port: int) -> str:
+
+    src_addr = None
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # Set the connection timeout to 10 seconds.
+        s.settimeout(10)
+
+        try:
+            # Simply connect without sending anything.
+            s.connect((dst_addr, dst_port))
+        except socket.error as error:
+            # We're really interested in which network interface the OS
+            # chose to connect to the destination address, so whether we were
+            # able to connect to the destination port is not as important.
+            # In other words, a "Connection Refused" is OK, because it
+            # means we connected, but nothing was listening on the port.
+            logging.error(f"Failed to connect to {dst_addr}:{dst_port} : {error}")
+
+        # The IP address that the client used to connect to the destination
+        # address. We don't really care about the port that's returned, which
+        # is why we have the "[0]" at the end.
+        src_addr = s.getsockname()[0]
+
+        if src_addr is not None:
+            interfaces = psutil.net_if_addrs()
+
+            # Iterate through all the network interfaces, looking for
+            # the one that owns the IP address that was used to connect
+            # to the destination address.
+            for interface_name in interfaces:
+                interface_addrs = interfaces[interface_name]
+
+                # The network interface may have multiple addresses
+                # (IPv4 & IPv6). Check them all for a match.
+                for addr_info in interface_addrs:
+                    if addr_info.address == src_addr:
+                        return str(interface_name)
+
+        return ""
 
 
 def is_using_cuda() -> bool:
@@ -67,6 +121,18 @@ def get_hostfile_path() -> str:
         temp_hostfile.close()
 
     return hostfile_path
+def set_nccl_socket_ifname(dst_ip: str) -> None:
+
+    # Try to connect to the ssh deamon on the destination IP address to see what
+    # network interface the OS uses to connect.
+    network_interface_name = get_network_interface_used_in_route_to_host(dst_ip, 22)
+
+    if network_interface_name is not None and len(network_interface_name) > 0:
+        os.environ["NCCL_SOCKET_IFNAME"] = network_interface_name
+
+        logging.info(
+            f"Setting NCCL_SOCKET_IFNAME environment variable to '{network_interface_name}'"
+        )
 
 
 def create_hostlist_file(
@@ -232,6 +298,16 @@ def main(script: List[str]) -> int:
     # We always need to set this variable to initialize the context correctly, even in the single
     # slot case.
     os.environ["USE_DEEPSPEED"] = "1"
+
+    # NCCL, like CUDA, is specific to Nvidia GPUs.  Therefore, if we're using
+    # CUDA, then we can set the NCCL_SOCKET_IFNAME if it's not already set.
+    if is_using_cuda() and not is_nccl_socket_ifname_env_var_set():
+
+        logging.info("NCCL_SOCKET_IFNAME environment variable is not set.")
+
+        # Set NCCL_SOCKET_IFNAME environment variable to the network interface
+        # that the chief uses to communicate with itself.
+        set_nccl_socket_ifname(chief_ip)
 
     # The chief has several layers of wrapper processes:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.
