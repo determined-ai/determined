@@ -35,6 +35,7 @@ type TaskContainerDefaultsConfig struct {
 
 	BindMounts BindMountsConfig `json:"bind_mounts"`
 	WorkDir    *string          `json:"work_dir"`
+	Slurm      []string         `json:"slurm"`
 }
 
 // DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.
