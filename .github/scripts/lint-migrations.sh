@@ -1,6 +1,3 @@
-GITHUB_BASE_REF=master
-GITHUB_SHA=lint_migrations
-
 # Get added files migration files.
 added_migrations=$(git diff --name-only --diff-filter=A origin/$GITHUB_BASE_REF $GITHUB_SHA -- master/static/migrations/*.sql)
 echo "Adding migrations " $added_migrations
