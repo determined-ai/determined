@@ -480,25 +480,28 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const renderColumns: ColumnsType<RecordType> = useMemo(
-    () =>
-      [
-        ...settings.columns.filter(columnName => columnDefs[columnName])
-          .map((columnName, index) => {
-            const column = columnDefs[columnName];
-            const columnWidth = widthData.widths[index];
-            const sortOrder =
+    () => {
+      const columns = settings.columns.filter(columnName => columnDefs[columnName])
+        .map((columnName, index) => {
+          const column = columnDefs[columnName];
+          const columnWidth = widthData.widths[index];
+          const sortOrder =
             column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-            return {
-              onHeaderCell: onHeaderCell(index, column),
-              sortOrder,
-              width: columnWidth,
-              ...column,
-            };
-          }),
-        { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
-      ] as ColumnsType<RecordType>,
+          return {
+            onHeaderCell: onHeaderCell(index, column),
+            sortOrder,
+            width: columnWidth,
+            ...column,
+          };
+        }) as ColumnsType<RecordType>;
 
+      if (columnDefs.action) {
+        columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+      }
+
+      return columns;
+    },
     [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
   );
 

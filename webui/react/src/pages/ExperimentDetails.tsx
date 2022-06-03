@@ -104,6 +104,7 @@ const ExperimentDetails: React.FC = () => {
         <ExperimentSingleTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
+          pageRef={pageRef}
           onTrialUpdate={handleSingleTrialUpdate}
         />
       ) : (
