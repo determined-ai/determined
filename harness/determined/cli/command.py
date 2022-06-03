@@ -39,7 +39,7 @@ _CONFIG_PATHS_COERCE_TO_LIST = {
 }
 
 UUID_REGEX = re.compile(
-    "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+    "^(?:[0-9]+\.)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
 )
 
 CommandTableHeader = OrderedDict(
