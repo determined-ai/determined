@@ -436,7 +436,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
 			switch ok := e.updateState(ctx, model.StateWithReason{
-				State:               model.StoppingCanceledState,
+				State:               model.StoppingKilledState,
 				InformationalReason: "user requested kill",
 			}); ok {
 			case true:

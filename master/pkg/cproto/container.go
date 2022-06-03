@@ -35,8 +35,8 @@ func (c Container) DeviceUUIDsByType(deviceType device.Type) (uuids []string) {
 	return uuids
 }
 
-// Proto returns the proto representation of the container.
-func (c *Container) Proto() *containerv1.Container {
+// ToProto returns the proto representation of the container.
+func (c *Container) ToProto() *containerv1.Container {
 	if c == nil {
 		return nil
 	}

@@ -252,7 +252,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		a.registerProxies(ctx, a.containerProxyAddresses())
 	case WatchRendezvousInfo, UnwatchRendezvousInfo, rendezvousTimeout:
 		if a.rendezvous == nil {
-			if a.resources == nil {
+			if len(a.resources) == 0 {
 				return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", msg)}
 			}
 
@@ -401,7 +401,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 				r.Kill(ctx, a.logCtx)
 			}
 		}
-		if len(a.resources) > 0 {
+		if a.resourcesStarted {
 			a.markResourcesReleased(ctx)
 		}
 
@@ -598,6 +598,11 @@ func (a *Allocation) ResourcesStateChanged(
 
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
+		ctx.Tell(a.rm, sproto.ResourcesReleased{
+			TaskActor:   ctx.Self(),
+			ResourcesID: &msg.ResourcesID,
+		})
+
 		logLevel := ptrs.Ptr(model.LogLevelInfo)
 		if msg.ResourcesStopped.Failure != nil {
 			logLevel = ptrs.Ptr(model.LogLevelError)
@@ -664,7 +669,7 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 	case !a.resourcesStarted:
 		a.terminated(ctx)
 		return true
-	case len(a.resources) == len(a.resources.exited()):
+	case len(a.resources.exited()) == len(a.resources):
 		a.terminated(ctx)
 		return true
 	case a.allNonDaemonsExited():

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -71,7 +73,8 @@ type (
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
-		TaskActor *actor.Ref
+		TaskActor   *actor.Ref
+		ResourcesID *ResourcesID
 	}
 	// GetTaskHandler returns a ref to the handler for the specified task.
 	GetTaskHandler struct{ ID model.AllocationID }
@@ -126,7 +129,7 @@ type (
 	ResourcesAllocated struct {
 		ID                model.AllocationID
 		ResourcePool      string
-		Resources         []Resources
+		Resources         ResourceList
 		JobSubmissionTime time.Time
 		Recovered         bool
 	}
@@ -166,6 +169,17 @@ const (
 	// ResourcesTypeSlurmJob indicates the resources are a handle for a slurm job.
 	ResourcesTypeSlurmJob ResourcesType = "slurm-job"
 )
+
+// Clone clones ResourcesAllocated. Used to not pass mutable refs to other actors.
+func (ra ResourcesAllocated) Clone() ResourcesAllocated {
+	return ResourcesAllocated{
+		ID:                ra.ID,
+		ResourcePool:      ra.ResourcePool,
+		Resources:         maps.Clone(ra.Resources),
+		JobSubmissionTime: ra.JobSubmissionTime,
+		Recovered:         ra.Recovered,
+	}
+}
 
 // ResourcesSummary provides a summary of the resources comprising what we know at the time the
 // allocation is granted, but for k8s it is granted before being scheduled so it isn't really much
@@ -249,3 +263,6 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		Log:         message,
 	}
 }
+
+// ResourceList is a wrapper for a list of resources.
+type ResourceList map[ResourcesID]Resources
