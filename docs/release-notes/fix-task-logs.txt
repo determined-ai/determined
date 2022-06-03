@@ -1,0 +1,7 @@
+:orphan:
+
+**Bug Fixes**
+
+-  CLI: Fix an issue for ``det task logs`` where short versions of task IDs could not be used.
+
+-  CLI: Fix an issue for ``det task logs`` where trial task IDs and Checkpoint GC task IDs could not be used.      
