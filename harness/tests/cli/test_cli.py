@@ -105,7 +105,6 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
 
 @pytest.mark.parametrize("index", range(len(command.RemoteTaskNewAPIs)))
 def test_uuid_prefix_task(requests_mock: requests_mock.Mocker, index: int) -> None:
-    index = 0
     task_id = str(uuid.uuid4())
 
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
