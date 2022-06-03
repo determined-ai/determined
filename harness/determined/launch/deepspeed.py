@@ -7,14 +7,12 @@ import argparse
 import logging
 import os
 import pathlib
-import socket
 import subprocess
 import sys
 import tempfile
 import time
 from typing import List
 
-import psutil
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
 import determined as det
