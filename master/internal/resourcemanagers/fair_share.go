@@ -158,13 +158,21 @@ func calculateGroupStates(
 				allocated := taskList.GetAllocations(req.TaskActor)
 				state.slotDemand += req.SlotsNeeded
 				switch {
-				case allocated == nil || len(allocated.Resources) == 0:
+				case !assignmentIsScheduled(allocated):
 					state.pendingReqs = append(state.pendingReqs, req)
-				case len(allocated.Resources) > 0:
+				default:
 					if !req.Preemptible {
 						state.presubscribedSlots += req.SlotsNeeded
 					}
 					state.allocatedReqs = append(state.allocatedReqs, req)
+					// Though it could be nice if group state slot counts were counted precisely
+					// as allocated.Resources.ActiveSlots() after incremental release, we would also
+					// need to change other slot-related variables to be similarly calculated and,
+					// unfortunately, all over the fair share code, AllocateRequest.SlotsNeeded is
+					// used as a proxy for demand or the number of slots actually scheduled, which
+					// makes this hard without introducing bugs. Said another way: active, demanded,
+					// and other views over "slots state for a task or group" have many sources of
+					// truth.
 					state.activeSlots += req.SlotsNeeded
 				}
 			}

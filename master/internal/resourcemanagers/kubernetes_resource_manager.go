@@ -257,7 +257,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		k.addTask(ctx, msg)
 
 	case sproto.ResourcesReleased:
-		k.resourcesReleased(ctx, msg.TaskActor)
+		k.resourcesReleased(ctx, msg)
 
 	case sproto.UpdatePodStatus:
 		var ref *actor.Ref
@@ -470,19 +470,18 @@ func (k *kubernetesResourceManager) assignResources(
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	allocations := make([]sproto.Resources, 0, numPods)
+	allocations := sproto.ResourceList{}
 	for pod := 0; pod < numPods; pod++ {
 		containerID := cproto.NewID()
-		allocations = append(allocations, &k8sPodResources{
+		rs := &k8sPodResources{
 			req:             req,
 			podsActor:       k.podsActor,
 			containerID:     containerID,
 			slots:           slotsPerPod,
 			group:           k.groups[req.Group],
 			initialPosition: k.queuePositions[k.addrToJobID[req.TaskActor]],
-		})
-
-		k.addrToContainerID[req.TaskActor] = containerID
+		}
+		allocations[rs.Summary().ResourcesID] = rs
 
 		k.addrToContainerID[req.TaskActor] = containerID
 		k.containerIDtoAddr[containerID.String()] = req.TaskActor
@@ -490,7 +489,7 @@ func (k *kubernetesResourceManager) assignResources(
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	k.reqList.SetAllocationsRaw(req.TaskActor, &assigned)
-	req.TaskActor.System().Tell(req.TaskActor, assigned)
+	ctx.Tell(req.TaskActor, assigned.Clone())
 
 	ctx.Log().
 		WithField("allocation-id", req.AllocationID).
@@ -498,22 +497,30 @@ func (k *kubernetesResourceManager) assignResources(
 		Infof("resources assigned with %d pods", numPods)
 }
 
-func (k *kubernetesResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("resources are released for %s", handler.Address())
-	k.reqList.RemoveTaskByHandler(handler)
-	delete(k.addrToContainerID, handler)
+func (k *kubernetesResourceManager) resourcesReleased(
+	ctx *actor.Context,
+	msg sproto.ResourcesReleased,
+) {
+	if msg.ResourcesID != nil {
+		// Just ignore this minor optimization in Kubernetes.
+		return
+	}
+
+	ctx.Log().Infof("resources are released for %s", msg.TaskActor.Address())
+	k.reqList.RemoveTaskByHandler(msg.TaskActor)
+	delete(k.addrToContainerID, msg.TaskActor)
 
 	deleteID := ""
 	for id, addr := range k.containerIDtoAddr {
-		if addr == handler {
+		if addr == msg.TaskActor {
 			deleteID = id
 			delete(k.containerIDtoAddr, deleteID)
 			break
 		}
 	}
 
-	if req, ok := k.reqList.GetTaskByHandler(handler); ok {
-		group := k.groups[handler]
+	if req, ok := k.reqList.GetTaskByHandler(msg.TaskActor); ok {
+		group := k.groups[msg.TaskActor]
 
 		if group != nil {
 			k.slotsUsedPerGroup[group] -= req.SlotsNeeded

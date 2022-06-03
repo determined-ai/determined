@@ -175,7 +175,7 @@ func (rp *ResourcePool) restoreResources(
 		return errors.New("0 container snapshots")
 	}
 
-	resources := make([]sproto.Resources, 0, len(containerSnapshots))
+	resources := sproto.ResourceList{}
 
 	agentStateMap := map[aproto.ID]*agent.AgentState{}
 
@@ -195,7 +195,7 @@ func (rp *ResourcePool) restoreResources(
 			devices:     cs.Devices,
 			containerID: cs.ID,
 		}
-		resources = append(resources, &cr)
+		resources[cr.Summary().ResourcesID] = &cr
 	}
 
 	allocated := sproto.ResourcesAllocated{
@@ -207,7 +207,7 @@ func (rp *ResourcePool) restoreResources(
 
 	rp.taskList.AddTask(req)
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
-	ctx.Tell(req.TaskActor, allocated)
+	ctx.Tell(req.TaskActor, allocated.Clone())
 
 	return nil
 }
@@ -290,9 +290,9 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		}
 	}
 
-	sprotoResources := make([]sproto.Resources, len(resources))
-	for i, v := range resources {
-		sprotoResources[i] = v
+	sprotoResources := sproto.ResourceList{}
+	for _, v := range resources {
+		sprotoResources[v.Summary().ResourcesID] = v
 	}
 
 	allocated := sproto.ResourcesAllocated{
@@ -322,15 +322,33 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
 }
 
-func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
-	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
-		ctx.Log().Infof("resources are released for %s", handler.Address())
-		for _, allocation := range allocated.Resources {
-			typed := allocation.(*containerResources)
+func (rp *ResourcePool) resourcesReleased(
+	ctx *actor.Context,
+	msg sproto.ResourcesReleased,
+) {
+	switch a := rp.taskList.GetAllocations(msg.TaskActor); {
+	case a == nil:
+		rp.taskList.RemoveTaskByHandler(msg.TaskActor)
+	case msg.ResourcesID != nil:
+		ctx.Log().Infof("resource %v is released for %s", msg.ResourcesID, msg.TaskActor.Address())
+		for rID, r := range a.Resources {
+			if r.Summary().ResourcesID != *msg.ResourcesID {
+				continue
+			}
+
+			typed := r.(*containerResources)
+			ctx.Tell(typed.agent.Handler, agent.DeallocateContainer{ContainerID: typed.containerID})
+			delete(a.Resources, rID)
+			break
+		}
+	default:
+		ctx.Log().Infof("all resources are released for %s", msg.TaskActor.Address())
+		for _, r := range a.Resources {
+			typed := r.(*containerResources)
 			ctx.Tell(typed.agent.Handler, agent.DeallocateContainer{ContainerID: typed.containerID})
 		}
+		rp.taskList.RemoveTaskByHandler(msg.TaskActor)
 	}
-	rp.taskList.RemoveTaskByHandler(handler)
 }
 
 func (rp *ResourcePool) getOrCreateGroup(
@@ -694,7 +712,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.allocateRequest(ctx, msg)
 
 	case sproto.ResourcesReleased:
-		rp.resourcesReleased(ctx, msg.TaskActor)
+		rp.resourcesReleased(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -808,7 +826,7 @@ func (c containerResources) Start(
 	}).Error()
 }
 
-// KillContainer notifies the agent to kill the container.
+// Kill notifies the agent to kill the container.
 func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
 	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
 		ContainerID: c.containerID,
