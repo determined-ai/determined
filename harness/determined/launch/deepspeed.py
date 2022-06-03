@@ -7,11 +7,14 @@ import argparse
 import logging
 import os
 import pathlib
+import socket
 import subprocess
 import sys
+import tempfile
 import time
 from typing import List
 
+import psutil
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
 import determined as det
@@ -19,7 +22,34 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
-hostfile_path = "/tmp/hostfile.txt"
+# When the task container uses "/tmp" from the host, having a file with a
+# well-known name in a world writable directory is not only a security issue,
+# but it can also cause a user's experiment to fail due to the file being owned
+# by another user.  Create the file securely with a random name to avoid
+# file name clashes between two different experiments.
+temp_hostfile = tempfile.NamedTemporaryFile(prefix="/tmp/hostfile-", suffix=".txt", delete=False)
+hostfile_path = temp_hostfile.name
+temp_hostfile.close()
+
+
+def is_using_cuda() -> bool:
+
+    val = os.getenv("CUDA_VISIBLE_DEVICES")
+
+    if val is None or len(val.strip()) == 0:
+        return False
+    else:
+        return True
+
+
+def is_nccl_socket_ifname_env_var_set() -> bool:
+
+    val = os.getenv("NCCL_SOCKET_IFNAME")
+
+    if val is None or len(val.strip()) == 0:
+        return False
+    else:
+        return True
 
 
 def create_hostlist_file(
@@ -95,7 +125,13 @@ def create_deepspeed_env_file() -> None:
     There are certain variables that we need to be set that we can pass to deepspeed using
     a custom env vars file.
     """
-    INCLUDE = ["PATH", "USE_DEEPSPEED", "DET_CHIEF_IP", "DET_MANUAL_INIT_DISTRIBUTED"]
+    INCLUDE = [
+        "PATH",
+        "LD_LIBRARY_PATH",
+        "USE_DEEPSPEED",
+        "DET_CHIEF_IP",
+        "DET_MANUAL_INIT_DISTRIBUTED",
+    ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
         for k, v in environ.items():
@@ -138,6 +174,16 @@ def main(script: List[str]) -> int:
 
     # Chief IP is set as an environment variable to support nested launch layers
     os.environ["DET_CHIEF_IP"] = chief_ip
+
+    # If the NCCL_SOCKET_IFNAME environment variable wasn't explicitly set by
+    # the user in the experiment's YAML file, then set it to the distributed
+    # network interface, if the value of "dtrain_network_interface" under
+    # "task_container_defaults" has been set in the "master.yaml".
+    if is_using_cuda() and not is_nccl_socket_ifname_env_var_set():
+        dtrain_network_interface = os.environ["DET_INTER_NODE_NETWORK_INTERFACE"]
+
+        if dtrain_network_interface is not None and len(dtrain_network_interface) > 0:
+            os.environ["NCCL_SOCKET_IFNAME"] = dtrain_network_interface
 
     # All ranks will need to run sshd.
     run_sshd_command = create_sshd_cmd()
