@@ -93,7 +93,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         sys.exit(1)
 
     if command == "down":
-        if not args.no_prompt:
+        if not args.yes:
             val = input(
                 "Deleting an AWS stack will lose all your data, including the created network "
                 "file system. Please back up the file system before deleting it. Do you still "
@@ -204,7 +204,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     try:
-        deployment_object.deploy(args.no_prompt)
+        deployment_object.deploy(args.yes)
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
@@ -297,6 +297,12 @@ args_description = Cmd(
                 Arg("--profile", type=str, default=None, help="AWS profile"),
                 Arg(
                     "--no-prompt",
+                    dest="yes",
+                    action="store_true",
+                    help=argparse.SUPPRESS,
+                ),
+                Arg(
+                    "--yes",
                     action="store_true",
                     help="no prompt when deleting resources",
                 ),
@@ -485,9 +491,15 @@ args_description = Cmd(
                     "able to connect to the FSx instance.",
                 ),
                 Arg(
-                    "--no-prompt",
+                    "--yes",
                     action="store_true",
                     help="no prompt when deployment would delete existing database",
+                ),
+                Arg(
+                    "--no-prompt",
+                    dest="yes",
+                    action="store_true",
+                    help=argparse.SUPPRESS,
                 ),
             ],
         ),

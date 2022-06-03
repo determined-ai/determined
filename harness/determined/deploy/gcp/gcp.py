@@ -303,7 +303,7 @@ def delete(configs: Dict, env: Dict, no_prompt: bool) -> None:
 
     command += ["-input=false"]
 
-    if not no_prompt:
+    if no_prompt:
         command += ["-auto-approve"]
 
     command += [f"-var-file={vars_file_path}"]

@@ -57,7 +57,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
 
     # Handle down subcommand.
     if command == "down":
-        gcp.delete(det_configs, env, args.no_prompt)
+        gcp.delete(det_configs, env, args.yes)
         print("Delete Successful")
         return
 
@@ -88,6 +88,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "user",
         "no_preflight_checks",
         "no_wait_for_master",
+        "yes",
         "no_prompt",
         "master_config_template_path",
         "tf_state_gcs_bucket_name",
@@ -164,9 +165,15 @@ args_description = Cmd(
                             help="local directory for storing cluster state",
                         ),
                         Arg(
-                            "--no-prompt",
+                            "--yes",
                             action="store_true",
                             help="no prompt when deleting resources",
+                        ),
+                        Arg(
+                            "--no-prompt",
+                            dest="yes",
+                            action="store_true",
+                            help=argparse.SUPPRESS,
                         ),
                     ],
                 ),
