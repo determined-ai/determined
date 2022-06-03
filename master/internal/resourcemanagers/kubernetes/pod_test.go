@@ -169,56 +169,35 @@ func createPodWithMockQueue() (
 	return system, newPod, ref, podMap, actorMap
 }
 
+var taskContainerFiles = []string{
+	"k8_init_container_entrypoint.sh",
+	"task-logging-setup.sh",
+	"task-logging-teardown.sh",
+	"task-signal-handling.sh",
+}
+
 func setupEntrypoint(t *testing.T) {
 	err := etc.SetRootPath(".")
 	if err != nil {
 		t.Logf("Failed to set root directory")
 	}
 
-	f, _ := os.OpenFile("k8_init_container_entrypoint.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	err = f.Close()
-	if err != nil {
-		t.Logf("Failed to close entrypoint")
-	}
-
-	f, _ = os.OpenFile("task-logging-setup.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	err = f.Close()
-	if err != nil {
-		t.Logf("Failed to close task-logging-setup.sh")
-	}
-
-	f, _ = os.OpenFile("task-logging-teardown.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	err = f.Close()
-	if err != nil {
-		t.Logf("Failed to close task-logging-teardown.sh")
-	}
-
-	f, _ = os.OpenFile("task-signal-handling.sh", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-	err = f.Close()
-	if err != nil {
-		t.Logf("Failed to close task-signal-handling.sh")
+	for _, file := range taskContainerFiles {
+		//nolint:gosec
+		f, _ := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		err = f.Close()
+		if err != nil {
+			t.Logf("failed to close %s", file)
+		}
 	}
 }
 
 func cleanup(t *testing.T) {
-	err := os.Remove("k8_init_container_entrypoint.sh")
-	if err != nil {
-		t.Logf("Failed to remove entrypoint")
-	}
-
-	err = os.Remove("task-logging-setup.sh")
-	if err != nil {
-		t.Logf("Failed to remove task-logging-setup.sh")
-	}
-
-	err = os.Remove("task-logging-teardown.sh")
-	if err != nil {
-		t.Logf("Failed to remove task-logging-teardown.sh")
-	}
-
-	err = os.Remove("task-signal-handling.sh")
-	if err != nil {
-		t.Logf("Failed to remove task-signal-handling.sh")
+	for _, file := range taskContainerFiles {
+		err := os.Remove(file)
+		if err != nil {
+			t.Logf("failed to remove %s", file)
+		}
 	}
 }
 

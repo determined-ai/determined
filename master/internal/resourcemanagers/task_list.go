@@ -96,6 +96,19 @@ func (l *taskList) RemoveAllocations(handler *actor.Ref) {
 	l.taskByHandler[handler].State = job.SchedulingStateQueued
 }
 
+func (l *taskList) ForResourcePool(name string) *taskList {
+	newTaskList := newTaskList()
+	for it := l.iterator(); it.next(); {
+		task := it.value()
+		if task.ResourcePool != name {
+			continue
+		}
+
+		newTaskList.AddTask(it.value())
+	}
+	return newTaskList
+}
+
 type taskIterator struct{ it treeset.Iterator }
 
 func (i *taskIterator) next() bool {
