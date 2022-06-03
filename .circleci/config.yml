@@ -517,7 +517,7 @@ commands:
               --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
-              --no-prompt
+              --yes
 
   terminate-aws-cluster:
     parameters:
@@ -529,7 +529,7 @@ commands:
           when: always
           command: |
             det deploy aws down \
-              --cluster-id <<parameters.cluster-id>> --no-prompt
+              --cluster-id <<parameters.cluster-id>> --yes
 
   setup-aws-cluster:
     parameters:

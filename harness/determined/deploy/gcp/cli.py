@@ -164,9 +164,14 @@ args_description = Cmd(
                             help="local directory for storing cluster state",
                         ),
                         Arg(
-                            "--no-prompt",
+                            "--yes",
                             action="store_true",
                             help="no prompt when deleting resources",
+                        ),
+                        Arg(
+                            "--no-prompt",
+                            action="store_true",
+                            help=argparse.SUPPRESS,
                         ),
                     ],
                 ),

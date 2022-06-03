@@ -298,6 +298,11 @@ args_description = Cmd(
                 Arg(
                     "--no-prompt",
                     action="store_true",
+                    help=argparse.SUPPRESS,
+                ),
+                Arg(
+                    "--yes",
+                    action="store_true",
                     help="no prompt when deleting resources",
                 ),
             ],
@@ -485,9 +490,14 @@ args_description = Cmd(
                     "able to connect to the FSx instance.",
                 ),
                 Arg(
-                    "--no-prompt",
+                    "--yes",
                     action="store_true",
                     help="no prompt when deployment would delete existing database",
+                ),
+                Arg(
+                    "--no-prompt",
+                    action="store_true",
+                    help=argparse.SUPPRESS,
                 ),
             ],
         ),
