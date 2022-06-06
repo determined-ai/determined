@@ -22,6 +22,7 @@ from determined import estimator, horovod, layers, monkey_patch, tensorboard, wo
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers import tensorflow
 
 VERY_LARGE_NUMBER = 9999999999999999
 
@@ -462,6 +463,13 @@ class EstimatorTrialController(det.TrialController):
         # This seed value will be overwritten by
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
+
+    @classmethod
+    def get_metric_writer(
+        cls: Type["EstimatorTrialController"],
+    ) -> Optional[tensorboard.BatchMetricWriter]:
+        writer = tensorflow.TFWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def _set_default_tensorflow_session(

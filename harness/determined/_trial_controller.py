@@ -4,7 +4,7 @@ import os
 from typing import Any, Optional, Type
 
 import determined as det
-from determined import profiler, workload
+from determined import profiler, tensorboard, workload
 from determined.common import check
 
 
@@ -105,6 +105,10 @@ class TrialController(metaclass=abc.ABCMeta):
     @classmethod
     def supports_averaging_training_metrics(cls: Type["TrialController"]) -> bool:
         return False
+
+    @classmethod
+    def get_metric_writer(cls: Type["TrialController"]) -> Optional[tensorboard.BatchMetricWriter]:
+        return None
 
     def initialize_wrapper(self) -> None:
         pass

@@ -14,9 +14,10 @@ import torch
 import torch.distributed as dist
 
 import determined as det
-from determined import layers, pytorch, util, workload
+from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 from determined.util import has_param
 
 # Apex is included only for GPU trials.
@@ -67,6 +68,13 @@ class PyTorchTrialController(det.TrialController):
             assert (
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training"
+
+    @classmethod
+    def get_metric_writer(
+        cls: Type["PyTorchTrialController"],
+    ) -> Optional[tensorboard.BatchMetricWriter]:
+        writer = TorchWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -298,6 +306,7 @@ class PyTorchTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.context._core.train._auto_upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)

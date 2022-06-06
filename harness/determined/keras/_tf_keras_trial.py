@@ -17,10 +17,11 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import keras, layers, util, workload
+from determined import keras, layers, tensorboard, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers import tensorflow
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
 if version.parse(tf.__version__) >= version.parse("2.6.0"):
@@ -165,6 +166,13 @@ class TFKerasTrialController(det.TrialController):
     @classmethod
     def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
         return True
+
+    @classmethod
+    def get_metric_writer(
+        cls: Type["TFKerasTrialController"],
+    ) -> Optional[tensorboard.BatchMetricWriter]:
+        writer = tensorflow.TFWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -316,6 +324,7 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+        self._metric_writer = tensorflow.TFWriter()
 
         self.model = model
         self.session = session
@@ -840,6 +849,7 @@ class TFKerasTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.context._core.train._auto_upload_tb_files()
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -943,6 +953,8 @@ class TFKerasTrialController(det.TrialController):
 
         self.train_response_func(response)
         self.train_response_func = None
+
+        self.context._core.train._auto_upload_tb_files()
 
         self._control_loop()
 

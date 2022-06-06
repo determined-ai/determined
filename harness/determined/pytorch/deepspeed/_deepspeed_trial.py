@@ -15,9 +15,10 @@ import torch
 from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
-from determined import layers, pytorch, util, workload
+from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
@@ -59,6 +60,13 @@ class DeepSpeedTrialController(det.TrialController):
             )
 
         self.steps_completed = self.env.steps_completed
+
+    @classmethod
+    def get_metric_writer(
+        cls: Type["DeepSpeedTrialController"],
+    ) -> Optional[tensorboard.BatchMetricWriter]:
+        writer = TorchWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(

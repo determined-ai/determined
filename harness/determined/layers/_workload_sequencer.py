@@ -207,6 +207,11 @@ class WorkloadSequencer(workload.Source):
             metrics=metrics,
             batch_metrics=batch_metrics,
         )
+        self.core_context.train.write_training_tensorboard_metrics(
+            steps_completed=self.state.steps_completed,
+            metrics=metrics,
+            batch_metrics=batch_metrics,
+        )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
         if self._unit == core.Unit.BATCHES:
@@ -295,6 +300,10 @@ class WorkloadSequencer(workload.Source):
 
         self.state.last_val = self.state.steps_completed
         self.core_context.train.report_validation_metrics(
+            steps_completed=self.state.steps_completed,
+            metrics=metrics,
+        )
+        self.core_context.train.write_validation_tensorboard_metrics(
             steps_completed=self.state.steps_completed,
             metrics=metrics,
         )
