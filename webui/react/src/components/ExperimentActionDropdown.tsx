@@ -1,19 +1,27 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
+import { handlePath, paths } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
-  openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
+  activateExperiment,
+  archiveExperiment,
+  cancelExperiment,
+  deleteExperiment,
+  getExperimentDetails,
+  killExperiment,
+  openOrCreateTensorBoard,
+  pauseExperiment,
+  unarchiveExperiment,
 } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import {
-  ExperimentAction as Action, DetailedUser, ProjectExperiment,
+  ExperimentAction as Action, DetailedUser, ExperimentBase, ProjectExperiment,
 } from 'types';
 import handleError from 'utils/error';
 import {
@@ -35,6 +43,9 @@ const dropdownActions = [
   Action.Archive,
   Action.Unarchive,
   Action.Cancel,
+  Action.Fork,
+  Action.DownloadCode,
+  Action.ContinueTrial,
   Action.Kill,
   Action.Delete,
   Action.Move,
@@ -51,7 +62,26 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: PropsWithChildren<Props>) => {
   const id = experiment.id;
+  const [ canceler ] = useState(new AbortController());
+  const [ fullExperiment, setFullExperiment ] = useState<ExperimentBase>();
+  const { modalOpen: openModalCreate } = useModalExperimentCreate();
   const { modalOpen: openExperimentMove } = useModalExperimentMove({ onClose: onComplete });
+  const trial = experiment.trialIds?.[0];
+
+  useEffect(() => {
+    (async () => {
+      const exp = await getExperimentDetails(
+        { id: experiment.id },
+        { signal: canceler.signal },
+      );
+
+      setFullExperiment(exp);
+    })();
+
+    return () => {
+      setFullExperiment(undefined);
+    };
+  }, [ canceler, experiment.id ]);
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -61,7 +91,23 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     });
   }, [ openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId ]);
 
+  const handleExperimentFork = useCallback(() => {
+    if(fullExperiment)
+      openModalCreate({ experiment: fullExperiment, type: CreateExperimentType.Fork }); 
+  }, [ fullExperiment, openModalCreate ]);
+
+  const handleContinueTrial = useCallback(() => {
+    if(fullExperiment)
+      openModalCreate({
+        experiment: fullExperiment,
+        // @ts-ignore TODO: remove this
+        trial, // TODO: check on how to set the trial properly
+        type: CreateExperimentType.ContinueTrial,
+      });
+  }, [ fullExperiment, openModalCreate, trial ]);
+
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
+    const e = params.domEvent as React.MouseEvent<HTMLElement, MouseEvent>;
     params.domEvent.stopPropagation();
     try {
       const action = params.key as Action;
@@ -123,6 +169,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           break;
         case Action.Move:
           handleExperimentMove();
+          break;
+        case Action.ContinueTrial:
+          if (trial) {
+            handleContinueTrial();
+          }
+
+          break;
+        case Action.DownloadCode:
+          handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
+          break;
+        case Action.Fork:
+          await handleExperimentFork();
           break;
       }
     } catch (e) {
