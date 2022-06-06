@@ -20,6 +20,7 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
+hostfile_path = None
 
 def is_using_cuda() -> bool:
 
@@ -42,16 +43,27 @@ def is_nccl_socket_ifname_env_var_set() -> bool:
 
 
 def get_hostfile_path() -> str:
-    # When the task container uses "/tmp" from the host, having a file with a
-    # well-known name in a world writable directory is not only a security issue,
-    # but it can also cause a user's experiment to fail due to the file being owned
-    # by another user.  Create the file securely with a random name to avoid
-    # file name clashes between two different experiments.
-    temp_hostfile = tempfile.NamedTemporaryFile(
-        prefix="/tmp/hostfile-", suffix=".txt", delete=False
-    )
-    hostfile_path = temp_hostfile.name
-    temp_hostfile.close()
+
+    global hostfile_path
+
+    # Ensure that "hostfile_path" is initialized only once. All subsquent calls
+    # will return the same file name.  The production code calls this only once,
+    # but the tests call it multiple times and the tests will fail if a
+    # a different name is returned, because the expected value will not match
+    # the actual value of the command line that the test creates due to the
+    # difference in the file name.
+    if hostfile_path is None:
+        # When the task container uses "/tmp" from the host, having a file with
+        # a well-known name in a world writable directory is not only a security
+        # issue, but it can also cause a user's experiment to fail due to the
+        # file being owned by another user.  Create the file securely with a
+        # random name to avoid file name clashes between two different
+        # experiments.
+        temp_hostfile = tempfile.NamedTemporaryFile(
+            prefix="/tmp/hostfile-", suffix=".txt", delete=False
+        )
+        hostfile_path = temp_hostfile.name
+        temp_hostfile.close()
 
     return hostfile_path
 

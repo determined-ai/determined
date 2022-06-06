@@ -10,24 +10,6 @@ import determined.launch.deepspeed  # noqa: F401
 from determined import constants, launch
 from tests.launch import test_util
 
-hostfile_path = None
-
-
-def get_hostfile_path() -> str:
-
-    global hostfile_path
-
-    # The production code's "get_hostfile_path()" randomizes the name of the
-    # host file. This will cause some tests to fail if they compare the
-    # expected versus actual values, such as command lines, since the host
-    # file name will be different.  To work around this, the test has its own
-    # "get_hostfile_path()" which returns the same randominzed file name
-    # every time.
-    if hostfile_path is None:
-        hostfile_path = launch.deepspeed.get_hostfile_path()
-
-    return hostfile_path
-
 
 def test_parse_args() -> None:
     positive_test_cases = {
@@ -75,7 +57,7 @@ def test_launch_multi_slot_chief(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
     deepspeed_cmd = launch.deepspeed.create_run_command(
-        cluster_info.container_addrs[0], get_hostfile_path()
+        cluster_info.container_addrs[0], launch.deepspeed.get_hostfile_path()
     )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
@@ -148,7 +130,7 @@ def test_launch_multi_slot_fail(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
     deepspeed_cmd = launch.deepspeed.create_run_command(
-        cluster_info.container_addrs[0], get_hostfile_path()
+        cluster_info.container_addrs[0], launch.deepspeed.get_hostfile_path()
     )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
@@ -205,7 +187,9 @@ def test_launch_one_slot(
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command("localhost", get_hostfile_path())
+    deepspeed_cmd = launch.deepspeed.create_run_command(
+        "localhost", launch.deepspeed.get_hostfile_path()
+    )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
@@ -230,7 +214,9 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command("localhost", get_hostfile_path())
+    deepspeed_cmd = launch.deepspeed.create_run_command(
+        "localhost", launch.deepspeed.get_hostfile_path()
+    )
     pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
     log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
