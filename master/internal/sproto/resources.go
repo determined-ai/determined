@@ -130,7 +130,7 @@ func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 
 func (r ResourcesStopped) String() string {
 	if r.Failure == nil {
-		return "container exited successfully with a zero exit code"
+		return "allocation exited successfully with a zero exit code"
 	}
 	return r.Failure.Error()
 }
@@ -183,10 +183,10 @@ type FailureType string
 
 const (
 	// ContainerFailed denotes that the container ran but failed with a non-zero exit code.
-	ContainerFailed = FailureType("container failed with non-zero exit code")
+	ContainerFailed = FailureType("allocation failed with non-zero exit code")
 
 	// ContainerAborted denotes the container was canceled before it was started.
-	ContainerAborted = FailureType("container was aborted before it started")
+	ContainerAborted = FailureType("allocation was aborted before it started")
 
 	// TaskAborted denotes that the task was canceled before it was started.
 	TaskAborted = FailureType("task was aborted before the task was started")

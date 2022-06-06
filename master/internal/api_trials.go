@@ -377,7 +377,11 @@ func (a *apiServer) KillTrial(
 	}
 
 	tr := actor.Addr("experiments", t.ExperimentID, t.RequestID)
-	if err = a.ask(tr, model.StoppingKilledState, nil); err != nil {
+	s := model.StateWithReason{
+		State:               model.StoppingKilledState,
+		InformationalReason: "user requested kill",
+	}
+	if err = a.ask(tr, s, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.KillTrialResponse{}, nil
