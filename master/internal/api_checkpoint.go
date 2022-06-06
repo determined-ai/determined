@@ -98,7 +98,8 @@ func (a *apiServer) DeleteCheckpoints(
 		}
 
 		jobSubmissionTime := time.Now().UTC().Truncate(time.Millisecond)
-		ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, jobID, jobSubmissionTime, taskSpec,
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec,
 			exp.ID, exp.Config.AsLegacy(), expIDcUUIDs.CheckpointUUIDSStr, agentUserGroup, curUser, nil)
 		if gcErr := a.m.system.MustActorOf(addr,
 			ckptGCTask).AwaitTermination(); gcErr != nil {

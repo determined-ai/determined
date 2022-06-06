@@ -98,11 +98,11 @@ def main(argv: List[str]) -> None:
     logging.info("Using checkpoint storage: {}".format(storage_config))
 
     manager = storage.build(storage_config,container_path=constants.SHARED_FS_CONTAINER_PATH)
-    if not os.path.exists(manager._base_path):
+    '''if not os.path.exists(manager._base_path):
         if os.path.exists(os.path.join("/determined_shared_fs/tmp/delete-checkpoints-e2etest")):
             raise ValueError(f"{manager._base_path} does not exist. but with /tmp it exists.")
         else: 
-            raise ValueError(f"{manager._base_path} does not exist.")
+            raise ValueError(f"{manager._base_path} does not exist.")'''
     
     storage_ids = args.delete.split(",")
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
