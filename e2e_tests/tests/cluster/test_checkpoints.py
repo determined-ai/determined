@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from determined import errors
-from determined.common import api, storage, constants 
+from determined.common import api, storage 
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedcheckpointv1State
 from tests import config as conf
