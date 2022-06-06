@@ -22,6 +22,7 @@ from determined.common.api import certs
 
 hostfile_path = None
 
+
 def is_using_cuda() -> bool:
 
     val = os.getenv("CUDA_VISIBLE_DEVICES")
