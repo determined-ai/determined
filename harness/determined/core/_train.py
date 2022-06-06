@@ -221,7 +221,9 @@ class TrainContext:
                 self.write_validation_tensorboard_metrics(steps_completed, metrics)
                 self._tbd_mgr.sync()
 
-    def write_validation_tensorboard_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
+    def write_validation_tensorboard_metrics(
+        self, steps_completed: int, metrics: Dict[str, Any]
+    ) -> None:
         self._tbd_writer.on_validation_step_end(steps_completed, metrics)
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
