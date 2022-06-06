@@ -1,0 +1,28 @@
+---
+name: sync_with_upstream
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  schedule:
+    cron: 
+      - 17 0,6,12,18 * * *
+
+jobs:
+  sync_with_upstream:
+    name: sync_with_upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          depth: 0
+      - name: configure git
+        run: |
+          git config --global user.name  "Danny Sauer"
+          git config --global user.email "danny@dannysauer.com"
+      - name: sync
+        run: |
+          git remote add upstream https://github.com/my-user/myapp.git
+          git fetch --all -p
+          git checkout main
+          git merge --ff-only && git push -f
