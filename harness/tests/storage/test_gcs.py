@@ -43,11 +43,9 @@ def prep_gcs_test_creds(tmp_path: Path) -> Iterator[None]:
         del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
 
 
-# @pytest.fixture
 def get_live_gcs_manager(
     tmp_path: Path,
     prefix: Optional[str],
-    prep_gcs_test_creds: None,
     require_secrets: bool,
 ) -> storage.GCSStorageManager:
     """
@@ -82,8 +80,9 @@ def test_gcs_lifecycle(
     require_secrets: bool,
     tmp_path: Path,
     prefix: Optional[str],
+    prep_gcs_test_creds: None,
 ) -> None:
-    live_gcs_manager = get_live_gcs_manager(tmp_path, prefix, None, require_secrets)
+    live_gcs_manager = get_live_gcs_manager(tmp_path, prefix, require_secrets)
 
     def post_delete_cb(storage_id: str) -> None:
         """Search gcs directly to ensure that a checkpoint is actually deleted."""
