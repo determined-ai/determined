@@ -20,15 +20,6 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
-# When the task container uses "/tmp" from the host, having a file with a
-# well-known name in a world writable directory is not only a security issue,
-# but it can also cause a user's experiment to fail due to the file being owned
-# by another user.  Create the file securely with a random name to avoid
-# file name clashes between two different experiments.
-temp_hostfile = tempfile.NamedTemporaryFile(prefix="/tmp/hostfile-", suffix=".txt", delete=False)
-hostfile_path = temp_hostfile.name
-temp_hostfile.close()
-
 
 def is_using_cuda() -> bool:
 
@@ -48,6 +39,21 @@ def is_nccl_socket_ifname_env_var_set() -> bool:
         return False
     else:
         return True
+
+
+def get_hostfile_path() -> str:
+    # When the task container uses "/tmp" from the host, having a file with a
+    # well-known name in a world writable directory is not only a security issue,
+    # but it can also cause a user's experiment to fail due to the file being owned
+    # by another user.  Create the file securely with a random name to avoid
+    # file name clashes between two different experiments.
+    temp_hostfile = tempfile.NamedTemporaryFile(
+        prefix="/tmp/hostfile-", suffix=".txt", delete=False
+    )
+    hostfile_path = temp_hostfile.name
+    temp_hostfile.close()
+
+    return hostfile_path
 
 
 def create_hostlist_file(
@@ -178,7 +184,7 @@ def main(script: List[str]) -> int:
     # network interface, if the value of "dtrain_network_interface" under
     # "task_container_defaults" has been set in the "master.yaml".
     if is_using_cuda() and not is_nccl_socket_ifname_env_var_set():
-        dtrain_network_interface = os.environ["DET_INTER_NODE_NETWORK_INTERFACE"]
+        dtrain_network_interface = os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE", None)
 
         if dtrain_network_interface is not None and len(dtrain_network_interface) > 0:
             os.environ["NCCL_SOCKET_IFNAME"] = dtrain_network_interface
@@ -222,6 +228,8 @@ def main(script: List[str]) -> int:
     #     - harness.py, which actually does the training for the worker
 
     pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
+
+    hostfile_path = get_hostfile_path()
 
     master_address = create_hostlist_file(
         hostfile_path=pathlib.Path(hostfile_path),
