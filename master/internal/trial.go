@@ -435,32 +435,35 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	case model.StoppingStates[t.state]:
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
-				State:               model.ErrorState,
-				InformationalReason: fmt.Sprintf("trial encountered an error exiting %v", exit.Err),
+				State: model.ErrorState,
+				InformationalReason: fmt.Sprintf(
+					"trial allocation exited with an error while trial was stopping %v", exit.Err),
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.StoppingToTerminalStates[t.state],
-			InformationalReason: "trial exited successfully",
+			InformationalReason: "trial stopped",
 		})
 	case t.searcher.Complete && t.searcher.Closed:
 		if exit.Err != nil {
 			return t.transition(ctx, model.StateWithReason{
-				State:               model.ErrorState,
-				InformationalReason: fmt.Sprintf("trial encountered an error exiting %v", exit.Err),
+				State: model.ErrorState,
+				InformationalReason: fmt.Sprintf(
+					"trial allocation exited with an error but hp search was complete %v", exit.Err),
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.CompletedState,
-			InformationalReason: "hp search is complete and closed",
+			InformationalReason: "hp search is finished",
 		})
 	case exit.Err != nil && sproto.IsUnrecoverableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial encountered unrecoverable failure")
 		return t.transition(ctx, model.StateWithReason{
-			State:               model.ErrorState,
-			InformationalReason: fmt.Sprintf("trial encountered unrecoverable failure exiting %v", exit.Err),
+			State: model.ErrorState,
+			InformationalReason: fmt.Sprintf(
+				"trial allocation exited with unrecoverable failure %v", exit.Err),
 		})
 	case exit.Err != nil && sproto.IsTransientSystemError(exit.Err):
 		ctx.Log().
@@ -487,7 +490,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		})
 		return t.transition(ctx, model.StateWithReason{
 			State:               model.CompletedState,
-			InformationalReason: "trial completed due to a user requested stop",
+			InformationalReason: "trial exited early due to a user requested stop",
 		})
 	case t.userInitiatedExit != nil:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
@@ -495,8 +498,9 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			reason:    *t.userInitiatedExit,
 		})
 		return t.transition(ctx, model.StateWithReason{
-			State:               model.CompletedState,
-			InformationalReason: "trial completed due to a user initiated exit",
+			State: model.CompletedState,
+			InformationalReason: fmt.Sprintf(
+				"trial exited early with reason: %v", *t.userInitiatedExit),
 		})
 	}
 

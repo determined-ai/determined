@@ -382,7 +382,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	exitReasons := strings.Join(a.exitReasons, ", ")
 	if exitReasons != "" {
 		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-			Log:   "Ended due to " + exitReasons,
+			Log:   fmt.Sprintf("exit reasons: %s", exitReasons),
 			Level: ptrs.Ptr(model.LogLevelWarning),
 		}))
 	}

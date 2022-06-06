@@ -503,10 +503,10 @@ func (e *experiment) processOperations(
 		case searcher.Create:
 			checkpoint, err := e.checkpointForCreate(op)
 			if err != nil {
-				r := fmt.Sprintf("hp search unable to get checkpoint for new trial with error %v", err)
 				e.updateState(ctx, model.StateWithReason{
-					State:               model.StoppingErrorState,
-					InformationalReason: r,
+					State: model.StoppingErrorState,
+					InformationalReason: fmt.Sprintf(
+						"hp search unable to get checkpoint for new trial with error %v", err),
 				})
 				ctx.Log().Error(err)
 				return
