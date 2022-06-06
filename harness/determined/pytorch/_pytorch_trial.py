@@ -17,7 +17,6 @@ import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import check
 from determined.horovod import hvd
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
 from determined.util import has_param
 
 # Apex is included only for GPU trials.
@@ -73,6 +72,9 @@ class PyTorchTrialController(det.TrialController):
     def get_metric_writer(
         cls: Type["PyTorchTrialController"],
     ) -> Optional[tensorboard.BatchMetricWriter]:
+        # import locally to avoid having tensorboard when metrics are not written
+        from determined.tensorboard.metric_writers.pytorch import TorchWriter
+
         writer = TorchWriter()
         return tensorboard.BatchMetricWriter(writer)
 
