@@ -38,8 +38,8 @@ _CONFIG_PATHS_COERCE_TO_LIST = {
     "bind_mounts",
 }
 
-UUID_REGEX = re.compile(
-    "^(?:[0-9]+\.)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+TASK_ID_REGEX = re.compile(
+    r"^(?:[0-9]+\.)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
 )
 
 CommandTableHeader = OrderedDict(
@@ -142,22 +142,18 @@ def expand_uuid_prefixes(
         prefixes = [prefixes]
 
     # Avoid making a network request if everything is already a full UUID.
-    if not all(UUID_REGEX.match(p) for p in prefixes):
-        # If we are unable to determine what specific task type something is
-        # such as when we are calling det task logs we need to check all
-        # of the possible API options.
-        api_paths = list(RemoteTaskNewAPIs.values())
-        if args._command in RemoteTaskNewAPIs:
-            api_paths = [RemoteTaskNewAPIs[args._command]]
-
-        all_ids = []  # type: List[str]
-        for api_path in api_paths:
-            api_full_path = "api/v1/{}".format(api_path)
-            res = api.get(args.master, api_full_path).json()[api_path]
-            all_ids.extend([x["id"] for x in res])
+    if not all(TASK_ID_REGEX.match(p) for p in prefixes):
+        if args._command not in RemoteTaskNewAPIs:
+            raise api.errors.BadRequestException(
+                f"partial UUIDs not supported for 'det {args._command} {args._subcommand}'"
+            )
+        api_path = RemoteTaskNewAPIs[args._command]
+        api_full_path = "api/v1/{}".format(api_path)
+        res = api.get(args.master, api_full_path).json()[api_path]
+        all_ids: List[str] = [x["id"] for x in res]
 
         def expand(prefix: str) -> str:
-            if UUID_REGEX.match(prefix):
+            if TASK_ID_REGEX.match(prefix):
                 return prefix
 
             # Could do better algorithmically than repeated linear scans, but let's not complicate

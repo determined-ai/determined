@@ -103,42 +103,6 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
         cli.main(["shell", "config", "x"])
 
 
-@pytest.mark.parametrize("index", range(len(command.RemoteTaskNewAPIs)))
-def test_uuid_prefix_task(requests_mock: requests_mock.Mocker, index: int) -> None:
-    task_id = str(uuid.uuid4())
-
-    requests_mock.get("/info", status_code=200, json={"version": "1.0"})
-    requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
-    )
-    requests_mock.get(
-        f"/api/v1/tasks/{task_id}/logs",
-        status_code=requests.codes.ok,
-        json={
-            "result": {
-                "message": "test",
-            }
-        },
-    )
-
-    for i, api in enumerate(command.RemoteTaskNewAPIs.values()):
-        ids = [{"id": task_id}]
-        if index != i:
-            ids = []
-
-        requests_mock.get(
-            f"/api/v1/{api}",
-            status_code=requests.codes.ok,
-            json={api: ids},
-        )
-
-    cli.main(["task", "logs", task_id[:4]])
-
-    # Non nonexistent prefix.
-    with pytest.raises(SystemExit):
-        cli.main(["task", "logs", task_id[:4] + "lightningstrike"])
-
-
 @pytest.mark.slow
 def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
