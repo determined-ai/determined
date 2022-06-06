@@ -54,7 +54,7 @@ class DistributedSampler(torch.utils.data.Sampler):
 
     DistributedSampler reports equivalent len values for every worker, regardless of rank.
     When DistributedSampler wraps a Sampler whose len is not divisible by the number
-    of replicas, this is accomplished by increasing the reported len for each
+    of replicas, equal lens are enforced by increasing the reported len for each
     would-be-shorter rank by one.  This ensures that epoch-triggered actions are synchronized
     across workers, as worker epochs are defined in terms of their DistributedSampler's len.
     """
@@ -93,7 +93,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
 
     DistributedBatchSampler reports equivalent len values for every worker, regardless of rank.
     When DistributedBatchSampler wraps a BatchSampler whose len is not divisible by the number
-    of replicas, this is accomplished by increasing the reported len for each
+    of replicas, equal lens are enforced by increasing the reported len for each
     would-be-shorter rank by one.  This ensures that epoch-triggered actions are synchronized
     across workers, as worker epochs are defined in terms of their DistributedBatchSampler's len.
     """
