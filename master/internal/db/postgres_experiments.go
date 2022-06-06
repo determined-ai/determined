@@ -1152,7 +1152,7 @@ func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
-	ctes := `
+	query := `
 WITH const AS (
     SELECT config->'searcher'->>'metric' AS metric_name,
            (CASE
@@ -1219,15 +1219,14 @@ WITH const AS (
                 AND c.trial_rank > $3)
                OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
                    IS NULL))
-)`
-
-	query := `SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
+)
+SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
 	var checkpointIDRows []struct {
 		ID uuid.UUID
 	}
 
-	if err := db.queryRows(ctes+query, &checkpointIDRows,
+	if err := db.queryRows(query, &checkpointIDRows,
 		id, experimentBest, trialBest, trialLatest); err != nil {
 		return "", fmt.Errorf(
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)

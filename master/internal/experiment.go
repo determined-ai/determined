@@ -353,23 +353,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
-		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			taskID:            model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
-			jobID:             e.JobID,
-			jobSubmissionTime: e.StartTime,
-			GCCkptSpec: tasks.GCCkptSpec{
-				Base:         taskSpec,
-				ExperimentID: e.Experiment.ID,
-				LegacyConfig: e.Config.AsLegacy(),
-				ToDelete:     checkpoints,
-			},
 
-			rm: e.rm,
-			db: e.db,
+		ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, e.JobID, e.StartTime, taskSpec,
+			e.Experiment.ID, e.Config.AsLegacy(), checkpoints, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
 
-			taskLogger: e.taskLogger,
-			logCtx:     e.logCtx,
-		})
+		ctx.Self().System().ActorOf(addr, ckptGCTask)
 
 		if e.State == model.CompletedState {
 			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
