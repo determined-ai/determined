@@ -71,7 +71,7 @@ class PyTorchTrialController(det.TrialController):
     @classmethod
     def get_metric_writer(
         cls: Type["PyTorchTrialController"],
-    ) -> Optional[tensorboard.BatchMetricWriter]:
+    ) -> tensorboard.BatchMetricWriter:
         # import locally to avoid having tensorboard when metrics are not written
         from determined.tensorboard.metric_writers.pytorch import TorchWriter
 

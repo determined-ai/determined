@@ -170,7 +170,7 @@ class TFKerasTrialController(det.TrialController):
     @classmethod
     def get_metric_writer(
         cls: Type["TFKerasTrialController"],
-    ) -> Optional[tensorboard.BatchMetricWriter]:
+    ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 
@@ -324,7 +324,6 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._metric_writer = tensorflow.TFWriter()
 
         self.model = model
         self.session = session

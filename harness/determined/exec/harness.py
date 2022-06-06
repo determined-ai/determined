@@ -120,8 +120,7 @@ def main(train_entrypoint: str) -> int:
                 env=env,
             )
             metric_writer = controller.get_metric_writer()
-            if metric_writer is not None:
-                core_context.train.set_tensorboard_metric_writer(metric_writer)
+            core_context.train.set_tensorboard_metric_writer(metric_writer)
 
             controller.run()
 

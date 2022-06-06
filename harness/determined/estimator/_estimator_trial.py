@@ -467,7 +467,7 @@ class EstimatorTrialController(det.TrialController):
     @classmethod
     def get_metric_writer(
         cls: Type["EstimatorTrialController"],
-    ) -> Optional[tensorboard.BatchMetricWriter]:
+    ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
         return tensorboard.BatchMetricWriter(writer)
 

@@ -107,8 +107,9 @@ class TrialController(metaclass=abc.ABCMeta):
         return False
 
     @classmethod
-    def get_metric_writer(cls: Type["TrialController"]) -> Optional[tensorboard.BatchMetricWriter]:
-        return None
+    def get_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
+        # default to the original kludge to avoid regression in custom trial controllers
+        return tensorboard.get_metric_writer()
 
     def initialize_wrapper(self) -> None:
         pass

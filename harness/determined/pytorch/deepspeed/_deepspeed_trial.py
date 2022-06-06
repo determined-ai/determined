@@ -64,7 +64,7 @@ class DeepSpeedTrialController(det.TrialController):
     @classmethod
     def get_metric_writer(
         cls: Type["DeepSpeedTrialController"],
-    ) -> Optional[tensorboard.BatchMetricWriter]:
+    ) -> tensorboard.BatchMetricWriter:
         writer = TorchWriter()
         return tensorboard.BatchMetricWriter(writer)
 
