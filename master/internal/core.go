@@ -995,7 +995,7 @@ func (m *Master) Run(ctx context.Context) error {
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
 	m.echo.GET("/config", api.Route(m.getConfig))
-	m.echo.GET("/info", api.Route(m.getInfo)) //unauthenticated
+	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs))
 
 	experimentsGroup := m.echo.Group("/experiments")
@@ -1016,12 +1016,12 @@ func (m *Master) Run(ctx context.Context) error {
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
-	m.echo.POST("/task-logs", api.Route(m.postTaskLogs)) //unauthenticated, but we want?
+	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
 
 	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
 	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
 	m.echo.GET("/ws/data-layer/*",
-		api.WebSocketRoute(m.rwCoordinatorWebSocket)) //unauthenticated
+		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
 	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	m.echo.Any(
