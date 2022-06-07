@@ -29,8 +29,8 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// UnauthenticatedFuncs are the paths that are exempted from authentication.
-var UnauthenticatedFuncs = map[string]bool{
+// UnauthenticatedPoints are the paths that are exempted from authentication.
+var UnauthenticatedPoints = map[string]bool{
 	"/info":             true,
 	"/task-logs":        true,
 	"/ws/data-layer/*":  true,
@@ -41,8 +41,8 @@ var UnauthenticatedFuncs = map[string]bool{
 	"/proxy/:service/*": true,
 }
 
-// AdminAuthenticatedFuncs are the paths that require admin authentication.
-var AdminAuthenticatedFuncs = map[string]bool{
+// AdminAuthenticatedPoints are the paths that require admin authentication.
+var AdminAuthenticatedPoints = map[string]bool{
 	"/config": true,
 }
 
@@ -140,9 +140,9 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		adminOnly := false
-		if _, ok := AdminAuthenticatedFuncs[c.Path()]; ok {
+		if _, ok := AdminAuthenticatedPoints[c.Path()]; ok {
 			adminOnly = true
-		} else if _, ok := UnauthenticatedFuncs[c.Path()]; ok {
+		} else if _, ok := UnauthenticatedPoints[c.Path()]; ok {
 			return next(c)
 		}
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
