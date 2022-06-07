@@ -289,7 +289,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                             ]
                         )
             agents_are_up[agent_id] = not agents_are_up[agent_id]
-        time.sleep(5)
+        time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
         agent_list = json.loads(
