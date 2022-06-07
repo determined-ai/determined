@@ -68,7 +68,9 @@ message TaskLogsRequest {
 // Response to TaskLogsRequest.
 message TaskLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "level", "log", "message", "task_id", "timestamp" ] }
+    json_schema: {
+      required: [ "id", "level", "log", "message", "task_id", "timestamp" ]
+    }
   };
   // The ID of the log.
   string id = 1;
