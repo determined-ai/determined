@@ -253,24 +253,23 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
         agent_up(["--agent-name", f"agent-{i}"])
     time.sleep(3)
 
-    # Set up if we are testing full agent disconnects or just agent enable/disables.
-    for i in range(steps):
+    for _ in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
 
             if agent_is_up:
                 if should_disconnect:
-                    agent_down(["--agent-name", f"agent-{i}"])
+                    agent_down(["--agent-name", f"agent-{agent_id}"])
                 else:
                     with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(["det", "agent", "disable", f"agent-{i}"])
+                        subprocess.run(["det", "agent", "disable", f"agent-{agent_id}"])
             else:
                 if should_disconnect:
-                    agent_up(["--agent-name", f"agent-{i}"])
+                    agent_up(["--agent-name", f"agent-{agent_id}"])
                 else:
                     with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(["det", "agent", "enable", f"agent-{i}"])
+                        subprocess.run(["det", "agent", "enable", f"agent-{agent_id}"])
             agents_are_up[agent_id] = not agents_are_up[agent_id]
         time.sleep(5)
 
