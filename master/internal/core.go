@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -37,6 +39,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/connsave"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
@@ -476,10 +479,32 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 
 	// If configured, set up TLS wrapping.
 	if cert != nil {
+		var clientCAs *x509.CertPool
+		clientAuthMode := tls.NoClientCert
+
+		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+			// Most connections don't require client certificates, but we do want to make sure that any that
+			// are provided are valid, so individual handlers that care can just check for the presence of
+			// certificates.
+			clientAuthMode = tls.VerifyClientCertIfGiven
+
+			if agentRM.ClientCA != "" {
+				clientCAs = x509.NewCertPool()
+				clientRootCA, iErr := ioutil.ReadFile(agentRM.ClientCA)
+				if iErr != nil {
+					return errors.Wrap(err, "failed to read agent CA file")
+				}
+				clientCAs.AppendCertsFromPEM(clientRootCA)
+			}
+		}
+
+		fmt.Println(clientAuthMode)
 		baseListener = tls.NewListener(baseListener, &tls.Config{
 			Certificates:             []tls.Certificate{*cert},
 			MinVersion:               tls.VersionTLS12,
 			PreferServerCipherSuites: true,
+			ClientCAs:                clientCAs,
+			ClientAuth:               clientAuthMode,
 		})
 	}
 
@@ -524,6 +549,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
 		m.echo.HidePort = true
+		m.echo.Server.ConnContext = connsave.SaveConn
 		defer closeWithErrCheck("echo", m.echo)
 		return m.echo.StartServer(m.echo.Server)
 	})

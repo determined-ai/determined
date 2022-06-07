@@ -57,6 +57,9 @@ type AgentResourceManagerConfig struct {
 	DefaultCPUResourcePool string `json:"default_cpu_resource_pool,omitempty"`
 	// Deprecated: use DefaultComputeResourcePool instead.
 	DefaultGPUResourcePool string `json:"default_gpu_resource_pool,omitempty"`
+
+	RequireAuthentication bool   `json:"require_authentication"`
+	ClientCA              string `json:"client_ca"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.

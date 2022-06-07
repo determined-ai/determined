@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
+from functools import partial
 from pathlib import Path
 from typing import IO, Any, ContextManager, Dict, Iterator, List, Tuple, Union
 
@@ -191,16 +192,16 @@ def _open_shell(
 
 args_description = [
     Cmd("shell", None, "manage shells", [
-        Cmd("list", command.list_tasks, "list shells", [
+        Cmd("list", partial(command.list_tasks), "list shells", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all shells (including other users')")
         ], is_default=True),
-        Cmd("config", command.config,
+        Cmd("config", partial(command.config),
             "display shell config", [
                 Arg("shell_id", type=str, help="shell ID"),
-            ]),
+        ]),
         Cmd("start", start_shell, "start a new shell", [
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
             Arg("--config-file", default=None, type=FileType("r"),
@@ -228,17 +229,17 @@ args_description = [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
-        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs),
+        Cmd("logs", partial(task.logs),
             "fetch shell logs", [
             Arg("task_id", help="shell ID", metavar="shell_id"),
             *task.common_log_options
         ]),
-        Cmd("kill", command.kill, "kill a shell", [
+        Cmd("kill", partial(command.kill), "kill a shell", [
             Arg("shell_id", help="shell ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set shell attributes", [
-            Cmd("priority", command.set_priority, "set shell priority", [
+            Cmd("priority", partial(command.set_priority), "set shell priority", [
                 Arg("shell_id", help="shell ID"),
                 Arg("priority", type=int, help="priority"),
             ]),

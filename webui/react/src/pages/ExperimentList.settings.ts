@@ -55,6 +55,7 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ExperimentColumnName[];
   label?: string[];
+  row?: number[];
   search?: string;
   sortKey: V1GetExperimentsRequestSortBy;
   state?: RunState[];

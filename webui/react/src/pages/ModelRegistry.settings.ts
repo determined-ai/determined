@@ -1,15 +1,45 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 
-export interface Settings {
+export type ModelColumnName =
+  | 'action'
+  | 'archived'
+  | 'description'
+  | 'lastUpdatedTime'
+  | 'name'
+  | 'tags'
+  | 'numVersions'
+  | 'user';
+
+export const DEFAULT_COLUMNS: ModelColumnName[] = [
+  'name',
+  'description',
+  'numVersions',
+  'lastUpdatedTime',
+  'tags',
+  'archived',
+  'user',
+];
+
+export const DEFAULT_COLUMN_WIDTHS: Record<ModelColumnName, number> = {
+  action: 46,
+  archived: 75,
+  description: 147,
+  lastUpdatedTime: 117,
+  name: 150,
+  numVersions: 74,
+  tags: 106,
+  user: 85,
+};
+
+export interface Settings extends InteractiveTableSettings {
   archived?: boolean;
+  columns: ModelColumnName[];
   description?: string;
   name?: string;
-  sortDesc: boolean;
   sortKey: V1GetModelsRequestSortBy;
-  tableLimit: number;
-  tableOffset: number;
   tags?: string[];
   users?: string[];
 }
@@ -20,6 +50,26 @@ const config: SettingsConfig = {
       key: 'archived',
       storageKey: 'archived',
       type: { baseType: BaseType.Boolean },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS,
+      key: 'columns',
+      skipUrlEncoding: true,
+      storageKey: 'columns',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+      key: 'columnWidths',
+      skipUrlEncoding: true,
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true,
+      },
     },
     {
       defaultValue: true,

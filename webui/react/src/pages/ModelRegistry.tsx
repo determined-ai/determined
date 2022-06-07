@@ -1,16 +1,16 @@
-import { Button, Dropdown, Menu, Modal } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings,
+  onRightClickableCell } from 'components/InteractiveTable';
+import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import Page from 'components/Page';
-import ResponsiveTable from 'components/ResponsiveTable';
-import tableCss from 'components/ResponsiveTable.module.scss';
-import Section from 'components/Section';
-import { checkmarkRenderer, getFullPaginationConfig, modelNameRenderer,
+import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
@@ -19,15 +19,14 @@ import { useStore } from 'contexts/Store';
 import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, deleteModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
-import { isBoolean, isEqual } from 'shared/utils/data';
-import { capitalize } from 'shared/utils/string';
-import { ArchiveFilter, ModelItem } from 'types';
+import { isEqual } from 'shared/utils/data';
+import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
@@ -36,7 +35,13 @@ import { ErrorType } from '../shared/utils/error';
 import { validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelRegistry.module.scss';
-import settingsConfig, { Settings } from './ModelRegistry.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  ModelColumnName,
+  Settings,
+} from './ModelRegistry.settings';
+
+const filterKeys: Array<keyof Settings> = [ 'tags', 'name', 'users', 'description' ];
 
 const ModelRegistry: React.FC = () => {
   const { users, auth: { user } } = useStore();
@@ -46,18 +51,23 @@ const ModelRegistry: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
   const { showModal } = useCreateModelModal();
+  const pageRef = useRef<HTMLElement>(null);
 
   const {
+    activeSettings,
     settings,
     updateSettings,
+    resetSettings,
   } = useSettings<Settings>(settingsConfig);
+
+  const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchModels = useCallback(async () => {
     try {
       const response = await getModels({
-        archived: settings.archived,
+        archived: settings.archived ? undefined : false,
         description: settings.description,
         labels: settings.tags,
         limit: settings.tableLimit,
@@ -147,27 +157,6 @@ const ModelRegistry: React.FC = () => {
       setIsLoading(false);
     }
   }, [ fetchModels ]);
-
-  const handleArchiveFilterApply = useCallback((archived: string[]) => {
-    const archivedFilter = archived.length === 1
-      ? archived[0] === ArchiveFilter.Archived : undefined;
-    updateSettings({ archived: archivedFilter });
-  }, [ updateSettings ]);
-
-  const handleArchiveFilterReset = useCallback(() => {
-    updateSettings({ archived: undefined });
-  }, [ updateSettings ]);
-
-  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      values={isBoolean(settings.archived)
-        ? [ settings.archived ? ArchiveFilter.Archived : ArchiveFilter.Unarchived ]
-        : undefined}
-      onFilter={handleArchiveFilterApply}
-      onReset={handleArchiveFilterReset}
-    />
-  ), [ handleArchiveFilterApply, handleArchiveFilterReset, settings.archived ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
     updateSettings({ users: users.length !== 0 ? users : undefined });
@@ -270,9 +259,39 @@ const ModelRegistry: React.FC = () => {
         type: ErrorType.Api,
       });
       setIsLoading(false);
-      return e;
+      return e as Error;
     }
-  }, [ ]);
+  }, []);
+
+  const resetColumnWidths = useCallback(
+    () =>
+      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
+    [ settings.columns, updateSettings ],
+  );
+
+  const resetFilters = useCallback(() => {
+    resetSettings([ ...filterKeys, 'tableOffset' ]);
+  }, [ resetSettings ]);
+
+  const ModelActionMenu = useCallback((record: ModelItem) => {
+    const isDeletable = user?.isAdmin || user?.id === record.userId;
+    return (
+      <Menu>
+        <Menu.Item
+          key="switch-archived"
+          onClick={() => switchArchived(record)}>
+          {record.archived ? 'Unarchive' : 'Archive'}
+        </Menu.Item>
+        <Menu.Item
+          danger
+          key="delete-model"
+          onClick={() => isDeletable ?
+            showConfirmDelete(record) : showModalItemCannotDelete()}>
+          Delete Model
+        </Menu.Item>
+      </Menu>
+    );
+  }, [ showConfirmDelete, switchArchived, user?.id, user?.isAdmin ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (
@@ -284,29 +303,13 @@ const ModelRegistry: React.FC = () => {
       />
     );
 
-    const overflowRenderer = (_:string, record: ModelItem) => {
-      const isDeletable = user?.isAdmin || user?.id === record.userId;
+    const actionRenderer = (_:string, record: ModelItem) => {
       return (
         <Dropdown
-          overlay={(
-            <Menu>
-              <Menu.Item
-                key="switch-archived"
-                onClick={() => switchArchived(record)}>
-                {record.archived ? 'Unarchive' : 'Archive'}
-              </Menu.Item>
-              <Menu.Item
-                danger
-                key="delete-model"
-                onClick={() => isDeletable ?
-                  showConfirmDelete(record) : showModalItemCannotDelete()}>
-                Delete Model
-              </Menu.Item>
-            </Menu>
-          )}
+          overlay={() => ModelActionMenu(record)}
           trigger={[ 'click' ]}>
           <Button className={css.overflow} type="text">
-            <Icon name="overflow-vertical" size="tiny" />
+            <Icon name="overflow-vertical" />
           </Button>
         </Dropdown>
       );
@@ -321,97 +324,94 @@ const ModelRegistry: React.FC = () => {
       />
     );
 
-    const tableColumns: ColumnsType<ModelItem> = [
+    return [
       {
         dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
+        isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
-        onHeaderCell: () => settings.name ? { className: tableCss.headerFilterOn } : {},
+        onCell: onRightClickableCell,
         render: modelNameRenderer,
         sorter: true,
         title: 'Name',
-        width: 250,
       },
       {
         dataIndex: 'description',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         filterDropdown: descriptionFilterSearch,
         filterIcon: tableSearchIcon,
+        isFiltered: (settings: Settings) => !!settings.description,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
-        onHeaderCell: () => settings.description ? { className: tableCss.headerFilterOn } : {},
         render: descriptionRenderer,
         sorter: true,
         title: 'Description',
       },
       {
         dataIndex: 'numVersions',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['numVersions'],
         key: V1GetModelsRequestSortBy.NUMVERSIONS,
+        onCell: onRightClickableCell,
         sorter: true,
         title: 'Versions',
-        width: 100,
       },
       {
         dataIndex: 'lastUpdatedTime',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdatedTime'],
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-        render: (date) => relativeTimeRenderer(new Date(date)),
+        render: (date: string) => relativeTimeRenderer(new Date(date)),
         sorter: true,
         title: 'Last updated',
-        width: 150,
       },
       {
-        dataIndex: 'labels',
+        dataIndex: 'tags',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: tags.map(tag => ({ text: tag, value: tag })),
-        onHeaderCell: () => settings.tags ? { className: tableCss.headerFilterOn } : {},
+        isFiltered: (settings: Settings) => !!settings.tags,
+        key: 'tags',
         render: tagsRenderer,
         title: 'Tags',
-        width: 120,
       },
       {
         dataIndex: 'archived',
-        filterDropdown: archiveFilterDropdown,
-        filters: [
-          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
-          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
-        ],
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
-        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: checkmarkRenderer,
         title: 'Archived',
-        width: 120,
       },
       {
+        dataIndex: 'user',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
+        isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         title: 'User',
-        width: 100,
       },
-      { fixed: 'right', render: overflowRenderer, title: '', width: 40 },
-    ];
-
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
+      {
+        align: 'right',
+        className: 'fullCell',
+        dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        fixed: 'right',
+        key: 'action',
+        render: actionRenderer,
+        title: '',
+        width: DEFAULT_COLUMN_WIDTHS['action'],
+      },
+    ] as ColumnDef<ModelItem>[];
   }, [ nameFilterSearch,
     tableSearchIcon,
     descriptionFilterSearch,
     labelFilterDropdown,
-    archiveFilterDropdown,
+    tags,
     userFilterDropdown,
     users,
     setModelTags,
-    user,
-    switchArchived,
-    showConfirmDelete,
-    settings,
-    tags,
+    ModelActionMenu,
     saveModelDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
@@ -439,48 +439,102 @@ const ModelRegistry: React.FC = () => {
     showModal({});
   }, [ showModal ]);
 
-  // archive === false is a filter
-  const filtered = (settings.archived != null
-  || settings.description
-  || settings.tags
-  || settings.name
-  || settings.users);
+  const switchShowArchived = useCallback((showArchived: boolean) => {
+    let newColumns: ModelColumnName[];
+    let newColumnWidths: number[];
+
+    if (showArchived) {
+      if (settings.columns?.includes('archived')) {
+        // just some defensive coding: don't add archived twice
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      } else {
+        newColumns = [ ...settings.columns, 'archived' ];
+        newColumnWidths = [ ...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived'] ];
+      }
+    } else {
+      const archivedIndex = settings.columns.indexOf('archived');
+      if (archivedIndex !== -1) {
+        newColumns = [ ...settings.columns ];
+        newColumnWidths = [ ...settings.columnWidths ];
+        newColumns.splice(archivedIndex, 1);
+        newColumnWidths.splice(archivedIndex, 1);
+      } else {
+        newColumns = settings.columns;
+        newColumnWidths = settings.columnWidths;
+      }
+    }
+    updateSettings({
+      archived: showArchived,
+      columns: newColumns,
+      columnWidths: newColumnWidths,
+      row: undefined,
+    });
+
+  }, [ settings, updateSettings ]);
+
+  const ModelActionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <Dropdown
+        overlay={() => ModelActionMenu(record)}
+        trigger={[ 'contextMenu' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+    ),
+    [ ModelActionMenu ],
+  );
 
   return (
-    <Page docTitle="Model Registry" id="models" loading={isLoading}>
-      <Section
-        options={<Button onClick={showCreateModelModal}>New Model</Button>}
-        title="Model Registry">
-        {(models.length === 0 && !isLoading && !filtered) ?
-          (
-            <div className={css.emptyBase}>
-              <div className={css.icon}>
-                <Icon name="model" size="mega" />
-              </div>
-              <h4>No Models Registered</h4>
-              <p className={css.description}>
-                Track important checkpoints and versions from your experiments.&nbsp;
-                <Link external path={paths.docs('/post-training/model-registry.html')}>
-                  Learn more
-                </Link>
-              </p>
+    <Page
+      containerRef={pageRef}
+      id="models"
+      loading={isLoading}
+      options={(
+        <Space>
+          <Switch checked={settings.archived} onChange={switchShowArchived} />
+          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Button onClick={resetColumnWidths}>Reset Widths</Button>
+          {filterCount > 0 &&
+            <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+          <Button onClick={showCreateModelModal}>New Model</Button>
+        </Space>
+      )}
+      title="Model Registry">
+      {(models.length === 0 && !isLoading && filterCount === 0) ?
+        (
+          <div className={css.emptyBase}>
+            <div className={css.icon}>
+              <Icon name="model" size="mega" />
             </div>
-          ) : (
-            <ResponsiveTable
-              columns={columns}
-              dataSource={models}
-              loading={isLoading}
-              pagination={getFullPaginationConfig({
-                limit: settings.tableLimit,
-                offset: settings.tableOffset,
-              }, total)}
-              rowKey="id"
-              showSorterTooltip={false}
-              size="small"
-              onChange={handleTableChange}
-            />
-          )}
-      </Section>
+            <h4>No Models Registered</h4>
+            <p className={css.description}>
+              Track important checkpoints and versions from your experiments.&nbsp;
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ModelActionDropdown}
+            dataSource={models}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="name"
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            onChange={handleTableChange}
+          />
+        )}
     </Page>
   );
 };

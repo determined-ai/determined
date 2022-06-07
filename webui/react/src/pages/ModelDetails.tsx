@@ -1,28 +1,24 @@
-import { Button, Dropdown, Menu, Modal } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
 import { SorterResult } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
-import DownloadModelModal from 'components/DownloadModelModal';
 import InlineEditor from 'components/InlineEditor';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import MetadataCard from 'components/Metadata/MetadataCard';
-import showModalItemCannotDelete from 'components/ModalItemDelete';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
-import ResponsiveTable from 'components/ResponsiveTable';
-import { getFullPaginationConfig, modelVersionNameRenderer, modelVersionNumberRenderer,
+import { defaultRowClassName, getFullPaginationConfig,
+  modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
-  archiveModel, deleteModel, deleteModelVersion, getModelDetails, isNotFound, patchModel,
+  archiveModel, deleteModel, getModelDetails, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
@@ -33,8 +29,12 @@ import { ErrorType } from '../shared/utils/error';
 import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
-import settingsConfig, { Settings } from './ModelDetails/ModelDetails.settings';
+import settingsConfig, {
+  DEFAULT_COLUMN_WIDTHS,
+  Settings,
+} from './ModelDetails/ModelDetails.settings';
 import ModelHeader from './ModelDetails/ModelHeader';
+import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 
 interface Params {
   modelName: string;
@@ -48,6 +48,7 @@ const ModelDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
   const history = useHistory();
+  const pageRef = useRef<HTMLElement>(null);
 
   const {
     settings,
@@ -80,21 +81,6 @@ const ModelDetails: React.FC = () => {
     fetchModel();
   }, [ fetchModel ]);
 
-  const deleteVersion = useCallback(async (version: ModelVersion) => {
-    try {
-      setIsLoading(true);
-      await deleteModelVersion({ modelName: version.model.name, versionId: version.id });
-      await fetchModel();
-    } catch (e) {
-      handleError(e, {
-        publicSubject: `Unable to delete model version ${version.id}.`,
-        silent: true,
-        type: ErrorType.Api,
-      });
-      setIsLoading(false);
-    }
-  }, [ fetchModel ]);
-
   const saveModelVersionTags = useCallback(async (modelName, versionId, tags) => {
     try {
       setIsLoading(true);
@@ -110,20 +96,6 @@ const ModelDetails: React.FC = () => {
     }
   }, [ fetchModel ]);
 
-  const showConfirmDelete = useCallback((version: ModelVersion) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}"
-      from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: () => deleteVersion(version),
-      title: 'Confirm Delete',
-    });
-  }, [ deleteVersion ]);
-
   const saveVersionDescription =
     useCallback(async (editedDescription: string, versionId: number) => {
       try {
@@ -138,7 +110,7 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        return e;
+        return e as Error;
       }
     }, [ modelName ]);
 
@@ -152,30 +124,14 @@ const ModelDetails: React.FC = () => {
       />
     );
 
-    const OverflowRenderer = (_:string, record: ModelVersion) => {
-      const isDeletable = user?.isAdmin
-        || user?.id === model?.model.userId
-        || user?.id === record.userId;
+    const actionRenderer = (_:string, record: ModelVersion) => {
       return (
-        <Dropdown
-          overlay={(
-            <Menu>
-              {useActionRenderer(_, record)}
-              <Menu.Item
-                danger
-
-                key="delete-version"
-                onClick={() => isDeletable ?
-                  showConfirmDelete(record) : showModalItemCannotDelete()}>
-                Delete Version
-              </Menu.Item>
-            </Menu>
-          )}
-          trigger={[ 'click' ]}>
-          <Button className={css.overflow} type="text">
-            <Icon name="overflow-vertical" size="tiny" />
-          </Button>
-        </Dropdown>
+        <ModelVersionActionDropdown
+          curUser={user}
+          model={model?.model}
+          modelVersion={record}
+          onComplete={fetchModel}
+        />
       );
     };
 
@@ -183,62 +139,60 @@ const ModelDetails: React.FC = () => {
       <InlineEditor
         disabled={record.model.archived}
         placeholder="Add description..."
-        value={value}
+        value={record.comment ?? ''}
         onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
       />
     );
 
-    const tableColumns: ColumnsType<ModelVersion> = [
+    return [
       {
         dataIndex: 'version',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['version'],
         key: V1GetModelVersionsRequestSortBy.VERSION,
         render: modelVersionNumberRenderer,
         sorter: true,
         title: 'V',
-        width: 1,
       },
       {
         dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         render: modelVersionNameRenderer,
         title: 'Name',
-        width: 250,
       },
       {
-        dataIndex: 'comment',
+        dataIndex: 'description',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         render: descriptionRenderer,
         title: 'Description',
       },
       {
         dataIndex: 'lastUpdatedTime',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['lastUpdatedTime'],
         render: (date: Date, record: ModelVersion) =>
           relativeTimeRenderer(date ?? record.creationTime),
         title: 'Last updated',
-        width: 140,
       },
       {
+        dataIndex: 'user',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
         render: userRenderer,
         title: 'User',
-        width: 1,
       },
-      { dataIndex: 'labels', render: tagsRenderer, title: 'Tags', width: 120 },
-      { render: OverflowRenderer, title: '', width: 1 },
-    ];
-
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
-  }, [ showConfirmDelete,
-    model?.model.userId,
-    saveModelVersionTags,
-    user,
-    settings.sortKey,
-    settings.sortDesc,
-    saveVersionDescription ]);
+      {
+        dataIndex: 'tags',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
+        render: tagsRenderer,
+        title: 'Tags',
+      },
+      {
+        dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        render: actionRenderer,
+        title: '',
+      },
+    ] as ColumnDef<ModelVersion>[];
+  }, [ saveModelVersionTags, user, model?.model, fetchModel, saveVersionDescription ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -302,7 +256,7 @@ const ModelDetails: React.FC = () => {
         silent: false,
         type: ErrorType.Api,
       });
-      return e;
+      return e as Error;
     }
   }, [ modelName ]);
 
@@ -352,6 +306,21 @@ const ModelDetails: React.FC = () => {
     history.push('/det/models');
   }, [ history, modelName ]);
 
+  const actionDropdown = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <ModelVersionActionDropdown
+        curUser={user}
+        model={model?.model}
+        modelVersion={record}
+        trigger={[ 'contextMenu' ]}
+        onComplete={fetchModel}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </ModelVersionActionDropdown>
+    ),
+    [ fetchModel, model?.model, user ],
+  );
+
   if (!modelName) {
     return <Message title="Model name is empty" />;
   } else if (pageError) {
@@ -365,6 +334,7 @@ const ModelDetails: React.FC = () => {
 
   return (
     <Page
+      containerRef={pageRef}
       docTitle="Model Details"
       headerComponent={(
         <ModelHeader
@@ -386,17 +356,22 @@ const ModelDetails: React.FC = () => {
             </p>
           </div>
         ) : (
-          <ResponsiveTable
+          <InteractiveTable
             columns={columns}
+            containerRef={pageRef}
+            ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
             loading={isLoading}
             pagination={getFullPaginationConfig({
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
-            rowKey="id"
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="version"
+            settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
             onChange={handleTableChange}
           />
         )}
@@ -412,25 +387,6 @@ const ModelDetails: React.FC = () => {
         />
       </div>
     </Page>
-  );
-};
-
-const useActionRenderer = (_:string, record: ModelVersion) => {
-  const [ showModal, setShowModal ] = useState(false);
-
-  return (
-    <>
-      <Menu.Item
-        key="download"
-        onClick={() => setShowModal(true)}>
-        Download
-      </Menu.Item>
-      <DownloadModelModal
-        modelVersion={record}
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-      />
-    </>
   );
 };
 

@@ -46,10 +46,11 @@ export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
   onTrialUpdate?: (trial: TrialDetails) => void;
+  pageRef: React.RefObject<HTMLElement>;
 }
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { experiment, fetchExperimentDetails, onTrialUpdate }: Props,
+  { experiment, fetchExperimentDetails, onTrialUpdate, pageRef }: Props,
 ) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
@@ -101,7 +102,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, trialId, onTrialUpdate ]);
+  }, [ canceler.signal, onTrialUpdate, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
@@ -175,7 +176,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
           <TrialDetailsHyperparameters
-            experiment={experiment}
+            pageRef={pageRef}
             trial={trialDetails as TrialDetails}
           />
         </TabPane>

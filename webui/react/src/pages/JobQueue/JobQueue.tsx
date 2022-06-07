@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
+import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Page from 'components/Page';
-import ResponsiveTable, { handleTableChange } from 'components/ResponsiveTable';
+import { handleTableChange } from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
   killJupyterLab, killShell, killTensorBoard } from 'services/api';
@@ -53,6 +54,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   const [ canceler ] = useState(new AbortController());
   const [ selectedRp, setSelectedRp ] = useState<ResourcePool>();
   const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
+  const pageRef = useRef<HTMLElement>(null);
+
   const {
     settings,
     updateSettings,
@@ -317,6 +320,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
     <Page
       bodyNoPadding={bodyNoPadding}
       className={css.base}
+      containerRef={pageRef}
       headerComponent={<div />}
       id="jobs"
       title="Job Queue by Resource Pool">
@@ -342,8 +346,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
         </Section>
       )}
       <Section hideTitle={!!selected} title={tableTitle}>
-        <ResponsiveTable<Job>
+        <InteractiveTable
           columns={columns}
+          containerRef={pageRef}
           dataSource={jobs}
           loading={pageState.isLoading}
           pagination={getFullPaginationConfig({
@@ -353,8 +358,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="jobId"
           scroll={{ x: 1000 }}
+          settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
           onChange={handleTableChange(columns, settings, updateSettings)}
         />
       </Section>

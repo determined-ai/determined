@@ -1,4 +1,5 @@
 from argparse import ONE_OR_MORE, FileType, Namespace
+from functools import partial
 from pathlib import Path
 from typing import Any, List
 
@@ -67,16 +68,16 @@ def open_notebook(args: Namespace) -> None:
 
 args_description = [
     Cmd("notebook", None, "manage notebooks", [
-        Cmd("list ls", command.list_tasks, "list notebooks", [
+        Cmd("list ls", partial(command.list_tasks), "list notebooks", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all notebooks (including other users')")
         ], is_default=True),
-        Cmd("config", command.config,
+        Cmd("config", partial(command.config),
             "display notebook config", [
                 Arg("notebook_id", type=str, help="notebook ID"),
-            ]),
+        ]),
         Cmd("start", start_notebook, "start a new notebook", [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
@@ -96,16 +97,16 @@ args_description = [
         Cmd("open", open_notebook, "open an existing notebook", [
             Arg("notebook_id", help="notebook ID")
         ]),
-        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs), "fetch notebook logs", [
+        Cmd("logs", partial(task.logs), "fetch notebook logs", [
             Arg("task_id", help="notebook ID", metavar="notebook_id"),
             *task.common_log_options
         ]),
-        Cmd("kill", command.kill, "kill a notebook", [
+        Cmd("kill", partial(command.kill), "kill a notebook", [
             Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set notebook attributes", [
-            Cmd("priority", command.set_priority, "set notebook priority", [
+            Cmd("priority", partial(command.set_priority), "set notebook priority", [
                 Arg("notebook_id", help="notebook ID"),
                 Arg("priority", type=int, help="priority"),
             ]),
