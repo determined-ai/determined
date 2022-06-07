@@ -1,4 +1,5 @@
 import json
+import uuid
 from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
@@ -144,6 +145,12 @@ def delete_checkpoints(args: Namespace) -> None:
         "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
     ):
         cUUIDS = args.checkpoints_uuids.split(",")
+        for uuidStr in cUUIDS: 
+            try: 
+                uuid.UUID(uuidStr)
+            except ValueError: 
+                raise ValueError(f"given checkpoint uuid {uuidStr} is invalid.")
+                
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=cUUIDS)
         bindings.delete_DeleteCheckpoints(setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))

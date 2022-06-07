@@ -98,10 +98,7 @@ def main(argv: List[str]) -> None:
 
     storage_config = args.storage_config
     logging.info("Using checkpoint storage: {}".format(storage_config))
-
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
-
-    logging.info(f"This is args.delete: {args.delete}")
     storage_ids = args.delete.split(",")
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
