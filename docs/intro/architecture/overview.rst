@@ -203,7 +203,7 @@ Training Implementation Workflow
 Training Scenarios
 **************************************
 
-TBD
+You can choose to use trial-based training, which hooks into a Determined framework that runs the training loop, or access Core API directly to run your training logic without hooking into a framework.
 
 Trial-based Training Compared to using the Core API
 ===================================================
@@ -219,22 +219,16 @@ Determined-provided training loop, the *trial logic*.  The training loop uses
 the Core API to integrate with the rest of the Determined platform but those
 details are not exposed to the user trial. Trial-based training can be viewed as a special case of Core API training.
 
-In Trial-based distributed training, Determined starts multiple workers with
-a Determined-provided *launcher*.  Each worker runs the same trial logic coordinated across many workers. The distributed training details are hidden as much as possible from the user trial.
-
-So in the Trial-based training case, the entrypoint script is always a launcher (if the user specifies the legacy trial class format of entrypoint in their config, we just automatically convert it).  The launcher does basically nothing in non-distributed training, and it launches one worker.  That one worker looks just like it does on the left.The second diagram, which depicts non-distributed training, has a rather meaningless "training script" label, and its content appears to be worker from the first diagram.  That's because in non-distributed training, the launcher does nothing, and it's easy enough to describe it to users as if it doesn't exist.The third diagram is just like the second diagram, also depicting non-distributed training.  It also elides the launcher-that-does-nothing from the explanation.  The goal of the third diagram was to contrast with the fourth diagram; the dotted boundary shows what the user controls.  In the Trial-based training, they write a little plugin (the Trial) that fits into a framework we define (the Training Loop or Trial Logic... same thing).  In that framework we define, the TrainingLoop/TrialLogic uses the Core API on the users' behalf.The fourth diagram has a dotted line around the whole entrypoint script (the label I gave it was "training script" but I think that was imprecise, as I noted above).  The point was to show that in Core API-based training, there  is no framework or plugins, you just do what you want and interact with the core api directly.
-
-Alternatively, you can call Core API methods directly. The difference implied for your code are described in the following sections about non-distributed and distributed Core API implementations.
+In Trial-based distributed training, Determined starts multiple workers with a Determined-provided *launcher*. You write a ``Trial`` class plugin that hooks into the Determined framework that provides the training loop, or trial logic. The training loop makes Core API calls on your behalf, transparently. Each worker runs the same trial logic coordinated across many workers.
 
 Non-distributed Training using Core API
 =======================================
 
-The Core API enables you to integrate directly with the the Determined
-platform by:
+In Core API-based training, there  is no framework or plugins. Instead, you interact directly with the the Determined platform to:
 
--  reporting metrics and checkpoints
--  checking for preemption signals
--  participating in hyperparameter searches
+-  report metrics and checkpoints
+-  check for preemption signals
+-  do hyperparameter searches
 
 The following figure shows the software logic you need to provide when using Core API, directly:
 
