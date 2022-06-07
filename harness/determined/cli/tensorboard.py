@@ -70,7 +70,6 @@ def open_tensorboard(args: Namespace) -> None:
 
 # fmt: off
 
-# TODO: try out functools.wraps
 args_description = [
     Cmd("tensorboard", None, "manage TensorBoard instances", [
         Cmd("list ls", partial(command.list_tasks), "list TensorBoard instances", [

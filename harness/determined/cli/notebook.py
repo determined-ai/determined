@@ -97,7 +97,7 @@ args_description = [
         Cmd("open", open_notebook, "open an existing notebook", [
             Arg("notebook_id", help="notebook ID")
         ]),
-        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs), "fetch notebook logs", [
+        Cmd("logs", partial(task.logs), "fetch notebook logs", [
             Arg("task_id", help="notebook ID", metavar="notebook_id"),
             *task.common_log_options
         ]),

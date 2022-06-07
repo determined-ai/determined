@@ -70,7 +70,7 @@ args_description = [
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set command attributes", [
-            Cmd("priority", command.set_priority, "set command priority", [
+            Cmd("priority", partial(command.set_priority), "set command priority", [
                 Arg("command_id", help="command ID"),
                 Arg("priority", type=int, help="priority"),
             ]),
