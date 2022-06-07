@@ -4681,13 +4681,29 @@ class v1TaskLogsResponse:
         self,
         id: str,
         level: "v1LogLevel",
+        log: str,
         message: str,
+        taskId: str,
         timestamp: str,
+        agentId: "typing.Optional[str]" = None,
+        allocationId: "typing.Optional[str]" = None,
+        containerId: "typing.Optional[str]" = None,
+        rankId: "typing.Optional[int]" = None,
+        source: "typing.Optional[str]" = None,
+        stdtype: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.timestamp = timestamp
         self.message = message
         self.level = level
+        self.taskId = taskId
+        self.allocationId = allocationId
+        self.agentId = agentId
+        self.containerId = containerId
+        self.rankId = rankId
+        self.log = log
+        self.source = source
+        self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsResponse":
@@ -4696,6 +4712,14 @@ class v1TaskLogsResponse:
             timestamp=obj["timestamp"],
             message=obj["message"],
             level=v1LogLevel(obj["level"]),
+            taskId=obj["taskId"],
+            allocationId=obj.get("allocationId", None),
+            agentId=obj.get("agentId", None),
+            containerId=obj.get("containerId", None),
+            rankId=obj.get("rankId", None),
+            log=obj["log"],
+            source=obj.get("source", None),
+            stdtype=obj.get("stdtype", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4704,6 +4728,14 @@ class v1TaskLogsResponse:
             "timestamp": self.timestamp,
             "message": self.message,
             "level": self.level.value,
+            "taskId": self.taskId,
+            "allocationId": self.allocationId if self.allocationId is not None else None,
+            "agentId": self.agentId if self.agentId is not None else None,
+            "containerId": self.containerId if self.containerId is not None else None,
+            "rankId": self.rankId if self.rankId is not None else None,
+            "log": self.log,
+            "source": self.source if self.source is not None else None,
+            "stdtype": self.stdtype if self.stdtype is not None else None,
         }
 
 class v1Template:

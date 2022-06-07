@@ -5495,7 +5495,7 @@ export interface V1TaskLogsResponse {
      */
     timestamp: Date;
     /**
-     * The log message.
+     * The flat version of the log that UIs have shown historically.
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
@@ -5506,6 +5506,54 @@ export interface V1TaskLogsResponse {
      * @memberof V1TaskLogsResponse
      */
     level: V1LogLevel;
+    /**
+     * The id of the task.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    taskId: string;
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    allocationId?: string;
+    /**
+     * The agent the logs came from.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    agentId?: string;
+    /**
+     * The id of the container or, in the case of k8s, the pod name.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    containerId?: string;
+    /**
+     * The rank id.
+     * @type {number}
+     * @memberof V1TaskLogsResponse
+     */
+    rankId?: number;
+    /**
+     * The text of the log entry.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    log: string;
+    /**
+     * The source of the log entry.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    source?: string;
+    /**
+     * The output stream (e.g. stdout, stderr).
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    stdtype?: string;
 }
 
 /**

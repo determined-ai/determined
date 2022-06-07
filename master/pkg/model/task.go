@@ -351,12 +351,40 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		level = TaskLogLevelToProto(*t.Level)
 	}
 
-	return &apiv1.TaskLogsResponse{
+	resp := &apiv1.TaskLogsResponse{
 		Id:        id,
 		Timestamp: ts,
 		Level:     level,
 		Message:   t.Message(),
-	}, nil
+		TaskId:    t.TaskID,
+		Log:       t.Log,
+	}
+
+	if t.AllocationID != nil {
+		resp.AllocationId = *t.AllocationID
+	}
+
+	if t.AgentID != nil {
+		resp.AgentId = *t.AgentID
+	}
+
+	if t.ContainerID != nil {
+		resp.ContainerId = *t.ContainerID
+	}
+
+	if t.RankID != nil {
+		resp.RankId = int32(*t.RankID)
+	}
+
+	if t.Source != nil {
+		resp.Source = *t.Source
+	}
+
+	if t.StdType != nil {
+		resp.Stdtype = *t.StdType
+	}
+
+	return resp, nil
 }
 
 // TaskLogBatch represents a batch of model.TaskLog.
