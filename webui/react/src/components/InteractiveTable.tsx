@@ -37,8 +37,17 @@ type Comparable = any;
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type RecordType = any;
 export interface InteractiveTableSettings {
+  /**
+     * ColumnWidths: Array of column widths, corresponding to columns array below
+     */
   columnWidths: number[];
+  /**
+     * Columns: Array of column names
+     */
   columns: string[];
+  /**
+     * Row: Array of selected row IDs
+     */
   row?: number[] | string[];
   sortDesc: boolean;
   sortKey: Comparable;

@@ -498,25 +498,6 @@ const TaskList: React.FC = () => {
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
-        {/* <ResponsiveTable<CommandTask>
-          columns={columns}
-          dataSource={filteredTasks}
-          loading={tasks === undefined}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, filteredTasks.length)}
-          rowClassName={() => defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        /> */}
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
