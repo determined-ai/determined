@@ -286,11 +286,13 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 	}
 
 	var certs []tls.Certificate
-	switch cert, err := a.Options.Security.TLS.ReadClientCertificate(); {
-	case err != nil:
-		return nil, errors.Wrap(err, "failed to read agent certificate file")
-	case cert != nil:
-		certs = append(certs, *cert)
+	if agentCert := a.Options.Security.TLS.ClientCert; agentCert != "" {
+		switch cert, err := a.Options.Security.TLS.ReadClientCertificate(); {
+		case err != nil:
+			return nil, errors.Wrap(err, "failed to read agent certificate file")
+		case cert != nil:
+			certs = append(certs, *cert)
+		}
 	}
 
 	return &tls.Config{
