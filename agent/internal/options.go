@@ -109,7 +109,7 @@ func (t TLSOptions) Validate() []error {
 // ReadClientCertificate returns the client certificate described by this configuration (nil if it
 // does not allow TLS to be enabled).
 func (t TLSOptions) ReadClientCertificate() (*tls.Certificate, error) {
-	if t.ClientCert != "" && t.ClientKey != "" {
+	if t.ClientCert == "" || t.ClientKey == "" {
 		return nil, nil
 	}
 	cert, err := tls.LoadX509KeyPair(t.ClientCert, t.ClientKey)
