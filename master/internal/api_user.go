@@ -175,20 +175,21 @@ func (a *apiServer) PatchUser(
 	if req.User.DisplayName != nil {
 		u := &userv1.User{}
 		if req.User.DisplayName.Value == "" {
-			err = a.m.db.QueryProto("set_display_name", u, req.UserId, "")
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, "")
 		} else {
 			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
 			re := regexp.MustCompile("[[:^ascii:]]")
 			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
-			if strings.Contains(strings.ToLower(displayName),
-				"admin") && !(curUser.Admin && curUser.ID == uid) {
+			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
+				"admin") {
 				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
 			}
-			if strings.Contains(strings.ToLower(displayName), "determined") {
+			if curUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
+				"determined") {
 				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 			}
-			err = a.m.db.QueryProto("set_display_name", req.UserId, strings.TrimSpace(displayName))
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
 		}
 		if err == db.ErrNotFound {
 			return nil, errUserNotFound
