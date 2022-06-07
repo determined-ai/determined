@@ -178,7 +178,7 @@ func (a *apiServer) PatchUser(
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, "")
 		} else {
 			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
-			re := regexp.MustCompile("[[:^ascii:]]")
+			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
 			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
 			// Restrict 'admin' and 'determined' in display names.
 			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
