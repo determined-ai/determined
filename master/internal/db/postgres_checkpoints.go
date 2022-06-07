@@ -6,19 +6,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// FilterForRegisteredCheckpoints gets the deleted checkpoints provided in the model registry.
-func (db *PgDB) FilterForRegisteredCheckpoints(deleteCheckpoints []uuid.UUID) ([]uuid.UUID, error) {
+// FilterForRegisteredCheckpoints filters for the checkpoints in the model registrys from the list of checkpoints provided.
+func (db *PgDB) FilterForRegisteredCheckpoints(checkpoints []uuid.UUID) ([]uuid.UUID, error) {
 	var checkpointIDRows []struct {
 		ID uuid.UUID
 	}
 
 	if err := db.queryRows(`
-	SELECT DISTINCT(c.uuid) AS ID FROM checkpoints_view AS c 
-	JOIN model_versions AS mv ON mv.checkpoint_uuid = c.uuid
-	WHERE c.uuid IN (SELECT UNNEST($1::uuid[])); 
-`, &checkpointIDRows, deleteCheckpoints); err != nil {
+	SELECT DISTINCT(mv.checkpoint_uuid) FROM model_versions AS mv 
+	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[])); 
+`, &checkpointIDRows, checkpoints); err != nil {
 		return nil, fmt.Errorf(
-			"querying for all requested delete checkpoints registered in model registry: %w", err)
+			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
 
 	var checkpointIDs []uuid.UUID
@@ -62,11 +61,10 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(
-		`SELECT e.id AS ExperimentID, string_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
-	FROM experiments e
-	JOIN checkpoints_view c ON c.experiment_id = e.id
+		`SELECT c.experiment_id AS ExperimentID, string_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
+	FROM checkpoints_view c
 	WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))
-	GROUP BY e.id`, checkpoints)
+	GROUP BY c.experiment_id`, checkpoints)
 	if err != nil {
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
 	}
