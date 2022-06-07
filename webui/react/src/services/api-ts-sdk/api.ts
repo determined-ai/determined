@@ -5507,13 +5507,13 @@ export interface V1TaskLogsResponse {
      */
     level: V1LogLevel;
     /**
-     * The id of the task.
+     * The ID of the task.
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
     taskId: string;
     /**
-     * The id of the allocation.
+     * The ID of the allocation.
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
@@ -5525,13 +5525,13 @@ export interface V1TaskLogsResponse {
      */
     agentId?: string;
     /**
-     * The id of the container or, in the case of k8s, the pod name.
+     * The ID of the container or, in the case of k8s, the pod name.
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
     containerId?: string;
     /**
-     * The rank id.
+     * The rank ID.
      * @type {number}
      * @memberof V1TaskLogsResponse
      */

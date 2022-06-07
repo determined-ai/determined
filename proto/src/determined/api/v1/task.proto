@@ -78,15 +78,15 @@ message TaskLogsResponse {
   string message = 3;
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
-  // The id of the task.
+  // The ID of the task.
   string task_id = 5;
-  // The id of the allocation.
+  // The ID of the allocation.
   string allocation_id = 6;
   // The agent the logs came from.
   string agent_id = 7;
-  // The id of the container or, in the case of k8s, the pod name.
+  // The ID of the container or, in the case of k8s, the pod name.
   string container_id = 8;
-  // The rank id.
+  // The rank ID.
   int32 rank_id = 9;
   // The text of the log entry.
   string log = 10;
