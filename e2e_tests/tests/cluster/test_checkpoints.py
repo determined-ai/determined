@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from determined import errors
-from determined.common import api, storage
+from determined.common import api, storage 
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedcheckpointv1State
 from tests import config as conf
@@ -56,6 +56,7 @@ def test_delete_checkpoints() -> None:
         "type": "shared_fs",
         "host_path": "/tmp",
         "storage_path": "delete-checkpoints-e2etest",
+        "save_trial_latest" : 10
     }
     config["min_checkpoint_period"] = {"batches": 10}
 
@@ -67,6 +68,11 @@ def test_delete_checkpoints() -> None:
         config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
     )
 
+    wait_for_gc_to_finish(exp_id_1)
+    wait_for_gc_to_finish(exp_id_2)
+
+    print("after first 2 gc finish")
+
     test_session = exp.test_session()
     exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(
         session=test_session, id=exp_id_1
@@ -76,41 +82,51 @@ def test_delete_checkpoints() -> None:
     ).checkpoints
     assert len(exp_1_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_1}"
     assert len(exp_2_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_2}"
-
-    indices_exp_1 = [i for i in range(0, len(exp_1_checkpoints))]
-    indices_exp_2 = [i for i in range(0, len(exp_2_checkpoints))]
+    
     d_exp_1_checkpoint_uuids = [
-        exp_1_checkpoints[d_index].uuid for d_index in random.sample(indices_exp_1, 2)
+        exp_1_checkpoints[d_index].uuid for d_index in random.sample(range(len(exp_1_checkpoints)), 2)
     ]
     d_exp_2_checkpoint_uuids = [
-        exp_2_checkpoints[d_index].uuid for d_index in random.sample(indices_exp_2, 2)
+        exp_2_checkpoints[d_index].uuid for d_index in random.sample(range(len(exp_2_checkpoints)), 2)
     ]
 
     d_checkpoint_uuids = d_exp_1_checkpoint_uuids + d_exp_2_checkpoint_uuids
+    print(f"checkpoints uuids to be deleteted: {d_checkpoint_uuids}")
+    # ensure checkpoint directories exist: 
+    checkpoint_config = config["checkpoint_storage"]
+    storage_manager = storage.build(checkpoint_config, container_path=None)
+
+    for id in d_checkpoint_uuids: 
+        try:
+            storage_manager.restore_path(id)
+            checkpoint_file = os.path.join(storage_manager._base_path, id)
+            print(checkpoint_file)
+        except errors.CheckpointNotFound:
+            pytest.fail(f"checkpoint directory with uuid: {id} was not created.")
+
     delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=d_checkpoint_uuids)
     bindings.delete_DeleteCheckpoints(session=test_session, body=delete_body)
+    
     wait_for_gc_to_finish(exp_id_1)
     wait_for_gc_to_finish(exp_id_2)
 
     for d_c in d_checkpoint_uuids:
-        ensure_checkpoint_deleted(test_session, config, d_c)
+        ensure_checkpoint_deleted(test_session, d_c,storage_manager)
 
 
-def ensure_checkpoint_deleted(test_session, config, d_checkpoint_uuid) -> bool:
+def ensure_checkpoint_deleted(test_session, d_checkpoint_uuid, storage_manager) -> bool:
     d_checkpoint = bindings.get_GetCheckpoint(
         session=test_session, checkpointUuid=d_checkpoint_uuid
     ).checkpoint
+
     if d_checkpoint is not None:
         assert (
             d_checkpoint.state == determinedcheckpointv1State.STATE_DELETED
         ), f"checkpoint with uuid {d_checkpoint_uuid} does not have a deleted state"
     else:
-        raise Exception(
+        pytest.fail(
             f"Failed to get checkpoint with uuid {d_checkpoint_uuid} to validate correct deletion"
         )
-
-    checkpoint_config = config["checkpoint_storage"]
-    storage_manager = storage.build(checkpoint_config, container_path=None)
     checkpoint_file = os.path.join(storage_manager._base_path, d_checkpoint_uuid)
 
     if os.path.exists(checkpoint_file):
