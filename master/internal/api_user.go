@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 	"sort"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -172,7 +173,9 @@ func (a *apiServer) PatchUser(
 	}
 	user := &model.User{ID: model.UserID(req.UserId)}
 	// TODO: handle any field name:
-	if req.User.DisplayName != "" {
+	if req.User.DisplayName == "" {
+		err = a.m.db.QueryProto("set_display_name", user.Id, "")
+	} else {
 		// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
 		re := regexp.MustCompile("[[:^ascii:]]")
 		user.DisplayName = re.ReplaceAllLiteralString(null.StringFrom(req.User.DisplayName), "")
@@ -183,21 +186,13 @@ func (a *apiServer) PatchUser(
 		if user.DisplayName.ToLower().Contains("determined") {
 			return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 		}
-		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
-		case err == db.ErrNotFound:
-			return nil, errUserNotFound
-		case err != nil:
-			return nil, err
-		}
-	} else {
-		user.DisplayName = null.StringFrom(curUser.Username)
-
-		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
-		case err == db.ErrNotFound:
-			return nil, errUserNotFound
-		case err != nil:
-			return nil, err
-		}
+		err = a.m.db.QueryProto("set_display_name", user.Id, strings.TrimSpace(user.DisplayName))
+	}
+	switch err {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
+		return nil, err
 	}
 
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
