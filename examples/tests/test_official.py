@@ -25,10 +25,6 @@ official_examples = [
         "computer_vision/mnist_estimator/const.yaml",
     ),
     (
-        "computer_vision/mnist_tf_layers",
-        "computer_vision/mnist_tf_layers/const.yaml",
-    ),
-    (
         "computer_vision/cifar10_tf_keras",
         "computer_vision/cifar10_tf_keras/const.yaml",
     ),

@@ -157,31 +157,6 @@ def test_mnist_estimator_accuracy() -> None:
 
 
 @pytest.mark.nightly
-def test_mnist_tf_layers_accuracy() -> None:
-    config = conf.load_config(conf.cv_examples_path("mnist_tf_layers/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_tf_layers"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].trial.id)
-
-    validation_errors = [
-        step["validation"]["metrics"]["validation_metrics"]["error"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
-
-    target_error = 0.04
-    assert min(validation_errors) < target_error, (
-        "mnist_estimator did not reach minimum target error {} in {} steps."
-        " full validation error history: {}".format(
-            target_error, len(trial_metrics["steps"]), validation_errors
-        )
-    )
-
-
-@pytest.mark.nightly
 def test_cifar10_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
