@@ -13,7 +13,7 @@ func (db *PgDB) FilterForRegisteredCheckpoints(checkpoints []uuid.UUID) ([]uuid.
 	}
 
 	if err := db.queryRows(`
-	SELECT DISTINCT(mv.checkpoint_uuid) FROM model_versions AS mv 
+	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv 
 	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[])); 
 `, &checkpointIDRows, checkpoints); err != nil {
 		return nil, fmt.Errorf(
