@@ -1,9 +1,7 @@
 import json
 import os
-import subprocess
 import random
-import uuid
-import json
+import subprocess
 import time
 from pathlib import Path
 from typing import List
@@ -13,6 +11,8 @@ import pytest
 
 from tests import config as conf
 from tests import experiment as exp
+
+from ..cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
 
 def det_deploy(subcommand: List) -> None:
@@ -235,56 +235,61 @@ def test_agent_up_down() -> None:
 
     master_down([])
 
-    
-@pytest.mark.parametrize("steps", [2]) #[5, 10])
-@pytest.mark.parametrize("num_agents", [5]) #[1, 10])
-@pytest.mark.parametrize("remove", [True]) #[False, True])
+
+@pytest.mark.parametrize("steps", [5, 10])
+@pytest.mark.parametrize("num_agents", [5, 10])
+@pytest.mark.parametrize("should_disconnect", [False, True])
 @pytest.mark.det_deploy_local
-def test_stress_agents_reconnect(steps: int, num_agents: int, remove: bool) -> None:
+def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
     master_host = "localhost"
     master_port = "8080"
     conf.MASTER_IP = master_host
     conf.MASTER_PORT = master_port
     master_up([])
-    
+
     # Start all agents.
     agents_are_up = [True] * num_agents
     for i in range(num_agents):
         agent_up(["--agent-name", f"agent-{i}"])
     time.sleep(3)
-    
-    up_func = None
-    down_func = None
-    if remove:
-        up_func = lambda x: agent_up(["--agent-name", f"agent-{x}"])
-        down_func = lambda x: agent_down(["--agent-name", f"agent-{x}"])
 
-    
+    # Set up if we are testing full agent disconnects or just agent enable/disables.
     for i in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
-            if random.choice([True, False]): # Should flip agent status?
-                if agent_is_up:
-                    print(f"Down {agent_id}")
-                    down_func(agent_id)
+            if random.choice([True, False]):  # Flip agents status randomly.
+                continue
+
+            if agent_is_up:
+                if should_disconnect:
+                    agent_down(["--agent-name", f"agent-{i}"])
                 else:
-                    print(f"Up {agent_id}")
-                    up_func(agent_id)
-                agents_are_up[agent_id] = not agents_are_up[agent_id]
-        time.sleep(3)
-                
+                    with logged_in_user(ADMIN_CREDENTIALS):
+                        subprocess.run(["det", "agent", "disable", f"agent-{i}"])
+            else:
+                if should_disconnect:
+                    agent_up(["--agent-name", f"agent-{i}"])
+                else:
+                    with logged_in_user(ADMIN_CREDENTIALS):
+                        subprocess.run(["det", "agent", "enable", f"agent-{i}"])
+            agents_are_up[agent_id] = not agents_are_up[agent_id]
+        time.sleep(5)
+
         # Validate that our master kept track of the agent reconnect spam.
-        agent_list = json.loads(subprocess.check_output([
-            "det",
-            "agent",
-            "list",
-            "--json",
-        ]).decode())
-        assert sum(agents_are_up) <= len(agent_list) 
+        agent_list = json.loads(
+            subprocess.check_output(
+                [
+                    "det",
+                    "agent",
+                    "list",
+                    "--json",
+                ]
+            ).decode()
+        )
+        assert sum(agents_are_up) <= len(agent_list)
         for agent in agent_list:
             agent_id = int(agent["id"].replace("agent-", ""))
             assert agents_are_up[agent_id] == agent["enabled"]
 
     for agent_id in range(num_agents):
-        print(f"Tearing down {agent_id}")
         agent_down(["--agent-name", f"agent-{agent_id}"])
     master_down([])
