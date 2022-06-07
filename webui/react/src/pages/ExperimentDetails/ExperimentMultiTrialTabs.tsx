@@ -39,10 +39,11 @@ const ExperimentVisualization = React.lazy(() => {
 export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
+  pageRef: React.RefObject<HTMLElement>;
 }
 
 const ExperimentMultiTrialTabs: React.FC<Props> = (
-  { experiment, fetchExperimentDetails }: Props,
+  { experiment, fetchExperimentDetails, pageRef }: Props,
 ) => {
   const { tab, viz } = useParams<Params>();
   const history = useHistory();
@@ -90,7 +91,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
         </React.Suspense>
       </TabPane>
       <TabPane key="trials" tab="Trials">
-        <ExperimentTrials experiment={experiment} />
+        <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>

@@ -1,15 +1,14 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
-import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Modal, Space } from 'antd';
+import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import ResponsiveTable from 'components/ResponsiveTable';
-import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   defaultRowClassName, getFullPaginationConfig, relativeTimeRenderer,
   stateRenderer, taskIdRenderer, taskNameRenderer, taskTypeRenderer, userRenderer,
@@ -23,7 +22,7 @@ import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -40,7 +39,7 @@ import { getDisplayName } from 'utils/user';
 import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import css from './TaskList.module.scss';
-import settingsConfig, { Settings } from './TaskList.settings';
+import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';
 
 enum TensorBoardSourceType {
   Experiment = 'Experiment',
@@ -62,10 +61,11 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
 
 const TaskList: React.FC = () => {
-  const { users } = useStore();
+  const { users, auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
   const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
+  const pageRef = useRef<HTMLElement>(null);
 
   const {
     activeSettings,
@@ -73,6 +73,12 @@ const TaskList: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
+
+  const resetColumnWidths = useCallback(
+    () =>
+      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
+    [ settings.columns, updateSettings ],
+  );
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -276,15 +282,18 @@ const TaskList: React.FC = () => {
       <TaskActionDropdown task={record} onComplete={handleActionComplete} />
     );
 
-    const tableColumns: ColumnType<CommandTask>[] = [
+    return [
       {
         dataIndex: 'id',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
         key: 'id',
         render: taskIdRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.id, b.id),
         title: 'Short ID',
       },
       {
+        dataIndex: 'type',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
         filterDropdown: typeFilterDropdown,
         filters: Object.values(CommandType).map(value => ({
           text: (
@@ -295,22 +304,26 @@ const TaskList: React.FC = () => {
           ),
           value,
         })),
+        isFiltered: (settings: Settings) => !!settings.type,
         key: 'type',
-        onHeaderCell: () => settings.type ? { className: tableCss.headerFilterOn } : {},
         render: taskTypeRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.type, b.type),
         title: 'Type',
       },
       {
+        dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
+        isFiltered: (settings: Settings) => !!settings.search,
         key: 'name',
-        onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: nameNSourceRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphaNumericSorter(a.name, b.name),
         title: 'Name',
       },
       {
+        dataIndex: 'startTime',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: 'startTime',
         render: (_: number, record: CommandTask): React.ReactNode => {
           return relativeTimeRenderer(new Date(record.startTime));
@@ -321,30 +334,35 @@ const TaskList: React.FC = () => {
         title: 'Start Time',
       },
       {
+        dataIndex: 'state',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: Object.values(CommandState)
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           })),
+        isFiltered: (settings: Settings) => !!settings.state,
         key: 'state',
-        onHeaderCell: () => settings.state ? { className: tableCss.headerFilterOn } : {},
         render: stateRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
         title: 'State',
       },
       {
         dataIndex: 'resourcePool',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
         key: 'resourcePool',
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(a.resourcePool, b.resourcePool),
         title: 'Resource Pool',
       },
       {
+        dataIndex: 'user',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
+        isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
-        onHeaderCell: () => settings.user ? { className: tableCss.headerFilterOn } : {},
         render: userRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
@@ -357,31 +375,22 @@ const TaskList: React.FC = () => {
       {
         align: 'right',
         className: 'fullCell',
+        dataIndex: 'action',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
         render: actionRenderer,
         title: '',
       },
-    ];
-
-    return tableColumns.map(column => {
-      column.sortOrder = null;
-      if (column.key === settings.sortKey) {
-        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
-      }
-      return column;
-    });
-  }, [
-    handleActionComplete,
+    ] as ColumnDef<CommandTask>[];
+  }, [ handleActionComplete,
     handleSourceShow,
     nameFilterSearch,
     stateFilterDropdown,
-    settings,
     tableSearchIcon,
     typeFilterDropdown,
     userFilterDropdown,
-    users,
-  ]);
+    users ]);
 
   const handleBatchKill = useCallback(async () => {
     try {
@@ -457,10 +466,30 @@ const TaskList: React.FC = () => {
     updateSettings({ row: undefined });
   }, [ updateSettings ]);
 
+  const TaskActionDropdownCM = useCallback(
+    ({ record, onVisibleChange, children }) => (
+      <TaskActionDropdown
+        curUser={user}
+        task={record}
+        onComplete={handleActionComplete}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </TaskActionDropdown>
+    ),
+    [ user, handleActionComplete ],
+  );
+
   return (
     <Page
+      containerRef={pageRef}
       id="tasks"
-      options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+      options={(
+        <Space>
+          <Button onClick={resetColumnWidths}>Reset Widths</Button>
+          {filterCount > 0 &&
+          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+        </Space>
+      )}
       title="Tasks">
       <div className={css.base}>
         <TableBatch
@@ -469,23 +498,27 @@ const TaskList: React.FC = () => {
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
-        <ResponsiveTable<CommandTask>
+        <InteractiveTable
           columns={columns}
+          containerRef={pageRef}
+          ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           loading={tasks === undefined}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
           }, filteredTasks.length)}
-          rowClassName={() => defaultRowClassName({ clickable: false })}
+          rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
+          settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
           onChange={handleTableChange}
         />
       </div>

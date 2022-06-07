@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
@@ -55,6 +55,7 @@ const TrialDetailsComp: React.FC = () => {
     error: undefined,
     isLoading: true,
   });
+  const pageRef = useRef<HTMLElement>(null);
 
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trial = trialDetails.data;
@@ -157,6 +158,7 @@ const TrialDetailsComp: React.FC = () => {
   return (
     <Page
       bodyNoPadding
+      containerRef={pageRef}
       headerComponent={(
         <TrialDetailsHeader
           experiment={experiment}
@@ -191,7 +193,7 @@ const TrialDetailsComp: React.FC = () => {
           </TabPane>
           <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
             {isSingleTrialExperiment(experiment) ?
-              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+              <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} /> :
               <TrialRangeHyperparameters experiment={experiment} trial={trial} />
             }
           </TabPane>

@@ -1,15 +1,17 @@
-import { ColumnType } from 'antd/es/table';
 import React, { useMemo } from 'react';
 
-import ResponsiveTable from 'components/ResponsiveTable';
+import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import { defaultRowClassName } from 'components/Table';
+import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { isObject } from 'shared/utils/data';
-import { ExperimentBase, TrialDetails } from 'types';
+import { TrialDetails } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './TrialDetailsHyperparameters.module.scss';
+import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';
 
 export interface Props {
-  experiment: ExperimentBase;
+  pageRef: React.RefObject<HTMLElement>;
   trial: TrialDetails;
 }
 
@@ -18,11 +20,17 @@ interface HyperParameter {
   value: string,
 }
 
-const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
-  const columns: ColumnType<HyperParameter>[] = useMemo(() => [
+const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props) => {
+  const {
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
+
+  const columns: ColumnDef<HyperParameter>[] = useMemo(() => [
     {
       dataIndex: 'hyperparameter',
       defaultSortOrder: 'ascend',
+      defaultWidth: 200,
       key: 'hyperparameter',
       sorter: (a: HyperParameter, b: HyperParameter) =>
         alphaNumericSorter(a.hyperparameter, b.hyperparameter),
@@ -30,6 +38,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
     },
     {
       dataIndex: 'value',
+      defaultWidth: 300,
       key: 'value',
       title: 'Value',
     },
@@ -48,11 +57,17 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
 
   return (
     <div className={css.base}>
-      <ResponsiveTable
+      <InteractiveTable
         columns={columns}
+        containerRef={pageRef}
         dataSource={dataSource}
         pagination={false}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="hyperparameter"
+        settings={settings as InteractiveTableSettings}
+        showSorterTooltip={false}
         size="small"
+        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       />
     </div>
   );

@@ -24,15 +24,31 @@ import Spinner from '../shared/components/Spinner/Spinner';
 
 import css from './InteractiveTable.module.scss';
 
+/*
+ * This indicates that the cell contents are rightClickable
+ * and we should disable custom context menu on cell context hover
+ */
+export const onRightClickableCell = (): React.HTMLAttributes<HTMLElement> =>
+  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type RecordType = any;
 export interface InteractiveTableSettings {
+  /**
+     * ColumnWidths: Array of column widths, corresponding to columns array below
+     */
   columnWidths: number[];
+  /**
+     * Columns: Array of column names
+     */
   columns: string[];
-  row?: number[];
+  /**
+     * Row: Array of selected row IDs
+     */
+  row?: number[] | string[];
   sortDesc: boolean;
   sortKey: Comparable;
   tableLimit: number;
@@ -52,6 +68,7 @@ interface ContextMenuProps {
 }
 
 export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+  dataIndex: string;
   defaultWidth: number;
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   isFiltered?: (s: any) => boolean; // any extends Settings
@@ -75,7 +92,7 @@ type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => J
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
 interface RowProps {
-  ContextMenu: React.FC<ContextMenuProps>;
+  ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
@@ -141,7 +158,7 @@ const Row = ({
   if (rowContextMenuTriggerableOrOpen) {
     classes.push('ant-table-row-selected');
   }
-  return record ? (
+  return (record && ContextMenu) ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
       <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
         <tr
@@ -472,25 +489,28 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const renderColumns: ColumnsType<RecordType> = useMemo(
-    () =>
-      [
-        ...settings.columns.filter(columnName => columnDefs[columnName])
-          .map((columnName, index) => {
-            const column = columnDefs[columnName];
-            const columnWidth = widthData.widths[index];
-            const sortOrder =
+    () => {
+      const columns = settings.columns.filter(columnName => columnDefs[columnName])
+        .map((columnName, index) => {
+          const column = columnDefs[columnName];
+          const columnWidth = widthData.widths[index];
+          const sortOrder =
             column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-            return {
-              onHeaderCell: onHeaderCell(index, column),
-              sortOrder,
-              width: columnWidth,
-              ...column,
-            };
-          }),
-        { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH },
-      ] as ColumnsType<RecordType>,
+          return {
+            onHeaderCell: onHeaderCell(index, column),
+            sortOrder,
+            width: columnWidth,
+            ...column,
+          };
+        }) as ColumnsType<RecordType>;
 
+      if (columnDefs.action) {
+        columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+      }
+
+      return columns;
+    },
     [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
   );
 

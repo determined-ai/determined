@@ -22,7 +22,7 @@ interface Props {
   model: ModelItem;
   onDelete: () => void;
   onSaveDescription: (editedDescription: string) => Promise<void>
-  onSaveName: (editedName: string) => Promise<void>;
+  onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
 }

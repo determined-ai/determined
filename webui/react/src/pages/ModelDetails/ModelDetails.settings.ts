@@ -1,16 +1,65 @@
+import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 
-export interface Settings {
-  sortDesc: boolean;
+export type ModelVersionColumnName =
+  | 'action'
+  | 'description'
+  | 'lastUpdatedTime'
+  | 'name'
+  | 'tags'
+  | 'version'
+  | 'user';
+
+export const DEFAULT_COLUMNS: ModelVersionColumnName[] = [
+  'version',
+  'name',
+  'description',
+  'lastUpdatedTime',
+  'tags',
+  'user',
+];
+
+export const DEFAULT_COLUMN_WIDTHS: Record<ModelVersionColumnName, number> = {
+  action: 46,
+  description: 147,
+  lastUpdatedTime: 117,
+  name: 150,
+  tags: 106,
+  user: 85,
+  version: 74,
+};
+
+export interface Settings extends InteractiveTableSettings {
+  columns: ModelVersionColumnName[];
   sortKey: V1GetModelVersionsRequestSortBy;
-  tableLimit: number;
-  tableOffset: number;
 }
 
 const config: SettingsConfig = {
   settings: [
+    {
+      defaultValue: DEFAULT_COLUMNS,
+      key: 'columns',
+      skipUrlEncoding: true,
+      storageKey: 'columns',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
+      defaultValue: DEFAULT_COLUMNS.map(
+        (col: ModelVersionColumnName) => DEFAULT_COLUMN_WIDTHS[col],
+      ),
+      key: 'columnWidths',
+      skipUrlEncoding: true,
+      storageKey: 'columnWidths',
+      type: {
+        baseType: BaseType.Float,
+        isArray: true,
+      },
+    },
     {
       defaultValue: true,
       key: 'sortDesc',

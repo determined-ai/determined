@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Page from 'components/Page';
@@ -33,6 +33,7 @@ const ExperimentDetails: React.FC = () => {
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
+  const pageRef = useRef<HTMLElement>(null);
 
   const id = parseInt(experimentId);
 
@@ -88,6 +89,7 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       bodyNoPadding
+      containerRef={pageRef}
       headerComponent={(
         <ExperimentDetailsHeader
           curUser={user}
@@ -102,12 +104,14 @@ const ExperimentDetails: React.FC = () => {
         <ExperimentSingleTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
+          pageRef={pageRef}
           onTrialUpdate={handleSingleTrialUpdate}
         />
       ) : (
         <ExperimentMultiTrialTabs
           experiment={experiment}
           fetchExperimentDetails={fetchExperimentDetails}
+          pageRef={pageRef}
         />
       )}
     </Page>
