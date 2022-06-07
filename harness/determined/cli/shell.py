@@ -50,14 +50,14 @@ def start_shell(args: Namespace) -> None:
         return
 
     ready = False
-    with api.ws(args.master, "shells/{}/events".format(resp["id"])) as ws:
+    with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
         for msg in ws:
             if msg["service_ready_event"]:
                 ready = True
                 break
             render_event_stream(msg)
     if ready:
-        shell = api.get(args.master, "api/v1/shells/{}".format(resp["id"])).json()["shell"]
+        shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
         check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
         _open_shell(
             args.master,
@@ -71,7 +71,7 @@ def start_shell(args: Namespace) -> None:
 @authentication.required
 def open_shell(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
-    shell = api.get(args.master, "api/v1/shells/{}".format(shell_id)).json()["shell"]
+    shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(
         args.master,
@@ -85,7 +85,7 @@ def open_shell(args: Namespace) -> None:
 @authentication.required
 def show_ssh_command(args: Namespace) -> None:
     shell_id = command.expand_uuid_prefixes(args)
-    shell = api.get(args.master, "api/v1/shells/{}".format(shell_id)).json()["shell"]
+    shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
 
@@ -149,32 +149,40 @@ def _open_shell(
 
         # Use determined.cli.tunnel as a portable script for using the HTTP CONNECT mechanism,
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
-        python = sys.executable
-        proxy_cmd = "{} -m determined.cli.tunnel {} %h".format(python, master)
+        proxy_cmd = f"{sys.executable} -m determined.cli.tunnel {master} %h"
 
         cert_bundle_path = _prepare_cert_bundle(cache_dir)
         if cert_bundle_path is not None:
-            proxy_cmd += ' --cert-file "{}"'.format(cert_bundle_path)
+            assert isinstance(cert_bundle_path, str), cert_bundle_path
+            proxy_cmd += f' --cert-file "{cert_bundle_path}"'
 
         cert = certs.cli_cert
         assert cert is not None, "cli_cert was not configured"
         if cert.name:
-            proxy_cmd += ' --cert-name "{}"'.format(cert.name)
+            proxy_cmd += f' --cert-name "{cert.name}"'
 
         username = shell["agentUserGroup"]["user"] or "root"
+
+        unixy_keypath = str(keypath)
+        if sys.platform == "win32":
+            # Convert the backslashes of the -i argument to ssh to forwardslashes.  This is
+            # important because when passing the output of ssh_show_command to VSCode, VSCode would
+            # put backslashes in .ssh/config, which would not be handled correctly by ssh.  When
+            # invoking ssh directly, it behaves the same whether -i has backslashes or not.
+            unixy_keypath = unixy_keypath.replace("\\", "/")
 
         cmd = [
             "ssh",
             "-o",
-            "ProxyCommand={}".format(proxy_cmd),
+            f"ProxyCommand={proxy_cmd}",
             "-o",
             "StrictHostKeyChecking=no",
             "-tt",
             "-o",
             "IdentitiesOnly=yes",
             "-i",
-            str(keypath),
-            "{}@{}".format(username, shell["id"]),
+            unixy_keypath,
+            f"{username}@{shell['id']}",
             *additional_opts,
         ]
 
@@ -185,7 +193,7 @@ def _open_shell(
 
         subprocess.run(cmd)
 
-        print(colored("To reconnect, run: det shell open {}".format(shell["id"]), "green"))
+        print(colored(f"To reconnect, run: det shell open {shell['id']}", "green"))
 
 
 # fmt: off
