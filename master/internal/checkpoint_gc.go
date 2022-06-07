@@ -36,13 +36,13 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
-func newCheckpointGCTask(master *Master, jobID model.JobID, jobSubmissionTime time.Time,
+func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID, jobID model.JobID, jobSubmissionTime time.Time,
 	taskSpec tasks.TaskSpec, expID int, legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string,
-	agentUserGroup *model.AgentUserGroup, owner *model.User) *checkpointGCTask {
+	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context) *checkpointGCTask {
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = owner
 	return &checkpointGCTask{
-		taskID:            model.NewTaskID(),
+		taskID:            taskID,
 		jobID:             jobID,
 		jobSubmissionTime: time.Now().UTC().Truncate(time.Millisecond),
 		GCCkptSpec: tasks.GCCkptSpec{
@@ -51,10 +51,10 @@ func newCheckpointGCTask(master *Master, jobID model.JobID, jobSubmissionTime ti
 			LegacyConfig: legacyConfig,
 			ToDelete:     toDeleteCheckpoints,
 		},
-		rm: master.rm,
-		db: master.db,
+		rm: rm,
+		db: db,
 
-		taskLogger: master.taskLogger,
+		taskLogger: taskLogger,
 	}
 }
 
@@ -97,6 +97,19 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Respond(t.ToTaskSpec())
 		}
 	case *task.AllocationExited:
+		if msg.Err != nil {
+			conv := &protoconverter.ProtoConverter{}
+			deleteCheckpointsStr := strings.Split(t.ToDelete, ",")
+			deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStr)
+			if err := conv.Error(); err != nil {
+				return err
+			}
+			if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
+				ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+				return err
+			}
+
+		}
 		t.completeTask(ctx)
 	case actor.ChildStopped:
 	case actor.ChildFailed:
@@ -108,18 +121,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
-
-	conv := &protoconverter.ProtoConverter{}
-	deleteCheckpointsStr := strings.Split(t.ToDelete, ",")
-	deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStr)
-	if err := conv.Error(); err != nil {
-		return err
-	}
-	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
-		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
-		return err
-	}
-
 	return nil
 }
 

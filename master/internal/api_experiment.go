@@ -210,8 +210,9 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
-	ckptGCTask := newCheckpointGCTask(a.m, exp.JobID, jobSubmissionTime, taskSpec, exp.ID, conf,
-		checkpoints, agentUserGroup, user)
+	taskID := model.NewTaskID()
+	ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID, conf,
+		checkpoints, agentUserGroup, user, nil)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
