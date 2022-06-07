@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"regexp"
 	"sort"
 
 	"google.golang.org/grpc/codes"
@@ -172,16 +173,23 @@ func (a *apiServer) PatchUser(
 	user := &model.User{ID: model.UserID(req.UserId)}
 	// TODO: handle any field name:
 	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(req.User.DisplayName)
+		// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
+		re := regexp.MustCompile("[[:^ascii:]]")
+		user.DisplayName = re.ReplaceAllLiteralString(null.StringFrom(req.User.DisplayName), "")
+		// Restrict 'admin' and 'determined' in display names.
+		if user.DisplayName.ToLower().Contains("admin") && !req.User.Admin {
+			return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
+		}
+		if user.DisplayName.ToLower().Contains("determined") {
+			return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
+		}
 		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
 		case err == db.ErrNotFound:
 			return nil, errUserNotFound
 		case err != nil:
 			return nil, err
 		}
-	}
-
-	if req.User.DisplayName == "" {
+	} else {
 		user.DisplayName = null.StringFrom(curUser.Username)
 
 		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
