@@ -1,10 +1,11 @@
-import { Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import useModalHyperparameterSearch from 'hooks/useModal/useModalHyperparameterSearch';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
@@ -60,6 +61,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const { modalOpen: openHyperparameterSearchModal } = useModalHyperparameterSearch({ experiment });
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -168,12 +170,22 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
+  const handleHPSearch = useCallback(() => {
+    openHyperparameterSearchModal({});
+  }, [ openHyperparameterSearchModal ]);
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+      <Tabs
+        activeKey={tabKey}
+        className="no-padding"
+        tabBarExtraContent={tabKey === 'hyperparameters' ?
+          <Button onClick={handleHPSearch}>Hyperparameter Search</Button> :
+          undefined}
+        onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
