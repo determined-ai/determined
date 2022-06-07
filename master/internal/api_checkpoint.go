@@ -43,10 +43,8 @@ func (a *apiServer) DeleteCheckpoints(
 		return nil, err
 	}
 
-	checkpointsToDeleteStr := req.CheckpointUuids
-
 	conv := &protoconverter.ProtoConverter{}
-	checkpointsToDelete := conv.ToUUIDList(checkpointsToDeleteStr)
+	checkpointsToDelete := conv.ToUUIDList(req.CheckpointUuids)
 	if cErr := conv.Error(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
 	}
@@ -59,7 +57,7 @@ func (a *apiServer) DeleteCheckpoints(
 	// return 400 if model registry checkpoints and include all the model registry checkpoints
 	if len(registeredCheckpointUUIDs) > 0 {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"This subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
+			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
 			registeredCheckpointUUIDs)
 	}
 
@@ -100,8 +98,9 @@ func (a *apiServer) DeleteCheckpoints(
 		}
 
 		jobSubmissionTime := time.Now().UTC().Truncate(time.Millisecond)
-		ckptGCTask := newCheckpointGCTask(a.m, jobID, jobSubmissionTime, taskSpec,
-			exp.ID, exp.Config.AsLegacy(), expIDcUUIDs.CheckpointUUIDSStr, agentUserGroup, curUser)
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec,
+			exp.ID, exp.Config.AsLegacy(), expIDcUUIDs.CheckpointUUIDSStr, agentUserGroup, curUser, nil)
 		if gcErr := a.m.system.MustActorOf(addr,
 			ckptGCTask).AwaitTermination(); gcErr != nil {
 			return nil, fmt.Errorf("failed to create GC task: %w", gcErr)
