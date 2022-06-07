@@ -61,6 +61,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -868,7 +869,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	if m.config.Telemetry.OtelEnabled {
-		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint, "determined-master")
+		opentelemetry.ConfigureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint, "determined-master")
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 

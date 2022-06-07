@@ -17,7 +17,7 @@ import (
 var tracer *sdktrace.TracerProvider
 
 // otelConfig initiates a new tracer and sets it as the default for otel.
-func configureOtel(endpoint string, serviceName string) *sdktrace.TracerProvider {
+func ConfigureOtel(endpoint string, serviceName string) *sdktrace.TracerProvider {
 	// avoid repeatedly re-creating the tracer.
 	if tracer != nil {
 		return tracer
