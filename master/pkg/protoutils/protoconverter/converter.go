@@ -102,10 +102,14 @@ func (c *ProtoConverter) ToUUIDList(x []string) []uuid.UUID {
 		return checkpointsToDelete
 	}
 
+	if len(x) == 0 {
+		return checkpointsToDelete
+	}
+
 	for _, cStr := range x {
 		cUUID, err := uuid.Parse(cStr)
 		if err != nil {
-			c.err = fmt.Errorf("string %s is not a valid uuid", x)
+			c.err = fmt.Errorf("string %s is not a valid uuid", cStr)
 			return checkpointsToDelete
 		}
 		checkpointsToDelete = append(checkpointsToDelete, cUUID)
