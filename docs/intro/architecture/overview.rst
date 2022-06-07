@@ -81,16 +81,35 @@ State information is not maintained on the agent. TBD: state of what?
 
 A trial runners needs access to training data.
 
-Database Functionality
-======================
+PostgreSQL Database
+===================
 
-Each Determined cluster requires access to a `PostgreSQL <https://www.postgresql.org/>`_ database, which stores experiment metadata. The database typically resides on the master but is not required to.
+Each Determined cluster requires access to a `PostgreSQL <https://www.postgresql.org/>`_ database, which stores experiment metadata. The database typically resides on the master but is not required to. Depending on your installation method, you might need to install PostgreSQL:
 
-Determined can use `Docker <https://www.docker.com/>`_ to run the master and agents. Depending on your installation method, some of these services are installed for you:
++------------------------------------------+--------------------+
+| Type of Deployment/Installation          | Install PostgreSQL |
++==========================================+====================+
+| Using ``det deploy`` on a cloud provider | No                 |
++------------------------------------------+--------------------+
+| Using ``det deploy`` on-prem             | No                 |
++------------------------------------------+--------------------+
+| Manual installation                      | Yes                |
++------------------------------------------+--------------------+
 
--  Using ``det deploy`` on a cloud provider, Docker and PostgreSQL are preinstalled.
--  Using ``det deploy`` on-prem, you need to install Docker.
--  For manual installation, you need to install Docker and PostgreSQL.
+Docker Images
+=============
+
+Determined can use `Docker <https://www.docker.com/>`_ to run the master and agents. Depending on your installation method, you might need to install Docker:
+
++------------------------------------------+----------------+
+| Type of Deployment/Installation          | Install Docker |
++==========================================+================+
+| Using ``det deploy`` on a cloud provider | No             |
++------------------------------------------+----------------+
+| Using ``det deploy`` on-prem             | Yes            |
++------------------------------------------+----------------+
+| Manual installation                      | Yes            |
++------------------------------------------+----------------+
 
 Additional Cloud Resources
 ==========================
