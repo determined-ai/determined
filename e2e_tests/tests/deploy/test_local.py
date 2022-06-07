@@ -236,8 +236,8 @@ def test_agent_up_down() -> None:
     master_down([])
 
 
-@pytest.mark.parametrize("steps", [5, 10])
-@pytest.mark.parametrize("num_agents", [5, 10])
+@pytest.mark.parametrize("steps", [10])
+@pytest.mark.parametrize("num_agents", [3, 5])
 @pytest.mark.parametrize("should_disconnect", [False, True])
 @pytest.mark.det_deploy_local
 def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
@@ -263,13 +263,31 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                     agent_down(["--agent-name", f"agent-{agent_id}"])
                 else:
                     with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(["det", "agent", "disable", f"agent-{agent_id}"])
+                        subprocess.run(
+                            [
+                                "det",
+                                "-m",
+                                f"{master_host}:{master_port}",
+                                "agent",
+                                "disable",
+                                f"agent-{agent_id}",
+                            ]
+                        )
             else:
                 if should_disconnect:
                     agent_up(["--agent-name", f"agent-{agent_id}"])
                 else:
                     with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(["det", "agent", "enable", f"agent-{agent_id}"])
+                        subprocess.run(
+                            [
+                                "det",
+                                "-m",
+                                f"{master_host}:{master_port}",
+                                "agent",
+                                "enable",
+                                f"agent-{agent_id}",
+                            ]
+                        )
             agents_are_up[agent_id] = not agents_are_up[agent_id]
         time.sleep(5)
 
