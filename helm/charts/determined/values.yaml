@@ -87,7 +87,8 @@ checkpointStorage:
   # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
-
+  # prefix: <prefix>
+  
   # For storing in S3.
   # type: s3
   # bucket: <bucket_name>
@@ -132,14 +133,10 @@ masterMemRequest: 8Gi
 
 ## Configure the task container defaults. Tasks include trials, commands, TensorBoards, notebooks,
 ## and shells. For all task containers, shm_size_bytes and network_mode are configurable. For
-## trials, the network interface used by distributed (multi-machine) training and ports used by the
-## NCCL and GLOO libraries during distributed training are configurable. These default to
-## auto-discovery and random non-privileged ports, respectively.
+## trials, the network interface used by distributed (multi-machine) training is configurable.
 taskContainerDefaults:
   # networkMode: bridge
   # dtrainNetworkInterface: <network interface name>
-  # ncclPortRange: <MIN:MAX>
-  # glooPortRange: <MIN:MAX>
   # forcePullImage: <true or false>
 
   # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and CPU tasks

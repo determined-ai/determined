@@ -91,6 +91,8 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
 
    -  ``type: s3``: Checkpoints are stored in Amazon S3.
 
@@ -153,12 +155,6 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
       agent machines may have others. If interface detection is not finding the appropriate
       interface, the ``dtrainNetworkInterface`` option can be used to set it explicitly (e.g.,
       ``eth11``).
-
-   -  ``ncclPortRange``: The range of ports that nccl is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
-
-   -  ``glooPortRange``: The range of ports that gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
 
    -  ``forcePullImage``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment

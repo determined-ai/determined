@@ -139,11 +139,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6e45071
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-3e933ea
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-6e45071
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea
 
   login-docker:
     parameters:
@@ -517,7 +517,7 @@ commands:
               --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
-              --no-prompt
+              --yes
 
   terminate-aws-cluster:
     parameters:
@@ -529,7 +529,7 @@ commands:
           when: always
           command: |
             det deploy aws down \
-              --cluster-id <<parameters.cluster-id>> --no-prompt
+              --cluster-id <<parameters.cluster-id>> --yes
 
   setup-aws-cluster:
     parameters:

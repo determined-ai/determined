@@ -52,6 +52,7 @@
     save_experiment_best: 3
     save_trial_best: 10
     save_trial_latest: 10
+    prefix:
 
 - name: partially-filled searcher is allowed and merges correctly
   merge_as: http://determined.ai/schemas/expconf/v0/searcher.json

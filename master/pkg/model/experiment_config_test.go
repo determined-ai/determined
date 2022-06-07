@@ -137,6 +137,10 @@ func TestValidateSlurmOptions(t *testing.T) {
 	testEnvironmentSlurm(t, []string{})
 	// Forbidden -G option
 	testEnvironmentSlurm(t, []string{"-G1"}, "slurm option -G is not configurable")
+	// Forbidden --grpus=#
+	testEnvironmentSlurm(t, []string{"--gpus=2"}, "slurm option --gpus= is not configurable")
+	// OK --gpus-per-task=#
+	testEnvironmentSlurm(t, []string{"--gpus-per-task=2"})
 	// OK option containing letters of forbidden option (-n)
 	testEnvironmentSlurm(t, []string{"--nice=3"})
 	// Forbidden -n option intermixed with OK options

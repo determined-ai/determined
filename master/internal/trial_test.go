@@ -35,7 +35,8 @@ func TestTrial(t *testing.T) {
 	system, db, rID, tr, self := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self,
+		model.StateWithReason{State: model.ActiveState}).Error())
 	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
@@ -86,7 +87,8 @@ func TestTrialRestarts(t *testing.T) {
 	system, db, rID, tr, self := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self,
+		model.StateWithReason{State: model.ActiveState}).Error())
 	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
@@ -137,7 +139,8 @@ func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
 	system, db, rID, tr, self := setup(t)
 
 	// Pre-scheduled stage.
-	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self,
+		model.StateWithReason{State: model.ActiveState}).Error())
 	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
@@ -151,7 +154,8 @@ func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
 
 	// Send the trial a termination, but don't setup our mock allocation to handle it, as if it
 	// is busy handling receiving resources.
-	require.NoError(t, system.Ask(self, model.StoppingCanceledState).Error())
+	require.NoError(t, system.Ask(self, model.StateWithReason{
+		State: model.StoppingCanceledState}).Error())
 
 	// Now the allocation checks in to get what to launch while we're canceled.
 	require.Error(t, system.Ask(tr.allocation, actors.ForwardThroughMock{

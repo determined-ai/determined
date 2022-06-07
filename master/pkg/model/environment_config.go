@@ -216,15 +216,15 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 func ValidateSlurm(slurm []string) []error {
 	slurmErrors := []error{}
 	var forbiddenArgs = []string{
-		"--ntasks-per-node",
-		"--gpus", "-G",
-		"--gres",
-		"--nodes", "-N",
-		"--ntasks", "-n",
-		"--chdir", "-D",
-		"--error", "-e",
-		"--output", "-o",
-		"--partition", "-p",
+		"--ntasks-per-node=",
+		"--gpus=", "-G",
+		"--gres=",
+		"--nodes=", "-N",
+		"--ntasks=", "-n",
+		"--chdir=", "-D",
+		"--error=", "-e",
+		"--output=", "-o",
+		"--partition=", "-p",
 	}
 
 	for _, arg := range slurm {

@@ -41,8 +41,10 @@ type (
 		resources resourcesList
 		// Separates the existence of resources from us having started them.
 		resourcesStarted bool
+		// Tracks an informatative reason for container exit.
+		exitReasons []string
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
-		exitReason error
+		exitErr error
 		// Marks that we intentionally killed the allocation so we can know to
 		// ignore any errors from containers dying. Not set when we kill an already
 		// terminating trial.
@@ -96,6 +98,12 @@ type (
 	BuildTaskSpec struct{}
 	// AllocationSignal is an interface for signals that can be sent to an allocation.
 	AllocationSignal string
+	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
+	// along with an informational reason about why the signal was sent.
+	AllocationSignalWithReason struct {
+		AllocationSignal    AllocationSignal
+		InformationalReason string
+	}
 	// AllocationState requests allocation state. A copy is filled and returned.
 	AllocationState struct {
 		State     model.AllocationState
@@ -226,6 +234,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 	case AllocationSignal:
+		a.HandleSignal(ctx, AllocationSignalWithReason{AllocationSignal: msg})
+	case AllocationSignalWithReason:
 		a.HandleSignal(ctx, msg)
 	case AllocationState:
 		if ctx.ExpectingResponse() {
@@ -367,13 +377,20 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 // Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
 func (a *Allocation) Cleanup(ctx *actor.Context) {
-	// This message must be sent when the actor is closing since it closes all
-	// websockets listening for these events.
-	exitReason := okExitMessage
-	if a.exitReason != nil {
-		exitReason = a.exitReason.Error()
+	// These messages must be sent when the actor is closing since it
+	// closes all websockets listening for these events.
+	exitReasons := strings.Join(a.exitReasons, ", ")
+	if exitReasons != "" {
+		a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+			Log:   fmt.Sprintf("exit reasons: %s", exitReasons),
+			Level: ptrs.Ptr(model.LogLevelWarning),
+		}))
 	}
-	a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitReason})
+	exitErr := okExitMessage
+	if a.exitErr != nil {
+		exitErr = a.exitErr.Error()
+	}
+	a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitErr})
 
 	// Just in-case code.
 	if !a.exited {
@@ -509,8 +526,12 @@ func (a *Allocation) SetResourcesAsDaemon(
 }
 
 // HandleSignal handles an external signal to kill or terminate the allocation.
-func (a *Allocation) HandleSignal(ctx *actor.Context, msg actor.Message) {
-	switch msg {
+func (a *Allocation) HandleSignal(ctx *actor.Context, msg AllocationSignalWithReason) {
+	if msg.InformationalReason != "" {
+		a.exitReasons = append(a.exitReasons, msg.InformationalReason)
+	}
+
+	switch msg.AllocationSignal {
 	case Kill:
 		a.Kill(ctx)
 	case Terminate:
@@ -656,11 +677,15 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
 	forcePreemption := false
-	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
+	switch msg := ctx.Message().(type) {
+	case sproto.ReleaseResources:
 		if msg.ForcePreemption {
 			forcePreemption = true
 		}
 		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
+		a.exitReasons = append(a.exitReasons, "allocation being preempted by the scheduler")
+	case sproto.ChangeRP:
+		a.exitReasons = append(a.exitReasons, "allocation resource pool changed")
 	}
 
 	if exited := a.Exit(ctx); exited {
@@ -685,8 +710,8 @@ func (a *Allocation) Kill(ctx *actor.Context) {
 // Error closes the allocation due to an error, beginning the kill flow.
 func (a *Allocation) Error(ctx *actor.Context, err error) {
 	ctx.Log().WithError(err).Errorf("allocation encountered fatal error")
-	if a.exitReason == nil {
-		a.exitReason = err
+	if a.exitErr == nil {
+		a.exitErr = err
 	}
 	a.Kill(ctx)
 }
@@ -837,13 +862,13 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	case a.req.Preemptible && a.preemption.Acknowledged():
 		ctx.Log().Info("allocation successfully stopped")
 		return
-	case a.exitReason == nil && len(a.resources.exited()) > 0:
+	case a.exitErr == nil && len(a.resources.exited()) > 0:
 		// This is true because searcher and preemption exits both ack preemption.
 		exit.UserRequestedStop = true
 		ctx.Log().Info("allocation successfully stopped early")
 		return
-	case a.exitReason != nil:
-		switch err := a.exitReason.(type) {
+	case a.exitErr != nil:
+		switch err := a.exitErr.(type) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ContainerFailed, sproto.TaskError:

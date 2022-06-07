@@ -223,14 +223,6 @@ The master supports the following configuration settings:
       detection is not finding the appropriate interface, the ``dtrain_network_interface`` option
       can be used to set it explicitly (e.g., ``eth11``).
 
-   -  ``nccl_port_range``: The range of ports that NCCL is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the NCCL port range.
-
-   -  ``gloo_port_range``: The range of ports that Gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the Gloo port range.
-
    -  ``cpu_pod_spec``: Defines the default pod spec which will be applied to all CPU-only tasks
       when running on Kubernetes. See :ref:`custom-pod-specs` for details.
 
@@ -680,6 +672,8 @@ The master supports the following configuration settings:
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
 
    -  ``type: hdfs``: Checkpoints are stored in HDFS using the `WebHDFS
       <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API

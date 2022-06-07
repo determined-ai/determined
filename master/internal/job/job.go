@@ -66,8 +66,13 @@ type DeleteJobResponse struct {
 
 // EmptyDeleteJobResponse returns a response with an empty error chan.
 func EmptyDeleteJobResponse() DeleteJobResponse {
+	return DeleteJobResponseOf(nil)
+}
+
+// DeleteJobResponseOf returns a response containing the specified error.
+func DeleteJobResponseOf(input error) DeleteJobResponse {
 	respC := make(chan error, 1)
-	respC <- nil
+	respC <- input
 	return DeleteJobResponse{Err: respC}
 }
 

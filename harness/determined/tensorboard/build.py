@@ -81,7 +81,12 @@ def build(
         )
 
     elif type_name == "gcs":
-        return gcs.GCSTensorboardManager(checkpoint_config["bucket"], base_path, sync_path)
+        return gcs.GCSTensorboardManager(
+            checkpoint_config["bucket"],
+            checkpoint_config.get("prefix", None),
+            base_path,
+            sync_path,
+        )
 
     elif type_name == "s3":
         return s3.S3TensorboardManager(

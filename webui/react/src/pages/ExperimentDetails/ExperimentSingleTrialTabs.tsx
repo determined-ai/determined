@@ -101,7 +101,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, trialId ]);
+  }, [ canceler, trialId, onTrialUpdate ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);

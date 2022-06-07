@@ -14,6 +14,7 @@ data:
       host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
       {{- else if eq .Values.checkpointStorage.type "gcs" }}
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
+      prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "s3" }}
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       access_key: {{ .Values.checkpointStorage.accessKey | quote }}
@@ -83,8 +84,8 @@ data:
         {{- end }}
       {{- end }}
 
-    {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-6e45071")._1}}
-    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-6e45071")._1 -}}
+    {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea")._1}}
+    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}
@@ -92,12 +93,6 @@ data:
       {{- end }}
       {{- if .Values.taskContainerDefaults.dtrainNetworkInterface }}
       dtrain_network_interface: {{ .Values.taskContainerDefaults.dtrainNetworkInterface }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.ncclPortRange }}
-      nccl_port_range: {{ .Values.taskContainerDefaults.ncclPortRange }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.glooPortRange }}
-      gloo_port_range: {{ .Values.taskContainerDefaults.glooPortRange }}
       {{- end }}
       {{- if .Values.taskContainerDefaults.cpuPodSpec }}
       cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec | toJson }}
