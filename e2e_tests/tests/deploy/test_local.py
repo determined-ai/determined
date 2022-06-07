@@ -267,7 +267,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                             [
                                 "det",
                                 "-m",
-                                f"{master_host}:{master_port}",
+                                conf.make_master_url(),
                                 "agent",
                                 "disable",
                                 f"agent-{agent_id}",
@@ -282,7 +282,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                             [
                                 "det",
                                 "-m",
-                                f"{master_host}:{master_port}",
+                                conf.make_master_url(),
                                 "agent",
                                 "enable",
                                 f"agent-{agent_id}",
