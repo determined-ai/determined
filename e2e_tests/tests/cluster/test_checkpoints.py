@@ -56,7 +56,7 @@ def test_delete_checkpoints() -> None:
         "type": "shared_fs",
         "host_path": "/tmp",
         "storage_path": "delete-checkpoints-e2etest",
-        "save_trial_latest" : 10
+        "save_trial_latest" : 1
     }
     config["min_checkpoint_period"] = {"batches": 10}
 
