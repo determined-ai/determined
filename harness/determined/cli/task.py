@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from functools import partial
 from typing import Any, Dict, List, Union, cast
 
 from determined.cli import command, render
@@ -177,7 +178,7 @@ args_description: List[Any] = [
                 # Since declarative argparse tries to attach the help_str to the func itself:
                 # ./harness/determined/common/declarative_argparse.py#L57
                 # Each func must be unique.
-                lambda *args, **kwargs: logs(*args, **kwargs),
+                partial(logs),
                 "fetch task logs",
                 [
                     Arg("task_id", help="task ID"),
