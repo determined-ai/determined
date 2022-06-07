@@ -353,6 +353,13 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
+
+		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
+		ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, taskID, e.JobID, e.StartTime, taskSpec,
+			e.Experiment.ID, e.Config.AsLegacy(), checkpoints, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
+
+		ctx.Self().System().ActorOf(addr, ckptGCTask)
+
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			taskID:            model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
 			jobID:             e.JobID,

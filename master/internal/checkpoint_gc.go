@@ -97,19 +97,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Respond(t.ToTaskSpec())
 		}
 	case *task.AllocationExited:
-		if msg.Err != nil {
-			conv := &protoconverter.ProtoConverter{}
-			deleteCheckpointsStr := strings.Split(t.ToDelete, ",")
-			deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStr)
-			if err := conv.Error(); err != nil {
-				return err
-			}
-			if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
-				ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
-				return err
-			}
-
-		}
 		t.completeTask(ctx)
 	case actor.ChildStopped:
 	case actor.ChildFailed:
@@ -121,6 +108,18 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+
+	conv := &protoconverter.ProtoConverter{}
+	deleteCheckpointsStr := strings.Split(t.ToDelete, ",")
+	deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStr)
+	if err := conv.Error(); err != nil {
+		return err
+	}
+	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
+		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+		return err
+	}
+
 	return nil
 }
 
