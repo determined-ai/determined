@@ -1,4 +1,5 @@
-import { Alert, InputNumber, ModalFuncProps, Select } from 'antd';
+import { Alert, Checkbox, InputNumber, ModalFuncProps, Select } from 'antd';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -9,7 +10,7 @@ import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { DetError, isDetError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { ExperimentBase, ResourcePool } from 'types';
+import { ExperimentBase, Hyperparameter, ResourcePool } from 'types';
 
 import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
@@ -62,6 +63,11 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     setSearchMethod(SearchMethods[value as string]);
   }, []);
 
+  const hyperparameters = useMemo(() => {
+    return Object.entries(experiment.hyperparameters)
+      .map(hp => ({ hyperparameter: hp[1], name: hp[0] }));
+  }, [ experiment.hyperparameters ]);
+
   const page1 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
@@ -83,10 +89,20 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
         </SelectFilter>
         <p>{searchMethod.description}</p>
-        {/* TODO: hyperparameter selection */}
+        <div>
+          <h2>Hyperparameter</h2>
+          <h2>Current</h2>
+          <h2>Min value</h2>
+          <h2>Max value</h2>
+          {hyperparameters.map(hp => <HyperparameterRow key={hp.name} {...hp} />)}
+        </div>
       </div>
     );
-  }, [ handleSelectSearchMethod, modalError, searchMethod ]);
+  }, [ handleSelectSearchMethod,
+    hyperparameters,
+    modalError,
+    searchMethod.description,
+    searchMethod.name ]);
 
   const handleSelectPool = useCallback((value: SelectValue) => {
     setResourcePool(resourcePools.find(pool => pool.imageId === value));
@@ -209,6 +225,41 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   }, [ modalProps, modalRef, openOrUpdate ]);
 
   return { modalClose, modalOpen, modalRef };
+};
+
+interface RowProps {
+  hyperparameter: Hyperparameter;
+  name: string;
+}
+
+const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name }: RowProps) => {
+  const [ checked, setChecked ] = useState(false);
+  const [ minVal, setMinVal ] = useState<number>();
+  const [ maxVal, setMaxVal ] = useState<number>();
+
+  const handleCheck = useCallback((e: CheckboxChangeEvent) => {
+    setChecked(e.target.checked);
+  }, []);
+
+  const handleMinChange = useCallback((value: number) => {
+    setMinVal(value);
+  }, []);
+
+  const handleMaxChange = useCallback((value: number) => {
+    setMaxVal(value);
+  }, []);
+
+  return (
+    <>
+      <div>
+        <Checkbox checked={checked} onChange={handleCheck} />
+        {name}
+      </div>
+      <div>{hyperparameter.val}</div>
+      <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+      <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+    </>
+  );
 };
 
 export default useModalHyperparameterSearch;
