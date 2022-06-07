@@ -213,9 +213,9 @@ The following figure compares ``Trial``-based training to using the Core API dir
 .. image:: /assets/images/arch03.png
 
 With ``Trial``-based training, you specify a ``Trial`` class as your
-``entrypoint`` instead of an entire command (?python script?).  Internally, a
+``entrypoint`` instead of an entire command (?python script?). Internally, a
 Determined-provided training script loads the *user trial* and starts a
-Determined-provided training loop, the *trial logic*.  The training loop uses
+Determined-provided training loop, the *trial logic*. The training loop uses
 the Core API to integrate with the rest of the Determined platform but those
 details are not exposed to the user trial. Trial-based training can be viewed as a special case of Core API training.
 
@@ -224,7 +224,7 @@ In Trial-based distributed training, Determined starts multiple workers with a D
 Non-distributed Training using Core API
 =======================================
 
-In Core API-based training, there  is no framework or plugins. Instead, you interact directly with the the Determined platform to:
+In Core API-based training, there is no framework or plugins. Instead, you interact directly with the the Determined platform to:
 
 -  report metrics and checkpoints
 -  check for preemption signals
@@ -246,19 +246,19 @@ TBD
 .. image:: /assets/images/arch02.png
 
 The Determined master launches one container with multiple slots attached, or
-multiple containers, each container with one or more slots.  The training script is
+multiple containers, each container with one or more slots. The training script is
 called once in each container.
 
 It is highly recommended to separate training functionality into a launcher and
-a training script.  The launcher is responsible for launching multiple workers
+a training script. The launcher is responsible for launching multiple workers
 according to the distributed training configuration, with each running the
-training script.  The training script should execute training with the number of available peer workers.
+training script. The training script should execute training with the number of available peer workers.
 
 If both the launcher and the training script are able to handle
 non-distributed training, where the launcher launches only one worker and the
 worker can operate without any peers, switching between distributed
 training and non-distributed training only requires changing the
-``slots_per_trial`` configuration parameter.  This is the recommended strategy for using Determined, and
+``slots_per_trial`` configuration parameter. This is the recommended strategy for using Determined, and
 it is how Trial-based training works.
 
 ****************
