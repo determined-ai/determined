@@ -28,8 +28,8 @@ class TensorboardSyncMode(enum.Enum):
     to call ``TrainContext.upload_tensorboard_files()``
     """
 
-    Auto = "AUTO"
-    Manual = "MANUAL"
+    AUTO = "AUTO"
+    MANUAL = "MANUAL"
 
 
 class TrainContext:
@@ -112,7 +112,7 @@ class TrainContext:
             data=det.util.json_encode(body),
         )
 
-        if self._tbd_sync_mode == TensorboardSyncMode.Auto:
+        if self._tbd_sync_mode == TensorboardSyncMode.AUTO:
             self.write_training_tensorboard_metrics(steps_completed, metrics, batch_metrics)
             if self._tbd_mgr:
                 self._tbd_mgr.sync()
@@ -216,7 +216,7 @@ class TrainContext:
         )
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tbd_sync_mode == TensorboardSyncMode.Auto:
+        if self._tbd_sync_mode == TensorboardSyncMode.AUTO:
             if self._tbd_writer and self._tbd_mgr:
                 self.write_validation_tensorboard_metrics(steps_completed, metrics)
                 self._tbd_mgr.sync()

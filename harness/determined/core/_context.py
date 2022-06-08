@@ -101,7 +101,7 @@ def init(
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
-    tensorboard_sync_mode: core.TensorboardSyncMode = core.TensorboardSyncMode.Auto,
+    tensorboard_sync_mode: core.TensorboardSyncMode = core.TensorboardSyncMode.AUTO,
 ) -> Context:
     """
     ``core.init()`` builds a :class:`core.Context <determined.core.Context>` for use with the Core
@@ -160,7 +160,7 @@ def init(
             info.trial._config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
-        if tensorboard_sync_mode == core.TensorboardSyncMode.Auto:
+        if tensorboard_sync_mode == core.TensorboardSyncMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()
 
         train = core.TrainContext(
