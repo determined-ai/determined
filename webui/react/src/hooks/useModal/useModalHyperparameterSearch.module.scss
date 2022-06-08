@@ -1,3 +1,24 @@
+.base {
+  padding: 16px;
+
+  .hyperparameterGrid {
+    display: grid;
+    grid-template-columns: 33% repeat(3, 1fr);
+
+    h2 {
+      font-size: 1rem;
+    }
+  }
+}
+.footer {
+  display: flex;
+  flex-direction: row;
+  padding: 16px;
+
+  .spacer {
+    flex-grow: 1;
+  }
+}
 .base:global(.ant-modal) {
   & > :global(.ant-modal-content) {
     & > :global(.ant-modal-body) {
@@ -14,7 +35,7 @@
       :global(.ant-modal-confirm-btns) {
         align-items: center;
         border-top: solid var(--theme-stroke-width) var(--theme-colors-monochrome-14);
-        display: flex;
+        display: none;
         height: 56px;
         justify-content: flex-end;
         margin: 0;

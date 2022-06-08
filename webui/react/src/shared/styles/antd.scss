@@ -322,6 +322,14 @@ html {
       padding-top: calc(16px + var(--theme-density) * 1px);
     }
   }
+  .ant-tabs.no-growing-tabbar {
+    & > .ant-tabs-nav {
+      & > .ant-tabs-nav-wrap {
+        align-self: flex-end;
+        height: fit-content;
+      }
+    }
+  }
 
   /* Tabs Cards Style */
 

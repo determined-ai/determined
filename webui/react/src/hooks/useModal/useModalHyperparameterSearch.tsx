@@ -1,4 +1,4 @@
-import { Alert, Checkbox, InputNumber, ModalFuncProps, Select } from 'antd';
+import { Alert, Button, Checkbox, InputNumber, ModalFuncProps, Select, Space } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
@@ -89,7 +89,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
         </SelectFilter>
         <p>{searchMethod.description}</p>
-        <div>
+        <div className={css.hyperparameterGrid}>
           <h2>Hyperparameter</h2>
           <h2>Current</h2>
           <h2>Min value</h2>
@@ -122,7 +122,8 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       <div className={css.base}>
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
         <p>Select the resources to allocate to this search and the trial iteration limit.</p>
-        <div><label htmlFor="resource-pool">Resource pool</label>
+        <div>
+          <label htmlFor="resource-pool">Resource pool</label>
           <SelectFilter
             id="resource-pool"
             value={resourcePool?.imageId}
@@ -189,27 +190,51 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     }
   }, [ submitExperiment, modalContent, page1, page2 ]);
 
-  const okText = useMemo(() => {
+  const handleBack = useCallback(() => {
+    setModalContent(page1);
+  }, [ page1 ]);
+
+  const handleCancel = useCallback(() => {
+    //modalClose();
+  }, [ ]);
+
+  const footer = useMemo(() => {
     if (modalContent === page1) {
-      return 'Select Resources';
+      return (
+        <div className={css.footer}>
+          <div className={css.spacer} />
+          <Space>
+            <Button onClick={handleCancel}>Cancel</Button>
+            <Button type="primary" onClick={handleOk}>Select Resources</Button>
+          </Space>
+        </div>
+      );
     }
-    return 'Run Experiment';
-  }, [ modalContent, page1 ]);
+    return (
+      <div className={css.footer}>
+        <Button onClick={handleBack}>Back</Button>
+        <div className={css.spacer} />
+        <Space>
+          <Button onClick={handleCancel}>Cancel</Button>
+          <Button type="primary" onClick={handleOk}>Run Experiment</Button>
+        </Space>
+      </div>
+    );
+  }, [ handleBack, handleCancel, handleOk, modalContent, page1 ]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
-      content: modalContent,
+      content: <>{modalContent}{footer}</>,
       icon: null,
       maskClosable: true,
-      okText,
-      onOk: handleOk,
       title: 'Hyperparameter Search',
+      width: 500,
     };
     //TODO: Back button in footer
-  }, [ modalContent, okText, handleOk ]);
+  }, [ modalContent, footer ]);
 
   const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
     setModalContent(page1);
