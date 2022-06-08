@@ -282,7 +282,7 @@ class TokenStore:
             for url in store.get("masters", {}):
                 if normalize_url(url) == self.master_address:
                     # Assume config is corrupted if we have multiple
-                    # that refer to the same url.
+                    # master urls that normalize to the same URL.
                     if to_remove:
                         raise api.errors.CorruptTokenCacheException()
                     to_remove = url

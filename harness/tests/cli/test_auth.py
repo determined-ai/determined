@@ -119,7 +119,9 @@ def test_auth_json_v0_upgrade() -> None:
         ("127.0.0.1", False),
         ("localhost:8080", True),
         ("localhost/", True),
-        ("localhost/det/test", True),  # Somewhat surprising behaviour.
+        ("localhost//", True),
+        ("localhost/det/test", True), # Somewhat surprising behaviour.
+        ("localhost/det/test/", True), # Somewhat surprising behaviour.
         ("http://localhost", False),
         ("https://localhost:8080", False),
         ("http://localhost:8080", True),
@@ -153,15 +155,13 @@ def test_auth_url_conflict(merge_url: str, should_corrupt: bool) -> None:
     with use_test_config_dir() as config_dir:
         auth_json_path = config_dir / "auth.json"
         with open(auth_json_path, "w") as f:
-            auth_json = copy.deepcopy(AUTH_JSON)
-            masters: Dict[str, Any] = auth_json["masters"]
-            to_add = {
+            auth_json: Dict[str, Any] = copy.deepcopy(AUTH_JSON)
+            auth_json["masters"][merge_url] = {
                 "active_user": "joe",
                 "tokens": {
                     "joe": "joe.token",
                 },
             }
-            masters[merge_url] = to_add
             json.dump(auth_json, f)
         if should_corrupt:
             with pytest.raises(CorruptTokenCacheException):
