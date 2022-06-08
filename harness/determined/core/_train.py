@@ -124,6 +124,7 @@ class TrainContext:
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         if self._tbd_writer:
+            logger.info(f"writing steps={steps_completed}, batch_metrics={batch_metrics}")
             self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
 
     def get_tensorboard_base_path(self) -> Optional[pathlib.Path]:

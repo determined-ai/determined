@@ -392,6 +392,7 @@ class TFKerasTrialController(det.TrialController):
         self.test_inputs = 0
 
         self.steps_completed = self.env.steps_completed
+        self.metric_writer = self.get_metric_writer()
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
@@ -947,6 +948,7 @@ class TFKerasTrialController(det.TrialController):
                 },
                 "stop_requested": self.context.get_stop_requested(),
             }  # type: workload.Response
+            logging.info(f"RESPONSE steps={self.steps_completed}, batch_metrics={self.train_workload_metrics}")
         else:
             response = {}
 
