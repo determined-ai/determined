@@ -43,8 +43,9 @@ const NavigationTabbar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ modal, contextHolder ] = Modal.useModal();
+  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -65,6 +66,7 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       {contextHolder}
+      {jupyterLabModalContextHolder}
       <div className={css.toolbar}>
         <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />

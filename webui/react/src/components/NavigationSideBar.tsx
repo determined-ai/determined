@@ -76,7 +76,8 @@ const NavigationSideBar: React.FC = () => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ modal, contextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
+  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -134,6 +135,7 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         {contextHolder}
+        {jupyterLabModalContextHolder}
         <header>
           <Dropdown
             content={(

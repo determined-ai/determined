@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
+import { Button, Modal } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
@@ -9,6 +9,7 @@ import useJupyterLabModal from './useJupyterLabModal';
 
 const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
+const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
 const MonacoEditorMock: React.FC = () => <></>;
 
@@ -37,14 +38,18 @@ jest.mock('components/MonacoEditor', () => ({
 const ModalTrigger: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  const { modalOpen } = useJupyterLabModal();
+  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
+  const { modalOpen } = useJupyterLabModal(jupyterLabModal);
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
   return (
-    <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
+    <>
+      {jupyterLabModalContextHolder }
+      <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
+    </>
   );
 };
 
@@ -87,6 +92,7 @@ describe('useJupyterLabModal', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(SIMPLE_CONFIG_TEMPLATE_TEXT)).not.toBeInTheDocument();
+      expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).not.toBeInTheDocument();
     });
   });
 
