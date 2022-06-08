@@ -847,33 +847,17 @@ class TFKerasTrialController(det.TrialController):
     def _allreduce_logs(self, logs: Dict) -> Dict:
         if not (self.context.distributed.size > 1):
             return logs
-        # Reduce logs in key-sorted to be deterministic across workers.
-        keys = sorted(logs)
-        logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
-        return {
-            key: np.array(self._hvd_allreduce(logs[key], average=True, name=key)) for key in keys
-        }
-
-    def _hvd_allreduce(self, value: Any, average: bool, name: str) -> Any:
-        # The signature of our horovod allreduce changed after we rebased onto 0.21.
-        hvd_sig = inspect.signature(hvd.allreduce)
-        horovod_kwargs = {
-            "value": value,
-            "name": name,
-        }  # type: Dict[str, Any]
-
-        if "op" in hvd_sig.parameters:
-            horovod_kwargs["op"] = hvd.Average if average else hvd.Sum
-
-            # average has not yet been removed but it's deprecated. It defaults
-            # to true and horovod does not support specifying an op while having
-            # average be not None.
-            if "average" in hvd_sig.parameters:
-                horovod_kwargs["average"] = None
-        else:
-            horovod_kwargs["average"] = average
-
-        return hvd.allreduce(**horovod_kwargs)
+        # Use DistributedContext to allgather logs instead of horovod, since horovod will not like
+        # it if some workers had an empty shard and emitted no metrics.
+        all_logs = self.context.distributed.allgather(logs)
+        all_keys = {k for log in all_logs for k in log}
+        avgs = {}
+        for key in all_keys:
+            # Get all values of this metric which are present in any workers' logs.
+            all_vals = [log[key] for log in all_logs if key in log]
+            # Use axis=0 to preserve the shape of the keys.
+            avgs[key] = np.mean(all_vals, axis=0)
+        return avgs
 
     def _convert_possible_tensor(self, possible_tensor: Any) -> Any:
         if isinstance(possible_tensor, EagerTensor):
@@ -903,10 +887,9 @@ class TFKerasTrialController(det.TrialController):
             )
 
         if self.context.distributed.size > 1:
-            self.train_workload_inputs = self._hvd_allreduce(
-                self.train_workload_inputs, average=False, name="train_num_inputs"
-            )
-            self.train_workload_inputs = self._convert_possible_tensor(self.train_workload_inputs)
+            num_inputs = self._convert_possible_tensor(self.train_workload_inputs)
+            all_num_inputs = self.context.distributed.allgather(num_inputs)
+            self.train_workload_inputs = np.mean(all_num_inputs)
 
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
