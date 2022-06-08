@@ -50,32 +50,21 @@ example:
 
 ``entrypoint``
 
-A model definition trial class specification or Python launcher script, which is the model
-processing entrypoint. This field can have the following formats.
+A model definition trial class specification or Python launcher script, which is the model processing entrypoint. This field can have the following formats.
 
-Note:
+Formats that specify a trial class have the form ``<module>:<object_reference>``.
 
-   Formats that specify a trial class have the form ``<module>:<object_reference>``.
+The ``<module>`` field specifies the module containing the trial class in the model definition, relative to root.
 
-   The ``<module>`` field specifies the module containing the trial class in the model definition,
-   relative to root.
+The ``<object_reference>`` specifies the trial class name in the module, which can be a nested object delimited by a period (``.``).
 
-   The ``<object_reference>`` specifies the trial class name in the module, which can be a nested
-   object delimited by a period (``.``).
+Examples:
 
-   Examples:
+-  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level of the context directory.
+-  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at the top level of the context directory.
+-  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
 
-      -  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top
-         level of the context directory.
-      -  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py``
-         file at the top level of the context directory.
-      -  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which
-         is an attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
-
-   These formats follow Python `Entry points
-   <https://packaging.python.org/specifications/entry-points/>`_ specification except that the
-   context directory name is prefixed by ``<module>`` or used as the module if the ``<module>``
-   field is empty.
+These formats follow Python `Entry points <https://packaging.python.org/specifications/entry-points/>`_ specification except that the context directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
 
 Arbitrary Script
 ================
@@ -387,10 +376,16 @@ to your container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATIO
 environment variable to the container path where the credentials are located. See
 :ref:`environment-variables` for more details on how to set environment variables in containers.
 
-The following fields are required when using GCS checkpoint storage:
+**Required Fields**
 
 ``bucket``
    The GCS bucket name to use.
+
+**Optional Fields**
+
+``prefix``
+   The optional path prefix to use. Must not contain ``..``. Note: Prefix is normalized, e.g.,
+   ``/pre/.//fix`` -> ``/pre/fix``
 
 HDFS
 ----
@@ -1020,10 +1015,10 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` for
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` for
       NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15`` for ROCm.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
+   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
 
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to

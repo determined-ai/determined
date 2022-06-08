@@ -93,6 +93,8 @@
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
 
    -  ``type: s3``: Checkpoints are stored in Amazon S3.
 
@@ -156,12 +158,6 @@
       interface, the ``dtrainNetworkInterface`` option can be used to set it explicitly (e.g.,
       ``eth11``).
 
-   -  ``ncclPortRange``: The range of ports that nccl is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
-
-   -  ``glooPortRange``: The range of ports that gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``.
-
    -  ``forcePullImage``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
       config <exp-environment-image>` this default is overriden. Please note that as of November
@@ -178,11 +174,11 @@
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
       Defaults to:
-      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.12``.
+      ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.12``.
+      to: ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 
@@ -192,6 +188,11 @@
 -  ``telemetry``: Specifies whether we collect anonymous information about the usage of Determined.
 
    -  ``enabled``: Whether collection is enabled. Defaults to ``true``.
+
+-  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
+   :ref:`Prometheus <prometheus>` for details.
+
+   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
 
 -  ``defaultPassword``: Specifies a string containing the default password for the admin and
    determined user accounts.
