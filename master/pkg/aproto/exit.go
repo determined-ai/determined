@@ -68,22 +68,25 @@ type FailureType string
 
 const (
 	// ContainerFailed denotes that the container ran but failed with a non-zero exit code.
-	ContainerFailed = FailureType("allocation failed with non-zero exit code")
+	ContainerFailed FailureType = "allocation failed with non-zero exit code"
 
 	// ContainerAborted denotes the container was canceled before it was started.
-	ContainerAborted = FailureType("allocation was aborted before it started")
+	ContainerAborted FailureType = "allocation was aborted before it started"
+
+	// ContainerMissing denotes the container was missing when the master asked about it.
+	ContainerMissing FailureType = "request for action on unknown container"
 
 	// TaskAborted denotes that the task was canceled before it was started.
-	TaskAborted = FailureType("task was aborted before the task was started")
+	TaskAborted FailureType = "task was aborted before the task was started"
 
 	// TaskError denotes that the task failed without an associated exit code.
-	TaskError = FailureType("task failed without an associated exit code")
+	TaskError FailureType = "task failed without an associated exit code"
 
 	// AgentFailed denotes that the agent failed while the container was running.
-	AgentFailed = FailureType("agent failed while the container was running")
+	AgentFailed FailureType = "agent failed while the container was running"
 
 	// AgentError denotes that the agent failed to launch the container.
-	AgentError = FailureType("agent failed to launch the container")
+	AgentError FailureType = "agent failed to launch the container"
 )
 
 // IsRestartableSystemError checks if the error is caused by the system and

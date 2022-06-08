@@ -263,7 +263,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -283,7 +286,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -304,7 +310,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -325,7 +334,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:

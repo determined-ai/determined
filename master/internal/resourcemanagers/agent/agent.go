@@ -291,7 +291,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
 			for cid := range a.agentState.containerAllocation {
-				ctx.Tell(a.agentState.containerAllocation[cid], task.Kill)
+				ctx.Tell(a.agentState.containerAllocation[cid], task.AllocationSignalWithReason{
+					AllocationSignal:    task.Kill,
+					InformationalReason: "agent disabled",
+				})
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
