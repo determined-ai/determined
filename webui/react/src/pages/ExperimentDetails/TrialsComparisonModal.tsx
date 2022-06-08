@@ -11,15 +11,21 @@ import SelectFilter from 'components/SelectFilter';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
+import { V1MetricNamesResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
+import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
+  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload,
+  MetricType, TrialDetails,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricNames } from 'utils/metric';
+import { alphaNumericSorter } from 'utils/sort';
 import { checkpointSize } from 'utils/workload';
+
+import { ErrorType } from '../../shared/utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -107,14 +113,46 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     , [ getCheckpointSize, trialsDetails ],
   );
 
-  const metricNames = useMemo(() => {
-    const nameSet: Record<string, MetricName> = {};
-    trials.forEach(trial => {
-      extractMetricNames(trialsDetails[trial]?.workloads || [])
-        .forEach(item => nameSet[item.name] = (item));
+  // Stream available metrics.
+  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+
+  useEffect(() => {
+    const canceler = new AbortController();
+    const trainingMetricsMap: Record<string, boolean> = {};
+    const validationMetricsMap: Record<string, boolean> = {};
+
+    readStream<V1MetricNamesResponse>(
+      detApi.StreamingInternal.metricNames(
+        experiment.id,
+        undefined,
+        { signal: canceler.signal },
+      ),
+      event => {
+        if (!event) return;
+        /*
+         * The metrics endpoint can intermittently send empty lists,
+         * so we keep track of what we have seen on our end and
+         * only add new metrics we have not seen to the list.
+         */
+        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
+        const newMetrics = [
+          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+        ];
+        setMetricNames(newMetrics);
+      },
+    ).catch(() => {
+      handleError({
+        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+        publicSubject: 'Experiment metric name stream failed.',
+        type: ErrorType.Api,
+      });
     });
-    return Object.values(nameSet);
-  }, [ trialsDetails, trials ]);
+    return () => canceler.abort();
+  }, [ experiment.id ]);
 
   useEffect(() => {
     setSelectedMetrics(metricNames);

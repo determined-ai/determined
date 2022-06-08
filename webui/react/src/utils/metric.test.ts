@@ -45,18 +45,6 @@ const metricNames = [
 ];
 
 describe('Metric Utilities', () => {
-  describe('extractMetricNames', () => {
-    it('should extract metric names from workloads', () => {
-      const result = [
-        { name: 'accuracy', type: MetricType.Validation },
-        { name: 'loss', type: MetricType.Validation },
-        { name: 'accuracy', type: MetricType.Training },
-        { name: 'loss', type: MetricType.Training },
-      ];
-      expect(utils.extractMetricNames(workloads)).toStrictEqual(result);
-    });
-  });
-
   describe('extractMetricValue', () => {
     const accuracyTraining = metricNames[0].metric;
     const lossValidation = metricNames[3].metric;
