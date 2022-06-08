@@ -481,8 +481,7 @@ const InteractiveTable: InteractiveTable = ({
     ],
   );
 
-<<<<<<< HEAD
-  const renderColumns= useMemo(
+  const renderColumns = useMemo(
     () => {
       const columns = settings.columns.filter(columnName => columnDefs[columnName])
         .map((columnName, index) => {

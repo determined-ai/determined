@@ -163,7 +163,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = validationRenderer('latestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
-        column.isFiltered = (settings: Settings) => !!settings.state;
+        column.isFiltered = (settings) => !!(settings as Settings).state;
         column.filters = ([ 'ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR' ] as RunState[])
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
