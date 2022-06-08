@@ -295,16 +295,25 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(e.rm, msg)
 	case sproto.NotifyRMPriorityChange:
 		err := e.setPriority(ctx, &msg.Priority, false)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
 	case job.SetGroupWeight:
 		err := e.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
 	case job.SetGroupPriority:
 		err := e.setPriority(ctx, &msg.Priority, true)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}

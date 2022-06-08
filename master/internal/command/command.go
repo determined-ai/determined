@@ -346,12 +346,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case job.SetGroupWeight:
 		err := c.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
 
 	case job.SetGroupPriority:
 		err := c.setPriority(ctx, msg.Priority, true)
+		if err != nil {
+			ctx.Log().WithError(err)
+		}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
 		}
