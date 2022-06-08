@@ -177,7 +177,7 @@ class TokenStore:
     """
 
     def __init__(self, master_address: str, path: Optional[pathlib.Path] = None) -> None:
-        self.master_address = master_address
+        self.master_address = normalize_url(master_address)
         self.path = path or util.get_config_path().joinpath("auth.json")
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing)
@@ -276,6 +276,19 @@ class TokenStore:
                 store = shim_store_v0(store, self.master_address)
 
             validate_token_store_v1(store)
+
+            # Normalize URLs.
+            to_remove = ""
+            for url in store.get("masters", {}):
+                if normalize_url(url) == self.master_address:
+                    # Assume config is corrupted if we have multiple
+                    # that refer to the same url.
+                    if to_remove:
+                        raise api.errors.CorruptTokenCacheException()
+                    to_remove = url
+            if to_remove and to_remove != self.master_address:
+                store.get("masters")[self.master_address] = store.get("masters").get(to_remove)
+                del store.get("masters")[to_remove]
 
             return cast(dict, store)
 
@@ -379,6 +392,12 @@ def validate_token_store_v1(store: Any) -> bool:
             validate_token_store_v0(val)
 
     return True
+
+
+def normalize_url(url: str) -> str:
+    from determined.common.api import request
+
+    return request.make_url(url, "/")  # Normalize to always have a trailing "/".
 
 
 # cli_auth is the process-wide authentication used for api calls originating from the cli.
