@@ -20,6 +20,7 @@ import sys
 import threading
 from typing import BinaryIO, List
 
+import determined as det
 from determined import constants
 
 
@@ -74,22 +75,22 @@ def main() -> int:
             return 1
 
     proc = subprocess.Popen(args.script, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    with det.util.forward_signals(proc):
+        with contextlib.ExitStack() as exit_stack:
+            if os.path.exists(constants.CONTAINER_STDOUT) and not args.no_redirect_stdio:
+                stdout = exit_stack.enter_context(open(constants.CONTAINER_STDOUT, "w"))
+                stderr = exit_stack.enter_context(open(constants.CONTAINER_STDERR, "w"))
+            else:
+                stdout = sys.stdout
+                stderr = sys.stderr
+            run_all(
+                [
+                    threading.Thread(target=forward_stream, args=(proc.stdout, stdout, rank)),
+                    threading.Thread(target=forward_stream, args=(proc.stderr, stderr, rank)),
+                ]
+            )
 
-    with contextlib.ExitStack() as exit_stack:
-        if os.path.exists(constants.CONTAINER_STDOUT) and not args.no_redirect_stdio:
-            stdout = exit_stack.enter_context(open(constants.CONTAINER_STDOUT, "w"))
-            stderr = exit_stack.enter_context(open(constants.CONTAINER_STDERR, "w"))
-        else:
-            stdout = sys.stdout
-            stderr = sys.stderr
-        run_all(
-            [
-                threading.Thread(target=forward_stream, args=(proc.stdout, stdout, rank)),
-                threading.Thread(target=forward_stream, args=(proc.stderr, stderr, rank)),
-            ]
-        )
-
-    return proc.wait()
+        return proc.wait()
 
 
 if __name__ == "__main__":
