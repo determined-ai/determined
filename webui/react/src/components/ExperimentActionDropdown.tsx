@@ -3,6 +3,8 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 
+import useModalExperimentCreate,
+{ CreateExperimentType } from 'hooks/useModal/useModalExperimentCreate';
 import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
 import { handlePath, paths } from 'routes/utils';
 import {
@@ -11,6 +13,7 @@ import {
   cancelExperiment,
   deleteExperiment,
   getExperimentDetails,
+  getTrialDetails,
   killExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
@@ -66,7 +69,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const [ fullExperiment, setFullExperiment ] = useState<ExperimentBase>();
   const { modalOpen: openModalCreate } = useModalExperimentCreate();
   const { modalOpen: openExperimentMove } = useModalExperimentMove({ onClose: onComplete });
-  const trial = experiment.trialIds?.[0];
+  const trialId = experiment.trialIds?.[0];
 
   useEffect(() => {
     (async () => {
@@ -93,18 +96,20 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleExperimentFork = useCallback(() => {
     if(fullExperiment)
-      openModalCreate({ experiment: fullExperiment, type: CreateExperimentType.Fork }); 
+      openModalCreate({ experiment: fullExperiment, type: CreateExperimentType.Fork });
   }, [ fullExperiment, openModalCreate ]);
 
-  const handleContinueTrial = useCallback(() => {
-    if(fullExperiment)
+  const handleContinueTrial = useCallback(async () => {
+    if (fullExperiment && trialId) {
+      const trial = await getTrialDetails({ id: trialId });
+
       openModalCreate({
         experiment: fullExperiment,
-        // @ts-ignore TODO: remove this
-        trial, // TODO: check on how to set the trial properly
+        trial,
         type: CreateExperimentType.ContinueTrial,
       });
-  }, [ fullExperiment, openModalCreate, trial ]);
+    }
+  }, [ fullExperiment, openModalCreate, trialId ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     const e = params.domEvent as React.MouseEvent<HTMLElement, MouseEvent>;
@@ -171,8 +176,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           handleExperimentMove();
           break;
         case Action.ContinueTrial:
-          if (trial) {
-            handleContinueTrial();
+          if (trialId) {
+            await handleContinueTrial();
           }
 
           break;
