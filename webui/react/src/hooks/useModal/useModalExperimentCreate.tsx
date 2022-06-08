@@ -1,4 +1,4 @@
-import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { Alert, Form, FormInstance, Input, ModalFuncProps, Modal } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -17,6 +17,8 @@ import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
+
 import { RawJson } from '../../shared/types';
 import { DetError, isDetError, isError } from '../../shared/utils/error';
 import { routeToReactUrl } from '../../shared/utils/routes';
@@ -31,6 +33,7 @@ export enum CreateExperimentType {
 
 interface Props {
   onClose?: () => void;
+  modal: Omit<ModalStaticFunctions, 'warn'>
 }
 
 interface OpenProps {
@@ -98,7 +101,7 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalExperimentCreate = (props?: Props): ModalHooks => {
+const useModalExperimentCreate = (props: Props): ModalHooks => {
   const formRef = useRef<FormInstance>(null);
   const [ registryCredentials, setRegistryCredentials ] = useState<RawJson>();
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -112,6 +115,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({
     onClose: handleModalClose,
     options: { rawCancel: true },
+    modal: props.modal,
   });
 
   const handleEditorChange = useCallback((newConfigString: string) => {
