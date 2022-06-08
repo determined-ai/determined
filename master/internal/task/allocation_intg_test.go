@@ -79,9 +79,10 @@ func TestAllocation(t *testing.T) {
 				return rsrv
 			}
 
-			resources := []sproto.Resources{
-				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
-				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
+			rID1, rID2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
+			resources := map[sproto.ResourcesID]sproto.Resources{
+				rID1: mockRsvn(rID1, "agent-1"),
+				rID2: mockRsvn(rID2, "agent-2"),
 			}
 			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 				Msg: tasks.TaskSpec{},
@@ -187,9 +188,10 @@ func TestAllocationAllGather(t *testing.T) {
 		return rsrv
 	}
 
-	resources := []sproto.Resources{
-		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
-		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
+	rID1, rID2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
+	resources := map[sproto.ResourcesID]sproto.Resources{
+		rID1: mockRsvn(rID1, "agent-1"),
+		rID2: mockRsvn(rID2, "agent-2"),
 	}
 
 	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
