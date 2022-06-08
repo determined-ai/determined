@@ -1,25 +1,26 @@
 import contextlib
+import copy
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Any, Dict, Iterator, Optional
 
 import pytest
 import requests_mock
 
 from determined.common.api.authentication import Authentication, TokenStore
 from determined.common.api.certs import default_load as certs_default_load
-from determined.common.api.errors import UnauthenticatedException
+from determined.common.api.errors import CorruptTokenCacheException, UnauthenticatedException
 from tests.confdir import use_test_config_dir
 
-MOCK_MASTER_URL = "http://localhost:8080"
+MOCK_MASTER_URL = "http://localhost:8080/"
 AUTH_V0_PATH = Path(__file__).parent / "auth_v0.json"
 UNTRUSTED_CERT_PATH = Path(__file__).parents[1] / "common" / "untrusted-root" / "127.0.0.1-ca.crt"
 AUTH_JSON = {
     "version": 1,
     "masters": {
-        "http://localhost:8080": {
+        "http://localhost:8080/": {
             "active_user": "bob",
             "tokens": {
                 "determined": "det.token",
@@ -109,6 +110,66 @@ def test_auth_json_v0_upgrade() -> None:
             data = json.load(fin)
             assert data.get("version") == 1
             assert "masters" in data and list(data["masters"].keys()) == [MOCK_MASTER_URL]
+
+
+@pytest.mark.parametrize(
+    "master_url,should_match",
+    [
+        ("localhost", True),
+        ("127.0.0.1", False),
+        ("localhost:8080", True),
+        ("localhost/", True),
+        ("localhost/det/test", True),  # Somewhat surprising behaviour.
+        ("http://localhost", False),
+        ("https://localhost:8080", False),
+        ("http://localhost:8080", True),
+    ],
+)
+def test_auth_url_normalization(master_url: str, should_match: bool) -> None:
+    with use_test_config_dir() as config_dir:
+        auth_json_path = config_dir / "auth.json"
+        with open(auth_json_path, "w") as f:
+            json.dump(AUTH_JSON, f)
+        ts = TokenStore(master_url, auth_json_path)
+
+        if should_match:
+            assert ts.get_active_user() == "bob"
+            assert ts.get_token("determined") == "det.token"
+        else:
+            assert ts.get_active_user() is None
+            assert ts.get_token("determined") is None
+
+
+@pytest.mark.parametrize(
+    "merge_url,should_corrupt",
+    [
+        ("localhost", True),
+        ("localhost:8080", True),
+        ("example.com", False),
+        ("https://localhost:8080", False),
+    ],
+)
+def test_auth_url_conflict(merge_url: str, should_corrupt: bool) -> None:
+    with use_test_config_dir() as config_dir:
+        auth_json_path = config_dir / "auth.json"
+        with open(auth_json_path, "w") as f:
+            auth_json = copy.deepcopy(AUTH_JSON)
+            masters: Dict[str, Any] = auth_json["masters"]
+            to_add = {
+                "active_user": "joe",
+                "tokens": {
+                    "joe": "joe.token",
+                },
+            }
+            masters[merge_url] = to_add
+            json.dump(auth_json, f)
+        if should_corrupt:
+            with pytest.raises(CorruptTokenCacheException):
+                ts = TokenStore(merge_url, auth_json_path)
+        else:
+            ts = TokenStore(merge_url, auth_json_path)
+            assert ts.get_active_user() == "joe"
+            assert ts.get_token("joe") == "joe.token"
 
 
 def test_cert_v0_upgrade() -> None:
