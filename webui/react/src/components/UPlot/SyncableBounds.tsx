@@ -72,8 +72,7 @@ export const useSyncableBounds = (onZoom?: (min: number, max: number) => void): 
                 zoomSetter(true);
                 const minX = u.posToVal(0, 'x');
                 const maxX = u.posToVal(u.bbox.width, 'x');
-                console.log([ minX, maxX ]);
-                if (onZoom) {
+                if (onZoom && minX > 1000000) {
                   onZoom(minX, maxX);
                 }
               }

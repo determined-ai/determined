@@ -40,22 +40,10 @@ const TrialChart: React.FC<Props> = ({
   const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
   const [ zooms, setZooms ] = useState<number[]>([ 0, 1000000 ]);
 
-  if (window.location.search.includes('compare=')) {
-    defaultMetricNames = defaultMetricNames.concat(defaultMetricNames.map(nm => ({
-      ...nm,
-      name: `t2_${nm.name}`,
-    })));
-    metricNames = metricNames.concat(metricNames.map(nm => ({
-      ...nm,
-      name: `t2_${nm.name}`,
-    })));
-  }
-
   useMemo(async () => {
     const [ min, max ] = zooms;
     if (trialId) {
-      const last = window.location.search.substring(window.location.search.indexOf('compare='));
-      const extraIDs = window.location.search.includes('compare=') ? (last || '0').match(/\d+/) : 0;
+      const extraIDs = null;
       const summ = await compareTrials({
         endBatches: Math.ceil(max),
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
@@ -72,10 +60,10 @@ const TrialChart: React.FC<Props> = ({
       }
       setTrialSummary(summ[0].metrics);
     }
-  }, [ metricNames, scale, trialId ]);
+  }, [ metricNames, scale, trialId, zooms ]);
 
   const resetZoom = (min: number, max: number) => {
-    // setZooms([ min, max ]);
+    setZooms([ min, max ]);
   };
 
   const chartData: AlignedData = useMemo(() => {
