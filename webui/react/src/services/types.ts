@@ -36,6 +36,9 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
   trialIds: number[],
 }
 
+export interface TrialWorkloadsParams extends TrialDetailsParams,
+  PaginationParams {}
+
 export interface CommandIdParams {
   commandId: string;
 }

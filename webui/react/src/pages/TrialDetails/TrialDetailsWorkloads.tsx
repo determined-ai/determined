@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -11,11 +11,15 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import usePolling from 'hooks/usePolling';
+import { getTrialWorkloads } from 'services/api';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import {
   CommandTask, ExperimentBase, MetricName,
-  Step, TrialDetails,
+  Step, TrialDetails, WorkloadGroup,
 } from 'types';
+import handleError from 'utils/error';
 import { extractMetricValue } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
@@ -106,8 +110,39 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
   }, [ metrics, settings, trial, experiment ]);
 
+  const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
+
+  const fetchWorkloads = useCallback(async () => {
+    try {
+      if (trial?.id) {
+        const workloads = await getTrialWorkloads({
+          id: trial.id,
+          limit: 20,
+          orderBy: 'ORDER_BY_DESC',
+        });
+        setWorkloads(workloads);
+      } else {
+        setWorkloads([]);
+      }
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Failed to load recent trial workloads.',
+        publicSubject: 'Unable to fetch Trial Workloads.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ trial?.id ]);
+
+  // const { stopPolling } =
+  usePolling(fetchWorkloads);
+
+  useEffect(() => {
+    fetchWorkloads();
+  }, [ fetchWorkloads, trial?.id ]);
+
   const workloadSteps = useMemo(() => {
-    const data = trial?.workloads || [];
+    const data = workloads || [];
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps

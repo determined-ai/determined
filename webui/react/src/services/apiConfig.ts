@@ -407,6 +407,20 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+export const getTrialWorkloads: DetApi<
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.WorkloadGroup[]
+> = {
+  name: 'getTrialWorkloads',
+  postProcess: (response: Api.V1GetTrialWorkloadsResponse) => {
+    return decoder.decodeTrialWorkloads(response);
+  },
+  request: (params: Service.TrialWorkloadsParams) => detApi.Internal.getTrialWorkloads(
+    params.id,
+    params.orderBy,
+    params.limit,
+  ),
+};
+
 export const getTrialSummary: DetApi<
   Service.TrialSummaryParams, Api.V1SummarizeTrialResponse, Type.TrialSummary
 > = {
