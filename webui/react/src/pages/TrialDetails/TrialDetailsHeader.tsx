@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
 import { Modal } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
+
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
@@ -36,7 +37,12 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
-  const { modalOpen } = useCreateExperimentModal({ modal: experimentCreateModal, onClose: handleModalClose });
+  const { modalOpen } = useCreateExperimentModal(
+    {
+      modal: experimentCreateModal,
+      onClose: handleModalClose,
+    },
+  );
 
   const handleContinueTrial = useCallback(() => {
     modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
@@ -86,12 +92,12 @@ const TrialDetailsHeader: React.FC<Props> = ({
   ]);
 
   return (
-  <>
-    <PageHeaderFoldable
-      leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
-      options={headerOptions}
-    />
-    {experimentCreateModalContextHolder}
+    <>
+      <PageHeaderFoldable
+        leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
+        options={headerOptions}
+      />
+      {experimentCreateModalContextHolder}
     </>
   );
 };

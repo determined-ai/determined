@@ -1,4 +1,5 @@
-import { Alert, Form, FormInstance, Input, ModalFuncProps, Modal } from 'antd';
+import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -17,8 +18,6 @@ import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
-import { ModalStaticFunctions } from 'antd/es/modal/confirm';
-
 import { RawJson } from '../../shared/types';
 import { DetError, isDetError, isError } from '../../shared/utils/error';
 import { routeToReactUrl } from '../../shared/utils/routes';
@@ -32,8 +31,8 @@ export enum CreateExperimentType {
 }
 
 interface Props {
+  modal: Omit<ModalStaticFunctions, 'warn'>;
   onClose?: () => void;
-  modal: Omit<ModalStaticFunctions, 'warn'>
 }
 
 interface OpenProps {
@@ -113,9 +112,9 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
   }, [ props ]);
 
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({
+    modal: props.modal,
     onClose: handleModalClose,
     options: { rawCancel: true },
-    modal: props.modal,
   });
 
   const handleEditorChange = useCallback((newConfigString: string) => {

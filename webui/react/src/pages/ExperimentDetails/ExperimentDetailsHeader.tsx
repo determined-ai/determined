@@ -1,4 +1,4 @@
-import { Button, Space, Modal } from 'antd';
+import { Button, Modal, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
@@ -85,7 +85,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
 
-  const { modalOpen: openModalCreate } = useModalExperimentCreate({modal: experimentCreateModal});
+  const { modalOpen: openModalCreate } = useModalExperimentCreate({ modal: experimentCreateModal });
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),

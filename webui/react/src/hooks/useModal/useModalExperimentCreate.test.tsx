@@ -1,10 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, Modal } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
-
 import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
@@ -40,8 +39,8 @@ const ModalTrigger: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
   const [ createExperimentModal, createExperimentModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useModalExperimentCreate({modal: createExperimentModal});
-  const {experiment, trial} = generateTestExperimentData();
+  const { modalOpen } = useModalExperimentCreate({ modal: createExperimentModal });
+  const { experiment, trial } = generateTestExperimentData();
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
@@ -49,7 +48,10 @@ const ModalTrigger: React.FC = () => {
   return (
     <>
       {createExperimentModalContextHolder}
-      <Button onClick={() => modalOpen({experiment:experiment, type:CreateExperimentType.Fork, trial:trial})}>Show Jupyter Lab</Button>
+      <Button onClick={() =>
+        modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })}>
+        Show Jupyter Lab
+      </Button>
     </>
   );
 };
@@ -83,6 +85,5 @@ describe('useModalExperimentCreate', () => {
 
     expect(await screen.findByText(SHOW_FULL_CONFIG_TEXT)).toBeInTheDocument();
   });
-
 
 });
