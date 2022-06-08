@@ -277,6 +277,7 @@ class PyTorchTrialController(det.TrialController):
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
+                            "determined_version": det.__version__,
                             "steps_completed": self.steps_completed,
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",

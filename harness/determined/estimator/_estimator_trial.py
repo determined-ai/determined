@@ -311,6 +311,7 @@ class DeterminedControlHook(estimator.RunHook):
                     self._save_model()
                     if self.estimator_trial_controller.is_chief:
                         metadata = {
+                            "determined_version": det.__version__,
                             "steps_completed": self.steps_completed,
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",

@@ -297,15 +297,22 @@ def test_end_to_end_adaptive() -> None:
     checkpoint.add_metadata({"testing": "metadata"})
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
-    # Beginning with 0.18 the system contributes a few items to the dict
+    # Beginning with 0.18 the TrialController contributes a few items to the dict.
     assert checkpoint.metadata.get("testing") == "metadata"
-    assert checkpoint.metadata.keys() == {"format", "framework", "steps_completed", "testing"}
+    assert checkpoint.metadata.keys() == {
+        "determined_version",
+        "format",
+        "framework",
+        "steps_completed",
+        "testing",
+    }
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"some_key": "some_value"})
     db_check = d.get_checkpoint(checkpoint.uuid)
     assert checkpoint.metadata.items() > {"testing": "metadata", "some_key": "some_value"}.items()
     assert checkpoint.metadata.keys() == {
+        "determined_version",
         "format",
         "framework",
         "steps_completed",
