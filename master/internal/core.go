@@ -149,6 +149,11 @@ func (m *Master) Info() aproto.MasterInfo {
 		// telemetry is enabled.
 		telemetryInfo.Enabled = true
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
+
+		if m.config.Telemetry.OtelEnabled && m.config.Telemetry.OtelExportedOtlpEndpoint != "" {
+			telemetryInfo.OtelEnabled = true
+			telemetryInfo.OtelExportedOtlpEndpoint = m.config.Telemetry.OtelExportedOtlpEndpoint
+		}
 	}
 
 	masterInfo := aproto.MasterInfo{

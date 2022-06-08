@@ -523,7 +523,7 @@ func (a *agent) postTaskLog(log model.TaskLog) error {
 	return nil
 }
 
-func runAPIServer(options Options, system *actor.System) error {
+func (a *agent) runAPIServer(options Options, system *actor.System) error {
 	server := echo.New()
 	server.Logger = logger.New()
 	server.HidePort = true
@@ -531,8 +531,8 @@ func runAPIServer(options Options, system *actor.System) error {
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
 
-	if m.config.Telemetry.OtelEnabled {
-		opentelemetry.ConfigureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint)
+	if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled {
+		opentelemetry.ConfigureOtel(a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
 	}
 	server.Use(otelecho.Middleware("determined-agent"))
 
@@ -560,12 +560,13 @@ func Run(version string, options Options) error {
 	logrus.Infof("agent configuration: %s", printableConfig)
 
 	system := actor.NewSystem(options.AgentID)
-	ref, _ := system.ActorOf(actor.Addr("agent"), newAgent(version, options))
+	a := newAgent(version, options)
+	ref, _ := system.ActorOf(actor.Addr("agent"), a)
 
 	errs := make(chan error)
 	if options.APIEnabled {
 		go func() {
-			errs <- runAPIServer(options, system)
+			errs <- a.runAPIServer(options, system)
 		}()
 	}
 	go func() {

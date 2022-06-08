@@ -49,6 +49,9 @@ stages:
         log:
           level: debug
         enable_cors: true
+        telemetry: 
+          otel_enabled: true 
+          otel_endpoint: "localhost:4317"
 
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
