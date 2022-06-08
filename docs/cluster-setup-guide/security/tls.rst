@@ -1,7 +1,7 @@
 .. _tls:
 
 ####################################
- Configure Transport Layer Security
+ Transport Layer Security
 ####################################
 
 **Transport Layer Security** (TLS) is a protocol for secure network communication. TLS prevents the

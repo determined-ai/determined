@@ -2,7 +2,6 @@
    :hidden:
 
    quickstart-mdldev
-   quickstart-cluster
 
 .. toctree::
    :caption: Introduction to Determined
