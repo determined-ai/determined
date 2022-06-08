@@ -58,7 +58,7 @@ const TrialChart: React.FC<Props> = ({
       const extraIDs = window.location.search.includes('compare=') ? (last || '0').match(/\d+/) : 0;
       const summ = await compareTrials({
         endBatches: Math.ceil(max),
-        maxDatapoints: 30,
+        maxDatapoints: screen.width > 1600 ? 1500 : 1000,
         metricNames: metricNames,
         scale: scale,
         startBatches: Math.floor(min),
@@ -75,7 +75,7 @@ const TrialChart: React.FC<Props> = ({
   }, [ metricNames, scale, trialId ]);
 
   const resetZoom = (min: number, max: number) => {
-    setZooms([ min, max ]);
+    // setZooms([ min, max ]);
   };
 
   const chartData: AlignedData = useMemo(() => {

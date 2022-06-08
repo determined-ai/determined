@@ -2721,12 +2721,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-    /**
-     * Trial workloads.
-     * @type {Array<V1WorkloadContainer>}
-     * @memberof V1GetTrialResponse
-     */
-    workloads: Array<V1WorkloadContainer>;
 }
 
 /**

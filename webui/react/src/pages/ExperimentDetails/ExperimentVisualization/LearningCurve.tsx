@@ -36,7 +36,7 @@ interface Props {
   selectedMetric: MetricName
 }
 
-const MAX_DATAPOINTS = 5000;
+const MAX_DATAPOINTS = screen.width > 1600 ? 1500 : 1000;
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
