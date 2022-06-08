@@ -1,5 +1,4 @@
 import { MetricName, MetricType, WorkloadGroup } from 'types';
-import { metricNameSorter } from 'utils/sort';
 
 import { RecordKey } from '../shared/types';
 

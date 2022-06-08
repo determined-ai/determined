@@ -77,7 +77,7 @@ const TrialDetailsComp: React.FC = () => {
     } catch (e) {
       handleError(e, {
         publicMessage: 'Failed to load experiment details.',
-        publicSubject: 'Unable to fetch Trial Experiment Detail',
+        publicSubject: 'Unable to fetch Trial Experiment Details.',
         silent: false,
         type: ErrorType.Api,
       });
