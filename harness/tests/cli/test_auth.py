@@ -120,8 +120,8 @@ def test_auth_json_v0_upgrade() -> None:
         ("localhost:8080", True),
         ("localhost/", True),
         ("localhost//", True),
-        ("localhost/det/test", True), # Somewhat surprising behaviour.
-        ("localhost/det/test/", True), # Somewhat surprising behaviour.
+        ("localhost/det/test", True),  # Somewhat surprising behaviour.
+        ("localhost/det/test/", True),  # Somewhat surprising behaviour.
         ("http://localhost", False),
         ("https://localhost:8080", False),
         ("http://localhost:8080", True),

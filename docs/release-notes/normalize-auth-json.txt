@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  CLI: URLs stored in ``auth.json`` are now normalized to prevent issues with the same URL being
+   stored in different ways such as with ``http://example.com`` and ``example.com:80``.
