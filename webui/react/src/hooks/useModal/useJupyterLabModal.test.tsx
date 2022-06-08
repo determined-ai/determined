@@ -71,7 +71,7 @@ const setup = async () => {
 };
 
 describe('useJupyterLabModal', () => {
-  it('open modal', async () => {
+  it('modal can be opened', async () => {
     await setup();
 
     expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('useJupyterLabModal', () => {
     expect(await screen.findByText(SIMPLE_CONFIG_TEMPLATE_TEXT)).toBeInTheDocument();
   });
 
-  it('switch to full config', async () => {
+  it('switch modal to full config', async () => {
     await setup();
 
     await screen.findByText(MODAL_TITLE);
@@ -91,12 +91,11 @@ describe('useJupyterLabModal', () => {
     userEvent.click(screen.getByRole('button', { name: /Show Full Config/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText(SIMPLE_CONFIG_TEMPLATE_TEXT)).not.toBeInTheDocument();
-      expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).not.toBeInTheDocument();
+      expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
     });
   });
 
-  it('close modal', async () => {
+  it('modal can be closed', async () => {
     await setup();
 
     await screen.findByText(MODAL_TITLE);
