@@ -134,7 +134,7 @@
     "stylelint-order": "^4.1.0",
     "stylelint-scss": "^3.18.0",
     "throttle-debounce": "^3.0.1",
-    "typescript": "^4.2.4"
+    "typescript": "^4.7.3"
   },
   "jest": {
     "coveragePathIgnorePatterns": [
