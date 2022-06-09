@@ -13,6 +13,7 @@ interface Props {
   onTrialClick?: (event: MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
   selectedMetric: MetricName;
+  selectedTrialIds: number[];
   trialIds: number[];
   xValues: number[];
 }
@@ -27,10 +28,13 @@ const LearningCurveChart: React.FC<Props> = ({
   onTrialClick,
   onTrialFocus,
   selectedMetric,
+  selectedTrialIds,
   trialIds,
   xValues,
 }: Props) => {
   const [ focusIndex, setFocusIndex ] = useState<number>();
+
+  const selectedTrialsIdsSet = useMemo(() => new Set(selectedTrialIds), [ selectedTrialIds ]);
 
   const chartData: AlignedData = useMemo(() => {
     return [ xValues, ...data ];
@@ -76,13 +80,14 @@ const LearningCurveChart: React.FC<Props> = ({
         ...trialIds.map((trialId, index) => ({
           label: `trial ${trialId}`,
           scale: 'metric',
+          show: !selectedTrialsIdsSet.size || selectedTrialsIdsSet.has(trialId),
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: SERIES_WIDTH / window.devicePixelRatio,
         })),
       ],
     };
-  }, [ onTrialClick, onTrialFocus, selectedMetric, trialIds ]);
+  }, [ onTrialClick, onTrialFocus, selectedMetric, trialIds, selectedTrialsIdsSet ]);
 
   /*
    * Focus on a trial series if provided.
