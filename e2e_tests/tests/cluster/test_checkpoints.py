@@ -51,6 +51,7 @@ def test_gc_checkpoints_lfs() -> None:
 @pytest.mark.e2e_cpu
 def test_delete_checkpoints() -> None:
     base_conf_path = conf.fixtures_path("no_op/single-default-ckpt.yaml")
+
     config = conf.load_config(str(base_conf_path))
     config["checkpoint_storage"] = {
         "type": "shared_fs",
@@ -73,7 +74,7 @@ def test_delete_checkpoints() -> None:
 
     print("after first 2 gc finish")
 
-    test_session = exp.test_session()
+    test_session = exp.determined_test_session()
     exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(
         session=test_session, id=exp_id_1
     ).checkpoints
