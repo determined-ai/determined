@@ -134,8 +134,6 @@ const NavigationSideBar: React.FC = () => {
       nodeRef={nodeRef}
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
-        {userSettingsModalContextHolder}
-        {jupyterLabModalContextHolder}
         <header>
           <Dropdown
             content={(
@@ -208,6 +206,8 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
+      {userSettingsModalContextHolder}
+      {jupyterLabModalContextHolder}
       </nav>
     </CSSTransition>
   );

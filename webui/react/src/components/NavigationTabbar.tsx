@@ -65,8 +65,6 @@ const NavigationTabbar: React.FC = () => {
 
   return (
     <nav className={css.base}>
-      {userSettingsModalContextHolder}
-      {jupyterLabModalContextHolder}
       <div className={css.toolbar}>
         <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
@@ -128,6 +126,8 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
+      {userSettingsModalContextHolder}
+      {jupyterLabModalContextHolder}
     </nav>
   );
 };
