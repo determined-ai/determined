@@ -1,6 +1,7 @@
 import { Alert, Button, InputNumber } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalFuncProps } from 'antd';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
 import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
@@ -69,8 +70,8 @@ interface FullConfigProps {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useJupyterLabModal = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+const useJupyterLabModal = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ config, setConfig ] = useState<string | undefined>();

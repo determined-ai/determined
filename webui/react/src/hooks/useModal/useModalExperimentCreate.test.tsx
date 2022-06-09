@@ -1,15 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, Modal } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
-import useJupyterLabModal from './useJupyterLabModal';
+import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
 
-const MODAL_TITLE = 'Launch JupyterLab';
-const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
-const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
+const MODAL_TITLE = 'Fork';
+const SHOW_FULL_CONFIG_TEXT = 'Show Full Config';
 
 const MonacoEditorMock: React.FC = () => <></>;
 
@@ -38,17 +38,20 @@ jest.mock('components/MonacoEditor', () => ({
 const ModalTrigger: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useJupyterLabModal(jupyterLabModal);
-
+  const [ createExperimentModal, createExperimentModalContextHolder ] = Modal.useModal();
+  const { modalOpen } = useModalExperimentCreate({ modal: createExperimentModal });
+  const { experiment, trial } = generateTestExperimentData();
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
   return (
     <>
-      <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-      {jupyterLabModalContextHolder}
+      {createExperimentModalContextHolder}
+      <Button onClick={() =>
+        modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })}>
+        Show Jupyter Lab
+      </Button>
     </>
   );
 };
@@ -70,7 +73,7 @@ const setup = async () => {
   userEvent.click(await screen.findByRole('button'));
 };
 
-describe('useJupyterLabModal', () => {
+describe('useModalExperimentCreate', () => {
   it('modal can be opened', async () => {
     await setup();
 
@@ -80,31 +83,7 @@ describe('useJupyterLabModal', () => {
   it('modal defaults to simple config', async () => {
     await setup();
 
-    expect(await screen.findByText(SIMPLE_CONFIG_TEMPLATE_TEXT)).toBeInTheDocument();
-  });
-
-  it('switch modal to full config', async () => {
-    await setup();
-
-    await screen.findByText(MODAL_TITLE);
-
-    userEvent.click(screen.getByRole('button', { name: /Show Full Config/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
-    });
-  });
-
-  it('modal can be closed', async () => {
-    await setup();
-
-    await screen.findByText(MODAL_TITLE);
-
-    userEvent.click(screen.getByRole('button', { name: /Launch/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
-    });
+    expect(await screen.findByText(SHOW_FULL_CONFIG_TEXT)).toBeInTheDocument();
   });
 
 });

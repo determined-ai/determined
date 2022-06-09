@@ -1,4 +1,5 @@
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -30,6 +31,7 @@ export enum CreateExperimentType {
 }
 
 interface Props {
+  modal: Omit<ModalStaticFunctions, 'warn'>;
   onClose?: () => void;
 }
 
@@ -98,7 +100,7 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalExperimentCreate = (props?: Props): ModalHooks => {
+const useModalExperimentCreate = (props: Props): ModalHooks => {
   const formRef = useRef<FormInstance>(null);
   const [ registryCredentials, setRegistryCredentials ] = useState<RawJson>();
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -110,6 +112,7 @@ const useModalExperimentCreate = (props?: Props): ModalHooks => {
   }, [ props ]);
 
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({
+    modal: props.modal,
     onClose: handleModalClose,
     options: { rawCancel: true },
   });

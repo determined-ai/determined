@@ -1,4 +1,4 @@
-import { Button, Space } from 'antd';
+import { Button, Modal, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
@@ -53,6 +53,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
+
+  const [ experimentCreateModal, experimentCreateModalContextHolder ] = Modal.useModal();
+
   const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
@@ -82,7 +85,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const { modalOpen: openModalDelete } = useModalExperimentDelete({ experimentId: experiment.id });
 
-  const { modalOpen: openModalCreate } = useModalExperimentCreate();
+  const { modalOpen: openModalCreate } = useModalExperimentCreate({ modal: experimentCreateModal });
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),
@@ -383,6 +386,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         options={headerOptions}
       />
       <ExperimentHeaderProgress experiment={experiment} />
+      {experimentCreateModalContextHolder}
     </>
   );
 };
