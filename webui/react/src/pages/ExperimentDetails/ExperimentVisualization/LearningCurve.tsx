@@ -230,6 +230,7 @@ const LearningCurve: React.FC<Props> = ({
               data={chartData}
               focusedTrialId={highlightedTrialId}
               selectedMetric={selectedMetric}
+              selectedTrialIds={selectedRowKeys}
               trialIds={trialIds}
               xValues={batches}
               onTrialClick={handleTrialClick}
