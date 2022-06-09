@@ -51,7 +51,7 @@ check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
 .PHONY: check-requirements
 check-requirements:
-	node --version | grep -E 'v16\.1[3-6]' || (echo "node version >=16.13 <17 is required" ; false)
+	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
 .PHONY: check
 check: check-js check-css check-package-lock
 
