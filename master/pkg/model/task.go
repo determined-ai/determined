@@ -308,6 +308,9 @@ func (t *TaskLog) Message() string {
 			containerID = containerID[:containerIDMaxLength]
 		}
 		parts = append(parts, containerID)
+	} else {
+		// Just so the logs visually line up.
+		parts = append(parts, strings.Repeat(" ", containerIDMaxLength))
 	}
 
 	// e.g., " [rank=1]"

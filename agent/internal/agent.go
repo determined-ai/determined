@@ -119,6 +119,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		switch msg.Child {
 		case a.socket:
 			if a.attemptReconnect(ctx) {
+				ctx.Tell(a.cm, requestResendRecentExits{})
 				return nil
 			}
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")

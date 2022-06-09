@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Agents: Improve behavior and observability when agents lose websocket messages due to network
+   failures.

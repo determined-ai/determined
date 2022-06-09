@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"container/ring"
 	"context"
 	"fmt"
 	"net/http"
@@ -37,6 +38,8 @@ const (
 	dockerContainerVersionValue = "0"
 )
 
+const recentExitsKept = 32
+
 type containerManager struct {
 	Options       Options           `json:"-"`
 	MasterInfo    aproto.MasterInfo `json:"-"`
@@ -47,6 +50,8 @@ type containerManager struct {
 	fluentPort int
 
 	docker *client.Client
+
+	recentExits *ring.Ring
 }
 
 type (
@@ -59,14 +64,20 @@ type (
 	responseReattachContainers struct {
 		ContainersReattached []aproto.ContainerReattachAck
 	}
+
+	// Tells the container manager it should resend all recent exits. Containers exits are
+	// idempotent so resending one that has been acknowledged does not hurt. Used to ensure all
+	// exits are received in the event of network failures.
+	requestResendRecentExits struct{}
 )
 
 func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
 	return &containerManager{
-		MasterInfo: a.MasterSetAgentOptions.MasterInfo,
-		Options:    a.Options,
-		Devices:    a.Devices,
-		fluentPort: fluentPort,
+		MasterInfo:  a.MasterSetAgentOptions.MasterInfo,
+		Options:     a.Options,
+		Devices:     a.Devices,
+		fluentPort:  fluentPort,
+		recentExits: ring.New(recentExitsKept),
 	}, nil
 }
 
@@ -131,7 +142,23 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(responseReattachContainers{ContainersReattached: containers})
 		}
 
-	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog, aproto.ContainerStatsRecord:
+	case requestResendRecentExits:
+		c.recentExits.Do(func(v any) {
+			if v == nil {
+				return
+			}
+			ctx.Tell(ctx.Self().Parent(), v)
+		})
+
+	case aproto.ContainerStateChanged:
+		if msg.ContainerStopped != nil {
+			c.recentExits = c.recentExits.Prev()
+			c.recentExits.Value = msg
+		}
+
+		ctx.Tell(ctx.Self().Parent(), msg)
+
+	case aproto.ContainerLog, model.TaskLog, aproto.ContainerStatsRecord:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
@@ -159,8 +186,42 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		if ref := ctx.Child(msg.ContainerID); ref != nil {
 			ctx.Tell(ref, msg)
 		} else {
-			ctx.Log().Warnf("error signaling container with %s, container not found: %s",
-				msg.Signal, msg.ContainerID)
+			// Fallback state change if the original is already gone from recent exits.
+			csc := aproto.ContainerStateChanged{
+				Container: cproto.Container{
+					Parent:  ctx.Self().Address(),
+					ID:      msg.ContainerID,
+					State:   cproto.Terminated,
+					Devices: nil,
+				},
+				ContainerStopped: &aproto.ContainerStopped{
+					Failure: &aproto.ContainerFailure{
+						FailureType: aproto.ContainerMissing,
+						ErrMsg: fmt.Sprintf(
+							"cannot signal container with %s, container actor not found: %s",
+							msg.Signal, msg.ContainerID,
+						),
+					},
+				},
+			}
+
+			// Try to pull the termination message from recent exits.
+			c.recentExits.Do(func(v any) {
+				if v == nil {
+					return
+				}
+
+				savedStop := v.(aproto.ContainerStateChanged)
+				if msg.ContainerID != savedStop.Container.ID {
+					return
+				}
+				csc = savedStop
+			})
+
+			// If the master is still sending us signals for this container, it likely thinks
+			// it still exists, so we should clarify.
+			ctx.Log().Warnf("resending stop due to %s", unix.SignalName(msg.Signal))
+			ctx.Tell(ctx.Self().Parent(), csc)
 		}
 
 	case echo.Context:

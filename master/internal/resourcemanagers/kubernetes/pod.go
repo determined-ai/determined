@@ -336,7 +336,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		default:
 			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 			resourcesStopped.Failure = sproto.NewResourcesFailure(
-				sproto.ContainerFailed,
+				sproto.ResourcesFailed,
 				exitMessage,
 				ptrs.Ptr(sproto.ExitCode(exitCode)))
 		}

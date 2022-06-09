@@ -126,10 +126,30 @@ func (rs resourcesList) started() resourcesList {
 	return nrs
 }
 
+func (rs resourcesList) active() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited == nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
 func (rs resourcesList) exited() resourcesList {
 	nrs := resourcesList{}
 	for id, r := range rs {
 		if r.Exited != nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
+func (rs resourcesList) failed() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited != nil && r.Exited.Failure != nil {
 			nrs[id] = r
 		}
 	}
