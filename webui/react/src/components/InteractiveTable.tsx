@@ -19,7 +19,9 @@ import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
-import { Primitive, UnknownRecord } from 'shared/types';
+import { Primitive } from 'shared/types';
+
+type BaseRecord = Record<string, Primitive>
 
 import Spinner from '../shared/components/Spinner/Spinner';
 
@@ -60,24 +62,24 @@ type DndItem = {
 }
 interface ContextMenuProps {
   onVisibleChange: (visible: boolean) => void;
-  record: UnknownRecord;
+  record: BaseRecord;
 }
 
-export interface ColumnDef<Settings> extends ColumnType<Settings> {
+export interface ColumnDef<RecordType, Settings> extends ColumnType<RecordType> {
   dataIndex: string;
   defaultWidth: number;
   // isFiltered?: <T extends InteractiveTableSettings>(s: T) => boolean;
   isFiltered?: (s: Settings) => boolean;
 }
-export type ColumnDefs<ColumnName extends string, RecordType> = Record<
+export type ColumnDefs<ColumnName extends string, RecordType, Settings> = Record<
   ColumnName,
-  ColumnDef<RecordType>
+  ColumnDef<RecordType, Settings>
 >;
 
 interface InteractiveTableProps<RecordType, Settings> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
-  columns: ColumnDef<RecordType>[],
+  columns: ColumnDef<RecordType, Settings>[],
   containerRef: MutableRefObject<HTMLElement | null>,
   settings: Settings;
   updateSettings: UpdateSettings<Settings>
@@ -89,7 +91,7 @@ interface RowProps {
   areRowsSelected?: boolean;
   children?: React.ReactNode;
   className?: string;
-  record: Record<string, unknown>;
+  record: BaseRecord;
 }
 
 interface HeaderCellProps {
@@ -287,7 +289,10 @@ const HeaderCell = ({
   return tableCell;
 };
 
-const InteractiveTable = <RecordType, Settings extends InteractiveTableSettings>({
+const InteractiveTable = <
+  RecordType extends BaseRecord,
+  Settings extends InteractiveTableSettings
+>({
   loading,
   scroll,
   dataSource,
@@ -480,40 +485,37 @@ const InteractiveTable = <RecordType, Settings extends InteractiveTableSettings>
     ],
   );
 
-  const renderColumns = useMemo(
-    () => {
-      const columns = settings.columns
-        .filter((columnName) => columnDefs[columnName])
-        .map((columnName, index) => {
-          const column = columnDefs[columnName];
-          const columnWidth = widthData.widths[index];
-          const sortOrder =
+  const renderColumns = useMemo(() => {
+    const columns = settings.columns
+      .filter((columnName) => columnDefs[columnName])
+      .map((columnName, index) => {
+        const column = columnDefs[columnName];
+        const columnWidth = widthData.widths[index];
+        const sortOrder =
           column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : undefined;
 
-          return {
-            onHeaderCell: onHeaderCell(index, column),
-            sortOrder,
-            width: columnWidth,
-            ...column,
-          };
-        }) as ColumnDef<RecordType>[];
+        return {
+          onHeaderCell: onHeaderCell(index, column),
+          sortOrder,
+          width: columnWidth,
+          ...column,
+        };
+      }) as ColumnDef<RecordType, Settings>[];
 
-      if (columnDefs.action) {
-        const actionDef = { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH };
-        columns.push(actionDef);
-      }
+    if (columnDefs.action) {
+      const actionDef = { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH };
+      columns.push(actionDef);
+    }
 
-      return columns;
-    },
-    [
-      settings.columns,
-      widthData,
-      settings.sortKey,
-      settings.sortDesc,
-      columnDefs,
-      onHeaderCell,
-    ],
-  );
+    return columns;
+  }, [
+    settings.columns,
+    widthData,
+    settings.sortKey,
+    settings.sortDesc,
+    columnDefs,
+    onHeaderCell,
+  ]);
 
   const components = {
     body: {
@@ -527,9 +529,7 @@ const InteractiveTable = <RecordType, Settings extends InteractiveTableSettings>
       <Spinner spinning={spinning}>
         <Table
           bordered
-          /* next one is just so ant doesnt complain */
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          columns={renderColumns as ColumnsType<any>}
+          columns={renderColumns as ColumnsType<RecordType>}
           components={components}
           dataSource={dataSource}
           tableLayout="fixed"

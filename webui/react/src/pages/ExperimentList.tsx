@@ -756,7 +756,7 @@ const ExperimentList: React.FC = () => {
         columns={columns}
         containerRef={pageRef}
         ContextMenu={ExperimentActionDropdown}
-        dataSource={experiments}
+        dataSource={experiments as Partial<ExperimentItem>[]}
         loading={isLoading}
         pagination={getFullPaginationConfig({
           limit: settings.tableLimit,

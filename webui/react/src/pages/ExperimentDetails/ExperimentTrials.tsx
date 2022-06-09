@@ -1,13 +1,18 @@
 import { Dropdown, Menu } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import { ColumnDef } from 'components/InteractiveTable';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Section from 'components/Section';
+import {
+  durationRenderer, relativeTimeRenderer, stateRenderer,
+} from 'components/Table';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -35,8 +40,8 @@ import { routeToReactUrl } from '../../shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from '../../shared/utils/service';
 
 import css from './ExperimentTrials.module.scss';
+import { DEFAULT_COLUMN_WIDTHS } from './ExperimentTrials.settings';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
-import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
@@ -48,6 +53,85 @@ enum TrialAction {
   OpenTensorBoard = 'Open Tensorboard',
   ViewLogs = 'View Logs',
 }
+
+const defaultColumns: ColumnDef<TrialItem, Settings>[] = [
+  {
+    dataIndex: 'id',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
+    key: V1GetExperimentTrialsRequestSortBy.ID,
+    sorter: true,
+    title: 'ID',
+  },
+  {
+    dataIndex: 'state',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+    key: V1GetExperimentTrialsRequestSortBy.STATE,
+    render: stateRenderer,
+    sorter: true,
+    title: 'State',
+  },
+  {
+    dataIndex: 'totalBatchesProcessed',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['totalBatchesProcessed'],
+    key: V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED,
+    sorter: true,
+    title: 'Batches',
+  },
+  {
+    dataIndex: 'bestValidationMetric',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['bestValidationMetric'],
+    key: V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC,
+    sorter: true,
+    title: 'Best Validation Metric',
+  },
+  {
+    dataIndex: 'latestValidationMetric',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['latestValidationMetric'],
+    key: V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC,
+    sorter: true,
+    title: 'Latest Validation Metric',
+  },
+  {
+    dataIndex: 'startTime',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
+    key: V1GetExperimentTrialsRequestSortBy.STARTTIME,
+    render: (_: string, record: TrialItem): ReactNode =>
+      relativeTimeRenderer(new Date(record.startTime)),
+    sorter: true,
+    title: 'Start Time',
+  },
+  {
+    dataIndex: 'duration',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
+    key: V1GetExperimentTrialsRequestSortBy.DURATION,
+    render: (_: string, record: TrialItem): ReactNode => durationRenderer(record),
+    sorter: true,
+    title: 'Duration',
+  },
+  {
+    dataIndex: 'restarts',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['restarts'],
+    key: V1GetExperimentTrialsRequestSortBy.RESTARTS,
+    sorter: true,
+    title: 'Restarts',
+  },
+  {
+    dataIndex: 'checkpoint',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
+    key: 'checkpoint',
+    title: 'Checkpoint',
+  },
+  {
+    align: 'right',
+    className: 'fullCell',
+    dataIndex: 'action',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+    fixed: 'right',
+    key: 'actions',
+    title: '',
+    width: DEFAULT_COLUMN_WIDTHS['action'],
+  },
+];
 
 const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ total, setTotal ] = useState(0);
@@ -163,7 +247,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = validationRenderer('latestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
-        column.isFiltered = (settings) => !!(settings as Settings).state;
+        column.isFiltered = (settings: Settings) => !!settings.state;
         column.filters = ([ 'ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR' ] as RunState[])
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
