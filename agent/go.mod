@@ -26,7 +26,11 @@ require (
 
 require (
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
+<<<<<<< HEAD
 	github.com/stretchr/testify v1.7.1
+=======
+	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
+>>>>>>> f98e284ca (fix lint)
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
@@ -127,7 +131,6 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0 // indirect
 	go.opentelemetry.io/otel v1.6.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.1 // indirect
