@@ -206,8 +206,8 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-      {userSettingsModalContextHolder}
-      {jupyterLabModalContextHolder}
+        {userSettingsModalContextHolder}
+        {jupyterLabModalContextHolder}
       </nav>
     </CSSTransition>
   );
