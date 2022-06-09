@@ -39,7 +39,7 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
     """Wraps subprocess.check_output and verifies a successful exit code."""
     # TODO(#2903): remove this once exit status are propagated through cli
     output = subprocess.check_output(args, **kwargs)
-    assert re.search(b"command exited successfully", output) is not None, "Output is: {}".format(
+    assert re.search(b"resources exited successfully", output) is not None, "Output is: {}".format(
         output.decode("utf-8")
     )
 
