@@ -47,7 +47,7 @@ const ModalTrigger: React.FC = () => {
 
   return (
     <>
-      {jupyterLabModalContextHolder }
+      {jupyterLabModalContextHolder}
       <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
     </>
   );
