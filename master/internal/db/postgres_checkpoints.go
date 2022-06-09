@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FilterForRegisteredCheckpoints filters for the checkpoints in the model registrys from the list of checkpoints provided.
+// FilterForRegisteredCheckpoints filters for the checkpoints in
+// the model registrys from the list of checkpoints provided.
 func (db *PgDB) FilterForRegisteredCheckpoints(checkpoints []uuid.UUID) ([]uuid.UUID, error) {
 	var checkpointIDRows []struct {
 		ID uuid.UUID

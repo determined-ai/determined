@@ -1421,7 +1421,7 @@ export interface V1CurrentUserResponse {
  */
 export interface V1DeleteCheckpointsRequest {
     /**
-     * 
+     * The list of checkpoint_uuids for the requested checkpoint.
      * @type {Array<string>}
      * @memberof V1DeleteCheckpointsRequest
      */

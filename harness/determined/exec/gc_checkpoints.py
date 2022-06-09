@@ -102,7 +102,7 @@ def main(argv: List[str]) -> None:
     args.delete = args.delete.strip()
     storage_ids = []
     if args.delete != "":
-         storage_ids = args.delete.split(",")
+        storage_ids = args.delete.split(",")
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
     if args.delete_tensorboards:

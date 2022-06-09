@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -1232,15 +1233,11 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
 	}
 
-	checkpointIDsStr := ""
-
+	var checkpointIDs []string
 	for _, cRow := range checkpointIDRows {
-		if checkpointIDsStr == "" {
-			checkpointIDsStr = cRow.ID.String()
-		} else {
-			checkpointIDsStr = checkpointIDsStr + "," + cRow.ID.String()
-		}
+		checkpointIDs = append(checkpointIDs, cRow.ID.String())
 	}
+	deleteCheckpoints := strings.Join(checkpointIDs, ",")
 
-	return checkpointIDsStr, nil
+	return deleteCheckpoints, nil
 }

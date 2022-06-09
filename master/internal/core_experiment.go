@@ -232,8 +232,9 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 
 		taskID := model.NewTaskID()
-		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID, dbExp.StartTime, taskSpec,
-			dbExp.ID, dbExp.Config.AsLegacy(), checkpoints, agentUserGroup, user, nil)
+		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID,
+			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), checkpoints,
+			true, agentUserGroup, user, nil)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			ckptGCTask)
 	}

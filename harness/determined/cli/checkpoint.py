@@ -143,8 +143,8 @@ def delete_checkpoints(args: Namespace) -> None:
         "Deleting checkpoints will result in deletion of all data associated\n"
         "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
     ):
-        cUUIDS = args.checkpoints_uuids.split(",")
-        delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=cUUIDS)
+        c_uuids = args.checkpoints_uuids.split(",")
+        delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=c_uuids)
         bindings.delete_DeleteCheckpoints(setup_session(args), body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
     else:
