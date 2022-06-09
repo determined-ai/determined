@@ -15,14 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import data
+import pytorch_lightning as pl
 import torch
+import torchmetrics
 from torch import nn
 from torch.nn import functional as F
 from torchvision import transforms
-import pytorch_lightning as pl
-import torchmetrics
-
-import data
 
 
 class LitMNIST(pl.LightningModule):

@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional, Type, Union
 import numpy as np
 
 import determined as det
-from determined import layers, util, workload, tensorboard
+from determined import layers, tensorboard, util, workload
 from determined.common import check
 
 

@@ -78,7 +78,7 @@
 .. autoclass:: determined.core.SearcherMode
 
 *****************************************
- ``determined.core.TensorboardSyncMode``
+ ``determined.core.TensorboardMode``
 *****************************************
 
-.. autoclass:: determined.core.TensorboardSyncMode
+.. autoclass:: determined.core.TensorboardMode
