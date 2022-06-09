@@ -12,7 +12,7 @@ from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
-from ..experiment.experiment import determined_test_session, num_active_trials
+from ..experiment.experiment import determined_test_session
 from .test_agent_disable import _wait_for_slots
 
 # How long we should for the Nth = 1 rank to free.
@@ -57,7 +57,6 @@ def test_allocation_resources_incremental_release() -> None:
             determinedexperimentv1State.STATE_ACTIVE,
         )
         exp.wait_for_experiment_active_workload(exp_id)
-        assert num_active_trials(exp_id) == 1
 
         # And wait for exactly one of the resources to free, while one is still in use.
         confirmations = 0
