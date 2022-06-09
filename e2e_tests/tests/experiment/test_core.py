@@ -7,6 +7,7 @@ import pytest
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster.test_checkpoints import wait_for_gc_to_finish
 from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
 
 
@@ -245,6 +246,8 @@ def test_end_to_end_adaptive() -> None:
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
+
+    wait_for_gc_to_finish(experiment_id=exp_id)
 
     # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)

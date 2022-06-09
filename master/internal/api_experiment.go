@@ -29,14 +29,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -200,37 +198,22 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	}
 
 	taskSpec := *a.m.taskSpec
-	taskSpec.AgentUserGroup = agentUserGroup
-	taskSpec.Owner = user
 	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
 		exp.ID,
 		0,
 		0,
 		0,
-		true,
 	)
 	if err != nil {
 		return err
 	}
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		taskID:            model.NewTaskID(),
-		jobID:             exp.JobID,
-		jobSubmissionTime: exp.StartTime,
-		GCCkptSpec: tasks.GCCkptSpec{
-			Base:               taskSpec,
-			ExperimentID:       exp.ID,
-			LegacyConfig:       conf,
-			ToDelete:           checkpoints,
-			DeleteTensorboards: true,
-		},
-		rm: a.m.rm,
-		db: a.m.db,
-
-		taskLogger: a.m.taskLogger,
-		logCtx:     logger.Context{"experiment-id": exp.ID},
-	}).AwaitTermination(); gcErr != nil {
+	jobSubmissionTime := exp.StartTime
+	taskID := model.NewTaskID()
+	ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID,
+		jobSubmissionTime, taskSpec, exp.ID, conf, checkpoints, true, agentUserGroup, user, nil)
+	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
 

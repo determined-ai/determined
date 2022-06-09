@@ -2,10 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/pkg/errors"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -31,6 +34,31 @@ type checkpointGCTask struct {
 	taskLogger *task.Logger
 
 	logCtx logger.Context
+}
+
+func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
+	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
+	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string, deleteTensorboards bool,
+	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context) *checkpointGCTask {
+	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = owner
+	return &checkpointGCTask{
+		taskID:            taskID,
+		jobID:             jobID,
+		jobSubmissionTime: jobSubmissionTime,
+		GCCkptSpec: tasks.GCCkptSpec{
+			Base:               taskSpec,
+			ExperimentID:       expID,
+			LegacyConfig:       legacyConfig,
+			ToDelete:           toDeleteCheckpoints,
+			DeleteTensorboards: deleteTensorboards,
+		},
+		rm: rm,
+		db: db,
+
+		taskLogger: taskLogger,
+		logCtx:     logCtx,
+	}
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
@@ -72,16 +100,38 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Respond(t.ToTaskSpec())
 		}
 	case *task.AllocationExited:
+		if msg.Err != nil {
+			ctx.Log().WithError(msg.Err).Error("wasn't able to delete checkpoints from checkpoint storage")
+			t.completeTask(ctx)
+			return errors.Wrapf(msg.Err, "checkpoint GC task failed because allocation failed")
+		}
+		conv := &protoconverter.ProtoConverter{}
+		var deleteCheckpointsStrList []string
+		if len(strings.TrimSpace(t.ToDelete)) > 0 {
+			deleteCheckpointsStrList = strings.Split(t.ToDelete, ",")
+		}
+		deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStrList)
+		if err := conv.Error(); err != nil {
+			ctx.Log().WithError(err).Error("error converting string list to uuid")
+			return err
+		}
+		if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
+			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+			return err
+		}
+
 		t.completeTask(ctx)
 	case actor.ChildStopped:
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == t.allocationID.String() {
 			t.completeTask(ctx)
+			return errors.Wrapf(msg.Error, "checkpoint GC task failed (actor.ChildFailed)")
 		}
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
+
 	return nil
 }
 
@@ -89,5 +139,6 @@ func (t *checkpointGCTask) completeTask(ctx *actor.Context) {
 	if err := t.db.CompleteTask(t.taskID, time.Now().UTC()); err != nil {
 		ctx.Log().WithError(err).Error("marking GC task complete")
 	}
+
 	ctx.Self().Stop()
 }

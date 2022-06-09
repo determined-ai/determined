@@ -137,6 +137,20 @@ def describe(args: Namespace) -> None:
     render_checkpoint(checkpoint)
 
 
+@authentication.required
+def delete_checkpoints(args: Namespace) -> None:
+    if args.yes or render.yes_or_no(
+        "Deleting checkpoints will result in deletion of all data associated\n"
+        "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
+    ):
+        c_uuids = args.checkpoints_uuids.split(",")
+        delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=c_uuids)
+        bindings.delete_DeleteCheckpoints(setup_session(args), body=delete_body)
+        print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
+    else:
+        print("Aborting deletion of checkpoints.")
+
+
 main_cmd = Cmd(
     "c|heckpoint",
     None,
@@ -167,6 +181,20 @@ main_cmd = Cmd(
             describe,
             "describe checkpoint",
             [Arg("uuid", type=str, help="checkpoint uuid to describe")],
+        ),
+        Cmd(
+            "delete",
+            delete_checkpoints,
+            "delete checkpoints",
+            [
+                Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
+                Arg(
+                    "--yes",
+                    action="store_true",
+                    default=False,
+                    help="automatically answer yes to prompts",
+                ),
+            ],
         ),
     ],
 )

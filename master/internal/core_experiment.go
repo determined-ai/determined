@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -86,7 +85,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	return m.db.ExperimentCheckpointsToGCRaw(
-		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
+		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
 
 func (m *Master) getExperimentModelDefinition(c echo.Context) error {
@@ -221,37 +220,23 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialLatest(),
-			true,
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		taskSpec := *m.taskSpec
-		taskSpec.AgentUserGroup = agentUserGroup
-		taskSpec.Owner = &model.User{
+		user := &model.User{
 			ID:       ownerFullUser.ID,
 			Username: ownerFullUser.Username,
 		}
 
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID,
+			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), checkpoints,
+			true, agentUserGroup, user, nil)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-			&checkpointGCTask{
-				taskID:            model.NewTaskID(),
-				jobID:             dbExp.JobID,
-				jobSubmissionTime: dbExp.StartTime,
-				GCCkptSpec: tasks.GCCkptSpec{
-					Base:               taskSpec,
-					ExperimentID:       dbExp.ID,
-					LegacyConfig:       dbExp.Config.AsLegacy(),
-					ToDelete:           checkpoints,
-					DeleteTensorboards: true,
-				},
-				rm: m.rm,
-				db: m.db,
-
-				taskLogger: m.taskLogger,
-				logCtx:     logger.Context{"experiment-id": dbExp.ID},
-			})
+			ckptGCTask)
 	}
 
 	return nil, nil
