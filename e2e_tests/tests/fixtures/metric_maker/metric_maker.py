@@ -1,12 +1,12 @@
 import math
 import pathlib
 import pickle
-from typing import Any, Dict
+from typing import Any, Dict, Type, Union
 
 import numpy as np
 
 import determined as det
-from determined import layers, util, workload
+from determined import layers, util, workload, tensorboard
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -76,6 +76,15 @@ class MetricMakerTrialContext(det.TrialContext):
         return self._global_batch_size
 
 
+class DummyMetricWriter(tensorboard.MetricWriter):
+
+    def add_scalar(self, name: str, value: Union[int, float, "np.number"], step: int) -> None:
+        pass
+
+    def reset(self) -> None:
+        pass
+
+
 class MetricMaker(det.TrialController):
     """
     MetricMaker is a class designed to test that metrics reported from a trial
@@ -119,6 +128,10 @@ class MetricMaker(det.TrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         pass
+
+    @classmethod
+    def _create_metric_writer(cls: Type["MetricMaker"]) -> tensorboard.BatchMetricWriter:
+        return tensorboard.BatchMetricWriter(DummyMetricWriter())
 
     def run(self) -> None:
         for w, response_func in self.workloads:
