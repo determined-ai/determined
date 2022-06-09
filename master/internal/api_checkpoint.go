@@ -102,10 +102,7 @@ func (a *apiServer) DeleteCheckpoints(
 		ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID,
 			jobSubmissionTime, taskSpec, exp.ID, exp.Config.AsLegacy(),
 			expIDcUUIDs.CheckpointUUIDSStr, false, agentUserGroup, curUser, nil)
-		if gcErr := a.m.system.MustActorOf(addr,
-			ckptGCTask).AwaitTermination(); gcErr != nil {
-			return nil, fmt.Errorf("failed to create GC task: %w", gcErr)
-		}
+		a.m.system.MustActorOf(addr, ckptGCTask)
 	}
 
 	return &apiv1.DeleteCheckpointsResponse{}, nil
