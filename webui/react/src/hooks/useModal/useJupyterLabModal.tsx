@@ -30,20 +30,24 @@ const settingsConfig : SettingsConfig = {
     {
       defaultValue: '',
       key: 'name',
+      skipUrlEncoding: true,
       type: { baseType: BaseType.String },
     },
     {
       defaultValue: '',
       key: 'pool',
+      skipUrlEncoding: true,
       type: { baseType: BaseType.String },
     },
     {
       defaultValue: DEFAULT_SLOT_COUNT,
       key: 'slots',
+      skipUrlEncoding: true,
       type: { baseType: BaseType.Integer },
     },
     {
       key: 'template',
+      skipUrlEncoding: true,
       type: { baseType: BaseType.String },
     },
   ],
@@ -288,8 +292,10 @@ const JupyterLabForm: React.FC<FormProps> = (
   }, [ fetchTemplates ]);
 
   useEffect(() => {
-    if (!fields.pool && resourcePools[0])
-      updateFields?.({ pool: resourcePools[0]?.toString() });
+    if (!fields.pool && resourcePools[0]?.name) {
+      const pool = resourcePools[0]?.name;
+      updateFields?.({ pool });
+    }
   }, [ resourcePools, fields.pool, updateFields ]);
 
   return (
