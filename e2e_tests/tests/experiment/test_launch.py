@@ -31,7 +31,8 @@ def test_launch_layer_cifar(collect_trial_profiles: Callable[[int], None]) -> No
     collect_trial_profiles(trials[0].trial.id)
 
     assert exp.check_if_string_present_in_trial_logs(
-        trials[0].trial.id, "allocation exited successfully with a zero exit code"
+        trials[0].trial.id,
+        "allocation stopped after resources exited successfully with a zero exit code",
     )
 
 
