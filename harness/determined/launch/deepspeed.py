@@ -162,7 +162,9 @@ def main(script: List[str]) -> int:
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
+        p = subprocess.Popen(pid_server_cmd + run_sshd_command)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # We always need to set this variable to initialize the context correctly, even in the single
     # slot case.
@@ -196,7 +198,9 @@ def main(script: List[str]) -> int:
 
     multi_machine = len(info.container_addrs) > 1
     if not multi_machine:
-        return subprocess.Popen(full_cmd).wait()
+        p = subprocess.Popen(full_cmd)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # Create the environment file that will be passed by deepspeed to individual ranks.
     create_deepspeed_env_file()
@@ -220,7 +224,9 @@ def main(script: List[str]) -> int:
         for peer_addr in info.container_addrs:
             util.check_sshd(peer_addr, deadline, constants.DTRAIN_SSH_PORT)
 
-        return subprocess.Popen(full_cmd).wait()
+        p = subprocess.Popen(full_cmd)
+        with det.util.forward_signals(p):
+            return p.wait()
     finally:
         sshd_process.kill()
         sshd_process.wait()

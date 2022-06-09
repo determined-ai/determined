@@ -49,7 +49,9 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
 
     logging.info(f"Launching: {entrypoint}")
 
-    return subprocess.Popen(entrypoint).wait()
+    p = subprocess.Popen(entrypoint)
+    with det.util.forward_signals(p):
+        return p.wait()
 
 
 def mask_config_dict(d: Dict) -> Dict:

@@ -681,35 +681,36 @@ class PIDServer:
             if ret is not None:
                 raise HealthCheckFail(ret)
 
-        try:
-            self.run(health_check)
-        except HealthCheckFail as e:
-            return e.exit_code or 77
-        except det.errors.WorkerError:
-            # Worker failed.
-            if on_fail is not None:
-                # Let things finish logging, exiting on their own, etc.
-                time.sleep(grace_period)
-                p.send_signal(on_fail)
-                if on_fail != signal.SIGKILL:
-                    try:
-                        return p.wait(timeout=10) or 78
-                    except subprocess.TimeoutExpired:
-                        logging.error(f"killing worker which didn't exit after {on_fail.name}")
-                        p.send_signal(signal.SIGKILL)
-            return p.wait() or 79
+        with det.util.forward_signals(p):
+            try:
+                self.run(health_check)
+            except HealthCheckFail as e:
+                return e.exit_code or 77
+            except det.errors.WorkerError:
+                # Worker failed.
+                if on_fail is not None:
+                    # Let things finish logging, exiting on their own, etc.
+                    time.sleep(grace_period)
+                    p.send_signal(on_fail)
+                    if on_fail != signal.SIGKILL:
+                        try:
+                            return p.wait(timeout=10) or 78
+                        except subprocess.TimeoutExpired:
+                            logging.error(f"killing worker which didn't exit after {on_fail.name}")
+                            p.send_signal(signal.SIGKILL)
+                return p.wait() or 79
 
-        # All workers exited normally.
-        if on_exit is not None:
-            time.sleep(grace_period)
-            p.send_signal(on_exit)
-            if on_exit != signal.SIGKILL:
-                try:
-                    return p.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    logging.error(f"killing worker which didn't exit after {on_exit.name}")
-                    p.send_signal(signal.SIGKILL)
-        return p.wait()
+            # All workers exited normally.
+            if on_exit is not None:
+                time.sleep(grace_period)
+                p.send_signal(on_exit)
+                if on_exit != signal.SIGKILL:
+                    try:
+                        return p.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        logging.error(f"killing worker which didn't exit after {on_exit.name}")
+                        p.send_signal(signal.SIGKILL)
+            return p.wait()
 
 
 class PIDClient:
@@ -763,8 +764,9 @@ class PIDClient:
     def run_subprocess(self, cmd: List[str]) -> int:
         p = subprocess.Popen(cmd)
 
-        while True:
-            try:
-                return p.wait(timeout=60)
-            except subprocess.TimeoutExpired:
-                self.keep_alive()
+        with det.util.forward_signals(p):
+            while True:
+                try:
+                    return p.wait(timeout=60)
+                except subprocess.TimeoutExpired:
+                    self.keep_alive()
