@@ -97,7 +97,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Respond(t.ToTaskSpec())
 		}
 	case *task.AllocationExited:
-		/*if msg.Err == nil {
+		if msg.Err == nil {
 			conv := &protoconverter.ProtoConverter{}
 			var deleteCheckpointsStrList []string
 			if len(strings.TrimSpace(t.ToDelete)) > 0 {
@@ -114,7 +114,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			}
 		} else {
 			ctx.Log().WithError(msg.Err).Error("wasn't able to mark checkpoints as deleted")
-		}*/
+		}
 		t.completeTask(ctx)
 	case actor.ChildStopped:
 	case actor.ChildFailed:
@@ -125,21 +125,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
-	}
-
-	conv := &protoconverter.ProtoConverter{}
-	var deleteCheckpointsStrList []string
-	if len(strings.TrimSpace(t.ToDelete)) > 0 {
-		deleteCheckpointsStrList = strings.Split(t.ToDelete, ",")
-	}
-	deleteCheckpoints := conv.ToUUIDList(deleteCheckpointsStrList)
-	if err := conv.Error(); err != nil {
-		ctx.Log().WithError(err).Error("error converting string list to uuid")
-		return err
-	}
-	if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
-		ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
-		return err
 	}
 
 	return nil

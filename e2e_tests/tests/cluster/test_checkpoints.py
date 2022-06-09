@@ -72,8 +72,6 @@ def test_delete_checkpoints() -> None:
     wait_for_gc_to_finish(exp_id_1)
     wait_for_gc_to_finish(exp_id_2)
 
-    print("after first 2 gc finish")
-
     test_session = exp.determined_test_session()
     exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(
         session=test_session, id=exp_id_1
@@ -100,8 +98,6 @@ def test_delete_checkpoints() -> None:
     for id in d_checkpoint_uuids: 
         try:
             storage_manager.restore_path(id)
-            checkpoint_file = os.path.join(storage_manager._base_path, id)
-            print(checkpoint_file)
         except errors.CheckpointNotFound:
             pytest.fail(f"checkpoint directory with uuid: {id} was not created.")
 
