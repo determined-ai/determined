@@ -353,7 +353,19 @@ func removeTaskFromAgents(
 ) {
 	for _, allocation := range resourcesAllocated.Resources {
 		allocation := allocation.(*containerResources)
+
+		// TODO properly handle this case since this will likely
+		// lead to issues in many cases.
 		agentState := agents[allocation.agent.Handler]
+		if agentState == nil {
+			log.Errorf("tried to remove an allocation (containerID: %s) "+
+				"from an agent: (agentID: %+v) but scheduler could not find the agent in the cache",
+				allocation.containerID,
+				allocation.agent.Handler.Address().Local(),
+			)
+			continue
+		}
+
 		agentState.DeallocateContainer(allocation.containerID)
 	}
 }
