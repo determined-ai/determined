@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button, Modal } from 'antd';
 import React, { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 
@@ -55,9 +56,11 @@ const ModalTrigger: React.FC = () => {
 
 const ModalTriggerContainer: React.FC = () => {
   return (
-    <StoreProvider>
-      <ModalTrigger />
-    </StoreProvider>
+    <BrowserRouter>
+      <StoreProvider>
+        <ModalTrigger />
+      </StoreProvider>
+    </BrowserRouter>
   );
 };
 
