@@ -495,7 +495,11 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		}
 	}
 
-	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
+	response := ctx.Ask(a.pools[poolName], GetResourceSummary{})
+	if response.Error() != nil {
+		return &resourcepoolv1.ResourcePool{}, err
+	}
+	resourceSummary := response.Get().(ResourceSummary)
 	resp.NumAgents = int32(resourceSummary.numAgents)
 	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
 	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
