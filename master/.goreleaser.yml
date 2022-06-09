@@ -43,6 +43,8 @@ nfpms:
       - src: "packaging/master.yaml"
         dst: "/etc/determined/master.yaml"
         type: config|noreplace
+        file_info:
+            mode: 0700
       - src: "build/growforest"
         dst: "/usr/share/determined/master/growforest"
       - src: "build/**/*"
