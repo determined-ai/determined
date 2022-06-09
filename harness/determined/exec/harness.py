@@ -105,7 +105,7 @@ def main(train_entrypoint: str) -> int:
         with core.init(
             distributed=distributed,
             preempt_mode=core.PreemptMode.ChiefOnly,
-            tensorboard_sync_mode=core.TensorboardSyncMode.MANUAL,
+            tensorboard_mode=core.TensorboardMode.MANUAL,
         ) as core_context:
             trial_context = trial_class.trial_context_class(core_context, env)
 
@@ -119,8 +119,6 @@ def main(train_entrypoint: str) -> int:
                 context=trial_context,
                 env=env,
             )
-            metric_writer = controller.get_metric_writer()
-            core_context.train.set_tensorboard_metric_writer(metric_writer)
 
             controller.run()
 

@@ -1,3 +1,4 @@
+from determined.core._tensorboard_mode import TensorboardMode
 from determined.core._distributed import DistributedContext, DummyDistributedContext
 from determined.core._checkpoint import (
     CheckpointContext,
@@ -8,7 +9,6 @@ from determined.core._train import (
     TrainContext,
     DummyTrainContext,
     EarlyExitReason,
-    TensorboardSyncMode,
 )
 from determined.core._searcher import (
     DummySearcherContext,

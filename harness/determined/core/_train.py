@@ -7,8 +7,7 @@ import determined as det
 from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
-from determined.core import DistributedContext
-from determined.tensorboard.util import get_rank_aware_path
+from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
 
@@ -17,19 +16,6 @@ class EarlyExitReason(enum.Enum):
     INVALID_HP = "EXITED_REASON_INVALID_HP"
     # This is generally unnecessary; just exit early.
     USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-
-
-class TensorboardSyncMode(enum.Enum):
-    """
-    ```TensorboardSyncMode`` defines how Tensorboard metrics and profiling data are retained.
-    In ``Auto`` mode only the chief uploads its metrics and profiling data to checkpoint
-    storage. This is the same behavior that existed prior to 0.18.2.
-    In ``Manual`` mode neither metrics nor profiling data are reported. It is up to the user
-    to call ``TrainContext.upload_tensorboard_files()``
-    """
-
-    AUTO = "AUTO"
-    MANUAL = "MANUAL"
 
 
 class TrainContext:
@@ -45,8 +31,8 @@ class TrainContext:
         run_id: int,
         exp_id: int,
         distributed: DistributedContext,
-        tbd_sync_mode: TensorboardSyncMode,
-        tbd_mgr: Optional[tensorboard.TensorboardManager],
+        tbd_sync_mode: TensorboardMode,
+        tensorboard_manager: tensorboard.TensorboardManager,
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
         self._session = session
@@ -54,8 +40,8 @@ class TrainContext:
         self._run_id = run_id
         self._exp_id = exp_id
         self._distributed = distributed
-        self._tbd_sync_mode = tbd_sync_mode
-        self._tbd_mgr = tbd_mgr
+        self._tensorboard_mode = tbd_sync_mode
+        self._tensorboard_manager = tensorboard_manager
         self._tbd_writer = tbd_writer
 
     def set_status(self, status: str) -> None:
@@ -67,9 +53,6 @@ class TrainContext:
         body = {"state": status}
         logger.debug(f"set_status({status})")
         self._session.post(f"/api/v1/trials/{self._trial_id}/runner/metadata", json=body)
-
-    def set_tensorboard_metric_writer(self, writer: tensorboard.BatchMetricWriter) -> None:
-        self._tbd_writer = writer
 
     def _get_last_validation(self) -> Optional[int]:
         # This is needed by the workload sequencer, but it is not generally stable, because it is
@@ -112,41 +95,17 @@ class TrainContext:
             data=det.util.json_encode(body),
         )
 
-        if self._tbd_sync_mode == TensorboardSyncMode.AUTO:
-            self.write_training_tensorboard_metrics(steps_completed, metrics, batch_metrics)
-            if self._tbd_mgr:
-                self._tbd_mgr.sync()
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                logger.info(f"writing steps={steps_completed}, batch_metrics={batch_metrics}")
+                self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
+            self._tensorboard_manager.sync()
 
-    def write_training_tensorboard_metrics(
-        self,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-        if self._tbd_writer:
-            logger.info(f"writing steps={steps_completed}, batch_metrics={batch_metrics}")
-            self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-
-    def get_tensorboard_base_path(self) -> Optional[pathlib.Path]:
+    def get_tensorboard_path(self) -> pathlib.Path:
         """
         Get TensorBoard log directory path.
         """
-        return self._tbd_mgr.base_path if self._tbd_mgr else None
-
-    def _auto_upload_tb_files(self) -> None:
-        """
-        Uploader for use by Trial classes
-        """
-        if self._distributed.rank == 0:
-            self.upload_tensorboard_files(
-                selector=lambda _: True,  # upload metrics and profiling data
-                mangler=get_rank_aware_path,
-            )
-        else:
-            self.upload_tensorboard_files(
-                selector=lambda p: not p.match("*tfevents*"),
-                mangler=get_rank_aware_path,
-            )
+        return self._tensorboard_manager.base_path
 
     def upload_tensorboard_files(
         self,
@@ -159,9 +118,8 @@ class TrainContext:
         If not provided, all files are uploaded.
         :param mangler: optional function modifying the destination file names based on rank.
         """
-        if self._tbd_mgr:
-            logger.info("upload tb profile")
-            self._tbd_mgr.sync(selector, mangler, self._distributed.rank)
+        logger.info("upload tb profile")
+        self._tensorboard_manager.sync(selector, mangler, self._distributed.rank)
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
@@ -217,16 +175,10 @@ class TrainContext:
         )
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tbd_sync_mode == TensorboardSyncMode.AUTO:
-            if self._tbd_writer and self._tbd_mgr:
-                self.write_validation_tensorboard_metrics(steps_completed, metrics)
-                self._tbd_mgr.sync()
-
-    def write_validation_tensorboard_metrics(
-        self, steps_completed: int, metrics: Dict[str, Any]
-    ) -> None:
-        if self._tbd_writer:
-            self._tbd_writer.on_validation_step_end(steps_completed, metrics)
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                self._tbd_writer.on_validation_step_end(steps_completed, metrics)
+            self._tensorboard_manager.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
@@ -296,12 +248,6 @@ class DummyTrainContext(TrainContext):
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
         )
-
-    def set_tensorboard_metric_writer(self, writer: tensorboard.BatchMetricWriter) -> None:
-        logger.info(f"set_tensorboard_metric_writer({writer})")
-
-    def _auto_upload_tb_files(self) -> None:
-        logger.info("_auto_upload_tb_files")
 
     def upload_tensorboard_files(
         self,

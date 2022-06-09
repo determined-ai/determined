@@ -207,11 +207,7 @@ class WorkloadSequencer(workload.Source):
             metrics=metrics,
             batch_metrics=batch_metrics,
         )
-        self.core_context.train.write_training_tensorboard_metrics(
-            steps_completed=self.state.steps_completed,
-            metrics=metrics,
-            batch_metrics=batch_metrics,
-        )
+        logging.warning("XXX HAVE TO WRITE TRAINING METRICS NOW")
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
         if self._unit == core.Unit.BATCHES:
@@ -303,10 +299,7 @@ class WorkloadSequencer(workload.Source):
             steps_completed=self.state.steps_completed,
             metrics=metrics,
         )
-        self.core_context.train.write_validation_tensorboard_metrics(
-            steps_completed=self.state.steps_completed,
-            metrics=metrics,
-        )
+        logging.warning("XXX HAVE TO WRITE VALIDATION METRICS NOW")
 
         if response.get("stop_requested"):
             raise ShouldExit()

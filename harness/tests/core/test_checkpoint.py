@@ -53,14 +53,15 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                 response = requests.Response()
                 response.status_code = 200
                 session._do_request.return_value = response
-                tbd_mgr = mock.MagicMock()
+                tensorboard_manager = mock.MagicMock()
                 checkpoint_context = core.CheckpointContext(
                     pex.distributed,
                     storage_manager,
                     session=session,
                     task_id="task-id",
                     allocation_id="allocation-id",
-                    tbd_mgr=tbd_mgr,
+                    tbd_sync_mode=core.TensorboardMode.AUTO,
+                    tensorboard_manager=tensorboard_manager,
                 )
             else:
                 checkpoint_context = core.DummyCheckpointContext(pex.distributed, storage_manager)
@@ -85,7 +86,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                 storage_manager._list_directory.assert_not_called()
                 if not dummy:
                     session._do_request.assert_not_called()
-                    tbd_mgr.sync.assert_not_called()
+                    tensorboard_manager.sync.assert_not_called()
 
             # Test store_path.
             with parallel.raises_when(
@@ -108,7 +109,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                 storage_manager._list_directory.assert_not_called()
                 if not dummy:
                     session._do_request.assert_not_called()
-                    tbd_mgr.sync.assert_not_called()
+                    tensorboard_manager.sync.assert_not_called()
 
             # Test download.
             unique_string = "arbitrary-string"

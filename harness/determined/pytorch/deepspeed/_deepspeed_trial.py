@@ -62,7 +62,7 @@ class DeepSpeedTrialController(det.TrialController):
         self.steps_completed = self.env.steps_completed
 
     @classmethod
-    def get_metric_writer(
+    def _create_metric_writer(
         cls: Type["DeepSpeedTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = TorchWriter()

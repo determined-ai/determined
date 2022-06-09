@@ -465,7 +465,7 @@ class EstimatorTrialController(det.TrialController):
         tf.compat.v1.set_random_seed(seed)
 
     @classmethod
-    def get_metric_writer(
+    def _create_metric_writer(
         cls: Type["EstimatorTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()

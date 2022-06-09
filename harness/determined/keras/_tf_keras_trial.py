@@ -168,7 +168,7 @@ class TFKerasTrialController(det.TrialController):
         return True
 
     @classmethod
-    def get_metric_writer(
+    def _create_metric_writer(
         cls: Type["TFKerasTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
@@ -392,7 +392,6 @@ class TFKerasTrialController(det.TrialController):
         self.test_inputs = 0
 
         self.steps_completed = self.env.steps_completed
-        self.metric_writer = self.get_metric_writer()
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
@@ -849,7 +848,7 @@ class TFKerasTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
-            self.context._core.train._auto_upload_tb_files()
+            self._upload_tb_files()
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -948,14 +947,18 @@ class TFKerasTrialController(det.TrialController):
                 },
                 "stop_requested": self.context.get_stop_requested(),
             }  # type: workload.Response
-            logging.info(f"RESPONSE steps={self.steps_completed}, batch_metrics={self.train_workload_metrics}")
+            self.metric_writer.on_train_step_end(
+                steps_completed=self.steps_completed,
+                metrics=final_metrics,
+                batch_metrics=self.train_workload_metrics,
+            )
         else:
             response = {}
 
         self.train_response_func(response)
         self.train_response_func = None
 
-        self.context._core.train._auto_upload_tb_files()
+        self._upload_tb_files()
 
         self._control_loop()
 
@@ -992,6 +995,8 @@ class TFKerasTrialController(det.TrialController):
         step_duration = time.time() - validation_start_time
         logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
+        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
+        self._upload_tb_files()
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _stop_training_check(self) -> None:

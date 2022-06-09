@@ -6,6 +6,7 @@ from typing import Any, Optional, Type
 import determined as det
 from determined import profiler, tensorboard, workload
 from determined.common import check
+from determined.tensorboard.util import get_rank_aware_path
 
 
 class _DistributedBackend:
@@ -65,6 +66,7 @@ class TrialController(metaclass=abc.ABCMeta):
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
             logging.getLogger().setLevel(log_level)
+        self.metric_writer = self._create_metric_writer()
 
     @classmethod
     @abc.abstractmethod
@@ -107,9 +109,9 @@ class TrialController(metaclass=abc.ABCMeta):
         return False
 
     @classmethod
-    def get_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
-        # default to the original kludge to avoid regression in custom trial controllers
-        return tensorboard.get_metric_writer()
+    @abc.abstractmethod
+    def _create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
+        pass
 
     def initialize_wrapper(self) -> None:
         pass
@@ -120,3 +122,9 @@ class TrialController(metaclass=abc.ABCMeta):
 
     def close(self) -> None:
         self.context.close()
+
+    def _upload_tb_files(self) -> None:
+        self.context._core.train.upload_tensorboard_files(
+            lambda _: True if self.is_chief else lambda p: not p.match("*tfevents*"),
+            get_rank_aware_path,
+        )

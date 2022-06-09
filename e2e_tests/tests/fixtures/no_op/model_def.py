@@ -7,12 +7,12 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type, Union
 
 import numpy as np
 
 import determined as det
-from determined import layers, util, workload
+from determined import layers, util, workload, tensorboard
 from determined.common import check
 
 
@@ -34,6 +34,15 @@ class NoOpTrialContext(det.TrialContext):
 
     def get_global_batch_size(self) -> int:
         return self._global_batch_size
+
+
+class NoOpMetricWriter(tensorboard.MetricWriter):
+
+    def add_scalar(self, name: str, value: Union[int, float, "np.number"], step: int) -> None:
+        pass
+
+    def reset(self) -> None:
+        pass
 
 
 class NoOpTrialController(det.TrialController):
@@ -107,6 +116,10 @@ class NoOpTrialController(det.TrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
+
+    @classmethod
+    def _create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
+        return tensorboard.BatchMetricWriter(NoOpMetricWriter())
 
     def run(self) -> None:
         if self.non_chief_exit_immediately:
