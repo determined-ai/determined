@@ -568,7 +568,6 @@ export const decodeTrialResponseToTrialDetails = (
   return {
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
-    workloads: [],
   };
 };
 

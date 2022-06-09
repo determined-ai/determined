@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
+import { getTrialWorkloads } from 'services/api';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 import {
@@ -31,15 +32,25 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     };
   }, [ trial ]);
 
-  const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = trial?.workloads
+  const [ totalCheckpointsSize, setTotalCheckpointsSize ] = useState<number>(0);
+  useMemo(async () => {
+    if (!trial) {
+      return;
+    }
+    const data = await getTrialWorkloads({
+      filter: 'Has Checkpoint',
+      id: trial.id,
+      limit: 1000,
+    });
+    const checkpointWorkloads = data.workloads;
+    const totalBytes = checkpointWorkloads
       .filter(step => step.checkpoint
         && step.checkpoint.state === CheckpointState.Completed)
       .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     if (!totalBytes) return;
-    return humanReadableBytes(totalBytes);
-  }, [ trial?.workloads ]);
+    setTotalCheckpointsSize(totalBytes);
+  }, [ trial, trial?.id ]);
 
   return (
     <Section>
@@ -56,7 +67,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         )}
         {totalCheckpointsSize && (
           <OverviewStats title="Total Checkpoint Size">
-            {totalCheckpointsSize}
+            {humanReadableBytes(totalCheckpointsSize)}
           </OverviewStats>
         )}
         {bestCheckpoint && (

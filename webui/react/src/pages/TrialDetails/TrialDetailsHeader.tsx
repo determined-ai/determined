@@ -9,15 +9,12 @@ import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
-import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
-  const workloadsWithSomeMetric = trial.workloads
-    .map(getWorkload)
-    .filter(workload => isMetricsWorkload(workload) && !!workload.metrics);
-  return isTerminal && workloadsWithSomeMetric.length === 0;
+  // const workloadsWithSomeMetric = anyMetricWorkloads;
+  return false;//;isTerminal; // && workloadsWithSomeMetric.length === 0;
 };
 
 interface Props {

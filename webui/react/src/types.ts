@@ -441,7 +441,6 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  workloads: WorkloadGroup[];
 }
 
 export interface TrialWorkloads {

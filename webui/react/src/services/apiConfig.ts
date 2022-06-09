@@ -419,8 +419,8 @@ export const getTrialWorkloads: DetApi<
     params.orderBy,
     params.offset,
     params.limit,
-    params.sortKey,
-    params.filter,
+    params.sortKey || 'batches',
+    params.filter || 'All',
   ),
 };
 

@@ -35,10 +35,7 @@ const sampleTrialItem: TrialItem = {
   totalBatchesProcessed: 10000,
 };
 
-const trialDetails: TrialDetails = {
-  ...sampleTrialItem,
-  workloads: [],
-};
+const trialDetails: TrialDetails = { ...sampleTrialItem };
 
 const experimentDetails: ExperimentBase = {
   ...sampleExperiment,

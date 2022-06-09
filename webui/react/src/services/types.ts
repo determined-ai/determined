@@ -37,8 +37,8 @@ export interface CompareTrialsParams extends TrialSummaryBaseParams {
 }
 
 export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
-  filter: string;
-  sortKey: string;
+  filter?: string;
+  sortKey?: string;
 }
 
 export interface CommandIdParams {

@@ -11,6 +11,7 @@ import SelectFilter from 'components/SelectFilter';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
+import { getTrialWorkloads } from 'services/api';
 import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -98,20 +99,29 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
-  const getCheckpointSize = useCallback((trial: TrialDetails) => {
-    const totalBytes = trial.workloads
-      .filter(step => step.checkpoint
-      && step.checkpoint.state === CheckpointState.Completed)
+  const getCheckpointSize = useCallback(async (trial: TrialDetails) => {
+    const data = await getTrialWorkloads({
+      filter: 'Has Checkpoint',
+      id: trial.id,
+      limit: 1000,
+    });
+    const checkpointWorkloads = data.workloads;
+    const totalBytes = checkpointWorkloads
+      .filter(step => step?.checkpoint?.state === CheckpointState.Completed)
       .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);
   }, []);
 
-  const totalCheckpointsSizes: Record<string, string> = useMemo(
-    () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => [ trial.id, getCheckpointSize(trial) ]))
-    , [ getCheckpointSize, trialsDetails ],
-  );
+  const [ totalCheckpointsSizes, setCheckpointSizes ] = useState<Record<string, string>>({});
+  useMemo(async () => {
+    const trialIDs = Object.values(trialsDetails);
+    const trialBytes: Record<string, string> = {};
+    for (const trial of trialIDs) {
+      trialBytes[trial.id] = await getCheckpointSize(trial);
+    }
+    setCheckpointSizes(trialBytes);
+  }, [ getCheckpointSize, trialsDetails ]);
 
   // Stream available metrics.
   const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
@@ -181,11 +191,22 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return metricsObj;
   }, []);
 
-  const metrics = useMemo(() => {
+  const [ latestMetrics, setLatestMetrics ] = useState<Record<string, {[key: string]: number}>>(
+    {},
+  );
+
+  useMemo(async () => {
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
-      trial.workloads.forEach(workload => {
+      const data = await getTrialWorkloads({
+        filter: 'All',
+        id: trial.id,
+        limit: 50,
+        orderBy: 'ORDER_BY_DESC',
+      });
+      const latestWorkloads = data.workloads;
+      latestWorkloads.forEach(workload => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -202,7 +223,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         }
       }
     }
-    return metricValues;
+    setLatestMetrics(metricValues);
   }, [ extractLatestMetrics, trialsDetails ]);
 
   const hyperparameterNames = useMemo(
@@ -263,7 +284,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               Total Checkpoint Size
             </div>
             {trials.map(trialId => (
-              <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId]}</div>
+              <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId] || ''}</div>
             ))}
           </div>
           <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
@@ -289,7 +310,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 </div>
                 {trials.map(trialId => (
                   <div className={css.cell} key={trialId}>
-                    <HumanReadableNumber num={metrics[trialId][metric.name]} />
+                    <HumanReadableNumber num={latestMetrics[trialId]
+                      ? latestMetrics[trialId][metric.name] || 0
+                      : 0}
+                    />
                   </div>
                 ))}
               </div>
