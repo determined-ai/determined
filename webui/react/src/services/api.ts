@@ -126,7 +126,7 @@ export const getTrialSummary = generateDetApi<
 >(Config.getTrialSummary);
 
 export const getTrialWorkloads = generateDetApi<
-  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.WorkloadGroup[]
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
 >(Config.getTrialWorkloads);
 
 export const compareTrials = generateDetApi<

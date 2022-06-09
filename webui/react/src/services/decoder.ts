@@ -540,15 +540,22 @@ export const decodeTrialSummary = (
 
 export const decodeTrialWorkloads = (
   data: Sdk.V1GetTrialWorkloadsResponse,
-): types.WorkloadGroup[] => {
+): types.TrialWorkloads => {
   if (data.workloads) {
-    return data.workloads.map(ww => ({
+    const workloads = data.workloads.map(ww => ({
       checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
       training: ww.training && decodeMetricsWorkload(ww.training),
       validation: ww.validation && decodeMetricsWorkload(ww.validation),
     }));
+    return {
+      count: data?.pagination?.total || 0,
+      workloads: workloads,
+    };
   }
-  return [];
+  return {
+    count: 0,
+    workloads: [],
+  };
 };
 
 export const decodeTrialResponseToTrialDetails = (

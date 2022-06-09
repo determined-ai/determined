@@ -111,18 +111,24 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [ metrics, settings, trial, experiment ]);
 
   const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
+  const [ workloadCount, setWorkloadCount ] = useState<number>(0);
 
   const fetchWorkloads = useCallback(async () => {
     try {
       if (trial?.id) {
-        const workloads = await getTrialWorkloads({
+        const wl = await getTrialWorkloads({
+          filter: settings.filter,
           id: trial.id,
-          limit: 20,
-          orderBy: 'ORDER_BY_DESC',
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortKey: settings.sortKey,
         });
-        setWorkloads(workloads);
+        setWorkloads(wl.workloads);
+        setWorkloadCount(wl.count);
       } else {
         setWorkloads([]);
+        setWorkloadCount(0);
       }
     } catch (e) {
       handleError(e, {
@@ -132,7 +138,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         type: ErrorType.Api,
       });
     }
-  }, [ trial?.id ]);
+  }, [
+    trial?.id,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.filter,
+  ]);
 
   // const { stopPolling } =
   usePolling(fetchWorkloads);
@@ -156,7 +169,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         }
         return false;
       });
-  }, [ settings.filter, trial?.workloads ]);
+  }, [ settings.filter, workloads ]);
 
   const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
     const newFilter = value as TrialWorkloadFilter;
@@ -202,7 +215,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
-          }, workloadSteps.length)}
+          }, workloadCount)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="batchNum"
           scroll={{ x: 1000 }}

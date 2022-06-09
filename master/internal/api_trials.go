@@ -610,13 +610,24 @@ func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWork
 		limit = nil
 	}
 
+	sortCode := "total_batches"
+	if req.SortKey != "batches" {
+		sortCode = fmt.Sprintf("metrics->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
+	}
+
 	switch err := a.m.db.QueryProtof(
 		"proto_get_trial_workloads",
-		[]interface{}{db.OrderByToSQL(req.OrderBy), db.OrderByToSQL(req.OrderBy)},
+		[]interface{}{
+			sortCode,
+			db.OrderByToSQL(req.OrderBy),
+			db.OrderByToSQL(req.OrderBy),
+			db.OrderByToSQL(req.OrderBy),
+		},
 		resp,
 		req.TrialId,
 		req.Offset,
 		limit,
+		req.Filter,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)

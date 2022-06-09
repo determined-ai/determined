@@ -408,7 +408,7 @@ export const getTrialDetails: DetApi<
 };
 
 export const getTrialWorkloads: DetApi<
-  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.WorkloadGroup[]
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
 > = {
   name: 'getTrialWorkloads',
   postProcess: (response: Api.V1GetTrialWorkloadsResponse) => {
@@ -417,7 +417,10 @@ export const getTrialWorkloads: DetApi<
   request: (params: Service.TrialWorkloadsParams) => detApi.Internal.getTrialWorkloads(
     params.id,
     params.orderBy,
+    params.offset,
     params.limit,
+    params.sortKey,
+    params.filter,
   ),
 };
 
