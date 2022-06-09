@@ -163,6 +163,11 @@ class DeterminedControlHook(estimator.RunHook):
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
             }  # type: workload.Response
+            self.estimator_trial_controller.metric_writer.on_train_step_end(
+                self.steps_completed,
+                response["metrics"]["avg_metrics"],
+                response["metrics"]["batch_metrics"],
+            )
         else:
             response = {}
 
@@ -300,12 +305,16 @@ class DeterminedControlHook(estimator.RunHook):
 
                 elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
+                    metrics = self._compute_validation_metrics()
                     response = {
-                        "metrics": self._compute_validation_metrics(),
+                        "metrics": metrics,
                         "stop_requested": (
                             self.estimator_trial_controller.context.get_stop_requested()
                         ),
                     }  # type: workload.Response
+                    self.estimator_trial_controller._write_validation_metrics(
+                        self.steps_completed, metrics["validation_metrics"]
+                    )
 
                 elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
@@ -706,6 +715,13 @@ class EstimatorTrialController(det.TrialController):
         )
         logging.debug(f"Initialized RunConfig with args: {config}.")
         return config
+
+    def _write_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]):
+        if self.is_chief:
+            self.metric_writer.on_validation_step_end(
+                steps_completed,
+                metrics,
+            )
 
     def run(self) -> None:
         with self.prof:

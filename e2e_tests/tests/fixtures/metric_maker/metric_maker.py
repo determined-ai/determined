@@ -6,7 +6,7 @@ from typing import Any, Dict, Type, Union
 import numpy as np
 
 import determined as det
-from determined import layers, util, workload, tensorboard
+from determined import layers, tensorboard, util, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -77,7 +77,6 @@ class MetricMakerTrialContext(det.TrialContext):
 
 
 class DummyMetricWriter(tensorboard.MetricWriter):
-
     def add_scalar(self, name: str, value: Union[int, float, "np.number"], step: int) -> None:
         pass
 

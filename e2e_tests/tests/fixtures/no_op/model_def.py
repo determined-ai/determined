@@ -37,7 +37,6 @@ class NoOpTrialContext(det.TrialContext):
 
 
 class NoOpMetricWriter(tensorboard.MetricWriter):
-
     def add_scalar(self, name: str, value: Union[int, float, "np.number"], step: int) -> None:
         pass
 
