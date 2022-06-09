@@ -60,30 +60,28 @@ type DndItem = {
 }
 interface ContextMenuProps {
   onVisibleChange: (visible: boolean) => void;
-  record: Record<string, unknown>;
+  record: UnknownRecord;
 }
 
-export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+export interface ColumnDef<Settings> extends ColumnType<Settings> {
   dataIndex: string;
   defaultWidth: number;
-  isFiltered?: (s: unknown) => boolean;
+  // isFiltered?: <T extends InteractiveTableSettings>(s: T) => boolean;
+  isFiltered?: (s: Settings) => boolean;
 }
 export type ColumnDefs<ColumnName extends string, RecordType> = Record<
   ColumnName,
   ColumnDef<RecordType>
 >;
 
-interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
+interface InteractiveTableProps<RecordType, Settings> extends TableProps<RecordType> {
   ContextMenu?: React.FC<ContextMenuProps>;
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[],
   containerRef: MutableRefObject<HTMLElement | null>,
-  settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings<InteractiveTableSettings>
+  settings: Settings;
+  updateSettings: UpdateSettings<Settings>
 }
-
-/* eslint-disable-next-line @typescript-eslint/ban-types */
-type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
 interface RowProps {
@@ -289,7 +287,7 @@ const HeaderCell = ({
   return tableCell;
 };
 
-const InteractiveTable: InteractiveTable = ({
+const InteractiveTable = <RecordType, Settings extends InteractiveTableSettings>({
   loading,
   scroll,
   dataSource,
@@ -300,15 +298,14 @@ const InteractiveTable: InteractiveTable = ({
   ContextMenu,
   areRowsSelected,
   ...props
-}) => {
-
+}: InteractiveTableProps<RecordType, Settings>): JSX.Element => {
   const columnDefs = useMemo(
     () =>
       columns
         ?.map((col) => ({ [col.dataIndex as string]: col }))
         .reduce((a, b) => ({ ...a, ...b })),
     [ columns ],
-  ) as ColumnDefs<string, UnknownRecord>;
+  );
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const [ widthData, setWidthData ] = useState({
@@ -348,7 +345,7 @@ const InteractiveTable: InteractiveTable = ({
     if (!newSettingsWidths) return;
     const widths = getUpscaledWidths(newSettingsWidths);
     const dropRightStyles = widths.map((width, idx) => ({
-      left: `${(width / 2)}px`,
+      left: `${width / 2}px`,
       width: `${(width + (widths[idx + 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
     const dropLeftStyles = widths.map((width, idx) => ({
@@ -356,10 +353,7 @@ const InteractiveTable: InteractiveTable = ({
       width: `${(width + (widths[idx - 1] ?? WIDGET_COLUMN_WIDTH)) / 2}px`,
     }));
     setWidthData({ dropLeftStyles, dropRightStyles, widths });
-  }, [ settings.columnWidths,
-    getUpscaledWidths,
-    updateSettings,
-    pageWidth ]);
+  }, [ settings.columnWidths, getUpscaledWidths, updateSettings, pageWidth ]);
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
@@ -373,7 +367,7 @@ const InteractiveTable: InteractiveTable = ({
         sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-      };
+      } as Partial<Settings>;
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },
@@ -388,7 +382,11 @@ const InteractiveTable: InteractiveTable = ({
       const width = reorderedWidths.splice(fromIndex, 1)[0];
       reorderedColumns.splice(toIndex, 0, col);
       reorderedWidths.splice(toIndex, 0, width);
-      updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
+      const payload = {
+        columns: reorderedColumns,
+        columnWidths: reorderedWidths,
+      } as Partial<Settings>;
+      updateSettings(payload);
     },
     [ settings.columns, settings.columnWidths, updateSettings ],
   );
@@ -446,7 +444,8 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleResizeStop = useCallback(() => {
     setIsResizing(false);
-    updateSettings({ columnWidths: widthData.widths.map(Math.round) });
+    const payload = { columnWidths: widthData.widths.map(Math.round) } as Partial<Settings>;
+    updateSettings(payload);
   }, [ updateSettings, widthData ]);
 
   const onHeaderCell = useCallback(
@@ -483,12 +482,13 @@ const InteractiveTable: InteractiveTable = ({
 
   const renderColumns = useMemo(
     () => {
-      const columns = settings.columns.filter(columnName => columnDefs[columnName])
+      const columns = settings.columns
+        .filter((columnName) => columnDefs[columnName])
         .map((columnName, index) => {
           const column = columnDefs[columnName];
           const columnWidth = widthData.widths[index];
           const sortOrder =
-            column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
+          column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : undefined;
 
           return {
             onHeaderCell: onHeaderCell(index, column),
@@ -496,15 +496,23 @@ const InteractiveTable: InteractiveTable = ({
             width: columnWidth,
             ...column,
           };
-        }) as ColumnsType<UnknownRecord>;
+        }) as ColumnDef<RecordType>[];
 
       if (columnDefs.action) {
-        columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+        const actionDef = { ...columnDefs.action, width: WIDGET_COLUMN_WIDTH };
+        columns.push(actionDef);
       }
 
       return columns;
     },
-    [ settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell ],
+    [
+      settings.columns,
+      widthData,
+      settings.sortKey,
+      settings.sortDesc,
+      columnDefs,
+      onHeaderCell,
+    ],
   );
 
   const components = {
