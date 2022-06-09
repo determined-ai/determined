@@ -530,3 +530,26 @@ def test_k8_sidecars(using_k8s: bool) -> None:
         )
 
         _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
+
+
+@pytest.mark.e2e_cpu
+def test_log_wait_timeout(tmp_path: Path, secrets: Dict[str, str]) -> None:
+    # Start a subshell that prints after 5 and 20 seconds, then exit.
+    cmd = 'sh -c "sleep 5; echo after 5; sleep 15; echo after 20" & echo main shell exiting'
+
+    config = {"environment": {"environment_variables": ["DET_LOG_WAIT_TIME=10"]}}
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        cli = ["det", "-m", conf.make_master_url(), "cmd", "run", "--config-file", tf.name, cmd]
+        p = subprocess.run(cli, stdout=subprocess.PIPE, check=True)
+        assert p.stdout is not None
+        stdout = p.stdout.decode("utf8")
+
+    # Logs should wait for the main process to die, plus 10 seconds, then shut down.
+    # That should capture the "after 5" but not the "after 60".
+    # By making the "after 20" occur before the default DET_LOG_WAIT_TIME of 30, we also are testing
+    # that the escape hatch keeps working.
+    assert "after 5" in stdout, stdout
+    assert "after 20" not in stdout, stdout

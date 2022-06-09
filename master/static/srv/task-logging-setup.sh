@@ -41,11 +41,11 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
 
 	exec 1> >(
 		multilog n2 "$STDOUT_ROTATE_DIR"
-		: >$DET_LOG_WAIT_FIFO
+		printf x >$DET_LOG_WAIT_FIFO
 	) \
 	2> >(
 		multilog n2 "$STDERR_ROTATE_DIR"
-		: >$DET_LOG_WAIT_FIFO
+		printf x  >$DET_LOG_WAIT_FIFO
 	)
 
 	((DET_LOG_WAIT_COUNT += 2))
@@ -62,10 +62,10 @@ fi
 # redirections are applied in reverse order.
 exec > >(
 	stdbuf -o0 tr '\r' '\n'
-	: >$DET_LOG_WAIT_FIFO
+	printf x >$DET_LOG_WAIT_FIFO
 ) 2> >(
 	stdbuf -o0 tr '\r' '\n' >&2
-	: >$DET_LOG_WAIT_FIFO
+	printf x >$DET_LOG_WAIT_FIFO
 )
 
 ((DET_LOG_WAIT_COUNT += 2))
