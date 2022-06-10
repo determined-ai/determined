@@ -92,9 +92,10 @@ def test_distributed_sampler():
     expected_samples.append([3, 7, 11, 15])
 
     for rank in range(num_replicas):
-        dist_sampler = samplers.DistributedSampler(sampler, 4, rank)
+        dist_sampler = samplers.DistributedSampler(sampler, num_replicas, rank)
         samples = list(dist_sampler)
-        assert len(dist_sampler) == len(samples)
+        # All samplers should report same len as chief.
+        assert len(dist_sampler) == len(expected_samples[0])
         assert samples == expected_samples[rank]
 
 
@@ -112,9 +113,10 @@ def test_distributed_batch_sampler():
     expected_samples.append([[6, 7], [14, 15]])
 
     for rank in range(num_replicas):
-        dist_sampler = samplers.DistributedBatchSampler(sampler, 4, rank)
+        dist_sampler = samplers.DistributedBatchSampler(sampler, num_replicas, rank)
         samples = list(dist_sampler)
-        assert len(dist_sampler) == len(samples)
+        # All samplers should report same len as chief.
+        assert len(dist_sampler) == len(expected_samples[0])
         assert samples == expected_samples[rank]
 
 
