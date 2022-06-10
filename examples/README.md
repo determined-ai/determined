@@ -1,13 +1,83 @@
 # Determined Examples
-| Domain | Example | Dataset | Framework |
-|:------:|:-----:|:-------:|:------------------:|
-| Tutorials | <p>[mnist_pytorch](tutorials/mnist_pytorch)<br>[fashion_mnist_tf_keras](tutorials/fashion_mnist_tf_keras)<br>[imagenet_pytorch](tutorials/imagenet_pytorch)<br>[core_api](tutorials/core_api)</p> | <p>MNIST<br>Fashion MNIST <br>ImageNet PyTorch<br>-</p> | <p>PyTorch<br>TensorFlow (tf.keras) <br>PyTorch<br>Core API</p> |
-| Computer Vision | <p>[cifar10_pytorch](computer_vision/cifar10_pytorch)<br>[cifar10_pytorch_inference](computer_vision/cifar10_pytorch_inference)<br>[fasterrcnn_coco_pytorch](computer_vision/fasterrcnn_coco_pytorch)<br>[mmdetection_pytorch](computer_vision/mmdetection_pytorch)<br>[detr_coco_pytorch](computer_vision/detr_coco_pytorch)<br>[deformabledetr_coco_pytorch](computer_vision/deformabledetr_coco_pytorch)<br>[mnist_estimator](computer_vision/mnist_estimator)<br>[cifar10_tf_keras](computer_vision/cifar10_tf_keras)<br>[iris_tf_keras](computer_vision/iris_tf_keras)<br>[unets_tf_keras](computer_vision/unets_tf_keras)<br>[efficientdet_pytorch](computer_vision/efficientdet_pytorch)<br>[byol_pytorch](computer_vision/byol_pytorch)</p> | <p>CIFAR-10<br>CIFAR-10<br>Penn-Fudan Dataset<br>COCO<br>COCO<br>COCO<br>MNIST<br>CIFAR-10<br>Iris Dataset<br>Oxford-IIIT Pet Dataset<br>COCO<br> CIFAR-10 / STL-10 / ImageNet</p> | <p>PyTorch<br>PyTorch<br>PyTorch<br>PyTorch<br>PyTorch<br>PyTorch<br>TensorFlow (Estimator API)<br>TensorFlow (tf.keras)<br>TensorFlow (tf.keras)<br>TensorFlow (tf.keras)<br>PyTorch<br>PyTorch</p> |
-| Natural Language Processing (NLP) | <p>[bert_squad_pytorch](nlp/bert_squad_pytorch)<br>[albert_squad_pytorch](nlp/albert_squad_pytorch)<br>[bert_glue_pytorch](nlp/bert_glue_pytorch)<br>[word_language_model](nlp/word_language_model)</p> | <p>SQuAD<br>SQuAD<br>GLUE<br>WikiText-2</p> | <p>PyTorch<br>PyTorch<br>PyTorch<br>PyTorch</p> |
-| HP Search Benchmarks |  <p>[darts_cifar10_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)<br>[darts_penntreebank_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch)</p> |  <p>CIFAR-10<br>Penn Treebank Dataset</p> |  <p>PyTorch<br>PyTorch</p> |
-| Neural Architecture Search (NAS)  | [gaea_pytorch](nas/gaea_pytorch) | DARTS | PyTorch |
-| Meta Learning | [protonet_omniglot_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch |
-| Generative Adversarial Networks (GAN) | <p>[dc_gan_tf_keras](gan/dcgan_tf_keras)<br>[gan_mnist_pytorch](gan/gan_mnist_pytorch)<br>[deepspeed_dcgan](deepspeed/deepspeed_dcgan)<br>[pix2pix_tf_keras](gan/pix2pix_tf_keras)</p> | <p>MNIST<br>MNIST<br>MNIST / CIFAR-10<br>pix2pix</p> | <p>TensorFlow (tf.keras)<br>PyTorch<br>PyTorch (DeepSpeed)<br>TensorFlow (tf.keras)</p> |
-| Decision Trees  | [gbt_titanic_estimator](decision_trees/gbt_titanic_estimator) | Titanic | TensorFlow (Estimator API) |
-| Custom Reducers | <p>[custom_reducers_mnist_pytorch](features/custom_reducers_mnist_pytorch)</p> | <p>MNIST</p> | <p>PyTorch</p> |
-| HP Search Constraints | <p>[hp_constraints_mnist_pytorch](features/hp_constraints_mnist_pytorch)</p> | <p>MNIST</p> | <p>PyTorch</p> |
+
+## Tutorials
+
+| Example                                                       | Dataset          | Framework             |
+|:-------------------------------------------------------------:|:----------------:|:---------------------:|
+| [mnist\_pytorch](tutorials/mnist_pytorch)                     | MNIST            | PyTorch               |
+| [fashion\_mnist\_tf\_keras](tutorials/fashion_mnist_tf_keras) | Fashion MNIST    | TensorFlow (tf.keras) |
+| [imagenet\_pytorch](tutorials/imagenet_pytorch)               | ImageNet PyTorch | PyTorch               |
+| [core\_api](tutorials/core_api)                               | Core API         | -                     |
+
+## Computer Vision
+
+| Example                                                                      | Dataset                      | Framework                                |
+|:----------------------------------------------------------------------------:|:----------------------------:|:----------------------------------------:|
+| [cifar10\_pytorch](computer_vision/cifar10_pytorch)                          | CIFAR-10                     | PyTorch                                  |
+| [cifar10\_pytorch\_inference](computer_vision/cifar10_pytorch_inference)     | CIFAR-10                     | PyTorch                                  |
+| [fasterrcnn\_coco\_pytorch](computer_vision/fasterrcnn_coco_pytorch)         | Penn-Fudan Dataset           | PyTorch                                  |
+| [mmdetection\_pytorch](computer_vision/mmdetection_pytorch)                  | COCO                         | PyTorch                                  |
+| [detr\_coco\_pytorch](computer_vision/detr_coco_pytorch)                     | COCO                         | PyTorch                                  |
+| [deformabledetr\_coco\_pytorch](computer_vision/deformabledetr_coco_pytorch) | COCO                         | PyTorch                                  |
+| [mnist\_estimator](computer_vision/mnist_estimator)                          | MNIST                        | TensorFlow (Estimator API)               |
+| [cifar10\_tf\_keras](computer_vision/cifar10_tf_keras)                       | CIFAR-10                     | TensorFlow (tf.keras)                    |
+| [iris\_tf\_keras](computer_vision/iris_tf_keras)                             | Iris Dataset                 | TensorFlow (tf.keras)                    |
+| [unets\_tf\_keras](computer_vision/unets_tf_keras)                           | Oxford-IIIT Pet Dataset      | TensorFlow (tf.keras)                    |
+| [efficientdet\_pytorch](computer_vision/efficientdet_pytorch)                | COCO                         | PyTorch                                  |
+| [byol\_pytorch](computer_vision/byol_pytorch)                                | CIFAR-10 / STL-10 / ImageNet | PyTorch                                  |
+
+## Natural Language Processing (NLP)
+
+| Example                                            | Dataset    | Framework |
+|:--------------------------------------------------:|:----------:|:---------:|
+| [bert\_squad\_pytorch](nlp/bert_squad_pytorch)     | SQuAD      | PyTorch   |
+| [albert\_squad\_pytorch](nlp/albert_squad_pytorch) | SQuAD      | PyTorch   |
+| [bert\_glue\_pytorch](nlp/bert_glue_pytorch)       | GLUE       | PyTorch   |
+| [word\_language\_model](nlp/word_language_model)   | WikiText-2 | PyTorch   |
+
+## HP Search Benchmarks
+
+| Example                                                                         | Dataset               | Framework |
+|:-------------------------------------------------------------------------------:|:---------------------:|:---------:|
+| [darts\_cifar10\_pytorch](hp_search_benchmarks/darts_cifar10_pytorch)           | CIFAR-10              | PyTorch   |
+| [darts\_penntreebank\_pytorch](hp_search_benchmarks/darts_penntreebank_pytorch) | Penn Treebank Dataset | PyTorch   |
+
+## Neural Architecture Search (NAS)
+
+| Example                            | Dataset | Framework |
+|:---------------------------------:|:-------:|:---------:|
+| [gaea\_pytorch](nas/gaea_pytorch) | DARTS   | PyTorch   |
+
+## Meta Learning
+
+| Example                                                                | Dataset  | Framework |
+|:----------------------------------------------------------------------:|:--------:|:---------:|
+| [protonet\_omniglot\_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch   |
+
+## Generative Adversarial Networks (GAN)
+
+| Example                                       | Dataset          | Framework             |
+|:---------------------------------------------:|:----------------:|:---------------------:|
+| [dc\_gan\_tf\_keras](gan/dcgan_tf_keras)      | MNIST            | TensorFlow (tf.keras) |
+| [gan\_mnist\_pytorch](gan/gan_mnist_pytorch)  | MNIST            | PyTorch               |
+| [deepspeed\_dcgan](deepspeed/deepspeed_dcgan) | MNIST / CIFAR-10 | PyTorch (DeepSpeed)   |
+| [pix2pix\_tf\_keras](gan/pix2pix_tf_keras)    | pix2pix          | TensorFlow (tf.keras) |
+
+## Decision Trees
+
+| Example                                                         | Dataset | Framework                  |
+|:---------------------------------------------------------------:|:-------:|:--------------------------:|
+| [gbt\_titanic\_estimator](decision_trees/gbt_titanic_estimator) | Titanic | TensorFlow (Estimator API) |
+
+## Custom Reducers
+
+| Example                                                                    | Dataset | Framework  |
+|:--------------------------------------------------------------------------:|:-------:|:----------:|
+| [custom\_reducers\_mnist\_pytorch](features/custom_reducers_mnist_pytorch) | MNIST   | PyTorch    |
+
+## HP Search Constraints
+
+
+| Example                                                                  | Dataset | Framework  |
+|:------------------------------------------------------------------------:|:-------:|:----------:|
+| [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
