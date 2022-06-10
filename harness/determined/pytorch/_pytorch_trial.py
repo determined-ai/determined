@@ -275,11 +275,12 @@ class PyTorchTrialController(det.TrialController):
                         "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
-                    self.metric_writer.on_train_step_end(
-                        self.steps_completed,
-                        metrics["avg_metrics"],
-                        metrics["batch_metrics"],
-                    )
+                    if isinstance(metrics, Dict) and self.is_chief:
+                        self.metric_writer.on_train_step_end(
+                            self.steps_completed,
+                            metrics["avg_metrics"],
+                            metrics["batch_metrics"],
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     metrics = self._compute_validation_metrics()
@@ -287,11 +288,11 @@ class PyTorchTrialController(det.TrialController):
                         "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }
-
-                    self.metric_writer.on_validation_step_end(
-                        self.steps_completed,
-                        metrics["validation_metrics"],
-                    )
+                    if isinstance(metrics, Dict) and self.is_chief:
+                        self.metric_writer.on_validation_step_end(
+                            self.steps_completed,
+                            metrics["validation_metrics"],
+                        )
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:

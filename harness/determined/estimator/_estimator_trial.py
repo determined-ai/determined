@@ -159,14 +159,15 @@ class DeterminedControlHook(estimator.RunHook):
         check.is_not_none(self.train_response_func, "no response_func at end of train_for_step")
         assert self.train_response_func is not None
         if self.estimator_trial_controller.is_chief:
+            metrics = det.util.make_metrics(self.batches_processed_in_step, self.step_metrics)
             response = {
-                "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
+                "metrics": metrics,
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
             }  # type: workload.Response
             self.estimator_trial_controller.metric_writer.on_train_step_end(
                 self.steps_completed,
-                response["metrics"]["avg_metrics"],
-                response["metrics"]["batch_metrics"],
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
             )
         else:
             response = {}
