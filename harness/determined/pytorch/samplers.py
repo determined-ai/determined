@@ -69,7 +69,7 @@ class DistributedSampler(torch.utils.data.Sampler):
     def __len__(self) -> int:
         sampler_len = len(self._sampler)  # type: ignore
         all_workers_get_samples, extra_samples = divmod(sampler_len, self._num_workers)
-        len_sync_sample = int(extra_samples > 0)
+        len_sync_sample = 1 if extra_samples > 0 else 0
         return all_workers_get_samples + len_sync_sample
 
     def __iter__(self) -> Iterator:
@@ -113,7 +113,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
         full_global_batches, extra_batches = divmod(
             len(self.batch_sampler), self.num_workers
         )
-        len_sync_batch = int(extra_batches > 0)
+        len_sync_batch = 1 if extra_batches > 0 else 0
         return full_global_batches + len_sync_batch
 
     def __iter__(self) -> Iterator:
