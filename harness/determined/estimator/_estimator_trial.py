@@ -173,6 +173,7 @@ class DeterminedControlHook(estimator.RunHook):
             response = {}
 
         self.train_response_func(response)
+        self.estimator_trial_controller._upload_tb_files()
 
         # Reset step counter and clear the step metrics from memory.
         self.train_response_func = None
@@ -313,9 +314,10 @@ class DeterminedControlHook(estimator.RunHook):
                             self.estimator_trial_controller.context.get_stop_requested()
                         ),
                     }  # type: workload.Response
-                    self.estimator_trial_controller._write_validation_metrics(
-                        self.steps_completed, metrics["validation_metrics"]
-                    )
+                    if isinstance(metrics, Dict) and self.estimator_trial_controller.is_chief:
+                        self.estimator_trial_controller._write_validation_metrics(
+                            self.steps_completed, metrics["validation_metrics"]
+                        )
 
                 elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
@@ -341,6 +343,7 @@ class DeterminedControlHook(estimator.RunHook):
                 response = workload.InvalidHP()
 
             response_func(response)
+            self.estimator_trial_controller._upload_tb_files()
 
         # End-of-training.
         raise det.errors.WorkerFinishedGracefully("Exiting normally.")
@@ -717,7 +720,7 @@ class EstimatorTrialController(det.TrialController):
         logging.debug(f"Initialized RunConfig with args: {config}.")
         return config
 
-    def _write_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]):
+    def _write_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         if self.is_chief:
             self.metric_writer.on_validation_step_end(
                 steps_completed,

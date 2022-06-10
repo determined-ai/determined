@@ -97,7 +97,6 @@ class TrainContext:
 
         if self._tensorboard_mode == TensorboardMode.AUTO:
             if self._tbd_writer:
-                logger.info(f"writing steps={steps_completed}, batch_metrics={batch_metrics}")
                 self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
             self._tensorboard_manager.sync()
 

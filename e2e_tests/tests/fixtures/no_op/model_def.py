@@ -7,7 +7,7 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type
 
 import numpy as np
 
@@ -34,14 +34,6 @@ class NoOpTrialContext(det.TrialContext):
 
     def get_global_batch_size(self) -> int:
         return self._global_batch_size
-
-
-class NoOpMetricWriter(tensorboard.MetricWriter):
-    def add_scalar(self, name: str, value: Union[int, float, "np.number"], step: int) -> None:
-        pass
-
-    def reset(self) -> None:
-        pass
 
 
 class NoOpTrialController(det.TrialController):
@@ -118,7 +110,7 @@ class NoOpTrialController(det.TrialController):
 
     @classmethod
     def _create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
-        return tensorboard.BatchMetricWriter(NoOpMetricWriter())
+        return tensorboard.get_metric_writer()
 
     def run(self) -> None:
         if self.non_chief_exit_immediately:
@@ -179,6 +171,11 @@ class NoOpTrialController(det.TrialController):
             "stop_requested": self.context.get_stop_requested(),
         }
         self.steps_completed += num_batches
+        self.metric_writer.on_train_step_end(
+            self.steps_completed,
+            metrics=response["metrics"]["avg_metrics"],
+            batch_metrics=response["metrics"]["batch_metrics"],
+        )
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:

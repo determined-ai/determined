@@ -2,8 +2,13 @@
 
 **New Features**
 
--  TensorBoard:
-      A new method, `TrainContext.upload_tensorboard_files()`, copies TensorBoard profiling data
-      files to checkpoint storage while optionally renaming them. It enables uploading profiling
-      data from non-chief workers (TensorBoard metrics and profiling data from chief is uploaded
-      automatically).
+-  API:
+      Trial API now uploads profiling data to the checkpoint storage from all workers. Core API
+      users can now pass a new optional argument, `tensorboard_mode`, to `core.init()`. The default
+      value is `AUTO`. In `AUTO` mode tensorboard metrics are written on the chief, and metrics as
+      well as profiling data are uploaded to checkpoint storage from the chief only. In `MANUAL`
+      mode the user is responsible for writing tensorboard metrics and uploading profiling data. In
+      order to make that possible, two new methods are introduced on `TrainContext`:
+      `get_tensorboard_path()` returns the path to the directory where metrics can be written
+      `upload_tensorboard_files()` uploads metrics and other files, such as profiling data, to
+      checkpoint storage.
