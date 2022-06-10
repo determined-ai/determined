@@ -9,8 +9,11 @@ from determined import pytorch
 
 
 class OnesDataset(torch.utils.data.Dataset):
-    def __len__(self, dataset_len: int) -> int:
-        return dataset_len
+    def __init__(self, dataset_len: int) -> None:
+        self.dataset_len = dataset_len
+
+    def __len__(self) -> int:
+        return self.dataset_len
 
     def __getitem__(self, index: int) -> Tuple:
         return torch.Tensor([float(1)])
