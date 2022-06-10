@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Link from 'components/Link';
@@ -23,6 +23,10 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
   const hasProgress = isExperiment && progress !== undefined && progress > 0;
   const isComplete = isExperiment && progress === 1;
   const iconName = isExperiment ? 'experiment' : (task as RecentCommandTask).type.toLowerCase();
+
+  const badgeId = useMemo(() => {
+    return isExperiment ? task.id : task.id.slice(0, 4);
+  }, [ isExperiment, task.id ]);
 
   if (canBeOpened(task)) classes.push(css.link);
 
@@ -51,7 +55,7 @@ const TaskCard: React.FC<Props> = ({ curUser, ...task }: Props) => {
         </div>
         <div className={css.lower}>
           <div className={css.badges}>
-            <Badge type={BadgeType.Default}>{`${task.id}`.slice(0, 4)}</Badge>
+            <Badge type={BadgeType.Default}>{badgeId}</Badge>
             <Badge state={task.state} type={BadgeType.State} />
             {isExperimentTask(task) && hasProgress && !isComplete && (
               <div className={css.percent}>{`${percent(task.progress || 0)}%`}</div>
