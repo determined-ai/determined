@@ -29,9 +29,9 @@ setup(
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
-        "azure-storage-blob",
         # azure-core 1.23 requires typing-extensions 4.x which is incompatible with TF2.4
         "azure-core<1.23",
+        "azure-storage-blob<1.23",
         "termcolor>=1.1.0",
         "boto3",
         # CLI:
