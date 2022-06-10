@@ -608,6 +608,9 @@
 - gpu: 8
   instanceType: p4d.24xlarge
   vcpu: 96
+- gpu: 8
+  instanceType: p4de.24xlarge
+  vcpu: 96
 - instanceType: r3
   vcpu: 32
 - instanceType: r3.2xlarge

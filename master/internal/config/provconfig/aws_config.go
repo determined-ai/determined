@@ -308,6 +308,7 @@ var ec2InstanceSlots = map[Ec2InstanceType]int{
 	"p3.16xlarge":   8,
 	"p3dn.24xlarge": 8,
 	"p4d.24xlarge":  8,
+	"p4de.24xlarge": 8,
 	"t2.medium":     0,
 	"t2.large":      0,
 	"t2.xlarge":     0,
