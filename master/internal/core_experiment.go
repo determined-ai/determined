@@ -205,12 +205,18 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupWeight{Weight: *patch.Resources.Weight})
+			if resp.Error() != nil {
+				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
+			}
 		}
 		if patch.Resources.Priority != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupPriority{Priority: *patch.Resources.Priority})
+			if resp.Error() != nil {
+				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
+			}
 		}
 	}
 

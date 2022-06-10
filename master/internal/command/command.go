@@ -357,10 +357,22 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupWeight:
-		ctx.Respond(c.setWeight(ctx, msg.Weight))
+		err := c.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting command job weight")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 
 	case job.SetGroupPriority:
-		ctx.Respond(c.setPriority(ctx, msg.Priority, true))
+		err := c.setPriority(ctx, msg.Priority, true)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting command job priority")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 
 	case job.RegisterJobPosition:
 		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
