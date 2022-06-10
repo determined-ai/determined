@@ -4,6 +4,7 @@ data:
 entrypoint: model_def:NoopPyTorchTrial
 hyperparameters:
   global_batch_size: 32
+  dataset_len: 64
 scheduling_unit: 1
 searcher:
   name: single
