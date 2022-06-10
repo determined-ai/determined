@@ -59,9 +59,7 @@ class DistributedSampler(torch.utils.data.Sampler):
     across workers, as worker epochs are defined in terms of their DistributedSampler's len.
     """
 
-    def __init__(
-        self, sampler: torch.utils.data.Sampler, num_workers: int, rank: int
-    ) -> None:
+    def __init__(self, sampler: torch.utils.data.Sampler, num_workers: int, rank: int) -> None:
         self._sampler = sampler
         self._num_workers = num_workers
         self._rank = rank
@@ -110,9 +108,7 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
         self.rank = rank
 
     def __len__(self) -> int:
-        full_global_batches, extra_batches = divmod(
-            len(self.batch_sampler), self.num_workers
-        )
+        full_global_batches, extra_batches = divmod(len(self.batch_sampler), self.num_workers)
         len_sync_batch = 1 if extra_batches > 0 else 0
         return full_global_batches + len_sync_batch
 

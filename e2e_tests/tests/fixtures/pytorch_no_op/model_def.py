@@ -22,7 +22,7 @@ class OnesDataset(torch.utils.data.Dataset):
 class NoopPyTorchTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext):
         self.context = context
-        self.dataset_len = context.get_hparam('dataset_len')
+        self.dataset_len = context.get_hparam("dataset_len")
 
         model = nn.Linear(1, 1, False)
         model.weight.data.fill_(0)
@@ -66,7 +66,11 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         }
 
     def build_training_data_loader(self):
-        return pytorch.DataLoader(OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def build_validation_data_loader(self):
-        return pytorch.DataLoader(OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
+        )
