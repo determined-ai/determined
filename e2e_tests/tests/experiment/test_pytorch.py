@@ -259,8 +259,8 @@ def test_distributed_logging() -> None:
 @pytest.mark.parametrize("num_workers,dataset_len", [(2, 2), (2, 3)])
 def test_epoch_sync(num_workers: int, dataset_len: int) -> None:
     """
-    Test that epoch_idx is synchronized across all workers, regardless of whether the number of batches
-    is evenly divisible by the number of workers.
+    Test that epoch_idx is synchronized across all workers, regardless of whether the
+    number of batches is evenly divisible by the number of workers.
     """
     config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
     config = conf.set_slots_per_trial(config, num_workers)
