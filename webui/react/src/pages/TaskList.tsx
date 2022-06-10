@@ -456,7 +456,7 @@ const TaskList: React.FC = () => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     return () => canceler.abort();

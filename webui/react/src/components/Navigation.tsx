@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
+import { useFetchAgents, useFetchPinnedWorkspaces, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 
 import Spinner from '../shared/components/Spinner/Spinner';
@@ -20,12 +20,16 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
+  const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
 
   const fetchAuthOnly = useCallback(async () => {
-    if (auth.isAuthenticated) await fetchAgents();
+    if (auth.isAuthenticated) {
+      await fetchAgents();
+    }
   }, [ auth.isAuthenticated, fetchAgents ]);
 
   usePolling(fetchAuthOnly);
+  usePolling(fetchPinnedWorkspaces);
 
   useEffect(() => {
     fetchResourcePools();

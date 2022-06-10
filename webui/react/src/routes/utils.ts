@@ -32,7 +32,7 @@ export const serverAddress = (path = ''): string => {
   return (customServer || reactHostAddress()) + path;
 };
 
-// checks to see if the provided address resolves to a live Determeind server or not.
+// checks to see if the provided address resolves to a live Determined server or not.
 export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {
@@ -116,6 +116,9 @@ export const paths = {
   modelVersionDetails: (modelName: string, versionId: number | string): string => {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
+  projectDetails: (projectId: number | string): string => {
+    return `/projects/${projectId}`;
+  },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
@@ -142,9 +145,19 @@ export const paths = {
   trialLogs: (trialId: number | string, experimentId: number | string): string => {
     return `/experiments/${experimentId}/trials/${trialId}/logs`;
   },
+  uncategorized: (): string => {
+    return '/projects/1';
+  },
   users: (): string => {
     return '/users';
   },
+  workspaceDetails: (workspaceId: number | string): string => {
+    return `/workspaces/${workspaceId}`;
+  },
+  workspaceList: (): string => {
+    return '/workspaces';
+  },
+
 };
 /*
   routeAll determines whether a path should be routed through internal React router or hanled

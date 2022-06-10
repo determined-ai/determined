@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata } from 'types';
+import { DetailedUser, Job, Metadata, Note } from 'types';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
 
@@ -50,11 +50,16 @@ export interface GetExperimentsParams extends PaginationParams {
   states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
   | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+  userIds?: Array<number>;
   users?: Array<string>;
 }
 
 export interface GetExperimentParams {
   id: number;
+}
+
+export interface ExperimentLabelsParams {
+  project_id?: number;
 }
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
@@ -147,6 +152,7 @@ export interface CreateExperimentParams {
   activate?: boolean;
   experimentConfig: string;
   parentId: number;
+  projectId: number;
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {
@@ -223,3 +229,77 @@ export interface PatchUserParams {
     displayName: string;
   };
 }
+
+export interface GetProjectParams {
+  id: number;
+}
+
+export interface GetProjectExperimentsParams extends GetExperimentsParams {
+  id: number;
+}
+
+export interface AddProjectNoteParams {
+  contents: string;
+  id: number;
+  name: string;
+}
+
+export interface SetProjectNotesParams {
+  notes: Note[];
+  projectId: number;
+}
+
+export interface GetWorkspacesParams extends PaginationParams {
+  archived?: boolean;
+  name?: string;
+  pinned?: boolean;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
+  users?: string[];
+}
+
+export interface GetWorkspaceParams {
+  id: number;
+}
+
+export interface GetWorkspaceProjectsParams extends PaginationParams {
+  archived?: boolean;
+  id: number;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' |
+  'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION';
+  users?: string[];
+}
+
+export interface DeleteWorkspaceParams {
+  id: number;
+}
+
+export interface DeleteProjectParams {
+  id: number;
+}
+
+export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
+  id: number;
+}
+
+export interface PatchProjectParams extends Api.V1PatchProject {
+  id: number;
+}
+
+export interface ArchiveProjectParams {
+  id: number;
+}
+
+export type UnarchiveProjectParams = ArchiveProjectParams;
+
+export interface ArchiveWorkspaceParams {
+  id: number;
+}
+
+export type UnarchiveWorkspaceParams = ArchiveWorkspaceParams;
+
+export interface PinWorkspaceParams {
+  id: number;
+}
+
+export type UnpinWorkspaceParams = ArchiveWorkspaceParams;

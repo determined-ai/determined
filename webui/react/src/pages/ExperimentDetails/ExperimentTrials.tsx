@@ -266,7 +266,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     }
   }, [ fetchExperimentTrials, sendBatchActions ]);
 
-  const { stopPolling } = usePolling(fetchExperimentTrials);
+  const { stopPolling } = usePolling(fetchExperimentTrials, { rerunOnNewFn: true });
 
   // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {

@@ -8,6 +8,31 @@ const routes: RouteConfig[] = [
     title: 'Interactive Task',
   },
   {
+    id: 'workspaceDetails',
+    needAuth: true,
+    path: '/workspaces/:workspaceId',
+    title: 'Workspace',
+  },
+  {
+    id: 'workspaceList',
+    needAuth: true,
+    path: '/workspaces',
+    title: 'Workspace',
+  },
+  {
+    id: 'projectDetails',
+    needAuth: true,
+    path: '/projects/:projectId',
+    title: 'Project',
+  },
+  {
+    icon: 'experiment',
+    id: 'uncategorized',
+    needAuth: true,
+    path: '/projects/1',
+    title: 'Uncategorized',
+  },
+  {
     id: 'trialDetails',
     needAuth: true,
     path: '/experiments/:experimentId/trials/:trialId/:tab?',
@@ -50,13 +75,6 @@ const routes: RouteConfig[] = [
     needAuth: true,
     path: '/tasks',
     title: 'Tasks',
-  },
-  {
-    icon: 'experiment',
-    id: 'experimentList',
-    needAuth: true,
-    path: '/experiments',
-    title: 'Experiments',
   },
   {
     id: 'modelVersionDetails',
@@ -102,13 +120,6 @@ const routes: RouteConfig[] = [
     needAuth: true,
     path: '/logs',
     title: 'Cluster Logs',
-  },
-  {
-    icon: 'user',
-    id: 'dashboard',
-    needAuth: true,
-    path: '/dashboard',
-    title: 'Dashboard',
   },
   {
     id: 'wait',

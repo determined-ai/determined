@@ -280,6 +280,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_USER:          "display_name",
 		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
 		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
+		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:    "project_id",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -311,6 +312,7 @@ func (a *apiServer) GetExperiments(
 		labelFilterExpr,
 		req.Description,
 		req.Name,
+		0,
 		req.Offset,
 		req.Limit,
 	)
@@ -321,7 +323,7 @@ func (a *apiServer) GetExperimentLabels(_ context.Context,
 	resp := &apiv1.GetExperimentLabelsResponse{}
 
 	var err error
-	labelUsage, err := a.m.db.ExperimentLabelUsage()
+	labelUsage, err := a.m.db.ExperimentLabelUsage(req.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -742,6 +744,22 @@ func (a *apiServer) CreateExperiment(
 	if req.ParentId != 0 {
 		parentID := int(req.ParentId)
 		detParams.ParentID = &parentID
+		parentExp := &experimentv1.Experiment{}
+		err := a.m.db.QueryProto("get_experiment", parentExp, req.ParentId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error retrieving parent experiment: %s", err)
+		}
+		if parentExp.Archived {
+			return nil, status.Errorf(codes.Internal, "forking an archived experiment")
+		}
+		if parentExp.ParentArchived {
+			return nil, status.Errorf(codes.Internal,
+				"forking an experiment in an archived workspace/project")
+		}
+	}
+	if req.ProjectId > 1 {
+		projectID := int(req.ProjectId)
+		detParams.ProjectID = &projectID
 	}
 
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
@@ -1347,4 +1365,28 @@ func (a *apiServer) GetModelDef(
 	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
 
 	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
+}
+
+func (a *apiServer) MoveExperiment(
+	_ context.Context, req *apiv1.MoveExperimentRequest) (*apiv1.MoveExperimentResponse, error) {
+	p, err := a.GetProjectByID(req.DestinationProjectId)
+	if err != nil {
+		return nil, err
+	}
+	if p.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new experiments.",
+			req.DestinationProjectId)
+	}
+
+	holder := &experimentv1.Experiment{}
+	err = a.m.db.QueryProto("move_experiment", holder, req.ExperimentId,
+		req.DestinationProjectId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "experiment (%d) does not exist or not moveable by this user",
+			req.ExperimentId)
+	}
+
+	return &apiv1.MoveExperimentResponse{},
+		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
 }

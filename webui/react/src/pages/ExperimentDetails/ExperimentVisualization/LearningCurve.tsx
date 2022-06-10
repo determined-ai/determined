@@ -14,6 +14,8 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { flattenObject } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
   metricTypeParamMap, RunState,
@@ -21,8 +23,6 @@ import {
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from '../../../shared/utils/routes';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';

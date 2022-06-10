@@ -188,6 +188,17 @@ func (e *ExperimentConfigV0) SetProfiling(val ProfilingConfigV0) {
 	e.RawProfiling = &val
 }
 
+func (e ExperimentConfigV0) Project() string {
+	if e.RawProject == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Project")
+	}
+	return *e.RawProject
+}
+
+func (e *ExperimentConfigV0) SetProject(val string) {
+	e.RawProject = &val
+}
+
 func (e ExperimentConfigV0) RecordsPerEpoch() int {
 	if e.RawRecordsPerEpoch == nil {
 		panic("You must call WithDefaults on ExperimentConfigV0 before .RecordsPerEpoch")
@@ -257,6 +268,17 @@ func (e ExperimentConfigV0) TensorboardStorage() *TensorboardStorageConfigV0 {
 
 func (e *ExperimentConfigV0) SetTensorboardStorage(val *TensorboardStorageConfigV0) {
 	e.RawTensorboardStorage = val
+}
+
+func (e ExperimentConfigV0) Workspace() string {
+	if e.RawWorkspace == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Workspace")
+	}
+	return *e.RawWorkspace
+}
+
+func (e *ExperimentConfigV0) SetWorkspace(val string) {
+	e.RawWorkspace = &val
 }
 
 func (e ExperimentConfigV0) ParsedSchema() interface{} {

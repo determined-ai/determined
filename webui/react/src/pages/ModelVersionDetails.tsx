@@ -54,6 +54,11 @@ const ModelVersionDetails: React.FC = () => {
       const versionData = await getModelVersion(
         { modelName, versionId: parseInt(versionId) },
       );
+      /**
+       * TODO: can this compare againt prev instead of modelVersion, so that
+       * modelVersion can be remove from deps? would need to get modelVersion
+       * out of deps in order to repoll on change fn
+       */
       setModelVersion(prev => !isEqual(versionData, modelVersion) ? versionData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);

@@ -51,7 +51,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   user: 85,
 };
 
-export interface ExperimentListSettings extends InteractiveTableSettings {
+export interface ProjectDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ExperimentColumnName[];
   label?: string[];
@@ -154,7 +154,7 @@ const config: SettingsConfig = {
       },
     },
   ],
-  storagePath: 'experiment-list',
+  storagePath: 'project-details',
 };
 
 export default config;

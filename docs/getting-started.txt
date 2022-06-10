@@ -180,12 +180,15 @@ schedules to run.
 
       The ``-f`` option is the short form of ``--follow``.
 
+#. To view the uncategorized experiments, enter your username and password. If you deployed locally,
+   accept the default determined username with no password and click **Sign In**:
+
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
    ``http://localhost:8080/``. Accept the default ``determined`` username and click **Sign In**. No
    password is required.
 
-   .. image:: /assets/images/qs01b.png
+   .. image:: /assets/images/qs01c.png
       :width: 704px
       :align: center
       :alt: Dashboard
@@ -194,7 +197,7 @@ schedules to run.
    still **ACTIVE**. Your experiment number and status can differ depending on how many times you
    run the examples.
 
-#. While an experiment is in the ACTIVE, training state, click the experiment tile to see the
+#. While an experiment is in the ACTIVE, training state, click the experiment name to see the
    **Metrics** graph update for your currently defined metrics:
 
    .. image:: /assets/images/qs04.png
@@ -204,7 +207,7 @@ schedules to run.
 
    In this example, the graph displays the loss.
 
-#. After the experiment completes, click the experiment tile to view the trial page:
+#. After the experiment completes, click the experiment name to view the trial page:
 
    .. image:: /assets/images/qs03.png
       :width: 704px
@@ -259,7 +262,7 @@ the number of GPUs per machine. You can change the value to match your hardware 
 #. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept the
    default ``determined`` username, and click **Sign In**. A password is not required.
 
-#. Click the **Experiment** tile to view the experiment’s trial display. The loss curve is similar
+#. Click the **Experiment** name to view the experiment’s trial display. The loss curve is similar
    to the single-GPU experiment in the previous exercise but the time to complete the trial is
    reduced by about half.
 
@@ -324,7 +327,7 @@ This example uses a fixed batch size and searches on dropout size, filters, and 
    default determined username, and click **Sign In**. No password is required.
 
 #. The experiment can take some time to complete. You can monitor progress in the WebUI Dashboard by
-   clicking the **Experiment** tile. Notice that more trials have started:
+   clicking the **Experiment** name. Notice that more trials have started:
 
    .. image:: /assets/images/qs05.png
       :width: 704px

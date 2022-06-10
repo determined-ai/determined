@@ -1,0 +1,9 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  :global(p) {
+    margin: 0;
+  }
+}

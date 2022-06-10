@@ -293,6 +293,7 @@ type Experiment struct {
 	GitCommitDate        *time.Time `db:"git_commit_date"`
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
+	ProjectID            int        `db:"project_id"`
 }
 
 // ExperimentDescriptor is a minimal description of an experiment.
@@ -313,6 +314,7 @@ func NewExperiment(
 	archived bool,
 	gitRemote, gitCommit, gitCommitter *string,
 	gitCommitDate *time.Time,
+	projectID int,
 ) (*Experiment, error) {
 	if len(modelDefinitionBytes) == 0 {
 		return nil, errors.New("empty model definition")
@@ -335,6 +337,7 @@ func NewExperiment(
 		GitCommit:            gitCommit,
 		GitCommitter:         gitCommitter,
 		GitCommitDate:        gitCommitDate,
+		ProjectID:            projectID,
 	}, nil
 }
 

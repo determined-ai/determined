@@ -74,7 +74,7 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelName, pageError, settings ]);
 
-  usePolling(fetchModel);
+  usePolling(fetchModel, { rerunOnNewFn: true });
 
   useEffect(() => {
     setIsLoading(true);

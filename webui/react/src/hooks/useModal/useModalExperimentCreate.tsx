@@ -8,6 +8,7 @@ import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { RawJson } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import {
   ExperimentBase,
@@ -18,7 +19,6 @@ import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
-import { RawJson } from '../../shared/types';
 import { DetError, isDetError, isError } from '../../shared/utils/error';
 import { routeToReactUrl } from '../../shared/utils/routes';
 
@@ -75,11 +75,14 @@ const trialContinueConfig = (
   experimentConfig: RawJson,
   trialHparams: TrialHyperparameters,
   trialId: number,
+  workspaceName: string,
+  projectName: string,
 ): RawJson => {
   const newConfig = clone(experimentConfig);
   return {
     ...newConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
+    project: projectName,
     searcher: {
       max_length: experimentConfig.searcher.max_length,
       metric: experimentConfig.searcher.metric,
@@ -87,6 +90,7 @@ const trialContinueConfig = (
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
       source_trial_id: trialId,
     },
+    workspace: workspaceName,
   };
 };
 
@@ -203,6 +207,7 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
         activate: true,
         experimentConfig: newConfig,
         parentId: modalState.experiment.id,
+        projectId: modalState.experiment.projectId,
       });
 
       // Route to reload path to forcibly remount experiment page.
@@ -336,16 +341,32 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     let config = upgradeConfig(experiment.configRaw);
 
     if (!isFork && trial) {
-      config = trialContinueConfig(config, trial.hyperparameters, trial.id);
+      config = trialContinueConfig(
+        config,
+        trial.hyperparameters,
+        trial.id,
+        experiment.workspaceName,
+        experiment.projectName,
+      );
       config.description = `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
         (config.description ? ` (${config.description})` : '');
     } else if (isFork) {
       if (config.description) config.description = `Fork of ${config.description}`;
     }
 
-    const { environment: { registry_auth, ...restEnvironment }, ...restConfig } = config;
+    const {
+      environment: { registry_auth, ...restEnvironment },
+      project: stripIt,
+      workspace: stripItToo,
+      ...restConfig
+    } = config;
     setRegistryCredentials(registry_auth);
-    const publicConfig = { environment: restEnvironment, ...restConfig };
+    const publicConfig = {
+      environment: restEnvironment,
+      project: experiment.projectName,
+      workspace: experiment.workspaceName,
+      ...restConfig,
+    };
 
     setModalState(prev => {
       const newModalState = {
