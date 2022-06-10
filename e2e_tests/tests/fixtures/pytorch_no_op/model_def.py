@@ -42,7 +42,9 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         self.context.backward(loss)
         self.context.step_optimizer(self.opt)
 
-        print("finished train_batch for rank {}".format(self.context.distributed.get_rank()))
+        rank = self.context.distributed.get_rank()
+        print(f"finished train_batch for rank {rank}")
+        print(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
 
         return {"loss": loss, "w_real": w_real}
 
@@ -53,7 +55,7 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         torch_rand = torch.randint(1000, (1,))
         gpu_rand = torch.randint(1000, (1,), device=self.context.device)
 
-        print("finished evaluate_batch for rank {}".format(self.context.distributed.get_rank()))
+        print(f"finished evaluate_batch for rank {self.context.distributed.get_rank()}")
 
         return {
             "validation_error": val,
