@@ -253,3 +253,30 @@ def test_distributed_logging() -> None:
         assert exp.check_if_string_present_in_trial_logs(
             t_id, "finished train_batch for rank {}".format(i)
         )
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize("num_workers,dataset_len", [(2, 2), (2, 3)])
+def test_epoch_sync(num_workers: int, dataset_len: int) -> None:
+    """
+    Test that epoch_idx is synchronized across all workers, regardless of whether the number of batches
+    is evenly divisible by the number of workers.
+    """
+    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
+    config = conf.set_slots_per_trial(config, num_workers)
+    max_len_batches = 10
+    config = conf.set_max_length(config, {"batches": max_len_batches})
+    config = conf.set_hparam(config, "dataset_len", dataset_len)
+    config = conf.set_global_batch_size(config, num_workers)  # One record per worker.
+
+    e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
+    t_id = exp.experiment_trials(e_id)[0].trial.id
+
+    batches_per_epoch = (dataset_len + num_workers - 1) // num_workers  # ceil
+
+    for batch_idx in range(max_len_batches):
+        epoch_idx = batch_idx // batches_per_epoch
+        for rank in range(config["resources"]["slots_per_trial"]):
+            assert exp.check_if_string_present_in_trial_logs(
+                t_id, f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}"
+            )
