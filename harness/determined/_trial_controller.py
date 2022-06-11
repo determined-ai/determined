@@ -66,7 +66,7 @@ class TrialController(metaclass=abc.ABCMeta):
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
             logging.getLogger().setLevel(log_level)
-        self.metric_writer = self._create_metric_writer()
+        self.metric_writer = self.create_metric_writer()
 
     @classmethod
     @abc.abstractmethod
@@ -110,7 +110,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def _create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
         pass
 
     def initialize_wrapper(self) -> None:
@@ -123,7 +123,7 @@ class TrialController(metaclass=abc.ABCMeta):
     def close(self) -> None:
         self.context.close()
 
-    def _upload_tb_files(self) -> None:
+    def upload_tb_files(self) -> None:
         self.context._core.train.upload_tensorboard_files(
             lambda _: True if self.is_chief else lambda p: not p.match("*tfevents*"),
             get_rank_aware_path,

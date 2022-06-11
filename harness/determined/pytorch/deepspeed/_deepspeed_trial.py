@@ -62,7 +62,7 @@ class DeepSpeedTrialController(det.TrialController):
         self.steps_completed = self.env.steps_completed
 
     @classmethod
-    def _create_metric_writer(
+    def create_metric_writer(
         cls: Type["DeepSpeedTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = TorchWriter()
@@ -301,33 +301,20 @@ class DeepSpeedTrialController(det.TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
-                    metrics = self._train_for_step(
-                        w.step_id,
-                        w.num_batches,
-                        w.total_batches_processed,
-                    )
                     response = {
-                        "metrics": metrics,
+                        "metrics": self._train_for_step(
+                            w.step_id,
+                            w.num_batches,
+                            w.total_batches_processed,
+                        ),
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
-                    if isinstance(metrics, Dict) and self.is_chief:
-                        self.metric_writer.on_train_step_end(
-                            self.steps_completed,
-                            metrics["avg_metrics"],
-                            metrics["batch_metrics"],
-                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
-                    metrics = self._compute_validation_metrics()
                     response = {
-                        "metrics": metrics,
+                        "metrics": self._compute_validation_metrics(),
                         "stop_requested": self.context.get_stop_requested(),
                     }
-                    if isinstance(metrics, Dict) and self.is_chief:
-                        self.metric_writer.on_validation_step_end(
-                            self.steps_completed,
-                            metrics["validation_metrics"],
-                        )
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     # The checkpointing api would have been sufficient if the base_path for the
@@ -377,6 +364,7 @@ class DeepSpeedTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // cast(int, self.context._epoch_len)
@@ -512,6 +500,11 @@ class DeepSpeedTrialController(det.TrialController):
         logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
         self.prof.set_training(False)
 
+        self.metric_writer.on_train_step_end(
+            self.steps_completed,
+            metrics["avg_metrics"],
+            metrics["batch_metrics"],
+        )
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -623,6 +616,7 @@ class DeepSpeedTrialController(det.TrialController):
             )
         )
 
+        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:

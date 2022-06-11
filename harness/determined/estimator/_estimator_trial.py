@@ -173,7 +173,7 @@ class DeterminedControlHook(estimator.RunHook):
             response = {}
 
         self.train_response_func(response)
-        self.estimator_trial_controller._upload_tb_files()
+        self.estimator_trial_controller.upload_tb_files()
 
         # Reset step counter and clear the step metrics from memory.
         self.train_response_func = None
@@ -343,7 +343,7 @@ class DeterminedControlHook(estimator.RunHook):
                 response = workload.InvalidHP()
 
             response_func(response)
-            self.estimator_trial_controller._upload_tb_files()
+            self.estimator_trial_controller.upload_tb_files()
 
         # End-of-training.
         raise det.errors.WorkerFinishedGracefully("Exiting normally.")
@@ -478,7 +478,7 @@ class EstimatorTrialController(det.TrialController):
         tf.compat.v1.set_random_seed(seed)
 
     @classmethod
-    def _create_metric_writer(
+    def create_metric_writer(
         cls: Type["EstimatorTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()

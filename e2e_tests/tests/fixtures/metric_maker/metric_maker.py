@@ -129,7 +129,7 @@ class MetricMaker(det.TrialController):
         pass
 
     @classmethod
-    def _create_metric_writer(cls: Type["MetricMaker"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(cls: Type["MetricMaker"]) -> tensorboard.BatchMetricWriter:
         return tensorboard.BatchMetricWriter(DummyMetricWriter())
 
     def run(self) -> None:

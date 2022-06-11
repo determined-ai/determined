@@ -168,7 +168,7 @@ class TFKerasTrialController(det.TrialController):
         return True
 
     @classmethod
-    def _create_metric_writer(
+    def create_metric_writer(
         cls: Type["TFKerasTrialController"],
     ) -> tensorboard.BatchMetricWriter:
         writer = tensorflow.TFWriter()
@@ -848,7 +848,7 @@ class TFKerasTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
-            self._upload_tb_files()
+            self.upload_tb_files()
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -958,7 +958,7 @@ class TFKerasTrialController(det.TrialController):
         self.train_response_func(response)
         self.train_response_func = None
 
-        self._upload_tb_files()
+        self.upload_tb_files()
 
         self._control_loop()
 
@@ -996,7 +996,7 @@ class TFKerasTrialController(det.TrialController):
         logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
         self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
-        self._upload_tb_files()
+        self.upload_tb_files()
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _stop_training_check(self) -> None:

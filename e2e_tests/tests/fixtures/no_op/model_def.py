@@ -109,7 +109,7 @@ class NoOpTrialController(det.TrialController):
         np.random.seed(env.trial_seed)
 
     @classmethod
-    def _create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
+    def create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
         return tensorboard.get_metric_writer()
 
     def run(self) -> None:
