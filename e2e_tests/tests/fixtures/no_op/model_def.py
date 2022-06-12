@@ -139,6 +139,7 @@ class NoOpTrialController(det.TrialController):
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
             response_func(response)
+            self.upload_tb_files()
 
     def steps_trained(self) -> int:
         return sum(self.trained_steps.values())
