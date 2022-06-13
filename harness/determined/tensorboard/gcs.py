@@ -7,6 +7,8 @@ from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
+logger = logging.getLogger("determined.tensorboard")
+
 
 class GCSTensorboardManager(base.TensorboardManager):
     """
@@ -44,7 +46,7 @@ class GCSTensorboardManager(base.TensorboardManager):
             to_path = self.get_storage_prefix(mangled_path)
             blob = self.bucket.blob(to_path)
 
-            logging.debug(f"Uploading {path} to GCS: {to_path}")
+            logger.debug(f"Uploading {path} to GCS: {to_path}")
             blob.upload_from_filename(str(path))
 
     def delete(self) -> None:

@@ -7,6 +7,8 @@ from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
 
+logger = logging.getLogger("determined.tensorboard")
+
 
 class S3TensorboardManager(base.TensorboardManager):
     """
@@ -57,7 +59,7 @@ class S3TensorboardManager(base.TensorboardManager):
             key_name = os.path.join(self.prefix, tbd_filename)
 
             url = f"s3://{self.bucket}/{key_name}"
-            logging.debug(f"Uploading {path} to {url}")
+            logger.debug(f"Uploading {path} to {url}")
 
             self.client.upload_file(str(path), self.bucket, key_name)
 

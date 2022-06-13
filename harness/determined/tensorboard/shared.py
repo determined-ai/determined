@@ -6,7 +6,7 @@ from typing import Any, Callable
 
 from determined.tensorboard import base
 
-logger = logging.getLogger("determined.core")
+logger = logging.getLogger("determined.tensorboard")
 
 
 class SharedFSTensorboardManager(base.TensorboardManager):

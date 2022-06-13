@@ -1,8 +1,11 @@
+import logging
 import pathlib
 from typing import Any, Callable, Optional
 
 from determined.common import util
 from determined.tensorboard import base
+
+logger = logging.getLogger("determined.tensorboard")
 
 
 class AzureTensorboardManager(base.TensorboardManager):
@@ -38,6 +41,8 @@ class AzureTensorboardManager(base.TensorboardManager):
             relative_path = path.relative_to(self.base_path)
             mangled_relative_path = mangler(relative_path, rank)
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
+
+            logger.debug(f"Uploading {path} to Azure: {self.container}/{mangled_path}")
             self.client.put(
                 f"{self.container}/{mangled_path.parent}",
                 mangled_path.name,

@@ -4,6 +4,7 @@ import enum
 class TensorboardMode(enum.Enum):
     """
     ``TensorboardMode`` defines how Tensorboard artifacts are handled.
+
     In ``Auto`` mode the chief automatically writes any reported training or validation
     metrics to the Tensorboard path (see :meth:`TrainContext.get_tensorboard_path()
     <determined.core.TrainContext.get_tensorboard_path>`), and automatically
