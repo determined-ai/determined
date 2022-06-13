@@ -95,7 +95,6 @@ func (d *StorageSize) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-
 	b, err := units.RAMInBytes(s)
 	if err != nil {
 		return errors.Wrap(err, "shm_size not a valid size")
