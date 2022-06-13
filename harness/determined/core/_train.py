@@ -31,7 +31,7 @@ class TrainContext:
         run_id: int,
         exp_id: int,
         distributed: DistributedContext,
-        tbd_sync_mode: TensorboardMode,
+        tensorboard_mode: TensorboardMode,
         tensorboard_manager: tensorboard.TensorboardManager,
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
@@ -40,7 +40,7 @@ class TrainContext:
         self._run_id = run_id
         self._exp_id = exp_id
         self._distributed = distributed
-        self._tensorboard_mode = tbd_sync_mode
+        self._tensorboard_mode = tensorboard_mode
         self._tensorboard_manager = tensorboard_manager
         self._tbd_writer = tbd_writer
 
@@ -113,11 +113,15 @@ class TrainContext:
     ) -> None:
         """
         Upload files generated for consumption by Tensorboard to checkpoint storage.
-        :param selector: optional function returning True for a file that should be included.
-        If not provided, all files are uploaded.
-        :param mangler: optional function modifying the destination file names based on rank.
+
+        Args:
+            selector: optional function returning True for a file that should be included.
+                If not provided, all files are uploaded.
+            mangler: optional function modifying the destination file names based on rank.
         """
-        logger.info("upload tb profile")
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            raise RuntimeError("upload_tensorboard_files can only be used in MANUAL mode")
+
         self._tensorboard_manager.sync(selector, mangler, self._distributed.rank)
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:

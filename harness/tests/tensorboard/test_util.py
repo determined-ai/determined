@@ -10,16 +10,6 @@ from determined.tensorboard.util import get_rank_aware_path
 
 BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
-profiler_file_extensions = [
-    ".input_pipeline.pb",
-    ".memory_profile.json.gz",
-    ".tensorflow_stats.pb",
-    ".xplane.pb",
-    ".kernel_stats.pb",
-    ".overview_page.pb",
-    ".trace.json.gz",
-]
-
 
 def get_dummy_env() -> det.EnvContext:
     return det.EnvContext(

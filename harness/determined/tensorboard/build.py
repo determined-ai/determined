@@ -31,10 +31,7 @@ def get_base_path(checkpoint_config: Dict[str, Any]) -> pathlib.Path:
     allocation_id = os.environ.get("DET_ALLOCATION_ID", "")
     rank = get_rank_if_horovod_process_else_return_zero()
 
-    if checkpoint_config.get("base_path"):
-        base_path = pathlib.Path(checkpoint_config["base_path"])
-    else:
-        base_path = pathlib.Path("/", "tmp")
+    base_path = pathlib.Path("/", "tmp")
 
     if rank == 0:
         return base_path.joinpath(f"tensorboard-{allocation_id}")

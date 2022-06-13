@@ -35,7 +35,7 @@ class BatchMetricWriter:
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
-        logging.debug("Write training metrics")
+        logging.debug("Write training metrics for TensorBoard")
         metrics_seen = set()
 
         # Log all batch metrics.
@@ -55,7 +55,7 @@ class BatchMetricWriter:
         self.writer.reset()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
-        logging.debug("Write validation metrics")
+        logging.debug("Write validation metrics for TensorBoard")
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
