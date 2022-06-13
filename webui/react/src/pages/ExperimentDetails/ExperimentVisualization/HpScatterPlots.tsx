@@ -178,14 +178,14 @@ const ScatterPlots: React.FC<Props> = ({
         });
 
         fullHParams.forEach(hParam => {
-          const hp = (experiment.hyperparameters || {})[hParam];
+          const hp = experiment.hyperparameters?.[hParam];
           if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam] = true;
 
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
           hpLabelMap[hParam] = [];
           trialIds.forEach(trialId => {
-            const map = (hpTrialMap[hParam] || {})[trialId] || {};
+            const map = hpTrialMap[hParam]?.[trialId] || {};
             const hpValue = isBoolean(map.hp) ? map.hp.toString() : map.hp;
 
             if (isString(hpValue)) {
