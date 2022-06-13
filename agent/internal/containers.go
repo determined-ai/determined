@@ -64,11 +64,6 @@ type (
 	responseReattachContainers struct {
 		ContainersReattached []aproto.ContainerReattachAck
 	}
-
-	// Tells the container manager it should resend all recent exits. Containers exits are
-	// idempotent so resending one that has been acknowledged does not hurt. Used to ensure all
-	// exits are received in the event of network failures.
-	requestResendRecentExits struct{}
 )
 
 func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
@@ -141,14 +136,6 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		} else {
 			ctx.Respond(responseReattachContainers{ContainersReattached: containers})
 		}
-
-	case requestResendRecentExits:
-		c.recentExits.Do(func(v any) {
-			if v == nil {
-				return
-			}
-			ctx.Tell(ctx.Self().Parent(), v)
-		})
 
 	case aproto.ContainerStateChanged:
 		if msg.ContainerStopped != nil {
@@ -391,7 +378,7 @@ func (c *containerManager) reattachContainers(
 			ack = aproto.ContainerReattachAck{
 				Container: cproto.Container{ID: expectedSurvivor.Container.ID},
 				Failure: &aproto.ContainerFailure{
-					FailureType: aproto.AgentFailed,
+					FailureType: aproto.RestoreError,
 					ErrMsg:      "container is gone on reattachment",
 				},
 			}
@@ -403,7 +390,7 @@ func (c *containerManager) reattachContainers(
 				ack = aproto.ContainerReattachAck{
 					Container: cproto.Container{ID: expectedSurvivor.Container.ID},
 					Failure: &aproto.ContainerFailure{
-						FailureType: aproto.AgentFailed,
+						FailureType: aproto.RestoreError,
 						ErrMsg:      err.Error(),
 					},
 				}
@@ -548,23 +535,40 @@ func (c *containerManager) revalidateContainers(
 	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
 
 	for _, expectedSurvivor := range expectedSurvivors {
-		var ack aproto.ContainerReattachAck
 		cid := expectedSurvivor.Container.ID
 
+		// Fallback container reattach ack.
+		ack := aproto.ContainerReattachAck{
+			Container: cproto.Container{ID: cid},
+			Failure: &aproto.ContainerFailure{
+				FailureType: aproto.RestoreError,
+				ErrMsg:      "failed to restore container on master blip",
+			},
+		}
+
+		// If the child is still there, assuming nothing has changed.
 		if ref := ctx.Child(cid.String()); ref != nil {
 			container := ctx.Ask(ref, getContainerSummary{}).Get().(cproto.Container)
 			ack = aproto.ContainerReattachAck{
 				Container: container,
 			}
-		} else {
-			ack = aproto.ContainerReattachAck{
-				Container: cproto.Container{ID: cid},
-				Failure: &aproto.ContainerFailure{
-					FailureType: aproto.AgentFailed,
-					ErrMsg:      "failed to restore container on master blip",
-				},
-			}
 		}
+
+		// But if there is a termination message for it, for any reason, go ahead and ack that.
+		c.recentExits.Do(func(v any) {
+			if v == nil {
+				return
+			}
+
+			savedStop := v.(aproto.ContainerStateChanged)
+			if cid != savedStop.Container.ID {
+				return
+			}
+			ack = aproto.ContainerReattachAck{
+				Container: savedStop.Container,
+				Failure:   savedStop.ContainerStopped.Failure,
+			}
+		})
 
 		result = append(result, ack)
 	}

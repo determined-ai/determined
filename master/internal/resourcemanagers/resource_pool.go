@@ -330,7 +330,9 @@ func (rp *ResourcePool) resourcesReleased(
 	case a == nil:
 		rp.taskList.RemoveTaskByHandler(msg.TaskActor)
 	case msg.ResourcesID != nil:
-		ctx.Log().Infof("resource %v is released for %s", msg.ResourcesID, msg.TaskActor.Address())
+		ctx.Log().Infof(
+			"resources %v are released for %s",
+			*msg.ResourcesID, msg.TaskActor.Address())
 		for rID, r := range a.Resources {
 			if r.Summary().ResourcesID != *msg.ResourcesID {
 				continue
