@@ -2231,6 +2231,24 @@ class v1GetUserResponse:
             "user": self.user.to_json() if self.user is not None else None,
         }
 
+class v1GetUserSettingResponse:
+    def __init__(
+        self,
+        settings: "typing.Sequence[v1UserWebSetting]",
+    ):
+        self.settings = settings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserSettingResponse":
+        return cls(
+            settings=[v1UserWebSetting.from_json(x) for x in obj["settings"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "settings": [x.to_json() for x in self.settings],
+        }
+
 class v1GetUsersResponse:
     def __init__(
         self,
@@ -3578,6 +3596,32 @@ class v1PostUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
+        }
+
+class v1PostUserSettingRequest:
+    def __init__(
+        self,
+        settings: "typing.Sequence[v1UserWebSetting]",
+        storagePath: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
+    ):
+        self.userId = userId
+        self.storagePath = storagePath
+        self.settings = settings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
+        return cls(
+            userId=obj.get("userId", None),
+            storagePath=obj.get("storagePath", None),
+            settings=[v1UserWebSetting.from_json(x) for x in obj["settings"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "userId": self.userId if self.userId is not None else None,
+            "storagePath": self.storagePath if self.storagePath is not None else None,
+            "settings": [x.to_json() for x in self.settings],
         }
 
 class v1PreviewHPSearchRequest:
@@ -5178,6 +5222,32 @@ class v1User:
             "modifiedAt": self.modifiedAt if self.modifiedAt is not None else None,
         }
 
+class v1UserWebSetting:
+    def __init__(
+        self,
+        key: str,
+        storagePath: "typing.Optional[str]" = None,
+        value: "typing.Optional[str]" = None,
+    ):
+        self.key = key
+        self.value = value
+        self.storagePath = storagePath
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserWebSetting":
+        return cls(
+            key=obj["key"],
+            value=obj.get("value", None),
+            storagePath=obj.get("storagePath", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "key": self.key,
+            "value": self.value if self.value is not None else None,
+            "storagePath": self.storagePath if self.storagePath is not None else None,
+        }
+
 class v1ValidateAfterOperation:
     def __init__(
         self,
@@ -6604,6 +6674,25 @@ def get_GetUser(
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
+def get_GetUserSetting(
+    session: "client.Session",
+    *,
+    userId: int,
+) -> "v1GetUserSettingResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/setting/{userId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserSettingResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserSetting", _resp)
+
 def get_GetUsers(
     session: "client.Session",
 ) -> "v1GetUsersResponse":
@@ -7124,6 +7213,26 @@ def post_PostUser(
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
+
+def post_PostUserSetting(
+    session: "client.Session",
+    *,
+    body: "v1PostUserSettingRequest",
+    userId: int,
+) -> "v1GetUserSettingResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/users/setting/{userId}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserSettingResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostUserSetting", _resp)
 
 def post_PreviewHPSearch(
     session: "client.Session",

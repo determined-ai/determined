@@ -1,5 +1,5 @@
 import queryString from 'query-string';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
@@ -8,10 +8,16 @@ import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
 import { Primitive, RecordKey } from '../shared/types';
-import { ErrorType } from '../shared/utils/error';
+import { ErrorType, isError } from '../shared/utils/error';
 
 import usePrevious from './usePrevious';
 import useStorage from './useStorage';
+import {useStore} from 'contexts/Store'
+
+import { getUserSetting, updateUserSetting } from 'services/api'
+import {UpdateUserSettingParams} from 'services/types'
+import { V1PostUserSettingRequest, V1UserWebSetting } from 'services/api-ts-sdk'
+
 
 export enum BaseType {
   Boolean = 'Boolean',
@@ -198,6 +204,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
+  const { auth: { user } } = useStore();
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
   const [ pathChange, setPathChange ] = useState<PathChange<T>>(defaultPathChange);
@@ -246,6 +253,28 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
         } else {
           storage.set(config.storageKey, value);
         }
+        if(user && user.id) {
+          // Persist storage to backend
+          const records: any[] = storage.getRecords()
+          console.log('records: ', records)
+          let storage_path = ''
+          const webSettings = records.map(ws=>{
+            if(ws.storage_path.startsWith(`u:${user.id}/`)) {
+              storage_path = ws.storage_path.replace(`u:${user.id}/`, '')
+              return {'key': ws.key.toString(), 'value': JSON.stringify(ws.value)}
+            } else {
+              return 
+            }
+          }) as Array<V1UserWebSetting>
+          console.log("webSettings", webSettings)
+          if(webSettings.length > 0 && user.id) {
+            // const webSettingsPayload = {settings: webSettings, storagePath:storage_path} as V1PostUserSettingRequest
+            // console.log(webSettings)
+            updateUserSetting({ userId: user.id, settings: webSettings, storagePath:storage_path } as UpdateUserSettingParams)
+          }
+          
+        }
+        
       }
 
       // Keep track of internal setting changes to update async from query settings.
@@ -268,7 +297,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       querySettings,
       type: push ? PathChangeType.Push : PathChangeType.Replace,
     });
-  }, [ configMap, storage ]);
+  }, [ configMap, storage, updateUserSetting ]);
 
   const resetSettings = useCallback((keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -279,6 +308,37 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
     updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
+
+  
+  const fetchUserSetting = useCallback(async () => {
+    
+    if(!user) return
+    const userSettingResponse = await getUserSetting({userId: user.id})
+    console.log(userSettingResponse)
+    userSettingResponse.settings.forEach(setting=>{
+      const {key, value, storagePath}  = setting;
+      const jsonValue = JSON.parse(value||'')
+      const config = configMap[key];
+      if (!config) return;
+      const isValid = validateSetting(config, jsonValue);
+      const isDefault = isEqual(config.defaultValue, jsonValue);
+      console.log(config.storageKey, isValid)
+      // Store or clear setting if `storageKey` is available.
+      if (config.storageKey && isValid) {
+        if (jsonValue === undefined || isDefault) {
+          storage.remove(config.storageKey, storagePath);
+        } else {
+          console.log('set ', config.storageKey, jsonValue)
+          storage.set(config.storageKey, jsonValue, storagePath);
+        }
+      }
+    })
+    
+  }, [getUserSetting, validateSetting])
+
+  useEffect(() => {
+    fetchUserSetting()
+  }, [fetchUserSetting])
 
   useEffect(() => {
     if (location.search === prevSearch) return;

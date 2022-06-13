@@ -66,3 +66,23 @@ message PatchUserResponse {
   // The updated user.
   determined.user.v1.User user = 1;
 }
+
+message GetUserSettingRequest {
+  // The id of the user.
+  int32 user_id = 1;
+}
+message GetUserSettingResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "settings" ] }
+  };
+  repeated determined.user.v1.UserWebSetting settings = 1;
+}
+message PostUserSettingRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user_id", "storage_path", "settings" ] }
+  };
+  // The id of the user.
+  int32 user_id = 1;
+  string storage_path = 2;
+  repeated determined.user.v1.UserWebSetting settings = 3;
+}

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // SessionDuration is how long a newly created session is valid.
@@ -424,4 +426,23 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	default:
 		return &tokenKeypair, nil
 	}
+}
+
+func AddUserSetting(userId model.UserID, storagePath string, settings []*model.UserWebSetting) error {
+	if len(settings) == 0 {
+		return nil
+	}
+	_, err := Bun().NewDelete().Model(&settings).Where("user_id = ?", userId).Where("storage_path = ?", storagePath).Exec(context.TODO())
+	if err != nil {
+		return err
+	}
+	_, err = Bun().NewInsert().Model(&settings).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
+		Set("value = EXCLUDED.value").Exec(context.TODO())
+	return err
+}
+
+func GetUserSetting(userId model.UserID) ([]*userv1.UserWebSetting, error) {
+	setting := []*userv1.UserWebSetting{}
+	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userId).Scan(context.TODO())
+	return setting, err
 }

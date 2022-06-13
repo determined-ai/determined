@@ -151,6 +151,25 @@ service Determined {
       tags: "Users"
     };
   }
+  // Get a user's settings for website
+  rpc GetUserSetting(GetUserSettingRequest) returns (GetUserSettingResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/setting/{user_id}",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+  // Patch a user's settings for website
+  rpc PostUserSetting(PostUserSettingRequest) returns (GetUserSettingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/setting/{user_id}",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Get telemetry information.
   rpc GetTelemetry(GetTelemetryRequest) returns (GetTelemetryResponse) {
     option (google.api.http) = {

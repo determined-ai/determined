@@ -127,3 +127,10 @@ type ExternalSessions struct {
 	LogoutURI string `json:"logout_uri"`
 	JwtKey    string `json:"jwt_key"`
 }
+
+type UserWebSetting struct {
+	UserId      UserID
+	Key         string
+	Value       string
+	StoragePath string
+}

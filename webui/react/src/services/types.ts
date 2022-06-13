@@ -1,4 +1,5 @@
 import { Dayjs } from 'dayjs';
+import { number } from 'fp-ts';
 
 import { DetailedUser, Job, Metadata } from 'types';
 
@@ -222,4 +223,14 @@ export interface PatchUserParams {
   userParams: {
     displayName: string;
   };
+}
+
+export interface GetUserSettingParams {
+  userId: number;
+}
+
+export interface UpdateUserSettingParams {
+  userId: number;
+  settings: Api.V1UserWebSetting[];
+  storagePath: string;
 }

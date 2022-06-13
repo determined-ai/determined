@@ -195,3 +195,24 @@ func (a *apiServer) PatchUser(
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
+
+func (a *apiServer) GetUserSetting(
+	ctx context.Context, req *apiv1.GetUserSettingRequest) (*apiv1.GetUserSettingResponse, error) {
+	settings, err := db.GetUserSetting(model.UserID(req.UserId))
+	return &apiv1.GetUserSettingResponse{Settings: settings}, err
+}
+
+func (a *apiServer) PostUserSetting(
+	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.GetUserSettingResponse, error) {
+	settingModel := []*model.UserWebSetting{}
+	for _, setting := range req.Settings {
+		settingModel = append(settingModel, &model.UserWebSetting{
+			UserId:      model.UserID(req.UserId),
+			Key:         setting.Key,
+			Value:       setting.Value,
+			StoragePath: req.StoragePath,
+		})
+	}
+	err := db.AddUserSetting(model.UserID(req.UserId), req.StoragePath, settingModel)
+	return &apiv1.GetUserSettingResponse{}, err
+}

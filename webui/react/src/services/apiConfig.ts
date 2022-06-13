@@ -132,6 +132,27 @@ export const patchUser: DetApi<
   ),
 };
 
+export const getUserSetting: DetApi<
+  Service.GetUserSettingParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
+  > = {
+    name: 'getUserSetting',
+    postProcess: (response) => response,
+    request: (params) => detApi.Users.getUserSetting(
+      params.userId
+    ),
+  }
+
+export const updateUserSetting: DetApi<
+Service.UpdateUserSettingParams, Api.V1PostUserSettingRequest, void
+  > = {
+    name: 'updateUserSetting',
+    postProcess: (response) => response,
+    request: (params) => detApi.Users.postUserSetting(
+      params.userId,
+      {storagePath: params.storagePath,
+      settings: params.settings}
+    ),
+  }
 /* Info */
 
 export const getInfo: DetApi<
