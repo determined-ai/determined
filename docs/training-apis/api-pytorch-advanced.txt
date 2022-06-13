@@ -62,11 +62,11 @@ training") is easy if you follow a few rules.
    wrap your sampler or batch_sampler. For your training dataset, make sure that you always repeat
    AFTER you shuffle, otherwise your shuffle will hang.
 
--  **Always shard**: Use Determined's DistributedSampler or
-   DistributedBatchSampler to provide a unique shard of data to each worker based on your sampler or
-   batch_sampler. It is best to always shard your data, and even when you are not doing distributed
-   training, because in non-distributed-training settings, the sharding is nearly zero-cost, and it
-   makes distributed training seamless if you ever want to use it in the future.
+-  **Always shard**: Use Determined's DistributedSampler or DistributedBatchSampler to provide a
+   unique shard of data to each worker based on your sampler or batch_sampler. It is best to always
+   shard your data, and even when you are not doing distributed training, because in
+   non-distributed-training settings, the sharding is nearly zero-cost, and it makes distributed
+   training seamless if you ever want to use it in the future.
 
 -  **Skip when training, and always last**: In Determined, training datasets should always be able
    to start from an arbitrary point in the dataset. This allows for advanced hyperparameter searches
