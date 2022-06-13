@@ -30,7 +30,7 @@ def test_setting_optional_variable(tmp_path: pathlib.Path) -> None:
         env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
     )
     assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
-    assert manager.base_path == pathlib.Path("test_value/tensorboard-")
+    assert manager.base_path == pathlib.Path("test_value/tensorboard--0")
 
 
 def test_build_with_container_path(tmp_path: pathlib.Path) -> None:

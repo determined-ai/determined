@@ -73,7 +73,7 @@ def test_list_tb_files(tmp_path: pathlib.Path) -> None:
         "events.out.tfevents.example",
     ]
 
-    test_filepaths = [BASE_PATH.joinpath("tensorboard-", test_file) for test_file in test_files]
+    test_filepaths = [BASE_PATH.joinpath("tensorboard--0", test_file) for test_file in test_files]
     tb_files = manager.list_tb_files(0, lambda _: True)
 
     assert set(test_filepaths) == set(tb_files)

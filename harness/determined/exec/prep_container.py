@@ -61,6 +61,11 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
         model_def.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
         model_def.extractall(path=".")
 
+    # pre-0.18.2 code wrote tensorboard stuff under /tmp/tensorboard
+    tensorboard_path_on_chief = f"/tmp/tensorboard-{info.allocation_id}-0"
+    os.makedirs(tensorboard_path_on_chief, exist_ok=True)
+    os.symlink(src=tensorboard_path_on_chief, dst="/tmp/tensorboard")
+
 
 def do_rendezvous_rm_provided(
     sess: Session, allocation_id: str, resources_id: str
