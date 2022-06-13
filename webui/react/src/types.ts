@@ -257,7 +257,6 @@ export enum ExperimentSearcherName {
   AdaptiveAsha = 'adaptive_asha',
   AdaptiveSimple = 'adaptive_simple',
   Grid = 'grid',
-  Pbt = 'pbt',
   Random = 'random',
   Single = 'single',
 }

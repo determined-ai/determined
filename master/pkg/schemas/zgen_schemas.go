@@ -2769,7 +2769,7 @@ var (
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', or 'adaptive_asha'",
             "items": [
                 {
                     "unionKey": "const:name=single",

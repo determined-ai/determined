@@ -630,7 +630,7 @@ class PBTExploreConfig(schemas.SchemaBase):
     ) -> None:
         pass
 
-
+# Leave this alone for backwards compatibility?
 @SearcherConfigV0.member("pbt")
 class PBTConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
