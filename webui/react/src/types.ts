@@ -253,9 +253,7 @@ export type HyperparametersFlattened = {
 };
 
 export enum ExperimentSearcherName {
-  AdaptiveAdvanced = 'adaptive',
   AdaptiveAsha = 'adaptive_asha',
-  AdaptiveSimple = 'adaptive_simple',
   Grid = 'grid',
   Random = 'random',
   Single = 'single',
