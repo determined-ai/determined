@@ -278,7 +278,7 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
 		if err != nil {
 			msg := fmt.Sprintf("failed to read certificate file %q", certFile)
-			return nil, errors.Wrap(err, msg)
+			return nil, errors.Wrapf(err, msg)
 		}
 		pool = x509.NewCertPool()
 		if !pool.AppendCertsFromPEM(certData) {
@@ -291,7 +291,7 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 	case err != nil:
 		msg := fmt.Sprintf("failed to read agent certificate file %q or certificate key %q",
 			a.Options.Security.TLS.ClientCert, a.Options.Security.TLS.ClientKey)
-		return nil, errors.Wrap(err, msg)
+		return nil, errors.Wrapf(err, msg)
 	case cert != nil:
 		certs = append(certs, *cert)
 	}
