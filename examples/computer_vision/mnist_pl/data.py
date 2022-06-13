@@ -15,16 +15,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import os
-import shutil
 import urllib.parse
-from typing import Optional
-
-import pytorch_lightning as pl
 import requests
-from torch.utils.data import DataLoader, random_split
+import logging
+import shutil
 from torchvision import transforms
+from torch.utils.data import DataLoader, random_split
+import pytorch_lightning as pl
+from typing import Optional
 from torchvision.datasets import MNIST
 
 

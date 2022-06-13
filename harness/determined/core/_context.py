@@ -126,7 +126,7 @@ def init(
         storage_manager: Internal use only.
         tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
             metrics and profiling data are retained. See
-            :class:`~determined.core.TensorboardMode`` for more detail.
+            :class:`~determined.core.TensorboardMode`` for more detail. Defaults to ``AUTO``.
     """
     info = det.get_cluster_info()
     if info is None:
