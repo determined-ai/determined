@@ -69,22 +69,22 @@
    attributions
    release-notes
 
-###############
- Determined AI
-###############
+############
+ Determined
+############
 
 |h3| *Welcome to Determined!*
 
-************************
- What is Determined AI?
-************************
+*********************
+ What is Determined?
+*********************
 
 Determined is an open source deep learning training platform that makes building models fast and
 easy.
 
-********************
- Why Determined AI?
-********************
+*****************
+ Why Determined?
+*****************
 
 With Determined you can:
 
