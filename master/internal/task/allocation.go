@@ -534,8 +534,8 @@ func (a *Allocation) ResourcesStateChanged(
 	}
 
 	a.resources[msg.ResourcesID].container = msg.Container
-	ctx.Log().Debugf("resources %s (rank %d) is %s [container=%v]",
-		msg.ResourcesID, a.resources[msg.ResourcesID].Rank, msg.ResourcesState, msg.Container,
+	ctx.Log().Debugf("resources %v are %s [rank=%d, container=%+v]",
+		msg.ResourcesID, msg.ResourcesState, a.resources[msg.ResourcesID].Rank, msg.Container,
 	)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
