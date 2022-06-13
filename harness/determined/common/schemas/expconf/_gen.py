@@ -935,6 +935,25 @@ schemas = {
                 "type": "string"
             }
         },
+        "shm_size": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "checks": {
+                "must be a valid memory size": {
+                    "pattern": "^([0-9]*[.])?[0-9]+ ?[kmgtpKMGTP]?[iI]?[bB]?$"
+                }
+            },
+            "default": null
+        },
+        "ipc": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "pod_spec": {
             "type": [
                 "object",
