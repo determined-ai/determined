@@ -707,7 +707,6 @@ SearcherConfigV0_Type = Union[
     GridConfigV0,
     AsyncHalvingConfigV0,
     AdaptiveASHAConfigV0,
-    PBTConfigV0,
     # EOL searchers:
     SyncHalvingConfigV0,
     AdaptiveConfigV0,
