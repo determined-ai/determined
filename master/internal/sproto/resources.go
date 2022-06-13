@@ -228,6 +228,8 @@ func FromContainerFailureType(t aproto.FailureType) FailureType {
 		return AgentFailed
 	case aproto.AgentError:
 		return AgentError
+	case aproto.RestoreError:
+		return RestoreError
 	default:
 		return FailureType(fmt.Sprintf(UnknownError, t))
 	}
