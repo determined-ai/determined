@@ -100,15 +100,18 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
 
 	envVars := map[string]string{
-		"DET_EXPERIMENT_ID":      strconv.Itoa(s.ExperimentID),
-		"DET_TRIAL_ID":           strconv.Itoa(s.TrialID),
-		"DET_TRIAL_RUN_ID":       strconv.Itoa(s.TrialRunID),
-		"DET_TRIAL_SEED":         strconv.FormatUint(uint64(s.TrialSeed), 10),
-		"DET_EXPERIMENT_CONFIG":  jsonify(s.ExperimentConfig),
-		"DET_HPARAMS":            jsonify(s.HParams),
-		"DET_STEPS_COMPLETED":    strconv.Itoa(s.StepsCompleted),
-		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
-		"DET_TASK_TYPE":          string(model.TaskTypeTrial),
+		"DET_EXPERIMENT_ID":     strconv.Itoa(s.ExperimentID),
+		"DET_TRIAL_ID":          strconv.Itoa(s.TrialID),
+		"DET_TRIAL_RUN_ID":      strconv.Itoa(s.TrialRunID),
+		"DET_TRIAL_SEED":        strconv.FormatUint(uint64(s.TrialSeed), 10),
+		"DET_EXPERIMENT_CONFIG": jsonify(s.ExperimentConfig),
+		"DET_HPARAMS":           jsonify(s.HParams),
+		"DET_STEPS_COMPLETED":   strconv.Itoa(s.StepsCompleted),
+		"DET_TASK_TYPE":         string(model.TaskTypeTrial),
+		// DET_UNIQUE_PORT_OFFSET will be overwritten by the agent resource manager when the
+		// container is started, but only on agent resource pools.  This default value will apply
+		// to k8s and slurm (though slurm will override it in a startup hook).
+		"DET_UNIQUE_PORT_OFFSET": "0",
 	}
 	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
 		envVars["DET_LATEST_CHECKPOINT"] = s.LatestCheckpoint.UUID.String()
