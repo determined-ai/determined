@@ -3,7 +3,6 @@ package internal
 import (
 	"crypto/tls"
 	"encoding/json"
-	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 
@@ -110,12 +109,10 @@ func (t TLSOptions) Validate() []error {
 // ReadClientCertificate returns the client certificate described by this configuration (nil if it
 // does not allow TLS to be enabled).
 func (t TLSOptions) ReadClientCertificate() (*tls.Certificate, error) {
-	clientCert := strings.TrimSpace(t.ClientCert)
-	clientKey := strings.TrimSpace(t.ClientKey)
-	if clientCert == "" || clientKey == "" {
+	if t.ClientCert == "" || t.ClientKey == "" {
 		return nil, nil
 	}
-	cert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+	cert, err := tls.LoadX509KeyPair(t.ClientCert, t.ClientKey)
 	return &cert, err
 }
 

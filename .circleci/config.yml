@@ -2218,7 +2218,9 @@ workflows:
       - test-e2e-aws:
           name: test-e2e-gpu-single
           context: aws
-          filters: *upstream-feature-branch
+          filters:
+            branches:
+              only: master
           requires:
             - package-and-push-system-dev
           matrix:
