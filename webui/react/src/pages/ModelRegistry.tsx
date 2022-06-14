@@ -259,7 +259,6 @@ const ModelRegistry: React.FC = () => {
         type: ErrorType.Api,
       });
       setIsLoading(false);
-      return e as Error;
     }
   }, []);
 

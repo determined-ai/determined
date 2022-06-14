@@ -221,9 +221,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
                   yaml.load(value);
                   setButtonDisabled(false);
                   return Promise.resolve();
-                } catch (err) {
+                } catch (err: unknown) {
                   setButtonDisabled(true);
-                  return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}.`));
+                  return Promise.reject(new Error(
+                    `Invalid YAML on line ${(err as {mark: {line: string}}).mark.line}.`,
+                  ));
                 }
               },
             },
