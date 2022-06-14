@@ -1,7 +1,11 @@
-from typing import Any, Optional
+import logging
+import pathlib
+from typing import Any, Callable, Optional
 
 from determined.common import util
 from determined.tensorboard import base
+
+logger = logging.getLogger("determined.tensorboard")
 
 
 class AzureTensorboardManager(base.TensorboardManager):
@@ -27,10 +31,23 @@ class AzureTensorboardManager(base.TensorboardManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def sync(self) -> None:
-        for path in self.to_sync():
-            whole_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            self.client.put("{}/{}".format(self.container, str(whole_path.parent)), path.name, path)
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.sync_path.joinpath(mangled_relative_path)
+
+            logger.debug(f"Uploading {path} to Azure: {self.container}/{mangled_path}")
+            self.client.put(
+                f"{self.container}/{mangled_path.parent}",
+                mangled_path.name,
+                path,
+            )
 
     def delete(self) -> None:
         files = self.client.list_files(self.container, self.sync_path)

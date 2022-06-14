@@ -7,12 +7,12 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 import numpy as np
 
 import determined as det
-from determined import layers, util, workload
+from determined import layers, tensorboard, util, workload
 from determined.common import check
 
 
@@ -108,6 +108,10 @@ class NoOpTrialController(det.TrialController):
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
         np.random.seed(env.trial_seed)
 
+    @classmethod
+    def create_metric_writer(cls: Type["NoOpTrialController"]) -> tensorboard.BatchMetricWriter:
+        return tensorboard.get_metric_writer()
+
     def run(self) -> None:
         if self.non_chief_exit_immediately:
             if self.context.distributed.get_rank() != 0:
@@ -135,6 +139,7 @@ class NoOpTrialController(det.TrialController):
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
             response_func(response)
+            self.upload_tb_files()
 
     def steps_trained(self) -> int:
         return sum(self.trained_steps.values())
@@ -167,6 +172,11 @@ class NoOpTrialController(det.TrialController):
             "stop_requested": self.context.get_stop_requested(),
         }
         self.steps_completed += num_batches
+        self.metric_writer.on_train_step_end(
+            self.steps_completed,
+            metrics=response["metrics"]["avg_metrics"],
+            batch_metrics=response["metrics"]["batch_metrics"],
+        )
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:

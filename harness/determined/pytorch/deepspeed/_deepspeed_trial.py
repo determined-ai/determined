@@ -15,9 +15,10 @@ import torch
 from deepspeed.runtime import dataloader as ds_loader
 
 import determined as det
-from determined import layers, pytorch, util, workload
+from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import storage
 from determined.pytorch import deepspeed as det_ds
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 
 # In most cases in which a user disables data reproducibility checks and chooses to return
@@ -59,6 +60,13 @@ class DeepSpeedTrialController(det.TrialController):
             )
 
         self.steps_completed = self.env.steps_completed
+
+    @classmethod
+    def create_metric_writer(
+        cls: Type["DeepSpeedTrialController"],
+    ) -> tensorboard.BatchMetricWriter:
+        writer = TorchWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -301,14 +309,12 @@ class DeepSpeedTrialController(det.TrialController):
                         ),
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
-
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
                         "metrics": self._compute_validation_metrics(),
                         "stop_requested": self.context.get_stop_requested(),
                     }
-
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     # The checkpointing api would have been sufficient if the base_path for the
@@ -358,6 +364,7 @@ class DeepSpeedTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // cast(int, self.context._epoch_len)
@@ -493,6 +500,11 @@ class DeepSpeedTrialController(det.TrialController):
         logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
         self.prof.set_training(False)
 
+        self.metric_writer.on_train_step_end(
+            self.steps_completed,
+            metrics["avg_metrics"],
+            metrics["batch_metrics"],
+        )
         return metrics
 
     @torch.no_grad()  # type: ignore
@@ -604,6 +616,7 @@ class DeepSpeedTrialController(det.TrialController):
             )
         )
 
+        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:

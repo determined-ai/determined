@@ -17,10 +17,11 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import keras, layers, util, workload
+from determined import keras, layers, tensorboard, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers import tensorflow
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
 if version.parse(tf.__version__) >= version.parse("2.6.0"):
@@ -165,6 +166,13 @@ class TFKerasTrialController(det.TrialController):
     @classmethod
     def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
         return True
+
+    @classmethod
+    def create_metric_writer(
+        cls: Type["TFKerasTrialController"],
+    ) -> tensorboard.BatchMetricWriter:
+        writer = tensorflow.TFWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -840,6 +848,7 @@ class TFKerasTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.upload_tb_files()
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -938,11 +947,18 @@ class TFKerasTrialController(det.TrialController):
                 },
                 "stop_requested": self.context.get_stop_requested(),
             }  # type: workload.Response
+            self.metric_writer.on_train_step_end(
+                steps_completed=self.steps_completed,
+                metrics=final_metrics,
+                batch_metrics=self.train_workload_metrics,
+            )
         else:
             response = {}
 
         self.train_response_func(response)
         self.train_response_func = None
+
+        self.upload_tb_files()
 
         self._control_loop()
 
@@ -979,6 +995,8 @@ class TFKerasTrialController(det.TrialController):
         step_duration = time.time() - validation_start_time
         logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, num_batches))
 
+        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
+        self.upload_tb_files()
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _stop_training_check(self) -> None:

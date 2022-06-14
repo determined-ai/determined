@@ -330,6 +330,24 @@ def legacy_trial_entrypoint_to_script(trial_entrypoint: str) -> List[str]:
     return ["python3", "-m", "determined.exec.harness", trial_entrypoint]
 
 
+def force_create_symlink(src: str, dst: str) -> None:
+    os.makedirs(src, exist_ok=True)
+    try:
+        os.symlink(src, dst, target_is_directory=True)
+    except FileExistsError:
+        if os.path.islink(dst):
+            os.unlink(dst)
+        elif os.path.isfile(dst):
+            os.unlink(dst)
+        else:
+            shutil.rmtree(dst)
+        try:
+            os.symlink(src, dst, target_is_directory=True)
+        except FileExistsError:
+            # in case of a race between two workers
+            pass
+
+
 @contextlib.contextmanager
 def forward_signals(p: subprocess.Popen, *signums: signal.Signals) -> Iterator[None]:
     """Forward a list of signals to a subprocess, restoring the original handlers afterwards."""
