@@ -1,0 +1,7 @@
+# Determined codeowners file
+
+# Notify eng-infra team of .github changes
+/.github  @determined-ai/infrastructure
+
+# default to no owner (this should be the last line)
+*
