@@ -60,13 +60,13 @@ const updateAntDesignTheme = (path: string) => {
   link.href = `${process.env.PUBLIC_URL}/themes/${path}`;
 };
 
-/*
+/**
  * `useTheme` hook takes a `themeId` and converts the theme object and translates into
  * CSS variables that are applied throughout various component CSS modules. Upon a change
  * in the `themeId`, the hook dynamically updates the CSS variables once again.
  * `useTheme` hook is meant to be used only once in the top level component such as App
  * and storybook Theme decorators and not individual components.
- */
+*/
 export const useTheme = (): ThemeHook => {
 
   const {
