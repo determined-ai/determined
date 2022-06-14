@@ -15,6 +15,7 @@ from .test_users import ADMIN_CREDENTIALS, logged_in_user
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
+DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
@@ -161,6 +162,12 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
         mc.initial_startup()
         yield mc
 
+def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
+
+    with ManagedCluster(config, reattach=False) as mc: 
+        mc.initial_startup()
+        yield mc
 
 def _now_ts() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat()

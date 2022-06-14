@@ -2,68 +2,31 @@ stages:
   - db:
       name: db
 
+  - elastic:
+      name: elastic
+
   - master:
       pre:
         - sh: make -C tools prep-root
       config_file:
         db:
           host: localhost
-          port: 5432
+          port: 5434
           password: postgres
           user: postgres
           name: determined
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp
-          storage_path: determined-cp
+          storage_path: determined-cp-priority
         log:
           level: debug
         root: tools/build
-        resource_manager:
-          default_aux_resource_pool: default
-          default_compute_resource_pool: default
-          scheduler:
-            fitting_policy: best
-            type: priority
-          type: agent
-        resource_pools:
-          - agent_reattach_enabled: true
-            agent_reconnect_wait: 25s
-            description: ''
-            max_aux_containers_per_agent: 100
-            pool_name: default
-            provider: null
-            task_container_defaults: null
-
-  - custom:
-      name: proxy
-      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
-      post:
-        - conncheck:
-            port: 8081
 
   - agent:
-      name: agent1
+      name: agent
       config_file:
         master_host: 127.0.0.1
-        master_port: 8081
-        agent_id: agent1
+        master_port: 8080
+        agent_id: agent
         container_master_host: $DOCKER_LOCALHOST
-        agent_reconnect_attempts: 24
-        agent_reconnect_backoff: 5
-        container_auto_remove_disabled: true
-
-
-  - agent:
-      name: agent2
-      config_file:
-        master_host: 127.0.0.1
-        master_port: 8081
-        agent_id: agent2
-        container_master_host: $DOCKER_LOCALHOST
-        fluent:
-          port: 24225  # default value is 24224
-          container_name: determined-fluent-2
-        agent_reconnect_attempts: 24
-        agent_reconnect_backoff: 5
-        container_auto_remove_disabled: true
