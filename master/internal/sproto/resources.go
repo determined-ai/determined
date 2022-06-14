@@ -130,7 +130,7 @@ func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 
 func (r ResourcesStopped) String() string {
 	if r.Failure == nil {
-		return "allocation exited successfully with a zero exit code"
+		return "resources exited successfully with a zero exit code"
 	}
 	return r.Failure.Error()
 }
@@ -182,29 +182,32 @@ func FromContainerExitCode(c *aproto.ExitCode) *ExitCode {
 type FailureType string
 
 const (
-	// ContainerFailed denotes that the container ran but failed with a non-zero exit code.
-	ContainerFailed = FailureType("allocation failed with non-zero exit code")
+	// ResourcesFailed denotes that the container ran but failed with a non-zero exit code.
+	ResourcesFailed FailureType = "resources failed with non-zero exit code"
 
-	// ContainerAborted denotes the container was canceled before it was started.
-	ContainerAborted = FailureType("allocation was aborted before it started")
+	// ResourcesAborted denotes the container was canceled before it was started.
+	ResourcesAborted FailureType = "resources was aborted before it started"
+
+	// ResourcesMissing denotes the resources were missing when the master asked about it.
+	ResourcesMissing FailureType = "request for action on unknown resources"
 
 	// TaskAborted denotes that the task was canceled before it was started.
-	TaskAborted = FailureType("task was aborted before the task was started")
+	TaskAborted FailureType = "task was aborted before the task was started"
 
 	// TaskError denotes that the task failed without an associated exit code.
-	TaskError = FailureType("task failed without an associated exit code")
+	TaskError FailureType = "task failed without an associated exit code"
 
 	// AgentFailed denotes that the agent failed while the container was running.
-	AgentFailed = FailureType("agent failed while the container was running")
+	AgentFailed FailureType = "agent failed while the container was running"
 
 	// AgentError denotes that the agent failed to launch the container.
-	AgentError = FailureType("agent failed to launch the container")
+	AgentError FailureType = "agent failed to launch the container"
 
 	// RestoreError denotes a failure to restore a running allocation on master blip.
-	RestoreError = FailureType("RM failed to restore the allocation")
+	RestoreError FailureType = "RM failed to restore the allocation"
 
 	// UnknownError denotes an internal error that did not map to a know failure type.
-	UnknownError
+	UnknownError = "unknown agent failure: %s"
 )
 
 // FromContainerFailureType converts an aproto.FailureType to a FailureType. This mapping is not
@@ -212,19 +215,23 @@ const (
 func FromContainerFailureType(t aproto.FailureType) FailureType {
 	switch t {
 	case aproto.ContainerFailed:
-		return FailureType(t)
+		return ResourcesFailed
 	case aproto.ContainerAborted:
-		return FailureType(t)
+		return ResourcesAborted
+	case aproto.ContainerMissing:
+		return ResourcesMissing
 	case aproto.TaskAborted:
-		return FailureType(t)
+		return TaskAborted
 	case aproto.TaskError:
-		return FailureType(t)
+		return TaskError
 	case aproto.AgentFailed:
-		return FailureType(t)
+		return AgentFailed
 	case aproto.AgentError:
-		return FailureType(t)
+		return AgentError
+	case aproto.RestoreError:
+		return RestoreError
 	default:
-		return FailureType(t)
+		return FailureType(fmt.Sprintf(UnknownError, t))
 	}
 }
 
@@ -253,13 +260,13 @@ func IsTransientSystemError(err error) bool {
 	switch err := err.(type) {
 	case ResourcesFailure:
 		switch err.FailureType {
-		case ContainerFailed, TaskError:
+		case ResourcesFailed, TaskError:
 			return false
 		// Questionable, could be considered failures, but for now we don't.
 		case AgentError, AgentFailed:
 			return true
 		// Definitely not a failure.
-		case TaskAborted, ContainerAborted:
+		case TaskAborted, ResourcesAborted:
 			return true
 		default:
 			return false

@@ -274,7 +274,7 @@ const HpHeatMaps: React.FC<Props> = ({
         });
 
         fullHParams.forEach(hParam1 => {
-          const hp = (experiment.hyperparameters || {})[hParam1];
+          const hp = experiment.hyperparameters?.[hParam1];
           if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam1] = true;
 
           hpLabelMap[hParam1] = [];

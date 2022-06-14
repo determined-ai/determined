@@ -62,8 +62,7 @@ type DB interface {
 	ExperimentCheckpointsToGCRaw(
 		id int,
 		experimentBest, trialBest, trialLatest int,
-		delete bool,
-	) ([]byte, error)
+	) (string, error)
 	AddTask(t *model.Task) error
 	AddTrial(trial *model.Trial) error
 	TrialByID(id int) (*model.Trial, error)

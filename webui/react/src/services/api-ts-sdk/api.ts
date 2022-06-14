@@ -151,7 +151,7 @@ export enum Determinedjobv1State {
 }
 
 /**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
  * @export
  * @enum {string}
  */
@@ -161,7 +161,8 @@ export enum Determinedjobv1Type {
     NOTEBOOK = <any> 'TYPE_NOTEBOOK',
     TENSORBOARD = <any> 'TYPE_TENSORBOARD',
     SHELL = <any> 'TYPE_SHELL',
-    COMMAND = <any> 'TYPE_COMMAND'
+    COMMAND = <any> 'TYPE_COMMAND',
+    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
 }
 
 /**
@@ -1411,6 +1412,28 @@ export interface V1CurrentUserResponse {
      * @memberof V1CurrentUserResponse
      */
     user: V1User;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteCheckpointsRequest
+ */
+export interface V1DeleteCheckpointsRequest {
+    /**
+     * The list of checkpoint_uuids for the requested checkpoint.
+     * @type {Array<string>}
+     * @memberof V1DeleteCheckpointsRequest
+     */
+    checkpointUuids: Array<string>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteCheckpointsResponse
+ */
+export interface V1DeleteCheckpointsResponse {
 }
 
 /**
@@ -6354,6 +6377,46 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
     return {
         /**
          * 
+         * @summary Delete Checkpoints.
+         * @param {V1DeleteCheckpointsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteCheckpoints.');
+            }
+            const localVarPath = `/api/v1/checkpoints`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1DeleteCheckpointsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6446,6 +6509,25 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Delete Checkpoints.
+         * @param {V1DeleteCheckpointsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).deleteCheckpoints(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6494,6 +6576,16 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
     return {
         /**
          * 
+         * @summary Delete Checkpoints.
+         * @param {V1DeleteCheckpointsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
+            return CheckpointsApiFp(configuration).deleteCheckpoints(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested checkpoint.
          * @param {string} checkpointUuid The uuid for the requested checkpoint.
          * @param {*} [options] Override http request option.
@@ -6523,6 +6615,18 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
  * @extends {BaseAPI}
  */
 export class CheckpointsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete Checkpoints.
+     * @param {V1DeleteCheckpointsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CheckpointsApi
+     */
+    public deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
+        return CheckpointsApiFp(this.configuration).deleteCheckpoints(body, options)(this.fetch, this.basePath);
+    }
+
     /**
      * 
      * @summary Get the requested checkpoint.

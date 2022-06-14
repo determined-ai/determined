@@ -595,22 +595,20 @@ func (_m *DB) ExperimentByID(id int) (*model.Experiment, error) {
 	return r0, r1
 }
 
-// ExperimentCheckpointsToGCRaw provides a mock function with given fields: id, experimentBest, trialBest, trialLatest, delete
-func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int, delete bool) ([]byte, error) {
-	ret := _m.Called(id, experimentBest, trialBest, trialLatest, delete)
+// ExperimentCheckpointsToGCRaw provides a mock function with given fields: id, experimentBest, trialBest, trialLatest
+func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int) (string, error) {
+	ret := _m.Called(id, experimentBest, trialBest, trialLatest)
 
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int, int, int, int, bool) []byte); ok {
-		r0 = rf(id, experimentBest, trialBest, trialLatest, delete)
+	var r0 string
+	if rf, ok := ret.Get(0).(func(int, int, int, int) string); ok {
+		r0 = rf(id, experimentBest, trialBest, trialLatest)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int, int, int, int, bool) error); ok {
-		r1 = rf(id, experimentBest, trialBest, trialLatest, delete)
+	if rf, ok := ret.Get(1).(func(int, int, int, int) error); ok {
+		r1 = rf(id, experimentBest, trialBest, trialLatest)
 	} else {
 		r1 = ret.Error(1)
 	}

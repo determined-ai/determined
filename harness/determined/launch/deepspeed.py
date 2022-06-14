@@ -9,6 +9,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 import time
 from typing import List
 
@@ -19,7 +20,53 @@ from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
 
-hostfile_path = "/tmp/hostfile.txt"
+hostfile_path = None
+
+
+def is_using_cuda() -> bool:
+
+    val = os.getenv("CUDA_VISIBLE_DEVICES")
+
+    if val is None or len(val.strip()) == 0:
+        return False
+    else:
+        return True
+
+
+def is_nccl_socket_ifname_env_var_set() -> bool:
+
+    val = os.getenv("NCCL_SOCKET_IFNAME")
+
+    if val is None or len(val.strip()) == 0:
+        return False
+    else:
+        return True
+
+
+def get_hostfile_path() -> str:
+
+    global hostfile_path
+
+    # Ensure that "hostfile_path" is initialized only once. All subsquent calls
+    # will return the same file name.  The production code calls this only once,
+    # but the tests call it multiple times and the tests will fail if a
+    # a different name is returned, because the expected value will not match
+    # the actual value of the command line that the test creates due to the
+    # difference in the file name.
+    if hostfile_path is None:
+        # When the task container uses "/tmp" from the host, having a file with
+        # a well-known name in a world writable directory is not only a security
+        # issue, but it can also cause a user's experiment to fail due to the
+        # file being owned by another user.  Create the file securely with a
+        # random name to avoid file name clashes between two different
+        # experiments.
+        temp_hostfile = tempfile.NamedTemporaryFile(
+            prefix="/tmp/hostfile-", suffix=".txt", delete=False
+        )
+        hostfile_path = temp_hostfile.name
+        temp_hostfile.close()
+
+    return hostfile_path
 
 
 def create_hostlist_file(
@@ -95,7 +142,13 @@ def create_deepspeed_env_file() -> None:
     There are certain variables that we need to be set that we can pass to deepspeed using
     a custom env vars file.
     """
-    INCLUDE = ["PATH", "USE_DEEPSPEED", "DET_CHIEF_IP", "DET_MANUAL_INIT_DISTRIBUTED"]
+    INCLUDE = [
+        "PATH",
+        "LD_LIBRARY_PATH",
+        "USE_DEEPSPEED",
+        "DET_CHIEF_IP",
+        "DET_MANUAL_INIT_DISTRIBUTED",
+    ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
         for k, v in environ.items():
@@ -139,6 +192,16 @@ def main(script: List[str]) -> int:
     # Chief IP is set as an environment variable to support nested launch layers
     os.environ["DET_CHIEF_IP"] = chief_ip
 
+    # If the NCCL_SOCKET_IFNAME environment variable wasn't explicitly set by
+    # the user in the experiment's YAML file, then set it to the distributed
+    # network interface, if the value of "dtrain_network_interface" under
+    # "task_container_defaults" has been set in the "master.yaml".
+    if is_using_cuda() and not is_nccl_socket_ifname_env_var_set():
+        dtrain_network_interface = os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE", None)
+
+        if dtrain_network_interface is not None and len(dtrain_network_interface) > 0:
+            os.environ["NCCL_SOCKET_IFNAME"] = dtrain_network_interface
+
     # All ranks will need to run sshd.
     run_sshd_command = create_sshd_cmd()
 
@@ -162,7 +225,9 @@ def main(script: List[str]) -> int:
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
+        p = subprocess.Popen(pid_server_cmd + run_sshd_command)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # We always need to set this variable to initialize the context correctly, even in the single
     # slot case.
@@ -176,6 +241,8 @@ def main(script: List[str]) -> int:
     #     - harness.py, which actually does the training for the worker
 
     pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
+
+    hostfile_path = get_hostfile_path()
 
     master_address = create_hostlist_file(
         hostfile_path=pathlib.Path(hostfile_path),
@@ -196,7 +263,9 @@ def main(script: List[str]) -> int:
 
     multi_machine = len(info.container_addrs) > 1
     if not multi_machine:
-        return subprocess.Popen(full_cmd).wait()
+        p = subprocess.Popen(full_cmd)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # Create the environment file that will be passed by deepspeed to individual ranks.
     create_deepspeed_env_file()
@@ -220,7 +289,9 @@ def main(script: List[str]) -> int:
         for peer_addr in info.container_addrs:
             util.check_sshd(peer_addr, deadline, constants.DTRAIN_SSH_PORT)
 
-        return subprocess.Popen(full_cmd).wait()
+        p = subprocess.Popen(full_cmd)
+        with det.util.forward_signals(p):
+            return p.wait()
     finally:
         sshd_process.kill()
         sshd_process.wait()

@@ -26,6 +26,8 @@ module.exports = {
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   root: true,
   rules: {
+    // Can disagree with @typescript-eslint/member-ordering.
+    '@typescript-eslint/adjacent-overload-signatures': 'off',
     '@typescript-eslint/explicit-module-boundary-types': [
       'warn',
       { allowArgumentsExplicitlyTypedAsAny: true },

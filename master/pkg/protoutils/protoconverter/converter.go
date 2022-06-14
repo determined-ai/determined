@@ -95,6 +95,29 @@ func (c *ProtoConverter) ToUUID(x string) uuid.UUID {
 	return y
 }
 
+// ToUUIDList converts a string to a uuid.UUID.
+func (c *ProtoConverter) ToUUIDList(x []string) []uuid.UUID {
+	var checkpointsToDelete []uuid.UUID
+	if c.err != nil {
+		return checkpointsToDelete
+	}
+
+	if len(x) == 0 {
+		return checkpointsToDelete
+	}
+
+	for _, cStr := range x {
+		cUUID, err := uuid.Parse(cStr)
+		if err != nil {
+			c.err = fmt.Errorf("string %s is not a valid uuid", cStr)
+			return checkpointsToDelete
+		}
+		checkpointsToDelete = append(checkpointsToDelete, cUUID)
+	}
+
+	return checkpointsToDelete
+}
+
 // ToCheckpointState converts a proto chechkpoint state internal state represenations.
 func (c *ProtoConverter) ToCheckpointState(x checkpointv1.State) model.State {
 	if c.err != nil {

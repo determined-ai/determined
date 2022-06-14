@@ -819,6 +819,7 @@ class TFKerasTrialController(det.TrialController):
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
+                            "determined_version": det.__version__,
                             "steps_completed": self.steps_completed,
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_weights",

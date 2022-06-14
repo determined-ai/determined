@@ -1,3 +1,4 @@
+import { Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -32,10 +33,16 @@ const TrialDetailsHeader: React.FC<Props> = ({
   trial,
 }: Props) => {
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
+  const [ experimentCreateModal, experimentCreateModalContextHolder ] = Modal.useModal();
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
-  const { modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
+  const { modalOpen } = useCreateExperimentModal(
+    {
+      modal: experimentCreateModal,
+      onClose: handleModalClose,
+    },
+  );
 
   const handleContinueTrial = useCallback(() => {
     modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
@@ -85,10 +92,13 @@ const TrialDetailsHeader: React.FC<Props> = ({
   ]);
 
   return (
-    <PageHeaderFoldable
-      leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
-      options={headerOptions}
-    />
+    <>
+      <PageHeaderFoldable
+        leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
+        options={headerOptions}
+      />
+      {experimentCreateModalContextHolder}
+    </>
   );
 };
 

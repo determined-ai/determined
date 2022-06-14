@@ -7,7 +7,6 @@ source_files := $(shell find src public -type f)
 default: get-deps
 	$(MAKE) build
 
-
 .PHONY: get-deps-npm
 get-deps-npm:
 	npm ci --no-audit
@@ -17,11 +16,11 @@ node_modules/done.stamp: package-lock.json
 	touch $@
 
 .PHONY: get-deps
-get-deps: node_modules/done.stamp
+get-deps: check-requirements node_modules/done.stamp
 	git submodule update --init
 
 .PHONY: build
-build: build/done.stamp
+build: check-requirements build/done.stamp
 
 build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.config.js jest.config.js
 	npm run build
@@ -36,7 +35,9 @@ clean:
 	rm -rf build build-storybook node_modules/
 
 .PHONY: live
-live:
+live: check-requirements start
+.PHONY: start
+start:
 	npm start
 
 .PHONY: check-js
@@ -48,6 +49,9 @@ check-css:
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
+.PHONY: check-requirements
+check-requirements:
+	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
 .PHONY: check
 check: check-js check-css check-package-lock
 

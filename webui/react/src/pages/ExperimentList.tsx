@@ -289,7 +289,6 @@ const ExperimentList: React.FC = () => {
         silent: false,
       });
       setIsLoading(false);
-      return e;
     }
   }, [ ]);
 

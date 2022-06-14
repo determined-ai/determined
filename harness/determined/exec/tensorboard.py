@@ -11,6 +11,7 @@ import boto3
 import requests
 from packaging import version
 
+import determined as det
 import determined.common
 from determined.tensorboard import fetchers
 
@@ -115,35 +116,35 @@ def start_tensorboard(
         tb_args = get_tensorboard_args(tb_version, local_dir, add_tb_args)
         logger.debug(f"tensorboard args: {tb_args}")
         tensorboard_process = subprocess.Popen(tb_args)
+        with det.util.forward_signals(tensorboard_process):
+            try:
+                while True:
+                    ret_code = tensorboard_process.poll()
+                    if ret_code is not None:
+                        raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
 
-        try:
-            while True:
-                ret_code = tensorboard_process.poll()
-                if ret_code is not None:
-                    raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
+                    # Check if we have reached a timeout without receiving metrics
+                    if num_fetched_files == 0 and time.time() > stop_time:
+                        raise RuntimeError("No new files were fetched before the timeout.")
 
-                # Check if we have reached a timeout without receiving metrics
-                if num_fetched_files == 0 and time.time() > stop_time:
-                    raise RuntimeError("No new files were fetched before the timeout.")
+                    if not responsive:
+                        if time.time() > stop_time:
+                            raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
+                        responsive = check_tensorboard_responsive()
 
-                if not responsive:
-                    if time.time() > stop_time:
-                        raise RuntimeError("Tensorboard wasn't responsive before the timeout.")
-                    responsive = check_tensorboard_responsive()
+                    if responsive and not triggered and num_fetched_files > 0:
+                        print(TENSORBOARD_TRIGGER_READY_MSG)
+                        triggered = True
 
-                if responsive and not triggered and num_fetched_files > 0:
-                    print(TENSORBOARD_TRIGGER_READY_MSG)
-                    triggered = True
+                    time.sleep(FETCH_INTERVAL)
+                    num_fetched_files += fetcher.fetch_new()
 
-                time.sleep(FETCH_INTERVAL)
-                num_fetched_files += fetcher.fetch_new()
+            finally:
+                if tensorboard_process.poll() is None:
+                    logger.info("Killing tensorboard process")
+                    tensorboard_process.kill()
 
-        finally:
-            if tensorboard_process.poll() is None:
-                logger.info("Killing tensorboard process")
-                tensorboard_process.kill()
-
-        return tensorboard_process.wait()
+            return tensorboard_process.wait()
 
 
 if __name__ == "__main__":

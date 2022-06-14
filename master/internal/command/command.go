@@ -263,7 +263,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
 		err := c.setPriority(ctx, int(msg.Priority), true)
@@ -283,7 +286,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillCommandRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
 
 	case *apiv1.SetCommandPriorityRequest:
@@ -304,7 +310,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillShellRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
 
 	case *apiv1.SetShellPriorityRequest:
@@ -325,7 +334,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 
 	case *apiv1.KillTensorboardRequest:
-		ctx.Tell(c.allocation, task.Kill)
+		ctx.Tell(c.allocation, task.AllocationSignalWithReason{
+			AllocationSignal:    task.Kill,
+			InformationalReason: "user requested kill",
+		})
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case *apiv1.SetTensorboardPriorityRequest:
@@ -345,10 +357,22 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case job.SetGroupWeight:
-		ctx.Respond(c.setWeight(ctx, msg.Weight))
+		err := c.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting command job weight")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 
 	case job.SetGroupPriority:
-		ctx.Respond(c.setPriority(ctx, msg.Priority, true))
+		err := c.setPriority(ctx, msg.Priority, true)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting command job priority")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 
 	case job.RegisterJobPosition:
 		err := c.db.UpdateJobPosition(msg.JobID, msg.JobPosition)
@@ -401,7 +425,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Id:             ctx.Self().Address().Local(),
 		State:          state.State.Proto(),
 		Description:    c.Config.Description,
-		Container:      state.FirstContainer().Proto(),
+		Container:      state.FirstContainer().ToProto(),
 		ServiceAddress: *c.serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.Base.Owner.Username,
@@ -419,7 +443,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Id:           ctx.Self().Address().Local(),
 		State:        state.State.Proto(),
 		Description:  c.Config.Description,
-		Container:    state.FirstContainer().Proto(),
+		Container:    state.FirstContainer().ToProto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.Base.Owner.Username,
 		UserId:       int32(c.Base.Owner.ID),
@@ -437,7 +461,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		State:          state.State.Proto(),
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:      state.FirstContainer().Proto(),
+		Container:      state.FirstContainer().ToProto(),
 		PrivateKey:     c.Metadata["privateKey"].(string),
 		PublicKey:      c.Metadata["publicKey"].(string),
 		Username:       c.Base.Owner.Username,
@@ -458,7 +482,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		State:          state.State.Proto(),
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:      state.FirstContainer().Proto(),
+		Container:      state.FirstContainer().ToProto(),
 		ServiceAddress: *c.serviceAddress,
 		ExperimentIds:  c.Metadata["experiment_ids"].([]int32),
 		TrialIds:       c.Metadata["trial_ids"].([]int32),

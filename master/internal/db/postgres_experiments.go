@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -1140,18 +1143,17 @@ FROM experiments
 WHERE id = $1`, id)
 }
 
-// ExperimentCheckpointsToGCRaw returns a JSON string describing checkpoints that should be GCed
-// according to the given GC policy parameters. If the delete parameter is true, the returned
-// checkpoints are also marked as deleted in the database.
+// ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints
+// that should be GCed according to the given GC policy parameters. If the delete parameter is true,
+// the returned checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-	delete bool,
-) ([]byte, error) {
+) (string, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
-	ctes := `
+	query := `
 WITH const AS (
     SELECT config->'searcher'->>'metric' AS metric_name,
            (CASE
@@ -1218,38 +1220,24 @@ WITH const AS (
                 AND c.trial_rank > $3)
                OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
                    IS NULL))
-)`
+)
+SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
-	if delete {
-		ctes += `, do_delete_v1 AS (
-    UPDATE checkpoints c
-    SET state = 'DELETED'
-    FROM selected_checkpoints
-    WHERE c.id = selected_checkpoints.id
-)
-`
-		ctes += `, do_delete_v2 AS (
-	UPDATE checkpoints_v2 c
-	SET state = 'DELETED'
-	FROM selected_checkpoints
-	WHERE c.id = selected_checkpoints.id
-)
-		`
+	var checkpointIDRows []struct {
+		ID uuid.UUID
 	}
 
-	query := `
-SELECT row_to_json(x)
-FROM (
-    SELECT const.metric_name,
-           (SELECT coalesce(
-                       jsonb_agg(to_jsonb(selected_checkpoints.*)
-                           #- '{experiment_rank}' #- '{trial_rank}' #- '{trial_order_rank}'
-                       ORDER BY id ASC), '[]'::jsonb)
-            FROM selected_checkpoints
-           ) AS checkpoints
-    FROM const
-) x
-`
+	if err := db.queryRows(query, &checkpointIDRows,
+		id, experimentBest, trialBest, trialLatest); err != nil {
+		return "", fmt.Errorf(
+			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
+	}
 
-	return db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
+	var checkpointIDs []string
+	for _, cRow := range checkpointIDRows {
+		checkpointIDs = append(checkpointIDs, cRow.ID.String())
+	}
+	deleteCheckpoints := strings.Join(checkpointIDs, ",")
+
+	return deleteCheckpoints, nil
 }

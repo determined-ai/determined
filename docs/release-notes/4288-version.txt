@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Automatically add a ``determined_version`` key to the metadata of checkpoints created by any of
+   the Trial APIs. This automatic key was accidentally dropped in release 0.18.0. Note that Core API
+   checkpoints have full control over their checkpoint metadata and so are unaffected.

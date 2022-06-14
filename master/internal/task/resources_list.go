@@ -74,15 +74,17 @@ func (r *ResourcesWithState) Persist() error {
 	return err
 }
 
-func (rs resourcesList) append(ars []sproto.Resources) error {
+func (rs resourcesList) append(ars map[sproto.ResourcesID]sproto.Resources) error {
 	start := len(rs)
-	for rank, r := range ars {
+	rank := 0
+	for _, r := range ars {
 		summary := r.Summary()
 		state := NewResourcesState(r, start+rank)
 		if err := state.Persist(); err != nil {
 			return err
 		}
 		rs[summary.ResourcesID] = &state
+		rank++
 	}
 
 	return nil
@@ -124,10 +126,30 @@ func (rs resourcesList) started() resourcesList {
 	return nrs
 }
 
+func (rs resourcesList) active() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited == nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
 func (rs resourcesList) exited() resourcesList {
 	nrs := resourcesList{}
 	for id, r := range rs {
 		if r.Exited != nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
+func (rs resourcesList) failed() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited != nil && r.Exited.Failure != nil {
 			nrs[id] = r
 		}
 	}

@@ -757,8 +757,8 @@ func AllocateTasks(
 			}
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
-				Resources: []sproto.Resources{
-					&containerResources{
+				Resources: map[sproto.ResourcesID]sproto.Resources{
+					sproto.ResourcesID(containerID): &containerResources{
 						req:         req,
 						agent:       fit.Agent,
 						containerID: containerID,

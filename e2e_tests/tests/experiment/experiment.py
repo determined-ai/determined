@@ -64,7 +64,7 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def cancel_experiment(experiment_id: int) -> None:
-    bindings.post_CancelExperiment(test_session(), id=experiment_id)
+    bindings.post_CancelExperiment(determined_test_session(), id=experiment_id)
     wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
 
 
@@ -189,7 +189,7 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
 
 def experiment_first_trial(exp_id: int) -> int:
-    session = test_session()
+    session = determined_test_session()
     trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
 
     assert len(trials) > 0
@@ -198,7 +198,7 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def test_session() -> session.Session:
+def determined_test_session() -> session.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
     authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
@@ -206,21 +206,21 @@ def test_session() -> session.Session:
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
-    r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
+    r = bindings.get_GetExperiment(determined_test_session(), experimentId=experiment_id)
     return r.config
 
 
 def experiment_state(experiment_id: int) -> determinedexperimentv1State:
-    r = bindings.get_GetExperiment(test_session(), experimentId=experiment_id)
+    r = bindings.get_GetExperiment(determined_test_session(), experimentId=experiment_id)
     return r.experiment.state
 
 
 def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
-    r1 = bindings.get_GetExperimentTrials(test_session(), experimentId=experiment_id)
+    r1 = bindings.get_GetExperimentTrials(determined_test_session(), experimentId=experiment_id)
     src_trials = r1.trials
     trials = []
     for trial in src_trials:
-        r2 = bindings.get_GetTrial(test_session(), trialId=trial.id)
+        r2 = bindings.get_GetTrial(determined_test_session(), trialId=trial.id)
         trials.append(r2)  # includes trial and workload
     return trials
 

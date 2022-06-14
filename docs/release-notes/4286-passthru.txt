@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Prevent certain hangs when using one of Determined's built-in launchers, which begin in release
+   0.18.0. These hangs were caused by wrapper processes which were seeing SIGTERM but not passing it
+   to their child process.

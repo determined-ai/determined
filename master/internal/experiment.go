@@ -294,14 +294,29 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 	case sproto.NotifyRMPriorityChange:
-		ctx.Respond(e.setPriority(ctx, &msg.Priority, false))
-	case job.SetGroupWeight:
-		if err := e.setWeight(ctx, msg.Weight); err != nil {
+		err := e.setPriority(ctx, &msg.Priority, false)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting experiment job priority")
+		}
+		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
-			ctx.Log().WithError(err)
+		}
+	case job.SetGroupWeight:
+		err := e.setWeight(ctx, msg.Weight)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting experiment job weight")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
 		}
 	case job.SetGroupPriority:
-		ctx.Respond(e.setPriority(ctx, &msg.Priority, true))
+		err := e.setPriority(ctx, &msg.Priority, true)
+		if err != nil {
+			ctx.Log().WithError(err).Info("setting experiment job priority")
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 	case job.GetJob:
 		ctx.Respond(e.toV1Job())
 
@@ -347,30 +362,19 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			e.Config.CheckpointStorage().SaveExperimentBest(),
 			e.Config.CheckpointStorage().SaveTrialBest(),
 			e.Config.CheckpointStorage().SaveTrialLatest(),
-			true,
 		)
 		if err != nil {
 			ctx.Log().WithError(err).Error("")
 		}
 
 		taskSpec := *e.taskSpec
-		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			taskID:            model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
-			jobID:             e.JobID,
-			jobSubmissionTime: e.StartTime,
-			GCCkptSpec: tasks.GCCkptSpec{
-				Base:         taskSpec,
-				ExperimentID: e.Experiment.ID,
-				LegacyConfig: e.Config.AsLegacy(),
-				ToDelete:     checkpoints,
-			},
 
-			rm: e.rm,
-			db: e.db,
+		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
+		ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, taskID, e.JobID,
+			e.StartTime, taskSpec, e.Experiment.ID, e.Config.AsLegacy(),
+			checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
 
-			taskLogger: e.taskLogger,
-			logCtx:     e.logCtx,
-		})
+		ctx.Self().System().ActorOf(addr, ckptGCTask)
 
 		if e.State == model.CompletedState {
 			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
@@ -436,7 +440,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
 			switch ok := e.updateState(ctx, model.StateWithReason{
-				State:               model.StoppingCanceledState,
+				State:               model.StoppingKilledState,
 				InformationalReason: "user requested kill",
 			}); ok {
 			case true:

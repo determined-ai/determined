@@ -105,6 +105,22 @@ commands:
               echo "detected non-docs-only changes: $DIFF_DIRS"
             fi
 
+  skip-if-webui-only:
+    steps:
+      - run: git fetch upstream
+      - run:
+          name: check for webui-only changes (must be run after skip-if-docs-only)
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            if [ "$DIFF_DIRS" = "webui" ] ; then
+              echo "webui-only change detected, halting job now"
+              circleci-agent step halt
+            else
+              echo "detected non-webui-only changes: $DIFF_DIRS"
+            fi
+
+
   set-slack-user-id:
     steps:
       - run:
@@ -1614,6 +1630,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
 
@@ -2122,7 +2139,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 2
           tf1: false
           tf2: true
           mark: managed_devcluster

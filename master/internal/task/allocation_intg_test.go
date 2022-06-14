@@ -49,13 +49,13 @@ func TestAllocation(t *testing.T) {
 		{
 			name:  "container failed",
 			acked: false,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
-			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ContainerFailed}},
+			err:   &sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
+			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
 			acked: true,
-			err:   &sproto.ResourcesFailure{FailureType: sproto.ContainerFailed},
+			err:   &sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
 			exit:  &AllocationExited{},
 		},
 	}
@@ -79,9 +79,10 @@ func TestAllocation(t *testing.T) {
 				return rsrv
 			}
 
-			resources := []sproto.Resources{
-				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
-				mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
+			rID1, rID2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
+			resources := map[sproto.ResourcesID]sproto.Resources{
+				rID1: mockRsvn(rID1, "agent-1"),
+				rID2: mockRsvn(rID2, "agent-2"),
 			}
 			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
 				Msg: tasks.TaskSpec{},
@@ -187,9 +188,10 @@ func TestAllocationAllGather(t *testing.T) {
 		return rsrv
 	}
 
-	resources := []sproto.Resources{
-		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-1"),
-		mockRsvn(sproto.ResourcesID(cproto.NewID()), "agent-2"),
+	rID1, rID2 := sproto.ResourcesID(cproto.NewID()), sproto.ResourcesID(cproto.NewID())
+	resources := map[sproto.ResourcesID]sproto.Resources{
+		rID1: mockRsvn(rID1, "agent-1"),
+		rID2: mockRsvn(rID2, "agent-2"),
 	}
 
 	trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{

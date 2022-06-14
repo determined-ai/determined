@@ -42,9 +42,10 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { auth, cluster: overview, ui, resourcePools, info } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
-  const [ modal, contextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
+  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
+  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
+  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -64,7 +65,6 @@ const NavigationTabbar: React.FC = () => {
 
   return (
     <nav className={css.base}>
-      {contextHolder}
       <div className={css.toolbar}>
         <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
         <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
@@ -126,6 +126,8 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
+      {userSettingsModalContextHolder}
+      {jupyterLabModalContextHolder}
     </nav>
   );
 };

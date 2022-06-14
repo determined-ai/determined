@@ -1,17 +1,18 @@
 import { Alert, Button, InputNumber } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalFuncProps } from 'antd';
+import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
-import React, { Dispatch, useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useJupyterLab from 'hooks/useJupyterLab';
 import usePrevious from 'hooks/usePrevious';
-import useStorage from 'hooks/useStorage';
+import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { JupyterLabConfig, ResourcePool, Template } from 'types';
+import { ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
+import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 
 import { RawJson } from '../../shared/types';
 
@@ -21,43 +22,41 @@ import useModal, { ModalHooks } from './useModal';
 const { Option } = Select;
 const { Item } = Form;
 
-const STORAGE_PATH = 'jupyter-lab-launch';
-const STORAGE_KEY = 'jupyter-lab-config';
+const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
-type DispatchFunction = Dispatch<{
-  key: keyof JupyterLabConfig,
-  value: string | number | undefined
-}>;
-
-function reducer(
-  state: JupyterLabConfig,
-  action: { key: keyof JupyterLabConfig, value: string | number | undefined },
-): JupyterLabConfig {
-  return { ...state, [action.key]: action.value };
-}
-
-const useJupyterLabForm = (): [ JupyterLabConfig, DispatchFunction ] => {
-  const storage = useStorage(STORAGE_PATH);
-  const [ state, dispatch ] = useReducer(
-    reducer,
-    storage.getWithDefault(STORAGE_KEY, { slots: DEFAULT_SLOT_COUNT }),
-  );
-
-  const storeConfig = useCallback((values: JupyterLabConfig) => {
-    const { name, ...storedValues } = values;
-    storage.set(STORAGE_KEY, storedValues);
-  }, [ storage ]);
-
-  useEffect(() => {
-    storeConfig(state);
-  }, [ state, storeConfig ]);
-
-  return [ state, dispatch ];
+const settingsConfig : SettingsConfig = {
+  settings: [
+    {
+      defaultValue: '',
+      key: 'name',
+      skipUrlEncoding: true,
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: '',
+      key: 'pool',
+      skipUrlEncoding: true,
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: DEFAULT_SLOT_COUNT,
+      key: 'slots',
+      skipUrlEncoding: true,
+      type: { baseType: BaseType.Integer },
+    },
+    {
+      key: 'template',
+      skipUrlEncoding: true,
+      type: { baseType: BaseType.String },
+    },
+  ],
+  storagePath: STORAGE_PATH,
 };
+
 interface FormProps {
-  fields: JupyterLabConfig;
-  onChange?: DispatchFunction;
+  fields: JupyterLabOptions;
+  updateFields?: UpdateSettings<JupyterLabOptions>;
 }
 
 interface FullConfigProps {
@@ -69,8 +68,12 @@ interface FullConfigProps {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useJupyterLabModal = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+const useJupyterLabModal = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
+  const [ visible, setVisible ] = useState(false);
+  const handleModalClose = useCallback(() => setVisible(false), []);
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
+    { modal, onClose: handleModalClose },
+  );
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ config, setConfig ] = useState<string | undefined>();
@@ -78,8 +81,10 @@ const useJupyterLabModal = (): ModalHooks => {
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
-  const [ fields, dispatch ] = useJupyterLabForm();
-  const { launchJupyterLab, previewJupyterLab } = useJupyterLab();
+  const { settings: fields, updateSettings: updateFields } = useSettings<JupyterLabOptions>(
+    settingsConfig,
+  );
+  const previousFields = usePrevious(fields, undefined);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -87,13 +92,13 @@ const useJupyterLabModal = (): ModalHooks => {
         name: fields.name,
         pool: fields.pool,
         slots: fields.slots,
-        templateName: fields.template,
+        template: fields.template,
       });
       setConfig(yaml.dump(newConfig));
     } catch (e) {
       setConfig(undefined);
     }
-  }, [ fields, previewJupyterLab ]);
+  }, [ fields ]);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) setButtonDisabled(false);
@@ -108,11 +113,11 @@ const useJupyterLabModal = (): ModalHooks => {
         name: fields.name,
         pool: fields.pool,
         slots: fields.slots,
-        templateName: fields.template,
+        template: fields.template,
       });
     }
     modalClose();
-  }, [ config, fields, launchJupyterLab, showFullConfig, modalClose ]);
+  }, [ config, fields, showFullConfig, modalClose ]);
 
   const handleConfigChange = useCallback((config: string) => setConfig(config), []);
 
@@ -123,8 +128,8 @@ const useJupyterLabModal = (): ModalHooks => {
       onChange={handleConfigChange}
     />
   ) : (
-    <JupyterLabForm fields={fields} onChange={dispatch} />
-  ), [ config, dispatch, fields, handleConfigChange, showFullConfig ]);
+    <JupyterLabForm fields={fields} updateFields={updateFields} />
+  ), [ config, fields, handleConfigChange, showFullConfig, updateFields ]);
 
   const content = useMemo(() => (
     <>
@@ -145,12 +150,15 @@ const useJupyterLabModal = (): ModalHooks => {
 
   const modalProps: ModalFuncProps = useMemo(() => ({
     className: css.noFooter,
+    closable: true,
     content: content,
+    icon: null,
     title: 'Launch JupyterLab',
     width: 540,
   }), [ content ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+    setVisible(true);
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
@@ -166,6 +174,11 @@ const useJupyterLabModal = (): ModalHooks => {
   useEffect(() => {
     if (showFullConfig) fetchConfig();
   }, [ fetchConfig, showFullConfig ]);
+
+  useEffect(() => {
+    if (visible && fields !== previousFields)
+      openOrUpdate(modalProps);
+  }, [ fields, previousFields, openOrUpdate, modalProps, visible ]);
 
   return { modalClose, modalOpen, modalRef };
 };
@@ -208,9 +221,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
                   yaml.load(value);
                   setButtonDisabled(false);
                   return Promise.resolve();
-                } catch (err) {
+                } catch (err: unknown) {
                   setButtonDisabled(true);
-                  return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}.`));
+                  return Promise.reject(new Error(
+                    `Invalid YAML on line ${(err as {mark: {line: string}}).mark.line}.`,
+                  ));
                 }
               },
             },
@@ -230,7 +245,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
 };
 
 const JupyterLabForm: React.FC<FormProps> = (
-  { onChange, fields }: FormProps,
+  { updateFields, fields }: FormProps,
 ) => {
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
@@ -248,14 +263,15 @@ const JupyterLabForm: React.FC<FormProps> = (
     const maxSlots = selectedPool.slotsPerAgent ?? 0;
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
-    if (hasAuxCapacity && !hasComputeCapacity) onChange?.({ key: 'slots', value: 0 });
+    if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
+    if (hasComputeCapacity && !fields.slots) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [ fields.pool, onChange, resourcePools ]);
+  }, [ fields.pool, updateFields, resourcePools, fields.slots ]);
 
   const fetchResourcePools = useCallback(async () => {
     try {
@@ -277,6 +293,13 @@ const JupyterLabForm: React.FC<FormProps> = (
     fetchTemplates();
   }, [ fetchTemplates ]);
 
+  useEffect(() => {
+    if (!fields.pool && resourcePools[0]?.name) {
+      const pool = resourcePools[0]?.name;
+      updateFields?.({ pool });
+    }
+  }, [ resourcePools, fields.pool, updateFields ]);
+
   return (
     <div className={css.form}>
       {[
@@ -286,7 +309,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               allowClear
               placeholder="No template (optional)"
               value={fields.template}
-              onChange={value => onChange?.({ key: 'template', value: value?.toString() })}>
+              onChange={value => updateFields?.({ template: value?.toString() })}>
               {templates.map(temp => (
                 <Option key={temp.name} value={temp.name}>{temp.name}</Option>
               ))}
@@ -297,9 +320,9 @@ const JupyterLabForm: React.FC<FormProps> = (
         {
           content: (
             <Input
-              placeholder="Name"
+              placeholder="Name (optional)"
               value={fields.name}
-              onChange={(e) => onChange?.({ key: 'name', value: e.target.value })}
+              onChange={(e) => updateFields?.({ name: e.target.value })}
             />
           ),
           label: 'Name',
@@ -310,7 +333,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               allowClear
               placeholder="Pick the best option"
               value={fields.pool}
-              onChange={value => onChange?.({ key: 'pool', value: value })}>
+              onChange={value => updateFields?.({ pool: value })}>
               {resourcePools.map(pool => (
                 <Option key={pool.name} value={pool.name}>{pool.name}</Option>
               ))}
@@ -326,7 +349,7 @@ const JupyterLabForm: React.FC<FormProps> = (
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
-              onChange={(value) => onChange?.({ key: 'slots', value: value })}
+              onChange={(value) => updateFields?.({ slots: value })}
             />
           ),
           label: 'Slots',

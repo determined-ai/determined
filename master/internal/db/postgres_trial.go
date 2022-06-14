@@ -291,32 +291,17 @@ DO NOTHING
 func (db *PgDB) AddCheckpointMetadata(
 	ctx context.Context, m *model.CheckpointV2,
 ) error {
-	return db.withTransaction("add checkpoint metadata", func(tx *sqlx.Tx) error {
-		var latestAllocationID model.AllocationID
-		switch err := tx.QueryRowx(`
-SELECT a.allocation_id
-FROM allocations a
-WHERE a.task_id = $1
-ORDER BY a.start_time DESC
-LIMIT 1`, m.TaskID).Scan(&latestAllocationID); {
-		case err != nil:
-			return fmt.Errorf("validating allocation ID: %w", err)
-		case m.AllocationID != latestAllocationID:
-			return fmt.Errorf("state allocation (%s != %s)", latestAllocationID, m.AllocationID)
-		}
-		// TODO: For the old "run ID" consistency check, we should just check the
-		// allocation ID is from the latest allocation.
-
-		if _, err := tx.NamedExecContext(ctx, `
+	query := `
 INSERT INTO checkpoints_v2
 	(uuid, task_id, allocation_id, report_time, state, resources, metadata)
 VALUES
-	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)
-`, m); err != nil {
-			return errors.Wrap(err, "inserting checkpoint")
-		}
-		return nil
-	})
+	(:uuid, :task_id, :allocation_id, :report_time, :state, :resources, :metadata)`
+
+	if _, err := db.sql.NamedExecContext(ctx, query, m); err != nil {
+		return errors.Wrap(err, "inserting checkpoint")
+	}
+
+	return nil
 }
 
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {

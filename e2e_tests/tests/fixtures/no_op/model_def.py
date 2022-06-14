@@ -5,6 +5,7 @@ import os
 import pathlib
 import pickle
 import random
+import sys
 import time
 from typing import Any, Dict, Optional
 
@@ -81,6 +82,8 @@ class NoOpTrialController(det.TrialController):
 
         self.request_stop = self.env.hparams.get("request_stop", False)
 
+        self.non_chief_exit_immediately = self.env.hparams.get("non_chief_exit_immediately", False)
+
         self.wlsq = None
         if self.workloads is None:
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
@@ -106,6 +109,12 @@ class NoOpTrialController(det.TrialController):
         np.random.seed(env.trial_seed)
 
     def run(self) -> None:
+        if self.non_chief_exit_immediately:
+            if self.context.distributed.get_rank() != 0:
+                sys.exit()
+            else:
+                time.sleep(1800)
+
         for w, response_func in self.workloads:
             if w.kind == workload.Workload.Kind.RUN_STEP:
                 response = self.train_for_step(w.step_id, w.num_batches)

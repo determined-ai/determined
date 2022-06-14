@@ -18,7 +18,7 @@ searcher_info AS (
     ) AS sign,
     (config->>'max_restarts')::int AS max_restarts,
     t.id AS trial_id,
-    t_ordering AS ordering
+    t_ordering.ordering AS ordering
   FROM experiments e
   JOIN trials t ON t.experiment_id = e.id
   JOIN trial_ids_ordering t_ordering ON t.id = t_ordering.trial_id

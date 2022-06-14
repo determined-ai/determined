@@ -6,20 +6,15 @@ import { openCommand } from 'wait';
 import { RawJson } from '../shared/types';
 import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
-interface JupyterLabOptions {
+export interface JupyterLabOptions {
   name?: string,
   pool?:string,
   slots?: number,
-  templateName?: string,
+  template?: string,
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {
   config?: RawJson,
-}
-
-interface JupyterLabHooks {
-  launchJupyterLab: (options: JupyterLabLaunchOptions) => Promise<void>;
-  previewJupyterLab: (options: JupyterLabOptions) => Promise<RawJson>;
 }
 
 export const launchJupyterLab = async (
@@ -34,7 +29,7 @@ export const launchJupyterLab = async (
           slots: options.slots,
         },
       },
-      templateName: options.templateName === '' ? undefined : options.templateName,
+      templateName: options.template === '' ? undefined : options.template,
     });
     openCommand(jupyterLab);
   } catch (e) {
@@ -61,16 +56,10 @@ export const previewJupyterLab = async (
         },
       },
       preview: true,
-      templateName: options.templateName === '' ? undefined : options.templateName,
+      templateName: options.template === '' ? undefined : options.template,
     });
     return config;
   } catch (e) {
     throw new Error('Unable to load JupyterLab config.');
   }
 };
-
-const useJupyterLab = (): JupyterLabHooks => {
-  return { launchJupyterLab, previewJupyterLab };
-};
-
-export default useJupyterLab;

@@ -158,13 +158,19 @@ func calculateGroupStates(
 				allocated := taskList.GetAllocations(req.TaskActor)
 				state.slotDemand += req.SlotsNeeded
 				switch {
-				case allocated == nil || len(allocated.Resources) == 0:
+				case !assignmentIsScheduled(allocated):
 					state.pendingReqs = append(state.pendingReqs, req)
-				case len(allocated.Resources) > 0:
+				default:
 					if !req.Preemptible {
 						state.presubscribedSlots += req.SlotsNeeded
 					}
 					state.allocatedReqs = append(state.allocatedReqs, req)
+					// Though it would be nice if group state slot counts were counted precisely by
+					// len(allocated.Resources.AgentDevices) after the incremental release feature,
+					// we would also need to change other slot-related variables to be similarly
+					// calculated and, unfortunately, all over the fair share code, slot demand,
+					// active slots, scheduled slots and more is have many sources of truth that
+					// make this change difficult without introducing bugs.
 					state.activeSlots += req.SlotsNeeded
 				}
 			}

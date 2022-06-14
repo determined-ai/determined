@@ -79,7 +79,7 @@ const Wait: React.FC = () => {
         }
         setWaitStatus(lastRun);
       } catch (e) {
-        handleTaskError(e);
+        handleTaskError(e as Error);
       }
     }, 1000);
   }, [ eventUrl, serviceAddr ]);

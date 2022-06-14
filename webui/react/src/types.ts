@@ -186,13 +186,6 @@ export interface Command {
   user: User;
 }
 
-export interface JupyterLabConfig {
-  name?: string;
-  pool?: string;
-  slots?: number;
-  template?: string;
-}
-
 export enum CheckpointStorageType {
   AWS = 'aws',
   GCS = 'gcs',
