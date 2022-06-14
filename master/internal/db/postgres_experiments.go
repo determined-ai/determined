@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -1233,11 +1234,32 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
 	}
 
-	var checkpointIDs []string
+	var checkpointIDs []uuid.UUID
 	for _, cRow := range checkpointIDRows {
-		checkpointIDs = append(checkpointIDs, cRow.ID.String())
+		checkpointIDs = append(checkpointIDs, cRow.ID)
 	}
-	deleteCheckpoints := strings.Join(checkpointIDs, ",")
+
+	registeredCheckpoints, err := db.GetRegisteredCheckpoints(checkpointIDs)
+	unregisteredCheckpoints := FilterRegisteredCheckpoints(registeredCheckpoints, checkpointIDs)
+	if err != nil {
+		return "", err
+	}
+
+	conv := &protoconverter.ProtoConverter{}
+	checkpointStrIDs := conv.ToStringList(unregisteredCheckpoints)
+	deleteCheckpoints := strings.Join(checkpointStrIDs, ",")
 
 	return deleteCheckpoints, nil
+}
+
+// FilterRegisteredCheckpoints filters for the checkpoints in
+// the model registrys from the list of checkpoints provided.
+func FilterRegisteredCheckpoints(registeredCheckpoints map[uuid.UUID]string, checkpoints []uuid.UUID) []uuid.UUID {
+	var filteredCheckpoints []uuid.UUID
+	for _, cUUID := range checkpoints {
+		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
+			filteredCheckpoints = append(filteredCheckpoints, cUUID)
+		}
+	}
+	return filteredCheckpoints
 }

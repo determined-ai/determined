@@ -45,16 +45,15 @@ func (a *apiServer) DeleteCheckpoints(
 
 	conv := &protoconverter.ProtoConverter{}
 	checkpointsToDelete := conv.ToUUIDList(req.CheckpointUuids)
-	if cErr := conv.Error(); err != nil {
+	if cErr := conv.Error(); cErr != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", cErr)
 	}
 
-	registeredCheckpointUUIDs, err := a.m.db.FilterForRegisteredCheckpoints(checkpointsToDelete)
+	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(checkpointsToDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	// return 400 if model registry checkpoints and include all the model registry checkpoints
 	if len(registeredCheckpointUUIDs) > 0 {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
