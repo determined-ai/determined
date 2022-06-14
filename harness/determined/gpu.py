@@ -119,3 +119,57 @@ def get_gpus() -> List[GPU]:
 
 def get_gpu_uuids() -> List[str]:
     return [gpu.uuid for gpu in sorted(get_gpus(), key=lambda gpu: gpu.id)]
+
+
+class GPUProcess(NamedTuple):
+    pid: int
+    process_name: str
+    gpu_uuid: int
+
+
+def _get_nvidia_processes() -> List[GPUProcess]:
+    try:
+        proc = subprocess.Popen(
+            ["nvidia-smi", "--query-compute-apps=" + ",".join(GPUProcess._fields), "--format=csv,noheader"],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+    except FileNotFoundError:
+        logging.info("detected 0 gpu processes (nvidia-smi not found)")
+        # This case is expected if NVIDIA drivers are not available.
+        return []
+    except Exception as e:
+        logging.warning(f"detected 0 gpu processes (error with nvidia-smi: {e})")
+        return []
+    
+    processes = []
+    with proc:
+        for fields in csv.reader(proc.stdout):
+            if len(fields) != len(GPUProcess._fields):
+                logging.warning(f"Ignoring unexpected nvidia-smi output: {fields}")
+                continue
+            fields = dict(zip(GPUProcess._fields, fields))
+            try:
+                processes.append(
+                    GPUProcess(
+                        pid=fields["pid"],
+                        uuid=fields["uuid"].strip(),
+                        gpu_uuid=fields["gpu_uuid"].strip(),
+                    )
+                )
+            except ValueError:
+                logging.warning(f"Ignoring GPU process with unexpected nvidia-smi output: {fields}")
+    if proc.returncode:
+        logging.warning(f"nvidia-smi exited with failure status code {proc.returncode}")
+
+    logging.info(f"detected {len(processes)} gpu processes")
+    return processes
+
+
+def get_gpu_processes() -> List[GPUProcess]:
+    return _get_nvidia_processes()
+
+
+def check_for_gpu_processes():
+    for process in get_gpu_processes():
+        logging.warning(f"{process.process_name} with pid {process.pid} is using gpu with uuid {process.gpu_uuid}")

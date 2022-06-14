@@ -255,6 +255,8 @@ if __name__ == "__main__":
 
     if args.resources:
         det.ResourcesInfo._by_inspection()._to_file()
+        from determined.gpu import check_for_gpu_processes
+        check_for_gpu_processes()
 
     if args.rendezvous:
         do_rendezvous(sess, info.allocation_id)
