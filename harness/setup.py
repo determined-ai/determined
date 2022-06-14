@@ -31,7 +31,7 @@ setup(
         "pathspec>=0.6.0",
         # azure-core 1.23 requires typing-extensions 4.x which is incompatible with TF2.4
         "azure-core<1.23",
-        "azure-storage-blob<1.23",
+        "azure-storage-blob<12.12",
         "termcolor>=1.1.0",
         "boto3",
         # CLI:
