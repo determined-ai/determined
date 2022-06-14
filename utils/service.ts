@@ -6,8 +6,7 @@ import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const getResponseStatus = (e: any): number | undefined => {
-  const errorResponse = e || {};
-  return (errorResponse.response || {}).status || errorResponse.status;
+  return e?.response?.status || e?.status;
 };
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {

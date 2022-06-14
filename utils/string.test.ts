@@ -142,7 +142,6 @@ describe('String Utilities', () => {
       expect(utils.humanReadableBytes(1234567890)).toBe('1.23 GB');
       expect(utils.humanReadableBytes(1234567890123)).toBe('1.23 TB');
       expect(utils.humanReadableBytes(1234567890123456)).toBe('1.23 PB');
-      expect(utils.humanReadableBytes(1234567890123456789)).toBe('1.23 EB');
     });
   });
 
