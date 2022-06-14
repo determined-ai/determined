@@ -10,7 +10,7 @@ class TensorboardMode(enum.Enum):
     <determined.core.TrainContext.get_tensorboard_path>`), and automatically
     uploads all of its own tensorboard artifacts to checkpoint storage.  Tensorboard
     artifacts written by non-chief workers will not be uploaded at all. This is the
-    same behavior that existed prior to 0.18.2.
+    same behavior that existed prior to 0.18.3.
 
     In ``Manual`` mode no Tensorboard artifacts are written or uploaded at all.
     It is entirely up to the user to write their desired metrics and upload
