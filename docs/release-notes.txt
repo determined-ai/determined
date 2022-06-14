@@ -15,7 +15,7 @@ Version 0.18.2
 
 **Bug Fixes**
 
--  Web: Update task cards to only truncate task UUIDs and leaving experiment IDs alone.
+-  Web: Update task cards to only truncate task UUIDs and leave experiment IDs alone.
 -  CLI: Fix an issue for ``det task logs`` where trial task IDs and checkpoint GC task IDs could not
    be used.
 -  Agent: Fix being unable to use control-C to cancel the agent when it is connecting to master.
@@ -26,12 +26,12 @@ Version 0.18.2
 **Fixes**
 
 -  Prevent certain hangs when using one of Determined's built-in launchers, which begin in release
-   0.18.0. These hangs were caused by wrapper processes which were seeing SIGTERM but not passing it
-   to their child process.
+   0.18.0. These hangs were caused by wrapper processes seeing SIGTERM but not passing it to their
+   child process.
 
--  Supports running in containers which do not have a /bin/which path, such as python-slim. The
-   error was caused by accidentally hardcoding ``/bin/which`` instead of letting the shell find
-   ``which`` on the path.
+-  Supports running in containers that do not have a /bin/which path, such as python-slim. The error
+   was caused by accidentally hardcoding ``/bin/which`` instead of letting the shell find ``which``
+   on the path.
 
 -  Automatically add a ``determined_version`` key to the metadata of checkpoints created by any of
    the Trial APIs. This automatic key was accidentally dropped in release 0.18.0. Note that Core API
@@ -39,11 +39,11 @@ Version 0.18.2
 
 **Improvements**
 
--  Scheduler: Tasks now release resources as they free instead of holding them until all resources
-   free.
+-  Scheduler: Tasks now release resources as they become free instead of holding them until all
+   resources are free.
 -  CLI: ``det deploy aws up``, ``det deploy aws down``, and ``det deploy gcp down`` now take
    ``--yes`` to skip prompts asking for confirmation. ``--no-prompt`` is still usable.
--  Experiments: When attempting to delete an experiment, if the delete fails it is now retry-able.
+-  Experiments: When attempting to delete an experiment, if the delete fails it is now retryable.
 -  Agents: Improve behavior and observability when agents lose websocket messages due to network
    failures.
 -  Trials: Trial logs will report some system events such as when a trial gets canceled, paused,
