@@ -130,7 +130,11 @@ class GPUProcess(NamedTuple):
 def _get_nvidia_processes() -> List[GPUProcess]:
     try:
         proc = subprocess.Popen(
-            ["nvidia-smi", "--query-compute-apps=" + ",".join(GPUProcess._fields), "--format=csv,noheader"],
+            [
+                "nvidia-smi",
+                "--query-compute-apps=" + ",".join(GPUProcess._fields),
+                "--format=csv,noheader",
+            ],
             stdout=subprocess.PIPE,
             universal_newlines=True,
         )
@@ -141,7 +145,7 @@ def _get_nvidia_processes() -> List[GPUProcess]:
     except Exception as e:
         logging.warning(f"detected 0 gpu processes (error with nvidia-smi: {e})")
         return []
-    
+
     processes = []
     with proc:
         for fields in csv.reader(proc.stdout):
@@ -172,4 +176,8 @@ def get_gpu_processes() -> List[GPUProcess]:
 
 def check_for_gpu_processes():
     for process in get_gpu_processes():
-        logging.warning(f"process {process.process_name} with pid {process.pid} is using gpu with uuid {process.gpu_uuid}")
+        logging.warning(
+            f"process {process.process_name} "
+            f"with pid {process.pid} "
+            f"is using gpu with uuid {process.gpu_uuid}"
+        )

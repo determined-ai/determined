@@ -242,7 +242,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(
-        level=args.log_level, format=det.LOG_FORMAT,
+        level=args.log_level,
+        format=det.LOG_FORMAT,
     )
     logging.debug("running prep_container")
 
@@ -267,6 +268,7 @@ if __name__ == "__main__":
     if args.resources:
         det.ResourcesInfo._by_inspection()._to_file()
         from determined.gpu import check_for_gpu_processes
+
         check_for_gpu_processes()
 
     if args.rendezvous:
