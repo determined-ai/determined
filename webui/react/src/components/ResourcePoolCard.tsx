@@ -41,7 +41,7 @@ export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
       break;
   }
 
-  return <img src={iconSrc} />;
+  return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
 const poolAttributes = [

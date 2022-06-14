@@ -1,7 +1,10 @@
 $padding: 12px;
-$icon-side: 50px;
+$icon-side: 40px;
 $line-height: 22px;
 
+.rp-type-logo {
+  width: $icon-side;
+}
 .base {
   background-color: var(--theme-stage);
   border-radius: var(--theme-border-radius);
@@ -101,7 +104,7 @@ $line-height: 22px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-  
+
     ul {
       flex-grow: 1;
     }
