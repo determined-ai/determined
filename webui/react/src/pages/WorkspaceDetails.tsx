@@ -5,7 +5,9 @@ import { useParams } from 'react-router';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -46,13 +48,6 @@ enum ProjectFilters {
   Mine = 'MY_PROJECTS',
   Others = 'OTHERS_PROJECTS'
 }
-
-/*
- * This indicates that the cell contents are rightClickable
- * and we should disable custom context menu on cell context hover
- */
-const onRightClickableCell = () =>
-  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 const WorkspaceDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();

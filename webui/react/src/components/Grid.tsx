@@ -1,4 +1,4 @@
-import React, { CSSProperties, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { ShirtSize } from 'themes';
 
@@ -14,7 +14,6 @@ interface Props {
   gap?: ShirtSize;
   minItemWidth?: number;
   mode?: GridMode | number;
-  style?: CSSProperties
 }
 
 const sizeMap = {
@@ -29,12 +28,10 @@ const Grid: React.FC<Props> = ({
   minItemWidth = 240,
   mode = GridMode.AutoFit,
   children,
-  style: styleIn,
 }: PropsWithChildren<Props>) => {
   const style = {
     gridGap: `calc(${sizeMap[gap]} + var(--theme-density) * 1px)`,
     gridTemplateColumns: `repeat(${mode}, minmax(${minItemWidth}px, 1fr))`,
-    ...styleIn,
   };
   const classes = [ css.base ];
 

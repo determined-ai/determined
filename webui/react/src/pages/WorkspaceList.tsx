@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -37,13 +39,6 @@ enum WorkspaceFilters {
   Mine = 'MY_WORKSPACES',
   Others = 'OTHERS_WORKSPACES'
 }
-
-/*
- * This indicates that the cell contents are rightClickable
- * and we should disable custom context menu on cell context hover
- */
-const onRightClickableCell = () =>
-  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 const WorkspaceList: React.FC = () => {
   const { users, auth: { user } } = useStore();

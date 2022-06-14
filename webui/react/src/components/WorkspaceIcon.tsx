@@ -3,7 +3,6 @@ import React, { CSSProperties, useMemo } from 'react';
 import useTheme from 'hooks/useTheme';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
-// import { DarkLight } from 'themes';
 
 import css from './WorkspaceIcon.module.scss';
 
@@ -39,9 +38,8 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
   }, [ size ]);
 
   const borderRadius = useMemo(() => {
-    if (size > 50) return 8;
-    if (size > 25) return 4;
-    return 4;
+    if (size > 50) return 'var(--theme-border-radius-strong)';
+    return 'var(--theme-border-radius)';
   }, [ size ]);
 
   return (

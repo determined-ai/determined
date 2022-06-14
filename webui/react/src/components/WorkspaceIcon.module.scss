@@ -1,7 +1,7 @@
 .base {
   aspect-ratio: 1;
-  background-color: var(--theme-colors-monochrome-15);
-  border-radius: 8px;
+  background-color: var(--theme-surface-weak);
+  border-radius: var(--theme-border-radius-strong);
   display: grid;
 
   & > * {

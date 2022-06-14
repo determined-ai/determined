@@ -8,7 +8,9 @@ import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import InteractiveTable, { ColumnDef,
+  InteractiveTableSettings,
+  onRightClickableCell } from 'components/InteractiveTable';
 import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -73,13 +75,6 @@ import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
-
-/*
- * This indicates that the cell contents are rightClickable
- * and we should disable custom context menu on cell context hover
- */
-const onRightClickableCell = () =>
-  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 interface Params {
   projectId: string;

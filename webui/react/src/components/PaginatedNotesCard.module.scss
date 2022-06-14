@@ -34,7 +34,7 @@
           visibility: hidden;
         }
         &:hover {
-          background-color: var(--theme-colors-monochrome-12);
+          background-color: var(--theme-surface-strong);
 
           .action {
             visibility: visible;
@@ -71,7 +71,7 @@
       margin: 0;
     }
     & > i {
-      color: var(--theme-colors-monochrome-8)
+      color: var(--theme-stage-on)
     }
   }
 }

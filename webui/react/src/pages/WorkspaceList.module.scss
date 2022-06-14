@@ -9,9 +9,5 @@
 }
 
 @media only screen and (max-width: $breakpoint-mobile) {
-  .base {
-    .controls {
-      flex-wrap: wrap;
-    }
-  }
+  .base .controls { flex-wrap: wrap; }
 }

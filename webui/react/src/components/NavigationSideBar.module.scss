@@ -38,7 +38,6 @@
 
     .noWorkspaces {
       align-self: center;
-      // color: #bfbfbf;
       color: var(--theme-stage-on-weak);
       font-size: 12px;
       padding: 6px;
@@ -119,7 +118,7 @@
     }
     &:hover {
       background-color: var(--theme-stage-strong);
-      color: var(--theme-colors-monochrome-17);
+      color: var(--theme-stage-on-strong);
     }
     .navItem {
       align-items: center;
@@ -129,18 +128,11 @@
       display: flex;
       flex-grow: 1;
       height: 48px;
-      // width: var(--nav-side-bar-width-max); // ???
       max-width: 100%;
 
       .icon {
         padding-inline: 16px;
       }
-      // [class*=Icon_base_] {
-      //   left: 16px;
-      //   position: absolute;
-      //   top: 12px;
-      // }
-
       .label {
         font-size: 12px;
         height: 24px;
@@ -148,8 +140,6 @@
         overflow: hidden;
         padding-right: 16px;
         white-space: nowrap;
-        // top: 12px;
-        // left: 56px;
         width: auto
       }
     }
@@ -162,8 +152,6 @@
       align-items: center;
       display: flex;
       flex-direction: column;
-
-      // height: 100%;
 
       & a {
         align-items: center;
@@ -183,9 +171,6 @@
         margin-right: 16px;
         padding: 0 6px;
         white-space: nowrap;
-        // bottom: 16px;
-        // position: absolute;
-        // right: 16px;
       }
       .action {
         height: 100%;
@@ -221,10 +206,6 @@
 
     .action,
     .label { opacity: 1; }
-    // .status {
-    //   right: 16px;
-    //   transform: translateX(0);
-    // }
   }
   .navItemContainer.hasStatus {
     height: 48px;
@@ -316,7 +297,6 @@
   }
   .navItemContainer.hasStatus {
     height: 72px;
-    // .status { bottom: 12px; }
   }
   .user {
     transition: width var(--animation-curve);
@@ -378,7 +358,6 @@
   }
   .navItemContainer.hasStatus {
     height: 72px;
-    // .status { bottom: 12px; }
   }
   .user {
     width: var(--nav-side-bar-width-min);
@@ -469,18 +448,9 @@
     .navItemExtra {
       display: none;
     }
-    // .status {
-    //   right: 16px;
-    //   transform: translateX(0);
-    //   transition:
-    //     bottom var(--animation-curve),
-    //     right var(--animation-curve),
-    //     transform var(--animation-curve);
-    // }
   }
   .navItemContainer.hasStatus {
     height: 48px;
-    // .status { bottom: 16px; }
   }
   .user {
     transition: width var(--animation-curve);

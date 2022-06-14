@@ -79,7 +79,7 @@ export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
     resources: {},
     searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
-  const { projectId, ... exp } = generateExperiments(1)[0];
+  const { projectId, ...exp } = generateExperiments(1)[0];
   return {
     ...exp,
     ...experimentTask,

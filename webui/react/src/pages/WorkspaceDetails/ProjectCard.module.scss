@@ -1,6 +1,6 @@
 .base {
   background-color: var(--theme-surface);
-  border: var(--theme-stroke-width) solid var(--theme-colors-monochrome-13);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
   border-radius: 12px;
   color: var(--theme-surface-on);
   cursor: pointer;

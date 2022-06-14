@@ -86,7 +86,7 @@ const ClusterOverview: React.FC = () => {
     setTotal(resourcePools.length || 0);
   }, [ resourcePools ]);
 
-  usePolling(fetchResourcePools, { interval: 10000, rerunOnNewFn: true });
+  usePolling(fetchResourcePools, { interval: 10000 });
 
   const getSlotTypeOverview = useCallback((
     resPoolName: string,

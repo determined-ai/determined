@@ -42,13 +42,9 @@ const ProjectActionDropdown: React.FC<Props> = (
     return curUser?.isAdmin || curUser?.username === project.username;
   }, [ curUser?.isAdmin, curUser?.username, project.username ]);
 
-  const handleEditClick = useCallback(() => {
-    openProjectEdit();
-  }, [ openProjectEdit ]);
+  const handleEditClick = useCallback(() => openProjectEdit(), [ openProjectEdit ]);
 
-  const handleMoveClick = useCallback(() => {
-    openProjectMove();
-  }, [ openProjectMove ]);
+  const handleMoveClick = useCallback(() => openProjectMove(), [ openProjectMove ]);
 
   const handleArchiveClick = useCallback(async () => {
     if (project.archived) {
