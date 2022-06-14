@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  CLI: ``det deploy aws up``, ``det deploy aws down``, and ``det deploy gcp down`` now take
-   ``--yes`` to skip prompts asking for confirmation. ``--no-prompt`` is still usable.

@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Scheduler: Tasks now release resources as they free instead of holding them until all resources
-   free.

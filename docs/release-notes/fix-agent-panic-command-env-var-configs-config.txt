@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Commands: Fix an issue for commands where setting an environment variable as ``FOO`` instead of
-   ``FOO=bar`` in ``environment.environment_variables`` causes the agent to panic.

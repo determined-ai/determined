@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Web: Update task cards to only truncate task UUIDs and leaving experiment IDs alone.
