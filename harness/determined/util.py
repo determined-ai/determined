@@ -341,7 +341,11 @@ def force_create_symlink(src: str, dst: str) -> None:
             os.unlink(dst)
         else:
             shutil.rmtree(dst)
-        os.symlink(src, dst, target_is_directory=True)
+        try:
+            os.symlink(src, dst, target_is_directory=True)
+        except FileExistsError:
+            # in case of a race between two workers
+            pass
 
 
 @contextlib.contextmanager
