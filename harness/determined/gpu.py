@@ -153,7 +153,7 @@ def _get_nvidia_processes() -> List[GPUProcess]:
                 processes.append(
                     GPUProcess(
                         pid=fields["pid"],
-                        uuid=fields["uuid"].strip(),
+                        process_name=fields["process_name"],
                         gpu_uuid=fields["gpu_uuid"].strip(),
                     )
                 )
@@ -172,4 +172,4 @@ def get_gpu_processes() -> List[GPUProcess]:
 
 def check_for_gpu_processes():
     for process in get_gpu_processes():
-        logging.warning(f"{process.process_name} with pid {process.pid} is using gpu with uuid {process.gpu_uuid}")
+        logging.warning(f"process {process.process_name} with pid {process.pid} is using gpu with uuid {process.gpu_uuid}")
