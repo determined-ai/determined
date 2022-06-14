@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Kubernetes: Users may now specify a ``checkpointStorage.prefix`` in the Determined helm chart if
-   using s3 buckets for checkpoint storage. Checkpoints will now be uploaded with the path prefix
-   whereas before it was ignored.

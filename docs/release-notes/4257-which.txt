@@ -1,7 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Supports running in containers which do not have a /bin/which path, such as python-slim. The
-   error was caused by accidentally hardcoding ``/bin/which`` instead of letting the shell find
-   ``which`` on the path.
