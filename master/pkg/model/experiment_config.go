@@ -82,24 +82,23 @@ type StorageSize int64
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (d *StorageSize) UnmarshalJSON(data []byte) error {
-	// Passed in as an int (for backwards compatibility)?
-	type DefaultParser *StorageSize
-	if err := json.Unmarshal(data, DefaultParser(d)); err == nil {
-		return nil
-	} else if _, ok := err.(*json.UnmarshalTypeError); !ok {
+	var size any
+	if err := json.Unmarshal(data, &size); err != nil {
 		return err
 	}
 
-	// Passed in as a string?
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
+	switch s := size.(type) {
+	case float64:
+		*d = StorageSize(s)
+	case string:
+		b, err := units.RAMInBytes(s)
+		if err != nil {
+			return errors.Wrap(err, "shm_size not a valid size")
+		}
+		*d = StorageSize(b)
+	default:
+		return errors.New("shm_size needs to be a string or numeric")
 	}
-	b, err := units.RAMInBytes(s)
-	if err != nil {
-		return errors.Wrap(err, "shm_size not a valid size")
-	}
-	*d = StorageSize(b)
 	return nil
 }
 

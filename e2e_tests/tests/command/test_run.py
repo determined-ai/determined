@@ -265,7 +265,7 @@ def test_environment_variables_command() -> None:
     )
 
 
-@pytest.mark.parametrize("actual,expected", [("24576", "24K"), ("1.5g", "1.5G")])
+@pytest.mark.parametrize("actual,expected", [("24576", "24"), ("1.5g", "1572864")])
 @pytest.mark.parametrize("use_config_file", [True, False])
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
@@ -288,13 +288,10 @@ resources:
         else:
             cmd += ["--config", f"resources.shm_size={actual}"]
         cmd += [
-            f"""echo '' > /dev/shm/test && \
-df -h /dev/shm && \
-df -h /dev/shm | \
+            f"""df /dev/shm && \
+df /dev/shm | \
 tail -1 | \
-[ $(awk '{{print $2}}') != '{expected}' ] && \
-exit 1 || \
-exit 0"""
+[ $(awk '{{print $2}}') = '{expected}' ]"""
         ]
         _run_and_verify_exit_code_zero(cmd)
 
