@@ -124,7 +124,7 @@ def get_gpu_uuids() -> List[str]:
 class GPUProcess(NamedTuple):
     pid: int
     process_name: str
-    gpu_uuid: int
+    gpu_uuid: str
 
 
 def _get_nvidia_processes() -> List[GPUProcess]:
@@ -148,15 +148,15 @@ def _get_nvidia_processes() -> List[GPUProcess]:
 
     processes = []
     with proc:
-        for fields in csv.reader(proc.stdout):
-            if len(fields) != len(GPUProcess._fields):
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {fields}")
+        for field_list in csv.reader(proc.stdout):  # type: ignore
+            if len(field_list) != len(GPUProcess._fields):
+                logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
                 continue
-            fields = dict(zip(GPUProcess._fields, fields))
+            fields = dict(zip(GPUProcess._fields, field_list))
             try:
                 processes.append(
                     GPUProcess(
-                        pid=fields["pid"],
+                        pid=int(fields["pid"]),
                         process_name=fields["process_name"],
                         gpu_uuid=fields["gpu_uuid"].strip(),
                     )
@@ -174,7 +174,7 @@ def get_gpu_processes() -> List[GPUProcess]:
     return _get_nvidia_processes()
 
 
-def check_for_gpu_processes():
+def check_for_gpu_processes() -> None:
     for process in get_gpu_processes():
         logging.warning(
             f"process {process.process_name} "
