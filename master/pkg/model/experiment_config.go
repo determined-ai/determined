@@ -93,7 +93,7 @@ func (d *StorageSize) UnmarshalJSON(data []byte) error {
 	case string:
 		b, err := units.RAMInBytes(s)
 		if err != nil {
-			return errors.Wrap(err, "shm_size not a valid size")
+			return errors.Wrap(err, "failed to parse shm_size")
 		}
 		*d = StorageSize(b)
 	default:
