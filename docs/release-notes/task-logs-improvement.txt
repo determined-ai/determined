@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Trials: Trial logs will report some system events such as when a trial gets canceled, paused,
-   killed, or preempted.
