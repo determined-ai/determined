@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  CLI: Add new command ``det experiment logs <experiment-id>`` to get logs of the first trial of an
-   experiment. Flags from ``det trial logs`` are supported.
