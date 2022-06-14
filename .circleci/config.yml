@@ -75,6 +75,11 @@ upstream-feature-branch: &upstream-feature-branch
       - /release-.*/
       - master
 
+any-upstream: &any-upstream
+  branches:
+    ignore:
+      - /pull\/.*/
+
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
@@ -2051,7 +2056,7 @@ workflows:
       - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
-          filters: *upstream-feature-branch
+          filters: *any-upstream
       - test-examples
       - python-coverage:
           requires:
@@ -2091,10 +2096,7 @@ workflows:
           requires:
             - build-react
             - build-docs
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
+          filters: *any-upstream
 
       - test-debian-packaging:
           requires:
