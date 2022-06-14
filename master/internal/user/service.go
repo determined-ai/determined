@@ -116,6 +116,11 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 
 func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		fmt.Println()
+		fmt.Println("PROCESSING AUTHENTICATION FOR:")
+		fmt.Println("FUNC PATH:", c.Path())
+		fmt.Println("FUNC URI:", c.Request().RequestURI)
+		fmt.Println()
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
