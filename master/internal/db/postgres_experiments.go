@@ -1254,7 +1254,8 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
 // FilterRegisteredCheckpoints filters for the checkpoints in
 // the model registrys from the list of checkpoints provided.
-func FilterRegisteredCheckpoints(registeredCheckpoints map[uuid.UUID]string, checkpoints []uuid.UUID) []uuid.UUID {
+func FilterRegisteredCheckpoints(registeredCheckpoints map[uuid.UUID]string,
+	checkpoints []uuid.UUID) []uuid.UUID {
 	var filteredCheckpoints []uuid.UUID
 	for _, cUUID := range checkpoints {
 		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
