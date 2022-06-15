@@ -364,8 +364,8 @@ def render_event_stream(event: Any) -> None:
         )
     elif event["assigned_event"] is not None:
         print(colored("{} was assigned to an agent...".format(description), "green"))
-    elif event["container_started_event"] is not None:
-        print(colored("Container of {} has started...".format(description), "green"))
+    elif event["resources_started_event"] is not None:
+        print(colored("Resources for {} has started...".format(description), "green"))
     elif event["service_ready_event"] is not None:
         pass  # Ignore this message.
     elif event["terminate_request_event"] is not None:

@@ -216,8 +216,8 @@ type Event struct {
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
 	AssignedEvent *ResourcesAllocated `json:"assigned_event"`
-	// ContainerStartedEvent is triggered when the container started on an agent.
-	ContainerStartedEvent *ResourcesStarted `json:"container_started_event"`
+	// ResourcesStartedEvent is triggered when the resources started on an agent.
+	ResourcesStartedEvent *ResourcesStarted `json:"resources_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
 	ServiceReadyEvent *bool `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
@@ -236,7 +236,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	switch {
 	case ev.ScheduledEvent != nil:
 		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
-	case ev.ContainerStartedEvent != nil:
+	case ev.ResourcesStartedEvent != nil:
 		message = fmt.Sprintf("Resources for %s have started", description)
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)

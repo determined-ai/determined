@@ -573,7 +573,7 @@ func (a *Allocation) ResourcesStateChanged(
 
 		a.sendEvent(ctx, sproto.Event{
 			ContainerID:           coalesceString(msg.ContainerIDStr(), ""),
-			ContainerStartedEvent: msg.ResourcesStarted,
+			ResourcesStartedEvent: msg.ResourcesStarted,
 		})
 
 		prom.AssociateAllocationTask(a.req.AllocationID,
