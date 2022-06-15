@@ -347,11 +347,11 @@
   case:
     shm_size: 1
 
-- name: shm size valid 1219021b
+- name: shm size valid 1219021 b
   complete_as:
     - http://determined.ai/schemas/expconf/v0/resources.json
   case:
-    shm_size: 1219021b
+    shm_size: 1219021 b
 
 - name: shm size invalid giga
   sanity_errors:
@@ -366,3 +366,18 @@
       - "<config>.shm_size: must be a valid memory size"  
   case:
     shm_size: 1.gb
+
+- name: shm size invalid 1 gi
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/resources.json:
+      - "<config>.shm_size: must be a valid memory size"  
+  case:
+    shm_size: 1 gi
+
+- name: shm size invalid 1 i
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/resources.json:
+      - "<config>.shm_size: must be a valid memory size"  
+  case:
+    shm_size: 1 i
+    
