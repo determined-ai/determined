@@ -329,6 +329,10 @@ html {
     background-color: var(--theme-surface-strong);
     border-color: var(--theme-surface-border);
   }
+  .ant-tabs-card > .ant-tabs-nav > .ant-tabs-nav-wrap .ant-tabs-tab:hover {
+    background-color: var(--theme-surface);
+    color: var(--theme-surface-on);
+  }
   .ant-tabs-card > .ant-tabs-nav > .ant-tabs-nav-wrap .ant-tabs-tab-active {
     background-color: var(--theme-surface);
     border-bottom-color: var(--theme-surface);
