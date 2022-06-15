@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -22,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -238,8 +240,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 
 		taskID := model.NewTaskID()
+		conv := &protoconverter.ProtoConverter{}
+		checkpointStrIDs := conv.ToStringList(checkpoints)
+		deleteCheckpoints := strings.Join(checkpointStrIDs, ",")
 		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID,
-			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), checkpoints,
+			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), deleteCheckpoints,
 			true, agentUserGroup, user, nil)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			ckptGCTask)

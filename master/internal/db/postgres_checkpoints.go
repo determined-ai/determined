@@ -8,7 +8,7 @@ import (
 
 // GetRegisteredCheckpoints gets the checkpoints in
 // the model registrys from the list of checkpoints provided.
-func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID]string, error) {
+func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID]bool, error) {
 	var checkpointIDRows []struct {
 		ID uuid.UUID
 	}
@@ -21,10 +21,10 @@ func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID
 			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
 
-	checkpointIDs := make(map[uuid.UUID]string)
+	checkpointIDs := make(map[uuid.UUID]bool)
 
 	for _, cRow := range checkpointIDRows {
-		checkpointIDs[cRow.ID] = ""
+		checkpointIDs[cRow.ID] = true
 	}
 
 	return checkpointIDs, nil

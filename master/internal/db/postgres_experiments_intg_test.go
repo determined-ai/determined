@@ -36,7 +36,7 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	exp := requireMockExperiment(t, db, user)
 	tr := requireMockTrial(t, db, exp)
 	a := requireMockAllocation(t, db, tr.TaskID)
-	var expectedCheckpoints []string
+	var expectedCheckpoints []uuid.UUID
 	for i := 1; i <= 3; i++ {
 		ckptUuid := uuid.New()
 		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
@@ -46,7 +46,7 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 			err = addCheckpointToModelRegistry(db, ckptUuid, user)
 			require.NoError(t, err)
 		} else {
-			expectedCheckpoints = append(expectedCheckpoints, ckptUuid.String())
+			expectedCheckpoints = append(expectedCheckpoints, ckptUuid)
 		}
 	}
 
@@ -57,8 +57,7 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 		0,
 	)
 	require.NoError(t, err)
-	expectedCheckpointsStr := strings.Join(expectedCheckpoints, ",")
-	require.Equal(t, expectedCheckpointsStr, checkpoints)
+	require.Equal(t, expectedCheckpoints, checkpoints)
 }
 
 func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model.User) error {

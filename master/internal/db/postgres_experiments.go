@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -1150,7 +1148,7 @@ WHERE id = $1`, id)
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-) (string, error) {
+) ([]uuid.UUID, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
@@ -1230,7 +1228,7 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
 	if err := db.queryRows(query, &checkpointIDRows,
 		id, experimentBest, trialBest, trialLatest); err != nil {
-		return "", fmt.Errorf(
+		return nil, fmt.Errorf(
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
 	}
 
@@ -1240,27 +1238,15 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 	}
 
 	registeredCheckpoints, err := db.GetRegisteredCheckpoints(checkpointIDs)
-	unregisteredCheckpoints := FilterRegisteredCheckpoints(registeredCheckpoints, checkpointIDs)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	conv := &protoconverter.ProtoConverter{}
-	checkpointStrIDs := conv.ToStringList(unregisteredCheckpoints)
-	deleteCheckpoints := strings.Join(checkpointStrIDs, ",")
-
-	return deleteCheckpoints, nil
-}
-
-// FilterRegisteredCheckpoints filters for the checkpoints in
-// the model registrys from the list of checkpoints provided.
-func FilterRegisteredCheckpoints(registeredCheckpoints map[uuid.UUID]string,
-	checkpoints []uuid.UUID) []uuid.UUID {
-	var filteredCheckpoints []uuid.UUID
-	for _, cUUID := range checkpoints {
+	var deleteCheckpoints []uuid.UUID
+	for _, cUUID := range checkpointIDs {
 		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
-			filteredCheckpoints = append(filteredCheckpoints, cUUID)
+			deleteCheckpoints = append(deleteCheckpoints, cUUID)
 		}
 	}
-	return filteredCheckpoints
+
+	return deleteCheckpoints, nil
 }

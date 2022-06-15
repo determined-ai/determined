@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/shopspring/decimal"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -368,11 +370,13 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
-
+		conv := &protoconverter.ProtoConverter{}
+		checkpointStrIDs := conv.ToStringList(checkpoints)
+		deleteCheckpoints := strings.Join(checkpointStrIDs, ",")
 		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, taskID, e.JobID,
 			e.StartTime, taskSpec, e.Experiment.ID, e.Config.AsLegacy(),
-			checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
+			deleteCheckpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
 
 		ctx.Self().System().ActorOf(addr, ckptGCTask)
 

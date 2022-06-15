@@ -596,14 +596,16 @@ func (_m *DB) ExperimentByID(id int) (*model.Experiment, error) {
 }
 
 // ExperimentCheckpointsToGCRaw provides a mock function with given fields: id, experimentBest, trialBest, trialLatest
-func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int) (string, error) {
+func (_m *DB) ExperimentCheckpointsToGCRaw(id int, experimentBest int, trialBest int, trialLatest int) ([]uuid.UUID, error) {
 	ret := _m.Called(id, experimentBest, trialBest, trialLatest)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(int, int, int, int) string); ok {
+	var r0 []uuid.UUID
+	if rf, ok := ret.Get(0).(func(int, int, int, int) []uuid.UUID); ok {
 		r0 = rf(id, experimentBest, trialBest, trialLatest)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]uuid.UUID)
+		}
 	}
 
 	var r1 error
