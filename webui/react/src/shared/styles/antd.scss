@@ -8,7 +8,7 @@ html {
 
   /* Button */
 
-  .ant-btn { border-radius: 4px; }
+  .ant-btn { border-radius: var(--theme-border-radius); }
   .ant-btn:not(.ant-btn-sm) { padding: 4px 8px; }
   .ant-btn > i + span { margin-left: 8px; }
   .ant-btn.ant-btn-background-ghost {
@@ -39,7 +39,13 @@ html {
 
   /* Checkbox */
 
-  .ant-checkbox-checked .ant-checkbox-inner::after {
+  .ant-checkbox > .ant-checkbox-inner {
+    border-color: var(--theme-ix-border);
+  }
+  .ant-checkbox-checked > .ant-checkbox-inner {
+    border-color: var(--theme-ix-border-active);
+  }
+  .ant-checkbox-checked > .ant-checkbox-inner::after {
     border-left: 0;
     border-top: 0;
   }
