@@ -237,7 +237,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.ScheduledEvent != nil:
 		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
 	case ev.ContainerStartedEvent != nil:
-		message = fmt.Sprintf("Container for %s has started", description)
+		message = fmt.Sprintf("Resources for %s have started", description)
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)
 	case ev.ExitedEvent != nil:
