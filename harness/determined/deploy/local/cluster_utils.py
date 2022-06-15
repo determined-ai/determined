@@ -282,7 +282,7 @@ def agent_up(
     if agent_config_path is not None:
         with agent_config_path.open() as f:
             agent_conf = yaml.safe_load(f)
-        volumes += f"{agent_config_path}:/etc/determined/agent.yaml"
+        volumes += [f"{agent_config_path}:/etc/determined/agent.yaml"]
 
     # Fallback on agent config for options not specified as flags.
     if agent_name == AGENT_NAME_DEFAULT:

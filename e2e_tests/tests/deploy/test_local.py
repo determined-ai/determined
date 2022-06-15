@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -101,6 +102,43 @@ def test_custom_etc() -> None:
     )
     assert os.path.exists("/tmp/ckpt-test/")
     cluster_down([])
+
+
+@pytest.mark.det_deploy_local
+def test_agent_config_path() -> None:
+    master_host = "localhost"
+    master_port = "8080"
+    conf.MASTER_IP = master_host
+    conf.MASTER_PORT = master_port
+    master_up([])
+
+    # Config makes it unmodified.
+    etc_path = str(Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
+    agent_name = "test-path-agent"
+    agent_up(["--agent-config-path", etc_path])
+
+    client = docker.from_env()
+    agent_container = client.containers.get(agent_name)
+    exit_code, out = agent_container.exec_run(["cat", "/etc/determined/agent.yaml"])
+    assert exit_code == 0
+    with open(etc_path) as f:
+        assert f.read() == out.decode("utf-8")
+
+    client.containers.get("test-fluent")  # Ensure config actually took effect.
+    agent_down(["--agent-name", agent_name])
+
+    # Validate CLI flags overwrite config file options.
+    agent_name += "-2"
+    agent_up(
+        ["--agent-name", agent_name, "--agent-config-path", etc_path, "--agent-label", "cli-flag"]
+    )
+    agent_list = json.loads(subprocess.check_output(["det", "a", "list", "--json"]).decode())
+    agent_list = list(filter(lambda x: x["id"] == agent_name, agent_list))
+    assert len(agent_list) == 1
+    assert agent_list[0]["label"] == "cli-flag"
+    agent_down(["--agent-name", agent_name])
+
+    master_down([])
 
 
 @pytest.mark.det_deploy_local
