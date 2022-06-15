@@ -2,6 +2,10 @@ import { Modal } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import ActionSheet from 'components/ActionSheet';
+import AvatarCard from 'components/AvatarCard';
+import DynamicIcon from 'components/DynamicIcon';
+import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
@@ -11,11 +15,7 @@ import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 
 import Icon from '../shared/components/Icon/Icon';
 
-import ActionSheet from './ActionSheet';
-import AvatarCard from './AvatarCard';
-import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
-import WorkspaceIcon from './WorkspaceIcon';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -102,7 +102,7 @@ const NavigationTabbar: React.FC = () => {
             path: paths.workspaceList(),
           },
           ...pinnedWorkspaces.map((workspace) => ({
-            icon: <WorkspaceIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
             label: workspace.name,
             onClick: (e: AnyMouseEvent) =>
               handlePathUpdate(e, paths.workspaceDetails(workspace.id)),

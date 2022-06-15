@@ -4,6 +4,10 @@ import React, { useCallback, useEffect, useMemo, useRef,
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import AvatarCard from 'components/AvatarCard';
+import Dropdown, { Placement } from 'components/Dropdown';
+import DynamicIcon from 'components/DynamicIcon';
+import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
@@ -15,12 +19,8 @@ import { paths } from 'routes/utils';
 
 import Icon from '../shared/components/Icon/Icon';
 
-import AvatarCard from './AvatarCard';
-import Dropdown, { Placement } from './Dropdown';
-import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
-import WorkspaceIcon from './WorkspaceIcon';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -228,7 +228,7 @@ const NavigationSideBar: React.FC = () => {
                       <li>
                         <NavigationItem
                           icon={(
-                            <WorkspaceIcon
+                            <DynamicIcon
                               name={workspace.name}
                               size={24}
                             />

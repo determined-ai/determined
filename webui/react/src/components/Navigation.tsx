@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchPinnedWorkspaces, useFetchResourcePools } from 'hooks/useFetch';
@@ -15,20 +15,14 @@ interface Props {
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
-  const { auth, ui } = useStore();
+  const { ui } = useStore();
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
 
-  const fetchAuthOnly = useCallback(async () => {
-    if (auth.isAuthenticated) {
-      await fetchAgents();
-    }
-  }, [ auth.isAuthenticated, fetchAgents ]);
-
-  usePolling(fetchAuthOnly);
+  usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
 
   useEffect(() => {

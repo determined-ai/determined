@@ -690,7 +690,6 @@ export interface Workspace {
   numProjects: number;
   pinned: boolean;
   userId: number;
-  username: string;
 }
 
 export interface WorkspacePagination extends WithPagination {
@@ -712,7 +711,6 @@ export interface Project {
   numActiveExperiments: number;
   numExperiments: number;
   userId: number;
-  username: string;
   workspaceId: number;
   workspaceName: string;
 }

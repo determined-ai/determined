@@ -1,5 +1,6 @@
+import { CheckOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import usePrevious from 'hooks/usePrevious';
@@ -8,13 +9,16 @@ import { Note } from 'types';
 
 import NotesCard from './NotesCard';
 import css from './PaginatedNotesCard.module.scss';
+import SelectFilter from './SelectFilter';
+
+const { Option } = Select;
 
 interface Props {
   disabled?: boolean;
   notes: Note[];
   onDelete: (pageNumber: number) => void;
   onNewPage: () => void;
-  onSave: (notes: Note[]) => void;
+  onSave: (notes: Note[]) => Promise<void>;
 }
 
 const PaginatedNotesCard: React.FC<Props> = (
@@ -110,8 +114,8 @@ const PaginatedNotesCard: React.FC<Props> = (
   }, [ currentPage, notes.length, fireNoteChangeSignal ]);
 
   useEffect(() => {
-    setEditedContents(notes?.[currentPage]?.contents ?? '');
-    setEditedName(notes?.[currentPage]?.name ?? '');
+    setEditedContents(prev => notes?.[currentPage]?.contents ?? prev);
+    setEditedName(prev => notes?.[currentPage]?.name ?? prev);
   }, [ currentPage, notes ]);
 
   const ActionMenu = useCallback((pageNumber: number) => {
@@ -154,7 +158,7 @@ const PaginatedNotesCard: React.FC<Props> = (
                   className={css.listItem}
                   style={{
                     borderColor: idx === currentPage ?
-                      'var(--theme-colors-monochrome-12)' :
+                      'var(--theme-stage-border-strong)' :
                       undefined,
                   }}
                   onClick={() => handleSwitchPage(idx)}>
@@ -174,6 +178,28 @@ const PaginatedNotesCard: React.FC<Props> = (
           </ul>
         </div>
       )}
+      <div className={css.pageSelectRow}>
+        <SelectFilter
+          className={css.pageSelect}
+          size="large"
+          value={currentPage}
+          onSelect={handleSwitchPage}>
+          {notes.map((note, idx) => {
+            return (
+              <Option className={css.selectOption} key={idx} value={idx}>
+                <CheckOutlined
+                  className={css.currentPage}
+                  style={{
+                    marginRight: 8,
+                    visibility: idx === currentPage ? 'visible' : 'hidden',
+                  }}
+                />
+                <span>{note.name}</span>
+              </Option>
+            );
+          })}
+        </SelectFilter>
+      </div>
       <div className={css.notesContainer}>
         <NotesCard
           disabled={disabled}

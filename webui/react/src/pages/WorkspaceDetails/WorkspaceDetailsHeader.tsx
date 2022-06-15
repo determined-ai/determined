@@ -2,8 +2,8 @@ import { DownOutlined, PushpinOutlined } from '@ant-design/icons';
 import { Button, Space, Tooltip } from 'antd';
 import React, { useCallback } from 'react';
 
+import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
-import WorkspaceIcon from 'components/WorkspaceIcon';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
@@ -45,38 +45,36 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
   return (
     <div className={css.base}>
       <Space align="center">
-        <WorkspaceIcon name={workspace.name} size={32} />
-        <div className={css.nameRow}>
-          <h1 className={css.name}>
-            <InlineEditor
-              disabled={workspace.immutable ||
+        <DynamicIcon name={workspace.name} size={32} />
+        <h1 className={css.name}>
+          <InlineEditor
+            disabled={workspace.immutable ||
                  workspace.archived
-                || (!curUser?.isAdmin && curUser?.username !== workspace.username)}
-              maxLength={80}
-              value={workspace.name}
-              onSave={handleNameChange}
-            />
-          </h1>
-          {workspace.archived && (
-            <Tooltip title="Archived">
-              <div>
-                <Icon name="archive" size="small" />
-              </div>
-            </Tooltip>
-          )}
-          {workspace.pinned && (
-            <Tooltip title="Pinned to sidebar">
-              <PushpinOutlined className={css.pinned} />
-            </Tooltip>
-          )}
-        </div>
+                || (!curUser?.isAdmin && curUser?.id !== workspace.userId)}
+            maxLength={80}
+            value={workspace.name}
+            onSave={handleNameChange}
+          />
+        </h1>
+        {workspace.archived && (
+          <Tooltip title="Archived">
+            <div>
+              <Icon name="archive" size="small" />
+            </div>
+          </Tooltip>
+        )}
+        {workspace.pinned && (
+          <Tooltip title="Pinned to sidebar">
+            <PushpinOutlined className={css.pinned} />
+          </Tooltip>
+        )}
         {!workspace.immutable && (
           <WorkspaceActionDropdown
             curUser={curUser}
             trigger={[ 'click' ]}
             workspace={workspace}
             onComplete={fetchWorkspace}>
-            <DownOutlined style={{ fontSize: 12 }} />
+            <DownOutlined className={css.dropdown} />
           </WorkspaceActionDropdown>
         )}
       </Space>

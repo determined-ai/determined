@@ -3,8 +3,8 @@ import { Tooltip, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
 import Avatar from 'components/Avatar';
+import DynamicIcon from 'components/DynamicIcon';
 import Link from 'components/Link';
-import WorkspaceIcon from 'components/WorkspaceIcon';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -31,7 +31,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
       workspace={workspace}
       onComplete={fetchWorkspaces}>
       <div className={css.base} onClick={handleCardClick}>
-        <WorkspaceIcon name={workspace.name} size={70} />
+        <DynamicIcon name={workspace.name} size={70} />
         <div className={css.info}>
           <div className={css.nameRow}>
             <h6 className={css.name}>
@@ -52,7 +52,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, curUser, fetchWorkspaces }:
           <p className={css.projects}>
             {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
-          <div className={css.avatar}><Avatar name={workspace.username} /></div>
+          <div className={css.avatar}><Avatar userId={workspace.userId} /></div>
         </div>
         {workspace.pinned && <PushpinOutlined className={css.pinned} />}
         {!workspace.immutable && (

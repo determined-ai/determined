@@ -4,7 +4,7 @@ import useTheme from 'hooks/useTheme';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
 
-import css from './WorkspaceIcon.module.scss';
+import css from './DynamicIcon.module.scss';
 
 interface Props {
   name?: string;
@@ -12,9 +12,9 @@ interface Props {
   style?: CSSProperties;
 }
 
-const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
-
+const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
   const { mode } = useTheme();
+
   const nameAcronym = useMemo(() => {
     if (!name) return '-';
     return name
@@ -59,4 +59,4 @@ const WorkspaceIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
   );
 };
 
-export default WorkspaceIcon;
+export default DynamicIcon;

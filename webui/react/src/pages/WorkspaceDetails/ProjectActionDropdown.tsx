@@ -39,8 +39,8 @@ const ProjectActionDropdown: React.FC<Props> = (
   const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: onComplete, project });
 
   const userHasPermissions = useMemo(() => {
-    return curUser?.isAdmin || curUser?.username === project.username;
-  }, [ curUser?.isAdmin, curUser?.username, project.username ]);
+    return curUser?.isAdmin || curUser?.id === project.userId;
+  }, [ curUser?.id, curUser?.isAdmin, project.userId ]);
 
   const handleEditClick = useCallback(() => openProjectEdit(), [ openProjectEdit ]);
 

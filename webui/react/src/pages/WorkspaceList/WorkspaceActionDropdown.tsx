@@ -41,8 +41,8 @@ const WorkspaceActionDropdown: React.FC<Props> = (
   });
 
   const userHasPermissions = useMemo(() => {
-    return curUser?.isAdmin || curUser?.username === workspace.username;
-  }, [ curUser?.isAdmin, curUser?.username, workspace.username ]);
+    return curUser?.isAdmin || curUser?.id === workspace.userId;
+  }, [ curUser?.id, curUser?.isAdmin, workspace.userId ]);
 
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {

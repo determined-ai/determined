@@ -628,7 +628,6 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
     numProjects: data.numProjects,
     pinned: data.pinned,
     userId: data.userId,
-    username: data.username,
   };
 };
 
@@ -644,7 +643,6 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
     numActiveExperiments: data.numActiveExperiments,
     numExperiments: data.numExperiments,
     userId: data.userId,
-    username: data.username,
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName ?? '',
   };

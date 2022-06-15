@@ -53,7 +53,7 @@ const Markdown: React.FC<Props> = ({
     <div aria-label="markdown-editor" className={css.base}>
       {editing ? (
         <Tabs className="no-padding">
-          <TabPane key={TabType.Edit} style={{ overflow: 'hidden' }} tab="Edit">
+          <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">
             <React.Suspense
               fallback={<div><Spinner tip="Loading text editor..." /></div>}>
               <MonacoEditor
@@ -81,7 +81,7 @@ const Markdown: React.FC<Props> = ({
       ) : (
         <MarkdownRender
           markdown={markdown}
-          placeholder="add notes..."
+          placeholder="Add notes..."
           onClick={onClick}
         />
       )}

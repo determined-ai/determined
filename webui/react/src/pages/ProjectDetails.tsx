@@ -45,8 +45,11 @@ import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import { RecordKey } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
+import { ErrorLevel } from 'shared/utils/error';
 import { isNotFound } from 'shared/utils/service';
+import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
   ExperimentAction as Action,
   CommandTask,
@@ -64,10 +67,6 @@ import {
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'wait';
-
-import { RecordKey } from '../shared/types';
-import { ErrorLevel } from '../shared/utils/error';
-import { validateDetApiEnum, validateDetApiEnumList } from '../shared/utils/service';
 
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,

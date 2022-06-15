@@ -8,24 +8,18 @@
   padding-bottom: 0;
   width: 100%;
 
-  .nameRow {
-    align-items: center;
-    display: flex;
-    gap: 6px;
-    grid-column: 1/3;
+  .name {
+    font-size: 20px;
+    margin: 0;
+    text-align: center;
+  }
+  .pinned {
+    color: var(--theme-colors-monochrome-9);
+    font-size: 20px;
     height: min-content;
-    min-width: 0;
-
-    .name {
-      font-size: 20px;
-      margin: 0;
-      text-align: center;
-    }
-    .pinned {
-      color: var(--theme-colors-monochrome-9);
-      font-size: 20px;
-      height: min-content;
-      width: min-content;
-    }
+    width: min-content;
+  }
+  .dropdown {
+    font-size: 12px;
   }
 }

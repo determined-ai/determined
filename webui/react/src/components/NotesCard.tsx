@@ -26,8 +26,15 @@ interface Props {
 
 const NotesCard: React.FC<Props> = (
   {
-    disabled = false, notes, onSave, onSaveTitle,
-    style, title = 'Notes', extra, onChange, noteChangeSignal,
+    disabled = false,
+    notes,
+    onSave,
+    onSaveTitle,
+    style,
+    title = 'Notes',
+    extra,
+    onChange,
+    noteChangeSignal,
   }: Props,
 ) => {
   const [ isEditing, setIsEditing ] = useState(false);
@@ -45,7 +52,6 @@ const NotesCard: React.FC<Props> = (
     setIsEditing(false);
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
-    // titleRef.current.focus();
   }, [ noteChangeSignal ]);
 
   const editNotes = useCallback(() => {
@@ -77,6 +83,10 @@ const NotesCard: React.FC<Props> = (
     setEditedNotes(newNotes);
     onChange?.(newNotes);
   }, [ onChange ]);
+
+  const handleNotesClick = useCallback((e: React.MouseEvent) => {
+    if (e.detail > 1 || notes === '') editNotes();
+  }, [ editNotes, notes ]);
 
   useEffect(() => {
     setEditedNotes(notes);
@@ -123,14 +133,13 @@ const NotesCard: React.FC<Props> = (
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}
-          onClick={(e: React.MouseEvent) => { if (e.detail > 1 || notes === '') editNotes(); }}
+          onClick={handleNotesClick}
         />
       </Spinner>
       <Prompt
         message={(newLocation) => {
-          const isSameExperiment =
-          location.pathname.split('/')[0] === 'experiment' &&
-            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
+          const isSameExperiment = location.pathname.split('/')[0] === 'experiment' &&
+             newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
           return (
             isSameExperiment ?
               true :

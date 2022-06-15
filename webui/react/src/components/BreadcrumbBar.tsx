@@ -10,8 +10,8 @@ import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './BreadcrumbBar.module.scss';
+import DynamicIcon from './DynamicIcon';
 import Link from './Link';
-import WorkspaceIcon from './WorkspaceIcon';
 
 interface Props {
   experiment?: ExperimentBase;
@@ -136,7 +136,7 @@ const BreadcrumbBar: React.FC<Props> = (
           <>
             <Breadcrumb.Item>
               <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
-                <WorkspaceIcon
+                <DynamicIcon
                   name={workspace?.name}
                   size={24}
                   style={{ color: 'black', marginRight: 10 }}
