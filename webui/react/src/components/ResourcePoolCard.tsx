@@ -3,12 +3,15 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
+import useTheme from 'hooks/useTheme';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import { clone } from 'shared/utils/data';
+import { DarkLight } from 'themes';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
 
 import Json from './Json';
@@ -23,11 +26,13 @@ interface Props {
   totalComputeSlots: number;
 }
 
-export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
+/** Resource pool logo based on resource pool type */
+export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
+  const { themeMode } = useTheme();
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
-      iconSrc = awsLogo;
+      iconSrc = themeMode === DarkLight.Light ? awsLogo : awsLogoOnDark;
       break;
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;
@@ -41,7 +46,7 @@ export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
       break;
   }
 
-  return <img src={iconSrc} />;
+  return <img className={css['rp-type-logo']} src={iconSrc} />;
 };
 
 const poolAttributes = [
@@ -97,7 +102,9 @@ const ResourcePoolCard: React.FC<Props> = ({
   return (
     <div className={css.base}>
       <div className={css.header}>
-        <div className={css.icon}>{poolLogo(pool.type)}</div>
+        <div className={css.icon}>
+          <PoolLogo type={pool.type} />
+        </div>
         <div className={css.info}>
           <div className={css.name}>{pool.name}</div>
           <div className={css.tags}>
