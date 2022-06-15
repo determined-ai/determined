@@ -26,7 +26,7 @@ interface Props {
   totalComputeSlots: number;
 }
 
-/** Resource pool logo for based on resource pool type */
+/** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
   const { themeMode } = useTheme();
   let iconSrc = '';
