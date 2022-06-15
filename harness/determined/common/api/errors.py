@@ -74,3 +74,8 @@ class CorruptCertificateCacheException(Exception):
             "Attempted to read a corrupted certificate cache.  The store has been deleted; "
             "please try again.\n"
         )
+
+
+class EmptyResultException(BadResponseException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

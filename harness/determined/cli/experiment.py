@@ -26,6 +26,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined, session
 
 from .checkpoint import render_checkpoint
+from .project import project_by_name
 from .trial import logs_args_description
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
@@ -769,6 +770,18 @@ def unarchive(args: Namespace) -> None:
     print("Unarchived experiment {}".format(args.experiment_id))
 
 
+@authentication.required
+def move_experiment(args: Namespace) -> None:
+    sess = setup_session(args)
+    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    req = bindings.v1MoveExperimentRequest(
+        destinationProjectId=p.id,
+        experimentId=args.experiment_id,
+    )
+    bindings.post_MoveExperiment(sess, body=req, experimentId=args.experiment_id)
+    print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
+
+
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):
         return None
@@ -1047,6 +1060,16 @@ main_cmd = Cmd(
                     "remove label",
                     [experiment_id_arg("experiment ID"), Arg("label", help="label")],
                 ),
+            ],
+        ),
+        Cmd(
+            "move",
+            move_experiment,
+            "move experiment to another project",
+            [
+                experiment_id_arg("experiment ID to move"),
+                Arg("workspace_name", help="Name of destination workspace"),
+                Arg("project_name", help="Name of destination project"),
             ],
         ),
         Cmd(

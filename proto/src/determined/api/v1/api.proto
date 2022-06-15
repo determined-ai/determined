@@ -15,12 +15,14 @@ import "determined/api/v1/job.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
+import "determined/api/v1/project.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
+import "determined/api/v1/workspace.proto";
 import "determined/api/v1/resourcepool.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
@@ -1311,6 +1313,212 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
+    };
+  }
+
+  // Get the requested workspace.
+  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Get projects associated with a workspace.
+  rpc GetWorkspaceProjects(GetWorkspaceProjectsRequest)
+      returns (GetWorkspaceProjectsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{id}/projects"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Get a list of workspaces.
+  rpc GetWorkspaces(GetWorkspacesRequest) returns (GetWorkspacesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Create a workspace.
+  rpc PostWorkspace(PostWorkspaceRequest) returns (PostWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Update a workspace.
+  rpc PatchWorkspace(PatchWorkspaceRequest) returns (PatchWorkspaceResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/workspaces/{id}"
+      body: "workspace"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Delete a workspace.
+  rpc DeleteWorkspace(DeleteWorkspaceRequest)
+      returns (DeleteWorkspaceResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/workspaces/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Archive a workspace.
+  rpc ArchiveWorkspace(ArchiveWorkspaceRequest)
+      returns (ArchiveWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Unarchive a workspace.
+  rpc UnarchiveWorkspace(UnarchiveWorkspaceRequest)
+      returns (UnarchiveWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Pin a workspace.
+  rpc PinWorkspace(PinWorkspaceRequest) returns (PinWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/pin"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+  // Unpin a workspace.
+  rpc UnpinWorkspace(UnpinWorkspaceRequest) returns (UnpinWorkspaceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/unpin"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Get the requested project.
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Get experiments associated with a project.
+  rpc GetProjectExperiments(GetProjectExperimentsRequest)
+      returns (GetProjectExperimentsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{id}/experiments"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Create a project.
+  rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{workspace_id}/projects"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Add a note to a project.
+  rpc AddProjectNote(AddProjectNoteRequest) returns (AddProjectNoteResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/notes"
+      body: "note"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Set project notes.
+  rpc PutProjectNotes(PutProjectNotesRequest)
+      returns (PutProjectNotesResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/projects/{project_id}/notes"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Update a project.
+  rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/projects/{id}"
+      body: "project"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Delete a project.
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/projects/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Archive a project.
+  rpc ArchiveProject(ArchiveProjectRequest) returns (ArchiveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Unarchive a project.
+  rpc UnarchiveProject(UnarchiveProjectRequest)
+      returns (UnarchiveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Move a project into a workspace.
+  rpc MoveProject(MoveProjectRequest) returns (MoveProjectResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/move"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
+  // Move an experiment into a project.
+  rpc MoveExperiment(MoveExperimentRequest) returns (MoveExperimentResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/move"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
     };
   }
 }

@@ -702,13 +702,13 @@ func (_m *DB) ExperimentIDByTrialID(trialID int) (int, error) {
 	return r0, r1
 }
 
-// ExperimentLabelUsage provides a mock function with given fields:
-func (_m *DB) ExperimentLabelUsage() (map[string]int, error) {
-	ret := _m.Called()
+// ExperimentLabelUsage provides a mock function with given fields: projectID
+func (_m *DB) ExperimentLabelUsage(projectID int32) (map[string]int, error) {
+	ret := _m.Called(projectID)
 
 	var r0 map[string]int
-	if rf, ok := ret.Get(0).(func() map[string]int); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(int32) map[string]int); ok {
+		r0 = rf(projectID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]int)
@@ -716,8 +716,8 @@ func (_m *DB) ExperimentLabelUsage() (map[string]int, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(int32) error); ok {
+		r1 = rf(projectID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1247,6 +1247,27 @@ func (_m *DB) PeriodicTelemetryInfo() ([]byte, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ProjectByName provides a mock function with given fields: workspaceName, projectName
+func (_m *DB) ProjectByName(workspaceName string, projectName string) (int, error) {
+	ret := _m.Called(workspaceName, projectName)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string, string) int); ok {
+		r0 = rf(workspaceName, projectName)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(workspaceName, projectName)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -8,10 +8,6 @@ import { openCommand } from 'wait';
 
 const locations: TreeNode[] = [
   {
-    onAction: visitAction(paths.experimentList()),
-    title: 'experiments',
-  },
-  {
     aliases: [ 'agents', 'resourcePools' ],
     onAction: visitAction(paths.cluster()),
     title: 'cluster',
@@ -58,10 +54,6 @@ const locations: TreeNode[] = [
       ];
     },
     title: 'trial',
-  },
-  {
-    onAction: visitAction(paths.dashboard()),
-    title: 'dashboard',
   },
   {
     aliases: [ 'jupyterLabs', 'tensorBoards', 'commands', 'shells' ],

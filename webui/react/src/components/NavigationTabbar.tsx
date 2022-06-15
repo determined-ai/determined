@@ -2,17 +2,19 @@ import { Modal } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import ActionSheet from 'components/ActionSheet';
+import AvatarCard from 'components/AvatarCard';
+import DynamicIcon from 'components/DynamicIcon';
+import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
+import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 
 import Icon from '../shared/components/Icon/Icon';
 
-import ActionSheet from './ActionSheet';
-import AvatarCard from './AvatarCard';
-import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
 
 interface ToolbarItemProps extends LinkProps {
@@ -40,17 +42,28 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
   const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
+  const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
-  const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
+  const handleWorkspacesOpen = useCallback(() => {
+    if (pinnedWorkspaces.length === 0) {
+      routeToReactUrl(paths.workspaceList());
+      return;
+    }
+    setIsShowingPinnedWorkspaces(true);
+  }, [ pinnedWorkspaces.length ]);
+  const handleActionSheetCancel = useCallback(() => {
+    setIsShowingOverflow(false);
+    setIsShowingPinnedWorkspaces(false);
+  }, []);
   const handleLaunchJupyterLab = useCallback(() => {
     setIsShowingOverflow(false);
     openJupyterLabModal();
@@ -59,6 +72,7 @@ const NavigationTabbar: React.FC = () => {
   const handlePathUpdate = useCallback((e, path) => {
     handlePath(e, { path });
     setIsShowingOverflow(false);
+    setIsShowingPinnedWorkspaces(false);
   }, []);
 
   if (!showNavigation) return null;
@@ -66,8 +80,7 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
-        <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
+        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem
@@ -76,8 +89,28 @@ const NavigationTabbar: React.FC = () => {
           path={paths.cluster()}
           status={clusterStatusText(overview, resourcePools)}
         />
+        <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
+      <ActionSheet
+        actions={[
+          {
+            icon: 'workspaces',
+            label: 'Workspaces',
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceList()),
+            path: paths.workspaceList(),
+          },
+          ...pinnedWorkspaces.map((workspace) => ({
+            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+            label: workspace.name,
+            onClick: (e: AnyMouseEvent) =>
+              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+          })),
+        ]}
+        show={isShowingPinnedWorkspaces}
+        onCancel={handleActionSheetCancel}
+      />
       <ActionSheet
         actions={[
           { render: () => <AvatarCard className={css.user} key="avatar" user={auth.user} /> },
@@ -89,7 +122,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'user',
             label: 'Sign out',
-            onClick: e => handlePathUpdate(e, paths.logout()),
+            onClick: (e) => handlePathUpdate(e, paths.logout()),
           },
           {
             icon: 'jupyter-lab',
@@ -99,7 +132,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'logs',
             label: 'Cluster Logs',
-            onClick: e => handlePathUpdate(e, paths.clusterLogs()),
+            onClick: (e) => handlePathUpdate(e, paths.clusterLogs()),
           },
           {
             external: true,

@@ -1,6 +1,7 @@
 import { Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
@@ -9,7 +10,8 @@ import useCreateExperimentModal, {
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
-import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
+import { canUserActionExperiment } from 'utils/experiment';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 
@@ -67,24 +69,27 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (trial.bestAvailableCheckpoint !== undefined) {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.ContinueTrial,
-        label: 'Continue Trial',
-        onClick: handleContinueTrial,
-      });
-    } else {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.ContinueTrial,
-        label: 'Continue Trial',
-        tooltip: 'No checkpoints found. Cannot continue trial',
-      });
+    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment)) {
+      if (trial.bestAvailableCheckpoint !== undefined) {
+        options.push({
+          icon: <Icon name="fork" size="small" />,
+          key: Action.ContinueTrial,
+          label: 'Continue Trial',
+          onClick: handleContinueTrial,
+        });
+      } else {
+        options.push({
+          icon: <Icon name="fork" size="small" />,
+          key: Action.ContinueTrial,
+          label: 'Continue Trial',
+          tooltip: 'No checkpoints found. Cannot continue trial',
+        });
+      }
     }
 
     return options;
   }, [
+    experiment,
     fetchTrialDetails,
     handleContinueTrial,
     isRunningTensorBoard,
@@ -93,6 +98,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   return (
     <>
+      <BreadcrumbBar experiment={experiment} id={trial.id} trial={trial} type="trial" />
       <PageHeaderFoldable
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}

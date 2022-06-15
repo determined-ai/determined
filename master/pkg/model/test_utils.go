@@ -55,6 +55,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
 		ModelDefinitionBytes: []byte{},
+		ProjectID:            1,
 	}
 
 	for _, o := range opts {

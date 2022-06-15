@@ -6,9 +6,13 @@ const SampleTask: Task = { id: '', name: '', resourcePool: '', startTime: '' };
 const SampleExperimentTask: ExperimentTask = {
   ...SampleTask,
   archived: false,
+  parentArchived: false,
+  projectId: 0,
   resourcePool: '',
   state: 'ACTIVE' as RunState,
   userId: 345,
+  username: '',
+  workspaceId: 0,
 };
 const SampleCommandTask: CommandTask = {
   ...SampleTask,
