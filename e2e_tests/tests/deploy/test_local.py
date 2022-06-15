@@ -11,6 +11,7 @@ import pytest
 
 from tests import config as conf
 from tests import experiment as exp
+from determined.common.api import bindings
 
 from ..cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
@@ -53,8 +54,17 @@ def master_down(arguments: List) -> None:
     command += arguments
     det_deploy(command)
 
-
+    
 def agent_up(arguments: List) -> None:
+    '''
+    # TODO fix this when DET-6278 lands.
+    config_file = Path("/etc/determined/agent.yaml")
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    config_file.write_text("""
+fluent:
+  container_name: testtesttest""")
+    '''    
+    
     command = ["agent-up", conf.MASTER_IP, "--no-gpu"]
     det_version = conf.DET_VERSION
     if det_version is not None:
@@ -68,6 +78,16 @@ def agent_down(arguments: List) -> None:
     command += arguments
     det_deploy(command)
 
+
+def agent_enable(arguments: List) -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "enable"] + arguments)
+
+def agent_disable(arguments: List) -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "disable"] + arguments)
+
+    
 
 @pytest.mark.det_deploy_local
 def test_cluster_down() -> None:
@@ -236,11 +256,12 @@ def test_agent_up_down() -> None:
     master_down([])
 
 
-@pytest.mark.parametrize("steps", [10])
-@pytest.mark.parametrize("num_agents", [3, 5])
-@pytest.mark.parametrize("should_disconnect", [False, True])
+@pytest.mark.parametrize("steps", [5]) #[10])
+@pytest.mark.parametrize("num_agents", [3]) #[3, 5])
+@pytest.mark.parametrize("should_disconnect", [False]) #[False, True])
 @pytest.mark.det_deploy_local
 def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
+    random.seed(42)
     master_host = "localhost"
     master_port = "8080"
     conf.MASTER_IP = master_host
@@ -255,40 +276,26 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
 
     for _ in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
+            if True and False:
+                continue
+            
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
 
-            if agent_is_up:
-                if should_disconnect:
+            if should_disconnect:
+                # Can't just randomly deploy up/down due to just getting a Docker name conflict.
+                if agent_is_up: 
                     agent_down(["--agent-name", f"agent-{agent_id}"])
                 else:
-                    with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(
-                            [
-                                "det",
-                                "-m",
-                                conf.make_master_url(),
-                                "agent",
-                                "disable",
-                                f"agent-{agent_id}",
-                            ]
-                        )
-            else:
-                if should_disconnect:
                     agent_up(["--agent-name", f"agent-{agent_id}"])
+                agents_are_up[agent_id] = not agents_are_up[agent_id]
+            else:
+                if random.choice([True, False]):
+                    agent_disable([f"agent-{agent_id}"])
+                    agents_are_up[agent_id] = False
                 else:
-                    with logged_in_user(ADMIN_CREDENTIALS):
-                        subprocess.run(
-                            [
-                                "det",
-                                "-m",
-                                conf.make_master_url(),
-                                "agent",
-                                "enable",
-                                f"agent-{agent_id}",
-                            ]
-                        )
-            agents_are_up[agent_id] = not agents_are_up[agent_id]
+                    agent_enable([f"agent-{agent_id}"])
+                    agents_are_up[agent_id] = True
         time.sleep(10)
 
         # Validate that our master kept track of the agent reconnect spam.
@@ -307,6 +314,17 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
             agent_id = int(agent["id"].replace("agent-", ""))
             assert agents_are_up[agent_id] == agent["enabled"]
 
+        # Can we still schedule something? 
+        if any(agents_are_up):        
+            experiment_id = exp.create_experiment(
+                conf.fixtures_path("no_op/single-one-short-step.yaml"),
+                conf.fixtures_path("no_op"),
+                None,
+            )
+            exp.wait_for_experiment_state(
+                experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+            )            
+        
     for agent_id in range(num_agents):
         agent_down(["--agent-name", f"agent-{agent_id}"])
     master_down([])
