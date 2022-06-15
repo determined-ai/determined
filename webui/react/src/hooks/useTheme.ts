@@ -80,7 +80,7 @@ export const useTheme = (): ThemeHook => {
   const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
 
   const themeMode = getThemeType(
-    mode === Mode.System ? systemMode === Mode.System ? Mode.Light : systemMode : mode,
+    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode,
   );
   const theme = useMemo(() => themes[branding][themeMode], [ branding, themeMode ]);
 
