@@ -4,9 +4,10 @@ import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Union, cast
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 import pytest
+import requests
 
 from tests import config as conf
 
@@ -16,6 +17,10 @@ DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devclus
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
+
+TOXIPROXY_URL = "http://localhost:8474"
+TOXIPROXY_MASTER_PROXY_NAME = "master"
+TOXIPROXY_DB_PROXY_NAME = "db"
 
 
 def _get_agent_data(master_url: str) -> List[Dict[str, Any]]:
@@ -36,6 +41,7 @@ class ManagedCluster:
         self.dc = Devcluster(config=config)
         self.master_url = conf.make_master_url()
         self.reattach = reattach
+        self.toxiproxy = ToxiproxyClient(TOXIPROXY_URL)
 
     def __enter__(self) -> "ManagedCluster":
         self.old_cd = os.getcwd()
@@ -102,10 +108,11 @@ class ManagedCluster:
             pytest.fail(f"Agent didn't restart after {WAIT_FOR_STARTUP} seconds")
 
     def kill_proxy(self) -> None:
-        subprocess.run(["killall", "socat"])
+        self.toxiproxy.patch_proxy(TOXIPROXY_MASTER_PROXY_NAME, enabled=False)
 
     def restart_proxy(self, wait_for_reconnect: bool = True) -> None:
-        self.dc.restart_stage("proxy")
+        self.toxiproxy.patch_proxy(TOXIPROXY_MASTER_PROXY_NAME, enabled=True)
+
         if wait_for_reconnect:
             for _i in range(25):
                 agent_data = _get_agent_data(self.master_url)
@@ -171,3 +178,25 @@ def managed_cluster(
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} teardown\n")
+
+
+class ToxiproxyClient:
+    # ToxiyProxy Client is a thin wrapper around the toxiproxy-server HTTP API, described at
+    # https://github.com/Shopify/toxiproxy#http-api.
+
+    def __init__(self, url: str) -> None:
+        self.url = url
+
+    def patch_proxy(self, name: str, enabled: Optional[bool] = None) -> None:
+        r = requests.get(f"{self.url}/proxies/{name}")
+        r.raise_for_status()
+        proxy = r.json()
+
+        if enabled is not None:
+            proxy["enabled"] = False
+
+        r = requests.post(
+            f"{self.url}/proxies/{name}",
+            json=proxy,
+        )
+        r.raise_for_status()

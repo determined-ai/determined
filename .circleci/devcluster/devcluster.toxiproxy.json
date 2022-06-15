@@ -1,0 +1,14 @@
+[
+    {
+      "name": "master",
+      "listen": "127.0.0.1:8081",
+      "upstream": "127.0.0.1:8080",
+      "enabled": true
+    },
+    {
+      "name": "postgres",
+      "listen": "127.0.0.1:5432",
+      "upstream": "127.0.0.1:5431",
+      "enabled": true
+    }
+]

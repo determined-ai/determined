@@ -1,6 +1,16 @@
 stages:
+  - custom:
+      name: proxy
+      cmd: ["toxiproxy-server", "-config", ".circleci/devcluster/devcluster.toxiproxy.json"]
+      post:
+        - conncheck:
+            port: 8081
+        - conncheck:
+            port: 5432
+
   - db:
       name: db
+      port: 5431
 
   - master:
       pre:
@@ -19,13 +29,6 @@ stages:
         log:
           level: debug
         root: tools/build
-
-  - custom:
-      name: proxy
-      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
-      post:
-        - conncheck:
-            port: 8081
 
   - agent:
       name: agent1
