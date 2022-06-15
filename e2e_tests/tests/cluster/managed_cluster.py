@@ -162,6 +162,7 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
         mc.initial_startup()
         yield mc
 
+@pytest.fixture(scope="session")
 def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
 
@@ -174,9 +175,9 @@ def _now_ts() -> str:
 
 
 @pytest.fixture
-def managed_cluster(
-    managed_cluster_session: ManagedCluster, request: Any
-) -> Iterator[ManagedCluster]:
+def managed_cluster( 
+    managed_cluster_session: ManagedCluster, request: Any 
+) -> Iterator[ManagedCluster]: # check if priority scheduler or not using config. 
     nodeid = request.node.nodeid
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session

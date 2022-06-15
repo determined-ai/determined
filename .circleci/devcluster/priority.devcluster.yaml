@@ -27,6 +27,6 @@ stages:
       name: agent
       config_file:
         master_host: 127.0.0.1
-        master_port: 8080
+        master_port: 8082
         agent_id: agent
         container_master_host: $DOCKER_LOCALHOST
