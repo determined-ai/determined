@@ -22,10 +22,10 @@ const (
 // CheckpointStorageConfigV0 has the common checkpoint config params.
 type CheckpointStorageConfigV0 struct {
 	RawSharedFSConfig *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
-	RawS3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
-	RawGCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
-	RawAzureConfig    *AzureConfigV0    `union:"type,azure" json:"-"`
+	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs"      json:"-"`
+	RawS3Config       *S3ConfigV0       `union:"type,s3"        json:"-"`
+	RawGCSConfig      *GCSConfigV0      `union:"type,gcs"       json:"-"`
+	RawAzureConfig    *AzureConfigV0    `union:"type,azure"     json:"-"`
 
 	RawSaveExperimentBest *int `json:"save_experiment_best"`
 	RawSaveTrialBest      *int `json:"save_trial_best"`
@@ -70,10 +70,10 @@ func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
 // TensorboardStorageConfigV0 is a legacy config.
 type TensorboardStorageConfigV0 struct {
 	RawSharedFSConfigV0 *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
-	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
-	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
-	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
-	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json:"-"`
+	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs"      json:"-"`
+	RawS3Config         *S3ConfigV0       `union:"type,s3"        json:"-"`
+	RawGCSConfig        *GCSConfigV0      `union:"type,gcs"       json:"-"`
+	RawAzureConfig      *AzureConfigV0    `union:"type,azure"     json:"-"`
 }
 
 // Merge implements schemas.Mergeable.

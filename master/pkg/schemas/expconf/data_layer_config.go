@@ -13,8 +13,8 @@ import (
 // DataLayerConfigV0 configures data layer storage.
 type DataLayerConfigV0 struct {
 	RawSharedFSConfig *SharedFSDataLayerConfigV0 `union:"type,shared_fs" json:"-"`
-	RawS3Config       *S3DataLayerConfigV0       `union:"type,s3" json:"-"`
-	RawGCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs" json:"-"`
+	RawS3Config       *S3DataLayerConfigV0       `union:"type,s3"        json:"-"`
+	RawGCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs"       json:"-"`
 }
 
 // Merge implements schemas.Mergeable.

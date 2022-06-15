@@ -76,7 +76,9 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 		if err != nil {
 			return nil,
 				fmt.Errorf(
-					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID:  %w", err)
+					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID:  %w",
+					err,
+				)
 		}
 		groupeIDcUUIDS = append(groupeIDcUUIDS, &eIDcUUIDs)
 	}

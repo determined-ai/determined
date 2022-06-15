@@ -257,7 +257,9 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 
 	_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
 	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = trialNameFromPod(p.podName)
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = trialNameFromPod(
+			p.podName,
+		)
 	}
 	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
 	if !ok {

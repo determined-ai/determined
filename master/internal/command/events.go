@@ -163,7 +163,8 @@ func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 		for i := 0; i < e.bufferSize; i++ {
 			if events.Value != nil {
 				event := events.Value.(sproto.Event)
-				if validEvent(event, args.GreaterThanID, args.LessThanID) && len(clientEvents) < limit {
+				if validEvent(event, args.GreaterThanID, args.LessThanID) &&
+					len(clientEvents) < limit {
 					clientEvents = append(clientEvents, event)
 				}
 			}

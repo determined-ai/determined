@@ -157,7 +157,10 @@ func (a *apiServer) DeleteExperiment(
 	case eErr != nil:
 		return nil, errors.New("failed to check model registry for references")
 	case exists:
-		return nil, status.Errorf(codes.InvalidArgument, "checkpoints are registered as model versions")
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"checkpoints are registered as model versions",
+		)
 	}
 
 	if !model.ExperimentTransitions[e.State][model.DeletingState] {
@@ -453,7 +456,11 @@ func (a *apiServer) ActivateExperiment(
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed passing request to experiment actor: %s",
+			err,
+		)
 	default:
 		return resp, nil
 	}
@@ -471,7 +478,11 @@ func (a *apiServer) PauseExperiment(
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed passing request to experiment actor: %s",
+			err,
+		)
 	default:
 		return resp, nil
 	}
@@ -572,7 +583,11 @@ func (a *apiServer) PatchExperiment(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.Experiment.Id)
 	case err != nil:
-		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", req.Experiment.Id)
+		return nil, errors.Wrapf(
+			err,
+			"error fetching experiment from database: %d",
+			req.Experiment.Id,
+		)
 	}
 
 	madeChanges := false
@@ -630,7 +645,11 @@ func (a *apiServer) PatchExperiment(
 		_, err = a.m.db.RawQuery(
 			"patch_experiment", exp.Id, marshalledPatches, exp.Notes)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
+			return nil, errors.Wrapf(
+				err,
+				"error updating experiment in database: %d",
+				req.Experiment.Id,
+			)
 		}
 	}
 
@@ -993,9 +1012,14 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 			panic("Invalid metric type")
 		}
 		if err != nil {
-			return errors.Wrapf(err,
+			return errors.Wrapf(
+				err,
 				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
-				metricType, metricName, experimentID, batchesProcessed)
+				metricType,
+				metricName,
+				experimentID,
+				batchesProcessed,
+			)
 		}
 		startTime = endTime
 
@@ -1057,7 +1081,12 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 	case ByMetricOfInterest:
 		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
 	case ByTrainingLength:
-		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
+		return a.m.db.TopTrialsByTrainingLength(
+			experimentID,
+			maxTrials,
+			s.Metric(),
+			s.SmallerIsBetter(),
+		)
 	default:
 		panic("Invalid state in trial sampling")
 	}
@@ -1286,8 +1315,12 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		if err != nil {
 			return errors.Wrap(err, "error looking up hyperparameter importance")
 		}
-		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
-		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
+		response.TrainingMetrics = make(
+			map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance,
+		)
+		response.ValidationMetrics = make(
+			map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance,
+		)
 		for metric, metricHpi := range result.TrainingMetrics {
 			response.TrainingMetrics[metric] = protoMetricHPI(metricHpi)
 		}

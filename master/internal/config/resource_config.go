@@ -39,7 +39,10 @@ func (r ResourceConfig) Validate() []error {
 	poolNames := make(map[string]bool)
 	for ix, rp := range r.ResourcePools {
 		if _, ok := poolNames[rp.PoolName]; ok {
-			errs = append(errs, errors.Errorf("%d resource pool has a duplicate name: %s", ix, rp.PoolName))
+			errs = append(
+				errs,
+				errors.Errorf("%d resource pool has a duplicate name: %s", ix, rp.PoolName),
+			)
 		} else {
 			poolNames[rp.PoolName] = true
 		}

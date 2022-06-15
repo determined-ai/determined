@@ -340,8 +340,16 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%t",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.Version, a.ResourcePool, a.reconnecting)
+	masterAddr := fmt.Sprintf(
+		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%t",
+		masterProto,
+		a.MasterHost,
+		a.MasterPort,
+		a.AgentID,
+		a.Version,
+		a.ResourcePool,
+		a.reconnecting,
+	)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
 	if resp != nil {

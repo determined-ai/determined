@@ -60,7 +60,11 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 		initialTrials = mathx.Min(s.MaxTrials(), s.MaxConcurrentTrials())
 	}
 	for trial := 0; trial < initialTrials; trial++ {
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		create := NewCreate(
+			ctx.rand,
+			sampleAll(ctx.hparams, ctx.rand),
+			model.TrialWorkloadSequencerType,
+		)
 		ops = append(ops, create)
 		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))
@@ -103,7 +107,11 @@ func (s *randomSearch) trialExitedEarly(
 	if s.SearchMethodType == RandomSearch {
 		if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
 			var ops []Operation
-			create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+			create := NewCreate(
+				ctx.rand,
+				sampleAll(ctx.hparams, ctx.rand),
+				model.TrialWorkloadSequencerType,
+			)
 			ops = append(ops, create)
 			ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 			ops = append(ops, NewClose(create.RequestID))
@@ -119,7 +127,11 @@ func (s *randomSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 	s.PendingTrials--
 	var ops []Operation
 	if s.CreatedTrials < s.MaxTrials() {
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		create := NewCreate(
+			ctx.rand,
+			sampleAll(ctx.hparams, ctx.rand),
+			model.TrialWorkloadSequencerType,
+		)
 		ops = append(ops, create)
 		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
 		ops = append(ops, NewClose(create.RequestID))

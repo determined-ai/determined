@@ -46,7 +46,9 @@ func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, er
 		return 1, ErrNotFound
 	}
 	if p.Archived {
-		return 1, fmt.Errorf("given workspace or project is archived and cannot add new experiments")
+		return 1, fmt.Errorf(
+			"given workspace or project is archived and cannot add new experiments",
+		)
 	}
 	return int(p.Id), nil
 }
@@ -481,7 +483,10 @@ FROM trials t
 	ON s.total_batches = filter.total_batches
 	AND t.id = filter.trial_id`, &rows, metric, experimentID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get training metrics for hyperparameter importance")
+		return nil, errors.Wrapf(
+			err,
+			"failed to get training metrics for hyperparameter importance",
+		)
 	}
 	for _, row := range rows {
 		result, batches, err := unmarshalHPImportanceHParams(row)

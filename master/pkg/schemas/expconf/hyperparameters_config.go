@@ -39,10 +39,10 @@ func flattenNestedHP(h HyperparameterV0, prefix string, target *HyperparametersV
 //go:generate ../gen.sh
 // HyperparameterV0 is a sum type for hyperparameters.
 type HyperparameterV0 struct {
-	RawConstHyperparameter       *ConstHyperparameterV0       `union:"type,const" json:"-"`
-	RawIntHyperparameter         *IntHyperparameterV0         `union:"type,int" json:"-"`
-	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
-	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
+	RawConstHyperparameter       *ConstHyperparameterV0       `union:"type,const"       json:"-"`
+	RawIntHyperparameter         *IntHyperparameterV0         `union:"type,int"         json:"-"`
+	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double"      json:"-"`
+	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log"         json:"-"`
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
 	// RawNestedHyperparameter is added as a union type to more closely reflect the underlying
 	// schema definition. Doing so also means that we can detect a nested hyperparameter from
@@ -62,7 +62,7 @@ type HyperparameterV0 struct {
 	//     momentum: 0.9
 	// The former is more user friendly so we will escape the union unmarshaling logic
 	// in its favor. We can add the later behavior in the future if needed.
-	RawNestedHyperparameter *map[string]HyperparameterV0 `union:"type,object" json:"-"`
+	RawNestedHyperparameter *map[string]HyperparameterV0 `union:"type,object"      json:"-"`
 }
 
 // Merge prevents recursive merging of hyperparameters unless h

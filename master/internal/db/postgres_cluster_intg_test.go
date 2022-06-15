@@ -71,7 +71,12 @@ func TestClusterAPI(t *testing.T) {
 	err = db.sql.QueryRow("SELECT cluster_heartbeat FROM cluster_id").Scan(&clusterHeartbeat)
 	require.NoError(t, err, "error reading cluster_heartbeat from cluster_id table")
 
-	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
+	require.Equal(
+		t,
+		currentTime,
+		clusterHeartbeat,
+		"Retrieved cluster heartbeat doesn't match the correct time",
+	)
 
 	// Don't complete the above allocation and call CloseOpenAllocations
 	db.CloseOpenAllocations(nil)
@@ -80,6 +85,13 @@ func TestClusterAPI(t *testing.T) {
 	aOut, err := db.AllocationByID(aIn.AllocationID)
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
-	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())
+	require.Equal(
+		t,
+		*aOut.EndTime,
+		clusterHeartbeat,
+		"Expected end time of open allocation is = %q but it is = %q instead",
+		clusterHeartbeat.String(),
+		(*aOut.EndTime).String(),
+	)
 
 }

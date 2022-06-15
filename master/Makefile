@@ -34,6 +34,7 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks
+	golines -w ./internal/mocks
 	mkdir -p build
 	touch $@
 
@@ -46,6 +47,7 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
+	go install github.com/segmentio/golines@v0.10.0
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 	go install github.com/bufbuild/buf/cmd/buf@v0.42.1
 	go install golang.org/x/tools/cmd/goimports@v0.1.5
@@ -86,6 +88,7 @@ check: check-gen
 .PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
+	golines -w .
 
 .PHONY: test
 test:

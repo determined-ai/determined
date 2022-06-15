@@ -49,7 +49,11 @@ func NewResourcesState(r sproto.Resources, rank int) ResourcesWithState {
 // WipeResourcesState deletes all database contents.
 func WipeResourcesState() error {
 	// Bun requires at least one WHERE for updates and deletes.
-	_, err := db.Bun().NewDelete().Model((*ResourcesWithState)(nil)).Where("1=1").Exec(context.TODO())
+	_, err := db.Bun().
+		NewDelete().
+		Model((*ResourcesWithState)(nil)).
+		Where("1=1").
+		Exec(context.TODO())
 	return err
 }
 

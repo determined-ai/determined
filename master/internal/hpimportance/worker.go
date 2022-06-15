@@ -115,7 +115,11 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 				return nil
 			}
 		default:
-			sendWorkFailed(system, work, "invalid metric type received in hyperparameter importance worker")
+			sendWorkFailed(
+				system,
+				work,
+				"invalid metric type received in hyperparameter importance worker",
+			)
 			return nil
 		}
 		taskDir := path.Join(workingDir, fmt.Sprint(actorId))
@@ -123,7 +127,13 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}
-		results, err := computeHPImportance(trials, experimentConfig, masterConfig, growforest, taskDir)
+		results, err := computeHPImportance(
+			trials,
+			experimentConfig,
+			masterConfig,
+			growforest,
+			taskDir,
+		)
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}

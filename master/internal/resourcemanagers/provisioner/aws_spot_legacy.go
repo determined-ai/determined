@@ -68,7 +68,9 @@ func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Cont
 	// Delete spot instances associated with the active requests
 	instancesToTerminate := activeSpotReqs.instanceIds()
 	if len(instancesToTerminate) == 0 {
-		loggerSpotLegacy.Debugf("no instances associated with active legacy spot requests to terminate")
+		loggerSpotLegacy.Debugf(
+			"no instances associated with active legacy spot requests to terminate",
+		)
 		return
 	}
 
@@ -96,7 +98,9 @@ func (c *awsCluster) legacyCleanupCanceledButInstanceRunningSpot(ctx *actor.Cont
 	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
 
 	loggerSpotLegacy.Debugf("listing CanceledButInstanceRunning requests")
-	canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests(ctx)
+	canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests(
+		ctx,
+	)
 	if err != nil {
 		loggerSpotLegacy.
 			WithError(err).

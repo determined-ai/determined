@@ -297,7 +297,11 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		tc := tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
 			toTerminate := tc.scaleDecider.findInstancesToTerminate()
-			assert.DeepEqual(t, newInstanceIDSet(toTerminate.InstanceIDs), newInstanceIDSet(tc.toTerminate))
+			assert.DeepEqual(
+				t,
+				newInstanceIDSet(toTerminate.InstanceIDs),
+				newInstanceIDSet(tc.toTerminate),
+			)
 		})
 	}
 }

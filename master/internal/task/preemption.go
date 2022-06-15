@@ -96,7 +96,10 @@ func (p *Preemption) ReceiveMsg(ctx *actor.Context) error {
 func (p *Preemption) Watch(
 	allocationID model.AllocationID, id uuid.UUID) (PreemptionWatcher, error) {
 	if p.allocationID != allocationID {
-		return PreemptionWatcher{}, ErrStaleAllocation{Received: allocationID, Actual: p.allocationID}
+		return PreemptionWatcher{}, ErrStaleAllocation{
+			Received: allocationID,
+			Actual:   p.allocationID,
+		}
 	}
 
 	// Size 1; at most a single message can be sent and we don't want to block.

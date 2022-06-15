@@ -208,14 +208,20 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupWeight{Weight: *patch.Resources.Weight})
 			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
+				return nil, errors.Errorf(
+					"cannot change experiment weight to %v",
+					*patch.Resources.Weight,
+				)
 			}
 		}
 		if patch.Resources.Priority != nil {
 			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupPriority{Priority: *patch.Resources.Priority})
 			if resp.Error() != nil {
-				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
+				return nil, errors.Errorf(
+					"cannot change experiment priority to %v",
+					*patch.Resources.Priority,
+				)
 			}
 		}
 	}
@@ -350,11 +356,15 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if params.ProjectID == nil {
 		if config.Workspace() == "" && config.Project() != "" {
 			return nil, false, nil,
-				errors.New("workspace and project must both be included in config if one is provided")
+				errors.New(
+					"workspace and project must both be included in config if one is provided",
+				)
 		}
 		if config.Workspace() != "" && config.Project() == "" {
 			return nil, false, nil,
-				errors.New("workspace and project must both be included in config if one is provided")
+				errors.New(
+					"workspace and project must both be included in config if one is provided",
+				)
 		}
 		if config.Workspace() != "" && config.Project() != "" {
 			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())

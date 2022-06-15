@@ -449,7 +449,9 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return t.transition(ctx, model.StateWithReason{
 				State: model.ErrorState,
 				InformationalReason: fmt.Sprintf(
-					"trial allocation exited with an error but hp search was complete %v", exit.Err),
+					"trial allocation exited with an error but hp search was complete %v",
+					exit.Err,
+				),
 			})
 		}
 		return t.transition(ctx, model.StateWithReason{

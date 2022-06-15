@@ -50,7 +50,9 @@ func TestAllocation(t *testing.T) {
 			name:  "container failed",
 			acked: false,
 			err:   &sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
-			exit:  &AllocationExited{Err: sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed}},
+			exit: &AllocationExited{
+				Err: sproto.ResourcesFailure{FailureType: sproto.ResourcesFailed},
+			},
 		},
 		{
 			name:  "container failed, but acked preemption",
@@ -111,10 +113,16 @@ func TestAllocation(t *testing.T) {
 				containerStateChanged.ResourcesState = sproto.Pulling
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 				afterPulling := time.Now().UTC().Truncate(time.Millisecond)
-				outOfRange := a.model.StartTime.Before(beforePulling) || a.model.StartTime.After(afterPulling)
-				require.Falsef(t, outOfRange,
+				outOfRange := a.model.StartTime.Before(beforePulling) ||
+					a.model.StartTime.After(afterPulling)
+				require.Falsef(
+					t,
+					outOfRange,
 					"Expected start time of open allocation should be in between %s and %s but it is = %s instead",
-					beforePulling, afterPulling, a.model.StartTime)
+					beforePulling,
+					afterPulling,
+					a.model.StartTime,
+				)
 
 				containerStateChanged.ResourcesState = sproto.Starting
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())

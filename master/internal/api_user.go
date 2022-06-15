@@ -138,7 +138,9 @@ func (a *apiServer) PostUser(
 }
 
 func (a *apiServer) SetUserPassword(
-	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
+	ctx context.Context,
+	req *apiv1.SetUserPasswordRequest,
+) (*apiv1.SetUserPasswordResponse, error) {
 	// TODO if ExternalSessions is there, don't even allow this
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {

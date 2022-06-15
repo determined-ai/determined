@@ -27,8 +27,8 @@ type Config struct {
 	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
 	AgentDockerImage       string            `json:"agent_docker_image"`
 	AgentFluentImage       string            `json:"agent_fluent_image"`
-	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
-	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
+	AWS                    *AWSClusterConfig `json:"-"                         union:"type,aws"`
+	GCP                    *GCPClusterConfig `json:"-"                         union:"type,gcp"`
 	MaxIdleAgentPeriod     model.Duration    `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod model.Duration    `json:"max_agent_starting_period"`
 	MinInstances           int               `json:"min_instances"`
@@ -86,7 +86,12 @@ func (c Config) Validate() []error {
 		check.GreaterThan(
 			int64(c.MaxIdleAgentPeriod), int64(0), "max idle agent period must be greater than 0"),
 		check.GreaterThan(
-			int64(c.MaxAgentStartingPeriod), int64(0), "max agent starting period must be greater than 0"),
+			int64(
+				c.MaxAgentStartingPeriod,
+			),
+			int64(0),
+			"max agent starting period must be greater than 0",
+		),
 		check.GreaterThanOrEqualTo(int64(c.MinInstances), int64(0),
 			"min instance must be greater than or equal to 0"),
 		check.GreaterThan(int64(c.MaxInstances), int64(0), "max instance must be greater than 0"),

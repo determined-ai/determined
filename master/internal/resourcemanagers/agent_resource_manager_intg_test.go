@@ -70,7 +70,12 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 
 	// Start CPU tasks actors
 	var cpuTask1Ref, cpuTask2Ref *actor.Ref
-	cpuTask1 := &mockTask{rmRef: agentRMRef, id: "cpu-task1", slotsNeeded: 0, resourcePool: "cpu-pool"}
+	cpuTask1 := &mockTask{
+		rmRef:        agentRMRef,
+		id:           "cpu-task1",
+		slotsNeeded:  0,
+		resourcePool: "cpu-pool",
+	}
 	cpuTask1Ref, created = system.ActorOf(actor.Addr(cpuTask1.id), cpuTask1)
 	assert.Assert(t, created)
 	cpuTask2 := &mockTask{rmRef: agentRMRef, id: "cpu-task2", slotsNeeded: 0}
@@ -79,7 +84,12 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 
 	// Start GPU task actors.
 	var gpuTask1Ref, gpuTask2Ref *actor.Ref
-	gpuTask1 := &mockTask{rmRef: agentRMRef, id: "gpu-task1", slotsNeeded: 4, resourcePool: "gpu-pool"}
+	gpuTask1 := &mockTask{
+		rmRef:        agentRMRef,
+		id:           "gpu-task1",
+		slotsNeeded:  4,
+		resourcePool: "gpu-pool",
+	}
 	gpuTask1Ref, created = system.ActorOf(actor.Addr(gpuTask1.id), gpuTask1)
 	assert.Assert(t, created)
 	gpuTask2 := &mockTask{rmRef: agentRMRef, id: "gpu-task2", slotsNeeded: 4}
@@ -96,7 +106,11 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.Equal(t, taskSummary.ResourcePool, cpuTask1.resourcePool)
 	taskSummaries = system.Ask(
 		agentRMRef, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
-	assert.Equal(t, taskSummaries[cpuTask1.id].ResourcePool, taskSummaries[cpuTask2.id].ResourcePool)
+	assert.Equal(
+		t,
+		taskSummaries[cpuTask1.id].ResourcePool,
+		taskSummaries[cpuTask2.id].ResourcePool,
+	)
 
 	// Let the GPU task actors request resources.
 	system.Ask(gpuTask1Ref, SendRequestResourcesToResourceManager{}).Get()
@@ -108,7 +122,11 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.Equal(t, taskSummary.ResourcePool, gpuTask1.resourcePool)
 	taskSummaries = system.Ask(
 		agentRMRef, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
-	assert.Equal(t, taskSummaries[gpuTask1.id].ResourcePool, taskSummaries[gpuTask2.id].ResourcePool)
+	assert.Equal(
+		t,
+		taskSummaries[gpuTask1.id].ResourcePool,
+		taskSummaries[gpuTask2.id].ResourcePool,
+	)
 
 	// Let the CPU task actors release resources.
 	system.Ask(cpuTask1Ref, SendResourcesReleasedToResourceManager{}).Get()

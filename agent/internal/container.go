@@ -225,7 +225,12 @@ func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
 	case log.PullMessage != nil:
 		msg = *log.PullMessage
 	case log.RunMessage != nil:
-		panic(fmt.Sprintf("unexpected run message from container on Fluent logging: %v", log.RunMessage))
+		panic(
+			fmt.Sprintf(
+				"unexpected run message from container on Fluent logging: %v",
+				log.RunMessage,
+			),
+		)
 	default:
 		panic("unknown log message received")
 	}

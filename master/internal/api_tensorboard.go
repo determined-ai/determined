@@ -304,7 +304,11 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	if err = check.Validate(req.Config); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid TensorBoard config: %s", err.Error())
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid TensorBoard config: %s",
+			err.Error(),
+		)
 	}
 
 	// Launch a TensorBoard actor.

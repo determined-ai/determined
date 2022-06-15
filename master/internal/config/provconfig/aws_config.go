@@ -211,10 +211,13 @@ func validateMaxSpotPrice(spotMaxPriceInput string) error {
 	for _, char := range priceWithoutDecimalPoint {
 		if !unicode.IsDigit(char) {
 			return errors.New(
-				fmt.Sprintf("spot max price should only contain digits and, optionally, one decimal point. "+
-					"Received %s, which has the non-digit character %s",
+				fmt.Sprintf(
+					"spot max price should only contain digits and, optionally, one decimal point. "+
+						"Received %s, which has the non-digit character %s",
 					spotMaxPriceInput,
-					string(char)))
+					string(char),
+				),
+			)
 		}
 	}
 	return nil

@@ -8,7 +8,10 @@ import (
 // calculateDesiredNewAgentNum calculates the new instances based on pending tasks and
 // slots per instance.
 func calculateDesiredNewAgentNum(
-	taskList *taskList, groups map[*actor.Ref]*group, slotsPerAgent int, maxZeroSlotTasksPerAgent int,
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	slotsPerAgent int,
+	maxZeroSlotTasksPerAgent int,
 ) int {
 	slotSum := 0
 	allTasks := 0

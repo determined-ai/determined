@@ -21,7 +21,10 @@ func getBracketMaxTrials(
 	bracketWeight := make([]float64, 0., len(brackets))
 	var totalWeight float64
 	for i, numRungs := range brackets {
-		bracketWeight = append(bracketWeight, math.Pow(divisor, float64(numRungs-1))/float64(numRungs))
+		bracketWeight = append(
+			bracketWeight,
+			math.Pow(divisor, float64(numRungs-1))/float64(numRungs),
+		)
 		totalWeight += bracketWeight[i]
 	}
 	bracketTrials := make([]int, 0, len(brackets))

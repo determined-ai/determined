@@ -90,9 +90,14 @@ func detectCPUs() ([]device.Device, error) {
 			switch errno {
 			case syscall.ENOENT:
 				if runtime.GOARCH == "arm64" && runtime.GOOS == osDarwin {
-					return []device.Device{{ID: 0, Brand: "Apple", UUID: "AppleSilicon", Type: device.CPU}}, nil
+					return []device.Device{
+						{ID: 0, Brand: "Apple", UUID: "AppleSilicon", Type: device.CPU},
+					}, nil
 				}
-				return nil, errors.Wrap(err, "error while gathering CPU info on a non-AppleM1 system")
+				return nil, errors.Wrap(
+					err,
+					"error while gathering CPU info on a non-AppleM1 system",
+				)
 			default:
 				return nil, errors.Wrap(err, "error while gathering CPU info")
 			}
@@ -170,8 +175,15 @@ func detectMigInstances(visibleGPUs string) ([]device.Device, error) {
 			}
 			brand := matches[1]
 			uuid := matches[2]
-			devices = append(devices,
-				device.Device{ID: device.ID(deviceIndex), Brand: brand, UUID: uuid, Type: device.CUDA})
+			devices = append(
+				devices,
+				device.Device{
+					ID:    device.ID(deviceIndex),
+					Brand: brand,
+					UUID:  uuid,
+					Type:  device.CUDA,
+				},
+			)
 			deviceIndex++
 		}
 	}

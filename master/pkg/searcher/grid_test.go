@@ -47,8 +47,11 @@ func TestGridFunctionality(t *testing.T) {
 
 func TestHyperparameterGridMethod(t *testing.T) {
 	dParam := expconf.DoubleHyperparameter{RawMaxval: 2.0, RawCount: ptrs.Ptr(5)}
-	assert.Equal(t,
-		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawDoubleHyperparameter: &dParam})[0]),
+	assert.Equal(
+		t,
+		len(
+			getGridAxes([]string{"x"}, expconf.Hyperparameter{RawDoubleHyperparameter: &dParam})[0],
+		),
 		5,
 	)
 	iParam := expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.Ptr(7)}
@@ -71,8 +74,11 @@ func TestHyperparameterGridMethod(t *testing.T) {
 		3,
 	)
 	constParam := expconf.ConstHyperparameter{RawVal: 3}
-	assert.Equal(t,
-		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawConstHyperparameter: &constParam})[0]),
+	assert.Equal(
+		t,
+		len(
+			getGridAxes([]string{"x"}, expconf.Hyperparameter{RawConstHyperparameter: &constParam})[0],
+		),
 		1,
 	)
 }

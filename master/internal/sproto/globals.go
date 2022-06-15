@@ -111,7 +111,9 @@ func GetResourcePool(
 			return "", errors.Wrapf(err, "failed to check resource pool resources: %s", poolName)
 		}
 		if !fillable {
-			return "", errors.New("resource request unfulfillable, please try requesting less slots")
+			return "", errors.New(
+				"resource request unfulfillable, please try requesting less slots",
+			)
 		}
 	}
 	return poolName, nil

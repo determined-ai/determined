@@ -257,8 +257,12 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 			labels = append(labels, labelEscaper.Replace(label))
 		}
 		fields := []string{
-			strconv.Itoa(int(entry.ExperimentId)), entry.Kind, entry.Username, strings.Join(labels, ","),
-			strconv.Itoa(int(entry.Slots)), formatTimestamp(entry.StartTime), formatTimestamp(entry.EndTime),
+			strconv.Itoa(
+				int(entry.ExperimentId),
+			), entry.Kind, entry.Username, strings.Join(labels, ","),
+			strconv.Itoa(
+				int(entry.Slots),
+			), formatTimestamp(entry.StartTime), formatTimestamp(entry.EndTime),
 			fmt.Sprintf("%f", entry.Seconds),
 		}
 		if err := csvWriter.Write(fields); err != nil {
@@ -409,7 +413,10 @@ func (m *Master) getSystemdListener() (net.Listener, error) {
 	case len(systemdListeners) == 1:
 		return systemdListeners[0], nil
 	default:
-		return nil, errors.Errorf("expected at most 1 systemd listener, got %d", len(systemdListeners))
+		return nil, errors.Errorf(
+			"expected at most 1 systemd listener, got %d",
+			len(systemdListeners),
+		)
 	}
 }
 
@@ -482,7 +489,8 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		var clientCAs *x509.CertPool
 		clientAuthMode := tls.NoClientCert
 
-		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil &&
+			agentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
@@ -745,8 +753,9 @@ func (m *Master) Run(ctx context.Context) error {
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            cert,
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
-		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
-		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
+		SegmentEnabled: m.config.Telemetry.Enabled &&
+			m.config.Telemetry.SegmentMasterKey != "",
+		SegmentAPIKey: m.config.Telemetry.SegmentMasterKey,
 	}
 
 	go m.cleanUpExperimentSnapshots()
@@ -957,7 +966,10 @@ func (m *Master) Run(ctx context.Context) error {
 		case os.IsPermission(oErr):
 			hasMatchingFile = false
 		case oErr != nil:
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
+			return echo.NewHTTPError(
+				http.StatusInternalServerError,
+				"failed to check if file exists",
+			)
 		default:
 			hasMatchingFile = !stat.IsDir()
 		}

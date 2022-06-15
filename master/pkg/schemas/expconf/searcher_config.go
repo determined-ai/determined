@@ -12,15 +12,15 @@ import (
 //go:generate ../gen.sh
 // SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
-	RawSingleConfig       *SingleConfigV0       `union:"name,single" json:"-"`
-	RawRandomConfig       *RandomConfigV0       `union:"name,random" json:"-"`
-	RawGridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
+	RawSingleConfig       *SingleConfigV0       `union:"name,single"        json:"-"`
+	RawRandomConfig       *RandomConfigV0       `union:"name,random"        json:"-"`
+	RawGridConfig         *GridConfigV0         `union:"name,grid"          json:"-"`
 	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
 
 	// These searchers are allowed only to help parse old experiment configs.
-	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
-	RawAdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive" json:"-"`
+	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving"    json:"-"`
+	RawAdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive"        json:"-"`
 	RawAdaptiveSimpleConfig *AdaptiveSimpleConfigV0 `union:"name,adaptive_simple" json:"-"`
 
 	RawMetric               *string `json:"metric"`

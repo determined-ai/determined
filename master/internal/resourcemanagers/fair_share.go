@@ -264,7 +264,10 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 			if state.disabled || state.offered == state.slotDemand {
 				continue
 			}
-			calculatedFairShare := mathx.Max(1, int(float64(startCapacity)*state.weight/totalWeight))
+			calculatedFairShare := mathx.Max(
+				1,
+				int(float64(startCapacity)*state.weight/totalWeight),
+			)
 
 			progressMade = true
 			offer := mathx.Min(calculatedFairShare, capacity, state.slotDemand-state.offered)

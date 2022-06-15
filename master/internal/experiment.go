@@ -473,8 +473,11 @@ func (e *experiment) restoreTrials(ctx *actor.Context) {
 		checkpoint, err := e.checkpointForCreate(state.Create)
 		if err != nil {
 			e.updateState(ctx, model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
+				State: model.StoppingErrorState,
+				InformationalReason: fmt.Sprintf(
+					"failed getting checkpoint to restore with error %v",
+					err,
+				),
 			})
 			ctx.Log().Error(err)
 			return

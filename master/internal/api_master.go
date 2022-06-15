@@ -22,11 +22,12 @@ var masterLogsBatchMissWaitTime = time.Second
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
-		Version:           version.Version,
-		MasterId:          a.m.MasterID,
-		ClusterId:         a.m.ClusterID,
-		ClusterName:       a.m.config.ClusterName,
-		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		Version:     version.Version,
+		MasterId:    a.m.MasterID,
+		ClusterId:   a.m.ClusterID,
+		ClusterName: a.m.config.ClusterName,
+		TelemetryEnabled: a.m.config.Telemetry.Enabled &&
+			a.m.config.Telemetry.SegmentWebUIKey != "",
 		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:          "determined",

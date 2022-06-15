@@ -192,7 +192,12 @@ func TestAddress_IsAncestorOf(t *testing.T) {
 		{"opposite ancestor", fields{path: "/test/child"}, args{Addr("test")}, false},
 		{"equal", fields{path: "/test/child"}, args{Addr("test", "child")}, false},
 		{"is not ancestor", fields{path: "/test/child1"}, args{Addr("test", "child2")}, false},
-		{"common parent", fields{path: "/test/nest1"}, args{Addr("test", "nest2", "child2")}, false},
+		{
+			"common parent",
+			fields{path: "/test/nest1"},
+			args{Addr("test", "nest2", "child2")},
+			false,
+		},
 		{"close prefix", fields{path: "/a"}, args{Addr("ab")}, false},
 	}
 	runTestCase := func(t *testing.T, tc testCase) {

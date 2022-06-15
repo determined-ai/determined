@@ -74,11 +74,17 @@ func TestSamplingReproducibility(t *testing.T) {
 	spec := expconf.Hyperparameters{
 		"cat": {RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
 			RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6}}},
-		"const":  {RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "val"}},
-		"double": {RawDoubleHyperparameter: &expconf.DoubleHyperparameter{RawMinval: 0, RawMaxval: 100}},
-		"int":    {RawIntHyperparameter: &expconf.IntHyperparameter{RawMinval: 0, RawMaxval: 100}},
+		"const": {RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "val"}},
+		"double": {
+			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{RawMinval: 0, RawMaxval: 100},
+		},
+		"int": {RawIntHyperparameter: &expconf.IntHyperparameter{RawMinval: 0, RawMaxval: 100}},
 		"log": {
-			RawLogHyperparameter: &expconf.LogHyperparameter{RawBase: 10, RawMinval: -2, RawMaxval: 2},
+			RawLogHyperparameter: &expconf.LogHyperparameter{
+				RawBase:   10,
+				RawMinval: -2,
+				RawMaxval: 2,
+			},
 		},
 	}
 

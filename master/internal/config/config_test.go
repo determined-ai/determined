@@ -70,9 +70,12 @@ resource_pools:
 				{
 					PoolName: "default",
 					Provider: &provconfig.Config{
-						AgentDockerRuntime:     "runc",
-						AgentDockerNetwork:     "default",
-						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+						AgentDockerRuntime: "runc",
+						AgentDockerNetwork: "default",
+						AgentDockerImage: fmt.Sprintf(
+							"determinedai/determined-agent:%s",
+							version.Version,
+						),
 						AgentFluentImage:       "fluent/fluent-bit:1.6",
 						MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
 						MaxAgentStartingPeriod: model.Duration(30 * time.Second),
@@ -132,9 +135,12 @@ resource_pools:
 				{
 					PoolName: "cpu-pool",
 					Provider: &provconfig.Config{
-						AgentDockerRuntime:     "runc",
-						AgentDockerNetwork:     "default",
-						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+						AgentDockerRuntime: "runc",
+						AgentDockerNetwork: "default",
+						AgentDockerImage: fmt.Sprintf(
+							"determinedai/determined-agent:%s",
+							version.Version,
+						),
 						AgentFluentImage:       "fluent/fluent-bit:1.6",
 						MaxIdleAgentPeriod:     model.Duration(10 * time.Second),
 						MaxAgentStartingPeriod: model.Duration(20 * time.Second),
@@ -147,9 +153,12 @@ resource_pools:
 				{
 					PoolName: "gpu-pool",
 					Provider: &provconfig.Config{
-						AgentDockerRuntime:     "runc",
-						AgentDockerNetwork:     "default",
-						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+						AgentDockerRuntime: "runc",
+						AgentDockerNetwork: "default",
+						AgentDockerImage: fmt.Sprintf(
+							"determinedai/determined-agent:%s",
+							version.Version,
+						),
 						AgentFluentImage:       "fluent/fluent-bit:1.6",
 						MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
 						MaxAgentStartingPeriod: model.Duration(40 * time.Second),

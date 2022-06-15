@@ -565,7 +565,8 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			ctx.Log().Info("all containers are connected successfully (task container state changed)")
+			ctx.Log().
+				Info("all containers are connected successfully (task container state changed)")
 		}
 		if a.req.ProxyPort != nil && msg.ResourcesStarted.Addresses != nil {
 			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)

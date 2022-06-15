@@ -177,7 +177,8 @@ func (s *websocketActor) processWriteMessage(
 }
 
 func isClosingError(err error) bool {
-	return err == websocket.ErrCloseSent || websocket.IsCloseError(err, websocket.CloseNormalClosure)
+	return err == websocket.ErrCloseSent ||
+		websocket.IsCloseError(err, websocket.CloseNormalClosure)
 }
 
 func (s *websocketActor) setupPingLoop(ctx *actor.Context) {
@@ -213,7 +214,10 @@ func (s *websocketActor) checkPendingPings() error {
 	var errs []error
 	for id, deadline := range s.pendingPings {
 		if deadline.Before(now) {
-			errs = append(errs, errors.Errorf("ping %s did not receive pong response by %s", id, deadline))
+			errs = append(
+				errs,
+				errors.Errorf("ping %s did not receive pong response by %s", id, deadline),
+			)
 			delete(s.pendingPings, id)
 		}
 	}

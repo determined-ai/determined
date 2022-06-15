@@ -34,10 +34,10 @@ func DefaultSchedulerConfig() *SchedulerConfig {
 
 // SchedulerConfig holds the configurations for scheduling policies.
 type SchedulerConfig struct {
-	FairShare     *FairShareSchedulerConfig  `union:"type,fair_share" json:"-"`
-	Priority      *PrioritySchedulerConfig   `union:"type,priority" json:"-"`
+	FairShare     *FairShareSchedulerConfig  `union:"type,fair_share"  json:"-"`
+	Priority      *PrioritySchedulerConfig   `union:"type,priority"    json:"-"`
 	RoundRobin    *RoundRobinSchedulerConfig `union:"type,round_robin" json:"-"`
-	FittingPolicy string                     `json:"fitting_policy"`
+	FittingPolicy string                     `                         json:"fitting_policy"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.

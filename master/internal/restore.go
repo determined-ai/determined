@@ -197,7 +197,9 @@ func (e *experiment) snapshotAndSave(ctx *actor.Context) {
 	err = e.db.SaveSnapshot(e.ID, experimentSnapshotVersion, es)
 	if err != nil {
 		e.faultToleranceEnabled = false
-		ctx.Log().WithError(err).Errorf("failed to persist experiment snapshot, fault tolerance is lost")
+		ctx.Log().
+			WithError(err).
+			Errorf("failed to persist experiment snapshot, fault tolerance is lost")
 		return
 	}
 }
@@ -265,7 +267,8 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 
 	// And queue them to be sent to trials immediately.
 	for _, ops := range waitingCheckpoints.(map[string]interface{}) {
-		searcherState["trial_operations"] = append(searcherState["trial_operations"].([]interface{}),
+		searcherState["trial_operations"] = append(
+			searcherState["trial_operations"].([]interface{}),
 			ops.([]interface{})...)
 	}
 	delete(searchMethodState, "waiting_checkpoints")

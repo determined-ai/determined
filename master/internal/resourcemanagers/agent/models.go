@@ -38,11 +38,12 @@ type AgentSnapshot struct {
 // ContainerSnapshot is a database representation of `containerResources`.
 type ContainerSnapshot struct {
 	bun.BaseModel `bun:"table:resourcemanagers_agent_containers,alias:rmac"`
-	ResourceID    sproto.ResourcesID `bun:"resource_id"`
-	AgentID       aproto.ID          `bun:"agent_id"`
-	ID            cproto.ID          `json:"id" bun:"container_id"`
-	State         cproto.State       `json:"state" bun:"state"`
-	Devices       []device.Device    `json:"devices" bun:"devices"`
+
+	ResourceID sproto.ResourcesID `bun:"resource_id"`
+	AgentID    aproto.ID          `bun:"agent_id"`
+	ID         cproto.ID          `bun:"container_id" json:"id"`
+	State      cproto.State       `bun:"state"        json:"state"`
+	Devices    []device.Device    `bun:"devices"      json:"devices"`
 }
 
 // NewContainerSnapshot creates an instance from `cproto.Container`.

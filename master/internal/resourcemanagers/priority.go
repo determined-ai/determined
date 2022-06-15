@@ -59,7 +59,12 @@ func (p *priorityScheduler) prioritySchedule(
 		// vice versa.
 		for _, zeroSlots := range []bool{false, true} {
 			allocate, release := p.prioritySchedulerWithFilter(
-				taskList, groups, jobPositions, agentsWithLabel, fittingMethod, taskFilter(label, zeroSlots),
+				taskList,
+				groups,
+				jobPositions,
+				agentsWithLabel,
+				fittingMethod,
+				taskFilter(label, zeroSlots),
 			)
 			toAllocate = append(toAllocate, allocate...)
 			toRelease = append(toRelease, release...)
@@ -131,7 +136,9 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 		if p.preemptionEnabled {
 			for _, prioritizedAllocation := range unSuccessfulAllocations {
 				// Check if we still need to preempt tasks to schedule this task.
-				if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
+				if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(
+					fits,
+				) > 0 {
 					log.Debugf(
 						"Not preempting tasks for task %s as it will be able to launch "+
 							"once already scheduled preemptions complete", prioritizedAllocation.Name)
@@ -140,8 +147,16 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 				}
 
 				taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
-					taskList, prioritizedAllocation, priority, jobPositions, fittingMethod, localAgentsState,
-					priorityToScheduledTaskMap, toRelease, filter)
+					taskList,
+					prioritizedAllocation,
+					priority,
+					jobPositions,
+					fittingMethod,
+					localAgentsState,
+					priorityToScheduledTaskMap,
+					toRelease,
+					filter,
+				)
 
 				if taskPlaced {
 					localAgentsState = updatedLocalAgentState
@@ -259,7 +274,10 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assignmentIsScheduled(assigned) {
-			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
+			priorityToScheduledTaskMap[*priority] = append(
+				priorityToScheduledTaskMap[*priority],
+				req,
+			)
 		} else {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		}

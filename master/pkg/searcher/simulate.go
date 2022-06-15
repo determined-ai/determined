@@ -197,7 +197,9 @@ func pickTrial(
 				return requestID, nil
 			}
 		}
-		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
+		return model.RequestID{}, errors.New(
+			"tried to pick a trial when no trial had pending operations",
+		)
 	}
 
 	// If randomOrder is true, pseudo-randomly select a trial that has pending operations.
@@ -208,7 +210,9 @@ func pickTrial(
 		}
 	}
 	if len(candidates) == 0 {
-		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
+		return model.RequestID{}, errors.New(
+			"tried to pick a trial when no trial had pending operations",
+		)
 	}
 
 	// Map iteration order is nondeterministic, even for identical maps in the same run, so sort the

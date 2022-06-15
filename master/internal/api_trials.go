@@ -668,7 +668,10 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 
 		timestamps, err := protoutils.TimeSliceFromProto(batch.Timestamps)
 		if err != nil {
-			errs = multierror.Append(errs, fmt.Errorf("failed to convert proto timestamps: %w", err))
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("failed to convert proto timestamps: %w", err),
+			)
 			continue
 		}
 

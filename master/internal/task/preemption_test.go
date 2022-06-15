@@ -61,7 +61,9 @@ func TestPreemption(t *testing.T) {
 	select {
 	case <-w.C:
 	default:
-		t.Fatal("PreemptionWatcher.C was empty channel (should come with initial status when preempted)")
+		t.Fatal(
+			"PreemptionWatcher.C was empty channel (should come with initial status when preempted)",
+		)
 	}
 
 	// preempted preemption unwatching should work.

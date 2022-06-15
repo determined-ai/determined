@@ -87,14 +87,14 @@ type Allocation struct {
 	bun.BaseModel `bun:"table:allocations"`
 
 	AllocationID AllocationID     `db:"allocation_id" bun:"allocation_id,notnull,unique"`
-	TaskID       TaskID           `db:"task_id" bun:"task_id,notnull"`
-	Slots        int              `db:"slots" bun:"slots,notnull"`
-	AgentLabel   string           `db:"agent_label" bun:"agent_label,notnull"`
+	TaskID       TaskID           `db:"task_id"       bun:"task_id,notnull"`
+	Slots        int              `db:"slots"         bun:"slots,notnull"`
+	AgentLabel   string           `db:"agent_label"   bun:"agent_label,notnull"`
 	ResourcePool string           `db:"resource_pool" bun:"resource_pool,notnull"`
-	StartTime    *time.Time       `db:"start_time" bun:"start_time"`
-	EndTime      *time.Time       `db:"end_time" bun:"end_time"`
-	State        *AllocationState `db:"state" bun:"state"`
-	IsReady      *bool            `db:"is_ready" bun:"is_ready"`
+	StartTime    *time.Time       `db:"start_time"    bun:"start_time"`
+	EndTime      *time.Time       `db:"end_time"      bun:"end_time"`
+	State        *AllocationState `db:"state"         bun:"state"`
+	IsReady      *bool            `db:"is_ready"      bun:"is_ready"`
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
@@ -261,23 +261,23 @@ func TaskLogLevelToProto(l string) logv1.LogLevel {
 // TaskLog represents a structured log emitted by an allocation.
 type TaskLog struct {
 	// A task log should have one of these IDs after being persisted. All should be unique.
-	ID *int `db:"id" json:"id,omitempty"`
+	ID *int `db:"id"            json:"id,omitempty"`
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
 	// _source and populated from _id.
-	StringID     *string `json:"-"`
-	TaskID       string  `db:"task_id" json:"task_id"`
+	StringID     *string `                   json:"-"`
+	TaskID       string  `db:"task_id"       json:"task_id"`
 	AllocationID *string `db:"allocation_id" json:"allocation_id"`
-	AgentID      *string `db:"agent_id" json:"agent_id,omitempty"`
+	AgentID      *string `db:"agent_id"      json:"agent_id,omitempty"`
 	// In the case of k8s, container_id is a pod name instead.
-	ContainerID *string    `db:"container_id" json:"container_id,omitempty"`
-	RankID      *int       `db:"rank_id" json:"rank_id,omitempty"`
-	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
-	Level       *string    `db:"level" json:"level"`
-	Log         string     `db:"log" json:"log"`
-	Source      *string    `db:"source" json:"source,omitempty"`
-	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
+	ContainerID *string    `db:"container_id"  json:"container_id,omitempty"`
+	RankID      *int       `db:"rank_id"       json:"rank_id,omitempty"`
+	Timestamp   *time.Time `db:"timestamp"     json:"timestamp"`
+	Level       *string    `db:"level"         json:"level"`
+	Log         string     `db:"log"           json:"log"`
+	Source      *string    `db:"source"        json:"source,omitempty"`
+	StdType     *string    `db:"stdtype"       json:"stdtype,omitempty"`
 }
 
 const (

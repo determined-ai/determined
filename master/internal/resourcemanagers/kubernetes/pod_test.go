@@ -219,7 +219,10 @@ func checkReceiveTermination(
 	}
 	containerMsg, ok := message.(sproto.ResourcesStateChanged)
 	if !ok {
-		t.Errorf("expected sproto.TaskContainerStateChanged but received %s", reflect.TypeOf(message))
+		t.Errorf(
+			"expected sproto.TaskContainerStateChanged but received %s",
+			reflect.TypeOf(message),
+		)
 	}
 	if containerMsg.ResourcesStopped == nil {
 		t.Errorf("container started message not present")

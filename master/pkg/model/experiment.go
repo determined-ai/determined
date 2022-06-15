@@ -322,7 +322,8 @@ func NewExperiment(
 	if !(gitRemote == nil && gitCommit == nil && gitCommitter == nil && gitCommitDate == nil) &&
 		!(gitRemote != nil && gitCommit != nil && gitCommitter != nil && gitCommitDate != nil) {
 		return nil, errors.New(
-			"all of git_remote, git_commit, git_committer and git_commit_date must be nil or non-nil")
+			"all of git_remote, git_commit, git_committer and git_commit_date must be nil or non-nil",
+		)
 	}
 	return &Experiment{
 		State:                PausedState,
@@ -409,13 +410,13 @@ func NewTrial(
 
 // TrialMetrics represents a row from the `steps` or `validations` table.
 type TrialMetrics struct {
-	ID           int        `db:"id" json:"id"`
-	TrialID      int        `db:"trial_id" json:"trial_id"`
-	TrialRunID   int        `db:"trial_run_id" json:"-"`
+	ID           int        `db:"id"            json:"id"`
+	TrialID      int        `db:"trial_id"      json:"trial_id"`
+	TrialRunID   int        `db:"trial_run_id"  json:"-"`
 	TotalBatches int        `db:"total_batches" json:"total_batches"`
-	State        State      `db:"state" json:"state"`
-	EndTime      *time.Time `db:"end_time" json:"end_time"`
-	Metrics      JSONObj    `db:"metrics" json:"metrics"`
+	State        State      `db:"state"         json:"state"`
+	EndTime      *time.Time `db:"end_time"      json:"end_time"`
+	Metrics      JSONObj    `db:"metrics"       json:"metrics"`
 }
 
 // CheckpointVersion describes the format in which some checkpoint metadata is saved.
@@ -436,17 +437,17 @@ const (
 
 // CheckpointV1 represents a row from the `checkpoints` table.
 type CheckpointV1 struct {
-	ID                int        `db:"id" json:"id"`
-	TrialID           int        `db:"trial_id" json:"trial_id"`
-	TrialRunID        int        `db:"trial_run_id" json:"-"`
-	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	State             State      `db:"state" json:"state"`
-	EndTime           *time.Time `db:"end_time" json:"end_time"`
-	UUID              *string    `db:"uuid" json:"uuid"`
-	Resources         JSONObj    `db:"resources" json:"resources"`
-	Metadata          JSONObj    `db:"metadata" json:"metadata"`
-	Framework         string     `db:"framework" json:"framework"`
-	Format            string     `db:"format" json:"format"`
+	ID                int        `db:"id"                 json:"id"`
+	TrialID           int        `db:"trial_id"           json:"trial_id"`
+	TrialRunID        int        `db:"trial_run_id"       json:"-"`
+	TotalBatches      int        `db:"total_batches"      json:"total_batches"`
+	State             State      `db:"state"              json:"state"`
+	EndTime           *time.Time `db:"end_time"           json:"end_time"`
+	UUID              *string    `db:"uuid"               json:"uuid"`
+	Resources         JSONObj    `db:"resources"          json:"resources"`
+	Metadata          JSONObj    `db:"metadata"           json:"metadata"`
+	Framework         string     `db:"framework"          json:"framework"`
+	Format            string     `db:"format"             json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
 }
 
@@ -501,20 +502,20 @@ type TrialLog struct {
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
 	// _source and populated from _id.
-	StringID *string `json:"-"`
+	StringID *string `        json:"-"`
 
 	TrialID int    `db:"trial_id" json:"trial_id"`
-	Message string `db:"message" json:"message,omitempty"`
+	Message string `db:"message"  json:"message,omitempty"`
 
-	AgentID *string `db:"agent_id" json:"agent_id,omitempty"`
+	AgentID *string `db:"agent_id"     json:"agent_id,omitempty"`
 	// In the case of k8s, container_id is a pod name instead.
 	ContainerID *string    `db:"container_id" json:"container_id,omitempty"`
-	RankID      *int       `db:"rank_id" json:"rank_id,omitempty"`
-	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
-	Level       *string    `db:"level" json:"level"`
-	Log         *string    `db:"log" json:"log"`
-	Source      *string    `db:"source" json:"source,omitempty"`
-	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
+	RankID      *int       `db:"rank_id"      json:"rank_id,omitempty"`
+	Timestamp   *time.Time `db:"timestamp"    json:"timestamp"`
+	Level       *string    `db:"level"        json:"level"`
+	Log         *string    `db:"log"          json:"log"`
+	Source      *string    `db:"source"       json:"source,omitempty"`
+	StdType     *string    `db:"stdtype"      json:"stdtype,omitempty"`
 }
 
 // Proto converts a trial log to its protobuf representation.

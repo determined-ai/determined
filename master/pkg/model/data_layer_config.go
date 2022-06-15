@@ -13,8 +13,8 @@ import (
 // DataLayerConfig configures data layer storage.
 type DataLayerConfig struct {
 	SharedFSConfig *SharedFSDataLayerConfig `union:"type,shared_fs" json:"-"`
-	S3Config       *S3DataLayerConfig       `union:"type,s3" json:"-"`
-	GCSConfig      *GCSDataLayerConfig      `union:"type,gcs" json:"-"`
+	S3Config       *S3DataLayerConfig       `union:"type,s3"        json:"-"`
+	GCSConfig      *GCSDataLayerConfig      `union:"type,gcs"       json:"-"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -68,8 +68,11 @@ type S3DataLayerConfig struct {
 func (s S3DataLayerConfig) Validate() []error {
 	validationErrors := make([]error, 0)
 	if s.LocalCacheContainerPath != nil {
-		validationErrors = append(validationErrors, check.True(filepath.IsAbs(*s.LocalCacheContainerPath),
-			"local_cache_container_path must be an absolute path"))
+		validationErrors = append(
+			validationErrors,
+			check.True(filepath.IsAbs(*s.LocalCacheContainerPath),
+				"local_cache_container_path must be an absolute path"),
+		)
 	}
 	if s.LocalCacheHostPath != nil {
 		validationErrors = append(validationErrors, []error{
@@ -95,8 +98,11 @@ type GCSDataLayerConfig struct {
 func (g GCSDataLayerConfig) Validate() []error {
 	validationErrors := make([]error, 0)
 	if g.LocalCacheContainerPath != nil {
-		validationErrors = append(validationErrors, check.True(filepath.IsAbs(*g.LocalCacheContainerPath),
-			"local_cache_container_path must be an absolute path"))
+		validationErrors = append(
+			validationErrors,
+			check.True(filepath.IsAbs(*g.LocalCacheContainerPath),
+				"local_cache_container_path must be an absolute path"),
+		)
 	}
 	if g.LocalCacheHostPath != nil {
 		validationErrors = append(validationErrors, []error{

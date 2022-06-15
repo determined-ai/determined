@@ -15,7 +15,7 @@ const defaultResourcePoolName = "default"
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
-	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
+	AgentRM      *AgentResourceManagerConfig      `union:"type,agent"      json:"-"`
 	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
 }
 
@@ -92,7 +92,10 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 func (a AgentResourceManagerConfig) Validate() []error {
 	return []error{
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
-		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
+		check.NotEmpty(
+			a.DefaultComputeResourcePool,
+			"default_compute_resource_pool should be non-empty",
+		),
 	}
 }
 

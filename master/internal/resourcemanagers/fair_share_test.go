@@ -293,7 +293,13 @@ func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
 
 	tasks := []*mockTask{
 		{id: "task1", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0]},
-		{id: "task2", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], nonPreemptible: true},
+		{
+			id:             "task2",
+			slotsNeeded:    1,
+			group:          groups[0],
+			allocatedAgent: agents[0],
+			nonPreemptible: true,
+		},
 	}
 	expectedToRelease := []*mockTask{tasks[0]}
 	system := actor.NewSystem(t.Name())
@@ -304,7 +310,13 @@ func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
 
 	// Repeat test in reverse order, because subtle bugs can be order-dependent
 	tasks = []*mockTask{
-		{id: "task1", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], nonPreemptible: true},
+		{
+			id:             "task1",
+			slotsNeeded:    1,
+			group:          groups[0],
+			allocatedAgent: agents[0],
+			nonPreemptible: true,
+		},
 		{id: "task2", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0]},
 	}
 	expectedToRelease = []*mockTask{tasks[1]}

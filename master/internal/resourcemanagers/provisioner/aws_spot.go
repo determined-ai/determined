@@ -412,7 +412,10 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(ctx *actor.Context) ([]*In
 		}
 	}
 
-	instancesToReturn, err := c.describeInstancesByID(runningSpotInstanceIds.asListOfPointers(), false)
+	instancesToReturn, err := c.describeInstancesByID(
+		runningSpotInstanceIds.asListOfPointers(),
+		false,
+	)
 	if err != nil {
 		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
 	}

@@ -16,11 +16,11 @@ type AgentUserGroup struct {
 	// The User is the username on an agent host machine. This may be different
 	// from the username of the user in the User database.
 	User string `db:"user_" json:"user"`
-	UID  int    `db:"uid" json:"uid"`
+	UID  int    `db:"uid"   json:"uid"`
 
 	// The Group is the primary group of the user.
 	Group string `db:"group_" json:"group"`
-	GID   int    `db:"gid" json:"gid"`
+	GID   int    `db:"gid"    json:"gid"`
 }
 
 // Validate validates the fields of the AgentUserGroup.

@@ -280,7 +280,11 @@ func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
 
 	for _, cont := range containers {
 		// Subscribe to termination notifications first.
-		exit, eerr := d.ContainerWait(context.Background(), cont.ID, dcontainer.WaitConditionNextExit)
+		exit, eerr := d.ContainerWait(
+			context.Background(),
+			cont.ID,
+			dcontainer.WaitConditionNextExit,
+		)
 
 		// Restore containerInfo.
 		containerInfo, err := d.ContainerInspect(context.Background(), cont.ID)

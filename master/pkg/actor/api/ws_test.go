@@ -25,7 +25,12 @@ var blob = []byte(`{"value": "test"}`)
 
 func Test_parseMsg(t *testing.T) {
 	tests := []testCase{
-		{"pointer", args{raw: blob, msgType: reflect.TypeOf(&parsed{})}, &parsed{Value: "test"}, false},
+		{
+			"pointer",
+			args{raw: blob, msgType: reflect.TypeOf(&parsed{})},
+			&parsed{Value: "test"},
+			false,
+		},
 		{"value", args{raw: blob, msgType: reflect.TypeOf(parsed{})}, parsed{Value: "test"}, false},
 		{"err", args{raw: []byte("[]"), msgType: reflect.TypeOf(parsed{})}, nil, true},
 	}

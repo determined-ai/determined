@@ -60,7 +60,9 @@ func newGCPCluster(
 	}
 
 	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
-	containerScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.ContainerStartupScript))
+	containerScriptBase64 := base64.StdEncoding.EncodeToString(
+		[]byte(config.ContainerStartupScript),
+	)
 
 	var certBytes []byte
 	if masterURL.Scheme == secureScheme && cert != nil {

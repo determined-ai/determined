@@ -65,7 +65,11 @@ func ConnectPostgres(url string) (*PgDB, error) {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
 			initTheOneBun(sql.DB)
-			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}, url: url}, err
+			return &PgDB{
+				sql:     sql,
+				queries: &staticQueryMap{queries: make(map[string]string)},
+				url:     url,
+			}, err
 		}
 		numTries++
 		if numTries >= 15 {

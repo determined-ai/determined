@@ -56,9 +56,11 @@ func (a *apiServer) DeleteCheckpoints(
 	}
 
 	if len(registeredCheckpointUUIDs) > 0 {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return nil, status.Errorf(
+			codes.InvalidArgument,
 			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
-			registeredCheckpointUUIDs)
+			registeredCheckpointUUIDs,
+		)
 	}
 
 	addr := actor.Addr(fmt.Sprintf("checkpoints-gc-%s", uuid.New().String()))

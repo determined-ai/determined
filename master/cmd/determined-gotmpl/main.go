@@ -78,14 +78,16 @@ func RunTmpl(data map[string]interface{}, files []string) *bytes.Buffer {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprint(flag.CommandLine.Output(),
+		fmt.Fprint(
+			flag.CommandLine.Output(),
 			`Usage: determined-gotmpl [-i data.yaml] [-o output.txt] [key=value] template [template ...]
 
 Based on https://github.com/NateScarlet/gotmpl
 Adds:
  - input yaml context support.
  - toYaml and reflectKind helpers.
-`)
+`,
+		)
 	}
 	var output string
 	var input string

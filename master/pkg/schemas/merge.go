@@ -158,7 +158,9 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 		// We already handled Ptr and Interface.
 		reflect.Ptr,
 		reflect.Interface:
-		panic(fmt.Sprintf("unable to fill %T with %T at %v", obj.Interface(), src.Interface(), name))
+		panic(
+			fmt.Sprintf("unable to fill %T with %T at %v", obj.Interface(), src.Interface(), name),
+		)
 
 	default:
 		// Simple kinds just get copied.

@@ -154,20 +154,31 @@ func trialProfilerMetricsTests(
 	for i := 0; i < 10; i++ {
 		// When we add some metrics that match our stream.
 		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brad's agent", "1")
-		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				match,
+		_, err := cl.PostTrialProfilerMetricsBatch(
+			creds,
+			&apiv1.PostTrialProfilerMetricsBatchRequest{
+				Batches: []*trialv1.TrialProfilerMetricsBatch{
+					match,
+				},
 			},
-		})
+		)
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
 		// And some that do not match our stream.
-		notMatch := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "someone else's agent", "1")
-		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				notMatch,
+		notMatch := randTrialProfilerSystemMetrics(
+			trial.ID,
+			"gpu_util",
+			"someone else's agent",
+			"1",
+		)
+		_, err = cl.PostTrialProfilerMetricsBatch(
+			creds,
+			&apiv1.PostTrialProfilerMetricsBatchRequest{
+				Batches: []*trialv1.TrialProfilerMetricsBatch{
+					notMatch,
+				},
 			},
-		})
+		)
 		assert.NilError(t, err, "failed to insert mocked unmatched trial profiler metrics")
 
 		// Then when we receive the metrics, they should be the metrics we expect.
@@ -206,10 +217,13 @@ func trialProfilerMetricsAvailableSeriesTests(
 	_, trial := setupTrial(t, pgDB)
 
 	ctx, _ := context.WithTimeout(creds, time.Minute)
-	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
-		TrialId: int32(trial.ID),
-		Follow:  true,
-	})
+	tlCl, err := cl.GetTrialProfilerAvailableSeries(
+		ctx,
+		&apiv1.GetTrialProfilerAvailableSeriesRequest{
+			TrialId: int32(trial.ID),
+			Follow:  true,
+		},
+	)
 	assert.NilError(t, err, "failed to initiate trial profiler series stream")
 
 	testBatches := []*trialv1.TrialProfilerMetricsBatch{
@@ -225,11 +239,14 @@ func trialProfilerMetricsAvailableSeriesTests(
 
 	for _, tb := range testBatches {
 		expected = append(expected, tb.Labels.Name)
-		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				tb,
+		_, err := cl.PostTrialProfilerMetricsBatch(
+			creds,
+			&apiv1.PostTrialProfilerMetricsBatchRequest{
+				Batches: []*trialv1.TrialProfilerMetricsBatch{
+					tb,
+				},
 			},
-		})
+		)
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
 		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure mechanism, if the client
@@ -302,7 +319,9 @@ func pbTimestampSlice(n int) []*timestamppb.Timestamp {
 	for i := 0; i < n; i++ {
 		ts[i] = ptypes.TimestampNow()
 		// Round off to millis.
-		ts[i].Nanos = int32(math.Round(float64(ts[i].Nanos)/float64(time.Millisecond)) * float64(time.Millisecond))
+		ts[i].Nanos = int32(
+			math.Round(float64(ts[i].Nanos)/float64(time.Millisecond)) * float64(time.Millisecond),
+		)
 	}
 	return ts
 }

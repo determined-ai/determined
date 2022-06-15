@@ -9,6 +9,7 @@ clean:
 
 .PHONY: get-deps
 get-deps:
+	go install github.com/segmentio/golines@v0.10.0
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 	go install golang.org/x/tools/cmd/goimports@v0.1.5
 	go install github.com/goreleaser/goreleaser@v1.1.0
@@ -37,6 +38,7 @@ check:
 .PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
+	golines -w .
 
 .PHONY: test
 test:

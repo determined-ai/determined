@@ -70,7 +70,11 @@ func pullImageByName(docker *client.Client, imageName string) error {
 	case client.IsErrNotFound(err):
 		// This error means the call to Docker went fine but the image doesn't exist; pull it now.
 		log.Infof("pulling Docker image %s", imageName)
-		pullResponse, pErr := docker.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+		pullResponse, pErr := docker.ImagePull(
+			context.Background(),
+			imageName,
+			types.ImagePullOptions{},
+		)
 		if pErr != nil {
 			return pErr
 		}
@@ -226,7 +230,11 @@ func startLoggingContainer(
 		return 0, "", err
 	}
 
-	err = docker.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{})
+	err = docker.ContainerStart(
+		context.Background(),
+		createResponse.ID,
+		types.ContainerStartOptions{},
+	)
 	if err != nil {
 		return 0, "", err
 	}

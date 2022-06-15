@@ -164,7 +164,10 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 		return err
 	}
 	if len(getResp.Models) > 0 {
-		return status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
+		return status.Errorf(
+			codes.AlreadyExists,
+			"avoid names equal to other models (case-insensitive)",
+		)
 	}
 	return nil
 }
@@ -346,7 +349,9 @@ func (a *apiServer) DeleteModel(
 }
 
 func (a *apiServer) GetModelVersion(
-	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
+	ctx context.Context,
+	req *apiv1.GetModelVersionRequest,
+) (*apiv1.GetModelVersionResponse, error) {
 	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
 	if err != nil {
 		return nil, err
@@ -357,7 +362,9 @@ func (a *apiServer) GetModelVersion(
 }
 
 func (a *apiServer) GetModelVersions(
-	ctx context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
+	ctx context.Context,
+	req *apiv1.GetModelVersionsRequest,
+) (*apiv1.GetModelVersionsResponse, error) {
 	parentModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -369,12 +376,19 @@ func (a *apiServer) GetModelVersions(
 		return nil, err
 	}
 
-	a.sort(resp.ModelVersions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
+	a.sort(
+		resp.ModelVersions,
+		req.OrderBy,
+		req.SortBy,
+		apiv1.GetModelVersionsRequest_SORT_BY_VERSION,
+	)
 	return resp, a.paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
 }
 
 func (a *apiServer) PostModelVersion(
-	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
+	ctx context.Context,
+	req *apiv1.PostModelVersionRequest,
+) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
 	modelResp, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
@@ -400,7 +414,8 @@ func (a *apiServer) PostModelVersion(
 	if c.State != checkpointv1.State_STATE_COMPLETED {
 		return nil, errors.Errorf(
 			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
-			c.Uuid, c.State,
+			c.Uuid,
+			c.State,
 		)
 	}
 
@@ -454,7 +469,8 @@ func (a *apiServer) PatchModelVersion(
 		currModelVersion.Name = req.ModelVersion.Name.Value
 	}
 
-	if req.ModelVersion.Comment != nil && req.ModelVersion.Comment.Value != currModelVersion.Comment {
+	if req.ModelVersion.Comment != nil &&
+		req.ModelVersion.Comment.Value != currModelVersion.Comment {
 		log.Infof("model version (%v) comment changing from %q to %q",
 			req.ModelVersionId, currModelVersion.Comment, req.ModelVersion.Comment.Value)
 		madeChanges = true
@@ -529,8 +545,11 @@ func (a *apiServer) DeleteModelVersion(
 		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "model version %v does not exist or not deletable by this user",
-			req.ModelVersionId)
+		return nil, errors.Wrapf(
+			err,
+			"model version %v does not exist or not deletable by this user",
+			req.ModelVersionId,
+		)
 	}
 
 	return &apiv1.DeleteModelVersionResponse{},

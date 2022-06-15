@@ -25,10 +25,16 @@ func (a *apiServer) GetWorkspaceByID(id int32, userID int32,
 			codes.NotFound, "workspace (%d) not found", id)
 	default:
 		if rejectImmutable && w.Immutable {
-			return nil, errors.Errorf("workspace (%v) is immutable and cannot add new projects.", w.Id)
+			return nil, errors.Errorf(
+				"workspace (%v) is immutable and cannot add new projects.",
+				w.Id,
+			)
 		}
 		if rejectImmutable && w.Archived {
-			return nil, errors.Errorf("workspace (%v) is archived and cannot add new projects.", w.Id)
+			return nil, errors.Errorf(
+				"workspace (%v) is archived and cannot add new projects.",
+				w.Id,
+			)
 		}
 		return w, errors.Wrapf(err,
 			"error fetching workspace (%d) from database", id)
@@ -244,8 +250,11 @@ func (a *apiServer) ArchiveWorkspace(
 		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not archive-able by this user",
-			req.Id)
+		return nil, errors.Wrapf(
+			err,
+			"workspace (%d) does not exist or not archive-able by this user",
+			req.Id,
+		)
 	}
 
 	return &apiv1.ArchiveWorkspaceResponse{},
@@ -265,8 +274,11 @@ func (a *apiServer) UnarchiveWorkspace(
 		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
-		return nil, errors.Wrapf(err, "workspace (%d) does not exist or not unarchive-able by this user",
-			req.Id)
+		return nil, errors.Wrapf(
+			err,
+			"workspace (%d) does not exist or not unarchive-able by this user",
+			req.Id,
+		)
 	}
 
 	return &apiv1.UnarchiveWorkspaceResponse{},

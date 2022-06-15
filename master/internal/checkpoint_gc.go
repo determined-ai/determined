@@ -38,10 +38,22 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
-func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
-	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
-	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
-	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context) *checkpointGCTask {
+func newCheckpointGCTask(
+	rm *actor.Ref,
+	db *db.PgDB,
+	taskLogger *task.Logger,
+	taskID model.TaskID,
+	jobID model.JobID,
+	jobSubmissionTime time.Time,
+	taskSpec tasks.TaskSpec,
+	expID int,
+	legacyConfig expconf.LegacyConfig,
+	toDeleteCheckpoints []uuid.UUID,
+	deleteTensorboards bool,
+	agentUserGroup *model.AgentUserGroup,
+	owner *model.User,
+	logCtx logger.Context,
+) *checkpointGCTask {
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = owner
 	conv := &protoconverter.ProtoConverter{}

@@ -16,8 +16,11 @@ func Test_errUnexpectedMessage_Error(t *testing.T) {
 			"unexpected message from <external> to <unknown> (string):  (no response expected)"},
 		{"sender", fields{ctx: &Context{message: "msg", sender: &Ref{address: Address{"/test"}}}},
 			"unexpected message from /test to <unknown> (string): msg (no response expected)"},
-		{"recipient", fields{ctx: &Context{message: "msg", recipient: &Ref{address: Address{"/test"}}}},
-			"unexpected message from <external> to /test (string): msg (no response expected)"},
+		{
+			"recipient",
+			fields{ctx: &Context{message: "msg", recipient: &Ref{address: Address{"/test"}}}},
+			"unexpected message from <external> to /test (string): msg (no response expected)",
+		},
 		{"response", fields{ctx: &Context{message: "msg", result: make(chan Message)}},
 			"unexpected message from <external> to <unknown> (string): msg (response expected)"},
 		{"array", fields{ctx: &Context{message: []string{"array"}}},

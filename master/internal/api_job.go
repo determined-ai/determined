@@ -30,7 +30,12 @@ func (a *apiServer) GetJobs(
 	}
 
 	resp = &apiv1.GetJobsResponse{Jobs: jobs}
-	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
+	return resp, a.paginate(
+		&resp.Pagination,
+		&resp.Jobs,
+		req.Pagination.Offset,
+		req.Pagination.Limit,
+	)
 }
 
 // GetJobQueueStats retrieves job queue stats for a set of resource pools.

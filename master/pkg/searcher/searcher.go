@@ -128,7 +128,11 @@ func (s *Searcher) ValidationCompleted(
 
 	operations, err := s.method.validationCompleted(s.context(), requestID, metric)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
+		return nil, errors.Wrapf(
+			err,
+			"error while handling a workload completed event: %s",
+			requestID,
+		)
 	}
 	s.CompletedOperations[op.String()] = op
 	s.Record(operations)

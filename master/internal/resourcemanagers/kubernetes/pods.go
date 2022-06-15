@@ -313,7 +313,10 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 }
 
 func (p *pods) startPodInformer(ctx *actor.Context) {
-	p.informer, _ = ctx.ActorOf("pod-informer", newInformer(p.podInterface, p.namespace, ctx.Self()))
+	p.informer, _ = ctx.ActorOf(
+		"pod-informer",
+		newInformer(p.podInterface, p.namespace, ctx.Self()),
+	)
 }
 
 func (p *pods) startNodeInformer(ctx *actor.Context) {
@@ -339,10 +342,24 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	newPodHandler := newPod(
-		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
-		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
-		p.resourceRequestQueue, p.leaveKubernetesResources,
-		p.slotType, p.slotResourceRequests, p.scheduler, p.fluentConfig,
+		msg,
+		p.cluster,
+		msg.Spec.ClusterID,
+		p.clientSet,
+		p.namespace,
+		p.masterIP,
+		p.masterPort,
+		p.masterTLSConfig,
+		p.loggingTLSConfig,
+		p.loggingConfig,
+		p.podInterface,
+		p.configMapInterface,
+		p.resourceRequestQueue,
+		p.leaveKubernetesResources,
+		p.slotType,
+		p.slotResourceRequests,
+		p.scheduler,
+		p.fluentConfig,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {

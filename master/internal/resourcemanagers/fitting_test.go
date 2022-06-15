@@ -406,8 +406,19 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			var index []*agent.AgentState
 			for i, capacity := range tc.AgentCapacities {
-				index = append(index,
-					newFakeAgentState(t, system, fmt.Sprintf("%s-agent-%d", tc.Name, i), "", capacity, 0, 100, 0))
+				index = append(
+					index,
+					newFakeAgentState(
+						t,
+						system,
+						fmt.Sprintf("%s-agent-%d", tc.Name, i),
+						"",
+						capacity,
+						0,
+						100,
+						0,
+					),
+				)
 			}
 			agents, index := byHandler(index...)
 			agentIndex := make(map[*agent.AgentState]int)

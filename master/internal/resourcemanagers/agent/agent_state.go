@@ -327,7 +327,9 @@ func (a *AgentState) startContainer(ctx *actor.Context, msg sproto.StartTaskCont
 func (a *AgentState) getSlotsSummary(ctx *actor.Context) model.SlotsSummary {
 	summary := make(model.SlotsSummary, len(a.slotStates))
 	for deviceID := range a.slotStates {
-		summary[fmt.Sprintf("%s/slots/%d", ctx.Self().Address(), deviceID)] = a.getSlotSummary(deviceID)
+		summary[fmt.Sprintf("%s/slots/%d", ctx.Self().Address(), deviceID)] = a.getSlotSummary(
+			deviceID,
+		)
 	}
 
 	return summary
@@ -353,7 +355,8 @@ func (a *AgentState) getSlotSummary(deviceID device.ID) model.SlotSummary {
 func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID) {
 	s, ok := a.slotStates[deviceID]
 	if !ok {
-		ctx.Log().Warnf("bad updateSlotDeviceView on device: %d (%s): not found", deviceID, a.string())
+		ctx.Log().
+			Warnf("bad updateSlotDeviceView on device: %d (%s): not found", deviceID, a.string())
 		return
 	}
 
@@ -413,7 +416,12 @@ func (a *AgentState) patchSlotState(
 	s, ok := a.slotStates[msg.ID]
 	if !ok {
 		return model.SlotSummary{}, errors.New(
-			fmt.Sprintf("bad updateSlotDeviceView on device: %d (%s): not found", msg.ID, a.string()))
+			fmt.Sprintf(
+				"bad updateSlotDeviceView on device: %d (%s): not found",
+				msg.ID,
+				a.string(),
+			),
+		)
 	}
 	return a.patchSlotStateInner(ctx, msg, s), nil
 }
@@ -684,7 +692,9 @@ func loadContainersToAllocationIds(
 	}
 
 	for _, row := range result {
-		rr[cproto.ID(row["container_id"].(string))] = model.AllocationID(row["allocation_id"].(string))
+		rr[cproto.ID(row["container_id"].(string))] = model.AllocationID(
+			row["allocation_id"].(string),
+		)
 	}
 
 	return rr, nil

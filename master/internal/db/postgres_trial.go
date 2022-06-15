@@ -314,7 +314,11 @@ WHERE id = $1
 	case err != nil:
 		return errors.Wrap(err, "querying current run")
 	case int(runID) != cRunID:
-		return api.AsValidationError("invalid run id, %d (reported) != %d (expected)", runID, cRunID)
+		return api.AsValidationError(
+			"invalid run id, %d (reported) != %d (expected)",
+			runID,
+			cRunID,
+		)
 	default:
 		return nil
 	}

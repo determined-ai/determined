@@ -18,34 +18,34 @@ type SessionID int
 
 // User corresponds to a row in the "users" DB table.
 type User struct {
-	ID           UserID      `db:"id" json:"id"`
-	Username     string      `db:"username" json:"username"`
+	ID           UserID      `db:"id"            json:"id"`
+	Username     string      `db:"username"      json:"username"`
 	PasswordHash null.String `db:"password_hash" json:"-"`
-	DisplayName  null.String `db:"display_name" json:"display_name"`
-	Admin        bool        `db:"admin" json:"admin"`
-	Active       bool        `db:"active" json:"active"`
-	ModifiedAt   time.Time   `db:"modified_at" json:"modified_at"`
+	DisplayName  null.String `db:"display_name"  json:"display_name"`
+	Admin        bool        `db:"admin"         json:"admin"`
+	Active       bool        `db:"active"        json:"active"`
+	ModifiedAt   time.Time   `db:"modified_at"   json:"modified_at"`
 }
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
-	ID     SessionID `db:"id" json:"id"`
+	ID     SessionID `db:"id"      json:"id"`
 	UserID UserID    `db:"user_id" json:"user_id"`
-	Expiry time.Time `db:"expiry" json:"expiry"`
+	Expiry time.Time `db:"expiry"  json:"expiry"`
 }
 
 // A FullUser is a User joined with any other user relations.
 type FullUser struct {
-	ID          UserID      `db:"id" json:"id"`
+	ID          UserID      `db:"id"           json:"id"`
 	DisplayName null.String `db:"display_name" json:"display_name"`
-	Username    string      `db:"username" json:"username"`
-	Admin       bool        `db:"admin" json:"admin"`
-	Active      bool        `db:"active" json:"active"`
-	ModifiedAt  time.Time   `db:"modified_at" json:"modified_at"`
+	Username    string      `db:"username"     json:"username"`
+	Admin       bool        `db:"admin"        json:"admin"`
+	Active      bool        `db:"active"       json:"active"`
+	ModifiedAt  time.Time   `db:"modified_at"  json:"modified_at"`
 
-	AgentUID   null.Int    `db:"agent_uid" json:"agent_uid"`
-	AgentGID   null.Int    `db:"agent_gid" json:"agent_gid"`
-	AgentUser  null.String `db:"agent_user" json:"agent_user"`
+	AgentUID   null.Int    `db:"agent_uid"   json:"agent_uid"`
+	AgentGID   null.Int    `db:"agent_gid"   json:"agent_gid"`
+	AgentUser  null.String `db:"agent_user"  json:"agent_user"`
 	AgentGroup null.String `db:"agent_group" json:"agent_group"`
 }
 

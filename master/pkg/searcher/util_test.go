@@ -62,7 +62,10 @@ func checkSimulation(
 // them, and checks that they produce the same trials and the same sequence of workloads for each
 // trial.
 func checkReproducibility(
-	t assert.TestingT, methodGen func() SearchMethod, hparams expconf.Hyperparameters, metric string,
+	t assert.TestingT,
+	methodGen func() SearchMethod,
+	hparams expconf.Hyperparameters,
+	metric string,
 ) {
 	hparams = schemas.WithDefaults(hparams).(expconf.Hyperparameters)
 	seed := int64(17)
@@ -80,7 +83,12 @@ func checkReproducibility(
 		w1 := results1.Results[requestID]
 		w2 := results2.Results[requestID]
 
-		assert.Equal(t, len(w1), len(w2), "trial had different numbers of workloads between searchers")
+		assert.Equal(
+			t,
+			len(w1),
+			len(w2),
+			"trial had different numbers of workloads between searchers",
+		)
 		for i := range w1 {
 			// We want to ignore the start and end time fields, so check the rest individually.
 			assert.Equal(t, w1[i], w2[i], "workload differed between searchers")

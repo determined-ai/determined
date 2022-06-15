@@ -161,7 +161,8 @@ func (m *manager) triggerPartialWork(ctx *actor.Context) {
 				}
 				err := m.pool.SubmitTask(task)
 				if err != nil {
-					ctx.Log().Errorf("failed to submit hp importance work on restart %v: %v", task, err)
+					ctx.Log().
+						Errorf("failed to submit hp importance work on restart %v: %v", task, err)
 				}
 			}
 		}
@@ -175,7 +176,8 @@ func (m *manager) triggerPartialWork(ctx *actor.Context) {
 				}
 				err := m.pool.SubmitTask(task)
 				if err != nil {
-					ctx.Log().Errorf("failed to submit hp importance work on restart %v: %v", task, err)
+					ctx.Log().
+						Errorf("failed to submit hp importance work on restart %v: %v", task, err)
 				}
 			}
 		}

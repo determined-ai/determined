@@ -64,7 +64,9 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*agent.AgentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest,
+	agents map[*actor.Ref]*agent.AgentState,
+	fittingMethod SoftConstraint,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
@@ -108,7 +110,10 @@ func findDedicatedAgentFits(
 	for _, agent := range agentStates {
 		constraints := []HardConstraint{labelSatisfied, agentSlotUnusedSatisfied}
 		if isViable(req, agent, constraints...) {
-			agentsByNumSlots[agent.NumEmptySlots()] = append(agentsByNumSlots[agent.NumEmptySlots()], agent)
+			agentsByNumSlots[agent.NumEmptySlots()] = append(
+				agentsByNumSlots[agent.NumEmptySlots()],
+				agent,
+			)
 		}
 	}
 
@@ -169,7 +174,9 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*agent.AgentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest,
+	agents map[*actor.Ref]*agent.AgentState,
+	fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {

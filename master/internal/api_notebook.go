@@ -56,12 +56,16 @@ func (a *apiServer) GetNotebook(
 }
 
 func (a *apiServer) IdleNotebook(
-	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
+	_ context.Context,
+	req *apiv1.IdleNotebookRequest,
+) (resp *apiv1.IdleNotebookResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
-	_ context.Context, req *apiv1.KillNotebookRequest) (resp *apiv1.KillNotebookResponse, err error) {
+	_ context.Context,
+	req *apiv1.KillNotebookRequest,
+) (resp *apiv1.KillNotebookResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 

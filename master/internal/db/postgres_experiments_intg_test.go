@@ -313,7 +313,11 @@ func TestGetExperiments(t *testing.T) {
 	}
 }
 
-func mockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
+func mockModelCheckpoint(
+	ckptUuid uuid.UUID,
+	tr *model.Trial,
+	a *model.Allocation,
+) model.CheckpointV2 {
 	stepsCompleted := int32(10)
 	ckpt := model.CheckpointV2{
 		UUID:         ckptUuid,
