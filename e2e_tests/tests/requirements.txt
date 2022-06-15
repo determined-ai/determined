@@ -6,7 +6,7 @@ pexpect
 torch==1.9.0
 torchvision==0.10.0
 tensorflow==2.4.3; sys_platform != 'darwin' or platform_machine != 'arm64'
-tensorflow-macos==2.7.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow-macos==2.9.2; sys_platform == 'darwin' and platform_machine == 'arm64'
 pandas
 pyyaml
 docker
