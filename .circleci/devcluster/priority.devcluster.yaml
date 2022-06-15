@@ -22,6 +22,14 @@ stages:
         log:
           level: debug
         root: tools/build
+        resource_manager:
+        default_aux_resource_pool: default
+        default_compute_resource_pool: default
+        scheduler:
+          fitting_policy: best
+          type: priority
+            default_priority: 40
+        type: agent
 
   - agent:
       name: agent
