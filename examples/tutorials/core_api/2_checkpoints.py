@@ -13,10 +13,10 @@ save the trial ID in the checkpoint and use that to distinguish the two types of
 
 import logging
 import pathlib
-import sys
 import time
 
 import determined as det
+import determined.profiler
 
 
 # NEW: given a checkpoint_directory of type pathlib.Path, save our state to a file.
@@ -39,7 +39,13 @@ def load_state(trial_id, checkpoint_directory):
         return x, 0
 
 
-def main(core_context, latest_checkpoint, trial_id, increment_by):
+def main(
+    core_context,
+    latest_checkpoint,
+    trial_id,
+    increment_by,
+    profiler: "determined.profiler.ProfilerAgent",
+):
     x = 0
 
     # NEW: load a checkpoint if one was provided.
@@ -48,11 +54,18 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             x, starting_batch = load_state(trial_id, path)
 
+    profiler.set_training(True)
+
     for batch in range(starting_batch, 100):
-        x += increment_by
-        steps_completed = batch + 1
-        time.sleep(.1)
-        logging.info(f"x is now {x}")
+        profiler.update_batch_idx(batch)
+        start_time = time.time()
+
+        with profiler.record_timing("training_batch"):
+            x += increment_by
+            steps_completed = batch + 1
+            time.sleep(.1)
+            logging.info(f"x is now {x}")
+
         if steps_completed % 10 == 0:
             core_context.train.report_training_metrics(
                 steps_completed=steps_completed, metrics={"x": x}
@@ -72,8 +85,37 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 # immediately and resume when the trial is reactivated.
                 return
 
+        end_time = time.time()
+        batch_inputs = 1
+        batch_dur = end_time - start_time
+        samples_per_second = batch_inputs / batch_dur
+        samples_per_second *= core_context.distributed.size
+        profiler.record_metric("samples_per_second", samples_per_second)
+
+    profiler.set_training(False)
+
     core_context.train.report_validation_metrics(
         steps_completed=steps_completed, metrics={"x": x}
+    )
+
+
+def determined_profiler_from_ctx(
+    ctx: det.core.Context,
+    begin_on_batch: int = 0,
+    end_after_batch: int = None,
+    sync_timings: bool = True,
+) -> "determined.profiler.ProfilerAgent":
+    cluster_info = det.get_cluster_info()
+    return determined.profiler.ProfilerAgent(
+        trial_id=ctx.train._trial_id,
+        agent_id=cluster_info.agent_id,
+        master_url=cluster_info.master_url,
+        profiling_is_enabled=True,
+        global_rank=ctx.distributed.get_rank(),
+        local_rank=ctx.distributed.get_local_rank(),
+        begin_on_batch=begin_on_batch,
+        end_after_batch=end_after_batch,
+        sync_timings=sync_timings,
     )
 
 
@@ -89,9 +131,11 @@ if __name__ == "__main__":
     trial_id = info.trial.trial_id
 
     with det.core.init() as core_context:
-        main(
-            core_context=core_context,
-            latest_checkpoint=latest_checkpoint,
-            trial_id=trial_id,
-            increment_by=1
-        )
+        with determined_profiler_from_ctx(core_context) as profiler:
+            main(
+                core_context=core_context,
+                latest_checkpoint=latest_checkpoint,
+                trial_id=trial_id,
+                increment_by=1,
+                profiler=profiler,
+            )
