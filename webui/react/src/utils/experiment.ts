@@ -108,11 +108,6 @@ export const alwaysTrueExperimentChecker = (
   user?: DetailedUser,
 ): boolean => true;
 
-export const alwaysFalseExperimentChecker = (
-  experiment: ProjectExperiment,
-  user?: DetailedUser,
-): boolean => false;
-
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
    * for internal use: the typing ensures that checkers
