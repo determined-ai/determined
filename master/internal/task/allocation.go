@@ -549,6 +549,13 @@ func (a *Allocation) ResourcesStateChanged(
 	case sproto.Starting:
 		a.setMostProgressedModelState(model.AllocationStateStarting)
 	case sproto.Running:
+		if a.resources[msg.ResourcesID].Started != nil {
+			// Only recognize the first start message for each resource, since the slurm resource
+			// manager is polling based instead and sends us a message that the resources are
+			// running each time it polls.
+			return
+		}
+
 		a.setMostProgressedModelState(model.AllocationStateRunning)
 
 		a.resources[msg.ResourcesID].Started = msg.ResourcesStarted
@@ -566,7 +573,7 @@ func (a *Allocation) ResourcesStateChanged(
 
 		a.sendEvent(ctx, sproto.Event{
 			ContainerID:           coalesceString(msg.ContainerIDStr(), ""),
-			ContainerStartedEvent: msg.ResourcesStarted,
+			ResourcesStartedEvent: msg.ResourcesStarted,
 		})
 
 		prom.AssociateAllocationTask(a.req.AllocationID,
