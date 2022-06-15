@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -29,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
@@ -1389,4 +1392,47 @@ func (a *apiServer) MoveExperiment(
 
 	return &apiv1.MoveExperimentResponse{},
 		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
+}
+
+func (a *apiServer) GetModelDefTree(
+	_ context.Context, req *apiv1.GetModelDefRequest,
+) (*apiv1.GetModelDefTreeResponse, error) {
+	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching model definition from database: %d", req.ExperimentId)
+	}
+	var resp apiv1.GetModelDefTreeResponse
+	arc, err := archive.FromTarGz(tgz)
+	if err == nil {
+		for _, ar := range arc {
+			resp.Files = append(resp.Files, &experimentv1.FileNode{
+				Path:          ar.Path,
+				ModifiedTime:  timestamppb.New(ar.ModifiedTime.Time),
+				ContentLength: int32(len(ar.Content)),
+				IsDir:         ar.IsDir(),
+			})
+		}
+	}
+	return &resp, nil
+}
+
+func (a *apiServer) GetModelDefFile(
+	_ context.Context, req *apiv1.GetModelDefFileRequest,
+) (*apiv1.GetModelDefFileResponse, error) {
+	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching model definition from database: %d", req.ExperimentId)
+	}
+	arc, err := archive.FromTarGz(tgz)
+	if err == nil {
+		for _, ar := range arc {
+			if ar.Path == req.Path {
+				return &apiv1.GetModelDefFileResponse{File: ar.Content}, nil
+			}
+		}
+	}
+	return nil, errors.New(
+		fmt.Sprintf("error fetching model file %s for experiment %d", req.Path, req.ExperimentId))
 }

@@ -575,3 +575,16 @@ message MoveExperimentRequest {
 
 // Response to MoveExperimentRequest.
 message MoveExperimentResponse {}
+
+message GetModelDefTreeResponse {
+  repeated determined.experiment.v1.FileNode files = 1;
+}
+
+message GetModelDefFileRequest {
+  int32 experiment_id = 1;
+  string path = 2;
+}
+
+message GetModelDefFileResponse {
+  bytes file = 1;
+}

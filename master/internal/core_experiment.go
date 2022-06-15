@@ -88,6 +88,37 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
 
+func (m *Master) getExperimentModelFile(c echo.Context) error {
+	args := struct {
+		ExperimentID int    `path:"experiment_id"`
+		Path         string `query:"path"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	modelDef, err := m.db.ExperimentModelDefinitionRaw(args.ExperimentID)
+	if err != nil {
+		return err
+	}
+	arc, err := archive.FromTarGz(modelDef)
+	if err == nil {
+		for _, ar := range arc {
+			if ar.Path == args.Path {
+				c.Response().Header().Set(
+					"Content-Disposition",
+					fmt.Sprintf(
+						`attachment; filename="exp%d_%s"`,
+						args.ExperimentID,
+						ar.Path))
+				return c.Blob(http.StatusOK, http.DetectContentType(ar.Content), ar.Content)
+			}
+		}
+	}
+	return errors.New(
+		fmt.Sprintf("error fetching model file %s for experiment %d", args.Path, args.ExperimentID))
+}
+
 func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	args := struct {
 		ExperimentID int `path:"experiment_id"`

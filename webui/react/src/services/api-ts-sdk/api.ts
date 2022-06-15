@@ -1891,6 +1891,38 @@ export interface V1File {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1FileNode
+ */
+export interface V1FileNode {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1FileNode
+     */
+    path?: string;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1FileNode
+     */
+    modifiedTime?: Date;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1FileNode
+     */
+    contentLength?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1FileNode
+     */
+    isDir?: boolean;
+}
+
+/**
  * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.
  * @export
  * @enum {string}
@@ -2357,6 +2389,20 @@ export interface V1GetModelDefResponse {
      * @memberof V1GetModelDefResponse
      */
     b64Tgz: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetModelDefTreeResponse
+ */
+export interface V1GetModelDefTreeResponse {
+    /**
+     * 
+     * @type {Array<V1FileNode>}
+     * @memberof V1GetModelDefTreeResponse
+     */
+    files?: Array<V1FileNode>;
 }
 
 /**
@@ -9749,6 +9795,42 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10592,6 +10674,24 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11000,6 +11100,15 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11321,6 +11430,17 @@ export class ExperimentsApi extends BaseAPI {
      */
     public getModelDef(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getModelDefTree(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**

@@ -139,3 +139,10 @@ message ValidationHistoryEntry {
   // the validation.
   float searcher_metric = 3;
 }
+
+message FileNode {
+  string path = 1;
+  google.protobuf.Timestamp modified_time = 2;
+  int32 content_length = 3;
+  bool is_dir = 4;
+}
