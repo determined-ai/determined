@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -1411,6 +1412,7 @@ func (a *apiServer) GetModelDefTree(
 				ModifiedTime:  timestamppb.New(ar.ModifiedTime.Time),
 				ContentLength: int32(len(ar.Content)),
 				IsDir:         ar.IsDir(),
+				ContentType:   http.DetectContentType(ar.Content),
 			})
 		}
 	}
