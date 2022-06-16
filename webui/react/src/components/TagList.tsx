@@ -20,7 +20,7 @@ export const ARIA_LABEL_CONTAINER = 'new-tag-container';
 export const ARIA_LABEL_TRIGGER = 'new-tag-trigger';
 export const ARIA_LABEL_INPUT = 'new-tag-input';
 
-const TAG_MAX_LENGTH = 10;
+const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (
@@ -72,21 +72,6 @@ const EditableTagList: React.FC<Props> = (
     setState(state => ({ ...state, editInputIndex: -1, inputVisible: false }));
   }, [ onChange, tags ]);
 
-  const toHex = (str: string) => {
-    let hash = 0;
-    if (str.length === 0) return '';
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-      hash = hash & hash;
-    }
-    let color = '#';
-    for (let i = 0; i < 3; i++) {
-      const value = (hash >> (i * 8)) & 255;
-      color += ('00' + value.toString(16)).substr(-2);
-    }
-    return color;
-  };
-
   const { editInputIndex, inputVisible, inputWidth } = state;
 
   const classes = [ css.base ];
@@ -129,7 +114,6 @@ const EditableTagList: React.FC<Props> = (
             <Tag
               className={css.tagEdit}
               closable={!disabled}
-              color={toHex(tag)}
               id={htmlId}
               key={tag}
               onClose={() => handleClose(tag)}>
