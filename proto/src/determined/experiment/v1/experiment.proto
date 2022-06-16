@@ -145,4 +145,5 @@ message FileNode {
   google.protobuf.Timestamp modified_time = 2;
   int32 content_length = 3;
   bool is_dir = 4;
+  string content_type = 5;
 }
