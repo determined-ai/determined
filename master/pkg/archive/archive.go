@@ -34,6 +34,8 @@ var defaultModifiedTime UnixTime = func() UnixTime {
 type Item struct {
 	// Path should include the filename.  For directories, it should not end in a '/'.
 	Path string `json:"path"`
+	// Target of the link (if type tar.TypeSymlink)
+	Linkname string `json:"linkname"`
 	// Type should match the tar.Header.Typeflag values.
 	Type         byte        `json:"type"`
 	Content      byteString  `json:"content"`
@@ -91,6 +93,17 @@ func RootItem(path string, content []byte, mode int, fileType byte) Item {
 
 // UserItem returns a new Item which will be owned by the user under which the container runs.
 func UserItem(path string, content []byte, mode int, fileType byte, userID int, groupID int) Item {
+	if fileType == tar.TypeSymlink {
+		return Item{
+			Path:         path,
+			Linkname:     string(content),
+			FileMode:     os.FileMode(mode),
+			Type:         fileType,
+			ModifiedTime: defaultModifiedTime,
+			UserID:       userID,
+			GroupID:      groupID,
+		}
+	}
 	return Item{
 		Path:         path,
 		Content:      content,
@@ -154,7 +167,6 @@ func tarArchive(prefix string, ar Archive, writer io.Writer) error {
 		if err := w.WriteHeader(&tar.Header{
 			Typeflag: item.Type,
 			Name:     prefix + item.Path,
-			Linkname: linkName,
 			Mode:     int64(item.FileMode),
 			Size:     int64(len(content)),
 			Uid:      item.UserID,
