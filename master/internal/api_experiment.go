@@ -31,7 +31,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -212,11 +211,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
 	taskID := model.NewTaskID()
-	conv := &protoconverter.ProtoConverter{}
-	checkpointStrIDs := conv.ToStringList(checkpoints)
-	deleteCheckpoints := strings.Join(checkpointStrIDs, ",")
 	ckptGCTask := newCheckpointGCTask(a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID,
-		jobSubmissionTime, taskSpec, exp.ID, conf, deleteCheckpoints, true, agentUserGroup, user, nil)
+		jobSubmissionTime, taskSpec, exp.ID, conf, checkpoints, true, agentUserGroup, user, nil)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
