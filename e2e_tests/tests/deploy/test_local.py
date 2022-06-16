@@ -4,6 +4,7 @@ import random
 import subprocess
 import time
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import docker
@@ -56,21 +57,24 @@ def master_down(arguments: List) -> None:
 
 
 def agent_up(arguments: List, fluent_offset: Optional[int] = None) -> None:
-    if fluent_offset is not None:
-        f = Path(__file__).parent.joinpath(f"etc/fluent-{fluent_offset}.yaml")
-        f.write_text(
-            f"""
-fluent:
-  port: {24224 + fluent_offset}
-  container_name: fluent-{fluent_offset}"""
-        )
-        arguments += ["--agent-config-path", str(f)]
     command = ["agent-up", conf.MASTER_IP, "--no-gpu"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
     command += arguments
-    det_deploy(command)
+
+    if fluent_offset is not None:
+        with NamedTemporaryFile() as tf:
+            with open(tf.name, "w") as f:
+                f.write(
+                    f"""
+fluent:
+  port: {24224 + fluent_offset}
+  container_name: fluent-{fluent_offset}"""
+                )
+            det_deploy(command + ["--agent-config-path", tf.name])
+    else:
+        det_deploy(command)
 
 
 def agent_down(arguments: List) -> None:
