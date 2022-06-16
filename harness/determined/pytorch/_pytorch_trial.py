@@ -154,24 +154,14 @@ class PyTorchTrialController(det.TrialController):
                 )
             self.training_loader = train_data
 
-        # The chief worker defines epoch lengths for all workers, when using a pytorch.DataLoader.
-        if isinstance(train_data, pytorch.DataLoader):
-            if self.is_chief:
-                chief_epoch_len = len(self.training_loader)
-            else:
-                chief_loader = train_data.get_data_loader(
-                    repeat=True, skip=skip_batches, num_replicas=num_replicas, rank=0
-                )
-                chief_epoch_len = len(chief_loader)
-            self.context._epoch_len = chief_epoch_len
-        # Otherwise, use train_data's len, if available, and set to max int otherwise, as the epoch
-        # length cannot be deduced.
-        else:
-            try:
-                epoch_len = len(train_data)
-            except TypeError:
-                epoch_len = sys.maxsize
-            self.context._epoch_len = epoch_len
+        # All workers use the chief's definition of epoch lengths, which is based on the training
+        # loader's len. If this len does not exist, epoch durations cannot be deduced, and they
+        # default to max int.
+        try:
+            epoch_len = len(self.training_loader)
+        except TypeError:
+            epoch_len = sys.maxsize
+        self.context._epoch_len = self.context.distributed.broadcast(epoch_len)
 
         # Validation loader will be undefined on process ranks > 0
         # when the user defines `validate_full_dataset()`.
