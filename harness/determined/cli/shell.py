@@ -49,23 +49,31 @@ def start_shell(args: Namespace) -> None:
         print(resp["id"])
         return
 
+    '''
     ready = False
     with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
         for msg in ws:
             if msg["service_ready_event"]:
                 ready = True
                 break
+            print(msg)
+            shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
+            print(shell)
             render_event_stream(msg)
     if ready:
-        shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
-        check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-        _open_shell(
-            args.master,
-            shell,
-            args.ssh_opts,
-            retain_keys_and_print=args.show_ssh_command,
-            print_only=False,
-        )
+    '''
+
+    stream_task_logs_till_ready(resp["id"])
+
+    shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
+    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
+    _open_shell(
+    args.master,
+    shell,
+    args.ssh_opts,
+    retain_keys_and_print=args.show_ssh_command,
+    print_only=False,
+    )
 
 
 @authentication.required

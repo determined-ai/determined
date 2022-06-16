@@ -278,6 +278,7 @@ type TaskLog struct {
 	Log         string     `db:"log" json:"log"`
 	Source      *string    `db:"source" json:"source,omitempty"`
 	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
+	EventType   *string    `db:"event_type" json:"eventType,omitempty"`
 }
 
 const (
@@ -354,11 +355,16 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		level = TaskLogLevelToProto(*t.Level)
 	}
 
+	e := ""
+	if t.EventType != nil {
+		e = *t.EventType
+	}
 	return &apiv1.TaskLogsResponse{
 		Id:        id,
 		Timestamp: ts,
 		Level:     level,
 		Message:   t.Message(),
+		EventType: e, // TODO make into enum
 	}, nil
 }
 

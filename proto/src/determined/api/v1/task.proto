@@ -78,6 +78,8 @@ message TaskLogsResponse {
   string message = 3;
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
+  // The event type of the log. // TODO make this an enum.
+  string event_type = 5;
 }
 
 // Stream distinct task log fields.

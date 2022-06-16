@@ -2,6 +2,7 @@ package command
 
 import (
 	"container/ring"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,6 +33,7 @@ type eventManager struct {
 }
 
 func newEventManager(description string) *eventManager {
+	fmt.Println("Starting events manager", description)
 	return &eventManager{
 		bufferSize:   defaultEventBufferSize,
 		buffer:       ring.New(defaultEventBufferSize),
@@ -45,6 +47,8 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop:
 	case sproto.Event:
+		fmt.Printf("Adding event! %+v\n", msg)
+
 		msg.ID = uuid.New().String()
 		msg.Seq = e.seq
 		e.seq++
@@ -76,6 +80,8 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case api.WebSocketConnected:
+		fmt.Println("Websocket connected")
+
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
 		if msg.Ctx.QueryParam("follow") == "" {
 			follow = true
@@ -114,6 +120,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			ws.Stop()
 		}
 	case echo.Context:
+		fmt.Println("Echo messgae")
 		e.handleAPIRequest(ctx, msg)
 
 	default:

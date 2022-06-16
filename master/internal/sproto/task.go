@@ -233,21 +233,29 @@ type Event struct {
 func (ev *Event) ToTaskLog() model.TaskLog {
 	description := ev.Description
 	var message string
+	var eventType *string
 	switch {
 	case ev.ScheduledEvent != nil:
 		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
+		eventType = ptrs.Ptr("scheduled_event")
 	case ev.ResourcesStartedEvent != nil:
 		message = fmt.Sprintf("Resources for %s have started", description)
+		eventType = ptrs.Ptr("resources_started_event")
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)
+		eventType = ptrs.Ptr("terminate_request_event")
 	case ev.ExitedEvent != nil:
 		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
+		eventType = ptrs.Ptr("exited_event")
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
+		eventType = ptrs.Ptr("log_event")
 	case ev.ServiceReadyEvent != nil:
 		message = fmt.Sprintf("Service of %s is available", description)
+		eventType = ptrs.Ptr("service_ready_event")
 	case ev.AssignedEvent != nil:
 		message = fmt.Sprintf("%s was assigned to an agent", description)
+		eventType = ptrs.Ptr("assigned_event")
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
 		// events we'd need to notify of them about these non existing logs either by adding a new
@@ -261,6 +269,7 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		ContainerID: &ev.ContainerID,
 		Timestamp:   &ev.Time,
 		Log:         message,
+		EventType:   eventType,
 	}
 }
 
