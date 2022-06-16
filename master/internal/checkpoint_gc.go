@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -38,10 +40,14 @@ type checkpointGCTask struct {
 
 func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
-	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints string, deleteTensorboards bool,
+	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
 	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context) *checkpointGCTask {
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = owner
+	conv := &protoconverter.ProtoConverter{}
+	checkpointStrIDs := conv.ToStringList(toDeleteCheckpoints)
+	deleteCheckpointsStr := strings.Join(checkpointStrIDs, ",")
+
 	return &checkpointGCTask{
 		taskID:            taskID,
 		jobID:             jobID,
@@ -50,7 +56,7 @@ func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, ta
 			Base:               taskSpec,
 			ExperimentID:       expID,
 			LegacyConfig:       legacyConfig,
-			ToDelete:           toDeleteCheckpoints,
+			ToDelete:           deleteCheckpointsStr,
 			DeleteTensorboards: deleteTensorboards,
 		},
 		rm: rm,

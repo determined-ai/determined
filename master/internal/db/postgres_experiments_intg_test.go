@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -35,17 +36,18 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	exp := requireMockExperiment(t, db, user)
 	tr := requireMockTrial(t, db, exp)
 	a := requireMockAllocation(t, db, tr.TaskID)
-	expectedCheckpoints := ""
+	var expectedCheckpoints []uuid.UUID
 	for i := 1; i <= 3; i++ {
 		ckptUuid := uuid.New()
-		if expectedCheckpoints == "" {
-			expectedCheckpoints = ckptUuid.String()
-		} else {
-			expectedCheckpoints = expectedCheckpoints + "," + ckptUuid.String()
-		}
 		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
 		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 		require.NoError(t, err)
+		if i == 2 { // add this checkpoint to the model registry
+			err = addCheckpointToModelRegistry(db, ckptUuid, user)
+			require.NoError(t, err)
+		} else {
+			expectedCheckpoints = append(expectedCheckpoints, ckptUuid)
+		}
 	}
 
 	checkpoints, err := db.ExperimentCheckpointsToGCRaw(
@@ -56,6 +58,49 @@ func TestExperimentCheckpointsToGCRaw(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, expectedCheckpoints, checkpoints)
+}
+
+func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model.User) error {
+	// Insert a model.
+	now := time.Now()
+	mdl := model.Model{
+		Name:            uuid.NewString(),
+		Description:     "some important model",
+		CreationTime:    now,
+		LastUpdatedTime: now,
+		Labels:          []string{"some other label"},
+		Username:        user.Username,
+	}
+	mdlNotes := "some notes"
+	var pmdl modelv1.Model
+	if err := db.QueryProto(
+		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+	); err != nil {
+		return fmt.Errorf("inserting a model: %w", err)
+	}
+
+	// Register checkpoints
+	var retCkpt1 checkpointv1.Checkpoint
+	if err := db.QueryProto("get_checkpoint", &retCkpt1, checkpointUUID); err != nil {
+		return fmt.Errorf("getting checkpoint: %w", err)
+	}
+
+	addmv := modelv1.ModelVersion{
+		Model:      &pmdl,
+		Checkpoint: &retCkpt1,
+		Name:       "checkpoint exp",
+		Comment:    "empty",
+	}
+	var mv modelv1.ModelVersion
+	if err := db.QueryProto(
+		"insert_model_version", &mv, pmdl.Id, retCkpt1.Uuid, addmv.Name, addmv.Comment,
+		emptyMetadata, strings.Join(addmv.Labels, ","), addmv.Notes, user.ID,
+	); err != nil {
+		return fmt.Errorf("inserting model version: %w", err)
+	}
+
+	return nil
 }
 func TestGetExperiments(t *testing.T) {
 	etc.SetRootPath(rootFromDB)

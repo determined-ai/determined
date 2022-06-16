@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -1173,7 +1172,7 @@ WHERE id = $1`, id)
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-) (string, error) {
+) ([]uuid.UUID, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
@@ -1253,15 +1252,25 @@ SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
 	if err := db.queryRows(query, &checkpointIDRows,
 		id, experimentBest, trialBest, trialLatest); err != nil {
-		return "", fmt.Errorf(
+		return nil, fmt.Errorf(
 			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
 	}
 
-	var checkpointIDs []string
+	var checkpointIDs []uuid.UUID
 	for _, cRow := range checkpointIDRows {
-		checkpointIDs = append(checkpointIDs, cRow.ID.String())
+		checkpointIDs = append(checkpointIDs, cRow.ID)
 	}
-	deleteCheckpoints := strings.Join(checkpointIDs, ",")
+
+	registeredCheckpoints, err := db.GetRegisteredCheckpoints(checkpointIDs)
+	if err != nil {
+		return nil, err
+	}
+	var deleteCheckpoints []uuid.UUID
+	for _, cUUID := range checkpointIDs {
+		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
+			deleteCheckpoints = append(deleteCheckpoints, cUUID)
+		}
+	}
 
 	return deleteCheckpoints, nil
 }
