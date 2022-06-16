@@ -29,7 +29,7 @@ class Reducer(enum.Enum):
 
 def _simple_reduce_metrics(
     reducer: Reducer, metrics: np.array, num_batches: Optional[List[int]] = None
-) -> float:
+) -> np.float64:
     if reducer == Reducer.AVG:
         if num_batches:
             check.check_eq(len(metrics), len(num_batches))
