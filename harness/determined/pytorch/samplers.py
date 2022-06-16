@@ -51,12 +51,6 @@ class DistributedSampler(torch.utils.data.Sampler):
     because theirs is meant to be a standalone sampler.  Theirs does shuffling and assumes a
     constant size dataset as an input.  Ours is meant to be used a building block in a chain of
     samplers, so it accepts a sampler as input that may or may not be constant-size.
-
-    DistributedSampler reports equivalent len values for every worker, regardless of rank.
-    When DistributedSampler wraps a Sampler whose len is not divisible by the number
-    of replicas, equal lens are enforced by increasing the reported len for each
-    would-be-shorter rank by one.  This ensures that epoch-triggered actions are synchronized
-    across workers, as worker epochs are defined in terms of their DistributedSampler's len.
     """
 
     def __init__(self, sampler: torch.utils.data.Sampler, num_workers: int, rank: int) -> None:
@@ -66,9 +60,9 @@ class DistributedSampler(torch.utils.data.Sampler):
 
     def __len__(self) -> int:
         sampler_len = len(self._sampler)  # type: ignore
-        all_workers_get_samples, extra_samples = divmod(sampler_len, self._num_workers)
-        len_sync_sample = 1 if extra_samples > 0 else 0
-        return all_workers_get_samples + len_sync_sample
+        all_workers_get_samples = sampler_len // self._num_workers
+        worker_gets_extra_sample = int(sampler_len % self._num_workers > self._rank)
+        return all_workers_get_samples + worker_gets_extra_sample
 
     def __iter__(self) -> Iterator:
         if self._num_workers == 1:
@@ -89,11 +83,14 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
     DistributedSampler expects to bbe called before the BatchSampler, and
     additionally the DistributedSampler is meant to be a stand-alone sampler.
 
-    DistributedBatchSampler reports equivalent len values for every worker, regardless of rank.
-    When DistributedBatchSampler wraps a BatchSampler whose len is not divisible by the number
-    of replicas, equal lens are enforced by increasing the reported len for each
-    would-be-shorter rank by one.  This ensures that epoch-triggered actions are synchronized
-    across workers, as worker epochs are defined in terms of their DistributedBatchSampler's len.
+    DistributedBatchSampler has the potential gotcha that when wrapping a
+    non-repeating BatchSampler, if the length of the BatchSampler is not
+    divisible by the number of replicas the length of the resulting
+    DistributedBatchSampler will differ based on the rank. In that case, the
+    divergent paths of multiple workers could cause problems during training.
+    PyTorchTrial always uses RepeatBatchSampler during training, PyTorchTrial
+    does not require that the workers stay in step during validation, so this
+    potential gotcha is not a problem in Determined.
     """
 
     def __init__(
@@ -108,9 +105,9 @@ class DistributedBatchSampler(torch.utils.data.BatchSampler):
         self.rank = rank
 
     def __len__(self) -> int:
-        full_global_batches, extra_batches = divmod(len(self.batch_sampler), self.num_workers)
-        len_sync_batch = 1 if extra_batches > 0 else 0
-        return full_global_batches + len_sync_batch
+        full_global_batches = len(self.batch_sampler) // self.num_workers
+        worker_gets_partial_batch = int(len(self.batch_sampler) % self.num_workers > self.rank)
+        return full_global_batches + worker_gets_partial_batch
 
     def __iter__(self) -> Iterator:
         if self.num_workers == 1:

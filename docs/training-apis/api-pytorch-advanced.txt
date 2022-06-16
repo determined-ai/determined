@@ -62,11 +62,16 @@ training") is easy if you follow a few rules.
    wrap your sampler or batch_sampler. For your training dataset, make sure that you always repeat
    AFTER you shuffle, otherwise your shuffle will hang.
 
--  **Always shard**: Use Determined's DistributedSampler or DistributedBatchSampler to provide a
-   unique shard of data to each worker based on your sampler or batch_sampler. It is best to always
-   shard your data, and even when you are not doing distributed training, because in
-   non-distributed-training settings, the sharding is nearly zero-cost, and it makes distributed
-   training seamless if you ever want to use it in the future.
+-  **Always shard, and not before a repeat**: Use Determined's DistributedSampler or
+   DistributedBatchSampler to provide a unique shard of data to each worker based on your sampler or
+   batch_sampler. It is best to always shard your data, and even when you are not doing distributed
+   training, because in non-distributed-training settings, the sharding is nearly zero-cost, and it
+   makes distributed training seamless if you ever want to use it in the future.
+
+   It is generally important to shard after you repeat, unless you can guarantee that each shard of
+   the dataset will have the same length. Otherwise, differences between the epoch boundaries for
+   each worker can grow over time, especially on small datasets. If you shard after you repeat, you
+   can change the number of workers arbitrarily without issue.
 
 -  **Skip when training, and always last**: In Determined, training datasets should always be able
    to start from an arbitrary point in the dataset. This allows for advanced hyperparameter searches
@@ -110,7 +115,7 @@ you find that the built-in context.DataLoader() does not support your use case.
            # Repeat when training.
            sampler = samplers.RepeatSampler(sampler)
 
-       # Always shard.
+       # Always shard, and not before a repeat.
        sampler = samplers.DistributedSampler(sampler, num_workers=num_workers, rank=rank)
 
        # Batch before skip, because Determined counts batches, not records.
