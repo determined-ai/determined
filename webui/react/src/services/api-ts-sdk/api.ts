@@ -1920,6 +1920,12 @@ export interface V1FileNode {
      * @memberof V1FileNode
      */
     isDir?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1FileNode
+     */
+    contentType?: string;
 }
 
 /**
@@ -2375,6 +2381,40 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     branding?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetModelDefFileRequest
+ */
+export interface V1GetModelDefFileRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GetModelDefFileRequest
+     */
+    experimentId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1GetModelDefFileRequest
+     */
+    path?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetModelDefFileResponse
+ */
+export interface V1GetModelDefFileResponse {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1GetModelDefFileResponse
+     */
+    file?: string;
 }
 
 /**
@@ -9795,6 +9835,51 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @param {number} experimentId 
+         * @param {V1GetModelDefFileRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefFile.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getModelDefFile.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/file`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1GetModelDefFileRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -10674,6 +10759,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {number} experimentId 
+         * @param {V1GetModelDefFileRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(experimentId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11100,6 +11204,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @param {number} experimentId 
+         * @param {V1GetModelDefFileRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefFile(experimentId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11430,6 +11544,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public getModelDef(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {number} experimentId 
+     * @param {V1GetModelDefFileRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefFile(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**

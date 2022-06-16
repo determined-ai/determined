@@ -1332,6 +1332,7 @@ class v1FileNode:
     def __init__(
         self,
         contentLength: "typing.Optional[int]" = None,
+        contentType: "typing.Optional[str]" = None,
         isDir: "typing.Optional[bool]" = None,
         modifiedTime: "typing.Optional[str]" = None,
         path: "typing.Optional[str]" = None,
@@ -1340,6 +1341,7 @@ class v1FileNode:
         self.modifiedTime = modifiedTime
         self.contentLength = contentLength
         self.isDir = isDir
+        self.contentType = contentType
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FileNode":
@@ -1348,6 +1350,7 @@ class v1FileNode:
             modifiedTime=obj.get("modifiedTime", None),
             contentLength=obj.get("contentLength", None),
             isDir=obj.get("isDir", None),
+            contentType=obj.get("contentType", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1356,6 +1359,7 @@ class v1FileNode:
             "modifiedTime": self.modifiedTime if self.modifiedTime is not None else None,
             "contentLength": self.contentLength if self.contentLength is not None else None,
             "isDir": self.isDir if self.isDir is not None else None,
+            "contentType": self.contentType if self.contentType is not None else None,
         }
 
 class v1FittingPolicy(enum.Enum):
@@ -1809,6 +1813,46 @@ class v1GetMasterResponse:
             "externalLoginUri": self.externalLoginUri if self.externalLoginUri is not None else None,
             "externalLogoutUri": self.externalLogoutUri if self.externalLogoutUri is not None else None,
             "branding": self.branding if self.branding is not None else None,
+        }
+
+class v1GetModelDefFileRequest:
+    def __init__(
+        self,
+        experimentId: "typing.Optional[int]" = None,
+        path: "typing.Optional[str]" = None,
+    ):
+        self.experimentId = experimentId
+        self.path = path
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelDefFileRequest":
+        return cls(
+            experimentId=obj.get("experimentId", None),
+            path=obj.get("path", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "path": self.path if self.path is not None else None,
+        }
+
+class v1GetModelDefFileResponse:
+    def __init__(
+        self,
+        file: "typing.Optional[str]" = None,
+    ):
+        self.file = file
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelDefFileResponse":
+        return cls(
+            file=obj.get("file", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "file": self.file if self.file is not None else None,
         }
 
 class v1GetModelDefResponse:
@@ -6955,6 +6999,26 @@ def get_GetModelDef(
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDef", _resp)
+
+def post_GetModelDefFile(
+    session: "client.Session",
+    *,
+    body: "v1GetModelDefFileRequest",
+    experimentId: int,
+) -> "v1GetModelDefFileResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/file",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetModelDefFileResponse.from_json(_resp.json())
+    raise APIHttpError("post_GetModelDefFile", _resp)
 
 def get_GetModelDefTree(
     session: "client.Session",

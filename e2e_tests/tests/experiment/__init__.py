@@ -12,6 +12,8 @@ from .experiment import (
     wait_for_experiment_active_workload,
     wait_for_experiment_workload_progress,
     experiment_config_json,
+    fetch_model_def_tree,
+    fetch_model_def_file,
     experiment_state,
     experiment_trials,
     maybe_create_experiment,
