@@ -29,21 +29,40 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// UnauthenticatedPoints are the paths that are exempted from authentication.
-var UnauthenticatedPoints = map[string]bool{
-	"/info":             true,
-	"/task-logs":        true,
-	"/ws/data-layer/*":  true,
-	"/agents*":          true,
-	"/det/*":            true,
-	"/login":            true,
-	"/api/v1/*":         true,
+// UnauthenticatedPointsMap contains the paths that are exempted from authentication.
+var UnauthenticatedPointsMap = map[string]bool{
+	"/":                   true,
+	"/det/":               true,
+	"/info":               true,
+	"/task-logs":          true,
+	"/ws/data-layer/*":    true,
+	"/agents*":            true,
+	"/det/*":              true,
+	"/login":              true,
+	"/api/v1/master":      true,
+	"/api/v1/auth/login":  true,
+	"/api/v1/auth/logout": true,
 	"/proxy/:service/*": true,
 }
 
-// AdminAuthenticatedPoints are the paths that require admin authentication.
-var AdminAuthenticatedPoints = map[string]bool{
+// UnauthenticatedPointsList contains URIs that are exempted from authentication
+var UnauthenticatedPointsList = []string{
+	"/api/v1/agents*",
+	"/api/v1/notebooks/*",
+	"/api/v1/tasks/*",
+	"/api/v1/allocations/*",
+	"/api/v1/tensorboards/",
+	"/api/v1/shells/*",
+}
+
+// AdminAuthPointsMap contains the paths that require admin authentication.
+var AdminAuthPointsMap = map[string]bool{
 	"/config": true,
+}
+
+// BlacklistedPointsMap contains the paths that require authentication
+var BlacklistedPointsMap = map[string]bool{
+	"/agents": true,
 }
 
 type agentUserGroup struct {
@@ -137,12 +156,59 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 	return s.processAuthentication(next)
 }
 
+func (s *Service) matchOne(uri string, path string) bool {
+	if len(uri) < len(path)-1 {
+		return false
+	}
+	if path[len(path)-1] == "*"[0] {
+		for i, _ := range path[0 : len(path)-1] {
+			if path[i] != uri[i] {
+				return false
+			}
+		}
+	} else {
+		if len(path) != len(uri) {
+			return false
+		}
+		for i, _ := range path {
+			if path[i] != uri[i] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (s *Service) pathMatches(uri string) bool {
+	for _, path := range UnauthenticatedPointsList {
+		if s.matchOne(uri, path) {
+			return true
+		}
+	}
+	return false
+}
+
+// getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
+// for whether the path requires admin authentication
+func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
+	if _, ok := AdminAuthPointsMap[c.Path()]; ok {
+		return true, true
+	} else if _, ok := BlacklistedPointsMap[c.Request().RequestURI]; ok {
+		return true, false
+	} else if _, ok := UnauthenticatedPointsMap[c.Path()]; ok {
+		return false, false
+	} else if _, ok := UnauthenticatedPointsMap[c.Request().RequestURI]; ok {
+		return false, false
+	} else if s.pathMatches(c.Request().RequestURI) {
+		return false, false
+	}
+	return true, false
+}
+
 func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		adminOnly := false
-		if _, ok := AdminAuthenticatedPoints[c.Path()]; ok {
-			adminOnly = true
-		} else if _, ok := UnauthenticatedPoints[c.Path()]; ok {
+		authenticate, adminOnly := s.getAuthLevel(c)
+		if !authenticate {
 			return next(c)
 		}
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
