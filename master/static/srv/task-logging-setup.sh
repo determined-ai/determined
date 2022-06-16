@@ -3,21 +3,6 @@
 STDOUT_FILE=/run/determined/train/logs/stdout.log
 STDERR_FILE=/run/determined/train/logs/stderr.log
 
-# When the task container is invoked via SLURM, we have
-# to avoid container-private files in the /run/determined
-# tree as it is shared between jobs.
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
-    # Link the logs to container-local /tmp using relative links
-    # Which are the same for all containers/jobs.
-    mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
-    ln -sf /tmp/stdout.log $STDOUT_FILE
-    ln -sf /tmp/stderr.log $STDERR_FILE
-
-    # Set log file names to container-private directories
-    STDOUT_FILE=/tmp/stdout.log
-    STDERR_FILE=/tmp/stderr.log 
-fi
-
 mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
 
 # Create symbolic links from well-known files to this process's STDOUT and
