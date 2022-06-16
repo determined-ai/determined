@@ -77,7 +77,7 @@ message TaskLogsResponse {
   // The timestamp of the log.
   google.protobuf.Timestamp timestamp = 2;
   // The flat version of the log that UIs have shown historically.
-  string message = 3;
+  string message = 3 [deprecated = true];
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
   // The ID of the task.
