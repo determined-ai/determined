@@ -201,8 +201,8 @@ def _check_web_url(url: str, name: str) -> None:
     token = _get_auth_token_for_curl()
     for _ in range(10):
         r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, allow_redirects=True)
-        # TODO(ilia): Remove this hack.
-        if r.status_code == 502:
+        # TODO(ilia): Is this hack ok?
+        if r.status_code == 502 or r.status_code == 404:
             time.sleep(1)
             continue
         r.raise_for_status()
