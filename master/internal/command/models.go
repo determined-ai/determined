@@ -15,12 +15,10 @@ type CommandSnapshot struct {
 
 	TaskID         model.TaskID `bun:"task_id"`
 	RegisteredTime time.Time    `bun:"registered_time"`
-	// taskType can get from task.
-	// jobType can get from task -> job_id -> job_type
-	// jobid can get from task -> job_id
+	// taskType can be obtained from related task.
+	// jobType can be obtained from task -> job_id -> job_type
+	// jobId can be obtained from task -> job_id
 	AllocationID model.AllocationID `bun:"allocation_id"`
-	// last state from allocation
-	// exit status from allocation
 
 	// GenericCommandSpec
 	GenericCommandSpec tasks.GenericCommandSpec `bun:"generic_command_spec"`

@@ -383,9 +383,7 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 		default:
 			ctx.Log().WithError(err).Error("error reconnecting to master")
 		}
-		ctx.Log().Info("pre-backoff")
 		time.Sleep(time.Duration(a.Options.AgentReconnectBackoff) * time.Second)
-		ctx.Log().Info("post-backoff")
 	}
 	ctx.Log().Warn("exhausted reconnect attempts, exiting")
 	return false

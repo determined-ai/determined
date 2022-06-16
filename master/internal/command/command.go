@@ -121,7 +121,8 @@ func remakeCommandsByType(
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
-	snapshots := make([]CommandSnapshot, 0)
+	snapshots := []CommandSnapshot{}
+
 	err := db.Bun().NewSelect().Model(&snapshots).
 		Relation("Allocation").
 		Relation("Task").
@@ -230,7 +231,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		var proxyPortConf *sproto.ProxyPortConfig
 		priority := c.Config.Resources.Priority
 		if priority != nil {
 			if err := c.setPriority(ctx, *priority, true); err != nil {
@@ -238,6 +238,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
+		var proxyPortConf *sproto.ProxyPortConfig
 		if c.GenericCommandSpec.Port != nil {
 			proxyPortConf = &sproto.ProxyPortConfig{
 				ServiceID:       string(c.taskID),
