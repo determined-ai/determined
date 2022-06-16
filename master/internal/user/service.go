@@ -29,8 +29,8 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// UnauthenticatedPointsMap contains the paths that are exempted from authentication.
-var UnauthenticatedPointsMap = map[string]bool{
+// unauthenticatedPointsMap contains the paths that are exempted from authentication.
+var unauthenticatedPointsMap = map[string]bool{
 	"/":                   true,
 	"/det/":               true,
 	"/info":               true,
@@ -45,8 +45,8 @@ var UnauthenticatedPointsMap = map[string]bool{
 	"/proxy/:service/*":   true,
 }
 
-// UnauthenticatedPointsList contains URIs that are exempted from authentication.
-var UnauthenticatedPointsList = []string{
+// unauthenticatedPointsList contains URIs that are exempted from authentication.
+var unauthenticatedPointsList = []string{
 	"/api/v1/agents*",
 	"/api/v1/notebooks/*",
 	"/api/v1/tasks/*",
@@ -58,13 +58,13 @@ var UnauthenticatedPointsList = []string{
 	"/api/v1/checkpoints",
 }
 
-// AdminAuthPointsMap contains the paths that require admin authentication.
-var AdminAuthPointsMap = map[string]bool{
+// adminAuthPointsMap contains the paths that require admin authentication.
+var adminAuthPointsMap = map[string]bool{
 	"/config": true,
 }
 
-// BlacklistedPointsMap contains the paths that require authentication.
-var BlacklistedPointsMap = map[string]bool{
+// blacklistedPointsMap contains the paths that require authentication.
+var blacklistedPointsMap = map[string]bool{
 	"/agents": true,
 }
 
@@ -184,7 +184,7 @@ func (s *Service) matchOne(uri string, path string) bool {
 }
 
 func (s *Service) pathMatches(uri string) bool {
-	for _, path := range UnauthenticatedPointsList {
+	for _, path := range unauthenticatedPointsList {
 		if s.matchOne(uri, path) {
 			return true
 		}
@@ -195,13 +195,13 @@ func (s *Service) pathMatches(uri string) bool {
 // getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
 // for whether the path requires admin authentication.
 func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
-	if _, ok := AdminAuthPointsMap[c.Path()]; ok {
+	if _, ok := adminAuthPointsMap[c.Path()]; ok {
 		return true, true
-	} else if _, ok := BlacklistedPointsMap[c.Request().RequestURI]; ok {
+	} else if _, ok := blacklistedPointsMap[c.Request().RequestURI]; ok {
 		return true, false
-	} else if _, ok := UnauthenticatedPointsMap[c.Path()]; ok {
+	} else if _, ok := unauthenticatedPointsMap[c.Path()]; ok {
 		return false, false
-	} else if _, ok := UnauthenticatedPointsMap[c.Request().RequestURI]; ok {
+	} else if _, ok := unauthenticatedPointsMap[c.Request().RequestURI]; ok {
 		return false, false
 	} else if s.pathMatches(c.Request().RequestURI) {
 		return false, false
