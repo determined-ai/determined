@@ -3,6 +3,7 @@ package tasks
 import (
 	"archive/tar"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -119,7 +120,17 @@ func (t TaskSpec) EnvVars() map[string]string {
 		"DET_CONTAINER_ID":  t.ContainerID,
 		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 		"DET_USER_TOKEN":    t.UserSessionToken,
-		"DET_USER":          t.Owner.Username,
+		"DET_WORKDIR":       t.WorkDir,
+	}
+	if t.Owner != nil {
+		e["DET_USER"] = t.Owner.Username
+	}
+
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
+	}
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		e["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
 	}
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
@@ -137,6 +148,15 @@ func (t TaskSpec) EnvVars() map[string]string {
 	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
 	if t.SegmentEnabled {
 		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
+	}
+
+	if t.LoggingFields != nil {
+		j, err := json.Marshal(t.LoggingFields)
+		if err != nil {
+			// TODO(Dispatcher): propagate errors.
+			panic(fmt.Errorf("serializing logging fields: %w", err))
+		}
+		e["DET_TASK_LOGGING_METADATA"] = string(j)
 	}
 
 	for k, v := range t.ExtraEnvVars {
@@ -239,6 +259,12 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			tar.TypeReg,
 		),
 		aug.OwnedArchiveItem(
+			taskEnrichLogsScript,
+			etc.MustStaticFile(etc.TaskEnrichLogsResource),
+			taskEnrichLogsScriptMode,
+			tar.TypeReg,
+		),
+		aug.OwnedArchiveItem(
 			taskLoggingTeardownScript,
 			etc.MustStaticFile(etc.TaskLoggingTeardownScriptResource),
 			taskLoggingTeardownMode,
@@ -261,7 +287,10 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 	passwdBytes := []byte(
 		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
-	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
+	// Add a bogus password in the shadow file.  Cannot use ! as that locks the account
+	// when using SLURM/Singularity.   The password is not actually ever used so OK that
+	// it can never be specified due to our sshd_config is configured with "PasswordAuthentication no"
+	shadowBytes := []byte(fmt.Sprintf("%v:BogusPasswordHash:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))
 
 	return wrapArchive(

@@ -44,8 +44,19 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # After openssh 8+ is the only version of openssh supported (that is, after we
 # only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
 # skip this awkwardness.
-blacklist="^(_|HOME|TERM|LANG|LC_.*)"
-vars="$(env | sed -E -e "s/=.*//; /$blacklist/d")"
+#
+# For HPC systems, bash module support uses variables that store functions 
+# of the form, and a wierd %% defintion.
+#   BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
+#   BASH_FUNC_module%%=() {  eval `/opt/lib/modulecmd bash $*`
+# so we add variables with parens or % in the name to the blacklist and 
+# filter them out because the  additional parens/% in the variable names 
+# causes problems in the escaping code below.   Additionally we properly
+# enumerate just the names but adding the grep '^\S+=\S' below to remove 
+# the multi-line values from for such functions so the blacklist can be
+# properly applied.
+blacklist="^(_|HOME|TERM|LANG|\S+\(\).*|\S+\%\S*|LC_.*)"
+vars="$(env | grep -E '^\S+=\S' | sed -E -e "s/=.*//; /$blacklist/d")"
 options="$(
     for var in $vars ; do
         # Note that the syntax ${!var} is for a double dereference.

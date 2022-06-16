@@ -204,6 +204,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     with det.util.forward_signals(p):
         return p.wait()
 
+
 def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:
     # Manually extract anything before the first "--" to pass through to horovodrun.
     if "--" in args:
