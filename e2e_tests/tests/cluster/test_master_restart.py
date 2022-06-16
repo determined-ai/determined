@@ -1,7 +1,6 @@
 import logging
 import subprocess
 import time
-import re
 from typing import Iterator
 
 import pytest
@@ -10,13 +9,19 @@ import requests
 from determined.common import constants
 from determined.common.api import authentication
 from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE
+from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
-from tests import command as cmd
 from tests.cluster.test_users import det_spawn
 
-from .managed_cluster import ManagedCluster, managed_cluster
-from .utils import command_succeeded, run_command, wait_for_command_state, get_command_info, wait_for_task_state
+from .managed_cluster import ManagedCluster
+from .utils import (
+    command_succeeded,
+    get_command_info,
+    run_command,
+    wait_for_command_state,
+    wait_for_task_state,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +142,9 @@ def test_master_restart_kill_works(managed_cluster: ManagedCluster) -> None:
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("slots", [0, 1])
 @pytest.mark.parametrize("downtime", [0, 20, 60])
-def test_master_restart_cmd(restartable_managed_cluster: ManagedCluster, slots: int, downtime: int) -> None:
+def test_master_restart_cmd(
+    restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
+) -> None:
     managed_cluster = restartable_managed_cluster
 
     command_id = run_command(30, slots=slots)
@@ -160,7 +167,6 @@ def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downt
 
     with cmd.interactive_command("shell", "start", "--detach") as shell:
         task_id = shell.task_id
-        print("shell task_id", task_id)
 
         assert task_id is not None
         wait_for_task_state("shell", task_id, "RUNNING")
@@ -185,7 +191,8 @@ def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downt
 
 def _get_auth_token_for_curl() -> str:
     token = authentication.TokenStore(conf.make_master_url()).get_token(
-        constants.DEFAULT_DETERMINED_USER)
+        constants.DEFAULT_DETERMINED_USER
+    )
     assert token is not None
     return token
 
@@ -193,17 +200,13 @@ def _get_auth_token_for_curl() -> str:
 def _check_web_url(url: str, name: str) -> None:
     token = _get_auth_token_for_curl()
     for _ in range(10):
-        r = requests.get(
-            url,
-            headers={"Authorization": f"Bearer {token}"},
-            allow_redirects=True
-        )
+        r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, allow_redirects=True)
         # TODO(ilia): Remove this hack.
         if r.status_code == 502:
             time.sleep(1)
             continue
         r.raise_for_status()
-        html = r.content.decode('utf-8')
+        html = r.content.decode("utf-8")
         assert name in html  # Brutal.
         break
     else:
@@ -220,17 +223,16 @@ def _check_tb_url(url: str) -> None:
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [5])
-def test_master_restart_notebook(restartable_managed_cluster: ManagedCluster, downtime: int) -> None:
+def test_master_restart_notebook(
+    restartable_managed_cluster: ManagedCluster, downtime: int
+) -> None:
     managed_cluster = restartable_managed_cluster
     with cmd.interactive_command("notebook", "start", "--detach") as notebook:
         task_id = notebook.task_id
-        print("notebook task_id", task_id)
         assert task_id is not None
         wait_for_task_state("notebook", task_id, "RUNNING")
         notebook_url = f"{conf.make_master_url()}proxy/{task_id}/"
-        print("notebook url", notebook_url)
         _check_notebook_url(notebook_url)
-        print("notebook ok")
 
         if downtime >= 0:
             managed_cluster.kill_master()
@@ -239,12 +241,14 @@ def test_master_restart_notebook(restartable_managed_cluster: ManagedCluster, do
 
         _check_notebook_url(notebook_url)
 
-        print('notebook ok')
+        print("notebook ok")
 
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [5])
-def test_master_restart_tensorboard(restartable_managed_cluster: ManagedCluster, downtime: int) -> None:
+def test_master_restart_tensorboard(
+    restartable_managed_cluster: ManagedCluster, downtime: int
+) -> None:
     managed_cluster = restartable_managed_cluster
 
     exp_id = exp.create_experiment(
@@ -253,9 +257,7 @@ def test_master_restart_tensorboard(restartable_managed_cluster: ManagedCluster,
         None,
     )
 
-    exp.wait_for_experiment_state(
-        exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=60
-    )
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=60)
 
     with cmd.interactive_command("tensorboard", "start", "--detach", str(exp_id)) as tb:
         task_id = tb.task_id
@@ -272,4 +274,4 @@ def test_master_restart_tensorboard(restartable_managed_cluster: ManagedCluster,
 
         _check_tb_url(tb_url)
 
-        print('tensorboard ok')
+        print("tensorboard ok")

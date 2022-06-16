@@ -2,10 +2,10 @@ import json
 import subprocess
 import time
 from typing import Any, Dict
-from typing_extensions import Literal
 
 import pytest
 import requests
+from typing_extensions import Literal
 
 from determined.common import api
 from determined.common.api import authentication, certs
@@ -59,6 +59,7 @@ def run_zero_slot_command(sleep: int = 30) -> str:
 
 
 TaskType = Literal["command", "notebook", "tensorboard", "shell"]
+
 
 def get_task_info(task_type: TaskType, task_id: str) -> Dict[str, Any]:
     task = ["det", "-m", conf.make_master_url(), task_type, "list", "--json"]

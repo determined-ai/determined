@@ -12,37 +12,37 @@ from tests import config as conf
 
 
 class _InteractiveCommandProcess:
-	def __init__(self, process: subprocess.Popen, detach: bool = False):
-		self.process = process
-		self.detach = detach
-		self.task_id = None  # type: Optional[str]
+    def __init__(self, process: subprocess.Popen, detach: bool = False):
+        self.process = process
+        self.detach = detach
+        self.task_id = None  # type: Optional[str]
 
-		if self.detach:
-			iterator = iter(self.process.stdout)  # type: ignore
-			line = next(iterator)
-			self.task_id = line.decode().strip()
-		else:
-			iterator = iter(self.process.stdout)  # type: ignore
-			line = next(iterator)
-			m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
-			assert m is not None
-			self.task_id = m.group(1).decode() if m else None
+        if self.detach:
+            iterator = iter(self.process.stdout)  # type: ignore
+            line = next(iterator)
+            self.task_id = line.decode().strip()
+        else:
+            iterator = iter(self.process.stdout)  # type: ignore
+            line = next(iterator)
+            m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
+            assert m is not None
+            self.task_id = m.group(1).decode() if m else None
 
-	@property
-	def stdout(self) -> Iterator[str]:
-		assert self.process.stdout is not None
-		for line in self.process.stdout:
-			yield line.decode()
+    @property
+    def stdout(self) -> Iterator[str]:
+        assert self.process.stdout is not None
+        for line in self.process.stdout:
+            yield line.decode()
 
-	@property
-	def stderr(self) -> Iterator[str]:
-		assert self.process.stderr is not None
-		return (line.decode() for line in self.process.stderr)
+    @property
+    def stderr(self) -> Iterator[str]:
+        assert self.process.stderr is not None
+        return (line.decode() for line in self.process.stderr)
 
-	@property
-	def stdin(self) -> IO:
-		assert self.process.stdin is not None
-		return self.process.stdin
+    @property
+    def stdin(self) -> IO:
+        assert self.process.stdin is not None
+        return self.process.stdin
 
 
 @contextmanager
@@ -58,7 +58,6 @@ def interactive_command(*args: str) -> Iterator[_InteractiveCommandProcess]:
             if "Jupyter Notebook is running" in line:
                 break
     """
-
 
     with subprocess.Popen(
         ("det", "-m", conf.make_master_url()) + args,
