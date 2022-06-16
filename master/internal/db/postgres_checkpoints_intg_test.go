@@ -4,7 +4,6 @@
 package db
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -98,8 +97,5 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 	db.sql.QueryRowx(`SELECT count(c.uuid) AS numC from checkpoints_view AS c WHERE
 	c.uuid::text = $1 AND c.state = 'DELETED';`, validDeleteCheckpoint).Scan(&numDStateCheckpoints)
-	fmt.Println("numDstatechekpoointsnum")
-	fmt.Println(numDStateCheckpoints)
 	require.Equal(t, numValidDCheckpoints, numDStateCheckpoints, "didn't correctly delete the valid checkpoints")
-
 }

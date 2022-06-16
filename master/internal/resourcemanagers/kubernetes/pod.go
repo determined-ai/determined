@@ -469,7 +469,6 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 	if !simpleReplacement {
 		matched, err := regexp.MatchString("nodes are available", msgText)
 		if err == nil && matched {
-			fmt.Printf("K8S nodes message: %s\n", msgText)
 			available := string(msgText[0])
 			required := strconv.Itoa(p.slots)
 			var resourceName string
