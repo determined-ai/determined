@@ -24,7 +24,6 @@ func RandomValidation(rand *rand.Rand, _, _ int) float64 { return rand.Float64()
 
 // TrialIDMetric returns the trialID as the metric for all validation steps.
 func TrialIDMetric(_ *rand.Rand, trialID, _ int) float64 {
-	fmt.Println(trialID)
 	return float64(trialID)
 }
 

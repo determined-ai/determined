@@ -101,8 +101,6 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 		return err
 	}
 
-	fmt.Printf("Upgrade debug %s %t\n", goMigrateEntry.Version, goMigrateEntry.Dirty)
-
 	// CREATE gopg_migrations table,
 	// and INSERT the initial version from go-migrate.
 	if _, _, err := migrations.Run(tx, "init"); err != nil {

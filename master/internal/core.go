@@ -498,7 +498,6 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 			}
 		}
 
-		fmt.Println(clientAuthMode)
 		baseListener = tls.NewListener(baseListener, &tls.Config{
 			Certificates:             []tls.Certificate{*cert},
 			MinVersion:               tls.VersionTLS12,
