@@ -5,10 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/google/uuid"
 
 	"github.com/pkg/errors"
 
