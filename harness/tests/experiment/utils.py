@@ -68,7 +68,7 @@ class TrainAndValidate:
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
                 if validation.get("stop_requested"):
-                    assert step_id == self.request_stop_step_id
+                    assert step_id == self.request_stop_step_id, (step_id, self)
                     stop_requested = True
 
             if stop_requested:
@@ -177,7 +177,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
     """
     assert set(metrics_A.keys()) == set(metrics_B.keys())
     for key in metrics_A.keys():
-        if isinstance(metrics_A[key], (float, np.float)):
+        if isinstance(metrics_A[key], (float, float)):
             assert metrics_A[key] == pytest.approx(metrics_B[key])
         elif isinstance(metrics_A[key], np.ndarray):
             assert np.array_equal(metrics_A[key], metrics_B[key])
