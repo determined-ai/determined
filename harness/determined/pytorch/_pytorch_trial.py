@@ -4,6 +4,7 @@ import logging
 import pathlib
 import pickle
 import random
+import sys
 import time
 from abc import abstractmethod
 from inspect import signature
@@ -137,13 +138,13 @@ class PyTorchTrialController(det.TrialController):
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.steps_completed
 
-        nreplicas = self.context.distributed.size
+        num_replicas = self.context.distributed.size
         rank = self.context.distributed.rank
 
         train_data = self.trial.build_training_data_loader()
         if isinstance(train_data, pytorch.DataLoader):
             self.training_loader = train_data.get_data_loader(
-                repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
+                repeat=True, skip=skip_batches, num_replicas=num_replicas, rank=rank
             )
         else:
             # Non-determined DataLoader; ensure the user meant to do this.
@@ -153,7 +154,24 @@ class PyTorchTrialController(det.TrialController):
                 )
             self.training_loader = train_data
 
-        self.context._epoch_len = len(self.training_loader)
+        # The chief worker defines epoch lengths for all workers, when using a pytorch.DataLoader.
+        if isinstance(train_data, pytorch.DataLoader):
+            if self.is_chief:
+                chief_epoch_len = len(self.training_loader)
+            else:
+                chief_loader = train_data.get_data_loader(
+                    repeat=True, skip=skip_batches, num_replicas=num_replicas, rank=0
+                )
+                chief_epoch_len = len(chief_loader)
+            self.context._epoch_len = chief_epoch_len
+        # Otherwise, use train_data's len, if available, and set to max int otherwise, as the epoch
+        # length cannot be deduced.
+        else:
+            try:
+                epoch_len = len(train_data)
+            except TypeError:
+                epoch_len = sys.maxsize
+            self.context._epoch_len = epoch_len
 
         # Validation loader will be undefined on process ranks > 0
         # when the user defines `validate_full_dataset()`.
@@ -162,7 +180,7 @@ class PyTorchTrialController(det.TrialController):
         if self._evaluate_batch_defined():
             if isinstance(validation_data, pytorch.DataLoader):
                 self.validation_loader = validation_data.get_data_loader(
-                    repeat=False, skip=0, num_replicas=nreplicas, rank=rank
+                    repeat=False, skip=0, num_replicas=num_replicas, rank=rank
                 )
             else:
                 # Non-determined DataLoader; ensure the user meant to do this.
@@ -300,7 +318,7 @@ class PyTorchTrialController(det.TrialController):
             response_func(response)
 
     def get_epoch_idx(self, batch_id: int) -> int:
-        return batch_id // len(self.training_loader)
+        return batch_id // self.context._epoch_len
 
     def _auto_step_lr_scheduler_per_batch(
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
