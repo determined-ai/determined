@@ -42,10 +42,10 @@ var UnauthenticatedPointsMap = map[string]bool{
 	"/api/v1/master":      true,
 	"/api/v1/auth/login":  true,
 	"/api/v1/auth/logout": true,
-	"/proxy/:service/*": true,
+	"/proxy/:service/*":   true,
 }
 
-// UnauthenticatedPointsList contains URIs that are exempted from authentication
+// UnauthenticatedPointsList contains URIs that are exempted from authentication.
 var UnauthenticatedPointsList = []string{
 	"/api/v1/agents*",
 	"/api/v1/notebooks/*",
@@ -53,6 +53,9 @@ var UnauthenticatedPointsList = []string{
 	"/api/v1/allocations/*",
 	"/api/v1/tensorboards/",
 	"/api/v1/shells/*",
+	"/api/v1/experiments/*",
+	"/api/v1/trials/*",
+	"/api/v1/checkpoints",
 }
 
 // AdminAuthPointsMap contains the paths that require admin authentication.
@@ -60,7 +63,7 @@ var AdminAuthPointsMap = map[string]bool{
 	"/config": true,
 }
 
-// BlacklistedPointsMap contains the paths that require authentication
+// BlacklistedPointsMap contains the paths that require authentication.
 var BlacklistedPointsMap = map[string]bool{
 	"/agents": true,
 }
@@ -157,11 +160,12 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 }
 
 func (s *Service) matchOne(uri string, path string) bool {
-	if len(uri) < len(path)-1 {
+	pathLen := len(path) - 1
+	if len(uri) < pathLen {
 		return false
 	}
-	if path[len(path)-1] == "*"[0] {
-		for i, _ := range path[0 : len(path)-1] {
+	if path[pathLen] == "*"[0] {
+		for i := range path[:pathLen] {
 			if path[i] != uri[i] {
 				return false
 			}
@@ -170,7 +174,7 @@ func (s *Service) matchOne(uri string, path string) bool {
 		if len(path) != len(uri) {
 			return false
 		}
-		for i, _ := range path {
+		for i := range path {
 			if path[i] != uri[i] {
 				return false
 			}
@@ -189,7 +193,7 @@ func (s *Service) pathMatches(uri string) bool {
 }
 
 // getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
-// for whether the path requires admin authentication
+// for whether the path requires admin authentication.
 func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
 	if _, ok := AdminAuthPointsMap[c.Path()]; ok {
 		return true, true
