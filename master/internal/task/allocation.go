@@ -735,7 +735,7 @@ func (a *Allocation) allNonDaemonsExited() bool {
 }
 
 func (a *Allocation) preempt(ctx *actor.Context, reason string) {
-	ctx.Log().Info("decided to gracefully terminate allocation")
+	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
 	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
@@ -754,7 +754,7 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 		return
 	}
 
-	ctx.Log().Info("decided to kill allocation")
+	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
 	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
