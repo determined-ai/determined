@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg"
@@ -33,6 +34,8 @@ var defaultModifiedTime UnixTime = func() UnixTime {
 type Item struct {
 	// Path should include the filename.  For directories, it should not end in a '/'.
 	Path string `json:"path"`
+	// Target of the link (if type tar.TypeSymlink)
+	Linkname string `json:"linkname"`
 	// Type should match the tar.Header.Typeflag values.
 	Type         byte        `json:"type"`
 	Content      byteString  `json:"content"`
@@ -67,6 +70,17 @@ func (ar Archive) ContainsPath(path string) bool {
 	return false
 }
 
+// ContainsFilePrefix returns true if any Item present in an Archive
+// has the specified prefix (i.e. is under that directory).
+func (ar Archive) ContainsFilePrefix(prefix string) bool {
+	for _, file := range ar {
+		if strings.HasPrefix(file.Path, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // RootItem returns a new Item which will be owned by root when embedded in a container.
 func RootItem(path string, content []byte, mode int, fileType byte) Item {
 	return Item{
@@ -80,6 +94,17 @@ func RootItem(path string, content []byte, mode int, fileType byte) Item {
 
 // UserItem returns a new Item which will be owned by the user under which the container runs.
 func UserItem(path string, content []byte, mode int, fileType byte, userID int, groupID int) Item {
+	if fileType == tar.TypeSymlink {
+		return Item{
+			Path:         path,
+			Linkname:     string(content),
+			FileMode:     os.FileMode(mode),
+			Type:         fileType,
+			ModifiedTime: defaultModifiedTime,
+			UserID:       userID,
+			GroupID:      groupID,
+		}
+	}
 	return Item{
 		Path:         path,
 		Content:      content,
@@ -130,13 +155,14 @@ func (t *UnixTime) UnmarshalJSON(data []byte) error {
 }
 
 // Writes the archive as a tarfile to the given Writer.
-func tarArchive(ar Archive, writer io.Writer) error {
+func tarArchive(prefix string, ar Archive, writer io.Writer) error {
 	w := tar.NewWriter(writer)
 
 	for _, item := range ar {
 		if err := w.WriteHeader(&tar.Header{
 			Typeflag: item.Type,
-			Name:     item.Path,
+			Name:     prefix + item.Path,
+			Linkname: item.Linkname,
 			Mode:     int64(item.FileMode),
 			Size:     int64(len(item.Content)),
 			Uid:      item.UserID,
@@ -157,7 +183,7 @@ func tarArchive(ar Archive, writer io.Writer) error {
 func ToIOReader(ar Archive) (io.Reader, error) {
 	var buf bytes.Buffer
 
-	if err := tarArchive(ar, &buf); err != nil {
+	if err := tarArchive("", ar, &buf); err != nil {
 		return nil, err
 	}
 
@@ -166,11 +192,17 @@ func ToIOReader(ar Archive) (io.Reader, error) {
 
 // ToTarGz converts the files in an Archive into a gzipped tarfile.
 func ToTarGz(ar Archive) ([]byte, error) {
+	return ToRelocatedTarGz("", ar)
+}
+
+// ToRelocatedTarGz converts the files in an Archive into a gzipped tarfile
+// relocated with the specified path prefix.
+func ToRelocatedTarGz(prefix string, ar Archive) ([]byte, error) {
 	var buf bytes.Buffer
 
 	gzipWriter := gzip.NewWriter(&buf)
 
-	if err := tarArchive(ar, gzipWriter); err != nil {
+	if err := tarArchive(prefix, ar, gzipWriter); err != nil {
 		return nil, err
 	}
 
