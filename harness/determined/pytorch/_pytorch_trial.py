@@ -318,7 +318,7 @@ class PyTorchTrialController(det.TrialController):
             response_func(response)
 
     def get_epoch_idx(self, batch_id: int) -> int:
-        return batch_id // self.context._epoch_len
+        return batch_id // self.context._epoch_len  # type: ignore
 
     def _auto_step_lr_scheduler_per_batch(
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
