@@ -531,7 +531,7 @@ func runAPIServer(options Options, system *actor.System, otelEnabled bool, otelE
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
 
-	if otelEnabled {
+	if otelEnabled { // configure where you set the values for this.
 		opentelemetry.ConfigureOtel(otelEndpoint, "determined-agent")
 	}
 	server.Use(otelecho.Middleware("determined-agent"))
