@@ -3,6 +3,7 @@ import pytest
 from tests import config as conf
 from tests import experiment as exp
 
+
 @pytest.mark.e2e_cpu
 def test_fetch_experiment_model_def() -> None:
     experiment_id = exp.run_basic_test(

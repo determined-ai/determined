@@ -235,11 +235,18 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         trial = trials[0].trial
         assert trial.state == determinedexperimentv1State.STATE_CANCELED
 
+
 def fetch_model_def_tree(experiment_id: int) -> bindings.v1GetModelDefTreeResponse:
     return bindings.get_GetModelDefTree(determined_test_session(), experimentId=experiment_id)
 
+
 def fetch_model_def_file(experiment_id: int, path: str) -> None:
-    bindings.post_GetModelDefFile(determined_test_session(), body=bindings.v1GetModelDefFileRequest(path=path), experimentId=experiment_id)
+    bindings.post_GetModelDefFile(
+        determined_test_session(),
+        body=bindings.v1GetModelDefFileRequest(path=path),
+        experimentId=experiment_id,
+    )
+
 
 def is_terminal_state(state: determinedexperimentv1State) -> bool:
     return state in (
