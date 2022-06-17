@@ -29,7 +29,11 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     }
     const hexColor = md5(name).substring(0, 6);
     const hslColor = hex2hsl(hexColor);
-    return hsl2str({ ...hslColor, l: ui.darkLight === DarkLight.Dark ? 90 : 10 });
+    return hsl2str({
+      ...hslColor,
+      l: ui.darkLight === DarkLight.Dark ? 80 : 90,
+      s: ui.darkLight === DarkLight.Dark ? 40 : 77,
+    });
   }, [ name, ui.darkLight ]);
 
   const fontSize = useMemo(() => {
