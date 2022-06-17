@@ -10,15 +10,6 @@ import { BrandingType, DarkLight, Mode } from 'types';
 
 import { config, Settings } from './useTheme.settings';
 
-type ThemeHook = {
-  // mode: Mode,
-  // setMode: Dispatch<SetStateAction<Mode>>,
-  // theme: Theme,
-  // themeMode: DarkLight,
-  // themeSetting: string,
-  // updateTheme: (mode: Mode) => void
-};
-
 const STYLESHEET_ID = 'antd-stylesheet';
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
@@ -71,23 +62,15 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
 */
 export const useTheme = (): void => {
-  const [ systemMode, setSystemMode ] = useState<Mode>(getSystemMode());
   const { info, ui } = useStore();
   const storeDispatch = useStoreDispatch();
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<Settings>(config);
+  const [ systemMode, setSystemMode ] = useState<Mode>(getSystemMode());
+  const [ isSettingsReady, setIsSettingsReady ] = useState(false);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     if (!event.matches) setSystemMode(getSystemMode());
   }, []);
-
-  // const themeSetting = settings.theme;
-  // const updateTheme = (mode: Mode) => {
-  //   setMode(mode);
-  //   updateSettings({ theme: mode });
-  // };
 
   useEffect(() => {
     // Set global CSS variables shared across themes.
@@ -114,10 +97,7 @@ export const useTheme = (): void => {
     };
   }, [ handleSchemeChange ]);
 
-  // Update Ant Design theme when darkLight changes.
-  useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ ui.darkLight ]);
-
-  // Update darkLight and theme when branding, system mode, or mode changes .
+  // Update darkLight and theme when branding, system mode, or mode changes.
   useEffect(() => {
     const darkLight = getDarkLight(ui.mode, systemMode);
     storeDispatch({
@@ -125,6 +105,21 @@ export const useTheme = (): void => {
       value: { darkLight, theme: themes[info.branding][darkLight] },
     });
   }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
+
+  // Update Ant Design theme when darkLight changes.
+  useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ ui.darkLight ]);
+
+  // Update setting mode when mode changes.
+  useEffect(() => {
+    if (isSettingsReady) {
+      // We have read from the settings, going forward any mode difference requires an update.
+      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
+    } else {
+      // Initially set the mode from settings.
+      storeDispatch({ type: StoreAction.SetMode, value: settings.mode });
+      setIsSettingsReady(true);
+    }
+  }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);
 };
 
 export default useTheme;
