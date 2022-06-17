@@ -1,5 +1,4 @@
 import argparse
-import socket
 import sys
 from pathlib import Path
 from typing import Callable, Dict
@@ -8,8 +7,6 @@ from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 from . import cluster_utils
 from .preflight import check_docker_install
-
-AGENT_NAME_DEFAULT = "det-agent-<hostname>"
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
@@ -61,16 +58,12 @@ def handle_master_down(args: argparse.Namespace) -> None:
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
-
-    agent_name = args.agent_name
-    if args.agent_name == AGENT_NAME_DEFAULT:
-        agent_name = f"det-agent-{socket.gethostname()}"
-
     cluster_utils.agent_up(
         master_host=args.master_host,
         master_port=args.master_port,
+        agent_config_path=args.agent_config_path,
         gpu=args.gpu,
-        agent_name=agent_name,
+        agent_name=args.agent_name,
         agent_label=args.agent_label,
         agent_resource_pool=args.agent_resource_pool,
         image_repo_prefix=args.image_repo_prefix,
@@ -82,15 +75,10 @@ def handle_agent_up(args: argparse.Namespace) -> None:
 
 
 def handle_agent_down(args: argparse.Namespace) -> None:
-
-    agent_name = args.agent_name
-    if args.agent_name == AGENT_NAME_DEFAULT:
-        agent_name = f"det-agent-{socket.gethostname()}"
-
     if args.all:
         cluster_utils.stop_all_agents()
     else:
-        cluster_utils.stop_agent(agent_name=agent_name)
+        cluster_utils.stop_agent(agent_name=args.agent_name)
 
 
 def deploy_local(args: argparse.Namespace) -> None:
@@ -136,7 +124,12 @@ args_description = Cmd(
                     default=1,
                     help="number of agents to start (on this machine)",
                 ),
-                Arg("--master-port", type=int, default=8080, help="port to expose master on"),
+                Arg(
+                    "--master-port",
+                    type=int,
+                    default=cluster_utils.MASTER_PORT_DEFAULT,
+                    help="port to expose master on",
+                ),
                 Arg(
                     "--cluster-name",
                     type=str,
@@ -213,7 +206,12 @@ args_description = Cmd(
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
-                Arg("--master-port", type=int, default=8080, help="port to expose master on"),
+                Arg(
+                    "--master-port",
+                    type=int,
+                    default=cluster_utils.MASTER_PORT_DEFAULT,
+                    help="port to expose master on",
+                ),
                 Arg(
                     "--master-name",
                     type=str,
@@ -295,9 +293,25 @@ args_description = Cmd(
             "Start a Determined agent",
             [
                 Arg("master_host", type=str, help="master hostname"),
-                Arg("--master-port", type=int, default=8080, help="master port"),
+                Arg(
+                    "--master-port",
+                    type=int,
+                    default=cluster_utils.MASTER_PORT_DEFAULT,
+                    help="master port",
+                ),
+                Arg(
+                    "--agent-config-path",
+                    type=Path,
+                    default=None,
+                    help="path to agent configuration",
+                ),
                 Arg("--det-version", type=str, default=None, help="version or commit to use"),
-                Arg("--agent-name", type=str, default=AGENT_NAME_DEFAULT, help="agent name"),
+                Arg(
+                    "--agent-name",
+                    type=str,
+                    default=cluster_utils.AGENT_NAME_DEFAULT,
+                    help="agent name",
+                ),
                 Arg("--agent-label", type=str, default=None, help="agent label"),
                 Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
                 BoolOptArg(
@@ -326,7 +340,12 @@ args_description = Cmd(
             handle_agent_down,
             "Stop a Determined agent",
             [
-                Arg("--agent-name", type=str, default=AGENT_NAME_DEFAULT, help="agent name"),
+                Arg(
+                    "--agent-name",
+                    type=str,
+                    default=cluster_utils.AGENT_NAME_DEFAULT,
+                    help="agent name",
+                ),
                 Arg("--all", help="stop all running agents", action="store_true"),
                 Arg(
                     "--cluster-name",
