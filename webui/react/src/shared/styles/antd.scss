@@ -11,6 +11,14 @@ html {
   .ant-btn { border-radius: var(--theme-border-radius); }
   .ant-btn:not(.ant-btn-sm) { padding: 4px 8px; }
   .ant-btn > i + span { margin-left: 8px; }
+  .ant-btn.ant-btn-background-ghost {
+    border-color: var(--theme-ix-border);
+    color: var(--theme-ix-on);
+  }
+  .ant-btn.ant-btn-background-ghost:hover {
+    border-color: var(--theme-ix-border-active);
+    color: var(--theme-ix-on-active);
+  }
   .ant-btn[disabled]:not(.ant-btn-link),
   .ant-btn[disabled]:not(.ant-btn-link):hover {
     background-color: var(--theme-ix-inactive);
