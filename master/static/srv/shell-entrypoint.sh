@@ -45,8 +45,8 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
 # skip this awkwardness.
 #
-# For HPC systems, bash module support uses variables that store functions 
-# of the form, and a wierd %% defintion.
+# For HPC systems, bash module support uses variables that store functions
+# of the form below (with embedded parenthesis or %% in the name).
 #   BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
 #   BASH_FUNC_module%%=() {  eval `/opt/lib/modulecmd bash $*`
 # so we add variables with parens or % in the name to the blacklist and 

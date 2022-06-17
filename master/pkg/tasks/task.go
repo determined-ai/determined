@@ -153,7 +153,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 	if t.LoggingFields != nil {
 		j, err := json.Marshal(t.LoggingFields)
 		if err != nil {
-			// TODO(Dispatcher): propagate errors.
+			// TODO(DET-7565): propagate errors.
 			panic(fmt.Errorf("serializing logging fields: %w", err))
 		}
 		e["DET_TASK_LOGGING_METADATA"] = string(j)
