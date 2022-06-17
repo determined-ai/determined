@@ -16,7 +16,7 @@ from determined.common import yaml
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
 
-AGENT_NAME_DEFAULT = "det-agent-<hostname>"
+AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
 MASTER_PORT_DEFAULT = 8080
 
 # This object, when included in the host config in a container creation request, tells Docker to
@@ -285,15 +285,22 @@ def agent_up(
         volumes += [f"{agent_config_path}:/etc/determined/agent.yaml"]
 
     # Fallback on agent config for options not specified as flags.
+    environment = {
+        "DET_MASTER_HOST": master_host,
+    }
     if agent_name == AGENT_NAME_DEFAULT:
-        agent_name = agent_conf.get("agent_id", f"det-agent-{socket.gethostname()}")
+        agent_name = agent_conf.get("agent_id", agent_name)
+    else:
+        environment["DET_AGENT_ID"] = agent_name
     if master_port == MASTER_PORT_DEFAULT:
         master_port = agent_conf.get("master_port", master_port)
-    if agent_label is None:
-        agent_label = agent_conf.get("label", None)
-    if agent_resource_pool is None:
-        agent_resource_pool = agent_conf.get("resource_pool", None)
+    else:
+        environment["DET_MASTER_PORT"] = str(master_port)
 
+    if agent_label is not None:
+        environment["DET_LABEL"] = agent_label
+    if agent_resource_pool is not None:
+        environment["DET_RESOURCE_POOL"] = agent_resource_pool
     if image_repo_prefix is None:
         image_repo_prefix = "determinedai"
     if version is None:
@@ -304,13 +311,6 @@ def agent_up(
     if master_host == "localhost":
         master_host = get_proxy_addr()
     image = f"{image_repo_prefix}/determined-agent:{version}"
-    environment = {
-        "DET_MASTER_HOST": master_host,
-        "DET_MASTER_PORT": master_port,
-        "DET_AGENT_ID": agent_name,
-        "DET_LABEL": agent_label,
-        "DET_RESOURCE_POOL": agent_resource_pool,
-    }
     init = True
     mounts = []  # type: List[str]
     if labels is None:
@@ -362,8 +362,6 @@ def stop_cluster_agents(cluster_name: str) -> None:
 
 
 def stop_agent(agent_name: str) -> None:
-    if agent_name == AGENT_NAME_DEFAULT:
-        agent_name = f"det-agent-{socket.gethostname()}"
     docker_client = docker.from_env()
     filters = {"name": [agent_name]}
     to_stop = docker_client.containers.list(all=True, filters=filters)
