@@ -280,9 +280,6 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
 
     for _ in range(steps):
         for agent_id, agent_is_up in enumerate(agents_are_up):
-            if True and False:
-                continue
-
             if random.choice([True, False]):  # Flip agents status randomly.
                 continue
 
