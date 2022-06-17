@@ -288,7 +288,8 @@ SELECT
     l.level,
     l.stdtype,
     l.source,
-    l.log
+    l.log,
+    l.event_type
 FROM task_logs l
 WHERE l.task_id = $1
 %s
@@ -317,7 +318,7 @@ func (db *PgDB) AddTaskLogs(logs []*model.TaskLog) error {
 	var text strings.Builder
 	text.WriteString(`
 INSERT INTO task_logs
-  (task_id, allocation_id, log, agent_id, container_id, rank_id, timestamp, level, stdtype, source)
+  (task_id, allocation_id, log, agent_id, container_id, rank_id, timestamp, level, stdtype, source, event_type)
 VALUES
 `)
 
@@ -328,11 +329,12 @@ VALUES
 			text.WriteString(",")
 		}
 		// TODO(brad): We can do better.
-		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			i*10+1, i*10+2, i*10+3, i*10+4, i*10+5, i*10+6, i*10+7, i*10+8, i*10+9, i*10+10)
+		// TODO
+		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			i*11+1, i*11+2, i*11+3, i*11+4, i*11+5, i*11+6, i*11+7, i*11+8, i*11+9, i*11+10, i*11+11)
 
 		args = append(args, log.TaskID, log.AllocationID, []byte(log.Log), log.AgentID, log.ContainerID,
-			log.RankID, log.Timestamp, log.Level, log.StdType, log.Source)
+			log.RankID, log.Timestamp, log.Level, log.StdType, log.Source, log.EventType)
 	}
 
 	if _, err := db.sql.Exec(text.String(), args...); err != nil {
