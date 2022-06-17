@@ -129,8 +129,8 @@ func (t TaskSpec) EnvVars() map[string]string {
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
 	}
-	if t.TaskContainerDefaults.NCCLPortRange != "" {
-		e["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
+	if t.TaskContainerDefaults.GLOOPortRange != "" {
+		e["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.GLOOPortRange
 	}
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
