@@ -1,14 +1,20 @@
 import json
 import os
+import random
 import subprocess
+import time
 from pathlib import Path
-from typing import List
+from tempfile import NamedTemporaryFile
+from typing import List, Optional
 
 import docker
 import pytest
 
+from determined.common.api import bindings
 from tests import config as conf
 from tests import experiment as exp
+
+from ..cluster.test_users import ADMIN_CREDENTIALS, logged_in_user
 
 
 def det_deploy(subcommand: List) -> None:
@@ -50,19 +56,41 @@ def master_down(arguments: List) -> None:
     det_deploy(command)
 
 
-def agent_up(arguments: List) -> None:
+def agent_up(arguments: List, fluent_offset: Optional[int] = None) -> None:
     command = ["agent-up", conf.MASTER_IP, "--no-gpu"]
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
     command += arguments
-    det_deploy(command)
+
+    if fluent_offset is not None:
+        with NamedTemporaryFile() as tf:
+            with open(tf.name, "w") as f:
+                f.write(
+                    f"""
+fluent:
+  port: {24224 + fluent_offset}
+  container_name: fluent-{fluent_offset}"""
+                )
+            det_deploy(command + ["--agent-config-path", tf.name])
+    else:
+        det_deploy(command)
 
 
 def agent_down(arguments: List) -> None:
     command = ["agent-down"]
     command += arguments
     det_deploy(command)
+
+
+def agent_enable(arguments: List) -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "enable"] + arguments)
+
+
+def agent_disable(arguments: List) -> None:
+    with logged_in_user(ADMIN_CREDENTIALS):
+        subprocess.run(["det", "-m", conf.make_master_url(), "agent", "disable"] + arguments)
 
 
 @pytest.mark.det_deploy_local
@@ -229,4 +257,75 @@ def test_agent_up_down() -> None:
     containers = client.containers.list(filters={"name": agent_name})
     assert len(containers) == 0
 
+    master_down([])
+
+
+@pytest.mark.parametrize("steps", [10])
+@pytest.mark.parametrize("num_agents", [3, 5])
+@pytest.mark.parametrize("should_disconnect", [False, True])
+@pytest.mark.det_deploy_local
+def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
+    random.seed(42)
+    master_host = "localhost"
+    master_port = "8080"
+    conf.MASTER_IP = master_host
+    conf.MASTER_PORT = master_port
+    master_up([])
+
+    # Start all agents.
+    agents_are_up = [True] * num_agents
+    for i in range(num_agents):
+        agent_up(["--agent-name", f"agent-{i}"], fluent_offset=i)
+    time.sleep(3)
+
+    for _ in range(steps):
+        for agent_id, agent_is_up in enumerate(agents_are_up):
+            if random.choice([True, False]):  # Flip agents status randomly.
+                continue
+
+            if should_disconnect:
+                # Can't just randomly deploy up/down due to just getting a Docker name conflict.
+                if agent_is_up:
+                    agent_down(["--agent-name", f"agent-{agent_id}"])
+                else:
+                    agent_up(["--agent-name", f"agent-{agent_id}"], fluent_offset=agent_id)
+                agents_are_up[agent_id] = not agents_are_up[agent_id]
+            else:
+                if random.choice([True, False]):
+                    agent_disable([f"agent-{agent_id}"])
+                    agents_are_up[agent_id] = False
+                else:
+                    agent_enable([f"agent-{agent_id}"])
+                    agents_are_up[agent_id] = True
+        time.sleep(10)
+
+        # Validate that our master kept track of the agent reconnect spam.
+        agent_list = json.loads(
+            subprocess.check_output(
+                [
+                    "det",
+                    "agent",
+                    "list",
+                    "--json",
+                ]
+            ).decode()
+        )
+        assert sum(agents_are_up) <= len(agent_list)
+        for agent in agent_list:
+            agent_id = int(agent["id"].replace("agent-", ""))
+            assert agents_are_up[agent_id] == agent["enabled"]
+
+        # Can we still schedule something?
+        if any(agents_are_up):
+            experiment_id = exp.create_experiment(
+                conf.fixtures_path("no_op/single-one-short-step.yaml"),
+                conf.fixtures_path("no_op"),
+                None,
+            )
+            exp.wait_for_experiment_state(
+                experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+            )
+
+    for agent_id in range(num_agents):
+        agent_down(["--agent-name", f"agent-{agent_id}"])
     master_down([])
