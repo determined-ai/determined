@@ -1,11 +1,10 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
-
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
 import { humanReadableBytes } from 'shared/utils/string';

@@ -1,7 +1,5 @@
 import { Button, Dropdown, Menu, Space, Switch } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings,
@@ -20,6 +18,7 @@ import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
