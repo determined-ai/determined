@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -573,8 +572,8 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      state.FirstContainer().ToProto(),
-		PrivateKey:     c.Metadata["privateKey"].(string),
-		PublicKey:      c.Metadata["publicKey"].(string),
+		PrivateKey:     *c.Metadata.PrivateKey,
+		PublicKey:      *c.Metadata.PublicKey,
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
@@ -583,45 +582,6 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Addresses:      toProto(state.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
-	}
-}
-
-func recastMetadataToInt32(metadataValue interface{}) []int32 {
-	// When metadata is JSON-parsed from database map[]interface{}, the types need to be converted
-	// from float64(-ish) to int32 for protobufs.
-	switch metadataValue := metadataValue.(type) {
-	case []int32:
-		return metadataValue
-	case []interface{}:
-		if len(metadataValue) == 0 {
-			return nil
-		}
-
-		result := make([]int32, 0, len(metadataValue))
-
-		switch metadataValue[0].(type) {
-		case int32:
-			for _, el := range metadataValue {
-				result = append(result, el.(int32))
-			}
-		case int:
-			for _, el := range metadataValue {
-				result = append(result, int32(el.(int)))
-			}
-		case float64:
-			for _, el := range metadataValue {
-				result = append(result, int32(el.(float64)))
-			}
-		case nil:
-		default:
-			panic(fmt.Sprintf("expected metadata[0] type: %s", reflect.TypeOf(metadataValue[0])))
-		}
-
-		return result
-	case nil:
-		return nil
-	default:
-		panic(fmt.Sprintf("unexpected metadata type: %s", reflect.TypeOf(metadataValue)))
 	}
 }
 
@@ -634,8 +594,8 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      state.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
-		ExperimentIds:  recastMetadataToInt32(c.Metadata["experiment_ids"]),
-		TrialIds:       recastMetadataToInt32(c.Metadata["trial_ids"]),
+		ExperimentIds:  c.Metadata.ExperimentIDs,
+		TrialIds:       c.Metadata.TrialIDs,
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),

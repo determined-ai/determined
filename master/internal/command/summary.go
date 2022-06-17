@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/task"
@@ -62,6 +63,11 @@ func (c *command) summary(ctx *actor.Context) summary {
 		break
 	}
 
+	misc, err := c.Metadata.MarshalToMap()
+	if err != nil {
+		panic(fmt.Errorf("failed to serialize command spec metadata: %w", err))
+	}
+
 	return summary{
 		RegisteredTime: c.registeredTime,
 		Owner: commandOwner{
@@ -74,7 +80,7 @@ func (c *command) summary(ctx *actor.Context) summary {
 		ServiceAddress: ptrs.Ptr(c.serviceAddress()),
 		Addresses:      addresses,
 		ExitStatus:     exitStatus,
-		Misc:           c.Metadata,
+		Misc:           misc,
 		IsReady:        state.Ready,
 		AgentUserGroup: c.Base.AgentUserGroup,
 		ResourcePool:   c.Config.Resources.ResourcePool,
