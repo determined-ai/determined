@@ -1,10 +1,8 @@
 import json as _json
 import webbrowser
-from types import TracebackType
-from typing import Any, Dict, Iterator, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 from urllib import parse
 
-import lomond
 import requests
 import urllib3
 
@@ -274,49 +272,3 @@ def browser_open(host: str, path: str) -> str:
     url = make_url(host, path)
     webbrowser.open(url)
     return url
-
-
-class WebSocket:
-    def __init__(self, socket: lomond.WebSocket) -> None:
-        self.socket = socket
-
-    def __enter__(self) -> "WebSocket":
-        return self
-
-    def __iter__(self) -> Iterator[Any]:
-        for event in self.socket.connect(ping_rate=0):
-            if isinstance(event, lomond.events.Connected):
-                # Ignore the initial connection event.
-                pass
-            elif isinstance(event, (lomond.events.Closing, lomond.events.Disconnected)):
-                # The socket was successfully closed so we just return.
-                return
-            elif isinstance(
-                event,
-                (lomond.events.ConnectFail, lomond.events.Rejected, lomond.events.ProtocolError),
-            ):
-                # Any unexpected failures raise the standard API exception.
-                raise errors.BadRequestException(message="WebSocket failure: {}".format(event))
-            elif isinstance(event, lomond.events.Text):
-                # All web socket connections are expected to be in a JSON
-                # format.
-                yield _json.loads(event.text)
-
-    def __exit__(
-        self,
-        exc_type: Optional[type],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> None:
-        if not self.socket.is_closed:
-            self.socket.close()
-
-
-def ws(host: str, path: str) -> WebSocket:
-    """
-    Connect to a web socket at the remote API.
-    """
-    websocket = lomond.WebSocket(maybe_upgrade_ws_scheme(make_url(host, path)))
-    token = authentication.must_cli_auth().get_session_token()
-    websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
-    return WebSocket(websocket)

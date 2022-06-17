@@ -12,7 +12,7 @@ from determined.common.api import authentication
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .command import CONFIG_DESC, CONTEXT_DESC, parse_config, render_event_stream
+from .command import CONFIG_DESC, CONTEXT_DESC, parse_config
 
 
 @authentication.required
@@ -37,25 +37,20 @@ def start_tensorboard(args: Namespace) -> None:
         print(resp["id"])
         return
 
-    url = "tensorboard/{}/events".format(resp["id"])
-    with api.ws(args.master, url) as ws:
-        for msg in ws:
-            if msg["log_event"] is not None:
-                # TensorBoard will print a url by default. The URL is incorrect since
-                # TensorBoard is not aware of the master proxy address it is assigned.
-                if "http" in msg["log_event"]:
-                    continue
-
-            if msg["service_ready_event"]:
-                if args.no_browser:
-                    url = api.make_url(args.master, resp["serviceAddress"])
-                else:
-                    url = api.browser_open(args.master, resp["serviceAddress"])
-
-                print(colored("TensorBoard is running at: {}".format(url), "green"))
-                render_event_stream(msg)
-                break
-            render_event_stream(msg)
+    for log in api.task_logs(args.master, resp["id"], follow=True):
+        # TensorBoard will print a url by default. The URL is incorrect since
+        # TensorBoard is not aware of the master proxy address it is assigned.
+        if log["eventType"] == "log_event" and "http" in log["message"]:
+            continue
+        if log["eventType"] == "service_ready_event":
+            if args.no_browser:
+                url = api.make_url(args.master, resp["serviceAddress"])
+            else:
+                url = api.browser_open(args.master, resp["serviceAddress"])
+            print(colored("TensorBoard is running at: {}".format(url), "green"))
+            print(log["message"], end="")
+            break
+        print(log["message"], end="")
 
 
 @authentication.required

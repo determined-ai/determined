@@ -40,8 +40,7 @@ func RegisterAPIHandler(
 	// will get routed to an above actor instead.
 	for _, t := range []string{"commands", "notebooks", "shells", "tensorboard"} {
 		e.Any(fmt.Sprintf("/%s/:taskID/events", t), func(c echo.Context) error {
-			fmt.Println("Are we hit?")
-			return echo.NewHTTPError(http.StatusNotFound, ErrAPIRemoved)
+			return echo.NewHTTPError(http.StatusGone, ErrAPIRemoved)
 		}, middleware...)
 	}
 }

@@ -13,7 +13,7 @@ from determined.common.check import check_eq
 from determined.common.context import Context
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, render_event_stream
+from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config
 
 
 @authentication.required
@@ -48,12 +48,18 @@ def start_notebook(args: Namespace) -> None:
         print(nb.id)
         return
 
-    with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
-        for msg in ws:
-            if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
+    for log in api.task_logs(args.master, nb.id, follow=True):
+        if log["eventType"]:
+            if (
+                log["eventType"] == "service_ready_event"
+                and nb.serviceAddress
+                and not args.no_browser
+            ):
                 url = api.browser_open(args.master, nb.serviceAddress)
+                if url is None:
+                    break
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
-            render_event_stream(msg)
+            print(log["message"], end="")
 
 
 @authentication.required

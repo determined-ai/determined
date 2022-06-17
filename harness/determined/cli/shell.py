@@ -20,14 +20,7 @@ from determined.common.api import authentication, certs
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .command import (
-    CONFIG_DESC,
-    CONTEXT_DESC,
-    VOLUME_DESC,
-    launch_command,
-    parse_config,
-    render_event_stream,
-)
+from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, launch_command, parse_config
 
 
 @authentication.required
@@ -49,28 +42,20 @@ def start_shell(args: Namespace) -> None:
         print(resp["id"])
         return
 
-    ready = False
-    with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
-        for msg in ws:
-            if msg["service_ready_event"]:
-                ready = True
+    for log in api.task_logs(args.master, resp["id"], follow=True):
+        if log["eventType"]:
+            print(log["message"], end="")
+            if log["eventType"] == "service_ready_event":
                 break
-            print(msg)
-            shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
-            print(shell)
-            render_event_stream(msg)
-    if not ready:
-        return
-    #stream_task_logs_till_ready(resp["id"])
 
     shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
     _open_shell(
-    args.master,
-    shell,
-    args.ssh_opts,
-    retain_keys_and_print=args.show_ssh_command,
-    print_only=False,
+        args.master,
+        shell,
+        args.ssh_opts,
+        retain_keys_and_print=args.show_ssh_command,
+        print_only=False,
     )
 
 

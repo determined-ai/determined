@@ -19,7 +19,6 @@ from determined.common.api.logs import (
     task_log_fields,
 )
 from determined.common.api.request import (
-    WebSocket,
     add_token_to_headers,
     delete,
     do_request,
@@ -30,7 +29,6 @@ from determined.common.api.request import (
     patch,
     post,
     put,
-    ws,
 )
 from determined.common.api.profiler import (
     post_trial_profiler_metrics_batches,

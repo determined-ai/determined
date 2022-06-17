@@ -354,28 +354,3 @@ def launch_command(
         endpoint,
         body,
     ).json()
-
-
-def render_event_stream(event: Any) -> None:
-    description = event["description"]
-    if event["scheduled_event"] is not None:
-        print(
-            colored("Scheduling {} (id: {})...".format(description, event["parent_id"]), "yellow")
-        )
-    elif event["assigned_event"] is not None:
-        print(colored("{} was assigned to an agent...".format(description), "green"))
-    elif event["resources_started_event"] is not None:
-        print(colored("Resources for {} has started...".format(description), "green"))
-    elif event["service_ready_event"] is not None:
-        pass  # Ignore this message.
-    elif event["terminate_request_event"] is not None:
-        print(colored("{} was requested to terminate...".format(description), "red"))
-    elif event["exited_event"] is not None:
-        # TODO: Non-success exit statuses should be red
-        stat = event["exited_event"]
-        print(colored("{} was terminated: {}".format(description, stat), "green"))
-        pass
-    elif event["log_event"] is not None:
-        print(event["log_event"], flush=True)
-    else:
-        raise ValueError("unexpected event: {}".format(event))
