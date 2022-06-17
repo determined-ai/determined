@@ -1,8 +1,9 @@
 import React, { CSSProperties, useMemo } from 'react';
 
-import useTheme from 'hooks/useTheme';
+import { useStore } from 'contexts/Store';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
+import { DarkLight } from 'types';
 
 import css from './DynamicIcon.module.scss';
 
@@ -13,7 +14,7 @@ interface Props {
 }
 
 const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
-  const { mode } = useTheme();
+  const { ui } = useStore();
 
   const nameAcronym = useMemo(() => {
     if (!name) return '-';
@@ -28,8 +29,8 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     }
     const hexColor = md5(name).substring(0, 6);
     const hslColor = hex2hsl(hexColor);
-    return hsl2str({ ...hslColor, l: mode ? 90 : 10 });
-  }, [ name, mode ]);
+    return hsl2str({ ...hslColor, l: ui.darkLight === DarkLight.Dark ? 90 : 10 });
+  }, [ name, ui.darkLight ]);
 
   const fontSize = useMemo(() => {
     if (size > 50) return 16;

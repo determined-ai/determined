@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import ReactMonacoEditor, { MonacoEditorProps } from 'react-monaco-editor';
 
+import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
-import useTheme from 'hooks/useTheme';
-
-import { DarkLight } from '../shared/themes';
+import { DarkLight } from 'shared/themes';
 
 import css from './MonacoEditor.module.scss';
 
@@ -19,7 +18,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<ReactMonacoEditor>(null);
   const resize = useResize(containerRef);
-  const { themeMode } = useTheme();
+  const { ui } = useStore();
 
   const handleEditorDidMount = useCallback((editor) => editor.focus(), []);
 
@@ -41,7 +40,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
           ...options,
         }}
         ref={editorRef}
-        theme={themeMode === DarkLight.Dark ? 'vs-dark' : 'vs-light'}
+        theme={ui.darkLight === DarkLight.Dark ? 'vs-dark' : 'vs-light'}
         {...props}
       />
     </div>

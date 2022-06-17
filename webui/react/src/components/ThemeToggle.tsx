@@ -1,7 +1,7 @@
 import React from 'react';
 
-import useTheme from 'hooks/useTheme';
-import { Mode } from 'hooks/useTheme.settings';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { Mode } from 'types';
 
 import css from './ThemeToggle.module.scss';
 
@@ -16,7 +16,6 @@ const ThemeOptions: Record<Mode, ThemeOption> = {
     className: Mode.Light,
     displayName: 'Light Mode',
     next: Mode.Dark,
-
   },
   [Mode.Dark]: {
     className: Mode.Dark,
@@ -31,18 +30,17 @@ const ThemeOptions: Record<Mode, ThemeOption> = {
 };
 
 const ThemeToggle: React.FC = () => {
-
-  const { mode, updateTheme } = useTheme();
+  const { ui } = useStore();
+  const storeDispatch = useStoreDispatch();
 
   const classes = [ css.toggler ];
-  const currentThemeOption = ThemeOptions[mode];
+  const currentThemeOption = ThemeOptions[ui.mode];
   classes.push(css[currentThemeOption.className]);
 
   const newThemeMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    const newThemeOption = currentThemeOption.next;
-    updateTheme(newThemeOption);
+    storeDispatch({ type: StoreAction.SetMode, value: currentThemeOption.next });
   };
 
   return (

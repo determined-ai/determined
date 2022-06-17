@@ -31,12 +31,12 @@ const AppView: React.FC = () => {
   const { auth, info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
-  const { setBranding } = useTheme();
 
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
   const fetchInfo = useFetchInfo(canceler);
 
+  useTheme();
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
@@ -75,18 +75,8 @@ const AppView: React.FC = () => {
     updateTelemetry(auth, info);
   }, [ auth, info, updateTelemetry ]);
 
-  // Detect branding changes and update theme accordingly.
-  useEffect(() => {
-    if (info.checked) setBranding(info.branding);
-  }, [ info.checked, info.branding, setBranding ]);
-
   // Abort cancel signal when app unmounts.
   useEffect(() => {
-    // window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    //   const newColorScheme = e.matches ? 'dark' : 'light';
-    //   console.log('scheme', newColorScheme);
-    // });
-
     return () => canceler.abort();
   }, [ canceler ]);
 

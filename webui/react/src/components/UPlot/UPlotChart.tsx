@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
+import { useStore } from 'contexts/Store';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
-import useTheme from 'hooks/useTheme';
 import Message, { MessageType } from 'shared/components/Message';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
@@ -89,7 +89,7 @@ const UPlotChart: React.FC<Props> = ({
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
 
-  const { theme } = useTheme();
+  const { ui } = useStore();
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
@@ -108,9 +108,9 @@ const UPlotChart: React.FC<Props> = ({
     );
 
     // Override chart support colors to match theme.
-    if (theme && extended.axes) {
-      const borderColor = theme.surfaceBorderWeak;
-      const labelColor = theme.surfaceOn;
+    if (ui.theme && extended.axes) {
+      const borderColor = ui.theme.surfaceBorderWeak;
+      const labelColor = ui.theme.surfaceOn;
       extended.axes = extended.axes.map(axis => {
         return {
           ...axis,
@@ -123,7 +123,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended as uPlot.Options;
-  }, [ boundsOptions, options, setZoomed, theme ]);
+  }, [ boundsOptions, options, setZoomed, ui.theme ]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 

@@ -1,7 +1,7 @@
 import Hermes from 'hermes-parallel-coordinates';
 import React, { useEffect, useRef } from 'react';
 
-import useTheme from 'hooks/useTheme';
+import { useStore } from 'contexts/Store';
 
 import css from './ParallelCoordinates.module.scss';
 
@@ -20,7 +20,7 @@ const ParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<Hermes>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
+  const { ui } = useStore();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -48,30 +48,30 @@ const ParallelCoordinates: React.FC<Props> = ({
           style: {
             axes: {
               label: {
-                fillStyle: theme.surfaceOn,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.surfaceOn,
+                strokeStyle: ui.theme.surfaceWeak,
               },
               labelActive: {
-                fillStyle: theme.surfaceOnStrong,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.surfaceOnStrong,
+                strokeStyle: ui.theme.surfaceWeak,
               },
               labelHover: {
-                fillStyle: theme.surfaceOnStrong,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.surfaceOnStrong,
+                strokeStyle: ui.theme.surfaceWeak,
               },
             },
             dimension: {
               label: {
-                fillStyle: theme.surfaceOn,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.surfaceOn,
+                strokeStyle: ui.theme.surfaceWeak,
               },
               labelActive: {
-                fillStyle: theme.statusActive,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.statusActive,
+                strokeStyle: ui.theme.surfaceWeak,
               },
               labelHover: {
-                fillStyle: theme.statusActive,
-                strokeStyle: theme.surfaceWeak,
+                fillStyle: ui.theme.statusActive,
+                strokeStyle: ui.theme.surfaceWeak,
               },
             },
           },
@@ -89,7 +89,7 @@ const ParallelCoordinates: React.FC<Props> = ({
     }
 
     if (redraw) chartRef.current?.redraw();
-  }, [ config, data, dimensions, theme ]);
+  }, [ config, data, dimensions, ui.theme ]);
 
   return (
     <div className={css.base}>

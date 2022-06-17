@@ -1,10 +1,5 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-
-export enum Mode {
-  System = 'system',
-  Light = 'light',
-  Dark = 'dark'
-}
+import { Mode } from 'types';
 
 export interface Settings {
   theme: Mode;
