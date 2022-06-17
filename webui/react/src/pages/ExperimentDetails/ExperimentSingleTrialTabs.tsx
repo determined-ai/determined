@@ -181,14 +181,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       onViewLogs={handleViewLogs}>
       <Tabs
         activeKey={tabKey}
-        className="no-growing-tabbar"
         tabBarExtraContent={tabKey === 'hyperparameters' ? (
           <div style={{ padding: 8 }}>
             <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
           </div>
         ) :
           undefined}
-        tabBarStyle={{ paddingLeft: 16 }}
+        tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />

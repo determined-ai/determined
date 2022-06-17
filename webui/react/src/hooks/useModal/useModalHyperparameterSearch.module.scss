@@ -1,12 +1,23 @@
 .base {
   padding: 16px;
 
-  .hyperparameterGrid {
+  .hyperparameterContainer {
     display: grid;
-    grid-template-columns: 33% repeat(3, 1fr);
+    gap: 8px;
+    grid-template-columns: 170px repeat(4, 1fr);
 
+    .hyperparameterName * {
+      overflow: hidden;
+    }
     h2 {
       font-size: 1rem;
+      margin: 0;
+      text-align: center;
+    }
+    h3 {
+      font-size: 1rem;
+      font-weight: normal;
+      margin: 0;
     }
   }
 }

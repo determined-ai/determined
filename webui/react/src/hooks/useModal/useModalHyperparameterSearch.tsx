@@ -1,4 +1,5 @@
-import { Alert, Button, Checkbox, InputNumber, ModalFuncProps, Select, Space } from 'antd';
+import { Alert, Button, Checkbox, Input, InputNumber,
+  ModalFuncProps, Select, Space, Typography } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
@@ -10,7 +11,7 @@ import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { DetError, isDetError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { ExperimentBase, Hyperparameter, ResourcePool } from 'types';
+import { ExperimentBase, Hyperparameter, HyperparameterType, ResourcePool } from 'types';
 
 import useModal, { ModalHooks as Hooks } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
@@ -89,8 +90,9 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
         </SelectFilter>
         <p>{searchMethod.description}</p>
-        <div className={css.hyperparameterGrid}>
-          <h2>Hyperparameter</h2>
+        <div className={css.hyperparameterContainer}>
+          <h2 className={css.hyperparameterName}>Hyperparameter</h2>
+          <h2>Type</h2>
           <h2>Current</h2>
           <h2>Min value</h2>
           <h2>Max value</h2>
@@ -164,6 +166,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         activate: true,
         experimentConfig: newConfig,
         parentId: experiment.id,
+        projectId: experiment.projectId,
       });
 
       // Route to reload path to forcibly remount experiment page.
@@ -180,7 +183,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [ experiment.id, newConfig ]);
+  }, [ experiment.id, experiment.projectId, newConfig ]);
 
   const handleOk = useCallback(() => {
     if (modalContent === page1) {
@@ -231,7 +234,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       icon: null,
       maskClosable: true,
       title: 'Hyperparameter Search',
-      width: 500,
+      width: 600,
     };
     //TODO: Back button in footer
   }, [ modalContent, footer ]);
@@ -261,9 +264,15 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name }: RowProp
   const [ checked, setChecked ] = useState(false);
   const [ minVal, setMinVal ] = useState<number>();
   const [ maxVal, setMaxVal ] = useState<number>();
+  const [ type, setType ] = useState<HyperparameterType>(hyperparameter.type);
 
   const handleCheck = useCallback((e: CheckboxChangeEvent) => {
     setChecked(e.target.checked);
+    if (e.target.checked) {
+      setType(prev => prev === HyperparameterType.Constant ? HyperparameterType.Double : prev);
+    } else {
+      setType(HyperparameterType.Constant);
+    }
   }, []);
 
   const handleMinChange = useCallback((value: number) => {
@@ -274,15 +283,81 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name }: RowProp
     setMaxVal(value);
   }, []);
 
+  const handleTypeChange = useCallback((value: HyperparameterType) => {
+    setType(value);
+    if (value === HyperparameterType.Constant) setChecked(false);
+    else setChecked(true);
+  }, []);
+
+  const typeSelect = useMemo(() => {
+    return (
+      <Select value={type} onChange={handleTypeChange}>
+        {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
+          .map((type) => (
+            <Select.Option
+              disabled={HyperparameterType[type] === HyperparameterType.Categorical}
+              key={HyperparameterType[type]}
+              value={HyperparameterType[type]}>
+              {type}
+            </Select.Option>
+          ))}
+      </Select>
+    );
+  }, [ handleTypeChange, type ]);
+
+  const inputs = useMemo(() => {
+    switch (type) {
+      case HyperparameterType.Constant:
+        return (
+          <>
+            <InputNumber value={hyperparameter.val as number} />
+            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+          </>
+        );
+      case HyperparameterType.Double:
+        return (
+          <>
+            <InputNumber value={hyperparameter.val as number} />
+            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+          </>
+        );
+      case HyperparameterType.Int:
+        return (
+          <>
+            <InputNumber precision={0} value={hyperparameter.val as number} />
+            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+          </>
+        );
+      case HyperparameterType.Log:
+        return (
+          <>
+            <InputNumber value={hyperparameter.val as number} />
+            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+          </>
+        );
+      case HyperparameterType.Categorical:
+        return (
+          <>
+            <Input value={hyperparameter.val as string} />
+            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
+            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+          </>
+        );
+    }
+  }, [ checked, handleMaxChange, handleMinChange, hyperparameter.val, maxVal, minVal, type ]);
+
   return (
     <>
-      <div>
+      <Space className={css.hyperparameterName}>
         <Checkbox checked={checked} onChange={handleCheck} />
-        {name}
-      </div>
-      <div>{hyperparameter.val}</div>
-      <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-      <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+        <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
+      </Space>
+      {typeSelect}
+      {inputs}
     </>
   );
 };
