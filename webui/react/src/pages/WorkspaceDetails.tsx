@@ -1,4 +1,4 @@
-import { Select, Space, Switch } from 'antd';
+import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
@@ -8,7 +8,6 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';

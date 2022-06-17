@@ -1,10 +1,9 @@
-import { Button, Dropdown, Menu, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Space } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig, modelNameRenderer,
