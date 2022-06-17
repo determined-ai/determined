@@ -140,10 +140,16 @@ message ValidationHistoryEntry {
   float searcher_metric = 3;
 }
 
+// File node is one node of file in experiment model definition file tree.
 message FileNode {
+  // Path of file.
   string path = 1;
+  // Modification time of file.
   google.protobuf.Timestamp modified_time = 2;
+  // Number of bytes in file content.
   int32 content_length = 3;
+  // Is this a directory.
   bool is_dir = 4;
+  // MIME type of file.
   string content_type = 5;
 }

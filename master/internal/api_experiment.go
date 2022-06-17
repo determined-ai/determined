@@ -1396,7 +1396,7 @@ func (a *apiServer) MoveExperiment(
 }
 
 func (a *apiServer) GetModelDefTree(
-	_ context.Context, req *apiv1.GetModelDefRequest,
+	_ context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
 	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
 	if err != nil {
