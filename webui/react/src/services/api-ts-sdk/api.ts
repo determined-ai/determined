@@ -1891,37 +1891,37 @@ export interface V1File {
 }
 
 /**
- * 
+ * File node is one node of file in experiment model definition file tree.
  * @export
  * @interface V1FileNode
  */
 export interface V1FileNode {
     /**
-     * 
+     * Path of file.
      * @type {string}
      * @memberof V1FileNode
      */
     path?: string;
     /**
-     * 
+     * Modification time of file.
      * @type {Date}
      * @memberof V1FileNode
      */
     modifiedTime?: Date;
     /**
-     * 
+     * Number of bytes in file content.
      * @type {number}
      * @memberof V1FileNode
      */
     contentLength?: number;
     /**
-     * 
+     * Is this a directory.
      * @type {boolean}
      * @memberof V1FileNode
      */
     isDir?: boolean;
     /**
-     * 
+     * MIME type of file.
      * @type {string}
      * @memberof V1FileNode
      */
@@ -2384,19 +2384,19 @@ export interface V1GetMasterResponse {
 }
 
 /**
- * 
+ * Request to get a file of model definition.
  * @export
  * @interface V1GetModelDefFileRequest
  */
 export interface V1GetModelDefFileRequest {
     /**
-     * 
+     * The id of the experiment.
      * @type {number}
      * @memberof V1GetModelDefFileRequest
      */
     experimentId?: number;
     /**
-     * 
+     * The path of file.
      * @type {string}
      * @memberof V1GetModelDefFileRequest
      */
@@ -2404,13 +2404,13 @@ export interface V1GetModelDefFileRequest {
 }
 
 /**
- * 
+ * Response to GetModelDefFileRequest.
  * @export
  * @interface V1GetModelDefFileResponse
  */
 export interface V1GetModelDefFileResponse {
     /**
-     * 
+     * Content of file.
      * @type {string}
      * @memberof V1GetModelDefFileResponse
      */
@@ -2432,13 +2432,13 @@ export interface V1GetModelDefResponse {
 }
 
 /**
- * 
+ * Response to GetModelDefTreeRequest.
  * @export
  * @interface V1GetModelDefTreeResponse
  */
 export interface V1GetModelDefTreeResponse {
     /**
-     * 
+     * File tree of an experiment.
      * @type {Array<V1FileNode>}
      * @memberof V1GetModelDefTreeResponse
      */
@@ -9835,7 +9835,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @param {number} experimentId 
+         * @summary Get one file content of model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9880,6 +9881,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get the model definition file tree of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -10759,7 +10761,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {number} experimentId 
+         * @summary Get one file content of model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -10778,6 +10781,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the model definition file tree of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11204,7 +11208,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @param {number} experimentId 
+         * @summary Get one file content of model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11214,6 +11219,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get the model definition file tree of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11548,7 +11554,8 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @param {number} experimentId 
+     * @summary Get one file content of model definition of an experiment.
+     * @param {number} experimentId The id of the experiment.
      * @param {V1GetModelDefFileRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -11560,6 +11567,7 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get the model definition file tree of an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
