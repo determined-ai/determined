@@ -295,15 +295,13 @@ const WorkspaceList: React.FC = () => {
       title="Workspaces">
       <div className={css.controls}>
         <SelectFilter
-          bordered={false}
           dropdownMatchSelectWidth={160}
-          label="View:"
           showSearch={false}
           value={workspaceFilter}
           onSelect={handleViewSelect}>
-          <Option value={WorkspaceFilters.All}>All workspaces</Option>
-          <Option value={WorkspaceFilters.Mine}>My workspaces</Option>
-          <Option value={WorkspaceFilters.Others}>Others&apos; workspaces</Option>
+          <Option value={WorkspaceFilters.All}>All Workspaces</Option>
+          <Option value={WorkspaceFilters.Mine}>My Workspaces</Option>
+          <Option value={WorkspaceFilters.Others}>Others&apos; Workspaces</Option>
         </SelectFilter>
         <Space wrap>
           <Toggle
@@ -312,15 +310,13 @@ const WorkspaceList: React.FC = () => {
             onChange={switchShowArchived}
           />
           <SelectFilter
-            bordered={false}
             dropdownMatchSelectWidth={150}
-            label="Sort:"
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>
-              Newest to oldest
+              Newest to Oldest
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />

@@ -376,15 +376,13 @@ const WorkspaceDetails: React.FC = () => {
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter
-          bordered={false}
           dropdownMatchSelectWidth={140}
-          label="View:"
           showSearch={false}
           value={projectFilter}
           onSelect={handleViewSelect}>
-          <Option value={ProjectFilters.All}>All projects</Option>
-          <Option value={ProjectFilters.Mine}>My projects</Option>
-          <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
+          <Option value={ProjectFilters.All}>All Projects</Option>
+          <Option value={ProjectFilters.Mine}>My Projects</Option>
+          <Option value={ProjectFilters.Others}>Others&apos; Projects</Option>
         </SelectFilter>
         <Space wrap>
           {!workspace.archived && (
@@ -395,18 +393,16 @@ const WorkspaceDetails: React.FC = () => {
             />
           )}
           <SelectFilter
-            bordered={false}
             dropdownMatchSelectWidth={150}
-            label="Sort:"
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last updated
+              Last Updated
             </Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to oldest
+              Newest to Oldest
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
