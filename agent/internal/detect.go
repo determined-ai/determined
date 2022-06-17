@@ -2,9 +2,12 @@ package internal
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -28,8 +31,20 @@ const (
 func (a *agent) detect() error {
 	switch {
 	case a.ArtificialSlots > 0:
+		h := sha256.New()
+		h.Write([]byte(a.AgentID))
+		rndSource, bytesRead := binary.Varint(h.Sum(nil)[:8])
+		if bytesRead <= 0 {
+			return fmt.Errorf(
+				"failed to init random source for artificial slots ids. bytes read: %d", bytesRead)
+		}
+		rnd := rand.New(rand.NewSource(rndSource)) // nolint:gosec
 		for i := 0; i < a.ArtificialSlots; i++ {
-			id := uuid.New().String()
+			u, err := uuid.NewRandomFromReader(rnd)
+			if err != nil {
+				return err
+			}
+			id := u.String()
 			a.Devices = append(a.Devices, device.Device{
 				ID: device.ID(i), Brand: "Artificial", UUID: id, Type: device.CPU,
 			})
