@@ -11,12 +11,6 @@ html {
   .ant-btn { border-radius: var(--theme-border-radius); }
   .ant-btn:not(.ant-btn-sm) { padding: 4px 8px; }
   .ant-btn > i + span { margin-left: 8px; }
-  .ant-btn.ant-btn-background-ghost {
-    color: var(--theme-ix-on);
-  }
-  .ant-btn.ant-btn-background-ghost:hover {
-    color: var(--theme-ix-on-active);
-  }
   .ant-btn[disabled]:not(.ant-btn-link),
   .ant-btn[disabled]:not(.ant-btn-link):hover {
     background-color: var(--theme-ix-inactive);
@@ -290,11 +284,7 @@ html {
     padding-top: 0;
   }
   .ant-tabs .ant-tabs-tab-active > .ant-tabs-tab-btn {
-    color: var(--theme-ix-on-active);
     text-shadow: none;
-  }
-  .ant-tabs .ant-tabs-ink-bar {
-    background-color: var(--theme-ix-on-active);
   }
   .ant-tabs > .ant-tabs-nav {
     margin: 0;
