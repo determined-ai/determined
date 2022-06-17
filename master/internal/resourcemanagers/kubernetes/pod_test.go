@@ -174,6 +174,7 @@ var taskContainerFiles = []string{
 	"task-logging-setup.sh",
 	"task-logging-teardown.sh",
 	"task-signal-handling.sh",
+	"enrich_task_logs.py",
 }
 
 func setupEntrypoint(t *testing.T) {
