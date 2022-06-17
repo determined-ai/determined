@@ -83,6 +83,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           <a>Learn more</a>
         </div>
         <SelectFilter
+          className={css.fullWidth}
           id="search-method"
           value={searchMethod.name}
           onChange={handleSelectSearchMethod}>

@@ -1,6 +1,14 @@
 .base {
   padding: 16px;
+  padding-top: 0;
 
+  .fullWidth {
+    width: 100%;
+  
+    & > div {
+      width: 100%;
+    }
+  }
   .hyperparameterContainer {
     display: grid;
     gap: 8px;
