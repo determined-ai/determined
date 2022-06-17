@@ -172,4 +172,3 @@ def _get_nvidia_processes() -> List[GPUProcess]:
 
 def get_gpu_processes() -> List[GPUProcess]:
     return _get_nvidia_processes()
-
