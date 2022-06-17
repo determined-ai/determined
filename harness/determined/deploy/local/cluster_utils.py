@@ -285,17 +285,16 @@ def agent_up(
         volumes += [f"{agent_config_path}:/etc/determined/agent.yaml"]
 
     # Fallback on agent config for options not specified as flags.
-    environment = {
-        "DET_MASTER_HOST": master_host,
-    }
+    environment = {}
     if agent_name == AGENT_NAME_DEFAULT:
         agent_name = agent_conf.get("agent_id", agent_name)
     else:
         environment["DET_AGENT_ID"] = agent_name
+    environment["DET_MASTER_PORT"] = str(master_port)
     if master_port == MASTER_PORT_DEFAULT:
-        master_port = agent_conf.get("master_port", master_port)
-    else:
-        environment["DET_MASTER_PORT"] = str(master_port)
+        if "master_port" in agent_conf:
+            del environment["DET_MASTER_PORT"]
+            master_port = agent_conf["master_port"]
 
     if agent_label is not None:
         environment["DET_LABEL"] = agent_label
@@ -310,6 +309,8 @@ def agent_up(
 
     if master_host == "localhost":
         master_host = get_proxy_addr()
+    environment["DET_MASTER_HOST"] = master_host
+
     image = f"{image_repo_prefix}/determined-agent:{version}"
     init = True
     mounts = []  # type: List[str]
