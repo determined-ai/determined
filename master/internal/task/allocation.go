@@ -983,9 +983,6 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
 	ev = a.enrichEvent(ctx, ev)
 	a.logger.Insert(ctx, a.enrichLog(ev.ToTaskLog()))
-	if a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, ev)
-	}
 }
 
 func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Event {

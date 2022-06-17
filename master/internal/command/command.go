@@ -85,9 +85,8 @@ func createGenericCommandActor(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db          *db.PgDB
-	eventStream *actor.Ref
-	taskLogger  *task.Logger
+	db         *db.PgDB
+	taskLogger *task.Logger
 
 	tasks.GenericCommandSpec
 
@@ -130,8 +129,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 
-		c.eventStream, _ = ctx.ActorOf("events", newEventManager(c.Config.Description))
-
 		priority := c.Config.Resources.Priority
 		if priority != nil {
 			if err := c.setPriority(ctx, *priority, true); err != nil {
@@ -146,13 +143,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 				Port:            *c.GenericCommandSpec.Port,
 				ProxyTCP:        c.ProxyTCP,
 				Unauthenticated: c.Unauthenticated,
-			}
-		}
-
-		var eventStreamConfig *sproto.EventStreamConfig
-		if c.eventStream != nil {
-			eventStreamConfig = &sproto.EventStreamConfig{
-				To: c.eventStream,
 			}
 		}
 
@@ -184,9 +174,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents: eventStreamConfig,
-			ProxyPort:    portProxyConf,
-			IdleTimeout:  idleWatcherConfig,
+			ProxyPort:   portProxyConf,
+			IdleTimeout: idleWatcherConfig,
 		}, c.db, sproto.GetRM(ctx.Self().System()), c.taskLogger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 

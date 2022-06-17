@@ -49,7 +49,6 @@ def start_shell(args: Namespace) -> None:
         print(resp["id"])
         return
 
-    '''
     ready = False
     with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
         for msg in ws:
@@ -60,10 +59,9 @@ def start_shell(args: Namespace) -> None:
             shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
             print(shell)
             render_event_stream(msg)
-    if ready:
-    '''
-
-    stream_task_logs_till_ready(resp["id"])
+    if not ready:
+        return
+    #stream_task_logs_till_ready(resp["id"])
 
     shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")

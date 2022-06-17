@@ -42,11 +42,10 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible  bool
-		IdleTimeout  *IdleTimeoutConfig
-		ProxyPort    *PortProxyConfig
-		StreamEvents *EventStreamConfig
-		Restore      bool
+		Preemptible bool
+		IdleTimeout *IdleTimeoutConfig
+		ProxyPort   *PortProxyConfig
+		Restore     bool
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.
@@ -64,11 +63,6 @@ type (
 		Port            int
 		ProxyTCP        bool
 		Unauthenticated bool
-	}
-
-	// EventStreamConfig configures an event stream.
-	EventStreamConfig struct {
-		To *actor.Ref
 	}
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
