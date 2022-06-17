@@ -5,12 +5,6 @@ source /run/determined/task-logging-setup.sh
 
 set -e
 
-# When the task container is invoked via SLURM, we have
-# to set the slot IDs.
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
-    export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
-fi
-
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
 if [ -z "$DET_PYTHON_EXECUTABLE" ] ; then
     export DET_PYTHON_EXECUTABLE="python3"

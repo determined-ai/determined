@@ -1,29 +1,5 @@
 #!/bin/bash
 
-# When the task container is invoked via SLURM, we have
-# to set the slot IDs.
-if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
-    export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
-
-    if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
-        # Test if "nvidia-smi" exists in the PATH before trying to invoking it.
-        if type nvidia-smi > /dev/null 2>&1 ; then
-            # For Nvidia GPUS, the slot IDs are the device index. Replace the
-            # newline characters with commas and enclose in square brackets.
-            # But only include GPUS that are in the CUDA_VISIBLE_DEVICES=0,1,...
-            VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
-            for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do 
-                if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
-                    echo "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
-                fi 
-            done
- 
-        else
-            echo "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
-        fi
-    fi
-fi
-
 source /run/determined/task-signal-handling.sh
 source /run/determined/task-logging-setup.sh
 
