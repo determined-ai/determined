@@ -173,11 +173,3 @@ def _get_nvidia_processes() -> List[GPUProcess]:
 def get_gpu_processes() -> List[GPUProcess]:
     return _get_nvidia_processes()
 
-
-def check_for_gpu_processes() -> None:
-    for process in get_gpu_processes():
-        logging.warning(
-            f"process {process.process_name} "
-            f"with pid {process.pid} "
-            f"is using gpu with uuid {process.gpu_uuid}"
-        )

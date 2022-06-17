@@ -11,7 +11,7 @@ from typing import List, Optional
 import psutil
 
 import determined as det
-from determined import constants
+from determined import constants, gpu
 from determined.common import util
 from determined.common.api import bindings, certs, request
 from determined.common.experimental import Session, get_max_retries_config
@@ -267,9 +267,12 @@ if __name__ == "__main__":
 
     if args.resources:
         det.ResourcesInfo._by_inspection()._to_file()
-        from determined.gpu import check_for_gpu_processes
-
-        check_for_gpu_processes()
+        for process in gpu.get_gpu_processes():
+            logging.warning(
+                f"process {process.process_name} "
+                f"with pid {process.pid} "
+                f"is using gpu with uuid {process.gpu_uuid}"
+            )
 
     if args.rendezvous:
         do_rendezvous(sess, info.allocation_id)
