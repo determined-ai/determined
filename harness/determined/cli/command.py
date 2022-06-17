@@ -12,7 +12,7 @@ from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
 
-yaml = yaml.YAML(typ="safe", pure=True)
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
 
 
 CONFIG_DESC = """

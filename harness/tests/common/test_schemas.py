@@ -8,7 +8,7 @@ from determined.common import schemas, yaml
 from determined.common.schemas import expconf
 from determined.common.schemas.expconf import _v0
 
-yaml = yaml.YAML(typ="safe", pure=True)
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
 
 
 def strip_runtime_defaultable(obj: Any, defaulted: Any) -> Any:

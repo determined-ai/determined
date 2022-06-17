@@ -9,7 +9,7 @@ from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Uni
 
 from determined.common import yaml
 
-yaml = yaml.YAML(typ="safe", pure=True)
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
 
 T = TypeVar("T")
 
