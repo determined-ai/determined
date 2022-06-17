@@ -14,6 +14,7 @@ import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, userRenderer } from 'components/Table';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -387,10 +388,11 @@ const WorkspaceDetails: React.FC = () => {
         </SelectFilter>
         <Space wrap>
           {!workspace.archived && (
-            <>
-              <Switch checked={settings.archived} onChange={switchShowArchived} />
-              <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-            </>
+            <Toggle
+              checked={settings.archived}
+              prefixLabel="Show Archived"
+              onChange={switchShowArchived}
+            />
           )}
           <SelectFilter
             bordered={false}

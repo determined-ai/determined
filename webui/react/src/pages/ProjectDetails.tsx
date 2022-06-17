@@ -23,6 +23,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -798,8 +799,11 @@ const ProjectDetails: React.FC = () => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>

@@ -12,6 +12,7 @@ import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer,
   getFullPaginationConfig, userRenderer } from 'components/Table';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePolling from 'hooks/usePolling';
@@ -305,8 +306,11 @@ const WorkspaceList: React.FC = () => {
           <Option value={WorkspaceFilters.Others}>Others&apos; workspaces</Option>
         </SelectFilter>
         <Space wrap>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <SelectFilter
             bordered={false}
             dropdownMatchSelectWidth={150}

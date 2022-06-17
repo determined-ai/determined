@@ -12,6 +12,7 @@ import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig, modelN
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
@@ -473,8 +474,11 @@ const ModelRegistry: React.FC = () => {
       loading={isLoading}
       options={(
         <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
