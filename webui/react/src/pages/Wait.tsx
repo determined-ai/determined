@@ -7,10 +7,10 @@ import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
-import { getTask } from 'services/api';
+import { getTask, getTensorBoards } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { capitalize } from 'shared/utils/string';
-import { CommandState } from 'types';
+import { CommandState, CommandType } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'wait';
 
@@ -63,26 +63,40 @@ const Wait: React.FC = () => {
     const taskId = (serviceAddr.match(/[0-f-]+/) || ' ')[0];
     const ival = setInterval(async () => {
       try {
-        const response = await getTask({ taskId });
-        if (!response?.allocations?.length) {
-          return;
+        if (taskType === CommandType.TensorBoard) {
+          const response = await getTensorBoards({});
+          if (!response) return;
+          const tensorboard = response.find(board => board.id === taskId);
+          if (!tensorboard) return;
+          const isReady = tensorboard.state === CommandState.Running;
+          setWaitStatus({ isReady, state: tensorboard.state });
+          if (isReady) {
+            clearInterval(ival);
+            setTimeout(() => window.location.assign(serverAddress(serviceAddr)), 1000);
+
+          }
+        } else {
+          const response = await getTask({ taskId });
+          if (!response?.allocations?.length) {
+            return;
+          }
+          const lastRun = response.allocations[0];
+          if (!lastRun) {
+            return;
+          }
+          if ([ CommandState.Terminated ].includes(lastRun.state)) {
+            clearInterval(ival);
+          } else if (lastRun.isReady) {
+            clearInterval(ival);
+            window.location.assign(serverAddress(serviceAddr));
+          }
+          setWaitStatus(lastRun);
         }
-        const lastRun = response.allocations[0];
-        if (!lastRun) {
-          return;
-        }
-        if ([ CommandState.Terminated ].includes(lastRun.state)) {
-          clearInterval(ival);
-        } else if (lastRun.isReady) {
-          clearInterval(ival);
-          window.location.assign(serverAddress(serviceAddr));
-        }
-        setWaitStatus(lastRun);
       } catch (e) {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [ eventUrl, serviceAddr ]);
+  }, [ eventUrl, serviceAddr, taskType ]);
 
   return (
     <PageMessage title={capitalizedTaskType}>
