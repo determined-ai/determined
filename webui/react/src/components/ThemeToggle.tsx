@@ -11,7 +11,7 @@ interface ThemeOption {
   next: Mode
 }
 
-const ThemeOptions: Record<Mode, ThemeOption> = {
+export const ThemeOptions: Record<Mode, ThemeOption> = {
   [Mode.Light]: {
     className: Mode.Light,
     displayName: 'Light Mode',

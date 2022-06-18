@@ -5,48 +5,37 @@ import { Router } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { Mode } from 'types';
 
-import ThemeToggle from './ThemeToggle';
+import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
-const ThemeToggleContainer: React.FC = () => {
-
-  return (
-    <StoreProvider>
-      <Router history={history}>
-        <ThemeToggle />
-      </Router>
-    </StoreProvider>
-  );
-};
-
-const SYSTEM_MODE = 'System Mode';
-const LIGHT_MODE = 'Light Mode';
-const DARK_MODE = 'Dark Mode';
+const ThemeToggleContainer: React.FC = () => (
+  <StoreProvider>
+    <Router history={history}>
+      <ThemeToggle />
+    </Router>
+  </StoreProvider>
+);
 
 const setup = () => render(<ThemeToggleContainer />);
 
 describe('ThemeToggle', () => {
-  it('Should have system mode as the default setting', async () => {
+  it('should have system mode as the default setting', async () => {
     await setup();
-    expect(await screen.findByText(SYSTEM_MODE)).toBeInTheDocument();
+    const defaultOption = ThemeOptions[Mode.System];
+    expect(await screen.findByText(defaultOption.displayName)).toBeInTheDocument();
   });
 
-  it('Light Mode is activated after system mode', async () => {
-    await setup();
-    userEvent.click(screen.getByText(SYSTEM_MODE));
-    expect(await screen.findByText(LIGHT_MODE)).toBeInTheDocument();
-  });
+  it('should cycle through all the modes in the correct order', async () => {
+    const optionCount = Object.keys(ThemeOptions).length;
+    let option = ThemeOptions[Mode.System];
 
-  it('Dark mode is activated after light mode', async () => {
     await setup();
-    userEvent.click(screen.getByText(LIGHT_MODE));
-    expect(await screen.findByText(DARK_MODE)).toBeInTheDocument();
-  });
 
-  it('System Mode is activated after dark mode', async () => {
-    await setup();
-    userEvent.click(screen.getByText(DARK_MODE));
-    expect(await screen.findByText(SYSTEM_MODE)).toBeInTheDocument();
+    for (let i = 0; i < optionCount; i++) {
+      expect(await screen.findByText(option.displayName)).toBeInTheDocument();
+      userEvent.click(screen.getByText(option.displayName));
+      option = ThemeOptions[option.next];
+    }
   });
-
 });
