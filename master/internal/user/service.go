@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ var unauthenticatedPointsMap = map[string]bool{
 	"/info":               true,
 	"/task-logs":          true,
 	"/ws/data-layer/*":    true,
-	"/agents*":            true,
+	"/agents":             true,
 	"/det/*":              true,
 	"/login":              true,
 	"/api/v1/master":      true,
@@ -56,16 +57,18 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/experiments/*",
 	"/api/v1/trials/*",
 	"/api/v1/checkpoints",
+	"/agents?id=*",
 }
 
 // adminAuthPointsMap contains the paths that require admin authentication.
 var adminAuthPointsMap = map[string]bool{
-	"/config": true,
+	"/config":   true,
+	"/agents/*": true,
 }
 
 // blacklistedPointsMap contains the paths that require authentication.
 var blacklistedPointsMap = map[string]bool{
-	"/agents": true,
+	"/api/v1/agents": true,
 }
 
 type agentUserGroup struct {
@@ -183,6 +186,21 @@ func (s *Service) matchOne(uri string, path string) bool {
 	return true
 }
 
+// doesMatch checks if the given uri matches the provided path after accounting for wildcards.
+func (s *Service) doesMatch(uri string, path string) bool {
+	regexStr := "^"
+	for i := range path {
+		if path[i] == "*"[0] {
+			regexStr += ".*"
+		} else {
+			regexStr += string(path[i])
+		}
+	}
+	regexStr += "$"
+	match, _ := regexp.MatchString(regexStr, uri)
+	return match
+}
+
 func (s *Service) pathMatches(uri string) bool {
 	for _, path := range unauthenticatedPointsList {
 		if s.matchOne(uri, path) {
@@ -195,9 +213,7 @@ func (s *Service) pathMatches(uri string) bool {
 // getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
 // for whether the path requires admin authentication.
 func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
-	if _, ok := adminAuthPointsMap[c.Path()]; ok {
-		return true, true
-	} else if _, ok := blacklistedPointsMap[c.Request().RequestURI]; ok {
+	if _, ok := blacklistedPointsMap[c.Request().RequestURI]; ok {
 		return true, false
 	} else if _, ok := unauthenticatedPointsMap[c.Path()]; ok {
 		return false, false
@@ -205,6 +221,8 @@ func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
 		return false, false
 	} else if s.pathMatches(c.Request().RequestURI) {
 		return false, false
+	} else if _, ok := adminAuthPointsMap[c.Path()]; ok {
+		return true, true
 	}
 	return true, false
 }
