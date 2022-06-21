@@ -330,6 +330,11 @@ The master supports the following configuration settings:
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
          is specified.
 
+      -  ``require_authentication``: Whether to require that agent connections be verified using
+         mutual TLS.
+
+      -  ``client_ca``: Certificate authority file to use for verifying agent certificates.
+
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
       cluster. The Determined master must be running within the Kubernetes cluster. When using the
       ``kubernetes`` resource manager, we recommend deploying Determined using the :ref:`Determined
@@ -911,6 +916,9 @@ The master supports the following configuration settings:
       -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
          value of the ``master_host`` option is an IP address or is not contained in the
          certificate.
+
+      -  ``client_cert``/``client_key``: Paths to files containing the client TLS certificate and
+         key to use when connecting to the master.
 
 -  ``fluent``: fluentd settings.
       -  ``image``: Docker image to use for the managed Fluent Bit daemon. Defaults to

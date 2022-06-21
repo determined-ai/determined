@@ -12,24 +12,24 @@ class GlobalStorage {
     };
   }
 
-  set authToken(token: string) {
-    this.storage.set(this.keys.authToken, token);
-  }
-
   get authToken() {
     return this.storage.get<string>(this.keys.authToken) || '';
   }
 
-  removeAuthToken() {
-    this.storage.remove(this.keys.authToken);
+  get serverAddress() {
+    return this.storage.get<string>(this.keys.serverAddress) || '';
+  }
+
+  set authToken(token: string) {
+    this.storage.set(this.keys.authToken, token);
   }
 
   set serverAddress(address: string) {
     this.storage.set(this.keys.serverAddress, address);
   }
 
-  get serverAddress() {
-    return this.storage.get<string>(this.keys.serverAddress) || '';
+  removeAuthToken() {
+    this.storage.remove(this.keys.authToken);
   }
 
   removeServerAddress() {

@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 package determined.user.v1;
@@ -30,7 +31,7 @@ message User {
 // Request to edit fields for a user.
 message PatchUser {
   // Name to display in the web UI.
-  string display_name = 2;
+  google.protobuf.StringValue display_name = 3;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

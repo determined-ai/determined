@@ -101,6 +101,7 @@ def init(
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
+    tensorboard_mode: core.TensorboardMode = core.TensorboardMode.AUTO,
 ) -> Context:
     """
     ``core.init()`` builds a :class:`core.Context <determined.core.Context>` for use with the Core
@@ -123,6 +124,9 @@ def init(
             ``core_context.preempt.should_preempt()`` method.  See
             :class:`~determined.core.PreemptMode` for more detail.  Defaults to ``WorkersAskChief``.
         storage_manager: Internal use only.
+        tensorboard_mode (``core.TensorboardMode``, optional): Define how Tensorboard
+            metrics and profiling data are retained. See
+            :class:`~determined.core.TensorboardMode`` for more detail. Defaults to ``AUTO``.
     """
     info = det.get_cluster_info()
     if info is None:
@@ -141,7 +145,6 @@ def init(
     preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
 
     # At present, we only support tensorboards in Trial tasks.
-    tbd_mgr = None
     tbd_writer = None
 
     train = None
@@ -149,21 +152,24 @@ def init(
 
     if info.task_type == "TRIAL":
         # Prepare the tensorboard hooks.
-        tbd_mgr = tensorboard.build(
+        tensorboard_manager = tensorboard.build(
             info.cluster_id,
             str(info.trial.experiment_id),
             str(info.trial.trial_id),
             info.trial._config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
-        tbd_writer = tensorboard.get_metric_writer()
+        if tensorboard_mode == core.TensorboardMode.AUTO:
+            tbd_writer = tensorboard.get_metric_writer()
 
         train = core.TrainContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
             info.trial.experiment_id,
-            tbd_mgr,
+            distributed,
+            tensorboard_mode,
+            tensorboard_manager,
             tbd_writer,
         )
         units = core._parse_searcher_units(info.trial._config)
@@ -183,7 +189,13 @@ def init(
             )
 
         checkpoint = core.CheckpointContext(
-            distributed, storage_manager, session, info.task_id, info.allocation_id, tbd_mgr
+            distributed,
+            storage_manager,
+            session,
+            info.task_id,
+            info.allocation_id,
+            tensorboard_mode,
+            tensorboard_manager,
         )
 
     else:

@@ -6,10 +6,6 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
-import awsLogo from 'shared/assets/images/aws-logo.svg';
-import gcpLogo from 'shared/assets/images/gcp-logo.svg';
-import k8sLogo from 'shared/assets/images/k8s-logo.svg';
-import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import Icon from 'shared/components/Icon/Icon';
 import { clone } from 'shared/utils/data';
 import { ShirtSize } from 'themes';
@@ -24,27 +20,6 @@ interface Props {
   resourcePool: ResourcePool;
   size?: ShirtSize;
 }
-
-export const poolLogo = (type: V1ResourcePoolType): React.ReactNode => {
-  let iconSrc = '';
-  switch (type) {
-    case V1ResourcePoolType.AWS:
-      iconSrc = awsLogo;
-      break;
-    case V1ResourcePoolType.GCP:
-      iconSrc = gcpLogo;
-      break;
-    case V1ResourcePoolType.K8S:
-      iconSrc = k8sLogo;
-      break;
-    case V1ResourcePoolType.UNSPECIFIED:
-    case V1ResourcePoolType.STATIC:
-      iconSrc = staticLogo;
-      break;
-  }
-
-  return <img src={iconSrc} />;
-};
 
 const poolAttributes = [
   {

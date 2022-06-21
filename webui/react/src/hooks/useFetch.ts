@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { agentsToOverview, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
-import { getAgents, getInfo, getResourcePools, getUsers } from 'services/api';
+import { getAgents, getInfo, getResourcePools, getUsers, getWorkspaces } from 'services/api';
 import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
@@ -51,6 +51,19 @@ export const useFetchResourcePools = (canceler: AbortController): () => Promise<
     try {
       const resourcePools = await getResourcePools({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
+    } catch (e) { handleError(e); }
+  }, [ canceler, storeDispatch ]);
+};
+
+export const useFetchPinnedWorkspaces = (canceler: AbortController): () => Promise<void> => {
+  const storeDispatch = useStoreDispatch();
+  return useCallback(async (): Promise<void> => {
+    try {
+      const pinnedWorkspaces = await getWorkspaces(
+        { limit: 0, pinned: true },
+        { signal: canceler.signal },
+      );
+      storeDispatch({ type: StoreAction.SetPinnedWorkspaces, value: pinnedWorkspaces.workspaces });
     } catch (e) { handleError(e); }
   }, [ canceler, storeDispatch ]);
 };

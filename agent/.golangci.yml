@@ -60,6 +60,9 @@ linters-settings:
     line-length: 100
   misspell:
     locale: US
+  forbidigo:
+    forbid:
+        - 'fmt\.Print.*'
 
 linters:
   enable-all: true
@@ -89,7 +92,6 @@ linters:
     - errname
     - errorlint
     - exhaustivestruct
-    - forbidigo
     - forcetypeassert
     - gci
     - gomoddirectives

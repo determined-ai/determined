@@ -3,14 +3,13 @@ import { FC } from 'react';
 import Cluster from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
-import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
-import ExperimentList from 'pages/ExperimentList';
 import InteractiveTask from 'pages/InteractiveTask';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
+import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import SignIn from 'pages/SignIn';
@@ -19,6 +18,8 @@ import TaskList from 'pages/TaskList';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
+import WorkspaceDetails from 'pages/WorkspaceDetails';
+import WorkspaceList from 'pages/WorkspaceList';
 
 import { RouteConfig } from '../shared/types';
 
@@ -28,14 +29,13 @@ const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
-  dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
-  experimentList: ExperimentList,
   interactive: InteractiveTask,
   jobs: JobQueue,
   modelDetails: ModelDetails,
   models: ModelRegistry,
   modelVersionDetails: ModelVersionDetails,
+  projectDetails: ProjectDetails,
   reload: Reload,
   resourcepool: ResourcepoolDetail,
   signIn: SignIn,
@@ -43,10 +43,13 @@ const routeComponentMap: Record<string, FC> = {
   taskList: TaskList,
   taskLogs: TaskLogsWrapper,
   trialDetails: TrialDetails,
+  uncategorized: ProjectDetails,
   wait: Wait,
+  workspaceDetails: WorkspaceDetails,
+  workspaceList: WorkspaceList,
 };
 
-const defaultRouteId = 'dashboard';
+const defaultRouteId = 'uncategorized';
 
 const appRoutes: RouteConfig[] = Routes.map(route => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);

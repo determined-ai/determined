@@ -105,7 +105,7 @@ const ModelRegistry: React.FC = () => {
     await Promise.allSettled([ fetchModels(), fetchTags(), fetchUsers() ]);
   }, [ fetchModels, fetchTags, fetchUsers ]);
 
-  usePolling(fetchAll);
+  usePolling(fetchAll, { rerunOnNewFn: true });
 
   /*
    * Get new models based on changes to the
@@ -259,7 +259,6 @@ const ModelRegistry: React.FC = () => {
         type: ErrorType.Api,
       });
       setIsLoading(false);
-      return e as Error;
     }
   }, []);
 

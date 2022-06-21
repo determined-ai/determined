@@ -78,6 +78,7 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
+		ProjectID:            1,
 	}
 	err := db.AddExperiment(&exp)
 	require.NoError(t, err, "failed to add experiment")
@@ -153,4 +154,23 @@ func requireMockMetrics(
 	err := db.AddValidationMetrics(context.TODO(), &m)
 	require.NoError(t, err)
 	return &m
+}
+
+func requireMockCheckpoint(
+	t *testing.T, db *PgDB, task *model.Task, allocation *model.Allocation, checkpoint_id int,
+) *model.CheckpointV2 {
+	uuid_val := uuid.New()
+
+	ckpt := model.CheckpointV2{
+		UUID:         uuid_val,
+		TaskID:       task.TaskID,
+		AllocationID: allocation.AllocationID,
+		ReportTime:   time.Now().UTC().Truncate(time.Millisecond),
+		State:        model.ActiveState,
+		Resources:    map[string]int64{"ok": 1.0},
+		Metadata:     model.JSONObjFromMapStringInt64(map[string]int64{"ok": 1.0}),
+	}
+	err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+	require.NoError(t, err)
+	return &ckpt
 }

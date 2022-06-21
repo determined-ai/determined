@@ -1170,6 +1170,13 @@ schemas = {
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/profiling.json"
         },
+        "project": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
         "records_per_epoch": {
             "type": [
                 "integer",
@@ -1224,6 +1231,13 @@ schemas = {
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
+        },
+        "workspace": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
         }
     },
     "allOf": [
@@ -2950,7 +2964,7 @@ schemas = {
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', or 'adaptive_asha'",
             "items": [
                 {
                     "unionKey": "const:name=single",

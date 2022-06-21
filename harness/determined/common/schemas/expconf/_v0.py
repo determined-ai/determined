@@ -607,59 +607,6 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
         pass
 
 
-class PBTReplaceConfig(schemas.SchemaBase):
-    truncate_fraction: float
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        truncate_fraction: float,
-    ) -> None:
-        pass
-
-
-class PBTExploreConfig(schemas.SchemaBase):
-    resample_probability: float
-    perturb_factor: float
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        resample_probability: float,
-        perturb_factor: float,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("pbt")
-class PBTConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-    length_per_round: Union[int, LengthV0]
-    metric: str
-    num_rounds: int
-    population_size: int
-    replace_function: PBTReplaceConfig
-    explore_function: PBTExploreConfig
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        length_per_round: Union[int, LengthV0],
-        metric: str,
-        num_rounds: int,
-        population_size: int,
-        replace_function: PBTReplaceConfig,
-        explore_function: PBTExploreConfig,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
-    ) -> None:
-        pass
-
-
 # This is an EOL searcher, not to be used in new experiments.
 @SearcherConfigV0.member("sync_halving")
 class SyncHalvingConfigV0(schemas.SchemaBase):
@@ -760,7 +707,6 @@ SearcherConfigV0_Type = Union[
     GridConfigV0,
     AsyncHalvingConfigV0,
     AdaptiveASHAConfigV0,
-    PBTConfigV0,
     # EOL searchers:
     SyncHalvingConfigV0,
     AdaptiveConfigV0,
@@ -940,12 +886,14 @@ class ExperimentConfigV0(schemas.SchemaBase):
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
+    project: Optional[str] = None
     records_per_epoch: Optional[int] = None
     reproducibility: Optional[ReproducibilityConfigV0] = None
     resources: Optional[ResourcesConfigV0] = None
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
     # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
+    workspace: Optional[str] = None
 
     @schemas.auto_init
     def __init__(
@@ -969,12 +917,14 @@ class ExperimentConfigV0(schemas.SchemaBase):
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
+        project: Optional[str] = None,
         records_per_epoch: Optional[int] = None,
         reproducibility: Optional[ReproducibilityConfigV0] = None,
         resources: Optional[ResourcesConfigV0] = None,
         scheduling_unit: Optional[int] = None,
         # security: Optional[SecurityConfigV0] = None,
         # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
+        workspace: Optional[str] = None,
     ) -> None:
         pass
 

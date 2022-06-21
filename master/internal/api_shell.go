@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -130,10 +131,8 @@ func (a *apiServer) LaunchShell(
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
-	spec.Metadata = map[string]interface{}{
-		"privateKey": string(keys.PrivateKey),
-		"publicKey":  string(keys.PublicKey),
-	}
+	spec.Metadata.PrivateKey = ptrs.Ptr(string(keys.PrivateKey))
+	spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))
 	spec.Keys = &keys
 
 	spec.ProxyTCP = true

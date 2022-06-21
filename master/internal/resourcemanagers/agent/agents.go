@@ -1,16 +1,19 @@
 package agent
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/soheilhy/cmux"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/connsave"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -70,6 +73,20 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			}
 		}
 	case api.WebSocketConnected:
+		cmuxConn := connsave.GetConn(msg.Ctx.Request().Context()).(*cmux.MuxConn)
+		// Here, we just have to check that there are any certificates at all, since the top-level TLS
+		// config verifies that any certificates that are provided are valid.
+		if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
+			requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
+			missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
+			if requireAuth && missingAuth {
+				ctx.Log().WithField("remote-addr", tlsConn.RemoteAddr()).
+					Warnf("rejecting agent WebSocket request with no certificates")
+				ctx.Respond(echo.ErrForbidden)
+				return nil
+			}
+		}
+
 		id := msg.Ctx.QueryParam("id")
 		resourcePool := msg.Ctx.QueryParam("resource_pool")
 		reconnect, err := msg.IsReconnect()

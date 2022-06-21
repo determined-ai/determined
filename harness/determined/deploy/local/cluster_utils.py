@@ -1,5 +1,6 @@
 import os
 import re
+import socket
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,9 @@ import determined.deploy
 from determined.common import yaml
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
+
+AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
+MASTER_PORT_DEFAULT = 8080
 
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
@@ -237,6 +241,7 @@ def cluster_up(
         agent_up(
             master_host="localhost",
             master_port=port,
+            agent_config_path=None,
             agent_name=agent_name,
             agent_label=None,
             agent_resource_pool=None,
@@ -261,6 +266,7 @@ def logs(cluster_name: str, no_follow: bool) -> None:
 def agent_up(
     master_host: str,
     master_port: int,
+    agent_config_path: Optional[Path],
     agent_name: str,
     agent_label: Optional[str],
     agent_resource_pool: Optional[str],
@@ -271,6 +277,29 @@ def agent_up(
     cluster_name: str,
     labels: Optional[Dict] = None,
 ) -> None:
+    agent_conf = {}
+    volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
+    if agent_config_path is not None:
+        with agent_config_path.open() as f:
+            agent_conf = yaml.safe_load(f)
+        volumes += [f"{agent_config_path}:/etc/determined/agent.yaml"]
+
+    # Fallback on agent config for options not specified as flags.
+    environment = {}
+    if agent_name == AGENT_NAME_DEFAULT:
+        agent_name = agent_conf.get("agent_id", agent_name)
+    else:
+        environment["DET_AGENT_ID"] = agent_name
+    environment["DET_MASTER_PORT"] = str(master_port)
+    if master_port == MASTER_PORT_DEFAULT:
+        if "master_port" in agent_conf:
+            del environment["DET_MASTER_PORT"]
+            master_port = agent_conf["master_port"]
+
+    if agent_label is not None:
+        environment["DET_LABEL"] = agent_label
+    if agent_resource_pool is not None:
+        environment["DET_RESOURCE_POOL"] = agent_resource_pool
     if image_repo_prefix is None:
         image_repo_prefix = "determinedai"
     if version is None:
@@ -280,16 +309,10 @@ def agent_up(
 
     if master_host == "localhost":
         master_host = get_proxy_addr()
+    environment["DET_MASTER_HOST"] = master_host
+
     image = f"{image_repo_prefix}/determined-agent:{version}"
-    environment = {
-        "DET_MASTER_HOST": master_host,
-        "DET_MASTER_PORT": master_port,
-        "DET_AGENT_ID": agent_name,
-        "DET_LABEL": agent_label,
-        "DET_RESOURCE_POOL": agent_resource_pool,
-    }
     init = True
-    volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
     mounts = []  # type: List[str]
     if labels is None:
         labels = {}

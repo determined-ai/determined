@@ -1,0 +1,16 @@
+.base {
+  display: flex;
+  flex-direction: column;
+
+  .label {
+    color: var(--theme-float-on);
+  }
+}
+.workspaceOptionDisabled {
+  display: flex;
+  justify-content: space-between;
+
+  span {
+    color: var(--theme-colors-monochrome-10);
+  }
+}

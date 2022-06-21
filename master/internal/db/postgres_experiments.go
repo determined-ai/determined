@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -17,6 +19,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 const (
@@ -26,16 +30,37 @@ const (
 	min  = "min"
 )
 
+// ProjectByName returns a project's ID if it exists in the given workspace.
+func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, error) {
+	w := workspacev1.Workspace{}
+	err := db.Query("get_workspace_from_name", &w, workspaceName)
+	if err != nil {
+		return 1, err
+	}
+	p := projectv1.Project{}
+	err = db.Query("get_project_from_name", &p, w.Id, projectName)
+	if err != nil {
+		return 1, err
+	}
+	if p.Id < 1 {
+		return 1, ErrNotFound
+	}
+	if p.Archived {
+		return 1, fmt.Errorf("given workspace or project is archived and cannot add new experiments")
+	}
+	return int(p.Id), nil
+}
+
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
 // labels in use across all experiments.
-func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
+func (db *PgDB) ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error) {
 	// First, assemble all the JSON lists that the database returns into a
 	// single tally of all the labels
 	type dbLabelList struct {
 		Labels []byte
 	}
 	var rawLists []dbLabelList
-	err = db.Query("get_experiment_labels", &rawLists)
+	err = db.Query("get_experiment_labels", &rawLists, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("error in get_experiment_labels query: %w", err)
 	}
@@ -699,10 +724,11 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
-	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
+ 	project_id)
 	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
 					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes, :job_id)
+					:notes, :job_id, :project_id)
 	RETURNING id`, experiment)
 		if err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
@@ -1140,18 +1166,17 @@ FROM experiments
 WHERE id = $1`, id)
 }
 
-// ExperimentCheckpointsToGCRaw returns a JSON string describing checkpoints that should be GCed
-// according to the given GC policy parameters. If the delete parameter is true, the returned
-// checkpoints are also marked as deleted in the database.
+// ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints
+// that should be GCed according to the given GC policy parameters. If the delete parameter is true,
+// the returned checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
 	experimentBest, trialBest, trialLatest int,
-	delete bool,
-) ([]byte, error) {
+) ([]uuid.UUID, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
 	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
 	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
-	ctes := `
+	query := `
 WITH const AS (
     SELECT config->'searcher'->>'metric' AS metric_name,
            (CASE
@@ -1218,38 +1243,34 @@ WITH const AS (
                 AND c.trial_rank > $3)
                OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
                    IS NULL))
-)`
+)
+SELECT selected_checkpoints.uuid AS ID from selected_checkpoints;`
 
-	if delete {
-		ctes += `, do_delete_v1 AS (
-    UPDATE checkpoints c
-    SET state = 'DELETED'
-    FROM selected_checkpoints
-    WHERE c.id = selected_checkpoints.id
-)
-`
-		ctes += `, do_delete_v2 AS (
-	UPDATE checkpoints_v2 c
-	SET state = 'DELETED'
-	FROM selected_checkpoints
-	WHERE c.id = selected_checkpoints.id
-)
-		`
+	var checkpointIDRows []struct {
+		ID uuid.UUID
 	}
 
-	query := `
-SELECT row_to_json(x)
-FROM (
-    SELECT const.metric_name,
-           (SELECT coalesce(
-                       jsonb_agg(to_jsonb(selected_checkpoints.*)
-                           #- '{experiment_rank}' #- '{trial_rank}' #- '{trial_order_rank}'
-                       ORDER BY id ASC), '[]'::jsonb)
-            FROM selected_checkpoints
-           ) AS checkpoints
-    FROM const
-) x
-`
+	if err := db.queryRows(query, &checkpointIDRows,
+		id, experimentBest, trialBest, trialLatest); err != nil {
+		return nil, fmt.Errorf(
+			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
+	}
 
-	return db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
+	var checkpointIDs []uuid.UUID
+	for _, cRow := range checkpointIDRows {
+		checkpointIDs = append(checkpointIDs, cRow.ID)
+	}
+
+	registeredCheckpoints, err := db.GetRegisteredCheckpoints(checkpointIDs)
+	if err != nil {
+		return nil, err
+	}
+	var deleteCheckpoints []uuid.UUID
+	for _, cUUID := range checkpointIDs {
+		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
+			deleteCheckpoints = append(deleteCheckpoints, cUUID)
+		}
+	}
+
+	return deleteCheckpoints, nil
 }

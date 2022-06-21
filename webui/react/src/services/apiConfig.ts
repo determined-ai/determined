@@ -30,6 +30,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Internal: new Api.InternalApi(config),
     Models: new Api.ModelsApi(config),
     Notebooks: new Api.NotebooksApi(config),
+    Projects: new Api.ProjectsApi(config),
     Shells: new Api.ShellsApi(config),
     StreamingCluster: Api.ClusterApiFetchParamCreator(config),
     StreamingExperiments: Api.ExperimentsApiFetchParamCreator(config),
@@ -40,6 +41,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
     Templates: new Api.TemplatesApi(config),
     TensorBoards: new Api.TensorboardsApi(config),
     Users: new Api.UsersApi(config),
+    Workspaces: new Api.WorkspacesApi(config),
   };
 };
 
@@ -262,7 +264,7 @@ export const createExperiment: DetApi<
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder.mapV1GetExperimentResponse(resp);
+    return decoder.mapV1GetExperimentDetailsResponse(resp);
   },
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
@@ -270,6 +272,7 @@ export const createExperiment: DetApi<
         activate: params.activate,
         config: params.experimentConfig,
         parentId: params.parentId,
+        projectId: params.projectId,
       },
       options,
     );
@@ -364,7 +367,7 @@ export const getExperimentDetails: DetApi<
   Service.ExperimentDetailsParams, Api.V1GetExperimentResponse, Type.ExperimentBase
 > = {
   name: 'getExperimentDetails',
-  postProcess: (response) => decoder.mapV1GetExperimentResponse(response),
+  postProcess: (response) => decoder.mapV1GetExperimentDetailsResponse(response),
   request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
 };
 
@@ -414,11 +417,11 @@ export const getExpTrials: DetApi<
 };
 
 export const getExperimentLabels: DetApi<
-  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  Service.ExperimentLabelsParams, Api.V1GetExperimentLabelsResponse, string[]
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (options) => detApi.Experiments.getExperimentLabels(options),
+  request: (params, options) => detApi.Experiments.getExperimentLabels(params.project_id, options),
 };
 
 export const getTrialDetails: DetApi<
@@ -429,6 +432,20 @@ export const getTrialDetails: DetApi<
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+};
+
+export const moveExperiment: DetApi<
+  Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
+> = {
+  name: 'moveExperiment',
+  postProcess: noOp,
+  request: (params) => detApi.Experiments.moveExperiment(
+    params.experimentId,
+    {
+      destinationProjectId: params.destinationProjectId,
+      experimentId: params.experimentId,
+    },
+  ),
 };
 
 /* Tasks */
@@ -614,6 +631,288 @@ export const postModelVersion: DetApi<
     params.modelName,
     params.body,
   ),
+};
+
+/* Workspaces */
+
+export const getWorkspaces: DetApi<
+  Service.GetWorkspacesParams,
+  Api.V1GetWorkspacesResponse,
+  Type.WorkspacePagination
+> = {
+  name: 'getWorkspaces',
+  postProcess: (response) => {
+    return {
+      pagination: response.pagination,
+      workspaces: response.workspaces.map(decoder.mapV1Workspace),
+    };
+  },
+  request: (params, options) => {
+    return detApi.Workspaces.getWorkspaces(
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.name,
+      params.archived,
+      params.users,
+      params.pinned,
+      options,
+    );
+  },
+};
+
+export const getWorkspace: DetApi<
+  Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
+> = {
+  name: 'getWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => detApi.Workspaces.getWorkspace(
+    params.id,
+  ),
+};
+
+export const createWorkspace: DetApi<
+  Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
+> = {
+  name: 'createWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => detApi.Workspaces.postWorkspace(
+    { name: params.name },
+  ),
+};
+
+export const getWorkspaceProjects: DetApi<
+  Service.GetWorkspaceProjectsParams,
+  Api.V1GetWorkspaceProjectsResponse,
+  Type.ProjectPagination
+> = {
+  name: 'getWorkspaceProjects',
+  postProcess: (response) => {
+    return {
+      pagination: response.pagination,
+      projects: response.projects.map(decoder.mapV1Project),
+    };
+  },
+  request: (params, options) => {
+    return detApi.Workspaces.getWorkspaceProjects(
+      params.id,
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.name,
+      params.archived,
+      params.users,
+      options,
+    );
+  },
+};
+
+export const deleteWorkspace: DetApi<
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+> = {
+  name: 'deleteWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.deleteWorkspace(
+    params.id,
+  ),
+};
+
+export const patchWorkspace: DetApi<
+  Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
+> = {
+  name: 'patchWorkspace',
+  postProcess: (response) => {
+    return decoder.mapV1Workspace(response.workspace);
+  },
+  request: (params) => {
+    return detApi.Workspaces.patchWorkspace(params.id, { name: params.name });
+  },
+};
+
+export const archiveWorkspace: DetApi<
+  Service.ArchiveWorkspaceParams, Api.V1ArchiveWorkspaceResponse, void
+> = {
+  name: 'archiveWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
+};
+
+export const unarchiveWorkspace: DetApi<
+  Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
+> = {
+  name: 'unarchiveWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
+};
+
+export const pinWorkspace: DetApi<
+  Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void
+> = {
+  name: 'pinWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.pinWorkspace(params.id),
+};
+
+export const unpinWorkspace: DetApi<
+  Service.UnpinWorkspaceParams, Api.V1UnpinWorkspaceResponse, void
+> = {
+  name: 'unpinWorkspace',
+  postProcess: noOp,
+  request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
+};
+
+/* Projects */
+
+export const getProject: DetApi<
+  Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
+> = {
+  name: 'getProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.getProject(
+    params.id,
+  ),
+};
+
+export const getProjectExperiments: DetApi<
+  Service.GetProjectExperimentsParams,
+  Api.V1GetProjectExperimentsResponse,
+  Type.ExperimentPagination
+> = {
+  name: 'getProjectExperiments',
+  postProcess: (response: Api.V1GetExperimentsResponse) => {
+    return {
+      experiments: decoder.mapV1ExperimentList(response.experiments),
+      pagination: response.pagination,
+    };
+  },
+  request: (params: Service.GetProjectExperimentsParams, options) => {
+    return detApi.Projects.getProjectExperiments(
+      params.id,
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.description,
+      params.name,
+      params.labels,
+      params.archived,
+      params.states,
+      params.users,
+      params.userIds,
+      options,
+    );
+  },
+};
+
+export const addProjectNote: DetApi<
+  Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
+> = {
+  name: 'addProjectNote',
+  postProcess: (response) => {
+    return response.notes as Type.Note[];
+  },
+  request: (params) => detApi.Projects.addProjectNote(
+    params.id,
+    {
+      contents: params.contents,
+      name: params.name,
+    },
+  ),
+};
+
+export const setProjectNotes: DetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+> = {
+  name: 'setProjectNotes',
+  postProcess: (response) => {
+    return response.notes as Type.Note[];
+  },
+  request: (params) => detApi.Projects.putProjectNotes(
+    params.projectId,
+    {
+      notes: params.notes,
+      projectId: params.projectId,
+    },
+  ),
+};
+
+export const createProject: DetApi<
+  Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
+> = {
+  name: 'createProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.postProject(
+    params.workspaceId,
+    {
+      description: params.description,
+      name: params.name,
+      workspaceId: params.workspaceId,
+    },
+  ),
+};
+
+export const patchProject: DetApi<
+  Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
+> = {
+  name: 'patchProject',
+  postProcess: (response) => {
+    return decoder.mapV1Project(response.project);
+  },
+  request: (params) => detApi.Projects.patchProject(
+    params.id,
+    {
+      description: params.description,
+      name: params.name,
+    },
+  ),
+};
+
+export const deleteProject: DetApi<
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+> = {
+  name: 'deleteProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.deleteProject(params.id),
+};
+
+export const moveProject: DetApi<
+  Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
+> = {
+  name: 'moveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.moveProject(
+    params.projectId,
+    {
+      destinationWorkspaceId: params.destinationWorkspaceId,
+      projectId: params.projectId,
+    },
+  ),
+};
+
+export const archiveProject: DetApi<
+  Service.ArchiveProjectParams, Api.V1ArchiveProjectResponse, void
+> = {
+  name: 'archiveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.archiveProject(params.id),
+};
+
+export const unarchiveProject: DetApi<
+  Service.UnarchiveProjectParams, Api.V1UnarchiveProjectResponse, void
+> = {
+  name: 'unarchiveProject',
+  postProcess: noOp,
+  request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
 /* Tasks */

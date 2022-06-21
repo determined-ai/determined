@@ -79,7 +79,9 @@ def main(override_args: List[str], script: List[str]) -> int:
 
     # Detect single-slot trials and skip distributed launch
     if single_slot:
-        return subprocess.Popen(script).wait()
+        p = subprocess.Popen(script)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
 
@@ -105,7 +107,9 @@ def main(override_args: List[str], script: List[str]) -> int:
 
     logging.debug(f"Torch distributed launching with: {launch_cmd}")
 
-    return subprocess.Popen(launch_cmd).wait()
+    p = subprocess.Popen(launch_cmd)
+    with det.util.forward_signals(p):
+        return p.wait()
 
 
 def parse_args(args: List[str]) -> Tuple[List[str], List[str]]:

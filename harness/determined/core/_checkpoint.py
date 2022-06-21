@@ -47,14 +47,16 @@ class CheckpointContext:
         session: Session,
         task_id: str,
         allocation_id: str,
-        tbd_mgr: Optional[tensorboard.TensorboardManager] = None,
+        tbd_sync_mode: core.TensorboardMode,
+        tensorboard_manager: tensorboard.TensorboardManager,
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
         self._session = session
         self._task_id = task_id
         self._allocation_id = allocation_id
-        self._tbd_mgr = tbd_mgr
+        self._tensorboard_mode = tbd_sync_mode
+        self._tensorboard_manager = tensorboard_manager
 
     def upload(
         self, ckpt_dir: Union[str, os.PathLike], metadata: Optional[Dict[str, Any]] = None
@@ -256,8 +258,8 @@ class CheckpointContext:
         logger.info(f"Reported checkpoint to master {storage_id}")
 
         # Also sync tensorboard.
-        if self._tbd_mgr:
-            self._tbd_mgr.sync()
+        if self._tensorboard_mode == core.TensorboardMode.AUTO:
+            self._tensorboard_manager.sync()
 
 
 class DummyCheckpointContext(CheckpointContext):

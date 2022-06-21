@@ -7,6 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
 
 // AgentSummary summarizes the state on an agent.
@@ -26,14 +27,20 @@ type AgentSummary struct {
 // ToProto converts an agent summary to a proto struct.
 func (a AgentSummary) ToProto() *agentv1.Agent {
 	slots := make(map[string]*agentv1.Slot)
+	containers := make(map[string]*containerv1.Container)
 	for i, s := range a.Slots {
-		slots[i] = s.ToProto()
+		sp := s.ToProto()
+		slots[i] = sp
+		if sp.Container != nil {
+			containers[sp.Container.Id] = sp.Container
+		}
 	}
+
 	return &agentv1.Agent{
 		Id:             a.ID,
 		RegisteredTime: protoutils.ToTimestamp(a.RegisteredTime),
 		Slots:          slots,
-		Containers:     nil,
+		Containers:     containers,
 		Label:          a.Label,
 		ResourcePool:   a.ResourcePool,
 		Addresses:      a.Addresses,
@@ -64,7 +71,7 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 		Id:        s.ID,
 		Device:    s.Device.Proto(),
 		Enabled:   s.Enabled,
-		Container: s.Container.Proto(),
+		Container: s.Container.ToProto(),
 		Draining:  s.Draining,
 	}
 }

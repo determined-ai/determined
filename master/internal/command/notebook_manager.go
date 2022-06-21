@@ -24,7 +24,10 @@ type notebookManager struct {
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+	case actor.PreStart:
+		tryRestoreCommandsByType(ctx, n.db, n.taskLogger, model.TaskTypeNotebook)
+
+	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetNotebooksRequest:
 		resp := &apiv1.GetNotebooksResponse{}

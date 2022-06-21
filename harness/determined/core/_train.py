@@ -1,11 +1,13 @@
 import enum
 import logging
-from typing import Any, Dict, List, Optional, Set
+import pathlib
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
+from determined.core import DistributedContext, TensorboardMode
 
 logger = logging.getLogger("determined.core")
 
@@ -28,14 +30,18 @@ class TrainContext:
         trial_id: int,
         run_id: int,
         exp_id: int,
-        tbd_mgr: Optional[tensorboard.TensorboardManager],
+        distributed: DistributedContext,
+        tensorboard_mode: TensorboardMode,
+        tensorboard_manager: tensorboard.TensorboardManager,
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
         self._session = session
         self._trial_id = trial_id
         self._run_id = run_id
         self._exp_id = exp_id
-        self._tbd_mgr = tbd_mgr
+        self._distributed = distributed
+        self._tensorboard_mode = tensorboard_mode
+        self._tensorboard_manager = tensorboard_manager
         self._tbd_writer = tbd_writer
 
     def set_status(self, status: str) -> None:
@@ -89,10 +95,34 @@ class TrainContext:
             data=det.util.json_encode(body),
         )
 
-        # Also sync tensorboard.
-        if self._tbd_writer and self._tbd_mgr:
-            self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-            self._tbd_mgr.sync()
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
+            self._tensorboard_manager.sync()
+
+    def get_tensorboard_path(self) -> pathlib.Path:
+        """
+        Get TensorBoard log directory path.
+        """
+        return self._tensorboard_manager.base_path
+
+    def upload_tensorboard_files(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+    ) -> None:
+        """
+        Upload files generated for consumption by Tensorboard to checkpoint storage.
+
+        Args:
+            selector: optional function returning True for a file that should be included.
+                If not provided, all files are uploaded.
+            mangler: optional function modifying the destination file names based on rank.
+        """
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            raise RuntimeError("upload_tensorboard_files can only be used in MANUAL mode")
+
+        self._tensorboard_manager.sync(selector, mangler, self._distributed.rank)
 
     def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
@@ -148,9 +178,10 @@ class TrainContext:
         )
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tbd_writer and self._tbd_mgr:
-            self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            self._tbd_mgr.sync()
+        if self._tensorboard_mode == TensorboardMode.AUTO:
+            if self._tbd_writer:
+                self._tbd_writer.on_validation_step_end(steps_completed, metrics)
+            self._tensorboard_manager.sync()
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
@@ -220,6 +251,13 @@ class DummyTrainContext(TrainContext):
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed} metrics={metrics})"
         )
+
+    def upload_tensorboard_files(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+    ) -> None:
+        logger.info("upload_tensorboard_files()")
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")

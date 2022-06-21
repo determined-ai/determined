@@ -1,5 +1,4 @@
 import { activeRunStates, terminalCommandStates, terminalRunStates } from 'constants/states';
-import { launchJupyterLab } from 'hooks/useJupyterLab';
 import { displayHelp, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import dev from 'omnibar/tree-extension/trees/dev';
 import locations from 'omnibar/tree-extension/trees/goto';
@@ -8,6 +7,7 @@ import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, getExperiments, getJupyterLabs, getTensorBoards,
   killExperiment, killJupyterLab, killTensorBoard, openOrCreateTensorBoard,
   pauseExperiment } from 'services/api';
+import { launchJupyterLab } from 'utils/jupyter';
 
 const root: NonLeafNode = {
   options: [

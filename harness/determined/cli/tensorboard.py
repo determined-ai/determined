@@ -1,22 +1,24 @@
 import sys
 from argparse import ONE_OR_MORE, FileType, Namespace
+from functools import partial
 from pathlib import Path
 from typing import Any, List
 
 from termcolor import colored
 
 from determined.cli import command, task
+from determined.cli.util import format_args
 from determined.common import api, constants, context
 from determined.common.api import authentication
 from determined.common.check import check_eq
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 from .command import CONFIG_DESC, CONTEXT_DESC, parse_config, render_event_stream
 
 
 @authentication.required
 def start_tensorboard(args: Namespace) -> None:
-    if args.trial_ids is None and args.experiment_ids is None:
+    if not (args.trial_ids or args.experiment_ids):
         print("Either experiment_ids or trial_ids must be specified.")
         sys.exit(1)
 
@@ -71,11 +73,12 @@ def open_tensorboard(args: Namespace) -> None:
 
 args_description = [
     Cmd("tensorboard", None, "manage TensorBoard instances", [
-        Cmd("list ls", command.list_tasks, "list TensorBoard instances", [
+        Cmd("list ls", partial(command.list_tasks), "list TensorBoard instances", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
-                help="show all TensorBoards (including other users')")
+                help="show all TensorBoards (including other users')"),
+            Group(format_args["json"], format_args["csv"]),
         ], is_default=True),
         Cmd("start", start_tensorboard, "start new TensorBoard instance", [
             Arg("experiment_ids", type=int, nargs="*",
@@ -95,25 +98,25 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
-        Cmd("config", command.config,
+        Cmd("config", partial(command.config),
             "display TensorBoard config", [
                 Arg("tensorboard_id", type=str, help="TensorBoard ID")
-            ]),
+        ]),
         Cmd("open", open_tensorboard,
             "open existing TensorBoard instance", [
                 Arg("tensorboard_id", help="TensorBoard ID")
             ]),
-        Cmd("logs", lambda *args, **kwargs: task.logs(*args, **kwargs),
+        Cmd("logs", partial(task.logs),
             "fetch TensorBoard instance logs", [
             Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
             *task.common_log_options,
         ]),
-        Cmd("kill", command.kill, "kill TensorBoard instance", [
+        Cmd("kill", partial(command.kill), "kill TensorBoard instance", [
             Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set TensorBoard attributes", [
-            Cmd("priority", command.set_priority, "set TensorBoard priority", [
+            Cmd("priority", partial(command.set_priority), "set TensorBoard priority", [
                 Arg("tensorboard_id", help="TensorBoard ID"),
                 Arg("priority", type=int, help="priority"),
             ]),

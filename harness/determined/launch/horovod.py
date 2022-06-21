@@ -93,7 +93,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     # When --autohorovod was set, detect single-slot trials.
     if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) == 1:
-        return subprocess.Popen(script).wait()
+        p = subprocess.Popen(script)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # Hack: get the resources id from the environment.
     resources_id = os.environ.get("DET_RESOURCES_ID")
@@ -135,7 +137,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
             f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
-        return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
+        p = subprocess.Popen(pid_server_cmd + run_sshd_command)
+        with det.util.forward_signals(p):
+            return p.wait()
 
     # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
     # close to in-step by now because all machines just finished synchronizing rendezvous info.
@@ -175,7 +179,9 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     os.environ["USE_HOROVOD"] = "1"
 
-    return subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script).wait()
+    p = subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script)
+    with det.util.forward_signals(p):
+        return p.wait()
 
 
 def parse_args(args: List[str]) -> Tuple[List[str], List[str], bool]:

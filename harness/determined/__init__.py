@@ -16,7 +16,6 @@ from determined._execution import (
     _load_trial_for_checkpoint_export,
     InvalidHP,
 )
-from determined._hparam import Categorical, Constant, Double, Integer, Log
 from determined import errors
 from determined import util
 

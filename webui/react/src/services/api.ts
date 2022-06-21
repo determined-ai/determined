@@ -166,8 +166,12 @@ export const patchExperiment = generateDetApi<
 >(Config.patchExperiment);
 
 export const getExperimentLabels = generateDetApi<
-  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+  Service.ExperimentLabelsParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
+
+export const moveExperiment = generateDetApi<
+  Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
+>(Config.moveExperiment);
 
 /* Tasks */
 
@@ -228,6 +232,92 @@ export const postModelVersion = generateDetApi<
 export const getModelLabels = generateDetApi<
   EmptyParams, Api.V1GetModelLabelsResponse, string[]
 >(Config.getModelLabels);
+
+/* Workspaces */
+
+export const getWorkspace = generateDetApi<
+  Service.GetWorkspaceParams, Api.V1GetWorkspaceResponse, Type.Workspace
+>(Config.getWorkspace);
+
+export const getWorkspaces = generateDetApi<
+  Service.GetWorkspacesParams, Api.V1GetWorkspacesResponse, Type.WorkspacePagination
+>(Config.getWorkspaces);
+
+export const getWorkspaceProjects = generateDetApi<
+  Service.GetWorkspaceProjectsParams, Api.V1GetWorkspaceProjectsResponse, Type.ProjectPagination
+>(Config.getWorkspaceProjects);
+
+export const createWorkspace = generateDetApi<
+  Api.V1PostWorkspaceRequest, Api.V1PostWorkspaceResponse, Type.Workspace
+>(Config.createWorkspace);
+
+export const deleteWorkspace = generateDetApi<
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+>(Config.deleteWorkspace);
+
+export const patchWorkspace = generateDetApi<
+  Service.PatchWorkspaceParams, Api.V1PatchWorkspaceResponse, Type.Workspace
+>(Config.patchWorkspace);
+
+export const archiveWorkspace = generateDetApi<
+  Service.ArchiveWorkspaceParams, Api.V1ArchiveWorkspaceResponse, void
+>(Config.archiveWorkspace);
+
+export const unarchiveWorkspace = generateDetApi<
+  Service.UnarchiveWorkspaceParams, Api.V1UnarchiveWorkspaceResponse, void
+>(Config.unarchiveWorkspace);
+
+export const pinWorkspace = generateDetApi<
+  Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void
+>(Config.pinWorkspace);
+
+export const unpinWorkspace = generateDetApi<
+  Service.UnpinWorkspaceParams, Api.V1UnpinWorkspaceResponse, void
+>(Config.unpinWorkspace);
+
+/* Projects */
+
+export const getProject = generateDetApi<
+  Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
+>(Config.getProject);
+
+export const getProjectExperiments = generateDetApi<
+  Service.GetProjectExperimentsParams,
+  Api.V1GetProjectExperimentsResponse,
+  Type.ExperimentPagination
+>(Config.getProjectExperiments);
+
+export const addProjectNote = generateDetApi<
+  Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
+>(Config.addProjectNote);
+
+export const setProjectNotes = generateDetApi<
+  Service.SetProjectNotesParams, Api.V1PutProjectNotesResponse, Type.Note[]
+>(Config.setProjectNotes);
+
+export const createProject = generateDetApi<
+  Api.V1PostProjectRequest, Api.V1PostProjectResponse, Type.Project
+>(Config.createProject);
+
+export const deleteProject = generateDetApi<
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+>(Config.deleteProject);
+
+export const patchProject = generateDetApi<
+  Service.PatchProjectParams, Api.V1PatchProjectResponse, Type.Project
+>(Config.patchProject);
+
+export const moveProject = generateDetApi<
+  Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void
+>(Config.moveProject);
+
+export const archiveProject = generateDetApi<
+  Service.ArchiveProjectParams, Api.V1ArchiveProjectResponse, void
+>(Config.archiveProject);
+
+export const unarchiveProject = generateDetApi<
+  Service.UnarchiveProjectParams, Api.V1UnarchiveProjectResponse, void
+>(Config.unarchiveProject);
 
 /* Tasks */
 

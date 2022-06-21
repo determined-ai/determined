@@ -4,25 +4,25 @@ import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
-import { routeToReactUrl } from '../../shared/utils/routes';
 
 import useModal, { ModalHooks } from './useModal';
 
 interface Props {
-  experimentId: number;
+  experiment: ExperimentBase;
   onClose?: () => void;
 }
 
-const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks => {
+const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose });
 
   const handleOk = useCallback(async () => {
     try {
-      await deleteExperiment({ experimentId: experimentId });
-      routeToReactUrl(paths.experimentList());
+      await deleteExperiment({ experimentId: experiment.id });
+      routeToReactUrl(paths.projectDetails(experiment.projectId));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -32,17 +32,17 @@ const useModalExperimentDelete = ({ experimentId, onClose }: Props): ModalHooks 
         type: ErrorType.Server,
       });
     }
-  }, [ experimentId ]);
+  }, [ experiment.id, experiment.projectId ]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
     return {
-      content: `Are you sure you want to delete\n experiment ${experimentId}?`,
+      content: `Are you sure you want to delete\n experiment ${experiment.id}?`,
       icon: <ExclamationCircleOutlined />,
       okText: 'Delete',
       onOk: handleOk,
       title: 'Confirm Experiment Deletion',
     };
-  }, [ handleOk, experimentId ]);
+  }, [ handleOk, experiment.id ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

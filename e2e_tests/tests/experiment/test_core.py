@@ -7,6 +7,7 @@ import pytest
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster.test_checkpoints import wait_for_gc_to_finish
 from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
 
 
@@ -246,6 +247,8 @@ def test_end_to_end_adaptive() -> None:
         None,
     )
 
+    wait_for_gc_to_finish(experiment_id=exp_id)
+
     # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)
     best = None
@@ -297,15 +300,22 @@ def test_end_to_end_adaptive() -> None:
     checkpoint.add_metadata({"testing": "metadata"})
     db_check = d.get_checkpoint(checkpoint.uuid)
     # Make sure the checkpoint metadata is correct and correctly saved to the db.
-    # Beginning with 0.18 the system contributes a few items to the dict
+    # Beginning with 0.18 the TrialController contributes a few items to the dict.
     assert checkpoint.metadata.get("testing") == "metadata"
-    assert checkpoint.metadata.keys() == {"format", "framework", "steps_completed", "testing"}
+    assert checkpoint.metadata.keys() == {
+        "determined_version",
+        "format",
+        "framework",
+        "steps_completed",
+        "testing",
+    }
     assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"some_key": "some_value"})
     db_check = d.get_checkpoint(checkpoint.uuid)
     assert checkpoint.metadata.items() > {"testing": "metadata", "some_key": "some_value"}.items()
     assert checkpoint.metadata.keys() == {
+        "determined_version",
         "format",
         "framework",
         "steps_completed",

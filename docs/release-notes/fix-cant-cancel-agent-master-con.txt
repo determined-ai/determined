@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Agent: Fix being unable to use control-C to cancel the agent when it is connecting to master.

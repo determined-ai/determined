@@ -2,12 +2,13 @@ package internal
 
 import (
 	"context"
+	"regexp"
 	"sort"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -166,33 +167,38 @@ func (a *apiServer) PatchUser(
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+	uid := model.UserID(req.UserId)
+	if !curUser.Admin && curUser.ID != uid {
 		return nil, grpcutil.ErrPermissionDenied
 	}
-	user := &model.User{ID: model.UserID(req.UserId)}
 	// TODO: handle any field name:
-	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(req.User.DisplayName)
-		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
-		case err == db.ErrNotFound:
+	if req.User.DisplayName != nil {
+		u := &userv1.User{}
+		if req.User.DisplayName.Value == "" {
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, "")
+		} else {
+			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
+			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
+			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
+			// Restrict 'admin' and 'determined' in display names.
+			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
+				"admin") {
+				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
+			}
+			if curUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
+				"determined") {
+				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
+			}
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
+		}
+		if err == db.ErrNotFound {
 			return nil, errUserNotFound
-		case err != nil:
+		} else if err != nil {
 			return nil, err
 		}
 	}
 
-	if req.User.DisplayName == "" {
-		user.DisplayName = null.StringFrom(curUser.Username)
-
-		switch err = a.m.db.UpdateUser(user, []string{"display_name"}, nil); {
-		case err == db.ErrNotFound:
-			return nil, errUserNotFound
-		case err != nil:
-			return nil, err
-		}
-	}
-
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(a.m.db, uid)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 

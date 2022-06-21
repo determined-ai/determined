@@ -96,7 +96,7 @@ class DistributedContext:
                 pub_url=f"tcp://*:{self._pub_port}",
                 pull_url=f"tcp://*:{self._pull_port}",
             )
-            self._chief_zmq.safe_start(lambda: None)
+            self._chief_zmq.safe_start()
 
         else:
             logging.debug(
@@ -141,7 +141,7 @@ class DistributedContext:
             # Do a global allgather to initialize local clients on every node.
             local_chief = (self.cross_rank, pub_url, pull_url)
             _ = self.allgather(local_chief)
-            self._local_chief_zmq.safe_start(lambda: None)
+            self._local_chief_zmq.safe_start()
 
         else:
             # Start with the global allgather.
@@ -298,7 +298,7 @@ class DistributedContext:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
         if self._is_chief:
-            worker_stuff_ranked, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked = self._chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             self._chief_zmq.broadcast(None)
             out = [stuff, *worker_stuff]  # type: Optional[List]
@@ -323,7 +323,7 @@ class DistributedContext:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
         if self._is_local_chief:
-            worker_stuff_ranked, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked = self._local_chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             self._local_chief_zmq.broadcast(None)
             out = [stuff, *worker_stuff]  # type: Optional[List]
@@ -347,7 +347,7 @@ class DistributedContext:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
-            worker_stuff_ranked, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked = self._chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             all_stuff = [stuff, *worker_stuff]
             self._chief_zmq.broadcast(all_stuff)
@@ -368,7 +368,7 @@ class DistributedContext:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
         if self._is_local_chief:
-            worker_stuff_ranked, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
+            worker_stuff_ranked = self._local_chief_zmq.gather()
             worker_stuff = [value for _, value in sorted(worker_stuff_ranked)]
             all_stuff = [stuff, *worker_stuff]
             self._local_chief_zmq.broadcast(all_stuff)

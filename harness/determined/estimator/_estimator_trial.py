@@ -22,6 +22,7 @@ from determined import estimator, horovod, layers, monkey_patch, tensorboard, wo
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers import tensorflow
 
 VERY_LARGE_NUMBER = 9999999999999999
 
@@ -158,14 +159,21 @@ class DeterminedControlHook(estimator.RunHook):
         check.is_not_none(self.train_response_func, "no response_func at end of train_for_step")
         assert self.train_response_func is not None
         if self.estimator_trial_controller.is_chief:
+            metrics = det.util.make_metrics(self.batches_processed_in_step, self.step_metrics)
             response = {
-                "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
+                "metrics": metrics,
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
             }  # type: workload.Response
+            self.estimator_trial_controller.metric_writer.on_train_step_end(
+                self.steps_completed,
+                metrics["avg_metrics"],
+                metrics["batch_metrics"],
+            )
         else:
             response = {}
 
         self.train_response_func(response)
+        self.estimator_trial_controller.upload_tb_files()
 
         # Reset step counter and clear the step metrics from memory.
         self.train_response_func = None
@@ -299,18 +307,24 @@ class DeterminedControlHook(estimator.RunHook):
 
                 elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
+                    metrics = self._compute_validation_metrics()
                     response = {
-                        "metrics": self._compute_validation_metrics(),
+                        "metrics": metrics,
                         "stop_requested": (
                             self.estimator_trial_controller.context.get_stop_requested()
                         ),
                     }  # type: workload.Response
+                    if isinstance(metrics, Dict) and self.estimator_trial_controller.is_chief:
+                        self.estimator_trial_controller._write_validation_metrics(
+                            self.steps_completed, metrics["validation_metrics"]
+                        )
 
                 elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     self._save_model()
                     if self.estimator_trial_controller.is_chief:
                         metadata = {
+                            "determined_version": det.__version__,
                             "steps_completed": self.steps_completed,
                             "framework": f"tensorflow-{tf.__version__}",
                             "format": "saved_model",
@@ -329,6 +343,7 @@ class DeterminedControlHook(estimator.RunHook):
                 response = workload.InvalidHP()
 
             response_func(response)
+            self.estimator_trial_controller.upload_tb_files()
 
         # End-of-training.
         raise det.errors.WorkerFinishedGracefully("Exiting normally.")
@@ -461,6 +476,13 @@ class EstimatorTrialController(det.TrialController):
         # This seed value will be overwritten by
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
+
+    @classmethod
+    def create_metric_writer(
+        cls: Type["EstimatorTrialController"],
+    ) -> tensorboard.BatchMetricWriter:
+        writer = tensorflow.TFWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def _set_default_tensorflow_session(
@@ -697,6 +719,13 @@ class EstimatorTrialController(det.TrialController):
         )
         logging.debug(f"Initialized RunConfig with args: {config}.")
         return config
+
+    def _write_validation_metrics(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
+        if self.is_chief:
+            self.metric_writer.on_validation_step_end(
+                steps_completed,
+                metrics,
+            )
 
     def run(self) -> None:
         with self.prof:

@@ -34,6 +34,8 @@ const (
 	JobTypeTensorboard JobType = "TENSORBOARD"
 	// JobTypeExperiment is the "EXPERIMENT" job type for the enum.job_type in Postgres.
 	JobTypeExperiment JobType = "EXPERIMENT"
+	// JobTypeCheckpointGC is the "CheckpointGC" job type for enum.job_type in Postgres.
+	JobTypeCheckpointGC JobType = "CHECKPOINT_GC"
 )
 
 // Proto returns the proto representation of the job type.
@@ -49,6 +51,8 @@ func (jt JobType) Proto() jobv1.Type {
 		return jobv1.Type_TYPE_NOTEBOOK
 	case JobTypeTensorboard:
 		return jobv1.Type_TYPE_TENSORBOARD
+	case JobTypeCheckpointGC:
+		return jobv1.Type_TYPE_CHECKPOINT_GC
 	default:
 		panic("unknown job type")
 	}
@@ -67,6 +71,8 @@ func JobTypeFromProto(t jobv1.Type) JobType {
 		return JobTypeNotebook
 	case jobv1.Type_TYPE_TENSORBOARD:
 		return JobTypeTensorboard
+	case jobv1.Type_TYPE_CHECKPOINT_GC:
+		return JobTypeCheckpointGC
 	default:
 		panic("unknown job type")
 	}
@@ -74,8 +80,8 @@ func JobTypeFromProto(t jobv1.Type) JobType {
 
 // Job is the model for a job in the database.
 type Job struct {
-	JobID   JobID           `db:"job_id"`
+	JobID   JobID           `db:"job_id" bun:"job_id,pk"`
 	JobType JobType         `db:"job_type"`
 	OwnerID *UserID         `db:"owner_id"`
-	QPos    decimal.Decimal `db:"q_position"`
+	QPos    decimal.Decimal `db:"q_position" bun:"q_position"`
 }

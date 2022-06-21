@@ -51,6 +51,24 @@ SELECT jsonb_build_object(
 	'num_allocations', (SELECT count(*) FROM allocations),
     'num_allocations_today', (
 		SELECT count(*) FROM allocations WHERE DATE(start_time) >= CURRENT_DATE
+	),
+	'num_workspaces', (SELECT count(*) FROM workspaces),
+	'num_projects', (SELECT count(*) FROM projects),
+	'avg_projects_per_workspace', (
+		(SELECT count(*) FROM projects WHERE id > 1)::float
+		/ (SELECT greatest(count(*), 1) FROM workspaces WHERE id > 1)
+	),
+	'avg_experiments_per_project', (
+		(SELECT count(*) FROM experiments WHERE project_id > 1)::float
+		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
+	),
+	'notes_gt_zero', (
+		(SELECT count(*) FROM projects WHERE id > 1 AND jsonb_array_length(notes) > 0)::float
+		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
+	),
+	'notes_gt_one', (
+		(SELECT count(*) FROM projects WHERE id > 1 AND jsonb_array_length(notes) > 1)::float
+		/ (SELECT greatest(count(*), 1) FROM projects WHERE id > 1)
 	)
 );
 `)

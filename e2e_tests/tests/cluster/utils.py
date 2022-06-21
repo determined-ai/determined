@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import pytest
 import requests
+from typing_extensions import Literal
 
 from determined.common import api
 from determined.common.api import authentication, certs
@@ -46,7 +47,7 @@ def run_command(sleep: int = 30, slots: int = 1) -> str:
         "run",
         "-d",
         "--config",
-        "resources.slots=0",
+        f"resources.slots={slots}",
         "sleep",
         str(sleep),
     ]
@@ -57,21 +58,32 @@ def run_zero_slot_command(sleep: int = 30) -> str:
     return run_command(sleep=sleep, slots=0)
 
 
+TaskType = Literal["command", "notebook", "tensorboard", "shell"]
+
+
+def get_task_info(task_type: TaskType, task_id: str) -> Dict[str, Any]:
+    task = ["det", "-m", conf.make_master_url(), task_type, "list", "--json"]
+    task_data = json.loads(subprocess.check_output(task).decode())
+    return next((d for d in task_data if d["id"] == task_id), {})
+
+
 def get_command_info(command_id: str) -> Dict[str, Any]:
-    command = ["det", "-m", conf.make_master_url(), "command", "list", "--json"]
-    command_data = json.loads(subprocess.check_output(command).decode())
-    return next((d for d in command_data if d["id"] == command_id), {})
+    return get_task_info("command", command_id)
 
 
 def command_succeeded(command_id: str) -> bool:
     return "success" in get_command_info(command_id)["exitStatus"]
 
 
-def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
+def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:
     for _ in range(ticks):
-        info = get_command_info(command_id)
+        info = get_task_info(task_type, task_id)
         if info.get("state") == state:
             return
         time.sleep(1)
 
-    pytest.fail(f"Command did't reach {state} state after {ticks} secs")
+    pytest.fail(f"{task_type} did't reach {state} state after {ticks} secs")
+
+
+def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
+    return wait_for_task_state("command", command_id, state, ticks)

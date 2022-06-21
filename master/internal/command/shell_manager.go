@@ -25,7 +25,10 @@ type shellManager struct {
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+	case actor.PreStart:
+		tryRestoreCommandsByType(ctx, s.db, s.taskLogger, model.TaskTypeShell)
+
+	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
