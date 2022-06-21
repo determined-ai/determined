@@ -1,10 +1,12 @@
-import { Alert, Button, Checkbox, Input, InputNumber,
+import { Alert, Button, Checkbox, Form, Input, InputNumber,
   ModalFuncProps, Select, Space, Typography } from 'antd';
+import { FormInstance } from 'antd/es/form/Form';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
@@ -52,13 +54,14 @@ const SearchMethods: Record<string, SearchMethod> = {
 } as const;
 
 const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({});
+  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const [ modalError, setModalError ] = useState<string>();
   const [ searchMethod, setSearchMethod ] = useState(SearchMethods.ASHA);
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
   const [ slots, setSlots ] = useState<number>();
   const [ maxTrials, setMaxTrials ] = useState<number>();
+  const [ form ] = Form.useForm();
 
   const handleSelectSearchMethod = useCallback((value: SelectValue) => {
     setSearchMethod(SearchMethods[value as string]);
@@ -78,9 +81,14 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           Select the hyperparameter space and search method to
           optimize your model hyperparameters.
         </p>
-        <div>
+        <div className={css.searchTitle}>
           <label htmlFor="search-method">Search method</label>
-          <a>Learn more</a>
+          <Link
+            external
+            path={paths.
+              docs('/training-hyperparameter/index.html#specifying-the-search-algorithm')}>
+            Learn more
+          </Link>
         </div>
         <SelectFilter
           className={css.fullWidth}
@@ -91,17 +99,20 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
         </SelectFilter>
         <p>{searchMethod.description}</p>
-        <div className={css.hyperparameterContainer}>
-          <h2 className={css.hyperparameterName}>Hyperparameter</h2>
-          <h2>Type</h2>
-          <h2>Current</h2>
-          <h2>Min value</h2>
-          <h2>Max value</h2>
-          {hyperparameters.map(hp => <HyperparameterRow key={hp.name} {...hp} />)}
-        </div>
+        <Form form={form} name="hyperparameters">
+          <div className={css.hyperparameterContainer}>
+            <h2 className={css.hyperparameterName}>Hyperparameter</h2>
+            <h2>Type</h2>
+            <h2>Current</h2>
+            <h2>Min value</h2>
+            <h2>Max value</h2>
+            {hyperparameters.map(hp => <HyperparameterRow form={form} key={hp.name} {...hp} />)}
+          </div>
+        </Form>
       </div>
     );
-  }, [ handleSelectSearchMethod,
+  }, [ form,
+    handleSelectSearchMethod,
     hyperparameters,
     modalError,
     searchMethod.description,
@@ -233,11 +244,9 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       closable: true,
       content: <>{modalContent}{footer}</>,
       icon: null,
-      maskClosable: true,
       title: 'Hyperparameter Search',
       width: 600,
     };
-    //TODO: Back button in footer
   }, [ modalContent, footer ]);
 
   const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
@@ -257,31 +266,22 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
 };
 
 interface RowProps {
+  form: FormInstance;
   hyperparameter: Hyperparameter;
   name: string;
 }
 
-const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name }: RowProps) => {
+const HyperparameterRow: React.FC<RowProps> = ({ form, hyperparameter, name }: RowProps) => {
   const [ checked, setChecked ] = useState(false);
-  const [ minVal, setMinVal ] = useState<number>();
-  const [ maxVal, setMaxVal ] = useState<number>();
   const [ type, setType ] = useState<HyperparameterType>(hyperparameter.type);
 
   const handleCheck = useCallback((e: CheckboxChangeEvent) => {
     setChecked(e.target.checked);
     if (e.target.checked) {
-      setType(prev => prev === HyperparameterType.Constant ? HyperparameterType.Double : prev);
+      setType(HyperparameterType.Double);
     } else {
       setType(HyperparameterType.Constant);
     }
-  }, []);
-
-  const handleMinChange = useCallback((value: number) => {
-    setMinVal(value);
-  }, []);
-
-  const handleMaxChange = useCallback((value: number) => {
-    setMaxVal(value);
   }, []);
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
@@ -290,74 +290,188 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name }: RowProp
     else setChecked(true);
   }, []);
 
-  const typeSelect = useMemo(() => {
-    return (
-      <Select value={type} onChange={handleTypeChange}>
-        {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
-          .map((type) => (
-            <Select.Option
-              disabled={HyperparameterType[type] === HyperparameterType.Categorical}
-              key={HyperparameterType[type]}
-              value={HyperparameterType[type]}>
-              {type}
-            </Select.Option>
-          ))}
-      </Select>
-    );
-  }, [ handleTypeChange, type ]);
+  useEffect(() => {
+    form.setFields([ { name: [ name, 'type' ], value: type } ]);
+  }, [ form, name, type ]);
+
+  useEffect(() => {
+    form.setFields([ { name: [ name, 'active' ], value: checked } ]);
+  }, [ checked, form, name ]);
 
   const inputs = useMemo(() => {
     switch (type) {
       case HyperparameterType.Constant:
-        return (
-          <>
-            <InputNumber value={hyperparameter.val as number} />
-            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
-          </>
-        );
       case HyperparameterType.Double:
         return (
           <>
-            <InputNumber value={hyperparameter.val as number} />
-            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+            <Form.Item
+              initialValue={hyperparameter.val as number}
+              name={[ name, 'value' ]}
+              noStyle
+              rules={[ {
+                required: !checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={checked} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.minval}
+              name={[ name, 'min' ]}
+              noStyle
+              rules={[ {
+                max: form.getFieldValue([ name, 'max' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.maxval}
+              name={[ name, 'max' ]}
+              noStyle
+              rules={[ {
+                min: form.getFieldValue([ name, 'min' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
           </>
         );
       case HyperparameterType.Int:
         return (
           <>
-            <InputNumber precision={0} value={hyperparameter.val as number} />
-            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+            <Form.Item
+              initialValue={hyperparameter.val as number}
+              name={[ name, 'value' ]}
+              noStyle
+              rules={[ {
+                required: !checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={checked} precision={0} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.minval}
+              name={[ name, 'min' ]}
+              noStyle
+              rules={[ {
+                max: form.getFieldValue([ name, 'max' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber
+                disabled={!checked}
+                precision={0}
+              />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.maxval}
+              name={[ name, 'max' ]}
+              noStyle
+              rules={[ {
+                min: form.getFieldValue([ name, 'min' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber
+                disabled={!checked}
+                precision={0}
+              />
+            </Form.Item>
           </>
         );
       case HyperparameterType.Log:
         return (
           <>
-            <InputNumber value={hyperparameter.val as number} />
-            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+            <Form.Item
+              initialValue={hyperparameter.val as number}
+              name={[ name, 'value' ]}
+              noStyle
+              rules={[ { required: !checked, type: 'number' } ]}>
+              <InputNumber disabled={checked} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.minval}
+              name={[ name, 'min' ]}
+              noStyle
+              rules={[ {
+                max: form.getFieldValue([ name, 'max' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.maxval}
+              name={[ name, 'max' ]}
+              noStyle
+              rules={[ {
+                min: form.getFieldValue([ name, 'min' ]),
+                required: checked,
+                type: 'number',
+              } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
           </>
         );
       case HyperparameterType.Categorical:
         return (
           <>
-            <Input value={hyperparameter.val as string} />
-            <InputNumber disabled={!checked} value={minVal} onChange={handleMinChange} />
-            <InputNumber disabled={!checked} value={maxVal} onChange={handleMaxChange} />
+            <Form.Item
+              initialValue={hyperparameter.val as string}
+              name={[ name, 'value' ]}
+              noStyle
+              rules={[ { enum: hyperparameter.vals, required: true, type: 'enum' } ]}>
+              <Input />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.minval}
+              name={[ name, 'min' ]}
+              noStyle
+              rules={[ { required: checked } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
+            <Form.Item
+              initialValue={hyperparameter.maxval}
+              name={[ name, 'max' ]}
+              noStyle
+              rules={[ { required: checked } ]}>
+              <InputNumber disabled={!checked} />
+            </Form.Item>
           </>
         );
     }
-  }, [ checked, handleMaxChange, handleMinChange, hyperparameter.val, maxVal, minVal, type ]);
+  }, [ checked,
+    form,
+    hyperparameter.maxval,
+    hyperparameter.minval,
+    hyperparameter.val,
+    hyperparameter.vals,
+    name,
+    type ]);
 
   return (
     <>
       <Space className={css.hyperparameterName}>
-        <Checkbox checked={checked} onChange={handleCheck} />
+        <Form.Item initialValue={false} name={[ name, 'active' ]} noStyle valuePropName="checked">
+          <Checkbox onChange={handleCheck} />
+        </Form.Item>
         <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
       </Space>
-      {typeSelect}
+      <Form.Item initialValue={hyperparameter.type} name={[ name, 'type' ]} noStyle>
+        <Select value={type} onChange={handleTypeChange}>
+          {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
+            .map((type) => (
+              <Select.Option
+                disabled={HyperparameterType[type] === HyperparameterType.Categorical}
+                key={HyperparameterType[type]}
+                value={HyperparameterType[type]}>
+                {type}
+              </Select.Option>
+            ))}
+        </Select>
+      </Form.Item>
       {inputs}
     </>
   );

@@ -9,6 +9,10 @@
       width: 100%;
     }
   }
+  .searchTitle {
+    display: flex;
+    justify-content: space-between;
+  }
   .hyperparameterContainer {
     display: grid;
     gap: 8px;
