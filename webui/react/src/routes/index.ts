@@ -1,6 +1,5 @@
 import { FC } from 'react';
 
-import Cluster from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import ExperimentDetails from 'pages/ExperimentDetails';
@@ -26,7 +25,6 @@ import { RouteConfig } from '../shared/types';
 import Routes from './routes';
 
 const routeComponentMap: Record<string, FC> = {
-  cluster: Cluster,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
   experimentDetails: ExperimentDetails,
