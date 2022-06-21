@@ -4221,19 +4221,19 @@ export interface V1PostUserSettingRequest {
      * @type {number}
      * @memberof V1PostUserSettingRequest
      */
-    userId?: number;
+    userId: number;
     /**
      * 
      * @type {string}
      * @memberof V1PostUserSettingRequest
      */
-    storagePath?: string;
+    storagePath: string;
     /**
      * 
-     * @type {Array<V1UserWebSetting>}
+     * @type {V1UserWebSetting}
      * @memberof V1PostUserSettingRequest
      */
-    settings: Array<V1UserWebSetting>;
+    setting: V1UserWebSetting;
 }
 
 /**
@@ -6089,13 +6089,13 @@ export interface V1UserWebSetting {
      * @type {string}
      * @memberof V1UserWebSetting
      */
-    value?: string;
+    storagePath?: string;
     /**
      * 
      * @type {string}
      * @memberof V1UserWebSetting
      */
-    storagePath?: string;
+    value?: string;
 }
 
 /**

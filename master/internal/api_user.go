@@ -204,15 +204,12 @@ func (a *apiServer) GetUserSetting(
 
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.GetUserSettingResponse, error) {
-	settingModel := []*model.UserWebSetting{}
-	for _, setting := range req.Settings {
-		settingModel = append(settingModel, &model.UserWebSetting{
-			UserId:      model.UserID(req.UserId),
-			Key:         setting.Key,
-			Value:       setting.Value,
-			StoragePath: req.StoragePath,
-		})
+	settingModel := model.UserWebSetting{
+		UserId:      model.UserID(req.UserId),
+		Key:         req.Setting.Key,
+		Value:       req.Setting.Value,
+		StoragePath: req.StoragePath,
 	}
-	err := db.AddUserSetting(model.UserID(req.UserId), req.StoragePath, settingModel)
+	err := db.UpdateUserSetting(&settingModel)
 	return &apiv1.GetUserSettingResponse{}, err
 }

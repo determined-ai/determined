@@ -3601,27 +3601,27 @@ class v1PostUserResponse:
 class v1PostUserSettingRequest:
     def __init__(
         self,
-        settings: "typing.Sequence[v1UserWebSetting]",
-        storagePath: "typing.Optional[str]" = None,
-        userId: "typing.Optional[int]" = None,
+        setting: "v1UserWebSetting",
+        storagePath: str,
+        userId: int,
     ):
         self.userId = userId
         self.storagePath = storagePath
-        self.settings = settings
+        self.setting = setting
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
         return cls(
-            userId=obj.get("userId", None),
-            storagePath=obj.get("storagePath", None),
-            settings=[v1UserWebSetting.from_json(x) for x in obj["settings"]],
+            userId=obj["userId"],
+            storagePath=obj["storagePath"],
+            setting=v1UserWebSetting.from_json(obj["setting"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "userId": self.userId if self.userId is not None else None,
-            "storagePath": self.storagePath if self.storagePath is not None else None,
-            "settings": [x.to_json() for x in self.settings],
+            "userId": self.userId,
+            "storagePath": self.storagePath,
+            "setting": self.setting.to_json(),
         }
 
 class v1PreviewHPSearchRequest:
@@ -5230,22 +5230,22 @@ class v1UserWebSetting:
         value: "typing.Optional[str]" = None,
     ):
         self.key = key
-        self.value = value
         self.storagePath = storagePath
+        self.value = value
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1UserWebSetting":
         return cls(
             key=obj["key"],
-            value=obj.get("value", None),
             storagePath=obj.get("storagePath", None),
+            value=obj.get("value", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "key": self.key,
-            "value": self.value if self.value is not None else None,
             "storagePath": self.storagePath if self.storagePath is not None else None,
+            "value": self.value if self.value is not None else None,
         }
 
 class v1ValidateAfterOperation:

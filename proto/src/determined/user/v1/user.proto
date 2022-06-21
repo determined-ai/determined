@@ -46,7 +46,7 @@ message UserWebSetting {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "key" ] }
   };
-  string key = 1;
-  string value = 2;
-  string storage_path = 3;
+  string key          = 1;
+  string storage_path = 2;
+  string value        = 3;
 }

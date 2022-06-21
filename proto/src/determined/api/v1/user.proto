@@ -79,10 +79,10 @@ message GetUserSettingResponse {
 }
 message PostUserSettingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "user_id", "storage_path", "settings" ] }
+    json_schema: { required: [ "user_id", "storage_path", "setting" ] }
   };
   // The id of the user.
-  int32 user_id = 1;
-  string storage_path = 2;
-  repeated determined.user.v1.UserWebSetting settings = 3;
+  int32 user_id                             = 1;
+  string storage_path                       = 2;
+  determined.user.v1.UserWebSetting setting = 3;
 }

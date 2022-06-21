@@ -428,15 +428,13 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
-func AddUserSetting(userId model.UserID, storagePath string, settings []*model.UserWebSetting) error {
-	if len(settings) == 0 {
-		return nil
-	}
-	_, err := Bun().NewDelete().Model(&settings).Where("user_id = ?", userId).Where("storage_path = ?", storagePath).Exec(context.TODO())
-	if err != nil {
+func UpdateUserSetting(setting *model.UserWebSetting) error {
+	if len(setting.Value) == 0 {
+		_, err := Bun().NewDelete().Model(setting).Where("user_id = ?", setting.UserId).Where("storage_path = ?", setting.StoragePath).Where("key = ?", setting.Key).Exec(context.TODO())
 		return err
 	}
-	_, err = Bun().NewInsert().Model(&settings).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
+
+	_, err := Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
 		Set("value = EXCLUDED.value").Exec(context.TODO())
 	return err
 }

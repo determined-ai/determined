@@ -138,21 +138,24 @@ export const getUserSetting: DetApi<
     name: 'getUserSetting',
     postProcess: (response) => response,
     request: (params) => detApi.Users.getUserSetting(
-      params.userId
+      params.userId,
     ),
-  }
+  };
 
 export const updateUserSetting: DetApi<
-Service.UpdateUserSettingParams, Api.V1PostUserSettingRequest, void
+Service.UpdateUserSettingParams, Api.V1GetUserSettingResponse, void
   > = {
     name: 'updateUserSetting',
     postProcess: (response) => response,
     request: (params) => detApi.Users.postUserSetting(
       params.userId,
-      {storagePath: params.storagePath,
-      settings: params.settings}
+      {
+        setting: params.setting,
+        storagePath: params.storagePath,
+        userId: params.userId,
+      },
     ),
-  }
+  };
 /* Info */
 
 export const getInfo: DetApi<

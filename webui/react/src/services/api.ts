@@ -51,11 +51,11 @@ export const patchUser = generateDetApi<
 
 export const getUserSetting = generateDetApi<
   Service.GetUserSettingParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
->(Config.getUserSetting)
+>(Config.getUserSetting);
 
 export const updateUserSetting = generateDetApi<
-Service.UpdateUserSettingParams, Api.V1PostUserSettingRequest, void
->(Config.updateUserSetting)
+Service.UpdateUserSettingParams, Api.V1GetUserSettingResponse, void
+>(Config.updateUserSetting);
 
 /* Info */
 
