@@ -97,6 +97,14 @@ const routes: RouteConfig[] = [
   },
   {
     icon: 'cluster',
+    id: 'cluster',
+    needAuth: true,
+    path: '/cluster/',
+    redirect: '/clsuters',
+    title: 'Cluster',
+  },
+  {
+    icon: 'cluster',
     id: 'clusters',
     needAuth: true,
     path: '/clusters/:tab?',
@@ -141,6 +149,7 @@ const routes: RouteConfig[] = [
     id: 'jobs',
     needAuth: true,
     path: '/jobs',
+    redirect: '/clustesr',
     title: 'Job Queue',
   },
 ];
