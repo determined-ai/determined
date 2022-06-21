@@ -30,8 +30,8 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// unauthenticatedPointsMap contains the paths that are exempted from authentication.
-var unauthenticatedPointsMap = map[string]bool{
+// unauthenticatedPathsMap contains the paths that are exempted from authentication.
+var unauthenticatedPathsMap = map[string]bool{
 	"/":                   true,
 	"/det/":               true,
 	"/info":               true,
@@ -48,7 +48,6 @@ var unauthenticatedPointsMap = map[string]bool{
 
 // unauthenticatedPointsList contains URIs that are exempted from authentication.
 var unauthenticatedPointsList = []string{
-	"/api/v1/agents*",
 	"/api/v1/notebooks/*",
 	"/api/v1/tasks/*",
 	"/api/v1/allocations/*",
@@ -57,18 +56,14 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/experiments/*",
 	"/api/v1/trials/*",
 	"/api/v1/checkpoints",
-	"/agents?id=*",
+	"/agents\\?id=*",
 }
 
 // adminAuthPointsMap contains the paths that require admin authentication.
-var adminAuthPointsMap = map[string]bool{
-	"/config":   true,
-	"/agents/*": true,
-}
-
-// blacklistedPointsMap contains the paths that require authentication.
-var blacklistedPointsMap = map[string]bool{
-	"/api/v1/agents": true,
+var adminAuthPointsList = []string{
+	"/config",
+	"/agents/*/slots/*",
+	"/api/v1/agents/*",
 }
 
 type agentUserGroup struct {
@@ -162,31 +157,6 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 	return s.processAuthentication(next)
 }
 
-func (s *Service) matchOne(uri string, path string) bool {
-	pathLen := len(path) - 1
-	if len(uri) < pathLen {
-		return false
-	}
-	if path[pathLen] == "*"[0] {
-		for i := range path[:pathLen] {
-			if path[i] != uri[i] {
-				return false
-			}
-		}
-	} else {
-		if len(path) != len(uri) {
-			return false
-		}
-		for i := range path {
-			if path[i] != uri[i] {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-// doesMatch checks if the given uri matches the provided path after accounting for wildcards.
 func (s *Service) doesMatch(uri string, path string) bool {
 	regexStr := "^"
 	for i := range path {
@@ -201,9 +171,9 @@ func (s *Service) doesMatch(uri string, path string) bool {
 	return match
 }
 
-func (s *Service) pathMatches(uri string) bool {
-	for _, path := range unauthenticatedPointsList {
-		if s.matchOne(uri, path) {
+func (s *Service) pathMatches(uri string, paths []string) bool {
+	for _, path := range paths {
+		if s.doesMatch(uri, path) {
 			return true
 		}
 	}
@@ -213,16 +183,14 @@ func (s *Service) pathMatches(uri string) bool {
 // getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
 // for whether the path requires admin authentication.
 func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
-	if _, ok := blacklistedPointsMap[c.Request().RequestURI]; ok {
-		return true, false
-	} else if _, ok := unauthenticatedPointsMap[c.Path()]; ok {
-		return false, false
-	} else if _, ok := unauthenticatedPointsMap[c.Request().RequestURI]; ok {
-		return false, false
-	} else if s.pathMatches(c.Request().RequestURI) {
-		return false, false
-	} else if _, ok := adminAuthPointsMap[c.Path()]; ok {
+	if s.pathMatches(c.Request().RequestURI, adminAuthPointsList) {
 		return true, true
+	} else if _, ok := unauthenticatedPathsMap[c.Path()]; ok {
+		return false, false
+	} else if _, ok = unauthenticatedPathsMap[c.Request().RequestURI]; ok {
+		return false, false
+	} else if s.pathMatches(c.Request().RequestURI, unauthenticatedPointsList) {
+		return false, false
 	}
 	return true, false
 }

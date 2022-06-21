@@ -927,7 +927,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo,
 		m.db,
 		m.taskLogger,
-		authFuncs...,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {
@@ -1050,7 +1049,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
-	
+
 	user.RegisterAPIHandler(m.echo, userService)
 	template.RegisterAPIHandler(m.echo, m.db)
 
