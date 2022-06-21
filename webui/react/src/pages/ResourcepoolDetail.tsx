@@ -4,7 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
-import { PoolLogo } from 'components/ResourcePoolCard';
+import { PoolLogo } from 'components/ResourcePoolCardLight';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';

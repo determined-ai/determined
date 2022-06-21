@@ -3,20 +3,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
-import useTheme from 'hooks/useTheme';
-import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
-import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
-import awsLogo from 'shared/assets/images/aws-logo.svg';
-import gcpLogo from 'shared/assets/images/gcp-logo.svg';
-import k8sLogo from 'shared/assets/images/k8s-logo.svg';
-import staticLogo from 'shared/assets/images/on-prem-logo.svg';
+import { V1SchedulerType } from 'services/api-ts-sdk';
 import { clone } from 'shared/utils/data';
-import { DarkLight } from 'themes';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
 
 import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCard.module.scss';
+import { PoolLogo } from './ResourcePoolCardLight';
 import ResourcePoolDetails from './ResourcePoolDetails';
 
 interface Props {
@@ -25,29 +19,6 @@ interface Props {
   resourceType: ResourceType;
   totalComputeSlots: number;
 }
-
-/** Resource pool logo based on resource pool type */
-export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
-  const { themeMode } = useTheme();
-  let iconSrc = '';
-  switch (type) {
-    case V1ResourcePoolType.AWS:
-      iconSrc = themeMode === DarkLight.Light ? awsLogo : awsLogoOnDark;
-      break;
-    case V1ResourcePoolType.GCP:
-      iconSrc = gcpLogo;
-      break;
-    case V1ResourcePoolType.K8S:
-      iconSrc = k8sLogo;
-      break;
-    case V1ResourcePoolType.UNSPECIFIED:
-    case V1ResourcePoolType.STATIC:
-      iconSrc = staticLogo;
-      break;
-  }
-
-  return <img className={css['rp-type-logo']} src={iconSrc} />;
-};
 
 const poolAttributes = [
   { key: 'location', label: 'Location' },
