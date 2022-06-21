@@ -60,7 +60,7 @@ describe('Section', () => {
     // Test that antd spinner is spinning
     expect(container.getElementsByClassName('ant-spin ant-spin-spinning')).toHaveLength(1);
     // Test that filter is not showing
-    expect(screen.queryAllByTestId('section-filters')).toBeEnabled();
+    expect(screen.queryAllByTestId('section-filters')[0]).toBeEnabled();
   });
 
   it('Section with different styles', () => {
