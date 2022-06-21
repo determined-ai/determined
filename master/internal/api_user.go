@@ -203,7 +203,7 @@ func (a *apiServer) GetUserSetting(
 }
 
 func (a *apiServer) PostUserSetting(
-	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.GetUserSettingResponse, error) {
+	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.PostUserSettingResponse, error) {
 	settingModel := model.UserWebSetting{
 		UserId:      model.UserID(req.UserId),
 		Key:         req.Setting.Key,
@@ -211,5 +211,5 @@ func (a *apiServer) PostUserSetting(
 		StoragePath: req.StoragePath,
 	}
 	err := db.UpdateUserSetting(&settingModel)
-	return &apiv1.GetUserSettingResponse{}, err
+	return &apiv1.PostUserSettingResponse{}, err
 }

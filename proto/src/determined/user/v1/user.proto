@@ -42,11 +42,15 @@ message AgentUserGroup {
   int32 agent_gid = 2;
 }
 
+// UserWebSetting represents user web setting.
 message UserWebSetting {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "key" ] }
   };
-  string key          = 1;
+  // The key of setting.
+  string key = 1;
+  // The storage path of setting.
   string storage_path = 2;
-  string value        = 3;
+  // The value of setting.
+  string value = 3;
 }
