@@ -249,20 +249,16 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   useEffect(() => {
     if (resourcePools.length === 0) {
       if (selectedRp) {
-        resetSettings([ 'selectedRp' ]);
+        resetSettings([ 'selectedPool' ]);
         setSelectedRp(undefined);
       }
       return;
     } else if (selectedRp) return;
 
     let pool: ResourcePool | undefined = undefined;
-    if (settings.selectedPool) {
-      pool = resourcePools.find(pool => pool.name === settings.selectedPool);
-    }
     if (!pool) {
       pool = resourcePools[0];
     }
-    updateSettings({ selectedPool: pool.name });
     setSelectedRp(pool);
 
   }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedPool ]);
