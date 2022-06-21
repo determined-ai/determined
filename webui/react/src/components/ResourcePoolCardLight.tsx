@@ -16,6 +16,7 @@ import { clone } from 'shared/utils/data';
 import { DarkLight, ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+
 import { maxPoolSlotCapacity } from '../pages/Clusters/ClustersOverview';
 
 import Json from './Json';

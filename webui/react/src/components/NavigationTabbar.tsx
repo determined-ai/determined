@@ -11,8 +11,8 @@ import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { handlePath, paths } from 'routes/utils';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 
+import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 import Icon from '../shared/components/Icon/Icon';
 
 import css from './NavigationTabbar.module.scss';

@@ -23,8 +23,8 @@ import { ResourceState } from 'types';
 import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
-import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 
+import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';

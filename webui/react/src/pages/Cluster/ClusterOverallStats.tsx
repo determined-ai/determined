@@ -6,6 +6,7 @@ import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
+
 import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {

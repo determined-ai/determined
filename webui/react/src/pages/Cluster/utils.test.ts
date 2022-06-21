@@ -1,4 +1,5 @@
 import { ResourcePool } from 'types';
+
 import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
 
 const pools: Record<string, Partial<ResourcePool>> = {

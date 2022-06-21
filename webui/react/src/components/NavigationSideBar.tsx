@@ -15,8 +15,8 @@ import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceC
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 
+import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 import Icon from '../shared/components/Icon/Icon';
 
 import css from './NavigationSideBar.module.scss';

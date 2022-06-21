@@ -1,3 +1,5 @@
+import React, { useCallback, useEffect, useState } from 'react';
+
 import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
 import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
@@ -6,12 +8,11 @@ import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import React, { useCallback, useEffect, useState } from 'react';
 import { paths } from 'routes/utils';
 import { ShirtSize } from 'themes';
 import { ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
-import { percent } from '../../shared/utils/number';
 
+import { percent } from '../../shared/utils/number';
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
@@ -23,22 +24,22 @@ import css from './ClustersOverview.module.scss';
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-    if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
-        return pool.maxAgents * pool.slotsPerAgent;
+  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
+    return pool.maxAgents * pool.slotsPerAgent;
     // on-premise deployments don't have dynamic agents and we don't know how many
     // agents might connect.
-    return pool.slotsAvailable;
+  return pool.slotsAvailable;
 };
 export const clusterStatusText = (
-    overview: Overview,
-    pools: ResourcePool[],
+  overview: Overview,
+  pools: ResourcePool[],
 ): string | undefined => {
-    if (overview[ResourceType.ALL].allocation === 0) return undefined;
-    const totalSlots = pools.reduce((totalSlots, currentPool) => {
-        return totalSlots + maxPoolSlotCapacity(currentPool);
-    }, 0);
-    if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-    return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
+  if (overview[ResourceType.ALL].allocation === 0) return undefined;
+  const totalSlots = pools.reduce((totalSlots, currentPool) => {
+    return totalSlots + maxPoolSlotCapacity(currentPool);
+  }, 0);
+  if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
+  return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
         / totalSlots)}%`;
 };
 

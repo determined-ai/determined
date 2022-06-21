@@ -1,8 +1,9 @@
 import { SorterResult } from 'antd/es/table/interface';
+import ResourcePoolCard from 'components/ResourcePoolCard';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
@@ -18,7 +19,6 @@ import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShirtSize } from 'themes';
 import { ClusterOverviewResource, ResourcePool, ResourceState, ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
