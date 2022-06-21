@@ -132,6 +132,33 @@ describe('String Utilities', () => {
     });
   });
 
+  describe('versionToString', () => {
+    const cases = [
+      { parsed: [ 1, 0, 0 ], str: '1.0.0' },
+      { parsed: [ 0, 1, 0 ], str: '0.1.0' },
+      { parsed: [ 23, 0, 1 ], str: '23.0.1' },
+    ].map(({ str, parsed }) => ({
+      parsed: {
+        major: parsed[0],
+        minor: parsed[1],
+        patch: parsed[2],
+      },
+      str,
+    }));
+
+    it('parse string into semantic versions', () => {
+      cases.forEach(({ str, parsed }) => {
+        expect(utils.stringToVersion(str)).toStrictEqual(parsed);
+      });
+    });
+
+    it('convert semantic version to string', () => {
+      cases.forEach(({ str, parsed }) => {
+        expect(utils.versionToString(parsed)).toStrictEqual(str);
+      });
+    });
+  });
+
   describe('humanReadableBytes', () => {
     it('should convert bytes into readable bytes', () => {
       expect(utils.humanReadableBytes(0)).toBe('0 B');

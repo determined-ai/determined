@@ -1,5 +1,7 @@
 import prettyBytes from 'pretty-bytes';
 
+import { SemanticVersion } from '../types';
+
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const CHARACTERS = `0123456789${LETTERS}`;
 
@@ -98,4 +100,18 @@ export const truncate = (str: string, maxLength = 20, suffix = '...'): string =>
     return str;
   }
   return str.slice(0, maxLength - suffix.length) + suffix;
+};
+
+/** convert semantic version to its string representation */
+export const versionToString = (version: SemanticVersion): string => {
+  return `${version.major}.${version.minor}.${version.patch}`;
+};
+/** parse the string representation of a semantic version */
+export const stringToVersion = (version: string): SemanticVersion => {
+  const [ major, minor, patch ] = version.split('.');
+  return {
+    major: parseInt(major),
+    minor: parseInt(minor),
+    patch: parseInt(patch),
+  };
 };
