@@ -264,7 +264,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
     setFilters(prev => {
       if (prev.hParams.length !== 0) return prev;
-      const map = ((hpImportanceMap || {})[prev.metric.type] || {})[prev.metric.name];
+      const map = hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {};
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));

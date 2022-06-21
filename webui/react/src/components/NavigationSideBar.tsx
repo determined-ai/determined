@@ -1,28 +1,33 @@
-import { Button, Menu, Modal, Tooltip } from 'antd';
+import { Button, Menu, Modal, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef,
   useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import AvatarCard from 'components/AvatarCard';
+import Dropdown, { Placement } from 'components/Dropdown';
+import DynamicIcon from 'components/DynamicIcon';
+import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
+import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 
 import Icon from '../shared/components/Icon/Icon';
 
-import AvatarCard from './AvatarCard';
-import Dropdown, { Placement } from './Dropdown';
-import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
 
 interface ItemProps extends LinkProps {
+  action?: React.ReactNode;
   badge?: number;
-  icon: string;
+  icon: string | React.ReactNode;
   label: string;
+  labelRender?: React.ReactNode;
   status?: string;
   tooltip?: boolean;
 }
@@ -44,24 +49,39 @@ const settingsConfig: SettingsConfig = {
   storagePath: 'navigation',
 };
 
-const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
+const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }: ItemProps) => {
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
+  const containerClasses = [ css.navItemContainer ];
 
-  if (isActive) classes.push(css.active);
-  if (status) classes.push(css.hasStatus);
+  if (isActive) {
+    containerClasses.push(css.active);
+    classes.push(css.active);
+  }
+  if (status) containerClasses.push(css.hasStatus);
 
   useEffect(() => {
-    setIsActive(path ? location.pathname.startsWith(path) : false);
+    setIsActive(location.pathname === path);
   }, [ location.pathname, path ]);
 
   const link = (
-    <Link className={classes.join(' ')} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
-      <div className={css.label}>{props.label}</div>
-      {status && <div className={css.status}>{status}</div>}
-    </Link>
+    <div className={containerClasses.join(' ')}>
+      <Link className={classes.join(' ')} path={path} {...props}>
+        {typeof props.icon === 'string' ?
+          <div className={css.icon}><Icon name={props.icon} size="large" /></div> :
+          <div className={css.icon}>{props.icon}</div>}
+        <div className={css.label}>{props.labelRender ? props.labelRender : props.label}</div>
+      </Link>
+      <div className={css.navItemExtra}>
+        {status && (
+          <Link path={path} {...props}>
+            <div className={css.status}>{status}</div>
+          </Link>
+        )}
+        {action && <div className={css.action}>{action}</div>}
+      </div>
+    </div>
   );
 
   return props.tooltip ? (
@@ -72,11 +92,13 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools, info } = useStore();
+  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const [ modal, contextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal();
+  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
+  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
+  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
+  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
+  const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -101,8 +123,7 @@ const NavigationSideBar: React.FC = () => {
       },
     ],
     top: [
-      { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
-      { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+      { icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() },
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -112,6 +133,10 @@ const NavigationSideBar: React.FC = () => {
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
   }, [ settings.navbarCollapsed, updateSettings ]);
+
+  const handleCreateWorkspace = useCallback(() => {
+    openWorkspaceCreateModal();
+  }, [ openWorkspaceCreateModal ]);
 
   if (!showNavigation) return null;
 
@@ -133,7 +158,6 @@ const NavigationSideBar: React.FC = () => {
       nodeRef={nodeRef}
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
-        {contextHolder}
         <header>
           <Dropdown
             content={(
@@ -179,6 +203,51 @@ const NavigationSideBar: React.FC = () => {
               />
             ))}
           </section>
+          <section className={css.workspaces}>
+            <NavigationItem
+              action={(
+                <Button type="text" onClick={handleCreateWorkspace}>
+                  <Icon name="add-small" size="tiny" />
+                </Button>
+              )}
+              icon="workspaces"
+              key="workspaces"
+              label="Workspaces"
+              path={paths.workspaceList()}
+              tooltip={settings.navbarCollapsed}
+            />
+            {pinnedWorkspaces.length === 0 ?
+              <p className={css.noWorkspaces}>No pinned workspaces</p> : (
+                <ul className={css.pinnedWorkspaces} role="list">
+                  {pinnedWorkspaces.map(workspace => (
+                    <WorkspaceActionDropdown
+                      curUser={auth.user}
+                      key={workspace.id}
+                      trigger={[ 'contextMenu' ]}
+                      workspace={workspace}>
+                      <li>
+                        <NavigationItem
+                          icon={(
+                            <DynamicIcon
+                              name={workspace.name}
+                              size={24}
+                            />
+                          )}
+                          label={workspace.name}
+                          labelRender={(
+                            <Typography.Paragraph
+                              ellipsis={{ rows: 1, tooltip: true }}>
+                              {workspace.name}
+                            </Typography.Paragraph>
+                          )}
+                          path={paths.workspaceDetails(workspace.id)}
+                        />
+                      </li>
+                    </WorkspaceActionDropdown>
+                  ))}
+                </ul>
+              )}
+          </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map(config => (
               <NavigationItem
@@ -206,6 +275,8 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
+        {userSettingsModalContextHolder}
+        {jupyterLabModalContextHolder}
       </nav>
     </CSSTransition>
   );

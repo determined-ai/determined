@@ -22,15 +22,29 @@ func RegisterAPIHandler(
 	taskLogger *task.Logger,
 	middleware ...echo.MiddlewareFunc,
 ) {
-	system.ActorOf(actor.Addr("commands"), &commandManager{db: db, taskLogger: taskLogger})
+	commandManagerRef, _ := system.ActorOf(
+		actor.Addr("commands"),
+		&commandManager{db: db, taskLogger: taskLogger},
+	)
+	notebookManagerRef, _ := system.ActorOf(
+		actor.Addr("notebooks"),
+		&notebookManager{db: db, taskLogger: taskLogger},
+	)
+	shellManagerRef, _ := system.ActorOf(
+		actor.Addr("shells"),
+		&shellManager{db: db, taskLogger: taskLogger},
+	)
+	tensorboardManagerRef, _ := system.ActorOf(
+		actor.Addr("tensorboard"),
+		&tensorboardManager{db: db, taskLogger: taskLogger},
+	)
+
+	// Wait for all managers to initialize.
+	refs := []*actor.Ref{commandManagerRef, notebookManagerRef, shellManagerRef, tensorboardManagerRef}
+	system.AskAll(actor.Ping{}, refs...).GetAll()
+
 	echo.Any("/commands*", api.Route(system, nil), middleware...)
-
-	system.ActorOf(actor.Addr("notebooks"), &notebookManager{db: db, taskLogger: taskLogger})
 	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
-
-	system.ActorOf(actor.Addr("shells"), &shellManager{db: db, taskLogger: taskLogger})
 	echo.Any("/shells*", api.Route(system, nil), middleware...)
-
-	system.ActorOf(actor.Addr("tensorboard"), &tensorboardManager{db: db, taskLogger: taskLogger})
 	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
 }

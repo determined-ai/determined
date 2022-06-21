@@ -4,7 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
-import { poolLogo } from 'components/ResourcePoolCard';
+import { PoolLogo } from 'components/ResourcePoolCard';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
@@ -90,7 +90,7 @@ const ResourcepoolDetail: React.FC = () => {
     }
   }, [ canceler.signal, poolname ]);
 
-  usePolling(fetchStats);
+  usePolling(fetchStats, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchStats();
@@ -136,7 +136,9 @@ const ResourcepoolDetail: React.FC = () => {
       <Section>
         <div className={css.nav} onClick={() => history.replace(paths.cluster())}>
           <Icon name="arrow-left" size="tiny" />
-          <div className={css.icon}>{poolLogo(pool.type)}</div>
+          <div className={css.icon}>
+            <PoolLogo type={pool.type} />
+          </div>
           <div>{`${pool.name} (${
             V1SchedulerTypeToLabel[pool.schedulerType]
           }) ${usage ? `- ${floatToPercent(usage)}` : '' } `}

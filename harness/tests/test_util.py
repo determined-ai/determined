@@ -1,6 +1,11 @@
+import os
+import pathlib
+from typing import Optional
+
 import pytest
 
 import determined as det
+from determined.util import force_create_symlink
 
 
 def test_list_to_dict() -> None:
@@ -37,3 +42,39 @@ def test_calculate_batch_sizes() -> None:
     # global_batch_size too small.
     with pytest.raises(det.errors.InvalidExperimentException, match="to be greater or equal"):
         det.util.calculate_batch_sizes({"global_batch_size": 1}, 2, "Trial")
+
+
+@pytest.mark.parametrize("whats_there", [None, "dir", "file", "symlink"])
+def test_force_create_symlink(whats_there: Optional[str], tmp_path: pathlib.Path) -> None:
+    symlink_to_create = tmp_path.joinpath("tensorboard")
+    symlink_source = tmp_path.joinpath("tensorboard-foo-0")
+
+    os.makedirs(tmp_path.joinpath(symlink_source))
+
+    if whats_there == "dir":
+        os.makedirs(symlink_to_create)
+    elif whats_there == "file":
+        with symlink_to_create.open("w"):
+            pass
+    elif whats_there == "symlink":
+        another_file = tmp_path.joinpath("another_file")
+        with another_file.open("w"):
+            pass
+        os.symlink(another_file, symlink_to_create)
+
+    force_create_symlink(str(symlink_source), str(symlink_to_create))
+
+    expected_entry_found = False
+    with os.scandir(tmp_path) as it:
+        for entry in it:
+            print(f"{entry}")
+            if entry.name == "tensorboard":
+                expected_entry_found = True
+                assert entry.is_dir(follow_symlinks=True)
+                assert entry.is_symlink()
+
+    assert expected_entry_found
+    assert os.readlink(str(symlink_to_create)) == str(symlink_source)
+
+    if whats_there == "symlink":
+        assert tmp_path.joinpath("another_file").exists(), "deleted previous symlink source"

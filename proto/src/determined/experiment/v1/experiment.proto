@@ -52,7 +52,8 @@ message Experiment {
         "num_trials",
         "username",
         "job_id",
-        "searcher_type"
+        "searcher_type",
+        "project_id"
       ]
     }
   };
@@ -94,6 +95,17 @@ message Experiment {
   google.protobuf.Int32Value forked_from = 16;
   // The current progress of a running experiment.
   google.protobuf.DoubleValue progress = 17;
+  // The id of the project associated with this experiment.
+  int32 project_id = 21;
+  // The name of the project associated with this experiment.
+  string project_name = 22;
+  // The id of the workspace associated with this experiment.
+  int32 workspace_id = 23;
+  // The name of the workspace associated with this experiment.
+  string workspace_name = 24;
+  // The archived status of the parent project (can be inherited from
+  // workspace).
+  bool parent_archived = 25;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

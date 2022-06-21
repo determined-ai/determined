@@ -33,6 +33,9 @@ type containerActor struct {
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
 
+	// Keeps track of why we exited. Always valid with a terminated state.
+	stop *aproto.ContainerStopped
+
 	baseTaskLog model.TaskLog
 	reattached  bool
 }
@@ -108,6 +111,13 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.Container)
 
 	case imagePulled:
+		if c.State == cproto.Terminated {
+			// This can happen if we are terminated while pulling, since `ctx.Self().Stop()` still
+			// allows us to read all our messages.
+			ctx.Log().Warn("ignoring pull complete message for terminated container")
+			return nil
+		}
+
 		c.transition(ctx, cproto.Starting)
 		ctx.Tell(c.docker, runContainer{c.spec.RunSpec})
 
@@ -166,7 +176,9 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 			ctx.Log().Debugf("docker: %v, contInfo: %v", c.docker, c.containerInfo)
 			ctx.Tell(c.docker, signalContainer{dockerID: c.containerInfo.ID, signal: msg.Signal})
 		case cproto.Terminated:
-			ctx.Log().Warnf("ignoring signal, container already terminated: %s", msg.Signal)
+			err := fmt.Errorf("re-acknowledging signal, container already terminated: %s", msg.Signal)
+			ctx.Log().Warnf(err.Error())
+			c.containerStopped(ctx, aproto.ContainerError(aproto.AgentFailed, err))
 		}
 
 	case aproto.ContainerLog:
@@ -248,17 +260,25 @@ func (c *containerActor) containerStarted(ctx *actor.Context, started aproto.Con
 		Container: c.Container, ContainerStarted: &started})
 }
 
-func (c *containerActor) containerStopped(ctx *actor.Context, stopped aproto.ContainerStopped) {
-	newState := cproto.Terminated
-	if c.State == newState {
-		ctx.Log().Infof("attempted transition of state from %s to %s", newState, newState)
-		return
+// containerStopped transitions the container and sets the reason for stop. If called multiple
+// times, it just respects and resends the first reason.
+func (c *containerActor) containerStopped(ctx *actor.Context, msg aproto.ContainerStopped) {
+	switch c.State {
+	case cproto.Terminated:
+		ctx.Log().
+			WithField("called-because", msg).
+			WithField("why", c.stop).
+			Infof("retransmitting actions for transition to %s", cproto.Terminated)
+	default:
+		ctx.Log().
+			WithField("why", msg).
+			Infof("transitioning state from %s to %s", c.State, cproto.Terminated)
+		c.Container = c.Transition(cproto.Terminated)
+		c.stop = &msg
 	}
 
-	ctx.Log().
-		WithField("why", stopped).
-		Infof("transitioning state from %s to %s", c.State, newState)
-	c.Container = c.Transition(newState)
 	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
-		Container: c.Container, ContainerStopped: &stopped})
+		Container:        c.Container,
+		ContainerStopped: c.stop,
+	})
 }

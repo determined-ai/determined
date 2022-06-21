@@ -1,11 +1,13 @@
 import logging
 import os
-from pathlib import Path
-from typing import Any, Optional
+import pathlib
+from typing import Any, Callable, Optional
 
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
 from determined.tensorboard import base
+
+logger = logging.getLogger("determined.tensorboard")
 
 
 class GCSTensorboardManager(base.TensorboardManager):
@@ -27,17 +29,24 @@ class GCSTensorboardManager(base.TensorboardManager):
         self.bucket = self.client.bucket(bucket)
         self.prefix = normalize_prefix(prefix)
 
-    def get_storage_prefix(self, storage_id: Path) -> str:
+    def get_storage_prefix(self, storage_id: pathlib.Path) -> str:
         return os.path.join(self.prefix, storage_id)
 
     @util.preserve_random_state
-    def sync(self) -> None:
-        for path in self.to_sync():
-            blob_name = self.sync_path.joinpath(path.relative_to(self.base_path))
-            to_path = self.get_storage_prefix(blob_name)
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        for path in self.to_sync(selector):
+            relative_path = path.relative_to(self.base_path)
+            mangled_relative_path = mangler(relative_path, rank)
+            mangled_path = self.sync_path.joinpath(mangled_relative_path)
+            to_path = self.get_storage_prefix(mangled_path)
             blob = self.bucket.blob(to_path)
 
-            logging.debug(f"Uploading {path} to GCS: {to_path}")
+            logger.debug(f"Uploading {path} to GCS: {to_path}")
             blob.upload_from_filename(str(path))
 
     def delete(self) -> None:

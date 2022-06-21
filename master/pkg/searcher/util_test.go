@@ -308,8 +308,8 @@ func saveAndReload(method SearchMethod) error {
 	} else if !bytes.Equal(state, state2) {
 		var unmarshaledState = method.Restore(state)
 		var unmarshaledState2 = method.Restore(state2)
-		fmt.Printf("%+v\n", unmarshaledState)
-		fmt.Printf("%+v\n", unmarshaledState2)
+		fmt.Printf("%+v\n", unmarshaledState)  //nolint: forbidigo
+		fmt.Printf("%+v\n", unmarshaledState2) //nolint: forbidigo
 		return errors.New("successive snapshots were not identical")
 	}
 	return nil

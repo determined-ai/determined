@@ -498,7 +498,6 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 			}
 		}
 
-		fmt.Println(clientAuthMode)
 		baseListener = tls.NewListener(baseListener, &tls.Config{
 			Certificates:             []tls.Certificate{*cert},
 			MinVersion:               tls.VersionTLS12,
@@ -908,6 +907,14 @@ func (m *Master) Run(ctx context.Context) error {
 		return err
 	}
 
+	command.RegisterAPIHandler(
+		m.system,
+		m.echo,
+		m.db,
+		m.taskLogger,
+		authFuncs...,
+	)
+
 	if err = m.closeOpenAllocations(); err != nil {
 		return err
 	}
@@ -1032,13 +1039,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
 	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
-	command.RegisterAPIHandler(
-		m.system,
-		m.echo,
-		m.db,
-		m.taskLogger,
-		authFuncs...,
-	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	telemetry.Setup(

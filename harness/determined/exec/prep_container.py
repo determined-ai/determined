@@ -15,6 +15,7 @@ from determined import constants
 from determined.common import util
 from determined.common.api import bindings, certs, request
 from determined.common.experimental import Session, get_max_retries_config
+from determined.util import force_create_symlink
 
 
 def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
@@ -60,6 +61,9 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
                 raise ValueError(f"'{path}' in tarball would expand to a parent directory")
         model_def.extractall(path=constants.MANAGED_TRAINING_MODEL_COPY)
         model_def.extractall(path=".")
+
+    # pre-0.18.3 code wrote tensorboard stuff under /tmp/tensorboard
+    force_create_symlink(f"/tmp/tensorboard-{info.allocation_id}-0", "/tmp/tensorboard")
 
 
 def do_rendezvous_rm_provided(

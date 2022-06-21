@@ -6,9 +6,9 @@
 
 Deep learning practitioners come from a variety of disciplines. Depending on their background, some
 practitioners have strong foundations in engineering, while others focus on statistics and domain
-expertise. Determined AI is a deep learning training platform that simplifies infrastructure
-management for domain experts while enabling configuration-based deep learning functionality that is
-generally inconvenient to implement for engineering-oriented practitioners.
+expertise. Determined is a deep learning training platform that simplifies infrastructure management
+for domain experts while enabling configuration-based deep learning functionality that is generally
+inconvenient to implement for engineering-oriented practitioners.
 
 Many current systems are point solutions for specific problems in deep learning, so combining the
 systems is tough and inefficient. Determined's cohesive end-to-end training platform provides

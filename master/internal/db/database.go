@@ -62,8 +62,7 @@ type DB interface {
 	ExperimentCheckpointsToGCRaw(
 		id int,
 		experimentBest, trialBest, trialLatest int,
-		delete bool,
-	) ([]byte, error)
+	) ([]uuid.UUID, error)
 	AddTask(t *model.Task) error
 	AddTrial(trial *model.Trial) error
 	TrialByID(id int) (*model.Trial, error)
@@ -110,7 +109,8 @@ type DB interface {
 	GetTrialProfilerMetricsBatches(
 		labelsJSON []byte, offset, limit int,
 	) (model.TrialProfilerMetricsBatchBatch, error)
-	ExperimentLabelUsage() (labelUsage map[string]int, err error)
+	ProjectByName(workspaceName string, projectName string) (projectID int, err error)
+	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
 	MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (

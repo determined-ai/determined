@@ -1,0 +1,13 @@
+# Determined codeowners file
+
+# explicit default to no owner (this should be the first line)
+*
+
+# Notify eng-infra team of .github changes
+/.github  @determined-ai/infrastructure
+
+# Ilia cares about agent RM.
+/master/internal/resourcemanagers/ @ioga
+/master/internal/sproto/ @ioga
+/proto/src/determined/ @ioga
+/agent/ @ioga

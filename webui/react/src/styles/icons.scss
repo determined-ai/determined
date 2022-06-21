@@ -44,6 +44,7 @@
 .icon-critical::before { content: '\e902'; }
 .icon-debug::before { content: '\e901'; }
 .icon-docs::before { content: '\e922'; }
+.icon-document::before { content: '\e922'; }
 .icon-error::before { content: '\e902'; }
 .icon-expand::before { content: '\e90e'; }
 .icon-experiment::before { content: '\e903'; }
@@ -86,3 +87,5 @@
 .icon-play::before { content: '\e934'; }
 .icon-stop::before { content: '\e935'; }
 .icon-fork::before { content: '\e936'; }
+.icon-archive::before { content: '\e939'; }
+.icon-workspaces::before { content: '\e93a'; }

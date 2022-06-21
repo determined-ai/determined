@@ -336,7 +336,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		default:
 			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 			resourcesStopped.Failure = sproto.NewResourcesFailure(
-				sproto.ContainerFailed,
+				sproto.ResourcesFailed,
 				exitMessage,
 				ptrs.Ptr(sproto.ExitCode(exitCode)))
 		}
@@ -469,7 +469,6 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 	if !simpleReplacement {
 		matched, err := regexp.MatchString("nodes are available", msgText)
 		if err == nil && matched {
-			fmt.Printf("K8S nodes message: %s\n", msgText)
 			available := string(msgText[0])
 			required := strconv.Itoa(p.slots)
 			var resourceName string

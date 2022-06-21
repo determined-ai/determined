@@ -69,9 +69,9 @@ def main(argv: List[str]) -> None:
     )
     parser.add_argument(
         "--delete",
-        type=json_file_arg,
-        default=os.getenv("DET_DELETE", []),
-        help="Checkpoints to delete (JSON-formatted file)",
+        type=str,
+        default=os.getenv("DET_DELETE", ""),
+        help="comma-separated list of checkpoints to delete",
     )
     parser.add_argument(
         "--delete-tensorboards",
@@ -99,8 +99,10 @@ def main(argv: List[str]) -> None:
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
-    storage_ids = [c["uuid"] for c in args.delete["checkpoints"]]
-
+    args.delete = args.delete.strip()
+    storage_ids = []
+    if args.delete != "":
+        storage_ids = args.delete.split(",")
     delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
     if args.delete_tensorboards:

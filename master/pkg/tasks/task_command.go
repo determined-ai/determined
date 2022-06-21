@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"encoding/json"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -10,6 +11,30 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
 
+// genericCommandSpecMetadata is GenericCommandSpec.Metadata.
+type genericCommandSpecMetadata struct {
+	PrivateKey    *string `json:"privateKey"`
+	PublicKey     *string `json:"publicKey"`
+	ExperimentIDs []int32 `json:"experiment_ids"`
+	TrialIDs      []int32 `json:"trial_ids"`
+}
+
+// MarshalToMap converts typed struct into a map.
+func (metadata *genericCommandSpecMetadata) MarshalToMap() (map[string]interface{}, error) {
+	data, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // GenericCommandSpec is a description of a task for running a command.
 type GenericCommandSpec struct {
 	Base TaskSpec
@@ -17,7 +42,7 @@ type GenericCommandSpec struct {
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
-	Metadata        map[string]interface{}
+	Metadata        genericCommandSpecMetadata
 
 	Keys *ssh.PrivateAndPublicKeys
 

@@ -26,6 +26,7 @@ import pytorch_lightning as pl
 from typing import Optional
 from torchvision.datasets import MNIST
 
+
 class MNISTDataModule(pl.LightningDataModule):
     def __init__(self, data_url: str, data_dir: str = '/tmp/det', batch_size=64):
         super().__init__()

@@ -13,9 +13,9 @@ const (
 	hostMode container.NetworkMode = "host"
 )
 
-// trialUniquePortOffset determines a deterministic, unique offset for ports that would otherwise
-// collide when using host networking.
-func trialUniquePortOffset(devices []device.Device) int {
+// UniquePortOffset determines a deterministic, unique offset for ports that would otherwise collide
+// when using host networking.
+func UniquePortOffset(devices []device.Device) int {
 	if len(devices) == 0 {
 		return 0
 	}

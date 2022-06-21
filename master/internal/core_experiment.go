@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -86,7 +85,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	return m.db.ExperimentCheckpointsToGCRaw(
-		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest, false)
+		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
 
 func (m *Master) getExperimentModelDefinition(c echo.Context) error {
@@ -206,12 +205,18 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupWeight{Weight: *patch.Resources.Weight})
+			if resp.Error() != nil {
+				return nil, errors.Errorf("cannot change experiment weight to %v", *patch.Resources.Weight)
+			}
 		}
 		if patch.Resources.Priority != nil {
-			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+			resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID),
 				job.SetGroupPriority{Priority: *patch.Resources.Priority})
+			if resp.Error() != nil {
+				return nil, errors.Errorf("cannot change experiment priority to %v", *patch.Resources.Priority)
+			}
 		}
 	}
 
@@ -221,37 +226,23 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialBest(),
 			dbExp.Config.CheckpointStorage().SaveTrialLatest(),
-			true,
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		taskSpec := *m.taskSpec
-		taskSpec.AgentUserGroup = agentUserGroup
-		taskSpec.Owner = &model.User{
+		user := &model.User{
 			ID:       ownerFullUser.ID,
 			Username: ownerFullUser.Username,
 		}
 
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(m.rm, m.db, m.taskLogger, taskID, dbExp.JobID,
+			dbExp.StartTime, taskSpec, dbExp.ID, dbExp.Config.AsLegacy(), checkpoints,
+			true, agentUserGroup, user, nil)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
-			&checkpointGCTask{
-				taskID:            model.NewTaskID(),
-				jobID:             dbExp.JobID,
-				jobSubmissionTime: dbExp.StartTime,
-				GCCkptSpec: tasks.GCCkptSpec{
-					Base:               taskSpec,
-					ExperimentID:       dbExp.ID,
-					LegacyConfig:       dbExp.Config.AsLegacy(),
-					ToDelete:           checkpoints,
-					DeleteTensorboards: true,
-				},
-				rm: m.rm,
-				db: m.db,
-
-				taskLogger: m.taskLogger,
-				logCtx:     logger.Context{"experiment-id": dbExp.ID},
-			})
+			ckptGCTask)
 	}
 
 	return nil, nil
@@ -270,6 +261,9 @@ type CreateExperimentParams struct {
 	GitCommitter  *string         `json:"git_committer"`
 	GitCommitDate *time.Time      `json:"git_commit_date"`
 	ValidateOnly  bool            `json:"validate_only"`
+	Project       *string         `json:"project"`
+	ProjectID     *int            `json:"project_id"`
+	Workspace     *string         `json:"workspace"`
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
@@ -350,9 +344,34 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = user
 
+	// Place experiment in Uncategorized, unless project set in config or CreateExperimentParams
+	// CreateExperimentParams has highest priority (coming from WebUI)
+	projectID := 1
+	if params.ProjectID == nil {
+		if config.Workspace() == "" && config.Project() != "" {
+			return nil, false, nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		}
+		if config.Workspace() != "" && config.Project() == "" {
+			return nil, false, nil,
+				errors.New("workspace and project must both be included in config if one is provided")
+		}
+		if config.Workspace() != "" && config.Project() != "" {
+			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
+			if err != nil {
+				return nil, false, nil, errors.Wrapf(
+					err, "unable to find parent workspace and project")
+			}
+		}
+	} else {
+		projectID = *params.ProjectID
+	}
+
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
-		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
+		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,
+		projectID,
+	)
 	if user != nil {
 		dbExp.OwnerID = &user.ID
 		dbExp.Username = user.Username

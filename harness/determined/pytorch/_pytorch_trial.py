@@ -14,7 +14,7 @@ import torch
 import torch.distributed as dist
 
 import determined as det
-from determined import layers, pytorch, util, workload
+from determined import layers, pytorch, tensorboard, util, workload
 from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
@@ -67,6 +67,15 @@ class PyTorchTrialController(det.TrialController):
             assert (
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training"
+
+    @classmethod
+    def create_metric_writer(
+        cls: Type["PyTorchTrialController"],
+    ) -> tensorboard.BatchMetricWriter:
+        from determined.tensorboard.metric_writers.pytorch import TorchWriter
+
+        writer = TorchWriter()
+        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -265,18 +274,17 @@ class PyTorchTrialController(det.TrialController):
                         ),
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
-
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
                         "metrics": self._compute_validation_metrics(),
                         "stop_requested": self.context.get_stop_requested(),
                     }
-
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
                         metadata = {
+                            "determined_version": det.__version__,
                             "steps_completed": self.steps_completed,
                             "framework": f"torch-{torch.__version__}",
                             "format": "pickle",
@@ -297,6 +305,7 @@ class PyTorchTrialController(det.TrialController):
                 logging.info(f"Invalid hyperparameter exception during {action}: {e}")
                 response = workload.InvalidHP()
             response_func(response)
+            self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)
@@ -338,7 +347,7 @@ class PyTorchTrialController(det.TrialController):
 
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
-    ) -> workload.Response:
+    ) -> workload.Metrics:
         self.prof.set_training(True)
         check.gt(step_id, 0)
         step_start_time = time.time()
@@ -462,11 +471,15 @@ class PyTorchTrialController(det.TrialController):
 
         step_duration = time.time() - step_start_time
         logging.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
-
+        self.metric_writer.on_train_step_end(
+            self.steps_completed,
+            metrics["avg_metrics"],
+            metrics["batch_metrics"],
+        )
         return metrics
 
     @torch.no_grad()  # type: ignore
-    def _compute_validation_metrics(self) -> workload.Response:
+    def _compute_validation_metrics(self) -> workload.Metrics:
         self.context.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
@@ -594,7 +607,7 @@ class PyTorchTrialController(det.TrialController):
             logging.info(
                 det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
             )
-
+        self.metric_writer.on_validation_step_end(self.steps_completed, metrics)
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:

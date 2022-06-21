@@ -59,14 +59,15 @@ var errMock = errors.New("mock error")
 type mockTask struct {
 	rmRef *actor.Ref
 
-	id                model.AllocationID
-	jobID             string
-	group             *mockGroup
-	slotsNeeded       int
-	nonPreemptible    bool
-	label             string
-	resourcePool      string
-	allocatedAgent    *mockAgent
+	id             model.AllocationID
+	jobID          string
+	group          *mockGroup
+	slotsNeeded    int
+	nonPreemptible bool
+	label          string
+	resourcePool   string
+	allocatedAgent *mockAgent
+	// Any test that set this to false is half wrong. It is used as a proxy to oversubscribe agents.
 	containerStarted  bool
 	jobSubmissionTime time.Time
 }
@@ -110,7 +111,8 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		panic(errMock)
 
 	case sproto.ResourcesAllocated:
-		for rank, allocation := range msg.Resources {
+		rank := 0
+		for _, allocation := range msg.Resources {
 			if err := allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
 				Token:        "",
 				AgentRank:    rank,
@@ -119,6 +121,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 				ctx.Respond(err)
 				return nil
 			}
+			rank++
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})
@@ -305,10 +308,10 @@ func forceSetTaskAllocations(
 	if numAllocated > 0 {
 		allocated := &sproto.ResourcesAllocated{
 			ID:        model.AllocationID(taskID),
-			Resources: []sproto.Resources{},
+			Resources: map[sproto.ResourcesID]sproto.Resources{},
 		}
 		for i := 0; i < numAllocated; i++ {
-			allocated.Resources = append(allocated.Resources, containerResources{})
+			allocated.Resources[sproto.ResourcesID(uuid.NewString())] = containerResources{}
 		}
 		taskList.SetAllocations(req.TaskActor, allocated)
 	} else {
@@ -430,8 +433,8 @@ func setupSchedulerStates(
 
 			allocated := &sproto.ResourcesAllocated{
 				ID: req.AllocationID,
-				Resources: []sproto.Resources{
-					&containerResources{
+				Resources: map[sproto.ResourcesID]sproto.Resources{
+					sproto.ResourcesID(containerID): &containerResources{
 						req:         req,
 						agent:       agentState,
 						containerID: containerID,
@@ -460,7 +463,7 @@ func assertEqualToAllocate(
 		assert.Assert(t, ok)
 	}
 	assert.Equal(t, len(actual), len(expected),
-		"actual tasks and expected tasks must have the same length")
+		"actual allocated tasks and expected tasks must have the same length")
 }
 
 func assertEqualToAllocateOrdered(
@@ -495,7 +498,7 @@ func assertEqualToRelease(
 		}
 	}
 	assert.Equal(t, len(actual), len(expected),
-		"actual tasks and expected tasks must have the same length")
+		"actual released tasks and expected tasks must have the same length")
 }
 
 func TestJobStats(t *testing.T) {

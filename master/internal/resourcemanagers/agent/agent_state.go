@@ -371,7 +371,10 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 		// On `PostStop`, draining will be already set to false, and we'll kill the container
 		// whether we have the device or not.
 		if !s.enabled.draining && s.containerID != nil {
-			ctx.Tell(a.containerAllocation[*s.containerID], task.Kill)
+			ctx.Tell(a.containerAllocation[*s.containerID], task.AllocationSignalWithReason{
+				AllocationSignal:    task.Kill,
+				InformationalReason: "slot disabled",
+			})
 		}
 	}
 }

@@ -1,5 +1,6 @@
 import abc
 import logging
+import pathlib
 from typing import Any, Dict
 
 import determined as det
@@ -138,3 +139,9 @@ class TrialContext(metaclass=abc.ABCMeta):
 
     def get_initial_batch(self) -> int:
         return self.env.steps_completed
+
+    def get_tensorboard_path(self) -> pathlib.Path:
+        """
+        Get the path where files for consumption by TensorBoard should be written
+        """
+        return self._core.train.get_tensorboard_path()

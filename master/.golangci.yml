@@ -70,6 +70,9 @@ linters-settings:
   exhaustivestruct:
     struct-patterns:
       - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
+  forbidigo:
+    forbid:
+      - 'fmt\.Print.*'
 
 linters:
   enable-all: true
@@ -103,7 +106,6 @@ linters:
     - durationcheck
     - errname
     - errorlint
-    - forbidigo
     - forcetypeassert
     - gci
     - gomoddirectives

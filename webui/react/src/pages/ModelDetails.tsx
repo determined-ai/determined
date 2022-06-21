@@ -74,7 +74,7 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelName, pageError, settings ]);
 
-  usePolling(fetchModel);
+  usePolling(fetchModel, { rerunOnNewFn: true });
 
   useEffect(() => {
     setIsLoading(true);
@@ -110,7 +110,6 @@ const ModelDetails: React.FC = () => {
           silent: false,
           type: ErrorType.Api,
         });
-        return e as Error;
       }
     }, [ modelName ]);
 
@@ -256,7 +255,6 @@ const ModelDetails: React.FC = () => {
         silent: false,
         type: ErrorType.Api,
       });
-      return e as Error;
     }
   }, [ modelName ]);
 

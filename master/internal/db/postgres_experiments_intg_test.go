@@ -23,9 +23,85 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
+func TestExperimentCheckpointsToGCRaw(t *testing.T) {
+	etc.SetRootPath(rootFromDB)
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, migrationsFromDB)
+
+	user := requireMockUser(t, db)
+	exp := requireMockExperiment(t, db, user)
+	tr := requireMockTrial(t, db, exp)
+	a := requireMockAllocation(t, db, tr.TaskID)
+	var expectedCheckpoints []uuid.UUID
+	for i := 1; i <= 3; i++ {
+		ckptUuid := uuid.New()
+		ckpt := mockModelCheckpoint(ckptUuid, tr, a)
+		err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+		require.NoError(t, err)
+		if i == 2 { // add this checkpoint to the model registry
+			err = addCheckpointToModelRegistry(db, ckptUuid, user)
+			require.NoError(t, err)
+		} else {
+			expectedCheckpoints = append(expectedCheckpoints, ckptUuid)
+		}
+	}
+
+	checkpoints, err := db.ExperimentCheckpointsToGCRaw(
+		exp.ID,
+		0,
+		0,
+		0,
+	)
+	require.NoError(t, err)
+	require.Equal(t, expectedCheckpoints, checkpoints)
+}
+
+func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model.User) error {
+	// Insert a model.
+	now := time.Now()
+	mdl := model.Model{
+		Name:            uuid.NewString(),
+		Description:     "some important model",
+		CreationTime:    now,
+		LastUpdatedTime: now,
+		Labels:          []string{"some other label"},
+		Username:        user.Username,
+	}
+	mdlNotes := "some notes"
+	var pmdl modelv1.Model
+	if err := db.QueryProto(
+		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+	); err != nil {
+		return fmt.Errorf("inserting a model: %w", err)
+	}
+
+	// Register checkpoints
+	var retCkpt1 checkpointv1.Checkpoint
+	if err := db.QueryProto("get_checkpoint", &retCkpt1, checkpointUUID); err != nil {
+		return fmt.Errorf("getting checkpoint: %w", err)
+	}
+
+	addmv := modelv1.ModelVersion{
+		Model:      &pmdl,
+		Checkpoint: &retCkpt1,
+		Name:       "checkpoint exp",
+		Comment:    "empty",
+	}
+	var mv modelv1.ModelVersion
+	if err := db.QueryProto(
+		"insert_model_version", &mv, pmdl.Id, retCkpt1.Uuid, addmv.Name, addmv.Comment,
+		emptyMetadata, strings.Join(addmv.Labels, ","), addmv.Notes, user.ID,
+	); err != nil {
+		return fmt.Errorf("inserting model version: %w", err)
+	}
+
+	return nil
+}
 func TestGetExperiments(t *testing.T) {
 	etc.SetRootPath(rootFromDB)
 	db := MustResolveTestPostgres(t)
@@ -222,6 +298,7 @@ func TestGetExperiments(t *testing.T) {
 				tt.labelFilter,
 				tt.descFilter,
 				tt.nameFilter,
+				0,
 				tt.offset,
 				tt.limit,
 			)
@@ -236,6 +313,27 @@ func TestGetExperiments(t *testing.T) {
 	}
 }
 
+func mockModelCheckpoint(ckptUuid uuid.UUID, tr *model.Trial, a *model.Allocation) model.CheckpointV2 {
+	stepsCompleted := int32(10)
+	ckpt := model.CheckpointV2{
+		UUID:         ckptUuid,
+		TaskID:       tr.TaskID,
+		AllocationID: a.AllocationID,
+		ReportTime:   time.Now().UTC(),
+		State:        model.CompletedState,
+		Resources: map[string]int64{
+			"ok": 1.0,
+		},
+		Metadata: map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(stepsCompleted),
+		},
+	}
+
+	return ckpt
+}
+
 func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) model.Experiment {
 	return model.Experiment{
 		JobID:                model.NewJobID(),
@@ -246,6 +344,7 @@ func mockModelExperiment(user model.User, expConf expconf.ExperimentConfigV0) mo
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		Archived:             false,
+		ProjectID:            1,
 	}
 }
 

@@ -6,7 +6,7 @@ import { clone } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 import { ResourcePool } from 'types';
 
-import { poolLogo } from './ResourcePoolCard';
+import { PoolLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
@@ -29,7 +29,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
 
   const title = (
     <div>
-      {poolLogo(pool.type)}
+      <PoolLogo type={pool.type} />
       {' ' + pool.name}
     </div>
   );

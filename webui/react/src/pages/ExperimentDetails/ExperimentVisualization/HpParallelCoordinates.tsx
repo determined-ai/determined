@@ -14,7 +14,9 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive, Range } from 'shared/types';
 import { clone, flattenObject } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
@@ -25,8 +27,6 @@ import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { openCommand } from 'wait';
 
-import { Primitive, Range } from '../../../shared/types';
-import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';

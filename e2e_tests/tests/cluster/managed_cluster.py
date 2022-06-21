@@ -89,17 +89,7 @@ class ManagedCluster:
         self.dc.restart_stage("agent1", wait=True, timeout=10)
 
         WAIT_FOR_STARTUP = 10
-        for _i in range(WAIT_FOR_STARTUP):
-            agent_data = _get_agent_data(self.master_url)
-            if (
-                len(agent_data) == 1
-                and agent_data[0]["enabled"] is True
-                and agent_data[0]["draining"] is False
-            ):
-                break
-            time.sleep(1)
-        else:
-            pytest.fail(f"Agent didn't restart after {WAIT_FOR_STARTUP} seconds")
+        self.wait_for_agent_ok(WAIT_FOR_STARTUP)
 
     def kill_proxy(self) -> None:
         subprocess.run(["killall", "socat"])
@@ -125,6 +115,19 @@ class ManagedCluster:
         assert agent_data[0]["enabled"] is True
         assert agent_data[0]["draining"] is False
 
+    def wait_for_agent_ok(self, ticks: int) -> None:
+        for _i in range(ticks):
+            agent_data = _get_agent_data(self.master_url)
+            if (
+                len(agent_data) == 1
+                and agent_data[0]["enabled"] is True
+                and agent_data[0]["draining"] is False
+            ):
+                break
+            time.sleep(1)
+        else:
+            pytest.fail(f"Agent didn't restart after {ticks} seconds")
+
     def fetch_config(self) -> Dict:
         with logged_in_user(ADMIN_CREDENTIALS):
             master_config = json.loads(
@@ -146,7 +149,7 @@ class ManagedCluster:
                 fout.write(marker)
 
 
-@pytest.fixture(scope="session", params=[False, True], ids=["reattach-off", "reattach-on"])
+@pytest.fixture(scope="session", params=[True, False], ids=["reattach-on", "reattach-off"])
 def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
     reattach = cast(bool, request.param)
     if reattach:

@@ -291,7 +291,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
 			for cid := range a.agentState.containerAllocation {
-				ctx.Tell(a.agentState.containerAllocation[cid], task.Kill)
+				ctx.Tell(a.agentState.containerAllocation[cid], task.AllocationSignalWithReason{
+					AllocationSignal:    task.Kill,
+					InformationalReason: "agent disabled",
+				})
 			}
 		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
@@ -564,18 +567,39 @@ func (a *agent) handleContainersReattached(
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
 
 	recovered := map[cproto.ID]aproto.ContainerReattachAck{}
+	doomed := map[cproto.ID]aproto.ContainerReattachAck{}
 
 	for _, containerRestored := range agentStarted.ContainersReattached {
-		if containerRestored.Failure != nil {
+		cid := containerRestored.Container.ID
+		if containerRestored.Failure != nil &&
+			containerRestored.Failure.FailureType == aproto.RestoreError {
 			ctx.Log().Infof(
-				"agent failed to restore container: %v: %v",
-				containerRestored.Container.ID, containerRestored.Failure.ErrMsg)
+				"agent failed to restore container: %s: %s",
+				cid, containerRestored.Failure.ErrMsg)
+			doomed[cid] = containerRestored
 			continue
 		}
 
-		cid := containerRestored.Container.ID
+		if containerRestored.Failure != nil {
+			ctx.Log().Infof(
+				"reattached container %s terminated while away: %s",
+				cid, containerRestored.Failure.ErrMsg)
+			doomed[cid] = containerRestored
+			continue
+		}
+
+		if containerRestored.Container.State == cproto.Terminated {
+			ctx.Log().Warnf(
+				"reattached container %s terminated while away", cid)
+			doomed[cid] = containerRestored
+			continue
+		}
+
 		_, ok := a.agentState.containerAllocation[cid]
 		if !ok {
+			ctx.Log().Warnf(
+				"agent state is missing container %s on reattach", cid)
+			doomed[cid] = containerRestored
 			continue
 		}
 
@@ -584,6 +608,7 @@ func (a *agent) handleContainersReattached(
 				"reattached container %s has changed state: %s to %s",
 				cid, a.agentState.containerState[cid].State,
 				containerRestored.Container.State)
+			doomed[cid] = containerRestored
 			continue
 		}
 
@@ -591,45 +616,56 @@ func (a *agent) handleContainersReattached(
 	}
 
 	// Mark the rest as dead.
-	return a.clearNonReattachedContainers(ctx, recovered)
+	return a.clearNonReattachedContainers(ctx, recovered, doomed)
 }
 
 func (a *agent) clearNonReattachedContainers(
-	ctx *actor.Context, recovered map[cproto.ID]aproto.ContainerReattachAck) error {
+	ctx *actor.Context,
+	recovered map[cproto.ID]aproto.ContainerReattachAck,
+	explicitlyDoomed map[cproto.ID]aproto.ContainerReattachAck,
+) error {
 	for cid, allocation := range a.agentState.containerAllocation {
-		_, ok := recovered[cid]
+		if _, ok := recovered[cid]; ok {
+			continue
+		}
 
-		if !ok {
-			errorMsg := "container cleaned up on reconnect"
-			if a.agentReattachEnabled {
-				errorMsg = "failed to reattach container on reconnect"
+		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
+			ResourcesID: sproto.ResourcesID(cid),
+		})
+		switch {
+		case resp.Error() != nil:
+			ctx.Log().Warnf(
+				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
+		case resp.Get() == nil:
+			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
+		default:
+			containerState := resp.Get().(cproto.Container)
+			containerState.State = cproto.Terminated
+
+			var stopped aproto.ContainerStopped
+			ack, ok := explicitlyDoomed[cid]
+			if ok {
+				stopped = aproto.ContainerStopped{Failure: ack.Failure}
+			} else {
+				stopped = a.defaultReattachFailureMessage()
 			}
 
-			stopped := aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
-			ctx.Log().Infof("killing container that didn't restore: %s", cid.String())
-
-			resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
-				ResourcesID: sproto.ResourcesID(cid),
+			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
+				Container:        containerState,
+				ContainerStopped: &stopped,
 			})
-			switch {
-			case resp.Error() != nil:
-				ctx.Log().Warnf(
-					"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
-			case resp.Get() == nil:
-				ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
-			default:
-				containerState := resp.Get().(cproto.Container)
-				containerState.State = cproto.Terminated
-
-				a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-					Container:        containerState,
-					ContainerStopped: &stopped,
-				})
-			}
 		}
 	}
 
 	return a.agentState.clearUnlessRecovered(recovered)
+}
+
+func (a *agent) defaultReattachFailureMessage() aproto.ContainerStopped {
+	errorMsg := "container cleaned up on reconnect"
+	if a.agentReattachEnabled {
+		errorMsg = "failed to reattach container on reconnect"
+	}
+	return aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
 }
 
 func (a *agent) socketDisconnected(ctx *actor.Context) {

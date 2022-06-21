@@ -23,8 +23,8 @@ type (
 		Started          *sproto.ResourcesStarted `bun:"started"`
 		Exited           *sproto.ResourcesStopped `bun:"exited"`
 		Daemon           bool                     `bun:"daemon"`
-		ResourceID       sproto.ResourcesID       `bun:"resource_id,type:text"`   // db only
-		AllocationID     model.AllocationID       `bun:"allocation_id,type:text"` // db only
+		ResourceID       sproto.ResourcesID       `bun:"resource_id,pk,type:text"` // db only
+		AllocationID     model.AllocationID       `bun:"allocation_id,type:text"`  // db only
 
 		// The container state, if we're using a RM that uses containers and it was given to us.
 		// This is a rip in the abstraction, remove eventually. Do not add usages.
@@ -43,6 +43,8 @@ func NewResourcesState(r sproto.Resources, rank int) ResourcesWithState {
 		Rank:         rank,
 		ResourceID:   summary.ResourcesID,
 		AllocationID: summary.AllocationID,
+		Started:      summary.Started,
+		Exited:       summary.Exited,
 	}
 }
 
@@ -74,15 +76,17 @@ func (r *ResourcesWithState) Persist() error {
 	return err
 }
 
-func (rs resourcesList) append(ars []sproto.Resources) error {
+func (rs resourcesList) append(ars map[sproto.ResourcesID]sproto.Resources) error {
 	start := len(rs)
-	for rank, r := range ars {
+	rank := 0
+	for _, r := range ars {
 		summary := r.Summary()
 		state := NewResourcesState(r, start+rank)
 		if err := state.Persist(); err != nil {
 			return err
 		}
 		rs[summary.ResourcesID] = &state
+		rank++
 	}
 
 	return nil
@@ -124,10 +128,30 @@ func (rs resourcesList) started() resourcesList {
 	return nrs
 }
 
+func (rs resourcesList) active() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited == nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
 func (rs resourcesList) exited() resourcesList {
 	nrs := resourcesList{}
 	for id, r := range rs {
 		if r.Exited != nil {
+			nrs[id] = r
+		}
+	}
+	return nrs
+}
+
+func (rs resourcesList) failed() resourcesList {
+	nrs := resourcesList{}
+	for id, r := range rs {
+		if r.Exited != nil && r.Exited.Failure != nil {
 			nrs[id] = r
 		}
 	}

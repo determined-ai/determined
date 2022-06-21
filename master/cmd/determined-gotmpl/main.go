@@ -146,6 +146,6 @@ Adds:
 			log.Fatal(err)
 		}
 	} else {
-		fmt.Print(b.String())
+		fmt.Print(b.String()) //nolint: forbidigo
 	}
 }

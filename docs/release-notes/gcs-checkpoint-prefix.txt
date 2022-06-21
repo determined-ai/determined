@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Configuration: Add support for ``checkpointStorage.prefix`` in master and experiment
-   configuration for Google Cloud Storage (gcs).

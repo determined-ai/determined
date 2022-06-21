@@ -138,10 +138,8 @@ func (a *apiServer) LaunchTensorboard(
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
 
-	spec.Metadata = map[string]interface{}{
-		"experiment_ids": req.ExperimentIds,
-		"trial_ids":      req.TrialIds,
-	}
+	spec.Metadata.ExperimentIDs = req.ExperimentIds
+	spec.Metadata.TrialIDs = req.TrialIds
 
 	logDirs := make([]string, 0)
 	uniqMounts := map[string]model.BindMount{}

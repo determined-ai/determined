@@ -20,7 +20,7 @@ export const ARIA_LABEL_CONTAINER = 'new-tag-container';
 export const ARIA_LABEL_TRIGGER = 'new-tag-trigger';
 export const ARIA_LABEL_INPUT = 'new-tag-input';
 
-const TAG_MAX_LENGTH = 10;
+const TAG_MAX_LENGTH = 50;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (

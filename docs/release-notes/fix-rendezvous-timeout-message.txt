@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Trial: Fix a bug where the rendezvous timeout warning could be printed erroneously.

@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import datetime
 import enum
 import inspect
@@ -11,10 +12,12 @@ import pathlib
 import random
 import re
 import shutil
+import signal
 import socket
+import subprocess
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Set, SupportsFloat, Tuple, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, SupportsFloat, Tuple, cast
 
 import determined as det
 from determined import constants
@@ -325,3 +328,46 @@ def match_legacy_trial_class(arg: str) -> bool:
 
 def legacy_trial_entrypoint_to_script(trial_entrypoint: str) -> List[str]:
     return ["python3", "-m", "determined.exec.harness", trial_entrypoint]
+
+
+def force_create_symlink(src: str, dst: str) -> None:
+    os.makedirs(src, exist_ok=True)
+    try:
+        os.symlink(src, dst, target_is_directory=True)
+    except FileExistsError:
+        if os.path.islink(dst):
+            os.unlink(dst)
+        elif os.path.isfile(dst):
+            os.unlink(dst)
+        else:
+            shutil.rmtree(dst)
+        try:
+            os.symlink(src, dst, target_is_directory=True)
+        except FileExistsError:
+            # in case of a race between two workers
+            pass
+
+
+@contextlib.contextmanager
+def forward_signals(p: subprocess.Popen, *signums: signal.Signals) -> Iterator[None]:
+    """Forward a list of signals to a subprocess, restoring the original handlers afterwards."""
+    if not signums:
+        # Pick a useful default for wrapper processes.
+        names = ["SIGINT", "SIGTERM", "SIGHUP", "SIGUSR1", "SIGUSR2", "SIGWINCH", "SIGBREAK"]
+        signums = tuple(getattr(signal, name) for name in names if hasattr(signal, name))
+
+    def signal_passthru(signum: Any, frame: Any) -> None:
+        p.send_signal(signum)
+
+    old_handlers = [None for n in signums]  # type: List[Any]
+    try:
+        # Install passthru handlers.
+        for i, n in enumerate(signums):
+            old_handlers[i] = signal.signal(n, signal_passthru)
+        yield
+    finally:
+        # restore original handlers
+        for n, old in zip(signums, old_handlers):
+            if old is None:
+                continue
+            signal.signal(n, old)

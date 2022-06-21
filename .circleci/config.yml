@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.18.2-dev0
+    default: 0.18.3-dev0
   docker-image:
     type: string
     default: cimg/base:2021.11
@@ -75,6 +75,11 @@ upstream-feature-branch: &upstream-feature-branch
       - /release-.*/
       - master
 
+any-upstream: &any-upstream
+  branches:
+    ignore:
+      - /pull\/.*/
+
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
@@ -104,6 +109,22 @@ commands:
             else
               echo "detected non-docs-only changes: $DIFF_DIRS"
             fi
+
+  skip-if-webui-only:
+    steps:
+      - run: git fetch upstream
+      - run:
+          name: check for webui-only changes (must be run after skip-if-docs-only)
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
+            if [ "$DIFF_DIRS" = "webui" ] ; then
+              echo "webui-only change detected, halting job now"
+              circleci-agent step halt
+            else
+              echo "detected non-webui-only changes: $DIFF_DIRS"
+            fi
+
 
   set-slack-user-id:
     steps:
@@ -1614,6 +1635,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
 
@@ -2034,7 +2056,7 @@ workflows:
       - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
-          filters: *upstream-feature-branch
+          filters: *any-upstream
       - test-examples
       - python-coverage:
           requires:
@@ -2074,10 +2096,7 @@ workflows:
           requires:
             - build-react
             - build-docs
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
+          filters: *any-upstream
 
       - test-debian-packaging:
           requires:
@@ -2122,7 +2141,7 @@ workflows:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
-          parallelism: 1
+          parallelism: 2
           tf1: false
           tf2: true
           mark: managed_devcluster

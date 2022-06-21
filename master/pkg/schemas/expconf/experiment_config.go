@@ -34,6 +34,7 @@ type ExperimentConfigV0 struct {
 	RawOptimizations            *OptimizationsConfigV0      `json:"optimizations"`
 	RawPerformInitialValidation *bool                       `json:"perform_initial_validation"`
 	RawProfiling                *ProfilingConfigV0          `json:"profiling"`
+	RawProject                  *string                     `json:"project"`
 	RawRecordsPerEpoch          *int                        `json:"records_per_epoch"`
 	RawReproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
 	RawResources                *ResourcesConfigV0          `json:"resources"`
@@ -41,6 +42,7 @@ type ExperimentConfigV0 struct {
 	RawSearcher                 *SearcherConfigV0           `json:"searcher"`
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
+	RawWorkspace                *string                     `json:"workspace"`
 }
 
 // Unit implements the model.InUnits interface.
