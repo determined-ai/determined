@@ -7,17 +7,18 @@ from typing import Any, List
 from termcolor import colored
 
 from determined.cli import command, task
+from determined.cli.util import format_args
 from determined.common import api, constants, context
 from determined.common.api import authentication
 from determined.common.check import check_eq
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 from .command import CONFIG_DESC, CONTEXT_DESC, parse_config, render_event_stream
 
 
 @authentication.required
 def start_tensorboard(args: Namespace) -> None:
-    if args.trial_ids is None and args.experiment_ids is None:
+    if not (args.trial_ids or args.experiment_ids):
         print("Either experiment_ids or trial_ids must be specified.")
         sys.exit(1)
 
@@ -76,7 +77,8 @@ args_description = [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
-                help="show all TensorBoards (including other users')")
+                help="show all TensorBoards (including other users')"),
+            Group(format_args["json"], format_args["csv"]),
         ], is_default=True),
         Cmd("start", start_tensorboard, "start new TensorBoard instance", [
             Arg("experiment_ids", type=int, nargs="*",

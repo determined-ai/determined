@@ -416,7 +416,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		ctx.Log().Debugf("ResourcesAllocated restored state: %s", a.getModelState())
 	}
 
-	a.setModelState(model.AllocationStateAssigned)
+	a.setMostProgressedModelState(model.AllocationStateAssigned)
 	if err := a.resources.append(msg.Resources); err != nil {
 		return errors.Wrapf(err, "appending resources")
 	}
@@ -468,6 +468,13 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 				IsMultiAgent: len(a.resources) > 1,
 			}); err != nil {
 				return fmt.Errorf("starting resources (%v): %w", r, err)
+			}
+		}
+	} else if a.getModelState() == model.AllocationStateRunning {
+		// Restore proxies.
+		for _, r := range a.resources {
+			if a.req.ProxyPort != nil && r.Started != nil && r.Started.Addresses != nil {
+				a.registerProxies(ctx, r.Started.Addresses)
 			}
 		}
 	}
@@ -728,7 +735,7 @@ func (a *Allocation) allNonDaemonsExited() bool {
 }
 
 func (a *Allocation) preempt(ctx *actor.Context, reason string) {
-	ctx.Log().Info("decided to gracefully terminate allocation")
+	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
 	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
@@ -747,7 +754,7 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 		return
 	}
 
-	ctx.Log().Info("decided to kill allocation")
+	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
 	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 		Level: ptrs.Ptr(model.LogLevelInfo),
 		Log: fmt.Sprintf(
@@ -778,7 +785,6 @@ func (a *Allocation) registerProxies(ctx *actor.Context, addresses []cproto.Addr
 	if cfg == nil {
 		return
 	}
-
 	if len(a.resources) > 1 {
 		// We don't support proxying multi-reservation allocations.
 		ctx.Log().Warnf("proxy for multi-reservation allocation aborted")

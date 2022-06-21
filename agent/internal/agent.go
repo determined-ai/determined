@@ -378,12 +378,14 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 		case err == nil:
 			return true
 		case errors.Is(err, aproto.ErrAgentMustReconnect):
+			ctx.Log().Warn("received ErrAgentMustReconnect, exiting")
 			return false
 		default:
 			ctx.Log().WithError(err).Error("error reconnecting to master")
 		}
 		time.Sleep(time.Duration(a.Options.AgentReconnectBackoff) * time.Second)
 	}
+	ctx.Log().Warn("exhausted reconnect attempts, exiting")
 	return false
 }
 

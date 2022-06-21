@@ -405,6 +405,7 @@ def test_killed_pending_command_terminates() -> None:
     with cmd.interactive_command(
         "cmd", "run", "--config", "resources.slots=10485", "sleep infinity"
     ) as command:
+        assert command.task_id is not None
         for _ in range(10):
             assert cmd.get_command(command.task_id)["state"] == "STATE_PENDING"
             time.sleep(1)

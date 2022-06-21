@@ -4,6 +4,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -43,6 +44,9 @@ type ContainerSnapshot struct {
 	ID            cproto.ID          `json:"id" bun:"container_id"`
 	State         cproto.State       `json:"state" bun:"state"`
 	Devices       []device.Device    `json:"devices" bun:"devices"`
+
+	// Relations
+	ResourcesWithState task.ResourcesWithState `bun:"rel:belongs-to,join:resource_id=resource_id"`
 }
 
 // NewContainerSnapshot creates an instance from `cproto.Container`.
