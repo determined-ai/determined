@@ -152,7 +152,14 @@ def test_agent_config_path() -> None:
     with open(etc_path) as f:
         assert f.read() == out.decode("utf-8")
 
-    client.containers.get("test-fluent")  # Ensure config actually took effect.
+    fluent = None
+    for _ in range(10):
+        try:
+            fluent = client.containers.get("test-fluent")
+        except docker.errors.NotFound:
+            print("Waiting for 'test-fluent' container to be created")
+            time.sleep(10)
+    assert fluent is not None  # Ensure config actually took effect.
     agent_down(["--agent-name", agent_name])
 
     # Validate CLI flags overwrite config file options.
