@@ -26,6 +26,7 @@ import Routes from './routes';
 
 const routeComponentMap: Record<string, FC> = {
   cluster: Deprecated,
+  clusterHistorical: Deprecated,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
   experimentDetails: ExperimentDetails,

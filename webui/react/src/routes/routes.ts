@@ -97,10 +97,18 @@ const routes: RouteConfig[] = [
   },
   {
     icon: 'cluster',
+    id: 'clusterHistorical',
+    needAuth: true,
+    path: '/cluster/historical-usage',
+    redirect: '/clusters/historical-usage',
+    title: 'Cluster Historical Usage',
+  },
+  {
+    icon: 'cluster',
     id: 'cluster',
     needAuth: true,
     path: '/cluster/',
-    redirect: '/clsuters',
+    redirect: '/clusters',
     title: 'Cluster',
   },
   {
@@ -120,6 +128,7 @@ const routes: RouteConfig[] = [
     id: 'clusterLogs',
     needAuth: true,
     path: '/logs',
+    redirect: '/clusters/logs',
     title: 'Cluster Logs',
   },
   {
@@ -149,7 +158,7 @@ const routes: RouteConfig[] = [
     id: 'jobs',
     needAuth: true,
     path: '/jobs',
-    redirect: '/clustesr',
+    redirect: '/clusters',
     title: 'Job Queue',
   },
 ];
