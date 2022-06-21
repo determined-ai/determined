@@ -4,7 +4,6 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useTheme from 'hooks/useTheme';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
@@ -17,6 +16,7 @@ import { clone } from 'shared/utils/data';
 import { DarkLight, ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { maxPoolSlotCapacity } from '../pages/Clusters/ClustersOverview';
 
 import Json from './Json';
 import css from './ResourcePoolCardLight.module.scss';

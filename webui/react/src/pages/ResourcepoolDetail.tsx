@@ -10,7 +10,6 @@ import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
@@ -24,6 +23,7 @@ import { ResourceState } from 'types';
 import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
+import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';

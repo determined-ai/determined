@@ -1,5 +1,4 @@
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -9,22 +8,23 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import {
-  defaultRowClassName, getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  defaultRowClassName,
+  getFullPaginationConfig,
+  isAlternativeAction,
+  MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { agentsToOverview, initResourceTally, useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
-import { percent } from 'shared/utils/number';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShirtSize } from 'themes';
-import {
-  ClusterOverviewResource,
-  ClusterOverview as Overview, ResourcePool, ResourceState, ResourceType,
-} from 'types';
+import { ClusterOverviewResource, ResourcePool, ResourceState, ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import { Pagination } from '../../shared/types';
+import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
 
 import { ClusterOverallBar } from './ClusterOverallBar';
 import { ClusterOverallStats } from './ClusterOverallStats';
@@ -36,32 +36,6 @@ const STORAGE_SORTER_KEY = 'sorter';
 const VIEW_CHOICE_KEY = 'view-choice';
 
 const defaultSorter = { descend: false, key: 'name' };
-
-/**
- * maximum theoretcial capacity of the resource pool in terms of the advertised
- * compute slot type.
- * @param pool resource pool
- */
-export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
-  if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
-    return pool.maxAgents * pool.slotsPerAgent;
-  // on-premise deployments don't have dynamic agents and we don't know how many
-  // agents might connect.
-  return pool.slotsAvailable;
-};
-
-export const clusterStatusText = (
-  overview: Overview,
-  pools: ResourcePool[],
-): string | undefined => {
-  if (overview[ResourceType.ALL].allocation === 0) return undefined;
-  const totalSlots = pools.reduce((totalSlots, currentPool) => {
-    return totalSlots + maxPoolSlotCapacity(currentPool);
-  }, 0);
-  if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-  return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-        / totalSlots)}%`;
-};
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);

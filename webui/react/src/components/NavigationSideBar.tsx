@@ -13,9 +13,9 @@ import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
+import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 
 import Icon from '../shared/components/Icon/Icon';
 

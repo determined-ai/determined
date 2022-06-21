@@ -9,9 +9,9 @@ import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
 import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
-import { clusterStatusText } from 'pages/Cluster/ClusterOverview';
 import { handlePath, paths } from 'routes/utils';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
+import { clusterStatusText } from '../pages/Clusters/ClustersOverview';
 
 import Icon from '../shared/components/Icon/Icon';
 
