@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { generateAlphaNumeric } from 'shared/utils/string';
-import { getStateColorCssVar } from 'themes';
 import { ResourceState, SlotState } from 'types';
 
 import Badge, { BadgeType } from './Badge';
@@ -34,15 +33,14 @@ describe('Badge', () => {
       );
     };
     const view = render(<TestComponent />);
-    const slotFree = view.getByText(stateToLabel(SlotState.Free));
-    expect(slotFree).toHaveStyle({
-      backgroundColor: getStateColorCssVar(SlotState.Free),
-      color: '#234b65',
-    });
+    const slotFree = await view.getByText(stateToLabel(SlotState.Free));
+
+    expect(slotFree).toHaveClass('state neutral');
+
     userEvent.click(view.getByRole('button'));
+
     await waitFor(() => {
-      const slotRunning = view.getByText(stateToLabel(SlotState.Running));
-      expect(slotRunning).toHaveStyle({ backgroundColor: getStateColorCssVar(SlotState.Running) });
+      expect(view.getByText(stateToLabel(SlotState.Running))).toBeInTheDocument();
     });
   });
 
@@ -65,9 +63,6 @@ describe('Badge', () => {
     };
     const view = render(<BadgeComponent />);
     const statePotential = view.getByText(stateToLabel(ResourceState.Potential));
-    expect(statePotential).toHaveStyle({
-      backgroundColor: getStateColorCssVar(ResourceState.Potential),
-      color: '#234b65',
-    });
+    expect(statePotential).toHaveClass('state neutral dashed');
   });
 });
