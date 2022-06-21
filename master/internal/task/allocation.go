@@ -150,6 +150,7 @@ func NewAllocation(
 			Slots:        req.SlotsNeeded,
 			AgentLabel:   req.Name,
 			ResourcePool: req.ResourcePool,
+			State:        ptrs.Ptr(model.AllocationStatePending),
 		},
 
 		resources: resourcesList{},

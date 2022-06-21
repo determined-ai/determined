@@ -1,0 +1,10 @@
+UPDATE allocations
+SET state = (CASE state
+  WHEN 1 THEN 0
+  WHEN 2 THEN 1
+  WHEN 3 THEN 2
+  WHEN 4 THEN 3
+  WHEN 5 THEN 4
+  WHEN 7 THEN 5
+  WHEN 6 THEN 6
+  END);

@@ -112,6 +112,7 @@ func testGetCheckpoint(
 					"framework":          "some framework",
 					"determined_version": "1.0.0",
 				},
+				State: model.AllocationStatePending,
 			}
 			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
 

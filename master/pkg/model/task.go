@@ -117,23 +117,25 @@ type ResourceAggregates struct {
 }
 
 const (
+	// AllocationStateUnspecified state denotes that the command status is unknown.
+	AllocationStateUnspecified AllocationState = 0
 	// AllocationStatePending state denotes that the command is awaiting allocation.
-	AllocationStatePending AllocationState = 0
+	AllocationStatePending AllocationState = 1
 	// AllocationStateAssigned state denotes that the command has been assigned to an agent but has
 	// not started yet.
-	AllocationStateAssigned AllocationState = 1
+	AllocationStateAssigned AllocationState = 2
 	// AllocationStatePulling state denotes that the command's base image is being pulled from the
 	// Docker registry.
-	AllocationStatePulling AllocationState = 2
+	AllocationStatePulling AllocationState = 3
 	// AllocationStateStarting state denotes that the image has been pulled and the task is being
 	// started, but the task is not ready yet.
-	AllocationStateStarting AllocationState = 3
+	AllocationStateStarting AllocationState = 4
 	// AllocationStateRunning state denotes that the service in the command is running.
-	AllocationStateRunning AllocationState = 4
-	// AllocationStateTerminating state denotes that the command is terminating.
-	AllocationStateTerminating AllocationState = 5
+	AllocationStateRunning AllocationState = 5
 	// AllocationStateTerminated state denotes that the command has exited or has been aborted.
 	AllocationStateTerminated AllocationState = 6
+	// AllocationStateTerminating state denotes that the command is terminating.
+	AllocationStateTerminating AllocationState = 7
 )
 
 // MostProgressedAllocationState returns the further progressed state. E.G. a call
