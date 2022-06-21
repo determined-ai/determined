@@ -335,17 +335,20 @@ def force_create_symlink(src: str, dst: str) -> None:
     try:
         os.symlink(src, dst, target_is_directory=True)
     except FileExistsError:
-        if os.path.islink(dst):
-            os.unlink(dst)
-        elif os.path.isfile(dst):
-            os.unlink(dst)
-        else:
-            shutil.rmtree(dst)
         try:
-            os.symlink(src, dst, target_is_directory=True)
-        except FileExistsError:
-            # in case of a race between two workers
-            pass
+            if os.path.islink(dst) or os.path.isfile(dst):
+                os.unlink(dst)
+            else:
+                shutil.rmtree(dst)
+
+            try:
+                os.symlink(src, dst, target_is_directory=True)
+            except FileExistsError:
+                # in case of a race between two workers
+                pass
+
+        except PermissionError as err:
+            logging.warning(f"{err} trying to remove {dst}")
 
 
 @contextlib.contextmanager
