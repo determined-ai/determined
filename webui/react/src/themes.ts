@@ -1,5 +1,6 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState, SlotState } from 'types';
+import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
+  SlotState } from 'types';
 
 import {
   DarkLight,
