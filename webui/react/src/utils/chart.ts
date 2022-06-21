@@ -45,7 +45,7 @@ export const getNumericRange = (values: number[], forceRange = true): Range<numb
 
   if (forceRange && range[0] === range[1]) {
     range[0] = Math.floor(range[0]);
-    range[1] = Math.ceil(range[1]);
+    range[1] = Math.ceil(range[1] + Number.EPSILON);
   }
 
   return range;

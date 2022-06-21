@@ -48,7 +48,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}
-      {!props.loading && props.filters && (
+      {props.filters && (
         <div className={css.filterBar}>
           {props.filters}
         </div>

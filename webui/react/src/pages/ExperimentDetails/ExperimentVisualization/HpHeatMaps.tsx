@@ -5,6 +5,7 @@ import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
+import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -38,6 +39,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
   selectedView: ViewType;
 }
 
@@ -76,6 +78,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
   selectedView,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
@@ -377,6 +380,7 @@ const HpHeatMaps: React.FC<Props> = ({
                     return (
                       <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
                         <UPlotScatter
+                          colorScaleDistribution={selectedScale}
                           data={chartProps[key].data}
                           options={chartProps[key].options}
                           tooltipLabels={chartProps[key].tooltipLabels}
@@ -400,6 +404,7 @@ const HpHeatMaps: React.FC<Props> = ({
         onPrevious={handleGalleryPrevious}>
         {chartProps && activeHParam && (
           <UPlotScatter
+            colorScaleDistribution={selectedScale}
             data={chartProps[activeHParam].data}
             options={{
               ...chartProps[activeHParam].options,

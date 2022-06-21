@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
+import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -32,6 +33,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
 }
 
 interface HpMetricData {
@@ -50,6 +52,7 @@ const ScatterPlots: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
@@ -58,6 +61,8 @@ const ScatterPlots: React.FC<Props> = ({
   const [ pageError, setPageError ] = useState<Error>();
   const [ activeHParam, setActiveHParam ] = useState<string>();
   const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
+
+  const yScaleKey = selectedScale === Scale.Log ? 'yLog' : 'y';
 
   const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
@@ -95,7 +100,7 @@ const ScatterPlots: React.FC<Props> = ({
               splits: xSplits,
               values: xValues,
             },
-            { scale: 'y' },
+            { scale: yScaleKey },
           ],
           cursor: { drag: { setScale: false, x: false, y: false } },
           title,
@@ -104,7 +109,7 @@ const ScatterPlots: React.FC<Props> = ({
       };
       return acc;
     }, {} as Record<string, UPlotScatterProps>);
-  }, [ chartData, selectedHParams, selectedMetric ]);
+  }, [ chartData, selectedHParams, selectedMetric, yScaleKey ]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
 

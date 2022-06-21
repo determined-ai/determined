@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
+import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
@@ -34,6 +35,7 @@ interface Props {
   fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
+  selectedScale: Scale;
 }
 
 const MAX_DATAPOINTS = 5000;
@@ -44,6 +46,7 @@ const LearningCurve: React.FC<Props> = ({
   fullHParams,
   selectedMaxTrial,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
@@ -230,6 +233,7 @@ const LearningCurve: React.FC<Props> = ({
               data={chartData}
               focusedTrialId={highlightedTrialId}
               selectedMetric={selectedMetric}
+              selectedScale={selectedScale}
               selectedTrialIds={selectedRowKeys}
               trialIds={trialIds}
               xValues={batches}
