@@ -145,7 +145,7 @@ export const getUserSetting: DetApi<
   };
 
 export const updateUserSetting: DetApi<
-Service.UpdateUserSettingParams, Api.V1GetUserSettingResponse, void
+Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
   > = {
     name: 'updateUserSetting',
     postProcess: (response) => response,
