@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DetailedUser, Job, Metadata, Note, MetricName, MetricType, Scale } from 'types';
+import { DetailedUser, Job, Metadata, MetricName, MetricType, Note, Scale } from 'types';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
 

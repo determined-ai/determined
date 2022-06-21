@@ -537,7 +537,7 @@ func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, log_scale bool) ([]*apiv1.SummarizedMetric, error) {
+	endBatches int, logScale bool) ([]*apiv1.SummarizedMetric, error) {
 	var metricSeries []lttb.Point
 	var startTime time.Time
 	var err error
@@ -555,7 +555,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, log_scale)
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
 			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
@@ -568,7 +568,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			if err != nil {
 				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
 			}
-			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, log_scale)
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
 			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
 	}
@@ -599,16 +599,16 @@ func (a *apiServer) SummarizeTrial(_ context.Context,
 func (a *apiServer) CompareTrials(_ context.Context,
 	req *apiv1.CompareTrialsRequest) (*apiv1.CompareTrialsResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0)
-	for _, trialId := range req.TrialIds {
+	for _, trialID := range req.TrialIds {
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
-		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialId); {
+		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
 		case err == db.ErrNotFound:
-			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialId)
+			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
 		case err != nil:
-			return nil, errors.Wrapf(err, "failed to get trial %d", trialId)
+			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
 		}
 
-		tsample, err := a.MultiTrialSample(trialId, req.MetricNames, req.MetricType,
+		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			(req.Scale == apiv1.Scale_SCALE_LOG))
 		if err != nil {
