@@ -540,13 +540,13 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	endBatches int, log_scale bool) ([]*apiv1.SummarizedMetric, error) {
 	var metricSeries []lttb.Point
 	var startTime time.Time
-	// var endTime time.Time
 	var err error
 
 	var metrics []*apiv1.SummarizedMetric
 
 	for _, name := range metricNames {
-		if metricType != apiv1.MetricType_METRIC_TYPE_VALIDATION {
+		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricSeries, _, err = a.m.db.TrainingMetricsSeries(trialID, startTime, name, startBatches,
@@ -558,7 +558,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, log_scale)
 			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
 		}
-		if metricType != apiv1.MetricType_METRIC_TYPE_TRAINING {
+		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
 			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,

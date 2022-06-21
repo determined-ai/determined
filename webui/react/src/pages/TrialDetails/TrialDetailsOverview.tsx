@@ -52,6 +52,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metricNames={metricNames}
         metrics={metrics}
         trialId={trial?.id}
+        workloads={trial?.workloads}
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads
