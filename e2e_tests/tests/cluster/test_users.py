@@ -15,7 +15,7 @@ import pytest
 from pexpect import spawn
 
 from determined.common import constants, yaml
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import authentication, bindings, certs, errors
 from determined.common.experimental import session
 from tests import command
 from tests import config as conf
@@ -890,11 +890,13 @@ def test_change_displayname(clean_auth: None) -> None:
     )
     sess = session.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
 
+    # Get API bindings object for the created test user
     all_users = bindings.get_GetUsers(sess).users
     assert all_users is not None
     current_user = list(filter(lambda u: u.username == original_name, all_users))[0]
     assert current_user is not None and current_user.id
 
+    # Rename user using display name
     patch_user = bindings.v1PatchUser(displayName="renamed")
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
@@ -902,9 +904,15 @@ def test_change_displayname(clean_auth: None) -> None:
     assert modded_user is not None
     assert modded_user.displayName == "renamed"
 
+    # Avoid display name of 'admin'
+    patch_user.displayName = "Admin"
+    with pytest.raises(errors.APIException):
+        bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
+
+    # Clear display name (UI will show username)
     patch_user.displayName = ""
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    assert modded_user.displayName == original_name
+    assert modded_user.displayName == ""
