@@ -46,7 +46,7 @@ export interface SingleEntityParams {
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
 
-/*
+/**
  * Router Configuration
  * If the component is not defined, the route is assumed to be an external route,
  * meaning React will attempt to load the path outside of the internal routing
@@ -68,3 +68,9 @@ export type CommonProps = {
   className?: string;
   title?: string;
 };
+
+export interface SemanticVersion {
+  major: number;
+  minor: number;
+  patch: number;
+}
