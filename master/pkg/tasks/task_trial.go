@@ -54,7 +54,9 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			trialEntrypointMode,
 			tar.TypeReg,
 		),
+	}
 
+	additionalSSHFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(sshDir, nil, sshDirMode, tar.TypeDir),
 		s.Base.AgentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
 			keys.PublicKey,
@@ -72,6 +74,9 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			sshdConfigMode,
 			tar.TypeReg,
 		),
+	}
+
+	additionalRootFiles := archive.Archive{
 		archive.RootItem(
 			trialSSHConfigFile,
 			etc.MustStaticFile(etc.SSHConfigResource),
@@ -89,6 +94,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			rootDir,
 		),
 		wrapArchive(additionalFiles, rootDir),
+		wrapArchive(additionalRootFiles, rootDir),
+		wrapArchive(additionalSSHFiles, rootDir),
 	}
 
 	res.Description = fmt.Sprintf(

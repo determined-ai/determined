@@ -23,8 +23,8 @@ type (
 		Started          *sproto.ResourcesStarted `bun:"started"`
 		Exited           *sproto.ResourcesStopped `bun:"exited"`
 		Daemon           bool                     `bun:"daemon"`
-		ResourceID       sproto.ResourcesID       `bun:"resource_id,type:text"`   // db only
-		AllocationID     model.AllocationID       `bun:"allocation_id,type:text"` // db only
+		ResourceID       sproto.ResourcesID       `bun:"resource_id,pk,type:text"` // db only
+		AllocationID     model.AllocationID       `bun:"allocation_id,type:text"`  // db only
 
 		// The container state, if we're using a RM that uses containers and it was given to us.
 		// This is a rip in the abstraction, remove eventually. Do not add usages.
@@ -43,6 +43,8 @@ func NewResourcesState(r sproto.Resources, rank int) ResourcesWithState {
 		Rank:         rank,
 		ResourceID:   summary.ResourcesID,
 		AllocationID: summary.AllocationID,
+		Started:      summary.Started,
+		Exited:       summary.Exited,
 	}
 }
 

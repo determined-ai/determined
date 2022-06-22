@@ -160,13 +160,10 @@ func (rp *ResourcePool) restoreResources(
 
 	allocationID := req.AllocationID
 
-	subq := db.Bun().NewSelect().Model((*task.ResourcesWithState)(nil)).
-		Where("allocation_id = ?", allocationID).
-		Column("resource_id")
-
 	containerSnapshots := []agent.ContainerSnapshot{}
 	err := db.Bun().NewSelect().Model(&containerSnapshots).
-		Where("resource_id in (?)", subq).
+		Relation("ResourcesWithState").
+		Where("resources_with_state.allocation_id = ?", allocationID).
 		Scan(context.TODO())
 	if err != nil {
 		return err
@@ -195,6 +192,8 @@ func (rp *ResourcePool) restoreResources(
 			agent:       agentState,
 			devices:     cs.Devices,
 			containerID: cs.ID,
+			started:     cs.ResourcesWithState.Started,
+			exited:      cs.ResourcesWithState.Exited,
 		}
 		resources[cr.Summary().ResourcesID] = &cr
 	}
@@ -781,6 +780,8 @@ type containerResources struct {
 	agent       *agent.AgentState
 	devices     []device.Device
 	containerID cproto.ID
+	started     *sproto.ResourcesStarted
+	exited      *sproto.ResourcesStopped
 }
 
 // Summary summarizes a container allocation.
@@ -793,6 +794,8 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 			aproto.ID(c.agent.Handler.Address().Local()): c.devices},
 
 		ContainerID: &c.containerID,
+		Started:     c.started,
+		Exited:      c.exited,
 	}
 }
 

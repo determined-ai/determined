@@ -21,7 +21,7 @@ import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap,
+  metricTypeParamMap, Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';
@@ -38,6 +38,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
   selectedView: ViewType;
 }
 
@@ -76,6 +77,7 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
   selectedView,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
@@ -377,6 +379,7 @@ const HpHeatMaps: React.FC<Props> = ({
                     return (
                       <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
                         <UPlotScatter
+                          colorScaleDistribution={selectedScale}
                           data={chartProps[key].data}
                           options={chartProps[key].options}
                           tooltipLabels={chartProps[key].tooltipLabels}
@@ -400,6 +403,7 @@ const HpHeatMaps: React.FC<Props> = ({
         onPrevious={handleGalleryPrevious}>
         {chartProps && activeHParam && (
           <UPlotScatter
+            colorScaleDistribution={selectedScale}
             data={chartProps[activeHParam].data}
             options={{
               ...chartProps[activeHParam].options,

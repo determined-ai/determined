@@ -5,12 +5,9 @@ import React from 'react';
 import SelectFilter from 'components/SelectFilter';
 import { capitalize } from 'shared/utils/string';
 
-const { Option } = Select;
+import { Scale } from '../types';
 
-export enum Scale {
-  Linear = 'linear',
-  Log = 'log',
-}
+const { Option } = Select;
 
 interface Props {
   onChange: (value: Scale) => void;

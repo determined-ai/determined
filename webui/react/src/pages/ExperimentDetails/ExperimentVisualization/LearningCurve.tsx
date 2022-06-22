@@ -18,7 +18,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
-  metricTypeParamMap, RunState,
+  metricTypeParamMap, RunState, Scale,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
@@ -34,6 +34,7 @@ interface Props {
   fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
+  selectedScale: Scale;
 }
 
 const MAX_DATAPOINTS = 5000;
@@ -44,6 +45,7 @@ const LearningCurve: React.FC<Props> = ({
   fullHParams,
   selectedMaxTrial,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
@@ -230,6 +232,7 @@ const LearningCurve: React.FC<Props> = ({
               data={chartData}
               focusedTrialId={highlightedTrialId}
               selectedMetric={selectedMetric}
+              selectedScale={selectedScale}
               selectedTrialIds={selectedRowKeys}
               trialIds={trialIds}
               xValues={batches}

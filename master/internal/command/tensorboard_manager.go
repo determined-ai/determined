@@ -24,7 +24,10 @@ type tensorboardManager struct {
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+	case actor.PreStart:
+		tryRestoreCommandsByType(ctx, t.db, t.taskLogger, model.TaskTypeTensorboard)
+
+	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}

@@ -19,7 +19,7 @@ import { clone, flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Scale,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
@@ -40,6 +40,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
 }
 
 interface HpTrialData {
@@ -57,6 +58,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -155,11 +157,20 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       const key = metricNameToStr(selectedMetric);
-      newDimensions.push({ key, label: key, type: DimensionType.Linear });
+      newDimensions.push(selectedScale === Scale.Log ? {
+        key,
+        label: key,
+        logBase: 10,
+        type: DimensionType.Logarithmic,
+      } : {
+        key,
+        label: key,
+        type: DimensionType.Linear,
+      });
     }
 
     return newDimensions;
-  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
+  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedScale, selectedHParams ]);
 
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
@@ -242,7 +253,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric, ui.isPageHidden ]);
+  }, [
+    experiment.id,
+    selectedBatch,
+    selectedBatchMargin,
+    selectedMetric,
+    selectedScale,
+    ui.isPageHidden,
+  ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {

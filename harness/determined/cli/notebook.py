@@ -7,11 +7,12 @@ from termcolor import colored
 
 from determined.cli import command, render, task
 from determined.cli.session import setup_session
+from determined.cli.util import format_args
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.check import check_eq
 from determined.common.context import Context
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, render_event_stream
 
@@ -72,7 +73,8 @@ args_description = [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
-                help="show all notebooks (including other users')")
+                help="show all notebooks (including other users')"),
+            Group(format_args["json"], format_args["csv"]),
         ], is_default=True),
         Cmd("config", partial(command.config),
             "display notebook config", [

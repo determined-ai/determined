@@ -19,6 +19,7 @@ import { hasObjectKeys } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
+  Scale,
 } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
 
@@ -94,6 +95,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
     metric: searcherMetric.current,
+    scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
   const initFilters = storage.getWithDefault<VisualizationFilters>(
@@ -343,6 +345,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
             selectedMetric={filters.metric}
+            selectedScale={filters.scale}
           />
         </Tabs.TabPane>
         <Tabs.TabPane
@@ -356,6 +359,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
+            selectedScale={filters.scale}
           />
         </Tabs.TabPane>
         <Tabs.TabPane
@@ -369,6 +373,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
+            selectedScale={filters.scale}
           />
         </Tabs.TabPane>
         <Tabs.TabPane
@@ -382,6 +387,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
+            selectedScale={filters.scale}
             selectedView={filters.view}
           />
         </Tabs.TabPane>

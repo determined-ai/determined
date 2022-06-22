@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -517,6 +518,106 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	resp.Workloads = workloads.Workloads
 
 	return resp, nil
+}
+
+func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.SummarizedMetric,
+	metricSeries []lttb.Point) []*apiv1.SummarizedMetric {
+	for _, in := range metricSeries {
+		out := apiv1.DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		m.Data = append(m.Data, &out)
+	}
+	if len(m.Data) > 0 {
+		return append(metrics, m)
+	}
+	return metrics
+}
+
+func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
+	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
+	endBatches int, logScale bool) ([]*apiv1.SummarizedMetric, error) {
+	var metricSeries []lttb.Point
+	var startTime time.Time
+	var err error
+
+	var metrics []*apiv1.SummarizedMetric
+
+	for _, name := range metricNames {
+		if (metricType == apiv1.MetricType_METRIC_TYPE_TRAINING) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+			var metric apiv1.SummarizedMetric
+			metric.Name = name
+			metricSeries, _, err = a.m.db.TrainingMetricsSeries(trialID, startTime, name, startBatches,
+				endBatches)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of training metrics")
+			}
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
+			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
+		}
+		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
+			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
+			var metric apiv1.SummarizedMetric
+			metric.Name = name
+			metricSeries, _, err = a.m.db.ValidationMetricsSeries(trialID, startTime, name, startBatches,
+				endBatches)
+			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
+			if err != nil {
+				return nil, errors.Wrapf(err, "error fetching time series of validation metrics")
+			}
+			metricSeries = lttb.Downsample(metricSeries, maxDatapoints, logScale)
+			metrics = a.appendToMetrics(metrics, &metric, metricSeries)
+		}
+	}
+	return metrics, nil
+}
+
+func (a *apiServer) SummarizeTrial(_ context.Context,
+	req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
+	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
+	switch err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
+	}
+
+	tsample, err := a.MultiTrialSample(req.TrialId, req.MetricNames, req.MetricType,
+		int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
+		(req.Scale == apiv1.Scale_SCALE_LOG))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed sampling")
+	}
+	resp.Metrics = tsample
+
+	return resp, nil
+}
+
+func (a *apiServer) CompareTrials(_ context.Context,
+	req *apiv1.CompareTrialsRequest) (*apiv1.CompareTrialsResponse, error) {
+	trials := make([]*apiv1.ComparableTrial, 0)
+	for _, trialID := range req.TrialIds {
+		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
+		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
+		case err == db.ErrNotFound:
+			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
+		case err != nil:
+			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
+		}
+
+		tsample, err := a.MultiTrialSample(trialID, req.MetricNames, req.MetricType,
+			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
+			(req.Scale == apiv1.Scale_SCALE_LOG))
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed sampling")
+		}
+		container.Metrics = tsample
+		trials = append(trials, container)
+	}
+	return &apiv1.CompareTrialsResponse{Trials: trials}, nil
 }
 
 func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWorkloadsRequest) (
