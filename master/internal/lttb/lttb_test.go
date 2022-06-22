@@ -27,7 +27,7 @@ func TestLTTB(t *testing.T) {
 		input[9],
 	}
 
-	actual := Downsample(input, 5)
+	actual := Downsample(input, 5, false)
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Unexpected result from LTTB, expected %v, actual %v", expected, actual)
