@@ -12,9 +12,11 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
+import { Primitive } from 'shared/types';
+import { clone } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
-import { ExperimentBase, Hyperparameter, HyperparameterType, ResourcePool } from 'types';
+import { ExperimentBase, ExperimentSearcherName, Hyperparameter, HyperparameterType, ResourcePool } from 'types';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
@@ -33,26 +35,44 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 interface SearchMethod {
   description: string;
-  name: string;
+  displayName: string;
+  name: `${ExperimentSearcherName}`;
 }
 
 const SearchMethods: Record<string, SearchMethod> = {
   ASHA: {
     description: `Automated HP search multi-trial experiment that will stop poor 
   performing trials early as it searches the HP space.`,
-    name: 'Adaptive ASHA',
+    displayName: 'Adaptive ASHA',
+    name: 'adaptive_asha',
+  },
+  AsyncHalving: {
+    description: `Automated HP search multi-trial experiment that will stop poor
+  performing trials early as it searches the HP space.`,
+    displayName: 'Async Halving',
+    name: 'async_halving',
   },
   Grid: {
     description: `Brute force evaluates all possible hyperparameter configurations 
   and returns the best.`,
-    name: 'Grid',
+    displayName: 'Grid',
+    name: 'grid',
   },
   Random: {
     description: `Evaluates a set of hyperparameter configurations chosen at 
   random and returns the best.`,
-    name: 'Random',
+    displayName: 'Random',
+    name: 'random',
   },
 } as const;
+
+interface HyperparameterRowValues {
+  active: boolean,
+  max_val: number,
+  min_val:number
+  type: HyperparameterType,
+  value: number | string,
+}
 
 const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
@@ -65,7 +85,9 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const [ canceler ] = useState(new AbortController());
 
   const handleSelectSearchMethod = useCallback((value: SelectValue) => {
-    setSearchMethod(SearchMethods[value as string]);
+    setSearchMethod(
+      Object.values(SearchMethods).find(searcher => searcher.name === value) ?? SearchMethods.ASHA,
+    );
   }, []);
 
   const hyperparameters = useMemo(() => {
@@ -99,8 +121,11 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             name="searcher">
             <SelectFilter
               onChange={handleSelectSearchMethod}>
-              {Object.entries(SearchMethods).map(method =>
-                <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
+              {Object.values(SearchMethods).map(searcher => (
+                <Select.Option key={searcher.name} value={searcher.name}>
+                  {searcher.displayName}
+                </Select.Option>
+              ))}
             </SelectFilter>
           </Form.Item>
           <p>{searchMethod.description}</p>
@@ -112,7 +137,6 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <h2>Max value</h2>
             {hyperparameters.map(hp => <HyperparameterRow form={form} key={hp.name} {...hp} />)}
           </div>
-
         </div>
       </Form>
     );
@@ -123,7 +147,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     searchMethod.description ]);
 
   const handleSelectPool = useCallback((value: SelectValue) => {
-    setResourcePool(resourcePools.find(pool => pool.imageId === value));
+    setResourcePool(resourcePools.find(pool => pool.name === value));
   }, [ resourcePools ]);
 
   const maxSlots = useMemo(
@@ -145,14 +169,14 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           <p>Select the resources to allocate to this search and the trial iteration limit.</p>
           <div className={css.poolRow}>
             <Form.Item
-              initialValue={resourcePools?.[0].imageId}
+              initialValue={resourcePools?.[0].name}
               label="Resource Pool"
               name="pool"
               rules={[ { required: true } ]}>
               <SelectFilter
                 onChange={handleSelectPool}>
                 {resourcePools.map(pool => (
-                  <Select.Option key={pool.imageId} value={pool.imageId}>
+                  <Select.Option key={pool.name} value={pool.name}>
                     {pool.name}
                   </Select.Option>
                 ))}
@@ -175,7 +199,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           <Form.Item
             initialValue={1}
             label="Max Trials"
-            name="max-trials"
+            name="max_trials"
             rules={[ { min: 0, required: true, type: 'number' } ]}>
             <InputNumber className={css.fullWidth} precision={0} />
           </Form.Item>
@@ -186,33 +210,43 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         </div>
       </Form>
     );
-  }, [ form,
-    handleSelectPool,
-    maxSlots,
-    modalError,
-    resourcePools ]);
+  }, [ form, handleSelectPool, maxSlots, modalError, resourcePools ]);
 
   const pages = useMemo(() => [ page1, page2 ], [ page1, page2 ]);
 
-  const newConfig = useMemo(() => {
-    const fields = form.getFieldsValue(true);
-    console.log(fields);
-    const config = { ...experiment.configRaw };
-    return yaml.dump(config);
-  }, [ experiment.configRaw, form ]);
-
   const submitExperiment = useCallback(async () => {
-    try {
-      const { id: newExperimentId } = await createExperiment({
-        activate: true,
-        experimentConfig: newConfig,
-        parentId: experiment.id,
-        projectId: experiment.projectId,
-      }, { signal: canceler.signal });
+    const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
+    console.log(fields);
+    const baseConfig = clone(experiment.configRaw, true);
+    baseConfig.searcher.name = fields.searcher;
+    baseConfig.searcher.max_trials = fields.max_trials;
+    baseConfig.resources.resource_pool = fields.pool;
 
-      // Route to reload path to forcibly remount experiment page.
-      const newPath = paths.experimentDetails(newExperimentId);
-      routeToReactUrl(paths.reload(newPath));
+    Object.entries(fields)
+      .filter(field => typeof field[1] === 'object' && field[1].active)
+      .forEach(hp => {
+        const hpName = hp[0];
+        const hpInfo = hp[1] as HyperparameterRowValues;
+        baseConfig.hyperparameters[hpName] = {
+          maxval: hpInfo.max_val,
+          minval: hpInfo.min_val,
+          type: hpInfo.type,
+        };
+        if (hpInfo.type === HyperparameterType.Log) baseConfig.hyperparameters[hpName].base = 10.0;
+      });
+    const newConfig = yaml.dump(baseConfig);
+
+    try {
+      // const { id: newExperimentId } = await createExperiment({
+      //   activate: true,
+      //   experimentConfig: newConfig,
+      //   parentId: experiment.id,
+      //   projectId: experiment.projectId,
+      // }, { signal: canceler.signal });
+
+      // // Route to reload path to forcibly remount experiment page.
+      // const newPath = paths.experimentDetails(newExperimentId);
+      // routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = 'Unable to create experiment.';
       if (isDetError(e)) {
@@ -224,7 +258,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [ canceler.signal, experiment.id, experiment.projectId, newConfig ]);
+  }, [ canceler.signal, experiment.configRaw, experiment.id, experiment.projectId, form ]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -259,8 +293,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
-      bodyStyle: { padding: 0 },
-      className: css.base,
+      className: css.modal,
       closable: true,
       content: <>{pages[currentPage]}{footer}</>,
       icon: null,
