@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 /* eslint-disable no-console, @typescript-eslint/no-var-requires */
 
+/**
+ * Whenever we upgrade the Ant Design package version,
+ * run this script to update the various theme CSS files to be brought in
+ * appropriately so we can support dynamic dark mode / light mode toggling.
+ */
+
 const fs = require('fs');
 
 const rimraf = require('rimraf');
