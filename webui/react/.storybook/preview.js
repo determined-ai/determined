@@ -1,5 +1,5 @@
-import 'styles/index.scss';
-import 'styles/storybook.scss';
+import 'shared/styles/index.scss';
+import 'shared/styles/storybook.scss';
 import 'shared/prototypes';
 
 import ThemeDecorator from "storybook/ThemeDecorator"
