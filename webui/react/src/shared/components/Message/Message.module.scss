@@ -1,0 +1,23 @@
+.base {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  padding: 40px;
+
+  img {
+    height: 100px;
+    width: 100px;
+  }
+  .title {
+    color: var(--theme-status-inactive-weak);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  span {
+    color: var(--theme-status-inactive-weak);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+}
