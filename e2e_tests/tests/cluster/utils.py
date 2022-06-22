@@ -37,6 +37,22 @@ def num_free_slots() -> int:
         for slot in agent_slots
     )
 
+def run_command_set_priority(sleep: int = 30, slots: int = 1, priority = 0) -> str:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        f"resources.slots={slots}",
+        "--config",
+        f"resources.priority={priority}"
+        "sleep",
+        str(sleep),
+    ]
+    return subprocess.check_output(command).decode().strip()
 
 def run_command(sleep: int = 30, slots: int = 1) -> str:
     command = [

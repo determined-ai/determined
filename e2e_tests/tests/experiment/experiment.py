@@ -534,9 +534,13 @@ def run_basic_test(
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     expect_workloads: bool = True,
     expect_checkpoints: bool = True,
+    priority: int = -1 
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
+    if priority != -1: 
+        set_priority(experiment_id=experiment_id,priority=priority)
+    
     wait_for_experiment_state(
         experiment_id,
         determinedexperimentv1State.STATE_COMPLETED,
@@ -550,6 +554,16 @@ def run_basic_test(
 
     return experiment_id
 
+def set_priority(experiment_id, priority):
+    command = ["det", "experiment", "set", "priority", str(experiment_id), set(priority)]
+
+    completed_process = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
 
 def verify_completed_experiment_metadata(
     experiment_id: int,
