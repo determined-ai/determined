@@ -11,8 +11,9 @@ import (
 
 // LoggingConfig configures logging for tasks (currently only trials) in Determined.
 type LoggingConfig struct {
-	DefaultLoggingConfig *DefaultLoggingConfig `union:"type,default" json:"-"`
-	ElasticLoggingConfig *ElasticLoggingConfig `union:"type,elastic" json:"-"`
+	DefaultLoggingConfig    *DefaultLoggingConfig `union:"type,default" json:"-"`
+	ElasticLoggingConfig    *ElasticLoggingConfig `union:"type,elastic" json:"-"`
+	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs"`
 }
 
 // Resolve resolves the parts of the TaskContainerDefaultsConfig that must be evaluated on
@@ -107,4 +108,9 @@ func (t *TLSClientConfig) Resolve() error {
 	}
 	t.CertBytes = certBytes
 	return nil
+}
+
+// CustomFluentOutputs configures custom output options for fluent logging.
+type CustomFluentOutputs struct {
+	Config string `json:"config"`
 }
