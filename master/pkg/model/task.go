@@ -143,6 +143,7 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 		return AllocationStatePending
 	}
 
+	// TODO how did this not error
 	max := states[0]
 	for _, state := range states {
 		if state > max {

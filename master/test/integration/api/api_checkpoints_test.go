@@ -371,7 +371,6 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 		TaskID:       trial.TaskID,
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
-		State:        ptrs.Ptr(model.AllocationStatePending),
 	}
 	err = pgDB.AddAllocation(a)
 	assert.NilError(t, err, "failed to add allocation")

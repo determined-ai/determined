@@ -1,10 +1,22 @@
-UPDATE allocations
-SET state = (CASE state
-  WHEN 0 THEN 1
-  WHEN 1 THEN 2
-  WHEN 2 THEN 3
-  WHEN 3 THEN 4
-  WHEN 4 THEN 5
-  WHEN 5 THEN 7
-  WHEN 6 THEN 6
-  END);
+CREATE TYPE public.allocation_state as ENUM (
+    'PENDING',
+    'ASSIGNED',
+    'PULLING',
+    'STARTING',
+    'RUNNING',
+    'TERMINATING',
+    'TERMINATED'
+);
+
+ALTER TABLE public.allocations
+ALTER COLUMN state
+SET DATA TYPE public.allocation_state
+USING (CASE state
+    WHEN 0 THEN 'PENDING'
+    WHEN 1 THEN 'ASSIGNED'
+    WHEN 2 THEN 'PULLING'
+    WHEN 3 THEN 'STARTING'
+    WHEN 4 THEN 'RUNNING'
+    WHEN 5 THEN 'TERMINATING'
+    WHEN 6 THEN 'TERMINATED'
+END)::public.allocation_state;    
