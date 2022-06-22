@@ -16,7 +16,7 @@ import { DetError, isDetError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase, Hyperparameter, HyperparameterType, ResourcePool } from 'types';
 
-import useModal, { ModalHooks as Hooks } from './useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
@@ -231,8 +231,8 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   }, [ page1 ]);
 
   const handleCancel = useCallback(() => {
-    //modalClose();
-  }, [ ]);
+    modalClose(ModalCloseReason.Cancel);
+  }, [ modalClose ]);
 
   const footer = useMemo(() => {
     if (modalContent === page1) {

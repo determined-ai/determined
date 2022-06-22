@@ -96,10 +96,22 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     setModalProps(props);
   }, []);
 
-  const modalClose = useCallback((reason: ModalCloseReason = ModalCloseReason.Cancel) => {
-    internalClose();
-    config.onClose?.(reason);
-  }, [ config, internalClose ]);
+  const modalClose = useCallback((reason?: ModalCloseReason) => {
+    if (!modalRef.current) return;
+    modalRef.current.destroy();
+    modalRef.current = undefined;
+    if (reason) {
+      /*
+       * We need to unpack onClose from config in order to please lint.
+       * This is because eslint doesn't know whether it's an arrow function or not.
+       * If not, the function has a dependency on `this`, which means the whole config
+       * object has to be in the dependency array. We're not using that behavior, so we can
+       * unpack it.
+      */
+      const onClose = config.onClose;
+      onClose?.(reason);
+    }
+  }, [ config.onClose ]);
 
   /**
    * Adds `modalClose` to event handlers `onOk` and `onCancel`.
