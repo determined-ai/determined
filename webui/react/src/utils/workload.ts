@@ -36,7 +36,9 @@ export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] =
     } else if (workload.checkpoint) {
       wltype = 'c';
     }
-    const batchNum = (workload.checkpoint || workload.validation || workload.training || {}).totalBatches;
+    const batchNum = (
+      workload?.checkpoint || workload?.validation || workload?.training
+    )?.totalBatches;
     return {
       batchNum: batchNum,
       checkpoint: workload.checkpoint,
