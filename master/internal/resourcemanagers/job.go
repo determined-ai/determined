@@ -54,7 +54,7 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 	return stats
 }
 
-//nolint:deadcode // Method used by Slurm support in determined-ee
+//nolint:deadcode,nolintlint // Method used by Slurm support in determined-ee
 func jobStatsByPool(taskList *taskList, resourcePool string) *jobv1.QueueStats {
 	reqs := make(AllocReqs, 0)
 	for it := taskList.iterator(); it.next(); {
