@@ -1,14 +1,20 @@
 .base {
-  padding: 16px;
-  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-inline: 16px;
 
+  p { margin: 0; }
   & :global(.ant-form-item) { margin: 0; }
-  .fullWidth {
+  & :global(.ant-form-item-label) label {
     width: 100%;
-  
+
     & > div {
       width: 100%;
     }
+  }
+  .fullWidth {
+    width: 100%;
   }
   .poolRow {
     display: flex;
@@ -25,12 +31,13 @@
   .hyperparameterContainer {
     display: grid;
     gap: 8px;
-    grid-template-columns: 170px repeat(4, 1fr);
+    grid-template-columns: 170px repeat(4, minmax(0, 1fr));
 
     .hyperparameterName * {
       overflow: hidden;
     }
     h2 {
+      border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
       font-size: 1rem;
       margin: 0;
       text-align: center;

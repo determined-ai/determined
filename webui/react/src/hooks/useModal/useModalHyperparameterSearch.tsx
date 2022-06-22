@@ -61,6 +61,8 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
   const [ form ] = Form.useForm();
+  const [ currentPage, setCurrentPage ] = useState(0);
+  const [ canceler ] = useState(new AbortController());
 
   const handleSelectSearchMethod = useCallback((value: SelectValue) => {
     setSearchMethod(SearchMethods[value as string]);
@@ -74,31 +76,34 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const page1 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
-      <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
-        <p>
-          Select the hyperparameter space and search method to
-          optimize your model hyperparameters.
-        </p>
-        <div className={css.searchTitle}>
-          <label htmlFor="search-method">Search method</label>
-          <Link
-            external
-            path={paths.
-              docs('/training-hyperparameter/index.html#specifying-the-search-algorithm')}>
-            Learn more
-          </Link>
-        </div>
-        <SelectFilter
-          className={css.fullWidth}
-          id="search-method"
-          value={searchMethod.name}
-          onChange={handleSelectSearchMethod}>
-          {Object.entries(SearchMethods).map(method =>
-            <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
-        </SelectFilter>
-        <p>{searchMethod.description}</p>
-        <Form form={form} name="hyperparameters">
+      <Form form={form} layout="vertical" name="hyperparameters">
+        <div className={css.base}>
+          {modalError && <Alert className={css.error} message={modalError} type="error" />}
+          <p>
+            Select the hyperparameter space and search method to
+            optimize your model hyperparameters.
+          </p>
+          <Form.Item
+            initialValue={SearchMethods.ASHA.name}
+            label={(
+              <div className={css.searchTitle}>
+                <p>Search method</p>
+                <Link
+                  external
+                  path={paths.
+                    docs('/training-hyperparameter/index.html#specifying-the-search-algorithm')}>
+                  Learn more
+                </Link>
+              </div>
+            )}
+            name="searcher">
+            <SelectFilter
+              onChange={handleSelectSearchMethod}>
+              {Object.entries(SearchMethods).map(method =>
+                <Select.Option key={method[0]} value={method[0]}>{method[1].name}</Select.Option>)}
+            </SelectFilter>
+          </Form.Item>
+          <p>{searchMethod.description}</p>
           <div className={css.hyperparameterContainer}>
             <h2 className={css.hyperparameterName}>Hyperparameter</h2>
             <h2>Type</h2>
@@ -107,15 +112,15 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             <h2>Max value</h2>
             {hyperparameters.map(hp => <HyperparameterRow form={form} key={hp.name} {...hp} />)}
           </div>
-        </Form>
-      </div>
+
+        </div>
+      </Form>
     );
   }, [ form,
     handleSelectSearchMethod,
     hyperparameters,
     modalError,
-    searchMethod.description,
-    searchMethod.name ]);
+    searchMethod.description ]);
 
   const handleSelectPool = useCallback((value: SelectValue) => {
     setResourcePool(resourcePools.find(pool => pool.imageId === value));
@@ -134,10 +139,10 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const page2 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
-      <div className={css.base}>
-        {modalError && <Alert className={css.error} message={modalError} type="error" />}
-        <p>Select the resources to allocate to this search and the trial iteration limit.</p>
-        <Form form={form} layout="vertical" requiredMark={false}>
+      <Form form={form} layout="vertical" requiredMark={false}>
+        <div className={css.base}>
+          {modalError && <Alert className={css.error} message={modalError} type="error" />}
+          <p>Select the resources to allocate to this search and the trial iteration limit.</p>
           <div className={css.poolRow}>
             <Form.Item
               initialValue={resourcePools?.[0].imageId}
@@ -163,7 +168,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
                 required: true,
                 type: 'number',
               } ]}>
-              <InputNumber />
+              <InputNumber precision={0} />
             </Form.Item>
           </div>
           <p>{maxSlots} max slots</p>
@@ -172,14 +177,14 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             label="Max Trials"
             name="max-trials"
             rules={[ { min: 0, required: true, type: 'number' } ]}>
-            <InputNumber className={css.fullWidth} />
+            <InputNumber className={css.fullWidth} precision={0} />
           </Form.Item>
-        </Form>
-        <p>
-          Note: HP search jobs (while more efficient than manual searching) can take longer
-          depending on the size of the HP search space and the resources you allocate to it.
-        </p>
-      </div>
+          <p>
+            Note: HP search jobs (while more efficient than manual searching) can take longer
+            depending on the size of the HP search space and the resources you allocate to it.
+          </p>
+        </div>
+      </Form>
     );
   }, [ form,
     handleSelectPool,
@@ -187,11 +192,14 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     modalError,
     resourcePools ]);
 
-  const [ modalContent, setModalContent ] = useState(page1);
+  const pages = useMemo(() => [ page1, page2 ], [ page1, page2 ]);
 
   const newConfig = useMemo(() => {
-    return yaml.dump(experiment.configRaw);
-  }, [ experiment.configRaw ]);
+    const fields = form.getFieldsValue(true);
+    console.log(fields);
+    const config = { ...experiment.configRaw };
+    return yaml.dump(config);
+  }, [ experiment.configRaw, form ]);
 
   const submitExperiment = useCallback(async () => {
     try {
@@ -200,7 +208,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         experimentConfig: newConfig,
         parentId: experiment.id,
         projectId: experiment.projectId,
-      });
+      }, { signal: canceler.signal });
 
       // Route to reload path to forcibly remount experiment page.
       const newPath = paths.experimentDetails(newExperimentId);
@@ -216,64 +224,55 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [ experiment.id, experiment.projectId, newConfig ]);
+  }, [ canceler.signal, experiment.id, experiment.projectId, newConfig ]);
 
   const handleOk = useCallback(() => {
-    if (modalContent === page1) {
-      setModalContent(page2);
+    if (currentPage === 0) {
+      setCurrentPage(1);
     } else {
       submitExperiment();
     }
-  }, [ submitExperiment, modalContent, page1, page2 ]);
+  }, [ currentPage, submitExperiment ]);
 
   const handleBack = useCallback(() => {
-    setModalContent(page1);
-  }, [ page1 ]);
+    setCurrentPage(0);
+  }, []);
 
   const handleCancel = useCallback(() => {
     modalClose(ModalCloseReason.Cancel);
   }, [ modalClose ]);
 
   const footer = useMemo(() => {
-    if (modalContent === page1) {
-      return (
-        <div className={css.footer}>
-          <div className={css.spacer} />
-          <Space>
-            <Button onClick={handleCancel}>Cancel</Button>
-            <Button type="primary" onClick={handleOk}>Select Resources</Button>
-          </Space>
-        </div>
-      );
-    }
     return (
       <div className={css.footer}>
-        <Button onClick={handleBack}>Back</Button>
+        {currentPage === 1 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
         <Space>
           <Button onClick={handleCancel}>Cancel</Button>
-          <Button type="primary" onClick={handleOk}>Run Experiment</Button>
+          <Button type="primary" onClick={handleOk}>
+            {currentPage === 0 ? 'Select Resources' : 'Run Experiment'}
+          </Button>
         </Space>
       </div>
     );
-  }, [ handleBack, handleCancel, handleOk, modalContent, page1 ]);
+  }, [ currentPage, handleBack, handleCancel, handleOk ]);
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
-      content: <>{modalContent}{footer}</>,
+      content: <>{pages[currentPage]}{footer}</>,
       icon: null,
       title: 'Hyperparameter Search',
       width: 600,
     };
-  }, [ modalContent, footer ]);
+  }, [ pages, currentPage, footer ]);
 
   const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
-    setModalContent(page1);
+    setCurrentPage(0);
     openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate, page1 ]);
+  }, [ modalProps, openOrUpdate ]);
 
   /*
    * When modal props changes are detected, such as modal content
