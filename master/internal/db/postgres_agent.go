@@ -22,7 +22,8 @@ WHERE NOT EXISTS (
 
 // EndAgentStats updates the end time of an instance.
 func EndAgentStats(a *model.AgentStats) error {
-	res, err := Bun().NewUpdate().Table("agent_stats").Set("end_time = (SELECT CURRENT_TIMESTAMP)").Where(
+	res, err := Bun().NewUpdate().Table("agent_stats").Set(
+		"end_time = (SELECT CURRENT_TIMESTAMP)").Where(
 		"agent_id = ?", a.AgentID).Where("end_time IS NULL").Exec(context.TODO())
 	if err != nil {
 		return err
