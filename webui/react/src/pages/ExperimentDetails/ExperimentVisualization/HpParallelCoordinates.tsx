@@ -3,7 +3,6 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
-import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
@@ -20,7 +19,7 @@ import { clone, flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
-  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Scale,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';

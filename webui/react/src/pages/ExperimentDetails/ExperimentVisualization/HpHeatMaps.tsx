@@ -5,7 +5,6 @@ import ColorLegend from 'components/ColorLegend';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -22,7 +21,7 @@ import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap,
+  metricTypeParamMap, Scale,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';

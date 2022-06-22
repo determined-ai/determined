@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom';
 
 import Link from 'components/Link';
-import { Scale } from 'components/ScaleSelectFilter';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
@@ -20,6 +19,7 @@ import { hasObjectKeys } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
+  Scale,
 } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
 

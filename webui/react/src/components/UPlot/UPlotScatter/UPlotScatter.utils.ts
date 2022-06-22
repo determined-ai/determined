@@ -1,9 +1,9 @@
 import uPlot from 'uplot';
 
-import { Scale } from 'components/ScaleSelectFilter';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 
 import { Range } from '../../../shared/types';
+import { Scale } from '../../../types';
 import { UPlotAxisSplits, UPlotData } from '../types';
 
 export const X_INDEX = 0;
