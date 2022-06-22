@@ -98,7 +98,7 @@ type Allocation struct {
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
-type AllocationState int
+type AllocationState string
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {
@@ -117,25 +117,23 @@ type ResourceAggregates struct {
 }
 
 const (
-	// AllocationStateUnspecified state denotes that the command status is unknown.
-	AllocationStateUnspecified AllocationState = 0
 	// AllocationStatePending state denotes that the command is awaiting allocation.
-	AllocationStatePending AllocationState = 1
+	AllocationStatePending AllocationState = "PENDING"
 	// AllocationStateAssigned state denotes that the command has been assigned to an agent but has
 	// not started yet.
-	AllocationStateAssigned AllocationState = 2
+	AllocationStateAssigned AllocationState = "ASSIGNED"
 	// AllocationStatePulling state denotes that the command's base image is being pulled from the
 	// Docker registry.
-	AllocationStatePulling AllocationState = 3
+	AllocationStatePulling AllocationState = "PULLING"
 	// AllocationStateStarting state denotes that the image has been pulled and the task is being
 	// started, but the task is not ready yet.
-	AllocationStateStarting AllocationState = 4
+	AllocationStateStarting AllocationState = "STARTING"
 	// AllocationStateRunning state denotes that the service in the command is running.
-	AllocationStateRunning AllocationState = 5
+	AllocationStateRunning AllocationState = "RUNNING"
 	// AllocationStateTerminated state denotes that the command has exited or has been aborted.
-	AllocationStateTerminated AllocationState = 6
+	AllocationStateTerminated AllocationState = "TERMINATED"
 	// AllocationStateTerminating state denotes that the command is terminating.
-	AllocationStateTerminating AllocationState = 7
+	AllocationStateTerminating AllocationState = "TERMINATING"
 )
 
 // MostProgressedAllocationState returns the further progressed state. E.G. a call
@@ -154,48 +152,9 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 	return max
 }
 
-// String returns the string representation of the task state.
-func (s AllocationState) String() string {
-	switch s {
-	case AllocationStatePending:
-		return "PENDING"
-	case AllocationStateAssigned:
-		return "ASSIGNED"
-	case AllocationStatePulling:
-		return "PULLING"
-	case AllocationStateStarting:
-		return "STARTING"
-	case AllocationStateRunning:
-		return "RUNNING"
-	case AllocationStateTerminating:
-		return "TERMINATING"
-	case AllocationStateTerminated:
-		return "TERMINATED"
-	default:
-		return "UNSPECIFIED"
-	}
-}
-
 // Proto returns the proto representation of the task state.
 func (s AllocationState) Proto() taskv1.State {
-	switch s {
-	case AllocationStatePending:
-		return taskv1.State_STATE_PENDING
-	case AllocationStateAssigned:
-		return taskv1.State_STATE_ASSIGNED
-	case AllocationStatePulling:
-		return taskv1.State_STATE_PULLING
-	case AllocationStateStarting:
-		return taskv1.State_STATE_STARTING
-	case AllocationStateRunning:
-		return taskv1.State_STATE_RUNNING
-	case AllocationStateTerminating:
-		return taskv1.State_STATE_TERMINATING
-	case AllocationStateTerminated:
-		return taskv1.State_STATE_TERMINATED
-	default:
-		return taskv1.State_STATE_UNSPECIFIED
-	}
+	return taskv1.State(taskv1.State_value[fmt.Sprintf("STATE_%s", s)])
 }
 
 const (
