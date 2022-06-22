@@ -428,9 +428,13 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
+// UpdateUserSetting updates user setting.
 func UpdateUserSetting(setting *model.UserWebSetting) error {
 	if len(setting.Value) == 0 {
-		_, err := Bun().NewDelete().Model(setting).Where("user_id = ?", setting.UserId).Where("storage_path = ?", setting.StoragePath).Where("key = ?", setting.Key).Exec(context.TODO())
+		_, err := Bun().NewDelete().Model(setting).Where(
+			"user_id = ?", setting.UserID).Where(
+			"storage_path = ?", setting.StoragePath).Where(
+			"key = ?", setting.Key).Exec(context.TODO())
 		return err
 	}
 
@@ -439,14 +443,16 @@ func UpdateUserSetting(setting *model.UserWebSetting) error {
 	return err
 }
 
-func GetUserSetting(userId model.UserID) ([]*userv1.UserWebSetting, error) {
+// GetUserSetting gets user setting.
+func GetUserSetting(userID model.UserID) ([]*userv1.UserWebSetting, error) {
 	setting := []*userv1.UserWebSetting{}
-	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userId).Scan(context.TODO())
+	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userID).Scan(context.TODO())
 	return setting, err
 }
 
-func ResetUserSetting(userId model.UserID) error {
+// ResetUserSetting resets user setting.
+func ResetUserSetting(userID model.UserID) error {
 	var setting model.UserWebSetting
-	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userId).Exec(context.TODO())
+	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userID).Exec(context.TODO())
 	return err
 }

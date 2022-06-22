@@ -211,7 +211,7 @@ func (a *apiServer) GetUserSetting(
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.PostUserSettingResponse, error) {
 	settingModel := model.UserWebSetting{
-		UserId:      model.UserID(req.UserId),
+		UserID:      model.UserID(req.UserId),
 		Key:         req.Setting.Key,
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
@@ -220,11 +220,12 @@ func (a *apiServer) PostUserSetting(
 	return &apiv1.PostUserSettingResponse{}, err
 }
 
-func (a *apiServer) ResetUserSetting(ctx context.Context, req *apiv1.ResetUserSettingRequest) (*apiv1.ResetUserSettingResponse, error) {
+func (a *apiServer) ResetUserSetting(
+	ctx context.Context, req *apiv1.ResetUserSettingRequest) (*apiv1.ResetUserSettingResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	err = db.ResetUserSetting(model.UserID(user.ID))
+	err = db.ResetUserSetting(user.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
 }
