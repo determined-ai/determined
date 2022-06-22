@@ -6,6 +6,7 @@ import HpSelectFilter from 'components/HpSelectFilter';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
+import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
 import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
 
@@ -19,6 +20,7 @@ export interface VisualizationFilters {
   hParams: string[];
   maxTrial: number;
   metric: MetricName;
+  scale: Scale;
   view: ViewType;
 }
 
@@ -44,7 +46,16 @@ interface Props {
   type: ExperimentVisualizationType,
 }
 
-enum ActionType { Set, SetBatch, SetBatchMargin, SetHParams, SetMaxTrial, SetMetric, SetView }
+enum ActionType {
+  Set,
+  SetBatch,
+  SetBatchMargin,
+  SetHParams,
+  SetMaxTrial,
+  SetMetric,
+  SetView,
+  SetScale,
+}
 
 type Action =
 | { type: ActionType.Set; value: VisualizationFilters }
@@ -54,6 +65,7 @@ type Action =
 | { type: ActionType.SetMaxTrial; value: number }
 | { type: ActionType.SetMetric; value: MetricName }
 | { type: ActionType.SetView; value: ViewType }
+| { type: ActionType.SetScale; value: Scale }
 
 const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 const BATCH_MARGIN_OPTIONS = [ 1, 5, 10, 20, 50 ];
@@ -76,6 +88,8 @@ const reducer = (state: VisualizationFilters, action: Action) => {
       return { ...state, metric: action.value };
     case ActionType.SetView:
       return { ...state, view: action.value };
+    case ActionType.SetScale:
+      return { ...state, scale: action.value };
     default:
       return state;
   }
@@ -94,7 +108,14 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 }: Props) => {
   const [ localFilters, dispatch ] = useReducer(reducer, filters);
 
-  const [ showMaxTrials, showBatches, showMetrics, showHParams, showViews ] = useMemo(() => {
+  const [
+    showMaxTrials,
+    showBatches,
+    showMetrics,
+    showHParams,
+    showViews,
+    showScales,
+  ] = useMemo(() => {
     return [
       [ ExperimentVisualizationType.LearningCurve ].includes(type),
       [
@@ -114,6 +135,12 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         ExperimentVisualizationType.HpScatterPlots,
       ].includes(type),
       [ ExperimentVisualizationType.HpHeatMap ].includes(type),
+      [
+        ExperimentVisualizationType.HpHeatMap,
+        ExperimentVisualizationType.HpScatterPlots,
+        ExperimentVisualizationType.LearningCurve,
+        ExperimentVisualizationType.HpParallelCoordinates,
+      ].includes(type),
     ];
   }, [ type ]);
 
@@ -146,7 +173,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     dispatch({ type: ActionType.SetView, value: view as ViewType });
   }, []);
 
-  const handleApply = useCallback(() => {
+  const handleScaleChange = useCallback((scale: Scale) => {
+    dispatch({ type: ActionType.SetScale, value: scale });
+  }, []);
+
+  useEffect(() => {
     if (onChange) onChange(localFilters);
   }, [ localFilters, onChange ]);
 
@@ -198,6 +229,15 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           </SelectFilter>
         </>
       )}
+      {showHParams && (
+        <HpSelectFilter
+          fullHParams={fullHParams}
+          hpImportance={hpImportance}
+          label={`HP (max ${MAX_HPARAM_COUNT})`}
+          value={localFilters.hParams}
+          onChange={handleHParamChange}
+        />
+      )}
       {showMetrics && (
         <MetricSelectFilter
           defaultMetricNames={metrics}
@@ -209,15 +249,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           onChange={handleMetricChange}
         />
       )}
-      {showHParams && (
-        <HpSelectFilter
-          fullHParams={fullHParams}
-          hpImportance={hpImportance}
-          label={`HP (max ${MAX_HPARAM_COUNT})`}
-          value={localFilters.hParams}
-          onChange={handleHParamChange}
-        />
-      )}
+      {showScales && <ScaleSelectFilter value={localFilters.scale} onChange={handleScaleChange} />}
       {showViews && (
         <RadioGroup
           iconOnly
@@ -231,7 +263,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       )}
       <div className={css.buttons}>
         <IconButton icon="reset" label="Reset" onClick={handleReset} />
-        <IconButton icon="checkmark" label="Apply" onClick={handleApply} />
       </div>
     </>
   );

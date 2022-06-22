@@ -3,6 +3,7 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
+import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
@@ -40,6 +41,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
 }
 
 interface HpTrialData {
@@ -57,6 +59,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -155,11 +158,20 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       const key = metricNameToStr(selectedMetric);
-      newDimensions.push({ key, label: key, type: DimensionType.Linear });
+      newDimensions.push(selectedScale === Scale.Log ? {
+        key,
+        label: key,
+        logBase: 10,
+        type: DimensionType.Logarithmic,
+      } : {
+        key,
+        label: key,
+        type: DimensionType.Linear,
+      });
     }
 
     return newDimensions;
-  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
+  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedScale, selectedHParams ]);
 
   const clearSelected = useCallback(() => setSelectedRowKeys([]), []);
 
@@ -242,7 +254,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric, ui.isPageHidden ]);
+  }, [
+    experiment.id,
+    selectedBatch,
+    selectedBatchMargin,
+    selectedMetric,
+    selectedScale,
+    ui.isPageHidden,
+  ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
