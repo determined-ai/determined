@@ -44,7 +44,7 @@ export enum Mode {
 }
 
 /**
- * DarkLight is a resolve form of `Mode` where we figure out
+ * DarkLight is a resolved form of `Mode` where we figure out
  * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
  */
 export enum DarkLight {
