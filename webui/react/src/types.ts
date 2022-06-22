@@ -387,6 +387,7 @@ export interface WorkloadGroup {
 // elsewhere so we can remove it with a redesign.
 export interface Step extends WorkloadGroup, StartEndTimes {
   batchNum: number;
+  key: string;
   training: MetricsWorkload;
 }
 

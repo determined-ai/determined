@@ -152,7 +152,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
 
   useEffect(() => {
     fetchWorkloads();
-  }, [ fetchWorkloads, trial?.id ]);
+  }, [ fetchWorkloads, settings.sortDesc, settings.sortKey, trial?.id ]);
 
   const workloadSteps = useMemo(() => {
     const data = workloads || [];
@@ -218,7 +218,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
             offset: settings.tableOffset,
           }, workloadCount)}
           rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="batchNum"
+          rowKey="key"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"

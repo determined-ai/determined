@@ -11,14 +11,14 @@ import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
 import { canUserActionExperiment } from 'utils/experiment';
-import { getWorkload, isMetricsWorkload } from 'utils/workload';
+import { isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
-    .map(getWorkload)
-    .filter((workload) => isMetricsWorkload(workload) && !!workload.metrics);
+    .map(w => w.checkpoint || w.training || w.validation)
+    .filter(workload => workload && isMetricsWorkload(workload) && !!workload.metrics);
   return isTerminal && workloadsWithSomeMetric.length === 0;
 };
 
