@@ -143,14 +143,26 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 		return AllocationStatePending
 	}
 
-	// TODO how did this not error
-	max := states[0]
-	for _, state := range states {
-		if state > max {
-			max = state
+	// Can't use taskv1.State_value[state] since in proto
+	// "STATE_TERMINATING" > "STATE_TERMINATED"
+	// while our model used to have
+	// "STATE_TERMINATED" > "STATE_TERMINATING".
+	statesToOrder := map[AllocationState]int{
+		AllocationStatePending:     0,
+		AllocationStateAssigned:    1,
+		AllocationStatePulling:     2,
+		AllocationStateStarting:    3,
+		AllocationStateRunning:     4,
+		AllocationStateTerminating: 5,
+		AllocationStateTerminated:  6,
+	}
+	maxOrder, state := statesToOrder[states[0]], states[0]
+	for _, s := range states {
+		if order := statesToOrder[s]; order > maxOrder {
+			maxOrder, state = order, s
 		}
 	}
-	return max
+	return state
 }
 
 // Proto returns the proto representation of the task state.
