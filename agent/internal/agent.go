@@ -81,6 +81,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				ctx.Log().Debugf("received MasterSetAgentOptions more than once: %v",
 					*msg.MasterSetAgentOptions)
 				a.MasterSetAgentOptions = msg.MasterSetAgentOptions
+				if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled { // configure where you set the values for this.
+					opentelemetry.ConfigureOtel(a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
+				}
 				return a.setupAfterMasterRestart(ctx)
 			}
 
@@ -523,17 +526,13 @@ func (a *agent) postTaskLog(log model.TaskLog) error {
 	return nil
 }
 
-func runAPIServer(options Options, system *actor.System, otelEnabled bool, otelEndpoint string) error {
+func runAPIServer(options Options, system *actor.System) error {
 	server := echo.New()
 	server.Logger = logger.New()
 	server.HidePort = true
 	server.HideBanner = true
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
-
-	if otelEnabled { // configure where you set the values for this.
-		opentelemetry.ConfigureOtel(otelEndpoint, "determined-agent")
-	}
 	server.Use(otelecho.Middleware("determined-agent"))
 
 	server.Any("/*", api.Route(system, nil))
@@ -566,8 +565,7 @@ func Run(version string, options Options) error {
 	errs := make(chan error)
 	if options.APIEnabled {
 		go func() {
-			errs <- runAPIServer(options, system, a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled,
-				a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint)
+			errs <- runAPIServer(options, system)
 		}()
 	}
 	go func() {
