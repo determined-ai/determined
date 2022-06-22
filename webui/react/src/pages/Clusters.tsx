@@ -7,10 +7,9 @@ import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
-import { clusterStatusText } from './Cluster/ClusterOverview';
 import ClusterLogs from './ClusterLogs';
 import css from './Clusters.module.scss';
-import ClustersOverview from './Clusters/ClustersOverview';
+import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview';
 
 const { TabPane } = Tabs;
 

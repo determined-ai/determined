@@ -4,13 +4,12 @@ import { useHistory, useParams } from 'react-router';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
-import { PoolLogo } from 'components/ResourcePoolCard';
+import { PoolLogo } from 'components/ResourcePoolCardLight';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCardLight';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat } from 'services/api-ts-sdk';
@@ -25,6 +24,7 @@ import { JobState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
 
+import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
@@ -159,10 +159,10 @@ const ResourcepoolDetail: React.FC = () => {
           destroyInactiveTabPane={true}
           onChange={handleTabChange}>
           <TabPane key="active" tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
-            <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selected={pool} />
+            <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
           </TabPane>
           <TabPane key="queued" tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
-            <JobQueue bodyNoPadding jobState={JobState.QUEUED} selected={pool} />
+            <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
           </TabPane>
           <TabPane key="stats" tab="Stats">
             <ClustersQueuedChart poolStats={poolStats} />
