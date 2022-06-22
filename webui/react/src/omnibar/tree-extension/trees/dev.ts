@@ -42,7 +42,10 @@ const dev: TreeNode[] = [
     title: 'resetLocalStorage',
   },
   {
-    onAction: () => userPreferencesStorage.reset(),
+    onAction: ():void => {
+      const resetStorage = userPreferencesStorage();
+      resetStorage();
+    },
     title: 'resetUserPreferences',
   },
 ];

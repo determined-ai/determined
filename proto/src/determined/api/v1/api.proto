@@ -162,6 +162,16 @@ service Determined {
       tags: "Users"
     };
   }
+  // Reset a user's settings for website
+  rpc ResetUserSetting(ResetUserSettingRequest)
+      returns (ResetUserSettingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/setting/reset",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
   // Patch a user's settings for website
   rpc PostUserSetting(PostUserSettingRequest)
       returns (PostUserSettingResponse) {

@@ -239,6 +239,7 @@ export interface UpdateUserSettingParams {
   storagePath: string;
   userId: number;
 }
+
 export interface GetProjectParams {
   id: number;
 }

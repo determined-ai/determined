@@ -93,3 +93,7 @@ message PostUserSettingRequest {
 }
 // Response to PostUserSettingRequest.
 message PostUserSettingResponse {}
+// Reset user setting.
+message ResetUserSettingRequest {}
+// Response to ResetUserSettingRequest.
+message ResetUserSettingResponse {}

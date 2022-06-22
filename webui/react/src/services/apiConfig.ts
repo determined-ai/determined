@@ -158,6 +158,15 @@ Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
       },
     ),
   };
+
+export const resetUserSetting: DetApi<
+  EmptyParams, Api.V1ResetUserSettingResponse, Api.V1ResetUserSettingResponse
+  > = {
+    name: 'resetUserSetting',
+    postProcess: (response) => response,
+    request: () => detApi.Users.resetUserSetting(),
+  };
+
 /* Info */
 
 export const getInfo: DetApi<

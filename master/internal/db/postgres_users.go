@@ -444,3 +444,9 @@ func GetUserSetting(userId model.UserID) ([]*userv1.UserWebSetting, error) {
 	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userId).Scan(context.TODO())
 	return setting, err
 }
+
+func ResetUserSetting(userId model.UserID) error {
+	var setting model.UserWebSetting
+	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userId).Exec(context.TODO())
+	return err
+}

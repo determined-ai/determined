@@ -8353,6 +8353,23 @@ def post_ReportTrialValidationMetrics(
         return
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
 
+def post_ResetUserSetting(
+    session: "client.Session",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/setting/reset",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ResetUserSetting", _resp)
+
 def get_ResourceAllocationAggregated(
     session: "client.Session",
     *,

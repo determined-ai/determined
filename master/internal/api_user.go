@@ -219,3 +219,12 @@ func (a *apiServer) PostUserSetting(
 	err := db.UpdateUserSetting(&settingModel)
 	return &apiv1.PostUserSettingResponse{}, err
 }
+
+func (a *apiServer) ResetUserSetting(ctx context.Context, req *apiv1.ResetUserSettingRequest) (*apiv1.ResetUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	err = db.ResetUserSetting(model.UserID(user.ID))
+	return &apiv1.ResetUserSettingResponse{}, err
+}

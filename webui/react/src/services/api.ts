@@ -54,8 +54,12 @@ export const getUserSetting = generateDetApi<
 >(Config.getUserSetting);
 
 export const updateUserSetting = generateDetApi<
-Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
+  Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
 >(Config.updateUserSetting);
+
+export const resetUserSetting = generateDetApi<
+  EmptyParams, Api.V1ResetUserSettingResponse, void
+>(Config.resetUserSetting);
 
 /* Info */
 
