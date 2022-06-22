@@ -14,6 +14,7 @@ import re
 import shutil
 import signal
 import socket
+import stat
 import subprocess
 import time
 import uuid
@@ -343,6 +344,9 @@ def force_create_symlink(src: str, dst: str) -> None:
 
             try:
                 os.symlink(src, dst, target_is_directory=True)
+                # be nice, make the newly created link world-writable
+                file_mode = os.stat(dst).st_mode
+                os.chmod(dst, file_mode | stat.S_IWOTH)
             except FileExistsError:
                 # in case of a race between two workers
                 pass
