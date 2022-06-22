@@ -36,4 +36,14 @@ def test_priortity_scheduler_noop_command(managed_cluster_priority_scheduler: Ma
 
 @pytest.mark.managed_devcluster
 def test_slots_list_command(managed_cluster_priority_scheduler: ManagedCluster) -> None: 
-     managed_cluster_priority_scheduler.ensure_agent_ok()
+    managed_cluster_priority_scheduler.ensure_agent_ok()
+
+    command = ["det", "slots", "list"]
+
+    completed_process = subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
