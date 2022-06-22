@@ -80,7 +80,7 @@ def test(sm_hash: str, repo_names: t.List[str]):
         if name not in repos:
             raise ValueError(f'unknown repo name: {name}')
         user = repos[name]
-        setup_user(user, name, sm_hash)
+        setup_user(user, name, sm_hash, '42cac7aa3a1ba510634d133a80c805bc222fc879')
         clone_dir = '/tmp' / pathlib.Path(name)
         web_dir = clone_dir / user['web_dir']
         for target in ['get-deps', 'check', 'build', 'test']:
