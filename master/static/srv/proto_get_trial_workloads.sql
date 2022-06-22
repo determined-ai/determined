@@ -8,7 +8,6 @@ WITH validations_vt AS (
         v.metrics->'validation_metrics' as metrics
       FROM validations v
       WHERE v.trial_id = $1
-      AND $4 != 'Has Checkpoint'
     ) AS r1
 ),
 trainings_vt AS (
