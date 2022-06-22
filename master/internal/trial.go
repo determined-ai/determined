@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
+
+// A list of errors for which we don't want to attempt any retries of the experiment.
+// These are errors that no matter how many times we retry, the outcome will still result
+// in the same error.
+var nonRetryableErrors = []*regexp.Regexp{
+	// This error is typically seen when you request resources that SLURM is not able to satisfy.
+	regexp.MustCompile("sbatch: error: Batch job submission failed"),
+}
 
 // A trial is a task actor which is responsible for handling:
 //  - messages from the resource manager,
@@ -115,6 +124,17 @@ func newTrial(
 		}),
 		restored: restored,
 	}
+}
+
+// Returns true if the error message matches one of the errors in the non-retryable list.
+func isNonRetryableError(err error) bool {
+	for _, nonRetryableError := range nonRetryableErrors {
+		if nonRetryableError.MatchString(err.Error()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (t *trial) Receive(ctx *actor.Context) error {
@@ -460,6 +480,15 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 		ctx.Log().
 			WithError(exit.Err).
 			Errorf("trial encountered unrecoverable failure")
+		return t.transition(ctx, model.StateWithReason{
+			State: model.ErrorState,
+			InformationalReason: fmt.Sprintf(
+				"trial allocation exited with unrecoverable failure %v", exit.Err),
+		})
+	case exit.Err != nil && isNonRetryableError(exit.Err):
+		// These are errors that no matter how many times we retry, the outcome will
+		// be the same, so don't bother retrying. Fail right away to allow the user
+		// to make any adjustments to the experiment and try again.
 		return t.transition(ctx, model.StateWithReason{
 			State: model.ErrorState,
 			InformationalReason: fmt.Sprintf(
