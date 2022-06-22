@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import { useStore } from 'contexts/Store';
+import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { DetError, isDetError } from 'shared/utils/error';
@@ -59,8 +60,6 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const [ searchMethod, setSearchMethod ] = useState(SearchMethods.ASHA);
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
-  const [ slots, setSlots ] = useState<number>();
-  const [ maxTrials, setMaxTrials ] = useState<number>();
   const [ form ] = Form.useForm();
 
   const handleSelectSearchMethod = useCallback((value: SelectValue) => {
@@ -122,13 +121,15 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     setResourcePool(resourcePools.find(pool => pool.imageId === value));
   }, [ resourcePools ]);
 
-  const handleChangeSlots = useCallback((value: number) => {
-    setSlots(value);
-  }, []);
+  const maxSlots = useMemo(
+    () => resourcePool ? maxPoolSlotCapacity(resourcePool) : 0,
+    [ resourcePool ],
+  );
 
-  const handleChangeMaxTrials = useCallback((value: number) => {
-    setMaxTrials(value);
-  }, []);
+  useEffect(() => {
+    if (resourcePool || resourcePools.length === 0) return;
+    setResourcePool(resourcePools[0]);
+  }, [ resourcePool, resourcePools ]);
 
   const page2 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -136,35 +137,55 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       <div className={css.base}>
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
         <p>Select the resources to allocate to this search and the trial iteration limit.</p>
-        <div>
-          <label htmlFor="resource-pool">Resource pool</label>
-          <SelectFilter
-            id="resource-pool"
-            value={resourcePool?.imageId}
-            onChange={handleSelectPool}>
-            {resourcePools.map(pool =>
-              <Select.Option key={pool.imageId} value={pool.imageId}>{pool.name}</Select.Option>)}
-          </SelectFilter>
-          <label htmlFor="slots">Slots</label>
-          <InputNumber id="slots" value={slots} onChange={handleChangeSlots} />
-        </div>
-        <p>TODO max slots</p>
-        <label htmlFor="max-trials">Slots</label>
-        <InputNumber id="max-trials" value={maxTrials} onChange={handleChangeMaxTrials} />
+        <Form form={form} layout="vertical" requiredMark={false}>
+          <div className={css.poolRow}>
+            <Form.Item
+              initialValue={resourcePools?.[0].imageId}
+              label="Resource Pool"
+              name="pool"
+              rules={[ { required: true } ]}>
+              <SelectFilter
+                onChange={handleSelectPool}>
+                {resourcePools.map(pool => (
+                  <Select.Option key={pool.imageId} value={pool.imageId}>
+                    {pool.name}
+                  </Select.Option>
+                ))}
+              </SelectFilter>
+            </Form.Item>
+            <Form.Item
+              initialValue={1}
+              label="Slots"
+              name="slots"
+              rules={[ {
+                max: maxSlots,
+                min: 1,
+                required: true,
+                type: 'number',
+              } ]}>
+              <InputNumber />
+            </Form.Item>
+          </div>
+          <p>{maxSlots} max slots</p>
+          <Form.Item
+            initialValue={1}
+            label="Max Trials"
+            name="max-trials"
+            rules={[ { min: 0, required: true, type: 'number' } ]}>
+            <InputNumber className={css.fullWidth} />
+          </Form.Item>
+        </Form>
         <p>
           Note: HP search jobs (while more efficient than manual searching) can take longer
           depending on the size of the HP search space and the resources you allocate to it.
         </p>
       </div>
     );
-  }, [ handleChangeMaxTrials,
-    handleChangeSlots,
+  }, [ form,
     handleSelectPool,
-    maxTrials,
+    maxSlots,
     modalError,
-    resourcePool?.imageId,
-    resourcePools,
-    slots ]);
+    resourcePools ]);
 
   const [ modalContent, setModalContent ] = useState(page1);
 

@@ -2,11 +2,20 @@
   padding: 16px;
   padding-top: 0;
 
+  & :global(.ant-form-item) { margin: 0; }
   .fullWidth {
     width: 100%;
   
     & > div {
       width: 100%;
+    }
+  }
+  .poolRow {
+    display: flex;
+    gap: 8px;
+
+    & :first-child {
+      flex-grow: 1;
     }
   }
   .searchTitle {
