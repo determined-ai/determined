@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
-import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
@@ -17,7 +16,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import {
-  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
+  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Scale,
 } from 'types';
 import { metricNameToStr } from 'utils/metric';
 

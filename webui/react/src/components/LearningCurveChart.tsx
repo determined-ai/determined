@@ -4,10 +4,8 @@ import { AlignedData } from 'uplot';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricName } from 'types';
+import { MetricName, Scale } from 'types';
 import { metricNameToStr } from 'utils/metric';
-
-import { Scale } from './ScaleSelectFilter';
 
 interface Props {
   data: (number | null)[][];

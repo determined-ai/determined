@@ -2,7 +2,6 @@ import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
-import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { terminalRunStates } from 'constants/states';
@@ -19,7 +18,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
-  metricTypeParamMap, RunState,
+  metricTypeParamMap, RunState, Scale,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
