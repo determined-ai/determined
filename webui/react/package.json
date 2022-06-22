@@ -29,7 +29,7 @@
     "fuse.js": "^6.4.6",
     "hermes-parallel-coordinates": "^0.5.18",
     "history": "^4.10.1",
-    "humanize-duration": "^3.27.0",
+    "humanize-duration": "^3.27.2",
     "io-ts": "^2.2.16",
     "js-sha512": "^0.8.0",
     "js-yaml": "^4.1.0",
