@@ -1,5 +1,5 @@
 WITH validations_vt AS (
-  SELECT row_to_json(r1) AS validation, total_batches, end_time
+  SELECT row_to_json(r1) AS validation, total_batches, end_time, metrics
   FROM (
       SELECT 'STATE_' || v.state as state,
         v.end_time,
@@ -8,10 +8,11 @@ WITH validations_vt AS (
         v.metrics->'validation_metrics' as metrics
       FROM validations v
       WHERE v.trial_id = $1
+      AND $4 != 'Has Checkpoint'
     ) AS r1
 ),
 trainings_vt AS (
-  SELECT row_to_json(r1) AS training, total_batches, end_time
+  SELECT row_to_json(r1) AS training, total_batches, end_time, metrics
   FROM (
       SELECT s.end_time,
         'STATE_' || s.state as state,
@@ -20,6 +21,7 @@ trainings_vt AS (
         s.total_batches
       FROM steps s
       WHERE s.trial_id = $1
+      AND $4 = 'All'
     ) AS r1
 ),
 checkpoints_vt AS (
@@ -33,6 +35,7 @@ checkpoints_vt AS (
         c.resources
       FROM checkpoints_view c
       WHERE c.trial_id = $1
+      AND $4 != 'Has Validation'
     ) AS r1
 ),
 workloads AS (
@@ -48,7 +51,11 @@ workloads AS (
       t.end_time,
       v.end_time,
       c.end_time
-    ) AS end_time
+    ) AS end_time,
+    coalesce(
+      t.metrics,
+      v.metrics
+    ) AS metrics
   FROM trainings_vt t
     FULL JOIN checkpoints_vt c ON false
     FULL JOIN validations_vt v ON false
@@ -58,7 +65,7 @@ page_info AS (
 )
 SELECT (
   SELECT jsonb_agg(w) FROM (SELECT validation, training, checkpoint FROM workloads
-    ORDER BY total_batches %s, end_time %s
+    ORDER BY %s %s NULLS LAST, total_batches %s, end_time %s
     OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
     LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
   ) w

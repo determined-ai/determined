@@ -7706,14 +7706,18 @@ def get_GetTrialWorkloads(
     session: "client.Session",
     *,
     trialId: int,
+    filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
+        "filter": filter,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "sortKey": sortKey,
     }
     _resp = session._do_request(
         method="GET",

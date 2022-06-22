@@ -497,6 +497,23 @@ export const compareTrials: DetApi<
   ),
 };
 
+export const getTrialWorkloads: DetApi<
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
+> = {
+  name: 'getTrialWorkloads',
+  postProcess: (response: Api.V1GetTrialWorkloadsResponse) => {
+    return decoder.decodeTrialWorkloads(response);
+  },
+  request: (params: Service.TrialWorkloadsParams) => detApi.Internal.getTrialWorkloads(
+    params.id,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.sortKey || 'batches',
+    params.filter || 'All',
+  ),
+};
+
 /* Tasks */
 
 export const getTask: DetApi<

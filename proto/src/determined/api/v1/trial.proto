@@ -253,6 +253,10 @@ message GetTrialWorkloadsRequest {
   int32 limit = 3;
   // Limit workloads to those that are owned by the specified trial.
   int32 trial_id = 4;
+  // Sort workloads by this column.
+  string sort_key = 5;
+  // Filter workloads with validation and/or checkpoint information.
+  string filter = 6;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {

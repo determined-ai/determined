@@ -484,7 +484,7 @@ FROM trials t
 WHERE t.id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
-  AND total_batches <= $4
+  AND ($4 <= 0 OR total_batches <= $4)
   AND s.end_time > $5
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -512,7 +512,7 @@ JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
-  AND v.total_batches <= $4
+  AND ($4 <= 0 OR v.total_batches <= $4)
   AND v.end_time > $5
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)

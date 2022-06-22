@@ -443,6 +443,11 @@ export interface TrialDetails extends TrialItem {
   workloads: WorkloadGroup[];
 }
 
+export interface TrialWorkloads {
+  count: number;
+  workloads: WorkloadGroup[];
+}
+
 export enum Scale {
   Linear = 'linear',
   Log = 'log',
