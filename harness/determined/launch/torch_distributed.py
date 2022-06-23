@@ -75,7 +75,7 @@ def main(override_args: List[str], script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
 
-    single_slot = len(info.container_addrs) == 1 and len(info.slot_ids) == 1
+    single_slot = len(info.container_addrs) == 1 and len(info.slot_ids) <= 1
 
     # Detect single-slot trials and skip distributed launch
     if single_slot:
