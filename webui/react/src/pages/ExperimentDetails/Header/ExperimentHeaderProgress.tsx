@@ -2,7 +2,7 @@ import { Progress, Tooltip } from 'antd';
 import React from 'react';
 
 import { getStateColorCssVar } from 'themes';
-import { ExperimentBase, JobState, RunState } from 'types';
+import { ExperimentBase, JobState, ResourceState, RunState } from 'types';
 
 import css from './ExperimentHeaderProgress.module.scss';
 
@@ -10,7 +10,7 @@ interface Props {
   experiment: ExperimentBase;
 }
 
-const activeStates = [ JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED, RunState.Active ];
+const activeStates: any[] = [ JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED, RunState.Active ];
 
 const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const progressPercent = (experiment.progress ?? 0) * 100;
