@@ -110,7 +110,6 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     debug = experiment_config.get("debug", False)
     if debug:
-        print("DEBUG: HOROVOD initilizing", file=sys.stderr)
         logging.getLogger().setLevel(logging.DEBUG)
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
@@ -196,10 +195,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # run to it describing the hosts and process topology, otherwise mpi ends
     # up wanting to launch all -np# processes on the local causing an oversubscription
     # error ("There are not enough slots available in the system").
-    slurm_vars_to_clear = ["SLURM_JOBID"]
-    for k, _ in os.environ.items():
-        if k in slurm_vars_to_clear:
-            os.environ.pop(k)
+    os.environ.pop("SLURM_JOBID", None)
     p = subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script)
     with det.util.forward_signals(p):
         return p.wait()
