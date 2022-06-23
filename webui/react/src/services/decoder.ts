@@ -382,12 +382,13 @@ export const mapV1GetExperimentDetailsResponse = (
   ) as types.HyperparametersFlattened;
   const v1Exp = mapV1Experiment(exp);
   v1Exp.jobSummary = jobSummary;
-  const resolvedState = v1Exp.state === types.RunState.Active && v1Exp.jobSummary ?
-    v1Exp.jobSummary.state : v1Exp.state;
+  // const resolvedState = (v1Exp.state === types.RunState.Active && v1Exp.jobSummary)
+  //   ? v1Exp.jobSummary.state
+  //   : v1Exp.state;
 
   // Super state
   if (!exp.suitablePoolExists) {
-    v1Exp.state = Sdk.Determinedjobv1State.QUEUED
+    v1Exp.state = Sdk.Determinedjobv1State.QUEUED;
   } else if (v1Exp.state === types.RunState.Active) {
     v1Exp.state = types.ResourceState.Running;
   }
@@ -435,7 +436,7 @@ export const mapV1Experiment = (
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
-    state: decodeExperimentState(data.state),
+    state: displayState,
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
   };

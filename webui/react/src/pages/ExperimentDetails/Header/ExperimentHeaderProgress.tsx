@@ -2,7 +2,7 @@ import { Progress, Tooltip } from 'antd';
 import React from 'react';
 
 import { getStateColorCssVar } from 'themes';
-import { ExperimentBase, JobState, ResourceState, RunState } from 'types';
+import { ExperimentBase, JobState, RunState } from 'types';
 
 import css from './ExperimentHeaderProgress.module.scss';
 
