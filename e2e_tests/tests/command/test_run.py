@@ -291,7 +291,7 @@ resources:
             f"""df /dev/shm && \
 df /dev/shm | \
 tail -1 | \
-[ $(awk '{{print $2}}') = '{expected}' ]"""
+[ "$(awk '{{print $2}}')" = '{expected}' ]"""
         ]
         _run_and_verify_exit_code_zero(cmd)
 
