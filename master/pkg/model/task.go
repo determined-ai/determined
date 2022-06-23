@@ -103,7 +103,7 @@ type Allocation struct {
 }
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
-type AllocationState int
+type AllocationState string
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {
@@ -123,22 +123,22 @@ type ResourceAggregates struct {
 
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
-	AllocationStatePending AllocationState = 0
+	AllocationStatePending AllocationState = "PENDING"
 	// AllocationStateAssigned state denotes that the command has been assigned to an agent but has
 	// not started yet.
-	AllocationStateAssigned AllocationState = 1
+	AllocationStateAssigned AllocationState = "ASSIGNED"
 	// AllocationStatePulling state denotes that the command's base image is being pulled from the
 	// Docker registry.
-	AllocationStatePulling AllocationState = 2
+	AllocationStatePulling AllocationState = "PULLING"
 	// AllocationStateStarting state denotes that the image has been pulled and the task is being
 	// started, but the task is not ready yet.
-	AllocationStateStarting AllocationState = 3
+	AllocationStateStarting AllocationState = "STARTING"
 	// AllocationStateRunning state denotes that the service in the command is running.
-	AllocationStateRunning AllocationState = 4
-	// AllocationStateTerminating state denotes that the command is terminating.
-	AllocationStateTerminating AllocationState = 5
+	AllocationStateRunning AllocationState = "RUNNING"
 	// AllocationStateTerminated state denotes that the command has exited or has been aborted.
-	AllocationStateTerminated AllocationState = 6
+	AllocationStateTerminated AllocationState = "TERMINATED"
+	// AllocationStateTerminating state denotes that the command is terminating.
+	AllocationStateTerminating AllocationState = "TERMINATING"
 )
 
 // MostProgressedAllocationState returns the further progressed state. E.G. a call
@@ -148,35 +148,26 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 		return AllocationStatePending
 	}
 
-	max := states[0]
-	for _, state := range states {
-		if state > max {
-			max = state
+	// Can't use taskv1.State_value[state] since in proto
+	// "STATE_TERMINATING" > "STATE_TERMINATED"
+	// while our model used to have
+	// "STATE_TERMINATED" > "STATE_TERMINATING".
+	statesToOrder := map[AllocationState]int{
+		AllocationStatePending:     0,
+		AllocationStateAssigned:    1,
+		AllocationStatePulling:     2,
+		AllocationStateStarting:    3,
+		AllocationStateRunning:     4,
+		AllocationStateTerminating: 5,
+		AllocationStateTerminated:  6,
+	}
+	maxOrder, state := statesToOrder[states[0]], states[0]
+	for _, s := range states {
+		if order := statesToOrder[s]; order > maxOrder {
+			maxOrder, state = order, s
 		}
 	}
-	return max
-}
-
-// String returns the string representation of the task state.
-func (s AllocationState) String() string {
-	switch s {
-	case AllocationStatePending:
-		return "PENDING"
-	case AllocationStateAssigned:
-		return "ASSIGNED"
-	case AllocationStatePulling:
-		return "PULLING"
-	case AllocationStateStarting:
-		return "STARTING"
-	case AllocationStateRunning:
-		return "RUNNING"
-	case AllocationStateTerminating:
-		return "TERMINATING"
-	case AllocationStateTerminated:
-		return "TERMINATED"
-	default:
-		return "UNSPECIFIED"
-	}
+	return state
 }
 
 // Proto returns the proto representation of the task state.

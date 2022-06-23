@@ -78,11 +78,13 @@ def command_succeeded(command_id: str) -> bool:
 def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:
     for _ in range(ticks):
         info = get_task_info(task_type, task_id)
-        if info.get("state") == state:
+        gotten_state = info.get("state")
+        if gotten_state == state:
             return
         time.sleep(1)
 
-    pytest.fail(f"{task_type} did't reach {state} state after {ticks} secs")
+    print(subprocess.check_output(["det", "-m", conf.make_master_url(), "task", "logs", task_id]))
+    pytest.fail(f"{task_type} expected {state} state got {gotten_state} instead after {ticks} secs")
 
 
 def wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
