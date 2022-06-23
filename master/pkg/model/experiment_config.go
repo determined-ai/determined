@@ -6,6 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/docker/go-units"
+
 	"github.com/ghodss/yaml"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -64,15 +66,40 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 type ResourcesConfig struct {
 	Slots int `json:"slots"`
 
-	MaxSlots       *int    `json:"max_slots,omitempty"`
-	Weight         float64 `json:"weight"`
-	NativeParallel bool    `json:"native_parallel,omitempty"`
-	ShmSize        *int    `json:"shm_size,omitempty"`
-	AgentLabel     string  `json:"agent_label"`
-	ResourcePool   string  `json:"resource_pool"`
-	Priority       *int    `json:"priority,omitempty"`
+	MaxSlots       *int         `json:"max_slots,omitempty"`
+	Weight         float64      `json:"weight"`
+	NativeParallel bool         `json:"native_parallel,omitempty"`
+	ShmSize        *StorageSize `json:"shm_size,omitempty"`
+	AgentLabel     string       `json:"agent_label"`
+	ResourcePool   string       `json:"resource_pool"`
+	Priority       *int         `json:"priority,omitempty"`
 
 	Devices DevicesConfig `json:"devices"`
+}
+
+// StorageSize is a named type for custom marshaling behavior for shm_size.
+type StorageSize int64
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *StorageSize) UnmarshalJSON(data []byte) error {
+	var size any
+	if err := json.Unmarshal(data, &size); err != nil {
+		return err
+	}
+
+	switch s := size.(type) {
+	case float64:
+		*d = StorageSize(s)
+	case string:
+		b, err := units.RAMInBytes(s)
+		if err != nil {
+			return errors.Wrap(err, "failed to parse shm_size")
+		}
+		*d = StorageSize(b)
+	default:
+		return errors.New("shm_size needs to be a string or numeric")
+	}
+	return nil
 }
 
 // ParseJustResources is a helper function for breaking the circular dependency where we need the
@@ -117,7 +144,6 @@ func (r ResourcesConfig) Validate() []error {
 	errs := []error{
 		check.GreaterThanOrEqualTo(r.Slots, 0, "slots must be >= 0"),
 		check.GreaterThan(r.Weight, float64(0), "weight must be > 0"),
-		check.GreaterThanOrEqualTo(r.ShmSize, 0, "shm_size must be >= 0"),
 	}
 	errs = append(errs, ValidatePrioritySetting(r.Priority)...)
 	return errs
