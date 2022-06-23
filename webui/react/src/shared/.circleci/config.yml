@@ -1,0 +1,33 @@
+version: 2.1
+
+commands:
+  # circleci's checkout does not fetch submodules by default.
+  # https://circleci.com/docs/2.0/configuration-reference/#checkout
+  checkout-with-sm:
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
+
+  install-python:
+    steps:
+      - run:
+          name: Installing Python
+          command: sudo apt-get update && sudo apt-get install -y python3 python3-pip
+
+
+# Define the jobs
+jobs:
+  test-repo-integration:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout
+      - install-python
+      - run: ./bin/test.py --repos core
+
+# Orchestrate our job run sequence
+workflows:
+  test:
+    jobs:
+      - test-repo-integration
