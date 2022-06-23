@@ -611,7 +611,7 @@ export interface Task {
 }
 
 // CompoundRunState adds more information about a job's state to RunState.
-export type CompoundRunState = RunState | JobState
+export type CompoundRunState = RunState | JobState | ResourceState
 
 export interface ExperimentTask extends Task {
   archived: boolean;

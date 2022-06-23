@@ -384,6 +384,8 @@ export const mapV1GetExperimentDetailsResponse = (
   v1Exp.jobSummary = jobSummary;
   if (!exp.suitablePoolExists) {
     v1Exp.state = Sdk.Determinedjobv1State.QUEUED
+  } else if (v1Exp.state === types.RunState.Active) {
+    v1Exp.state = types.ResourceState.Running;
   }
   // const resolvedState = v1Exp.state === types.RunState.Active && v1Exp.jobSummary ?
   //   v1Exp.jobSummary.state : v1Exp.state;
