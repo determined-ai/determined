@@ -3,7 +3,8 @@ import { isColor, rgba2str, rgbaMix, str2rgba } from './utils/color';
 
 const STRONG_WEAK_DELTA = 45;
 export const getCssVar = (name: string): string => {
-  return window.getComputedStyle(document.body)?.getPropertyValue(name);
+  const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
+  return window.getComputedStyle(document.body)?.getPropertyValue(varName);
 };
 
 const generateStrongWeak = (theme: Theme): Theme => {

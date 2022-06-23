@@ -8,21 +8,18 @@ import { getDisplayName } from 'utils/user';
 const UserAvatar: React.FC<{
   userId?: number;
 } & Omit<Props, 'displayName'>> = ({ userId, ...rest }) => {
-
   const [ displayName, setDisplayName ] = useState('');
-  const { users } = useStore();
+  const { ui, users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
 
   useEffect(() => {
     if (!userId) return;
-    if (!users.length) {
-      fetchUsers();
-    }
+    if (!users.length) fetchUsers();
     const user = users.find(user => user.id === userId);
     setDisplayName(getDisplayName(user));
   }, [ fetchUsers, userId, users ]);
 
-  return <Avatar {...rest} displayName={displayName} />;
+  return <Avatar {...rest} darkLight={ui.darkLight} displayName={displayName} />;
 };
 
 export default UserAvatar;

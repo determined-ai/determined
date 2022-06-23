@@ -23,12 +23,8 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
       .slice(0, 2);
   }, [ name ]);
 
-  const color = useMemo(() => {
-    if (!name) {
-      return hsl2str({ ...hex2hsl('#808080'), l: 90 });
-    }
-    const hexColor = md5(name).substring(0, 6);
-    const hslColor = hex2hsl(hexColor);
+  const backgroundColor = useMemo(() => {
+    const hslColor = name ? hex2hsl(md5(name).substring(0, 6)) : hex2hsl('#808080');
     return hsl2str({
       ...hslColor,
       l: ui.darkLight === DarkLight.Dark ? 80 : 90,
@@ -51,7 +47,7 @@ const DynamicIcon: React.FC<Props> = ({ name, size = 70, style }: Props) => {
     <div
       className={css.base}
       style={{
-        backgroundColor: color,
+        backgroundColor,
         borderRadius,
         color: 'black',
         fontSize,
