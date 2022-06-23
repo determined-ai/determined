@@ -18,7 +18,7 @@ Read more about the methodology and tradeoffs [here](https://hpe-my.sharepoint.c
 
 ## How
 
-Code in this directory should not depend on internal dependencies that leave outside this directory
+Code in this directory should not depend on internal dependencies that live outside this directory
 
 ## TODO
 
