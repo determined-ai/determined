@@ -91,8 +91,8 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    # When --autohorovod was set, detect single-slot trials.
-    if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) == 1:
+    # When --autohorovod was set, detect single-slot and zero-slot trials.
+    if autohorovod and len(info.container_addrs) == 1 and len(info.slot_ids) <= 1:
         p = subprocess.Popen(script)
         with det.util.forward_signals(p):
             return p.wait()
