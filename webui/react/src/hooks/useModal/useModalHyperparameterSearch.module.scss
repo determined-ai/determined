@@ -11,13 +11,16 @@
   :global(.ant-modal-confirm-btns) {
     display: none;
   }
+  :global(.ant-form-item-explain) {
+    display: none;
+  }
   .base {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 16px;
     
-    & :global(.ant-form-item) { margin: 0; }
+    :global(.ant-form-item) { margin: 0; }
     .fullWidth {
       width: 100%;
     }
@@ -32,12 +35,14 @@
     .searchTitle {
       display: flex;
       justify-content: space-between;
+      width: 100%;
     }
     .hyperparameterContainer {
       display: grid;
       gap: 8px;
       grid-template-columns: 170px minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
-    
+
+      :global(.ant-input-number) { width: 100%; }
       .hyperparameterName * {
         overflow: hidden;
       }
@@ -52,15 +57,10 @@
         font-weight: normal;
         margin: 0;
       }
-      & > div { width: 100%; }
     }
     p { margin: 0; }
-    & :global(.ant-form-item-label) label {
+    label {
       width: 100%;
-    
-      & > div {
-        width: 100%;
-      }
     }
   }
   .footer {
@@ -73,5 +73,17 @@
     .spacer {
       flex-grow: 1;
     }
+  }
+  .error {
+    color: #ff4d4f; //antd error color
+    font-size: 12px;
+    grid-column: 1 / span 5;
+    margin-block: -8px !important;
+  }
+  .warning {
+    color: #faad14; //antd warning color
+    font-size: 12px;
+    grid-column: 1 / span 5;
+    margin-block: -8px !important;
   }
 }
