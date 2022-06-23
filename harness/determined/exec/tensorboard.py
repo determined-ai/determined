@@ -133,7 +133,7 @@ def start_tensorboard(
                         responsive = check_tensorboard_responsive()
 
                     if responsive and not triggered and num_fetched_files > 0:
-                        print(TENSORBOARD_TRIGGER_READY_MSG)
+                        print(TENSORBOARD_TRIGGER_READY_MSG, flush=True)
                         triggered = True
 
                     time.sleep(FETCH_INTERVAL)
