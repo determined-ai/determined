@@ -13,7 +13,7 @@ import (
 type LoggingConfig struct {
 	DefaultLoggingConfig    *DefaultLoggingConfig `union:"type,default" json:"-"`
 	ElasticLoggingConfig    *ElasticLoggingConfig `union:"type,elastic" json:"-"`
-	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs"`
+	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs,omitempty"`
 }
 
 // Resolve resolves the parts of the TaskContainerDefaultsConfig that must be evaluated on
