@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg"
@@ -66,6 +67,17 @@ func (i *Item) IsSymLink() bool {
 func (ar Archive) ContainsPath(path string) bool {
 	for _, file := range ar {
 		if file.Path == path {
+			return true
+		}
+	}
+	return false
+}
+
+// ContainsFilePrefix returns true if any Item present in an Archive
+// has the specified prefix (i.e. is under that directory).
+func (ar Archive) ContainsFilePrefix(prefix string) bool {
+	for _, file := range ar {
+		if strings.HasPrefix(file.Path, prefix) {
 			return true
 		}
 	}
@@ -129,7 +141,7 @@ func (t *UnixTime) UnmarshalJSON(data []byte) error {
 }
 
 // Writes the archive as a tarfile to the given Writer.
-func tarArchive(ar Archive, writer io.Writer) error {
+func tarArchive(prefix string, ar Archive, writer io.Writer) error {
 	w := tar.NewWriter(writer)
 
 	for _, item := range ar {
@@ -142,6 +154,7 @@ func tarArchive(ar Archive, writer io.Writer) error {
 		if err := w.WriteHeader(&tar.Header{
 			Typeflag: item.Type,
 			Name:     prefix + item.Path,
+			Linkname: linkName,
 			Mode:     int64(item.FileMode),
 			Size:     int64(len(content)),
 			Uid:      item.UserID,
@@ -162,7 +175,7 @@ func tarArchive(ar Archive, writer io.Writer) error {
 func ToIOReader(ar Archive) (io.Reader, error) {
 	var buf bytes.Buffer
 
-	if err := tarArchive(ar, &buf); err != nil {
+	if err := tarArchive("", ar, &buf); err != nil {
 		return nil, err
 	}
 
@@ -171,11 +184,17 @@ func ToIOReader(ar Archive) (io.Reader, error) {
 
 // ToTarGz converts the files in an Archive into a gzipped tarfile.
 func ToTarGz(ar Archive) ([]byte, error) {
+	return ToRelocatedTarGz("", ar)
+}
+
+// ToRelocatedTarGz converts the files in an Archive into a gzipped tarfile
+// relocated with the specified path prefix.
+func ToRelocatedTarGz(prefix string, ar Archive) ([]byte, error) {
 	var buf bytes.Buffer
 
 	gzipWriter := gzip.NewWriter(&buf)
 
-	if err := tarArchive(ar, gzipWriter); err != nil {
+	if err := tarArchive(prefix, ar, gzipWriter); err != nil {
 		return nil, err
 	}
 
