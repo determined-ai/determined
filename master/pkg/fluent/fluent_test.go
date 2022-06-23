@@ -19,11 +19,11 @@ func TestAdditionalOutputConfig(t *testing.T) {
   Path /run/determined/fluent
 `
 	loggingConfigs := []model.LoggingConfig{
-		model.LoggingConfig{
+		{
 			DefaultLoggingConfig:    &model.DefaultLoggingConfig{},
 			AdditionalFluentOutputs: ptrs.Ptr(additionalFluentOutputs),
 		},
-		model.LoggingConfig{
+		{
 			ElasticLoggingConfig: &model.ElasticLoggingConfig{
 				Host: "test",
 				Port: 9200,
