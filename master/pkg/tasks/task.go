@@ -288,7 +288,7 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
 	// Disable login via password by * in shadow file.  Cannot use ! as that locks the account
-	// when using SLURM/Singularity. 
+	// when using SLURM/Singularity.
 	shadowBytes := []byte(fmt.Sprintf("%v:*:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))
 
