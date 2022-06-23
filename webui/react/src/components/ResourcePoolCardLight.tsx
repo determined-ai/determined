@@ -13,8 +13,9 @@ import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import Icon from 'shared/components/Icon/Icon';
+import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
-import { DarkLight, ShirtSize } from 'themes';
+import { ShirtSize } from 'themes';
 import { deviceTypes, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 

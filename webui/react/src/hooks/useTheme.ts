@@ -3,8 +3,10 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } f
 import useSettings from 'hooks/useSettings';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
-import themes, { DarkLight, globalCssVars, Theme } from 'themes';
+import themes from 'themes';
 import { BrandingType } from 'types';
+
+import { DarkLight, globalCssVars, Theme } from '../shared/themes';
 
 import { config, Mode, Settings } from './useTheme.settings';
 
