@@ -288,9 +288,9 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
 	// Add a bogus password in the shadow file.  Cannot use ! as that locks the account
-	// when using SLURM/Singularity.   The password is not actually ever used so OK that
-	// it can never be specified due to our sshd_config is configured with "PasswordAuthentication no"
-	shadowBytes := []byte(fmt.Sprintf("%v:BogusPasswordHash:::::::\n", aug.User))
+	// when using SLURM/Singularity.   Use * which cannot match any password.
+        // Our sshd_config is configured with "PasswordAuthentication no" so * works.
+	shadowBytes := []byte(fmt.Sprintf("%v:*:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))
 
 	return wrapArchive(
