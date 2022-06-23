@@ -1,0 +1,31 @@
+.base {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: inherit;
+  justify-content: flex-start;
+  overflow: auto;
+  width: 100%;
+
+  .body {
+    height: max-content;
+    height: 100%;
+    min-height: 0;
+    padding: 16px;
+    width: 100%;
+  }
+}
+.bodyNoPadding {
+  .body {
+    padding: 0;
+  }
+}
+.stickyHeader {
+  overflow: inherit;
+
+  .body {
+    overflow: auto;
+    padding-bottom: 0;
+  }
+}
