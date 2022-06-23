@@ -66,6 +66,7 @@ func makeOutputConfig(
 				tlsConfig.CertificateName = localhost
 			}
 		}
+
 		fmt.Fprintf(config, `
 [OUTPUT]
   Name http
@@ -109,6 +110,7 @@ func makeOutputConfig(
   HTTP_Passwd %s
 `, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
 		}
+
 	default:
 		panic("no log driver set for agent")
 	}
