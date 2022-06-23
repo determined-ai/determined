@@ -109,8 +109,3 @@ func (t *TLSClientConfig) Resolve() error {
 	t.CertBytes = certBytes
 	return nil
 }
-
-// CustomFluentOutputs configures custom output options for fluent logging.
-type CustomFluentOutputs struct {
-	Config string `json:"config"`
-}

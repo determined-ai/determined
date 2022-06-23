@@ -66,7 +66,6 @@ func makeOutputConfig(
 				tlsConfig.CertificateName = localhost
 			}
 		}
-		fmt.Println("DEFAULT LOGGING CONFIG!!!")
 		fmt.Fprintf(config, `
 [OUTPUT]
   Name http
@@ -115,8 +114,7 @@ func makeOutputConfig(
 	}
 
 	if c := loggingConfig.AdditionalFluentOutputs; c != nil {
-		fmt.Println("\n|", *c, "|\n")
-		fmt.Fprintf(config, *c)
+		fmt.Fprint(config, *c)
 	}
 
 	const (
