@@ -172,7 +172,24 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 
 // Proto returns the proto representation of the task state.
 func (s AllocationState) Proto() taskv1.State {
-	return taskv1.State(taskv1.State_value[fmt.Sprintf("STATE_%s", s)])
+	switch s {
+	case AllocationStatePending:
+		return taskv1.State_STATE_PENDING
+	case AllocationStateAssigned:
+		return taskv1.State_STATE_ASSIGNED
+	case AllocationStatePulling:
+		return taskv1.State_STATE_PULLING
+	case AllocationStateStarting:
+		return taskv1.State_STATE_STARTING
+	case AllocationStateRunning:
+		return taskv1.State_STATE_RUNNING
+	case AllocationStateTerminating:
+		return taskv1.State_STATE_TERMINATING
+	case AllocationStateTerminated:
+		return taskv1.State_STATE_TERMINATED
+	default:
+		return taskv1.State_STATE_UNSPECIFIED
+	}
 }
 
 const (
