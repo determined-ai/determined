@@ -79,6 +79,18 @@ func initializeConfig() error {
 	if err != nil {
 		return err
 	}
+
+	// Validate warnings for extraneous and duplicate keys before
+	// Viper merges configuration. Viper does some weird merging logic
+	// that appears to dedupe some values along with ignoring config like
+	// not_a_real_key: {}
+	var c *config.Config
+	if err := yaml.UnmarshalStrict(bs, &c, yaml.DisallowUnknownFields); err != nil {
+		log.Warnf("master configuration parsing warning (will soon be error) %s", err)
+		// TODO uncomment to turn strict parsing warnings into errors next breaking change.
+		//return err
+	}
+
 	if err = mergeConfigBytesIntoViper(bs); err != nil {
 		return err
 	}
