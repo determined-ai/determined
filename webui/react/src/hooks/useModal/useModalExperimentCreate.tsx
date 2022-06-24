@@ -141,7 +141,8 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
   }, []);
 
   const handleCancel = useCallback((close) => {
-    if (close?.triggerCancel) {
+    // 'close' is an indicator for if cancel button (show config) is clicked or not.
+    if (!close) {
       modalClose(ModalCloseReason.Cancel);
     } else {
       setModalState(prev => {
