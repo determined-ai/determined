@@ -59,7 +59,7 @@ const ExperimentComparison: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  if (!experimentIds) {
+  if (!experimentIds || !experimentIds.length) {
     return <Message title="No Experiments chosen for comparison" />;
   } else if (pageError) {
     return <Message title="Unable to compare experiments" type={MessageType.Warning} />;
