@@ -425,6 +425,7 @@ export const mapV1Experiment = (
     projectId: data.projectId,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
+    slotsPerTrial: data.slotsPerTrial,
     startTime: data.startTime as unknown as string,
     state: displayState,
     trialIds: data.trialIds || [],

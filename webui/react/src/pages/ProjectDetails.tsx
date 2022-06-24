@@ -103,6 +103,7 @@ const ProjectDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const { projectId } = useParams<Params>();
   const [ project, setProject ] = useState<Project>();
+  const [ maxAgents, setMaxAgents ] = useState<number>(0);
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
@@ -163,6 +164,20 @@ const ProjectDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [ canceler.signal, id, pageError ]);
+
+  const fetchAgents = useCallback(async () => {
+    try {
+      const response = await getAgents({ signal: canceler.signal });
+      let max = 0;
+      response.forEach(agent => max = Math.max(max, agent.resources.length));
+      setMaxAgents(prev => {
+        if (isEqual(prev, max)) return prev;
+        return max;
+      });
+    } catch (e) {
+      if (!pageError) setPageError(e as Error);
+    }
+  }, [ canceler.signal, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -237,8 +252,8 @@ const ProjectDetails: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
-      fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
-  }, [ fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
+      fetchAgents(), fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels() ]);
+  }, [ fetchAgents, fetchProject, fetchExperiments, fetchUsers, fetchLabels ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 

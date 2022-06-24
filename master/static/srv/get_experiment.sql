@@ -2,10 +2,6 @@ WITH trial_ids AS (
     SELECT id
     FROM trials
     WHERE experiment_id = $1
-),
-slots_by_agent AS (
-    SELECT jsonb_array_length(slots) AS slots
-    FROM resourcemanagers_agent_agentstate
 )
 SELECT
     e.id AS id,
@@ -33,9 +29,7 @@ SELECT
     p.user_id AS project_owner_id,
     w.id AS workspace_id,
     w.name AS workspace_name,
-    (w.archived OR p.archived) AS parent_archived,
-    ((e.config->'resources'->>'slots_per_trial')::int <= (SELECT MAX(slots) FROM slots_by_agent))
-      AS suitable_pool_exists
+    (w.archived OR p.archived) AS parent_archived
 FROM
     experiments e
 JOIN users u ON e.owner_id = u.id

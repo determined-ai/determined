@@ -509,6 +509,7 @@ export interface ExperimentItem {
   projectId: number;
   resourcePool: string;
   searcherType: string;
+  slotsPerTrial?: number;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
