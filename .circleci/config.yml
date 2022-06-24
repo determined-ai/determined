@@ -2014,7 +2014,7 @@ jobs:
           fail_only: True
           only_for_branches: master
           failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
-          channel: "devops-ag"
+          channel: "infra-eng-team"
 
 workflows:
   lint:
