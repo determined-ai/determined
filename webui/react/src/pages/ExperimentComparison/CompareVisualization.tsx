@@ -3,13 +3,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useHistory, useLocation } from 'react-router-dom';
 
 import Link from 'components/Link';
-import { Scale } from 'components/ScaleSelectFilter';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import {
   GetHPImportanceResponseMetricHPImportance,
   V1ExpTrial,
-  V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse, V1TrialsSampleResponse
+  V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse, V1TrialsSampleResponse,
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -17,12 +16,13 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys, isEqual } from 'shared/utils/data';
 // import { union } from 'shared/utils/set'
+import { flattenObject } from 'shared/utils/data';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
-  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, Hyperparameter, metricTypeParamMap
+  HpImportanceMap, HpImportanceMetricMap, Hyperparameter, HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
+import { Scale } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
-import { flattenObject } from 'shared/utils/data';
 
 import css from './CompareVisualization.module.scss';
 import LearningCurve from './CompareVisualization/CompareCurve';
@@ -76,7 +76,6 @@ const CompareVisualization: React.FC<Props> = ({
   const { ui } = useStore();
   //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
 
-
   const fullHParams = useRef<string[]>(
     (Object.keys(experiments?.[0]?.hyperparameters || {}).filter(key => {
       // Constant hyperparameters are not useful for visualizations.
@@ -84,10 +83,8 @@ const CompareVisualization: React.FC<Props> = ({
     })),
   );
 
-
-
   // const asd = useMemo(() => {
-  //   const experimentHps = experiments.map(e => new Set(Object.keys(e.hyperparameters ?? {}))) 
+  //   const experimentHps = experiments.map(e => new Set(Object.keys(e.hyperparameters ?? {})))
   //   const allHParams = experimentHps.reduce(union)
   //   const differingHParams = [].filter(hp => {
   //     const allHpVals = experiments.map(e => e.hyperparameters[hp] )
@@ -95,15 +92,12 @@ const CompareVisualization: React.FC<Props> = ({
 
   // }, [])
 
-  
-  
   // Hack to show exp data
   const defaultMetric = {
-      name: experiments?.[0]?.config.searcher.metric,
-      type: MetricType.Validation,
-    };
-  
-  
+    name: experiments?.[0]?.config.searcher.metric,
+    type: MetricType.Validation,
+  };
+
   const searcherMetric = useRef<MetricName>(defaultMetric);
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
@@ -128,12 +122,12 @@ const CompareVisualization: React.FC<Props> = ({
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
-  
-  const typeKey = DEFAULT_TYPE_KEY
+
+  const typeKey = DEFAULT_TYPE_KEY;
   const { hasData, isSupported, hasLoaded } = useMemo(() => {
     return {
       hasData: (batches && batches.length !== 0) || (metrics && metrics.length !== 0) || (trialIds && trialIds.length > 0),
-      hasLoaded: batches.length > 0 || metrics &&metrics.length > 0 || trialIds.length > 0,
+      hasLoaded: batches.length > 0 || metrics && metrics.length > 0 || trialIds.length > 0,
       // isSupported: ![
       //   ExperimentSearcherName.Single,
       //   ExperimentSearcherName.Pbt,
@@ -170,7 +164,7 @@ const CompareVisualization: React.FC<Props> = ({
         view: DEFAULT_VIEW,
       });
     }
-  }, [experiments.length])
+  }, [ experiments.length ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !experiments.length) return;
@@ -208,7 +202,7 @@ const CompareVisualization: React.FC<Props> = ({
         (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
         (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds(prevTrialIds => isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds); 
+        setTrialIds(prevTrialIds => isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds);
 
         (event.trials || []).forEach(trial => {
           const id = trial.trialId;
@@ -263,38 +257,32 @@ const CompareVisualization: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ trialIds, filters.metric, ui.isPageHidden ]);
 
-
-
   // Stream available metrics. experiments
   useEffect(() => {
     if (!isSupported || ui.isPageHidden || !trialIds?.length) return;
 
-    console.log('want to stream')
+    console.log('want to stream');
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
     detApi.Internal.trialsMetricNames(trialIds).then(metrics => {
 
-        (metrics.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-        (metrics.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
-        const newMetrics = [
-          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
-        ];
-        setMetrics(newMetrics);
-      },
-    ).catch(() => {
+      (metrics.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+      (metrics.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+      const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
+      const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
+      const newMetrics = [
+        ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+        ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+      ];
+      setMetrics(newMetrics);
+    }).catch(() => {
       setPageError(PageError.MetricNames);
     });
 
-
     return () => canceler.abort();
   }, [ trialIds, filters?.metric, isSupported, ui.isPageHidden ]);
-
-
 
   // Set the default filter batch.
   useEffect(() => {
@@ -329,7 +317,6 @@ const CompareVisualization: React.FC<Props> = ({
       return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
     });
   }, [ hpImportanceMap, isSupported ]);
-
 
   if (!experiments.length) {
     return (
@@ -397,19 +384,21 @@ const CompareVisualization: React.FC<Props> = ({
         <Tabs.TabPane
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
-          {(experiments.length > 0 && filters.metric?.name && <LearningCurve
-            experiments={experiments}
-            filters={visualizationFilters}
-            selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-            trialHps={trialHps}
-            chartData={chartData}
-            trialIds={trialIds}
-            hyperparameters={hyperparameters}
-            batches={batches}
-            hasLoaded={hasLoaded}
-          /> )}
+          {(experiments.length > 0 && filters.metric?.name && (
+            <LearningCurve
+              batches={batches}
+              chartData={chartData}
+              experiments={experiments}
+              filters={visualizationFilters}
+              hasLoaded={hasLoaded}
+              hyperparameters={hyperparameters}
+              selectedMaxTrial={filters.maxTrial}
+              selectedMetric={filters.metric}
+              selectedScale={filters.scale}
+              trialHps={trialHps}
+              trialIds={trialIds}
+            />
+          ))}
         </Tabs.TabPane>
         {/* <Tabs.TabPane
           key={ExperimentVisualizationType.HpParallelCoordinates}

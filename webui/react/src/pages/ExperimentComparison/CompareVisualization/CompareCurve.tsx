@@ -2,7 +2,6 @@ import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
-import { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { useStore } from 'contexts/Store';
@@ -12,6 +11,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Scale } from 'types';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, HyperparameterType,
   MetricName,
@@ -120,7 +120,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
- if (hasLoaded && !hasTrials) {
+  if (hasLoaded && !hasTrials) {
     return (
       <div className={css.waiting}>
         <Alert

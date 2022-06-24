@@ -6,8 +6,9 @@ import HpSelectFilter from 'components/HpSelectFilter';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
-import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
+import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
+import { Scale } from 'types';
 import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
 
 import css from './CompareFilters.module.scss';

@@ -44,28 +44,6 @@ class APIHttpError(Exception):
         return self.message
 
 
-class ExpTrialDataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "ExpTrialDataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
-        }
-
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -111,6 +89,28 @@ class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
     PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
     PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
+
+class apiv1DataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "apiv1DataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
+        }
 
 class determinedcheckpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -1008,28 +1008,6 @@ class v1CurrentUserResponse:
             "user": self.user.to_json(),
         }
 
-class v1DataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1DataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
-        }
-
 class v1DeleteCheckpointsRequest:
     def __init__(
         self,
@@ -1175,7 +1153,7 @@ class v1EnableSlotResponse:
 class v1ExpTrial:
     def __init__(
         self,
-        data: "typing.Sequence[ExpTrialDataPoint]",
+        data: "typing.Sequence[v1ExpTrialDataPoint]",
         hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
         experimentId: "typing.Optional[int]" = None,
@@ -1190,7 +1168,7 @@ class v1ExpTrial:
         return cls(
             trialId=obj["trialId"],
             hparams=obj["hparams"],
-            data=[ExpTrialDataPoint.from_json(x) for x in obj["data"]],
+            data=[v1ExpTrialDataPoint.from_json(x) for x in obj["data"]],
             experimentId=obj.get("experimentId", None),
         )
 
@@ -1200,6 +1178,28 @@ class v1ExpTrial:
             "hparams": self.hparams,
             "data": [x.to_json() for x in self.data],
             "experimentId": self.experimentId if self.experimentId is not None else None,
+        }
+
+class v1ExpTrialDataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpTrialDataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
         }
 
 class v1Experiment:
@@ -5269,7 +5269,7 @@ class v1SummarizeTrialResponse:
 class v1SummarizedMetric:
     def __init__(
         self,
-        data: "typing.Sequence[v1DataPoint]",
+        data: "typing.Sequence[apiv1DataPoint]",
         name: str,
         type: "v1MetricType",
     ):
@@ -5281,7 +5281,7 @@ class v1SummarizedMetric:
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
         return cls(
             name=obj["name"],
-            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            data=[apiv1DataPoint.from_json(x) for x in obj["data"]],
             type=v1MetricType(obj["type"]),
         )
 
@@ -5719,9 +5719,6 @@ class v1TrialsMetricNamesResponse:
 class v1TrialsSampleResponse:
     def __init__(
         self,
-        data: "typing.Sequence[v1DataPoint]",
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
         trials: "typing.Sequence[v1ExpTrial]",
@@ -5733,9 +5730,6 @@ class v1TrialsSampleResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSampleResponse":
         return cls(
-            trialId=obj["trialId"],
-            hparams=obj["hparams"],
-            data=[v1DataPoint.from_json(x) for x in obj["data"]],
             trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
             promotedTrials=obj["promotedTrials"],
             demotedTrials=obj["demotedTrials"],
@@ -8620,6 +8614,16 @@ def get_SummarizeTrial(
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/trials/{trialId}/summarize",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1SummarizeTrialResponse.from_json(_resp.json())
+    raise APIHttpError("get_SummarizeTrial", _resp)
+
 def get_TrialsMetricNames(
     session: "client.Session",
     *,
@@ -8640,8 +8644,6 @@ def get_TrialsMetricNames(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return v1SummarizeTrialResponse.from_json(_resp.json())
-    raise APIHttpError("get_SummarizeTrial", _resp)
         return v1TrialsMetricNamesResponse.from_json(_resp.json())
     raise APIHttpError("get_TrialsMetricNames", _resp)
 
