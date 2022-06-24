@@ -170,7 +170,11 @@ func (c Config) Printable() ([]byte, error) {
 	}
 	if c.TaskContainerDefaults.RegistryAuth != nil {
 		if c.TaskContainerDefaults.RegistryAuth.Password != "" {
-			c.TaskContainerDefaults.RegistryAuth.Password = hiddenValue
+			// RegistryAuth is a pointer, so if we need to hide the password we need to be very
+			// careful to replace the pointer, not the contents behind the pointer.
+			printable := *c.TaskContainerDefaults.RegistryAuth
+			printable.Password = hiddenValue
+			c.TaskContainerDefaults.RegistryAuth = &printable
 		}
 	}
 
