@@ -1,3 +1,4 @@
+import ExperimentComparison from 'pages/ExperimentComparison';
 import { FC } from 'react';
 
 import ClusterLogs from 'pages/ClusterLogs';
@@ -29,6 +30,7 @@ const routeComponentMap: Record<string, FC> = {
   clusterHistorical: Deprecated,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
+  experimentComparison: ExperimentComparison,
   experimentDetails: ExperimentDetails,
   interactive: InteractiveTask,
   jobs: Deprecated,

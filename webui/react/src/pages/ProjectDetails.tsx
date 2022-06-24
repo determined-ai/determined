@@ -50,6 +50,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandTask,
@@ -80,6 +81,7 @@ interface Params {
 }
 
 const batchActions = [
+  Action.CompareExperiments,
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
@@ -558,6 +560,11 @@ const ProjectDetails: React.FC = () => {
         sourceWorkspaceId: project?.workspaceId,
       });
     }
+    if (action === Action.CompareExperiments) {
+      if (settings.row?.length)
+        return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
+    }
+
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {
         case Action.Activate:

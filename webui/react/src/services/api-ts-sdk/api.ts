@@ -182,6 +182,26 @@ export enum Determinedtaskv1State {
 }
 
 /**
+ * A possibly down-sampled series of metric readings through the progress of the trial.
+ * @export
+ * @interface ExpTrialDataPoint
+ */
+export interface ExpTrialDataPoint {
+    /**
+     * Total batches processed by the time this measurement is taken.
+     * @type {number}
+     * @memberof ExpTrialDataPoint
+     */
+    batches: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof ExpTrialDataPoint
+     */
+    value: number;
+}
+
+/**
  * Hyperparameter importance as computed with respect for one specific metric.
  * @export
  * @interface GetHPImportanceResponseMetricHPImportance
@@ -316,6 +336,26 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
+}
+
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1ExperimentsSampleResponse
+ */
+export interface StreamResultOfV1ExperimentsSampleResponse {
+    /**
+     * 
+     * @type {V1ExperimentsSampleResponse}
+     * @memberof StreamResultOfV1ExperimentsSampleResponse
+     */
+    result?: V1ExperimentsSampleResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExperimentsSampleResponse
+     */
+    error?: RuntimeStreamError;
 }
 
 /**
@@ -1663,6 +1703,38 @@ export interface V1EnableSlotResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1ExpTrial
+ */
+export interface V1ExpTrial {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof V1ExpTrial
+     */
+    trialId: number;
+    /**
+     * Hyperparamters values for this specific trial.
+     * @type {any}
+     * @memberof V1ExpTrial
+     */
+    hparams: any;
+    /**
+     * 
+     * @type {Array<ExpTrialDataPoint>}
+     * @memberof V1ExpTrial
+     */
+    data: Array<ExpTrialDataPoint>;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ExpTrial
+     */
+    experimentId?: number;
+}
+
+/**
  * Experiment is a collection of one or more trials that are exploring a user-defined hyperparameter space.
  * @export
  * @interface V1Experiment
@@ -1838,6 +1910,32 @@ export interface V1ExperimentSimulation {
      * @memberof V1ExperimentSimulation
      */
     trials?: Array<V1TrialSimulation>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ExperimentsSampleResponse
+ */
+export interface V1ExperimentsSampleResponse {
+    /**
+     * A historical or incremental series of data points for the trials.
+     * @type {Array<V1ExpTrial>}
+     * @memberof V1ExperimentsSampleResponse
+     */
+    trials: Array<V1ExpTrial>;
+    /**
+     * IDs of trials that are newly included in the data.
+     * @type {Array<number>}
+     * @memberof V1ExperimentsSampleResponse
+     */
+    promotedTrials: Array<number>;
+    /**
+     * IDs of trials that are no loger included in the top N trials.
+     * @type {Array<number>}
+     * @memberof V1ExperimentsSampleResponse
+     */
+    demotedTrials: Array<number>;
 }
 
 /**
@@ -6491,17 +6589,37 @@ export interface V1TrialSimulation {
 }
 
 /**
+ * Response to MetricNamesRequest.
+ * @export
+ * @interface V1TrialsMetricNamesResponse
+ */
+export interface V1TrialsMetricNamesResponse {
+    /**
+     * List of training metric names.
+     * @type {Array<string>}
+     * @memberof V1TrialsMetricNamesResponse
+     */
+    trainingMetrics?: Array<string>;
+    /**
+     * List of validation metric names.
+     * @type {Array<string>}
+     * @memberof V1TrialsMetricNamesResponse
+     */
+    validationMetrics?: Array<string>;
+}
+
+/**
  * 
  * @export
  * @interface V1TrialsSampleResponse
  */
 export interface V1TrialsSampleResponse {
     /**
-     * A historical or incremental series of data points for the trials.
-     * @type {Array<V1TrialsSampleResponseTrial>}
+     * Metadata and metrics stream from a trial. A historical or incremental series of data points for the trials.
+     * @type {Array<V1ExpTrial>}
      * @memberof V1TrialsSampleResponse
      */
-    trials: Array<V1TrialsSampleResponseTrial>;
+    trials: Array<V1ExpTrial>;
     /**
      * IDs of trials that are newly included in the data.
      * @type {Array<number>}
@@ -11894,6 +12012,89 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentIds' is not null or undefined
+            if (experimentIds === null || experimentIds === undefined) {
+                throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling experimentsSample.');
+            }
+            // verify required parameter 'metricName' is not null or undefined
+            if (metricName === null || metricName === undefined) {
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling experimentsSample.');
+            }
+            // verify required parameter 'metricType' is not null or undefined
+            if (metricType === null || metricType === undefined) {
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling experimentsSample.');
+            }
+            const localVarPath = `/api/v1/experiments-compare`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (experimentIds) {
+                localVarQueryParameter['experimentIds'] = experimentIds;
+            }
+
+            if (metricName !== undefined) {
+                localVarQueryParameter['metricName'] = metricName;
+            }
+
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType;
+            }
+
+            if (maxTrials !== undefined) {
+                localVarQueryParameter['maxTrials'] = maxTrials;
+            }
+
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
+            }
+
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches;
+            }
+
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches;
+            }
+
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -12769,6 +12970,51 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialsMetricNames.');
+            }
+            const localVarPath = `/api/v1/trials/metrics-stream/metric-names`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (trialId) {
+                localVarQueryParameter['trialId'] = trialId;
+            }
+
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -13138,6 +13384,32 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         createExperiment(body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createExperiment(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExperimentsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).experimentsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13550,6 +13822,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TrialsMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsMetricNames(trialId, periodSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -13722,6 +14014,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         createExperiment(body: V1CreateExperimentRequest, options?: any) {
             return InternalApiFp(configuration).createExperiment(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        experimentsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).experimentsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -13945,6 +14254,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).trialsMetricNames(trialId, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -14108,6 +14428,25 @@ export class InternalApi extends BaseAPI {
      */
     public createExperiment(body: V1CreateExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).createExperiment(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a sample of the metrics over time for a sample of the trials.
+     * @param {Array<number>} experimentIds The id of the experiment.
+     * @param {string} metricName A metric name.
+     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+     * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+     * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+     * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public experimentsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).experimentsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14368,6 +14707,19 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the set of metric names recorded for a trial.
+     * @param {Array<number>} trialId The id of the experiment.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).trialsMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**

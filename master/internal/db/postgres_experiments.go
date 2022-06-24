@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -142,6 +143,58 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 		}
 	}
 
+	return training, validation, sEndTime, vEndTime, err
+}
+
+func (db *PgDB) TrialsMetricNames(trialIDs []int, sStartTime time.Time, vStartTime time.Time) (
+	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
+	type namesWrapper struct {
+		Name    string    `db:"name"`
+		EndTime time.Time `db:"end_time"`
+	}
+
+	trialIdsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(trialIDs)), ","), "[]")
+	formattedtrialIds := fmt.Sprintf("(%s)", trialIdsString)
+	var rows []namesWrapper
+	err = db.queryRows(fmt.Sprintf(`
+SELECT
+  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
+  max(s.end_time) AS end_time
+FROM trials t
+JOIN steps s ON t.id=s.trial_id
+WHERE t.id IN %s
+  AND s.end_time > $1
+GROUP BY name`, formattedtrialIds), &rows, sStartTime)
+	if err != nil {
+		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+			"error querying training metric names fort rials")
+	}
+	for _, row := range rows {
+		training = append(training, row.Name)
+		if row.EndTime.After(sEndTime) {
+			sEndTime = row.EndTime
+		}
+	}
+
+	err = db.queryRows(fmt.Sprintf(`
+SELECT
+  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
+  max(v.end_time) AS end_time
+FROM trials t
+JOIN validations v ON t.id = v.trial_id
+WHERE t.id IN %s
+  AND v.end_time > $1
+GROUP BY name`, formattedtrialIds), &rows, vStartTime)
+	if err != nil {
+		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+			"error querying validation metric names for trials")
+	}
+	for _, row := range rows {
+		validation = append(validation, row.Name)
+		if row.EndTime.After(sEndTime) {
+			sEndTime = row.EndTime
+		}
+	}
 	return training, validation, sEndTime, vEndTime, err
 }
 
@@ -332,6 +385,32 @@ SELECT t.id FROM (
   ORDER BY best_metric %s
   LIMIT $3
 ) t;`, aggregate, order), metric, experimentID, maxTrials)
+	return trials, err
+}
+
+func (db *PgDB) TopExperimentsByMetric(experimentIDs []int32, maxTrials int, metric string,
+	smallerIsBetter bool) (trials []int32, err error) {
+	order := desc
+	aggregate := max
+	experimentIdsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]")
+	formattedExperimentIds := fmt.Sprintf("(%s)", experimentIdsString)
+	if smallerIsBetter {
+		order = asc
+		aggregate = min
+	}
+
+	err = db.sql.Select(&trials, fmt.Sprintf(`
+SELECT t.id FROM (
+  SELECT t.id,
+    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
+  FROM trials t
+  JOIN validations v ON t.id = v.trial_id
+  WHERE t.experiment_id in %s
+    AND v.state = 'COMPLETED'
+  GROUP BY t.id
+  ORDER BY best_metric %s
+  LIMIT $2
+) t;`, aggregate, formattedExperimentIds, order), metric, maxTrials)
 	return trials, err
 }
 

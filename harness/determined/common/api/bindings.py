@@ -44,6 +44,28 @@ class APIHttpError(Exception):
         return self.message
 
 
+class ExpTrialDataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ExpTrialDataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
+        }
+
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -1150,6 +1172,36 @@ class v1EnableSlotResponse:
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
 
+class v1ExpTrial:
+    def __init__(
+        self,
+        data: "typing.Sequence[ExpTrialDataPoint]",
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
+        experimentId: "typing.Optional[int]" = None,
+    ):
+        self.trialId = trialId
+        self.hparams = hparams
+        self.data = data
+        self.experimentId = experimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpTrial":
+        return cls(
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[ExpTrialDataPoint.from_json(x) for x in obj["data"]],
+            experimentId=obj.get("experimentId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId,
+            "hparams": self.hparams,
+            "data": [x.to_json() for x in self.data],
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+        }
+
 class v1Experiment:
     def __init__(
         self,
@@ -1284,6 +1336,32 @@ class v1ExperimentSimulation:
             "config": self.config if self.config is not None else None,
             "seed": self.seed if self.seed is not None else None,
             "trials": [x.to_json() for x in self.trials] if self.trials is not None else None,
+        }
+
+class v1ExperimentsSampleResponse:
+    def __init__(
+        self,
+        demotedTrials: "typing.Sequence[int]",
+        promotedTrials: "typing.Sequence[int]",
+        trials: "typing.Sequence[v1ExpTrial]",
+    ):
+        self.trials = trials
+        self.promotedTrials = promotedTrials
+        self.demotedTrials = demotedTrials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentsSampleResponse":
+        return cls(
+            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
+            promotedTrials=obj["promotedTrials"],
+            demotedTrials=obj["demotedTrials"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trials": [x.to_json() for x in self.trials],
+            "promotedTrials": self.promotedTrials,
+            "demotedTrials": self.demotedTrials,
         }
 
 class v1File:
@@ -5616,12 +5694,37 @@ class v1TrialSimulation:
             "occurrences": self.occurrences if self.occurrences is not None else None,
         }
 
+class v1TrialsMetricNamesResponse:
+    def __init__(
+        self,
+        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialsMetricNamesResponse":
+        return cls(
+            trainingMetrics=obj.get("trainingMetrics", None),
+            validationMetrics=obj.get("validationMetrics", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+        }
+
 class v1TrialsSampleResponse:
     def __init__(
         self,
+        data: "typing.Sequence[v1DataPoint]",
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[v1TrialsSampleResponseTrial]",
+        trials: "typing.Sequence[v1ExpTrial]",
     ):
         self.trials = trials
         self.promotedTrials = promotedTrials
@@ -5630,7 +5733,10 @@ class v1TrialsSampleResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSampleResponse":
         return cls(
-            trials=[v1TrialsSampleResponseTrial.from_json(x) for x in obj["trials"]],
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
             promotedTrials=obj["promotedTrials"],
             demotedTrials=obj["demotedTrials"],
         )
@@ -5640,32 +5746,6 @@ class v1TrialsSampleResponse:
             "trials": [x.to_json() for x in self.trials],
             "promotedTrials": self.promotedTrials,
             "demotedTrials": self.demotedTrials,
-        }
-
-class v1TrialsSampleResponseTrial:
-    def __init__(
-        self,
-        data: "typing.Sequence[v1DataPoint]",
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
-    ):
-        self.trialId = trialId
-        self.hparams = hparams
-        self.data = data
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialsSampleResponseTrial":
-        return cls(
-            trialId=obj["trialId"],
-            hparams=obj["hparams"],
-            data=[v1DataPoint.from_json(x) for x in obj["data"]],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trialId": self.trialId,
-            "hparams": self.hparams,
-            "data": [x.to_json() for x in self.data],
         }
 
 class v1TrialsSnapshotResponse:
@@ -8540,6 +8620,19 @@ def get_SummarizeTrial(
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/trials/{trialId}/summarize",
+def get_TrialsMetricNames(
+    session: "client.Session",
+    *,
+    trialId: "typing.Sequence[int]",
+    periodSeconds: "typing.Optional[int]" = None,
+) -> "v1TrialsMetricNamesResponse":
+    _params = {
+        "periodSeconds": periodSeconds,
+        "trialId": trialId,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/metrics-stream/metric-names",
         params=_params,
         json=None,
         data=None,
@@ -8549,6 +8642,8 @@ def get_SummarizeTrial(
     if _resp.status_code == 200:
         return v1SummarizeTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_SummarizeTrial", _resp)
+        return v1TrialsMetricNamesResponse.from_json(_resp.json())
+    raise APIHttpError("get_TrialsMetricNames", _resp)
 
 def post_UnarchiveExperiment(
     session: "client.Session",
