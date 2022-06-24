@@ -2702,6 +2702,43 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/searcher-custom.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-custom.json",
+    "title": "CustomConfig",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "custom"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/searcher-grid.json": json.loads(
         r"""
 {
@@ -3042,7 +3079,7 @@ schemas = {
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', or 'adaptive_asha'",
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'custom', or 'adaptive_asha'",
             "items": [
                 {
                     "unionKey": "const:name=single",
@@ -3055,6 +3092,10 @@ schemas = {
                 {
                     "unionKey": "const:name=grid",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                },
+                {
+                    "unionKey": "const:name=custom",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
                 },
                 {
                     "unionKey": "const:name=adaptive_asha",
@@ -3112,20 +3153,8 @@ schemas = {
             ],
             "default": true
         },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
+        "source_trial_id": true,
+        "source_checkpoint_uuid": true,
         "budget": true,
         "train_stragglers": true
     }
