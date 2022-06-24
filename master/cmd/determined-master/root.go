@@ -85,10 +85,10 @@ func initializeConfig() error {
 	// that appears to dedupe some values along with ignoring config like
 	// not_a_real_key: {}
 	var c *config.Config
-	if err := yaml.UnmarshalStrict(bs, &c, yaml.DisallowUnknownFields); err != nil {
+	if err = yaml.UnmarshalStrict(bs, &c, yaml.DisallowUnknownFields); err != nil {
 		log.Warnf("master configuration parsing warning (will soon be error) %s", err)
 		// TODO uncomment to turn strict parsing warnings into errors next breaking change.
-		//return err
+		// return err
 	}
 
 	if err = mergeConfigBytesIntoViper(bs); err != nil {

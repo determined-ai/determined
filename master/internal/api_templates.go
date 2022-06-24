@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,6 +12,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/templatev1"
 )
@@ -46,9 +49,16 @@ func (a *apiServer) PutTemplate(
 	_ context.Context, req *apiv1.PutTemplateRequest,
 ) (*apiv1.PutTemplateResponse, error) {
 	config, err := protojson.Marshal(req.Template.Config)
+	if err == nil {
+		dec := json.NewDecoder(bytes.NewBuffer(config))
+		dec.DisallowUnknownFields()
+		c := new(expconf.ExperimentConfig)
+		err = dec.Decode(&c) // Validate fields.
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
 	}
+
 	err = a.m.db.QueryProto("put_template", req.Template, req.Template.Name, config)
 	return &apiv1.PutTemplateResponse{Template: req.Template},
 		errors.Wrapf(err, "error putting template")

@@ -22,7 +22,7 @@ def test_set_template_fail_strict() -> None:
     res = tpl.maybe_set_template(template_name, template_path)
     assert res.returncode != 0
     assert "duplicate key" in str(res.stdout)
-    
+
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
