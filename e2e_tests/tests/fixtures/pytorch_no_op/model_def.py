@@ -9,8 +9,11 @@ from determined import pytorch
 
 
 class OnesDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset_len: int) -> None:
+        self.dataset_len = dataset_len
+
     def __len__(self) -> int:
-        return 64
+        return self.dataset_len
 
     def __getitem__(self, index: int) -> Tuple:
         return torch.Tensor([float(1)])
@@ -19,6 +22,7 @@ class OnesDataset(torch.utils.data.Dataset):
 class NoopPyTorchTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext):
         self.context = context
+        self.dataset_len = context.get_hparam("dataset_len")
 
         model = nn.Linear(1, 1, False)
         model.weight.data.fill_(0)
@@ -38,7 +42,9 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         self.context.backward(loss)
         self.context.step_optimizer(self.opt)
 
-        print("finished train_batch for rank {}".format(self.context.distributed.get_rank()))
+        rank = self.context.distributed.get_rank()
+        print(f"finished train_batch for rank {rank}")
+        print(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
 
         return {"loss": loss, "w_real": w_real}
 
@@ -49,7 +55,7 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         torch_rand = torch.randint(1000, (1,))
         gpu_rand = torch.randint(1000, (1,), device=self.context.device)
 
-        print("finished evaluate_batch for rank {}".format(self.context.distributed.get_rank()))
+        print(f"finished evaluate_batch for rank {self.context.distributed.get_rank()}")
 
         return {
             "validation_error": val,
@@ -60,7 +66,11 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         }
 
     def build_training_data_loader(self):
-        return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def build_validation_data_loader(self):
-        return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
+        )

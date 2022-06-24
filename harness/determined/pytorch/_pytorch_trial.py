@@ -4,6 +4,7 @@ import logging
 import pathlib
 import pickle
 import random
+import sys
 import time
 from abc import abstractmethod
 from inspect import signature
@@ -146,13 +147,13 @@ class PyTorchTrialController(det.TrialController):
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.steps_completed
 
-        nreplicas = self.context.distributed.size
+        num_replicas = self.context.distributed.size
         rank = self.context.distributed.rank
 
         train_data = self.trial.build_training_data_loader()
         if isinstance(train_data, pytorch.DataLoader):
             self.training_loader = train_data.get_data_loader(
-                repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
+                repeat=True, skip=skip_batches, num_replicas=num_replicas, rank=rank
             )
         else:
             # Non-determined DataLoader; ensure the user meant to do this.
@@ -162,7 +163,14 @@ class PyTorchTrialController(det.TrialController):
                 )
             self.training_loader = train_data
 
-        self.context._epoch_len = len(self.training_loader)
+        # All workers use the chief's definition of epoch lengths, which is based on the training
+        # loader's len. If this len does not exist, epoch durations cannot be deduced, and they
+        # default to max int.
+        try:
+            epoch_len = len(self.training_loader)
+        except TypeError:
+            epoch_len = sys.maxsize
+        self.context._epoch_len = self.context.distributed.broadcast(epoch_len)
 
         # Validation loader will be undefined on process ranks > 0
         # when the user defines `validate_full_dataset()`.
@@ -171,7 +179,7 @@ class PyTorchTrialController(det.TrialController):
         if self._evaluate_batch_defined():
             if isinstance(validation_data, pytorch.DataLoader):
                 self.validation_loader = validation_data.get_data_loader(
-                    repeat=False, skip=0, num_replicas=nreplicas, rank=rank
+                    repeat=False, skip=0, num_replicas=num_replicas, rank=rank
                 )
             else:
                 # Non-determined DataLoader; ensure the user meant to do this.
@@ -308,7 +316,7 @@ class PyTorchTrialController(det.TrialController):
             self.upload_tb_files()
 
     def get_epoch_idx(self, batch_id: int) -> int:
-        return batch_id // len(self.training_loader)
+        return batch_id // self.context._epoch_len  # type: ignore
 
     def _auto_step_lr_scheduler_per_batch(
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
