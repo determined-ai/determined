@@ -2,6 +2,7 @@
 import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
   SlotState } from 'types';
 
+import { Theme } from './shared/themes';
 import {
   DarkLight,
   getCssVar,
@@ -73,13 +74,15 @@ export const getStateColor = (state: StateOfUnion | undefined): string => {
   return getCssVar(getStateColorCssVar(state));
 };
 
-export default {
-  [BrandingType.Determined]: {
+const themes: Record<BrandingType, Record<DarkLight, Theme>> = {
+  determined: {
     [DarkLight.Dark]: themeDarkDetermined,
     [DarkLight.Light]: themeLightDetermined,
   },
-  [BrandingType.HPE]: {
+  hpe: {
     [DarkLight.Dark]: themeDarkHpe,
     [DarkLight.Light]: themeLightHpe,
   },
 };
+
+export default themes;

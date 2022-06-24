@@ -32,11 +32,7 @@ export interface SsoProvider {
   ssoUrl: string;
 }
 
-export enum BrandingType {
-  Determined = 'determined',
-  HPE = 'hpe',
-}
-
+export type BrandingType = 'determined' | 'hpe'
 export interface DeterminedInfo {
   branding: BrandingType;
   checked: boolean,

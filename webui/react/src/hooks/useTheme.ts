@@ -77,7 +77,7 @@ export const useTheme = (): ThemeHook => {
   } = useSettings<Settings>(config);
 
   const currentMode = getSystemMode();
-  const [ branding, setBranding ] = useState(BrandingType.Determined);
+  const [ branding, setBranding ] = useState<BrandingType>('determined');
   const [ mode, setMode ] = useState<Mode>(settings.theme);
   const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
 

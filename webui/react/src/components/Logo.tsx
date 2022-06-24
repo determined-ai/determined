@@ -30,7 +30,7 @@ interface Props {
 }
 
 const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>> = {
-  [BrandingType.Determined]: {
+  determined: {
     [Orientation.Horizontal]: {
       [DarkLight.Dark]: logoDeterminedOnDarkHorizontal,
       [DarkLight.Light]: logoDeterminedOnLightHorizontal,
@@ -40,7 +40,7 @@ const logos: Record<BrandingType, Record<Orientation, Record<DarkLight, string>>
       [DarkLight.Light]: logoDeterminedOnLightVertical,
     },
   },
-  [BrandingType.HPE]: {
+  hpe: {
     [Orientation.Horizontal]: {
       [DarkLight.Dark]: logoHpeOnDarkHorizontal,
       [DarkLight.Light]: logoHpeOnLightHorizontal,
@@ -57,7 +57,7 @@ const Logo: React.FC<Props> = ({ branding, orientation }: Props) => {
   const classes = [ css[branding], css[orientation] ];
 
   const alt = useMemo(() => {
-    const isDetermined = branding === BrandingType.Determined;
+    const isDetermined = branding === 'determined';
     const server = serverAddress();
     const isSameServer = reactHostAddress() === server;
     return [

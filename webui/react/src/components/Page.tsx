@@ -9,8 +9,8 @@ export interface Props extends BasePageProps {
   docTitle?: string;
 }
 
-const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
-  const brand = branding === BrandingType.HPE ?
+const getFullDocTitle = (branding: BrandingType, title?: string, clusterName?: string) => {
+  const brand = branding === 'hpe' ?
     'HPE Machine Learning Development Environment' : 'Determined';
   const segmentList = [ brand ];
 

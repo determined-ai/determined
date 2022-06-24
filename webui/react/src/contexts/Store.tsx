@@ -109,8 +109,8 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo = {
-  branding: BrandingType.Determined,
+const initInfo: DeterminedInfo = {
+  branding: 'determined',
   checked: false,
   clusterId: '',
   clusterName: '',

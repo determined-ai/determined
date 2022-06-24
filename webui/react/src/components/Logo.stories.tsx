@@ -20,16 +20,17 @@ export default {
   title: 'Logo',
 };
 
-const knobBrandingOptions = enumToOptions<BrandingType>(BrandingType);
+const knobBrandingOptions: BrandingType[] = [ 'hpe', 'determined' ];
+
 const knobTypeOptions = enumToOptions<Orientation>(Orientation);
 
 export const Default = (): React.ReactNode => (
-  <Logo branding={BrandingType.Determined} orientation={Orientation.Horizontal} />
+  <Logo branding="determined" orientation={Orientation.Horizontal} />
 );
 
 export const Custom = (): React.ReactNode => (
   <Logo
-    branding={select<BrandingType>('Branding', knobBrandingOptions, BrandingType.Determined)}
+    branding={select<BrandingType>('Branding', knobBrandingOptions, 'determined')}
     orientation={select<Orientation>('Orientation', knobTypeOptions, Orientation.Horizontal)}
   />
 );

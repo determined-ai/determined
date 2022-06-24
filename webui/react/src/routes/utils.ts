@@ -126,7 +126,7 @@ export const paths = {
     return `/resourcepool/${name}`;
   },
   submitProductFeedback: (branding: BrandingType): string => {
-    return branding === BrandingType.Determined
+    return branding === 'determined'
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
       : 'https://airtable.com/shrodYROolF0E1iYf';
   },
