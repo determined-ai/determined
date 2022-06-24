@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
-import { DarkLight, globalCssVars, Theme } from 'shared/themes';
+import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes from 'themes';
-import { BrandingType, DarkLight, Mode } from 'types';
 
 import { config, Settings } from './useTheme.settings';
 

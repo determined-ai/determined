@@ -37,21 +37,6 @@ export enum BrandingType {
   HPE = 'hpe',
 }
 
-export enum Mode {
-  System = 'system',
-  Light = 'light',
-  Dark = 'dark'
-}
-
-/**
- * DarkLight is a resolved form of `Mode` where we figure out
- * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
- */
-export enum DarkLight {
-  Dark = 'dark',
-  Light = 'light',
-}
-
 export interface DeterminedInfo {
   branding: BrandingType;
   checked: boolean,

@@ -3,9 +3,10 @@ import React, { CSSProperties, PropsWithChildren, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
+import { DarkLight, getCssVar } from 'shared/themes';
 import { hsl2str, str2hsl, str2rgba } from 'shared/utils/color';
-import { getCssVar, getStateColorCssVar, StateOfUnion } from 'themes';
-import { DarkLight, ResourceState, RunState, SlotState } from 'types';
+import { getStateColorCssVar, StateOfUnion } from 'themes';
+import { ResourceState, RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 

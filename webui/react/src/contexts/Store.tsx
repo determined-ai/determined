@@ -1,13 +1,13 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
+import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
-import themes, { Theme } from 'themes';
+import themes from 'themes';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
-  DarkLight,
-  DetailedUser, DeterminedInfo, Mode, PoolOverview, ResourcePool, ResourceType, Workspace,
+  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 
 interface Props {

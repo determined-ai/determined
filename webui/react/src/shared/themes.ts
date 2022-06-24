@@ -2,10 +2,6 @@
 import { isColor, rgba2str, rgbaMix, str2rgba } from './utils/color';
 
 const STRONG_WEAK_DELTA = 45;
-export const getCssVar = (name: string): string => {
-  const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
-  return window.getComputedStyle(document.body)?.getPropertyValue(varName);
-};
 
 const generateStrongWeak = (theme: Theme): Theme => {
   const rgbaStrong = str2rgba(theme.strong);
@@ -267,7 +263,22 @@ export const globalCssVars = {
   navSideBarWidthMin: '56px',
 };
 
+export enum Mode {
+  System = 'system',
+  Light = 'light',
+  Dark = 'dark'
+}
+
+/**
+ * DarkLight is a resolved form of `Mode` where we figure out
+ * what `Mode.System` should ultimate resolve to (`Dark` vs `Light).
+ */
 export enum DarkLight {
   Dark = 'dark',
   Light = 'light',
 }
+
+export const getCssVar = (name: string): string => {
+  const varName = name.replace(/^(var\()?(.*?)\)?$/i, '$2');
+  return window.getComputedStyle(document.body)?.getPropertyValue(varName);
+};

@@ -1,9 +1,9 @@
 import React, { CSSProperties, useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
+import { DarkLight } from 'shared/themes';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
-import { DarkLight } from 'types';
 
 import css from './DynamicIcon.module.scss';
 
