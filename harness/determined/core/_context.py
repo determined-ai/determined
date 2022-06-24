@@ -1,4 +1,7 @@
 import logging
+import signal
+import sys
+import traceback
 from typing import Any, Optional
 
 import appdirs
@@ -58,6 +61,23 @@ class Context:
             exit(0)
 
 
+def _install_stacktrace_on_sigusr1() -> None:
+    """Install a SIGUSR1 handler that prints a stack trace to stderr."""
+    if not hasattr(signal, "SIGUSR1"):
+        return
+
+    old_handler = None
+
+    def stacktrace_on_sigusr1(signum: Any, frame: Any) -> None:
+        traceback.print_stack(frame, file=sys.stderr)
+        # old_handler may be None, SIG_IGN, or SIG_DFL.  It happens that SIG_DFL would be a noop for
+        # SIGUSR1 so we don't have to worry about that case.
+        if callable(old_handler):
+            old_handler(signum, frame)
+
+    old_handler = signal.signal(signal.SIGUSR1, stacktrace_on_sigusr1)
+
+
 def _dummy_init(
     *,
     distributed: Optional[core.DistributedContext] = None,
@@ -81,6 +101,8 @@ def _dummy_init(
 
     train = core.DummyTrainContext()
     searcher = core.DummySearcherContext(distributed)
+
+    _install_stacktrace_on_sigusr1()
 
     return Context(
         distributed=distributed,
@@ -205,6 +227,8 @@ def init(
             logger.info("no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
+
+    _install_stacktrace_on_sigusr1()
 
     return Context(
         distributed=distributed,
