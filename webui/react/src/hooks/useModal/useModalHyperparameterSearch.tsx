@@ -101,28 +101,40 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
 
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
-    console.log(fields);
+
     const baseConfig = clone(experiment.configRaw, true);
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials = fields.max_trials;
     baseConfig.resources.resource_pool = fields.pool;
+    baseConfig.resources.max_slots = fields.slots;
 
     Object.entries(fields)
-      .filter(field => typeof field[1] === 'object' && field[1].active)
+      .filter(field => typeof field[1] === 'object')
       .forEach(hp => {
         const hpName = hp[0];
         const hpInfo = hp[1] as HyperparameterRowValues;
-        baseConfig.hyperparameters[hpName] = {
-          maxval: hpInfo.type === HyperparameterType.Int ?
-            roundToPrecision(hpInfo.max_val, 0) :
-            hpInfo.max_val,
-          minval: hpInfo.type === HyperparameterType.Int ?
-            roundToPrecision(hpInfo.min_val, 0) :
-            hpInfo.min_val,
-          type: hpInfo.type,
-        };
+        if (hpInfo.type === HyperparameterType.Categorical) return;
+        if (hpInfo.active) {
+          baseConfig.hyperparameters[hpName] = {
+            maxval: hpInfo.type === HyperparameterType.Int ?
+              roundToPrecision(hpInfo.max_val, 0) :
+              hpInfo.max_val,
+            minval: hpInfo.type === HyperparameterType.Int ?
+              roundToPrecision(hpInfo.min_val, 0) :
+              hpInfo.min_val,
+            type: hpInfo.type,
+          };
+        } else {
+          baseConfig.hyperparameters[hpName] = {
+            type: hpInfo.type,
+            val: hpInfo.value,
+          };
+        }
         if (hpInfo.type === HyperparameterType.Log) baseConfig.hyperparameters[hpName].base = 10.0;
       });
+
+    console.log(baseConfig);
+
     const newConfig = yaml.dump(baseConfig);
 
     try {
@@ -506,6 +518,8 @@ const HyperparameterRow: React.FC<RowProps> = (
       )}
       {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Categorical &&
         <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
+      {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Log &&
+        <p className={css.warning}>Logs are base 10.</p>}
       {(!form.getFieldValue([ name, 'active' ]) && valError) &&
         <p className={css.error}>{valError}</p>}
       {(form.getFieldValue([ name, 'active' ]) && minError) &&
