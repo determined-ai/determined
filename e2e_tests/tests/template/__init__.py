@@ -1,1 +1,1 @@
-from .template import describe_template, set_template
+from .template import describe_template, set_template, maybe_set_template

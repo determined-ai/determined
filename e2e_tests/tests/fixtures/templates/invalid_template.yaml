@@ -1,0 +1,6 @@
+description: test_template
+resources:
+  agent_label: ""
+  slots: 100
+  slots: 100
+extra: true

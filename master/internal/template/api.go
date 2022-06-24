@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // RegisterAPIHandler initializes and registers the API handlers for all template related features.
@@ -44,7 +45,10 @@ func (m *manager) put(c echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := yaml.Unmarshal(body, make(map[interface{}]interface{})); err != nil {
+
+	// Validate template.
+	var t expconf.ExperimentConfig
+	if err := yaml.UnmarshalStrict(body, &t, yaml.DisallowUnknownFields); err != nil {
 		return nil, errors.Wrap(err, "invalid YAML for template")
 	}
 	return nil, errors.Wrapf(

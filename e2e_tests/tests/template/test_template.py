@@ -15,6 +15,15 @@ def test_set_template() -> None:
     assert config == conf.load_config(template_path)
 
 
+@pytest.mark.e2e_cpu
+def test_set_template_fail_strict() -> None:
+    template_name = "test_set_template_invalid"
+    template_path = conf.fixtures_path("templates/invalid_template.yaml")
+    res = tpl.maybe_set_template(template_name, template_path)
+    assert res.returncode != 0
+    assert "duplicate key" in str(res.stdout)
+    
+
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_cross_version
