@@ -5,7 +5,7 @@ import { Router } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
-import { Mode } from 'types';
+import { Mode } from 'shared/themes';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 

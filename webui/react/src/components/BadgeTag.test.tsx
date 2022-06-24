@@ -1,10 +1,11 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
+import StoreProvider from 'contexts/Store';
 import { generateAlphaNumeric } from 'shared/utils/string';
 
-import BadgeTag from './BadgeTag';
+import BadgeTag, { Props } from './BadgeTag';
 
 const LABEL = generateAlphaNumeric();
 const CONTENT = generateAlphaNumeric();
@@ -13,14 +14,10 @@ const CONTENT_TOOLTIP = generateAlphaNumeric();
 jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
 
-  /** We need to mock Tooltip in order to set mouseEnterDelay to 0
-   */
+  // We need to mock Tooltip in order to set mouseEnterDelay to 0.
   const Tooltip = (props: unknown) => {
     return (
-      <antd.Tooltip
-        {...props}
-        mouseEnterDelay={0}
-      />
+      <antd.Tooltip {...props} mouseEnterDelay={0} />
     );
   };
 
@@ -31,47 +28,40 @@ jest.mock('antd', () => {
   };
 });
 
-const setup = ({ labelAfter = true }) => {
+const setup = ({
+  children = CONTENT,
+  tooltip = CONTENT_TOOLTIP,
+  ...props
+}: PropsWithChildren<Props> = {}) => {
   const view = render(
-    <BadgeTag
-      label={labelAfter && LABEL}
-      preLabel={!labelAfter && LABEL}
-      tooltip={CONTENT_TOOLTIP}>
-      {CONTENT}
-    </BadgeTag>,
+    <StoreProvider>
+      <BadgeTag tooltip={tooltip} {...props}>{children}</BadgeTag>
+    </StoreProvider>,
   );
   return { view };
 };
 
 describe('BadgeTag', () => {
   it('displays label and content', () => {
-    const { view } = setup({});
-
+    const { view } = setup({ label: LABEL });
     expect(view.getByText(LABEL)).toBeInTheDocument();
     expect(view.getByText(CONTENT)).toBeInTheDocument();
   });
-  it('displays prelabel', () => {
-    const { view } = setup({ labelAfter: false });
 
+  it('displays prelabel', () => {
+    const { view } = setup({ preLabel: LABEL });
     expect(view.getByText(LABEL)).toBeInTheDocument();
   });
-  it('label displays tooltip on hover', async () => {
-    const { view } = setup({});
 
+  it('label displays tooltip on hover', async () => {
+    const { view } = setup({ label: LABEL });
     userEvent.hover(view.getByText(LABEL));
-    // await waitFor(() => {
-    //   expect(view.getByRole('tooltip').textContent).toEqual(LABEL);
-    // });
-    //await view.findByRole('tooltip');
     expect((await view.findByRole('tooltip')).textContent).toEqual(LABEL);
   });
 
   it('content displays tooltip on hover', async () => {
-    const { view } = setup({});
-
+    const { view } = setup({ label: LABEL });
     userEvent.hover(view.getByText(CONTENT));
-    await waitFor(() => {
-      expect(view.getByRole('tooltip').textContent).toEqual(CONTENT_TOOLTIP);
-    });
+    expect((await view.getByRole('tooltip')).textContent).toEqual(CONTENT_TOOLTIP);
   });
 });

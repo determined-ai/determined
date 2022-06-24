@@ -1,10 +1,9 @@
 import { Button, Tooltip } from 'antd';
-import React, { PropsWithChildren, useCallback } from 'react';
-
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import { ModalCloseReason } from 'hooks/useModal/useModal';
+import React, { PropsWithChildren, useCallback } from 'react';
 import Icon from 'shared/components/Icon/Icon';
 import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
 
@@ -63,10 +62,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
       <span onClick={handleModalCheckpointClick}>
         {children !== undefined ? children : (
           <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-            />
+            <Button aria-label="View Checkpoint" icon={<Icon name="checkpoint" />} />
           </Tooltip>
         )}
       </span>

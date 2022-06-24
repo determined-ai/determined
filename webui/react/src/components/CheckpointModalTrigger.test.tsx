@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect } from 'react';
-
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import React, { useEffect } from 'react';
 import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
@@ -34,8 +33,6 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  const user = userEvent.setup();
-
   render(
     <StoreProvider>
       <ModalTrigger />
