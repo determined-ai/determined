@@ -38,6 +38,18 @@ enum State {
   STATE_STOPPING_KILLED = 12;
 }
 
+// Job state.
+enum JobState {
+  // Unspecified state.
+  JOB_STATE_UNSPECIFIED = 0;
+  // Job is queued and waiting to be schedlued.
+  JOB_STATE_QUEUED = 1;
+  // Job is scheduled.
+  JOB_STATE_SCHEDULED = 2;
+  // Job is scheduled as a backfill.
+  JOB_STATE_SCHEDULED_BACKFILLED = 3;
+}
+
 // Experiment is a collection of one or more trials that are exploring a
 // user-defined hyperparameter space.
 message Experiment {

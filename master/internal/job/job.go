@@ -154,7 +154,26 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(jobs)
 
+<<<<<<< HEAD
 	case sproto.GetJobSummary:
+=======
+	case GetJobStates:
+		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
+		if err != nil {
+			ctx.Respond(err)
+			return nil
+		}
+		states := make(map[string]jobv1.State)
+		for _, jobID := range msg.JobIDs {
+			jobInfo, _ := jobs[model.JobID(jobID)]
+			if jobInfo != nil {
+				states[jobID] = jobInfo.State.Proto()
+			}
+		}
+		ctx.Respond(states)
+
+	case GetJobSummary:
+>>>>>>> 140f74dc2 (include JobState in GetExperiments/GetProjectExperiments so we can show Pending state)
 		jobs, err := j.jobQSnapshot(ctx, msg.ResourcePool)
 		if err != nil {
 			ctx.Respond(err)

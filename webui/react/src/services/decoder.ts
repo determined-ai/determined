@@ -380,19 +380,7 @@ export const mapV1GetExperimentDetailsResponse = (
     ioConfig.hyperparameters,
     { continueFn },
   ) as types.HyperparametersFlattened;
-  const v1Exp = mapV1Experiment(exp);
-  v1Exp.jobSummary = jobSummary;
-  // const resolvedState = (v1Exp.state === types.RunState.Active && v1Exp.jobSummary)
-  //   ? v1Exp.jobSummary.state
-  //   : v1Exp.state;
-
-  // Super state
-  if (!exp.suitablePoolExists) {
-    v1Exp.state = Sdk.Determinedjobv1State.QUEUED;
-  } else if (v1Exp.state === types.RunState.Active) {
-    v1Exp.state = types.ResourceState.Running;
-  }
-
+  const v1Exp = mapV1Experiment(exp, jobSummary);
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
@@ -409,6 +397,7 @@ export const mapV1GetExperimentDetailsResponse = (
 
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
+  jobSummary?: types.JobSummary,
 ): types.ExperimentItem => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, data.config);
@@ -427,6 +416,7 @@ export const mapV1Experiment = (
     hyperparameters,
     id: data.id,
     jobId: data.jobId,
+    jobSummary: jobSummary,
     labels: data.labels || [],
     name: data.name,
     notes: data.notes,
@@ -443,7 +433,8 @@ export const mapV1Experiment = (
 };
 
 export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(mapV1Experiment);
+  // empty JobSummary
+  return data.map(e => mapV1Experiment(e));
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
