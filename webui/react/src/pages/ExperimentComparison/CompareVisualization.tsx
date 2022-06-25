@@ -202,7 +202,10 @@ const CompareVisualization: React.FC<Props> = ({
         (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
         (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds(prevTrialIds => isEqual(prevTrialIds, newTrialIds) ? prevTrialIds : newTrialIds);
+        setTrialIds(prevTrialIds =>
+          isEqual(prevTrialIds, newTrialIds)
+            ? prevTrialIds
+            : newTrialIds);
 
         (event.trials || []).forEach(trial => {
           const id = trial.trialId;
@@ -215,7 +218,7 @@ const CompareVisualization: React.FC<Props> = ({
 
           if (hasHParams && !trialHpMap[id]) {
             trialHpMap[id] = {
-              experimentId: trial.experimentId ?? 0,
+              experimentId: trial.experimentId,
               hparams: flatHParams,
               id,
               metric: null,
@@ -257,27 +260,38 @@ const CompareVisualization: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ trialIds, filters.metric, ui.isPageHidden ]);
 
-  // Stream available metrics. experiments
   useEffect(() => {
     if (!isSupported || ui.isPageHidden || !trialIds?.length) return;
 
-    console.log('want to stream');
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
-    detApi.Internal.trialsMetricNames(trialIds).then(metrics => {
+    readStream<V1MetricNamesResponse>(
+      detApi.StreamingInternal.trialsMetricNames(
+        trialIds,
+        undefined,
+        { signal: canceler.signal },
+      ),
+      event => {
+        if (!event) return;
+        /*
+         * The metrics endpoint can intermittently send empty lists,
+         * so we keep track of what we have seen on our end and
+         * only add new metrics we have not seen to the list.
+         */
+        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
 
-      (metrics.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-      (metrics.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
-      const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-      const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
-      const newMetrics = [
-        ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-        ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
-      ];
-      setMetrics(newMetrics);
-    }).catch(() => {
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
+        const newMetrics = [
+          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+        ];
+        setMetrics(newMetrics);
+      },
+    ).catch(() => {
       setPageError(PageError.MetricNames);
     });
 

@@ -2,22 +2,22 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { paths } from 'routes/utils';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
   str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
 import {
-  HyperparameterType, MetricName,HyperparametersFlattened
+  HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
-import { paths } from 'routes/utils';
-import Link from 'components/Link';
+
 import { Primitive, RecordKey } from '../../../shared/types';
 
 import css from './CompareTable.module.scss';
-
 
 interface Props {
   colorScale?: ColorScale[];
@@ -77,12 +77,13 @@ const HpTrialTable: React.FC<Props> = ({
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
           <Link path={paths.trialDetails(record.id, record.experimentId)}>
             {record.id}
-            </Link>
+          </Link>
         </div>
       );
     };
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.id, b.id);
-    const experimentIdSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.experimentId, b.experimentId);
+    const experimentIdSorter = (a: TrialHParams, b: TrialHParams): number =>
+      alphaNumericSorter(a.experimentId, b.experimentId);
     const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const metricRenderer = (_: string, record: TrialHParams) => {
@@ -103,13 +104,13 @@ const HpTrialTable: React.FC<Props> = ({
     const experimentIdColumn = {
       dataIndex: 'experimentId',
       key: 'experimentId',
-      title: 'Experiment ID',
-      render: (_: string, record: TrialHParams) => ( 
+      render: (_: string, record: TrialHParams) => (
         <Link path={paths.experimentDetails(record.experimentId)}>
           {record.experimentId}
         </Link>
-    ) ,
-      sorter: experimentIdSorter
+      ),
+      sorter: experimentIdSorter,
+      title: 'Experiment ID',
     };
 
     const hpRenderer = (key: string) => {
@@ -125,7 +126,7 @@ const HpTrialTable: React.FC<Props> = ({
         if (isNumber(value) && isValidType) {
           return <HumanReadableNumber num={value} />;
         } else if (!value) {
-          return '-'
+          return '-';
         }
         return value + '';
       };
@@ -148,7 +149,7 @@ const HpTrialTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, metricColumn, ...hpColumns , experimentIdColumn];
+    return [ idColumn, metricColumn, ...hpColumns, experimentIdColumn ];
   }, [ colorScale, hyperparameters, metric, trialIds ]);
 
   const handleTableChange = useCallback((tablePagination) => {

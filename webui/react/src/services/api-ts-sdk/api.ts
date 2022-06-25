@@ -1731,7 +1731,7 @@ export interface V1ExpTrial {
      * @type {number}
      * @memberof V1ExpTrial
      */
-    experimentId?: number;
+    experimentId: number;
 }
 
 /**
