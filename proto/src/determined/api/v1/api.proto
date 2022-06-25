@@ -1241,7 +1241,7 @@ service Determined {
   }
 
    // Get the set of metric names recorded for a trial.
-  rpc TrialsMetricNames(TrialsMetricNamesRequest) returns ( TrialsMetricNamesResponse) {
+  rpc TrialsMetricNames(TrialsMetricNamesRequest) returns (stream TrialsMetricNamesResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/metrics-stream/metric-names"
     };

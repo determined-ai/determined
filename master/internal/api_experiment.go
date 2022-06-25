@@ -871,12 +871,17 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
-func (a *apiServer) TrialsMetricNames(_ context.Context, req *apiv1.TrialsMetricNamesRequest) (*apiv1.TrialsMetricNamesResponse, error) {
+func (a *apiServer) TrialsMetricNames(req *apiv1.TrialsMetricNamesRequest,
+	resp apiv1.Determined_TrialsMetricNamesServer) error {
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
 	var vStartTime time.Time
 	var trialIdList []int
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
 	for n := range req.TrialId {
 		trialIdList = append(trialIdList, int(n))
 	}
@@ -886,7 +891,7 @@ func (a *apiServer) TrialsMetricNames(_ context.Context, req *apiv1.TrialsMetric
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.TrialsMetricNames(trialIdList,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil, err
+			return nil
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -904,27 +909,18 @@ func (a *apiServer) TrialsMetricNames(_ context.Context, req *apiv1.TrialsMetric
 			}
 		}
 
-		return &response, nil
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+		if err = resp.Send(&response); err != nil {
+			return err
+		}
 
-		// if grpcutil.ConnectionIsClosed(resp) {
-		// 	return nil
-		// }
-		// if err = resp.Send(&response); err != nil {
-		// 	return err
-		// }
+		time.Sleep(period)
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 
-		// state, _, err := a.m.db.GetExperimentStatus(experimentID)
-		// if err != nil {
-		// 	return errors.Wrap(err, "error looking up experiment state")
-		// }
-		// if model.TerminalStates[state] {
-		// 	return nil
-		// }
-
-		// time.Sleep(period)
-		// if grpcutil.ConnectionIsClosed(resp) {
-		// 	return nil
-		// }
 	}
 }
 
