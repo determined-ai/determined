@@ -561,6 +561,26 @@ export interface StreamResultOfV1TrialLogsResponse {
 /**
  * 
  * @export
+ * @interface StreamResultOfV1TrialsMetricNamesResponse
+ */
+export interface StreamResultOfV1TrialsMetricNamesResponse {
+    /**
+     * 
+     * @type {V1TrialsMetricNamesResponse}
+     * @memberof StreamResultOfV1TrialsMetricNamesResponse
+     */
+    result?: V1TrialsMetricNamesResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1TrialsMetricNamesResponse
+     */
+    error?: RuntimeStreamError;
+}
+
+/**
+ * 
+ * @export
  * @interface StreamResultOfV1TrialsSampleResponse
  */
 export interface StreamResultOfV1TrialsSampleResponse {
@@ -13802,7 +13822,7 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TrialsMetricNamesResponse> {
+        trialsMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsMetricNamesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsMetricNames(trialId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
