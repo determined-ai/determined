@@ -111,7 +111,7 @@ export interface Resource {
 export interface Agent {
   id: string;
   registeredTime: number;
-  resourcePool: string;
+  resourcePools: string[];
   resources: Resource[];
 }
 
