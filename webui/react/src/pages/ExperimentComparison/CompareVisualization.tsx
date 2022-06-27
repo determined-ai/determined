@@ -139,7 +139,7 @@ const CompareVisualization: React.FC<Props> = ({ experiments }: Props) => {
   }, [ experiments, filters.metric?.name ]);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experiments.length) return;
+    if (ui.isPageHidden || !experiments.length || !filters.metric.name) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
