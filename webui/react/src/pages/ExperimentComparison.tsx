@@ -14,12 +14,15 @@ interface Query {
 const ExperimentComparison: React.FC = () => {
   const location = useLocation();
 
-  const experimentIds = useMemo(() => {
+  const experimentIds: number[] = useMemo(() => {
     const query: Query = queryString.parse(location.search);
     if(query.id && typeof query.id === 'string'){
-      return [ query.id ];
+      return [ parseInt(query.id) ];
+    } else if (Array.isArray(query.id)) {
+
+      return query.id.map(x => parseInt(x));
     }
-    return query.id ?? [];
+    return [];
   }, [ location.search ]);
 
   const [ canceler ] = useState(new AbortController());

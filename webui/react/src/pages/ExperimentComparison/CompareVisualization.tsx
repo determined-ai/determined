@@ -92,7 +92,7 @@ const CompareVisualization: React.FC = () => {
       return [ parseInt(query.id) ];
 
     } else if(Array.isArray(query.id)){
-      return query.id.map(parseInt);
+      return query.id.map(x => parseInt(x));
     }
     return [];
 
