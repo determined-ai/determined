@@ -43,8 +43,8 @@ class TestPyTorchContext(unittest.TestCase):
 
     def test_wrap_scalar(self) -> None:
         scaler = 1
-        if not torch.cuda.is_available():
-            self.assertRaises(CheckFailedError, self.context.wrap_scaler, scaler)
-        else:
+        if torch.cuda.is_available():
             self.assertEqual(scaler, self.context.wrap_scaler(scaler))
             self.assertEqual(scaler, self.context._scaler)
+        else:
+            self.assertRaises(CheckFailedError, self.context.wrap_scaler, scaler)
