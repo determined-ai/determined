@@ -83,7 +83,7 @@ const CompareVisualization: React.FC = () => {
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
-  const initFilters = defaultFilters;
+
   const location = useLocation();
 
   const experimentIds: number[] = useMemo(() => {
@@ -98,7 +98,7 @@ const CompareVisualization: React.FC = () => {
 
   }, [ location.search ]);
 
-  const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
+  const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ hpImportanceMap ] = useState<HpImportanceMap>();
@@ -163,7 +163,7 @@ const CompareVisualization: React.FC = () => {
         experimentIds,
         filters.metric.name,
         metricTypeParam,
-        undefined,
+        filters.maxTrial,
         undefined,
         undefined,
         undefined,
@@ -238,7 +238,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ trialIds, filters.metric, ui.isPageHidden, experimentIds ]);
+  }, [ trialIds, filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (!isSupported || ui.isPageHidden || !trialIds?.length) return;
