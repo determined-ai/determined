@@ -51,10 +51,18 @@
     border-color: var(--theme-colors-monochrome-14);
   }
   .growWrap > .spinner {
-    display: hidden;
+    display: none;
     position: absolute;
-    right: 18px;
-    top: 18px;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .growWrap > .backdrop {
+    display: none;
+    position: absolute;
+    background-color: rgba(0, 0, 0, .4);
+    width: 100%;
+    height: 100%;
   }
 }
 .base.editable {
@@ -73,10 +81,8 @@
 }
 .base.loading {
   .growWrap > textarea,
-  .growWrap::after {
-    margin-right: 36px;
-  }
   .growWrap > .spinner { display: block; }
+  .growWrap > .backdrop { display: block; }
 }
 .base.onDark {
   .growWrap > textarea,
