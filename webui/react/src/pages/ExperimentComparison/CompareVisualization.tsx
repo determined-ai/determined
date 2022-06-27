@@ -16,7 +16,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys, isEqual } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
 import {
-  ExperimentBase, ExperimentVisualizationType,
+  ExperimentVisualizationType,
   HpImportanceMap, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
@@ -67,11 +67,11 @@ const CompareVisualization: React.FC = () => {
   // }, [])
 
   // Hack to show exp data
-  const defaultMetric = {
+  const defaultMetric = useMemo(() => ({
     // name: experiments?.[0]?.config.searcher.metric,
     name: 'validation_loss',
     type: MetricType.Validation,
-  };
+  }), []);
 
   const searcherMetric = useRef<MetricName>(defaultMetric);
   const defaultFilters: VisualizationFilters = {
@@ -127,6 +127,10 @@ const CompareVisualization: React.FC = () => {
     if (!hpImportanceMap) return {};
     return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
   }, [ filters.metric, hpImportanceMap ]);
+
+  const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
+    setFilters(filters);
+  }, [ ]);
 
   useEffect(() => {
     if(!filters.metric?.name && trialIds.length){
@@ -348,7 +352,7 @@ const CompareVisualization: React.FC = () => {
       hpImportance={hpImportance}
       metrics={metrics || []}
       type={typeKey}
-      // onReset={handleFiltersReset}
+      onChange={handleFiltersChange}
     />
   );
 

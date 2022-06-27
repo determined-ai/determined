@@ -109,7 +109,7 @@ const HpTrialTable: React.FC<Props> = ({
         </Link>
       ),
       sorter: experimentIdSorter,
-      title: 'Experiment ID',
+      title: 'Exp ID',
     };
 
     const hpRenderer = (key: string) => {
@@ -148,7 +148,7 @@ const HpTrialTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, metricColumn, ...hpColumns, experimentIdColumn ];
+    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
   }, [ colorScale, hyperparameters, metric, trialIds ]);
 
   const handleTableChange = useCallback((tablePagination) => {
