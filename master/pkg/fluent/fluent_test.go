@@ -20,8 +20,9 @@ func TestAdditionalOutputConfig(t *testing.T) {
 `
 	loggingConfigs := []model.LoggingConfig{
 		{
-			DefaultLoggingConfig:    &model.DefaultLoggingConfig{},
-			AdditionalFluentOutputs: ptrs.Ptr(additionalFluentOutputs),
+			DefaultLoggingConfig: &model.DefaultLoggingConfig{
+				AdditionalFluentOutputs: ptrs.Ptr(additionalFluentOutputs),
+			},
 		},
 		{
 			ElasticLoggingConfig: &model.ElasticLoggingConfig{
@@ -31,8 +32,8 @@ func TestAdditionalOutputConfig(t *testing.T) {
 					Username: ptrs.Ptr("username"),
 					Password: ptrs.Ptr("password"),
 				},
+				AdditionalFluentOutputs: ptrs.Ptr(additionalFluentOutputs),
 			},
-			AdditionalFluentOutputs: ptrs.Ptr(additionalFluentOutputs),
 		},
 	}
 
