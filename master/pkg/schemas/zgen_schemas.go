@@ -1921,8 +1921,14 @@ var (
         "shm_size": {
             "type": [
                 "integer",
+                "string",
                 "null"
             ],
+            "checks": {
+                "must be a valid memory size": {
+                    "pattern": "^([0-9]*[.])?[0-9]+ ?(([kmgtpKMGTP]([iI]?[bB])?)|[bB])?$"
+                }
+            },
             "default": null
         },
         "slots": {

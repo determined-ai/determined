@@ -164,7 +164,6 @@ type DB interface {
 	TrialLogsCount(trialID int, fs []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 	RecordAgentStats(a *model.AgentStats) error
-	EndAgentStats(a *model.AgentStats) error
 	EndAllAgentStats() error
 	RecordInstanceStats(a *model.InstanceStats) error
 	EndInstanceStats(a *model.InstanceStats) error

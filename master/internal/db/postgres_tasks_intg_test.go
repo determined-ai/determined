@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
@@ -104,6 +105,64 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 	require.True(t, reflect.DeepEqual(aIn, aOut), pprintedExpect(aIn, aOut))
 }
 
+func TestAllocationState(t *testing.T) {
+	etc.SetRootPath(rootFromDB)
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, migrationsFromDB)
+
+	// Add an allocation of every possible state.
+	states := []model.AllocationState{
+		model.AllocationStatePending,
+		model.AllocationStateAssigned,
+		model.AllocationStatePulling,
+		model.AllocationStateStarting,
+		model.AllocationStateRunning,
+		model.AllocationStateTerminating,
+		model.AllocationStateTerminated,
+	}
+	for _, state := range states {
+		tID := model.NewTaskID()
+		task := &model.Task{
+			TaskID:    tID,
+			TaskType:  model.TaskTypeTrial,
+			StartTime: time.Now().UTC().Truncate(time.Millisecond),
+		}
+		require.NoError(t, db.AddTask(task), "failed to add task")
+
+		a := &model.Allocation{
+			TaskID:       tID,
+			AllocationID: model.AllocationID(tID + "allocationID"),
+			ResourcePool: "default",
+			State:        &state,
+		}
+		require.NoError(t, db.AddAllocation(a), "failed to add allocation")
+
+		// Update allocation to every possible state.
+		testNoUpdate := true
+		for j := 0; j < len(states); j++ {
+			if testNoUpdate {
+				testNoUpdate = false
+				j-- // Go to first iteration of loop after this.
+			} else {
+				a.State = &states[j]
+				require.NoError(t, db.UpdateAllocationState(*a),
+					"failed to update allocation state")
+			}
+
+			// Get task back as a proto struct.
+			tOut := &taskv1.Task{}
+			require.NoError(t, db.QueryProto("get_task", tOut, tID), "failed to get task")
+
+			// Ensure our state is the same as allocation.
+			require.Equal(t, len(tOut.Allocations), 1, "failed to get exactly 1 allocation")
+			aOut := tOut.Allocations[0]
+			require.Equal(t, a.State.Proto(), aOut.State, "proto state not equal")
+			require.Equal(t, fmt.Sprintf("STATE_%s", *a.State), aOut.State.String(),
+				"proto state to strings not equal")
+		}
+	}
+}
+
 const (
 	postgresExhaustiveEnum = "postgresexhaustiveenum"
 )
@@ -133,6 +192,7 @@ func TestExhaustiveEnums(t *testing.T) {
 	addCheck("JobType", "public.job_type", map[string]bool{})
 	addCheck("TaskType", "public.task_type", map[string]bool{})
 	addCheck("State", "public.experiment_state", map[string]bool{"DELETED": true})
+	addCheck("AllocationState", "public.allocation_state", map[string]bool{})
 
 	// Populate postgres types.
 	for _, c := range checks {

@@ -1,0 +1,14 @@
+ALTER TABLE public.allocations
+ALTER COLUMN state
+SET DATA TYPE INT
+USING (CASE state
+    WHEN 'PENDING'     THEN 0
+    WHEN 'ASSIGNED'    THEN 1
+    WHEN 'PULLING'     THEN 2
+    WHEN 'STARTING'    THEN 3
+    WHEN 'RUNNING'     THEN 4
+    WHEN 'TERMINATING' THEN 5
+    WHEN 'TERMINATED'  THEN 6
+END);
+
+DROP TYPE public.allocation_state;

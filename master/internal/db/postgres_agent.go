@@ -1,6 +1,10 @@
 package db
 
 import (
+	"context"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -17,12 +21,18 @@ WHERE NOT EXISTS (
 }
 
 // EndAgentStats updates the end time of an instance.
-func (db *PgDB) EndAgentStats(a *model.AgentStats) error {
-	return db.namedExecOne(`
-UPDATE agent_stats
-SET end_time = (SELECT CURRENT_TIMESTAMP)
-WHERE agent_id = :agent_id AND end_time IS NULL
-`, a)
+func EndAgentStats(a *model.AgentStats) error {
+	res, err := Bun().NewUpdate().Table("agent_stats").Set(
+		"end_time = (SELECT CURRENT_TIMESTAMP)").Where(
+		"agent_id = ?", a.AgentID).Where("end_time IS NULL").Exec(context.TODO())
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if count != 1 {
+		log.Debugf("End agent stats call affects %d row(s), this number is suppose to be 1.", count)
+	}
+	return err
 }
 
 // EndAllAgentStats called at master starts, in case master previously crushed

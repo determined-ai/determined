@@ -57,7 +57,7 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option value={ALL_VALUE}>{allLabel}</Option>
+      <Option key={ALL_VALUE} value={ALL_VALUE}>{allLabel}</Option>
       {props.children}
     </SelectFilter>
   );

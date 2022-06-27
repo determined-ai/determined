@@ -90,28 +90,6 @@ class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
     PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
 
-class TrialsSampleResponseDataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "TrialsSampleResponseDataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
-        }
-
 class determinedcheckpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ACTIVE = "STATE_ACTIVE"
@@ -838,6 +816,46 @@ class v1Command:
             "jobId": self.jobId,
         }
 
+class v1ComparableTrial:
+    def __init__(
+        self,
+        metrics: "typing.Sequence[v1SummarizedMetric]",
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ComparableTrial":
+        return cls(
+            trial=trialv1Trial.from_json(obj["trial"]),
+            metrics=[v1SummarizedMetric.from_json(x) for x in obj["metrics"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trial": self.trial.to_json(),
+            "metrics": [x.to_json() for x in self.metrics],
+        }
+
+class v1CompareTrialsResponse:
+    def __init__(
+        self,
+        trials: "typing.Sequence[v1ComparableTrial]",
+    ):
+        self.trials = trials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CompareTrialsResponse":
+        return cls(
+            trials=[v1ComparableTrial.from_json(x) for x in obj["trials"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trials": [x.to_json() for x in self.trials],
+        }
+
 class v1CompleteValidateAfterOperation:
     def __init__(
         self,
@@ -966,6 +984,28 @@ class v1CurrentUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json(),
+        }
+
+class v1DataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
         }
 
 class v1DeleteCheckpointsRequest:
@@ -4810,6 +4850,11 @@ class v1SSOProvider:
             "ssoUrl": self.ssoUrl,
         }
 
+class v1Scale(enum.Enum):
+    SCALE_UNSPECIFIED = "SCALE_UNSPECIFIED"
+    SCALE_LINEAR = "SCALE_LINEAR"
+    SCALE_LOG = "SCALE_LOG"
+
 class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_UNSPECIFIED = "SCHEDULER_TYPE_UNSPECIFIED"
     SCHEDULER_TYPE_PRIORITY = "SCHEDULER_TYPE_PRIORITY"
@@ -5119,6 +5164,54 @@ class v1Slot:
             "enabled": self.enabled if self.enabled is not None else None,
             "container": self.container.to_json() if self.container is not None else None,
             "draining": self.draining if self.draining is not None else None,
+        }
+
+class v1SummarizeTrialResponse:
+    def __init__(
+        self,
+        metrics: "typing.Sequence[v1SummarizedMetric]",
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+        self.metrics = metrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SummarizeTrialResponse":
+        return cls(
+            trial=trialv1Trial.from_json(obj["trial"]),
+            metrics=[v1SummarizedMetric.from_json(x) for x in obj["metrics"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trial": self.trial.to_json(),
+            "metrics": [x.to_json() for x in self.metrics],
+        }
+
+class v1SummarizedMetric:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        name: str,
+        type: "v1MetricType",
+    ):
+        self.name = name
+        self.data = data
+        self.type = type
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SummarizedMetric":
+        return cls(
+            name=obj["name"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            type=v1MetricType(obj["type"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "data": [x.to_json() for x in self.data],
+            "type": self.type.value,
         }
 
 class v1Task:
@@ -5552,7 +5645,7 @@ class v1TrialsSampleResponse:
 class v1TrialsSampleResponseTrial:
     def __init__(
         self,
-        data: "typing.Sequence[TrialsSampleResponseDataPoint]",
+        data: "typing.Sequence[v1DataPoint]",
         hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
     ):
@@ -5565,7 +5658,7 @@ class v1TrialsSampleResponseTrial:
         return cls(
             trialId=obj["trialId"],
             hparams=obj["hparams"],
-            data=[TrialsSampleResponseDataPoint.from_json(x) for x in obj["data"]],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
         )
 
     def to_json(self) -> typing.Any:
@@ -6058,6 +6151,39 @@ def post_CancelExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_CancelExperiment", _resp)
+
+def get_CompareTrials(
+    session: "client.Session",
+    *,
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
+    scale: "typing.Optional[v1Scale]" = None,
+    startBatches: "typing.Optional[int]" = None,
+    trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> "v1CompareTrialsResponse":
+    _params = {
+        "endBatches": endBatches,
+        "maxDatapoints": maxDatapoints,
+        "metricNames": metricNames,
+        "metricType": metricType.value if metricType is not None else None,
+        "scale": scale.value if scale is not None else None,
+        "startBatches": startBatches,
+        "trialIds": trialIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/compare",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1CompareTrialsResponse.from_json(_resp.json())
+    raise APIHttpError("get_CompareTrials", _resp)
 
 def post_CompleteTrialSearcherValidation(
     session: "client.Session",
@@ -8391,6 +8517,38 @@ def post_SetUserPassword(
     if _resp.status_code == 200:
         return v1SetUserPasswordResponse.from_json(_resp.json())
     raise APIHttpError("post_SetUserPassword", _resp)
+
+def get_SummarizeTrial(
+    session: "client.Session",
+    *,
+    trialId: int,
+    endBatches: "typing.Optional[int]" = None,
+    maxDatapoints: "typing.Optional[int]" = None,
+    metricNames: "typing.Optional[typing.Sequence[str]]" = None,
+    metricType: "typing.Optional[v1MetricType]" = None,
+    scale: "typing.Optional[v1Scale]" = None,
+    startBatches: "typing.Optional[int]" = None,
+) -> "v1SummarizeTrialResponse":
+    _params = {
+        "endBatches": endBatches,
+        "maxDatapoints": maxDatapoints,
+        "metricNames": metricNames,
+        "metricType": metricType.value if metricType is not None else None,
+        "scale": scale.value if scale is not None else None,
+        "startBatches": startBatches,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{trialId}/summarize",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1SummarizeTrialResponse.from_json(_resp.json())
+    raise APIHttpError("get_SummarizeTrial", _resp)
 
 def post_UnarchiveExperiment(
     session: "client.Session",

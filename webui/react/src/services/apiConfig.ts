@@ -424,6 +424,24 @@ export const moveExperiment: DetApi<
   ),
 };
 
+export const compareTrials: DetApi<
+  Service.CompareTrialsParams, Api.V1CompareTrialsResponse, Type.TrialSummary[]
+> = {
+  name: 'compareTrials',
+  postProcess: (response: Api.V1CompareTrialsResponse) => {
+    return response.trials.map(decoder.decodeTrialSummary);
+  },
+  request: (params: Service.CompareTrialsParams) => detApi.Experiments.compareTrials(
+    params.trialIds,
+    params.maxDatapoints,
+    params.metricNames.map(m => m.name),
+    params.startBatches,
+    params.endBatches,
+    params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
+    params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
+  ),
+};
+
 /* Tasks */
 
 export const getTask: DetApi<

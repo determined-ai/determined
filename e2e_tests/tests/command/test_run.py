@@ -265,6 +265,37 @@ def test_environment_variables_command() -> None:
     )
 
 
+@pytest.mark.parametrize("actual,expected", [("24576", "24"), ("1.5g", "1572864")])
+@pytest.mark.parametrize("use_config_file", [True, False])
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
+def test_shm_size_command(
+    tmp_path: Path, actual: str, expected: str, use_config_file: bool
+) -> None:
+    with FileTree(
+        tmp_path,
+        {
+            "config.yaml": f"""
+resources:
+  shm_size: {actual}
+"""
+        },
+    ) as tree:
+        config_path = tree.joinpath("config.yaml")
+        cmd = ["det", "-m", conf.make_master_url(), "cmd", "run"]
+        if use_config_file:
+            cmd += ["--config-file", str(config_path)]
+        else:
+            cmd += ["--config", f"resources.shm_size={actual}"]
+        cmd += [
+            f"""df /dev/shm && \
+df /dev/shm | \
+tail -1 | \
+[ "$(awk '{{print $2}}')" = '{expected}' ]"""
+        ]
+        _run_and_verify_exit_code_zero(cmd)
+
+
 @pytest.mark.slow
 @pytest.mark.e2e_cpu
 def test_absolute_bind_mount(tmp_path: Path) -> None:

@@ -3,7 +3,8 @@ import ReactMonacoEditor, { MonacoEditorProps } from 'react-monaco-editor';
 
 import useResize from 'hooks/useResize';
 import useTheme from 'hooks/useTheme';
-import { DarkLight } from 'themes';
+
+import { DarkLight } from '../shared/themes';
 
 import css from './MonacoEditor.module.scss';
 

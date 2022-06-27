@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Page from 'components/Page';
 import { handleTableChange } from 'components/ResponsiveTable';
@@ -20,7 +19,6 @@ import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/Actio
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
-import { ShirtSize } from 'themes';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
@@ -32,15 +30,14 @@ import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
 import ManageJob from './ManageJob';
-import RPStatsOverview from './RPStats';
 
 interface Props {
   bodyNoPadding?: boolean,
   jobState?: JobState,
-  selected?: ResourcePool,
+  selectedRp: ResourcePool,
 }
 
-const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
+const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { resourcePools } = useStore();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
@@ -52,22 +49,18 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   const [ jobs, setJobs ] = useState<Job[]>([]);
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
-  const [ selectedRp, setSelectedRp ] = useState<ResourcePool>();
   const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
   const pageRef = useRef<HTMLElement>(null);
 
   const {
     settings,
     updateSettings,
-    resetSettings,
   } = useSettings<Settings>(settingsConfig);
 
   const fetchResourcePools = useFetchResourcePools(canceler);
-  const isJobOrderAvailable = !!selectedRp && orderedSchedulers.has(selectedRp.schedulerType);
+  const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
-    if (!selectedRp?.name) return;
-
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
       const promises = [
@@ -101,7 +94,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
     } finally {
       setPageState(cur => ({ ...cur, isLoading: false }));
     }
-  }, [ canceler.signal, selectedRp?.name, settings, jobState ]);
+  }, [ canceler.signal, selectedRp.name, settings, jobState ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -192,7 +185,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
           };
           break;
         case SCHEDULING_VAL_KEY:
-          switch (selectedRp?.schedulerType) {
+          switch (selectedRp.schedulerType) {
             case Api.V1SchedulerType.PRIORITY:
             case Api.V1SchedulerType.KUBERNETES:
               col.title = 'Priority';
@@ -243,31 +236,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
   }, [ dropDownOnTrigger, selectedRp, jobs, isJobOrderAvailable ]);
 
   useEffect(() => {
-    selected && setSelectedRp(selected);
-  }, [ selected, setSelectedRp ]);
-
-  useEffect(() => {
-    if (resourcePools.length === 0) {
-      if (selectedRp) {
-        resetSettings([ 'selectedRp' ]);
-        setSelectedRp(undefined);
-      }
-      return;
-    } else if (selectedRp) return;
-
-    let pool: ResourcePool | undefined = undefined;
-    if (settings.selectedPool) {
-      pool = resourcePools.find(pool => pool.name === settings.selectedPool);
-    }
-    if (!pool) {
-      pool = resourcePools[0];
-    }
-    updateSettings({ selectedPool: pool.name });
-    setSelectedRp(pool);
-
-  }, [ resourcePools, selectedRp, updateSettings, resetSettings, settings.selectedPool ]);
-
-  useEffect(() => {
     fetchResourcePools();
     return () => canceler.abort();
   }, [ canceler, fetchResourcePools ]);
@@ -295,15 +263,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
     }
   }, [ jobs, managingJob ]);
 
-  const rpSwitcher = useCallback((rpName: string) => {
-    return () => {
-      const rp = resourcePools.find(rp => rp.name === rpName);
-      if (!rp) return;
-      setSelectedRp(rp);
-      updateSettings({ selectedPool: rp.name });
-    };
-  }, [ resourcePools, updateSettings ]);
-
   // table title using selectedRp and schedulerType from list of resource pools
   const tableTitle = useMemo(() => {
     if (!selectedRp) return '';
@@ -324,28 +283,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
       headerComponent={<div />}
       id="jobs"
       title="Job Queue by Resource Pool">
-      {!selected && (
-        <Section hideTitle title="Resource Pools">
-          <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
-            {rpStats.map((stats, idx) => {
-              let onClick = undefined;
-              const isTargetRp = stats.resourcePool === selectedRp?.name;
-              if (!isTargetRp) {
-                onClick = rpSwitcher(stats.resourcePool);
-              }
-              return (
-                <RPStatsOverview
-                  focused={isTargetRp}
-                  key={idx}
-                  stats={stats}
-                  onClick={onClick}
-                />
-              );
-            })}
-          </Grid>
-        </Section>
-      )}
-      <Section hideTitle={!!selected} title={tableTitle}>
+      <Section hideTitle={!!selectedRp} title={tableTitle}>
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
@@ -365,7 +303,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selected, jobState }) => {
           onChange={handleTableChange(columns, settings, updateSettings)}
         />
       </Section>
-      {!!managingJob && !!selectedRp && (
+      {!!managingJob && (
         <ManageJob
           initialPool={selectedRp.name}
           job={managingJob}

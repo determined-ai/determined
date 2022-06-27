@@ -11,8 +11,9 @@ import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import { clone } from 'shared/utils/data';
-import { DarkLight } from 'themes';
 import { deviceTypes, ResourcePool, ResourceState, ResourceType } from 'types';
+
+import { DarkLight } from '../shared/themes';
 
 import Json from './Json';
 import Link from './Link';

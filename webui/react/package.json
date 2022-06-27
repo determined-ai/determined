@@ -27,7 +27,7 @@
     "dayjs": "^1.10.7",
     "fp-ts": "^2.11.2",
     "fuse.js": "^6.4.6",
-    "hermes-parallel-coordinates": "^0.5.16",
+    "hermes-parallel-coordinates": "^0.5.18",
     "history": "^4.10.1",
     "humanize-duration": "^3.27.0",
     "io-ts": "^2.2.16",

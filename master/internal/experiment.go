@@ -368,12 +368,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
-		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
-		ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, taskID, e.JobID,
-			e.StartTime, taskSpec, e.Experiment.ID, e.Config.AsLegacy(),
-			checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
 
-		ctx.Self().System().ActorOf(addr, ckptGCTask)
+		// May be no checkpoints to gc, if so skip
+		if len(checkpoints) > 0 {
+			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
+			ckptGCTask := newCheckpointGCTask(e.rm, e.db, e.taskLogger, taskID, e.JobID,
+				e.StartTime, taskSpec, e.Experiment.ID, e.Config.AsLegacy(),
+				checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx)
+
+			ctx.Self().System().ActorOf(addr, ckptGCTask)
+		}
 
 		if e.State == model.CompletedState {
 			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
