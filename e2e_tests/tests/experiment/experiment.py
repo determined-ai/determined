@@ -555,7 +555,7 @@ def run_basic_test(
     return experiment_id
 
 
-def set_priority(experiment_id, priority):
+def set_priority(experiment_id: int, priority: int) -> None:
     command = ["det", "experiment", "set", "priority", str(experiment_id), str(priority)]
 
     completed_process = subprocess.run(

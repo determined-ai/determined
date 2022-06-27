@@ -173,7 +173,7 @@ def test_agent_noreattach_restart_kills(
 
         assert "success" not in get_command_info(command_id)["exitStatus"]
     except Exception:
-        managed_cluster.restart_agent()
+        managed_cluster_restarts.restart_agent()
         raise
 
 

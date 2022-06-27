@@ -38,7 +38,7 @@ def num_free_slots() -> int:
     )
 
 
-def run_command_set_priority(sleep: int = 30, slots: int = 1, priority=0) -> str:
+def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0) -> str:
     command = [
         "det",
         "-m",
