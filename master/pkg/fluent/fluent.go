@@ -115,7 +115,7 @@ func makeOutputConfig(
 `, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
 		}
 
-		if c := loggingConfig.ElasticLoggingConfig.AdditionalFluentOutputs; c != nil {
+		if c := elasticOpts.AdditionalFluentOutputs; c != nil {
 			fmt.Fprint(config, *c)
 		}
 
