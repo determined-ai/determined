@@ -30,6 +30,8 @@ const (
 	NotebookIdleCheckResource = "check_idle.py"
 	// TaskCheckReadyLogsResource is the script to parse logs to check if a task is ready.
 	TaskCheckReadyLogsResource = "check_ready_logs.py"
+	// TaskEnrichLogsResource is the script to enrich logs for slurm (which doesn't run fluent).
+	TaskEnrichLogsResource = "enrich_task_logs.py"
 	// TensorboardEntryScriptResource is the script to set up TensorBoard.
 	TensorboardEntryScriptResource = "tensorboard-entrypoint.sh"
 	// TrialEntrypointScriptResource is the script to set up a trial.

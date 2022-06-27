@@ -19,7 +19,9 @@ from determined.common.api import certs
 from determined.constants import DTRAIN_SSH_PORT
 
 
-def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[str], List[str]]:
+def create_sshd_worker_cmd(
+    allocation_id: str, num_slot_ids: int, debug: bool = False
+) -> Tuple[List[str], List[str]]:
     # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
     # TODO: After the upstream horovod bugfix (github.com/horovod/horovod/pull/3060) is in a
     # widely-used release of horovod, we should remove this pid_server layer, which just adds
@@ -45,6 +47,8 @@ def create_sshd_worker_cmd(allocation_id: str, num_slot_ids: int) -> Tuple[List[
         "/run/determined/ssh/sshd_config",
         "-D",
     ]
+    if debug:
+        run_sshd_command.append("-e")
     return pid_server_cmd, run_sshd_command
 
 
@@ -105,6 +109,8 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     experiment_config = info.trial._config
 
     debug = experiment_config.get("debug", False)
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
@@ -130,7 +136,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
         )
 
         pid_server_cmd, run_sshd_command = create_sshd_worker_cmd(
-            info.allocation_id, len(info.slot_ids)
+            info.allocation_id, len(info.slot_ids), debug=debug
         )
 
         logging.debug(
@@ -163,6 +169,8 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # TODO: remove this (very old) hack when we have a configurable launch layer.
     hvd_optional_args = experiment_config.get("data", {}).get("__det_dtrain_args", [])
     hvd_optional_args += hvd_args
+    if debug:
+        hvd_optional_args += ["--mpi-args=-v --display-map"]
 
     hvd_cmd = horovod.create_run_command(
         num_proc_per_machine=len(info.slot_ids),
@@ -179,6 +187,15 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
 
     os.environ["USE_HOROVOD"] = "1"
 
+    # We now have environment images with built-in OpenMPI.   When invoked the
+    # SLURM_JOBID variable triggers integration with SLURM, however, we are
+    # running in a singularity container and SLURM may or may not have
+    # compatible configuration enabled.  We therefore clear the SLURM_JOBID variable
+    # before invoking mpi so that mpirun will honor the args passed via horvod
+    # run to it describing the hosts and process topology, otherwise mpi ends
+    # up wanting to launch all -np# processes on the local causing an oversubscription
+    # error ("There are not enough slots available in the system").
+    os.environ.pop("SLURM_JOBID", None)
     p = subprocess.Popen(pid_server_cmd + hvd_cmd + worker_wrapper_cmd + script)
     with det.util.forward_signals(p):
         return p.wait()
