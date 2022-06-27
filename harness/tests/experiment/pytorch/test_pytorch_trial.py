@@ -414,34 +414,27 @@ class TestPyTorchTrial:
             "legacy_on_training_epochs_start_calls": 1
         }
 
-    def test_context(self) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialAccessContext,
-            hparams=self.hparams,
-            workloads=make_workloads(),
-            trial_seed=self.trial_seed,
-        )
-        controller.run()
-
-    def test_lr_scheduler_step_modes(self) -> None:
+    @pytest.mark.parametrize(
+        "lr_scheduler_step_mode", [mode.value for mode in pytorch.LRScheduler.StepMode]
+    )
+    def test_context(
+        self,
+        lr_scheduler_step_mode,
+    ) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
 
         hparams = self.hparams.copy()
-        for step_mode in [1, 2, 3, 4]:
-            hparams["lr_scheduler_step_mode"] = step_mode
-            controller = utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialAccessContext,
-                hparams=hparams,
-                workloads=make_workloads(),
-                trial_seed=self.trial_seed,
-            )
-            controller.run()
+        hparams["lr_scheduler_step_mode"] = lr_scheduler_step_mode
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrialAccessContext,
+            hparams=hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
 
     def test_variable_workload_size(self) -> None:
         def make_workloads() -> workload.Stream:
@@ -529,7 +522,7 @@ class TestPyTorchTrial:
             controller.run()
 
     def test_reject_named_dict_metric(self) -> None:
-        # If at some point in the future the webui is able to render scalar metrics inside of
+        # If at some point in the future the webui is able to render scalar metrics inside
         # nested dictionary metrics, this test could go away.
 
         def make_workloads() -> workload.Stream:
