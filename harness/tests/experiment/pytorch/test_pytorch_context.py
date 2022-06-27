@@ -34,11 +34,12 @@ class TestPyTorchContext(unittest.TestCase):
         self.assertIsNone(self.context._average_gradients(None, 1))
 
     def test_training_not_started(self) -> None:
-        # self.assertRaises(InternalException, self.context._should_communicate_and_update)
         self.assertRaises(InternalException, self.context.is_epoch_start)
         self.assertRaises(InternalException, self.context.is_epoch_end)
         self.assertRaises(InternalException, self.context.current_train_batch)
         self.assertRaises(InternalException, self.context.current_train_epoch)
+        self.context.env.managed_training = True
+        self.assertRaises(InternalException, self.context._should_communicate_and_update)
 
     def test_wrap_scalar(self) -> None:
         scaler = 1
