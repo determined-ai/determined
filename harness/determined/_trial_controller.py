@@ -75,7 +75,7 @@ class TrialController(metaclass=abc.ABCMeta):
     ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
-        or intializing user code (in the Trial API case).
+        or initializing user code (in the Trial API case).
         """
         pass
 
