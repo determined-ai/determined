@@ -103,8 +103,10 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
     const baseConfig = clone(experiment.configRaw, true);
+    baseConfig.name = fields.name as string;
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials = fields.max_trials;
+    baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.max_slots = fields.slots;
 
@@ -186,6 +188,12 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     [ resourcePool ],
   );
 
+  const [ maxLengthUnit, maxLength ] = useMemo(() => {
+    return Object.entries(
+      experiment.configRaw.searcher.max_length,
+    )[0] as ['batches' | 'records' | 'epochs', number];
+  }, [ experiment.configRaw.searcher.max_length ]);
+
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
     setResourcePool(resourcePools[0]);
@@ -261,6 +269,13 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
       <div className={css.base}>
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
         <p>Select the resources to allocate to this search and the trial iteration limit.</p>
+        <Form.Item
+          initialValue={experiment.name}
+          label="Experiment Name"
+          name="name"
+          rules={[ { required: true } ]}>
+          <Input />
+        </Form.Item>
         <div className={css.poolRow}>
           <Form.Item
             initialValue={resourcePools?.[0]?.name}
@@ -278,7 +293,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           </Form.Item>
           <Form.Item
             initialValue={1}
-            label="Slots"
+            label="Max Slots"
             name="slots"
             rules={[ {
               max: maxSlots,
@@ -292,24 +307,61 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         </div>
         {slotsError && (
           <p className={css.error}>
-            Slots must be an integer between 1 and {maxSlots} (max slots).
+            Slots must be an integer between 1 and {maxSlots} (total slots).
           </p>
         )}
-        <p>{maxSlots} max slots</p>
+        <p>Total slots: {maxSlots}</p>
         <Form.Item
           initialValue={1}
           label="Max Trials"
           name="max_trials"
           rules={[ { min: 1, required: true, type: 'number' } ]}>
-          <InputNumber className={css.fullWidth} precision={0} />
+          <InputNumber precision={0} />
         </Form.Item>
+        <div className={css.lengthRow}>
+          <Form.Item
+            initialValue={maxLength}
+            label="Max Length"
+            name="max-length"
+            rules={[ { message: 'test', min: 1, required: true, type: 'number' } ]}>
+            <InputNumber precision={0} />
+          </Form.Item>
+          <Form.Item
+            initialValue={maxLengthUnit}
+            label="Units"
+            name="length_units"
+            rules={[ { required: true } ]}>
+            <SelectFilter
+              onChange={handleSelectPool}>
+              <Select.Option value="records">
+                records
+              </Select.Option>
+              <Select.Option value="batches">
+                batches
+              </Select.Option>
+              {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
+                <Select.Option value="epochs">
+                  epochs
+                </Select.Option>
+              )}
+            </SelectFilter>
+          </Form.Item>
+        </div>
         <p>
           Note: HP search jobs (while more efficient than manual searching) can take longer
           depending on the size of the HP search space and the resources you allocate to it.
         </p>
       </div>
     );
-  }, [ handleSelectPool, maxSlots, modalError, resourcePools, slotsError, validateSlots ]);
+  }, [ experiment.configRaw?.records_per_epoch,
+    handleSelectPool,
+    maxLength,
+    maxLengthUnit,
+    maxSlots,
+    modalError,
+    resourcePools,
+    slotsError,
+    validateSlots ]);
 
   const pages = useMemo(() => [ page1, page2 ], [ page1, page2 ]);
 

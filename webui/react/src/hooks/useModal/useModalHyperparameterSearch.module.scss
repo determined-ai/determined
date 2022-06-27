@@ -21,6 +21,7 @@
     padding: 16px;
     
     :global(.ant-form-item) { margin: 0; }
+    :global(.ant-input-number) { width: 100%; }
     .fullWidth {
       width: 100%;
     }
@@ -30,6 +31,14 @@
     
       & :first-child {
         flex-grow: 1;
+      }
+    }
+    .lengthRow {
+      display: flex;
+      gap: 8px;
+    
+      & > div {
+        flex: 1;
       }
     }
     .searchTitle {
@@ -42,7 +51,7 @@
       gap: 8px;
       grid-template-columns: 170px minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
 
-      :global(.ant-input-number) { width: 100%; }
+      
       .hyperparameterName * {
         overflow: hidden;
       }
