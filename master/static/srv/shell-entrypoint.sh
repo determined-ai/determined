@@ -46,16 +46,10 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # skip this awkwardness.
 #
 # For HPC systems, bash module support uses variables that store functions 
-# of the form, and a wierd %% defintion.
+# of the form below (with embedded parenthesis or %% in the name).
 #   BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
 #   BASH_FUNC_module%%=() {  eval `/opt/lib/modulecmd bash $*`
-# so we add variables with parens or % in the name to the blacklist and 
-# filter them out because the  additional parens/% in the variable names 
-# causes problems in the escaping code below.   Additionally we properly
-# enumerate just the names but adding the grep '^\S+=\S' below to remove 
-# the multi-line values from for such functions so the blacklist can be
-# properly applied.
-blacklist="^(_|HOME|TERM|LANG|\S+\(\).*|\S+\%\S*|LC_.*)"
+# so we also filter variables with parens or % in the name.
 
 # extglob enables +() notation in patterns of ${parameter/pattern/string} notation
 shopt -s extglob
