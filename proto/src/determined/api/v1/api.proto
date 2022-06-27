@@ -1240,8 +1240,9 @@ service Determined {
     };
   }
 
-   // Get the set of metric names recorded for a trial.
-  rpc TrialsMetricNames(TrialsMetricNamesRequest) returns (stream TrialsMetricNamesResponse) {
+  // Get the set of metric names recorded for a trial.
+  rpc TrialsMetricNames(TrialsMetricNamesRequest)
+      returns (stream TrialsMetricNamesResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/metrics-stream/metric-names"
     };
@@ -1285,7 +1286,8 @@ service Determined {
   }
 
   // Get a sample of the metrics over time for a sample of the trials.
-  rpc ExperimentsSample(ExperimentsSampleRequest) returns (stream ExperimentsSampleResponse) {
+  rpc ExperimentsSample(ExperimentsSampleRequest)
+      returns (stream ExperimentsSampleResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments-compare"
     };
