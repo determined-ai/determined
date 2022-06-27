@@ -2,11 +2,11 @@ import { Input, ModalFuncProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import CopyButton from 'components/CopyButton';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { copyToClipboard } from 'shared/utils/dom';
 import { ModelVersion } from 'types';
 
-import useModal, { ModalHooks as Hooks } from './useModal';
-import css from './useModalDownloadModel.module.scss';
+import css from './useModalModelDownload.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;
@@ -21,7 +21,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalDownloadModel = ({ modelVersion, onClose }: Props): ModalHooks => {
+const useModalModelDownload = ({ modelVersion, onClose }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose });
 
   const downloadCommand = useMemo(() => {
@@ -69,4 +69,4 @@ const useModalDownloadModel = ({ modelVersion, onClose }: Props): ModalHooks => 
   return { modalClose, modalOpen, modalRef };
 };
 
-export default useModalDownloadModel;
+export default useModalModelDownload;

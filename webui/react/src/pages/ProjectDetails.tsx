@@ -26,12 +26,12 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
-import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
-import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
+import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove, {
   Settings as MoveExperimentSettings,
   settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/useModalExperimentMove';
+} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -668,7 +668,7 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ updateSettings ]);
 
-  const { modalOpen: openCustomizeColumns } = useModalCustomizeColumns({
+  const { modalOpen: openCustomizeColumns } = useModalColumnsCustomize({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
     onSave: (handleUpdateColumns as (columns: string[]) => void),

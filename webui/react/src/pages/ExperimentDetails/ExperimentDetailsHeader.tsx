@@ -16,10 +16,10 @@ import {
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
-} from 'hooks/useModal/useModalExperimentCreate';
-import useModalExperimentDelete from 'hooks/useModal/useModalExperimentDelete';
-import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
-import useModalExperimentStop from 'hooks/useModal/useModalExperimentStop';
+} from 'hooks/useModal/Experiment/useModalExperimentCreate';
+import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {

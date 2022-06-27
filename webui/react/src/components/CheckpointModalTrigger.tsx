@@ -1,7 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
+import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import Icon from 'shared/components/Icon/Icon';
 import {
   CheckpointWorkloadExtended, ExperimentBase,
@@ -22,8 +22,11 @@ const CheckpointModalTrigger: React.FC<Props> = (
     children,
   }: PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openModalDelete } =
-  useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
+  const { modalOpen: openModalDelete } = useModalCheckpoint({
+    checkpoint,
+    config: experiment.config,
+    title,
+  });
   const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
 
   return (

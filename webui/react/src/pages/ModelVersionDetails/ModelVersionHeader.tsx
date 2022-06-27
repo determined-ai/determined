@@ -11,7 +11,7 @@ import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
-import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
+import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -37,7 +37,7 @@ const ModelVersionHeader: React.FC<Props> = (
 ) => {
   const { auth: { user }, users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
-  const { modalOpen: openModelDownload } = useModalDownloadModel({ modelVersion });
+  const { modalOpen: openModelDownload } = useModalModelDownload({ modelVersion });
 
   const isDeletable = user?.isAdmin
         || user?.id === modelVersion.userId;

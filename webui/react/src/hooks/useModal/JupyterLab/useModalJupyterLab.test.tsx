@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 
-import useJupyterLabModal from './useJupyterLabModal';
+import useModalJupyterLab from './useModalJupyterLab';
 
 const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
@@ -40,7 +40,7 @@ const ModalTrigger: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useJupyterLabModal(jupyterLabModal);
+  const { modalOpen } = useModalJupyterLab(jupyterLabModal);
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
@@ -73,7 +73,7 @@ const setup = async () => {
   userEvent.click(await screen.findByRole('button'));
 };
 
-describe('useJupyterLabModal', () => {
+describe('useModalJupyterLab', () => {
   it('modal can be opened', async () => {
     await setup();
 

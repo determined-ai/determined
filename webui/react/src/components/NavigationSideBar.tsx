@@ -9,7 +9,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
@@ -97,7 +97,7 @@ const NavigationSideBar: React.FC = () => {
   const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
   const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
+  const { modalOpen: openJupyterLabModal } = useModalJupyterLab(jupyterLabModal);
   const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';

@@ -10,7 +10,7 @@ import {
   sentenceToCamelCase,
 } from 'shared/utils/string';
 
-import useModalCustomizeColumns from './useModalCustomizeColumns';
+import useModalColumnsCustomize from './useModalColumnsCustomize';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
@@ -28,7 +28,7 @@ const ColumnsButton: React.FC = () => {
     return arr;
   }, []);
 
-  const { modalOpen } = useModalCustomizeColumns({
+  const { modalOpen } = useModalColumnsCustomize({
     columns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
   });

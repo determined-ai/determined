@@ -3,7 +3,7 @@ import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import useModalExperimentMove from 'hooks/useModal/useModalExperimentMove';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,

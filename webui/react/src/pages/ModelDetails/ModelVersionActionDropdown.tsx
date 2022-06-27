@@ -2,7 +2,7 @@ import { Dropdown, Menu, Modal } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
 import showModalItemCannotDelete from 'components/ModalItemDelete';
-import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
+import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import { deleteModelVersion } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
@@ -30,7 +30,7 @@ const ModelVersionActionDropdown: React.FC<Props> = (
   }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openModelDownload } = useModalDownloadModel({
+  const { modalOpen: openModelDownload } = useModalModelDownload({
     modelVersion,
     onClose: onComplete,
   });

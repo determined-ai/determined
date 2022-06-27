@@ -3,6 +3,7 @@ import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -10,6 +11,8 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
+import { DetError, isDetError, isError } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentBase,
   TrialDetails,
@@ -19,10 +22,6 @@ import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
-import { DetError, isDetError, isError } from '../../shared/utils/error';
-import { routeToReactUrl } from '../../shared/utils/routes';
-
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalExperimentCreate.module.scss';
 
 export enum CreateExperimentType {

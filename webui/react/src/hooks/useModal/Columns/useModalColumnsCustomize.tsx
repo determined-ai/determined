@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import DraggableListItem from 'components/DraggableListItem';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 
-import useModal, { ModalHooks as Hooks } from './useModal';
-import css from './useModalCustomizeColumns.module.scss';
+import css from './useModalColumnsCustomize.module.scss';
 
 interface Props {
   columns: string[];
@@ -24,7 +24,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalCustomizeColumns = ({
+const useModalColumnsCustomize = ({
   columns,
   defaultVisibleColumns,
   onSave,
@@ -233,4 +233,4 @@ const useModalCustomizeColumns = ({
   return { modalClose, modalOpen, modalRef };
 };
 
-export default useModalCustomizeColumns;
+export default useModalColumnsCustomize;

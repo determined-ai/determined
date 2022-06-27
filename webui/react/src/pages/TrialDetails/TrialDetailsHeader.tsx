@@ -6,7 +6,7 @@ import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
-} from 'hooks/useModal/useModalExperimentCreate';
+} from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';

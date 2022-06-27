@@ -2,19 +2,20 @@ import { Button, Modal } from 'antd';
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import StoreDecorator from 'storybook/StoreDecorator';
 
 export default {
-  component: useJupyterLabModal,
+  component: useModalJupyterLab,
   decorators: [ StoreDecorator ],
-  title: 'useJupyterLabModal',
+  title: 'useModalJupyterLab',
 };
 
-const UseJupyterLabModalContainer = () => {
+const Container = () => {
   const storeDispatch = useStoreDispatch();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useJupyterLabModal(jupyterLabModal);
+  const { modalOpen } = useModalJupyterLab(jupyterLabModal);
+
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
@@ -28,5 +29,5 @@ const UseJupyterLabModalContainer = () => {
 };
 
 export const Default = (): React.ReactNode => {
-  return <UseJupyterLabModalContainer />;
+  return <Container />;
 };

@@ -6,6 +6,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import useCreateModelModal from 'hooks/useCreateModelModal';
+import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import useRegisterCheckpointModal from 'hooks/useRegisterCheckpointModal';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -18,7 +19,6 @@ import {
 } from 'types';
 import { checkpointSize } from 'utils/workload';
 
-import useModal, { ModalHooks } from './useModal';
 import css from './useModalCheckpoint.module.scss';
 
 interface Props {

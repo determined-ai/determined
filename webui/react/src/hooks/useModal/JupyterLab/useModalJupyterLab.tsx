@@ -6,18 +6,17 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
+import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { RawJson } from 'shared/types';
 import { ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 
-import { RawJson } from '../../shared/types';
-
-import css from './useJupyterLabModal.module.scss';
-import useModal, { ModalHooks } from './useModal';
+import css from './useModalJupyterLab.module.scss';
 
 const { Option } = Select;
 const { Item } = Form;
@@ -68,7 +67,7 @@ interface FullConfigProps {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const useJupyterLabModal = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
+const useModalJupyterLab = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
   const [ visible, setVisible ] = useState(false);
   const handleModalClose = useCallback(() => setVisible(false), []);
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
@@ -362,4 +361,4 @@ const JupyterLabForm: React.FC<FormProps> = (
   );
 };
 
-export default useJupyterLabModal;
+export default useModalJupyterLab;
