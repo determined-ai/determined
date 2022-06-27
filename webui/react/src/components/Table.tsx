@@ -1,7 +1,7 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
-import Avatar from 'components/Avatar';
+import Avatar from 'shared/components/Avatar/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';

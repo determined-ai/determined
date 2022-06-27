@@ -3,7 +3,7 @@ import React from 'react';
 import { DetailedUser, User } from 'types';
 import { getDisplayName } from 'utils/user';
 
-import Avatar from '../../../components/Avatar';
+import Avatar from '../Avatar/Avatar';
 import css from './AvatarCard.module.scss';
 
 interface Props {
