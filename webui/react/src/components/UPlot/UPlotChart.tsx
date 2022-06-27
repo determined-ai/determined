@@ -44,14 +44,21 @@ const shouldRecreate = (
 
   if (chart?.series?.length !== next.series?.length) return true;
 
-  if (prev.scales?.y?.distr !== next.scales?.y?.distr) return true;
+  const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([ scaleKey, nextScale ]) => {
+    const prevScale = prev?.scales?.[scaleKey];
+    return prevScale?.distr !== nextScale?.distr;
+  });
 
-  const someAxisLabelHasChanged =
+  if (someScaleHasChanged) return true;
+
+  const someAxisHasChanged =
     prev.axes?.some((prevAxis, seriesIdx) => {
       const nextAxis = next.axes?.[seriesIdx];
-      return prevAxis.label !== nextAxis?.label;
+      return (prevAxis.label !== nextAxis?.label)
+        || (prevAxis.stroke !== nextAxis?.stroke)
+        || (prevAxis.scale !== nextAxis?.scale);
     });
-  if (someAxisLabelHasChanged) return true;
+  if (someAxisHasChanged) return true;
 
   const someSeriesHasChanged =
     chart.series.some((chartSerie, seriesIdx) => {
@@ -61,7 +68,8 @@ const shouldRecreate = (
         (nextSerie?.show != null && chartSerie?.show !== nextSerie?.show)
         || (prevSerie?.show != null && prevSerie?.show !== nextSerie?.show)
         || (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label)
-        || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
+        || (nextSerie?.stroke != null && chartSerie?.stroke !== nextSerie?.stroke)
+        || (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths)
       );
     });
   if(someSeriesHasChanged) return true;

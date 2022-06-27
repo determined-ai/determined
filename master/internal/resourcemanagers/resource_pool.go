@@ -732,7 +732,7 @@ func (rp *ResourcePool) updateAgentStartStats(
 }
 
 func (rp *ResourcePool) updateAgentEndStats(agentID string) error {
-	return rp.db.EndAgentStats(&model.AgentStats{
+	return db.EndAgentStats(&model.AgentStats{
 		AgentID: agentID,
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
@@ -248,6 +249,7 @@ func TestPrintableConfig(t *testing.T) {
 	s3Secret := "my_secret_key_secret"
 	masterSecret := "my_master_secret"
 	webuiSecret := "my_webui_secret"
+	registryAuthSecret := "i_love_cellos"
 
 	raw := fmt.Sprintf(`
 db:
@@ -266,7 +268,14 @@ telemetry:
   enabled: true
   segment_master_key: %v
   segment_webui_key: %v
-`, s3Key, s3Secret, masterSecret, webuiSecret)
+
+task_container_defaults:
+  registry_auth:
+    username: yo-yo-ma
+    password: %v
+    shm_size_bytes: 4294967296
+    network_mode: bridge
+`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret)
 
 	expected := Config{
 		Logging: model.LoggingConfig{
@@ -290,6 +299,14 @@ telemetry:
 			SegmentMasterKey: masterSecret,
 			SegmentWebUIKey:  webuiSecret,
 		},
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
+			RegistryAuth: &types.AuthConfig{
+				Username: "yo-yo-ma",
+				Password: registryAuthSecret,
+			},
+			ShmSizeBytes: 4294967296,
+			NetworkMode:  "bridge",
+		},
 	}
 
 	unmarshaled := Config{
@@ -309,6 +326,7 @@ telemetry:
 	assert.Assert(t, !bytes.Contains(printable, []byte(s3Secret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(masterSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(webuiSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(registryAuthSecret)))
 
 	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)

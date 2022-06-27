@@ -481,20 +481,6 @@ func (_m *DB) DeleteUserSessionByToken(userSessionToken string) error {
 	return r0
 }
 
-// EndAgentStats provides a mock function with given fields: a
-func (_m *DB) EndAgentStats(a *model.AgentStats) error {
-	ret := _m.Called(a)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.AgentStats) error); ok {
-		r0 = rf(a)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // EndAllAgentStats provides a mock function with given fields:
 func (_m *DB) EndAllAgentStats() error {
 	ret := _m.Called()

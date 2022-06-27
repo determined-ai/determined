@@ -63,7 +63,7 @@ fmt-css:
 	npm run lint:css -- --fix
 .PHONY: fmt-package-lock
 fmt-package-lock:
-	sed -i -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
 .PHONY: fmt
 fmt: fmt-js fmt-css fmt-package-lock
 

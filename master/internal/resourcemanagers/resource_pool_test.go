@@ -224,7 +224,6 @@ func TestAddRemoveAgent(t *testing.T) {
 	db.On("RecordAgentStats", mock.Anything).Return(nil)
 
 	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
-	db.On("EndAgentStats", mock.Anything).Return(nil)
 }
 
 func setupRPSamePriority(t *testing.T) *ResourcePool {

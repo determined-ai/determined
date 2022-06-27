@@ -37,7 +37,6 @@ export const DEFAULT_COLUMN_WIDTHS: Record<JobColumnName, number> = {
 };
 
 export interface Settings extends InteractiveTableSettings {
-  selectedPool: string;
   sortKey: 'jobsAhead';
 }
 
@@ -73,11 +72,6 @@ const config: SettingsConfig = {
       defaultValue: 'jobsAhead',
       key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
-    },
-    {
-      key: 'selectedPool',
-      storageKey: 'selectedPool',
       type: { baseType: BaseType.String },
     },
     {

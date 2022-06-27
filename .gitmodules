@@ -1,3 +1,0 @@
-[submodule "webui/react/src/shared"]
-	path = webui/react/src/shared
-	url = https://github.com/determined-ai/shared-web.git

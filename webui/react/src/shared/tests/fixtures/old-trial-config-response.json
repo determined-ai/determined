@@ -1,0 +1,90 @@
+{
+  "debug": false,
+  "internal": null,
+  "searcher": {
+    "mode": "standard",
+    "name": "adaptive",
+    "metric": "validation_error",
+    "divisor": 2,
+    "max_rungs": 3,
+    "step_budget": 500,
+    "bracket_rungs": null,
+    "source_trial_id": null,
+    "train_stragglers": true,
+    "smaller_is_better": true,
+    "target_trial_steps": 16,
+    "source_checkpoint_uuid": null
+  },
+  "resources": {
+    "weight": 1,
+    "agent_label": "",
+    "native_parallel": false,
+    "slots_per_trial": 1
+  },
+  "data_layer": {
+    "type": "shared_fs",
+    "container_storage_path": null
+  },
+  "entrypoint": "model_def:NoOpTrial",
+  "description": "noop_adaptive",
+  "name": "noop_adaptive",
+  "environment": {
+    "image": {
+      "cpu": "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-ed66d8a",
+      "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-ed66d8a"
+    },
+    "ports": null,
+    "force_pull_image": false,
+    "environment_variables": {}
+  },
+  "max_restarts": 0,
+  "optimizations": {
+    "mixed_precision": "O0",
+    "gradient_compression": false,
+    "aggregation_frequency": 1,
+    "auto_tune_tensor_fusion": false,
+    "tensor_fusion_threshold": 64,
+    "average_training_metrics": false,
+    "tensor_fusion_cycle_time": 5,
+    "average_aggregated_gradients": true
+  },
+  "hyperparameters": {
+    "metrics_base": {
+      "type": "double",
+      "count": null,
+      "maxval": 0.9,
+      "minval": 0.5
+    },
+    "metrics_sigma": {
+      "val": 0,
+      "type": "const"
+    },
+    "global_batch_size": {
+      "val": 32,
+      "type": "const"
+    },
+    "metrics_progression": {
+      "val": "decreasing",
+      "type": "const"
+    },
+    "chaos_probability_validate": {
+      "val": 0.5,
+      "type": "const"
+    }
+  },
+  "reproducibility": {
+    "experiment_seed": 999
+  },
+  "batches_per_step": 100,
+  "checkpoint_policy": "best",
+  "checkpoint_storage": {
+    "type": "shared_fs",
+    "host_path": "/tmp",
+    "storage_path": "determined-integration-checkpoints",
+    "save_trial_best": 1,
+    "save_trial_latest": 1,
+    "save_experiment_best": 0
+  },
+  "min_checkpoint_period": null,
+  "min_validation_period": null
+}

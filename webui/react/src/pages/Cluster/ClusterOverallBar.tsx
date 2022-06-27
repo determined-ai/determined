@@ -8,7 +8,7 @@ import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
-import { maxPoolSlotCapacity } from './ClusterOverview';
+import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallBar: React.FC = () => {
 

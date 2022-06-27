@@ -1,8 +1,9 @@
 import { Primitive, Range } from 'shared/types';
 import { ColorScale } from 'shared/utils/color';
 import { clone } from 'shared/utils/data';
-import { Theme } from 'themes';
 import { primitiveSorter } from 'utils/sort';
+
+import { Theme } from '../shared/themes';
 
 /* Color Scales */
 
@@ -45,7 +46,7 @@ export const getNumericRange = (values: number[], forceRange = true): Range<numb
 
   if (forceRange && range[0] === range[1]) {
     range[0] = Math.floor(range[0]);
-    range[1] = Math.ceil(range[1]);
+    range[1] = Math.ceil(range[1] + Number.EPSILON);
   }
 
   return range;

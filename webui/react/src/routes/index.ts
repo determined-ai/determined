@@ -1,11 +1,10 @@
 import { FC } from 'react';
 
-import Cluster from 'pages/Cluster';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
+import Deprecated from 'pages/Deprecated';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
-import JobQueue from 'pages/JobQueue/JobQueue';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
@@ -26,12 +25,13 @@ import { RouteConfig } from '../shared/types';
 import Routes from './routes';
 
 const routeComponentMap: Record<string, FC> = {
-  cluster: Cluster,
+  cluster: Deprecated,
+  clusterHistorical: Deprecated,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
   experimentDetails: ExperimentDetails,
   interactive: InteractiveTask,
-  jobs: JobQueue,
+  jobs: Deprecated,
   modelDetails: ModelDetails,
   models: ModelRegistry,
   modelVersionDetails: ModelVersionDetails,

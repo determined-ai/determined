@@ -5,6 +5,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import QuadTree, { pointWithin } from 'components/UPlot/UPlotScatter/quadtree';
 
 import { Range } from '../../shared/types';
+import { Scale } from '../../types';
 
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';
@@ -15,6 +16,7 @@ import {
 import useScatterPointTooltipPlugin from './UPlotScatter/useScatterPointTooltipPlugin';
 
 interface Props {
+  colorScaleDistribution?: Scale;
   data?: FacetedData;
   options?: Partial<Options>;
   tooltipLabels?: (string | null)[];
@@ -24,7 +26,12 @@ const DEFAULT_FILL_COLOR = 'rgba(0, 155, 222, 0.3)';
 const DEFAULT_HOVER_COLOR = 'rgba(0, 155, 222, 1.0)';
 const DEFAULT_STROKE_COLOR = 'rgba(0, 155, 222, 1.0)';
 
-const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Props) => {
+const UPlotScatter: React.FC<Props> = ({
+  data,
+  colorScaleDistribution,
+  options = {},
+  tooltipLabels,
+}: Props) => {
   const quadtree = useRef<QuadTree>();
   const hRect = useRef<QuadTree | null>();
   const ranges = useRef<(Range<number>)[]>([]);
@@ -44,7 +51,10 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
 
             const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
             const seriesData = (fillData || []) as unknown as UPlotData[];
-            return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
+            return (
+              seriesData.map((value) =>
+                getColor(value, minValue, maxValue, colorScaleDistribution)) || []
+            );
           },
         },
         size: {
@@ -69,7 +79,10 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
 
             const [ minValue, maxValue ] = ranges.current[STROKE_INDEX];
             const seriesData = (strokeData || []) as unknown as UPlotData[];
-            return seriesData.map(value => getColor(value, minValue, maxValue)) || [];
+            return (
+              seriesData.map((value) =>
+                getColor(value, minValue, maxValue, colorScaleDistribution)) || []
+            );
           },
         },
       },
@@ -91,7 +104,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
         ));
       },
     });
-  }, []);
+  }, [ colorScaleDistribution ]);
 
   const chartOptions = useMemo(() => {
     const seriesOptions = options.series?.[1] || {};
@@ -140,7 +153,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
               if (value == null) return getColor(0, 0, 1);
 
               const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
-              return getColor(value, minValue, maxValue);
+              return getColor(value, minValue, maxValue, colorScaleDistribution);
             },
             size: (u, seriesIndex) => {
               return seriesIndex === hRect.current?.seriesIndex
@@ -153,7 +166,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
           drawClear: [
             u => {
               quadtree.current = quadtree.current
-                || new QuadTree(0, 0, u.bbox.width, u.bbox.height);
+              || new QuadTree(0, 0, u.bbox.width, u.bbox.height);
               quadtree.current.clear();
 
               // force-clear the path cache to cause drawBars() to rebuild new quadtree
@@ -201,7 +214,7 @@ const UPlotScatter: React.FC<Props> = ({ data, options = {}, tooltipLabels }: Pr
         ],
       } as Partial<Options>,
     );
-  }, [ drawPoints, options, tooltipPlugin ]);
+  }, [ colorScaleDistribution, drawPoints, options, tooltipPlugin ]);
 
   return (
     <div className={css.base}>

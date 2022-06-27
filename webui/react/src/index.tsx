@@ -5,7 +5,7 @@ import { Router } from 'react-router-dom';
 import history from 'shared/routes/history';
 
 /* Import the styles first to allow components to override styles. */
-import 'styles/index.scss';
+import 'shared/styles/index.scss';
 import 'uplot/dist/uPlot.min.css';
 
 import App from './App';

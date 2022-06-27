@@ -12,9 +12,9 @@ import logoDeterminedOnLightVertical from
   'shared/assets/images/logo-determined-on-light-vertical.svg';
 import logoHpeOnDarkHorizontal from 'shared/assets/images/logo-hpe-on-dark-horizontal.svg';
 import logoHpeOnLightHorizontal from 'shared/assets/images/logo-hpe-on-light-horizontal.svg';
-import { DarkLight } from 'themes';
 import { BrandingType } from 'types';
 
+import { DarkLight } from '../shared/themes';
 import { reactHostAddress } from '../shared/utils/routes';
 
 import css from './Logo.module.scss';

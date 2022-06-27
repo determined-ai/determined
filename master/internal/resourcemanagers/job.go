@@ -42,7 +42,6 @@ func reduceToJobQInfo(reqs AllocReqs) map[model.JobID]*job.RMJobInfo {
 }
 
 func jobStats(taskList *taskList) *jobv1.QueueStats {
-	stats := &jobv1.QueueStats{}
 	reqs := make(AllocReqs, 0)
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
@@ -51,7 +50,26 @@ func jobStats(taskList *taskList) *jobv1.QueueStats {
 		}
 		reqs = append(reqs, req)
 	}
+	stats := requestsToQueueStats(reqs)
+	return stats
+}
+
+//nolint:deadcode,nolintlint // Method used by Slurm support in determined-ee
+func jobStatsByPool(taskList *taskList, resourcePool string) *jobv1.QueueStats {
+	reqs := make(AllocReqs, 0)
+	for it := taskList.iterator(); it.next(); {
+		req := it.value()
+		if !req.IsUserVisible || req.ResourcePool != resourcePool {
+			continue
+		}
+		reqs = append(reqs, req)
+	}
+	return requestsToQueueStats(reqs)
+}
+
+func requestsToQueueStats(reqs []*sproto.AllocateRequest) *jobv1.QueueStats {
 	jobsMap := reduceToJobQInfo(reqs)
+	stats := &jobv1.QueueStats{}
 	for _, jobInfo := range jobsMap {
 		if jobInfo.State == job.SchedulingStateQueued {
 			stats.QueuedCount++

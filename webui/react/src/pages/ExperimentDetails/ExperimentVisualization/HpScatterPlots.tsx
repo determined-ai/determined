@@ -16,7 +16,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import {
-  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap,
+  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Scale,
 } from 'types';
 import { metricNameToStr } from 'utils/metric';
 
@@ -32,6 +32,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedScale: Scale
 }
 
 interface HpMetricData {
@@ -50,6 +51,7 @@ const ScatterPlots: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
+  selectedScale,
 }: Props) => {
   const { ui } = useStore();
   const baseRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,8 @@ const ScatterPlots: React.FC<Props> = ({
   const [ pageError, setPageError ] = useState<Error>();
   const [ activeHParam, setActiveHParam ] = useState<string>();
   const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
+
+  const yScaleKey = selectedScale === Scale.Log ? 'yLog' : 'y';
 
   const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
@@ -95,7 +99,7 @@ const ScatterPlots: React.FC<Props> = ({
               splits: xSplits,
               values: xValues,
             },
-            { scale: 'y' },
+            { scale: yScaleKey },
           ],
           cursor: { drag: { setScale: false, x: false, y: false } },
           title,
@@ -104,7 +108,7 @@ const ScatterPlots: React.FC<Props> = ({
       };
       return acc;
     }, {} as Record<string, UPlotScatterProps>);
-  }, [ chartData, selectedHParams, selectedMetric ]);
+  }, [ chartData, selectedHParams, selectedMetric, yScaleKey ]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
 

@@ -3,6 +3,7 @@ import uPlot from 'uplot';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 
 import { Range } from '../../../shared/types';
+import { Scale } from '../../../types';
 import { UPlotAxisSplits, UPlotData } from '../types';
 
 export const X_INDEX = 0;
@@ -20,10 +21,13 @@ const STROKE_WIDTH = 1;
 
 export type ColorFn = () => string;
 
+const safeLog = (x: number): number => Math.log10(Math.max(x, Number.EPSILON));
+
 type BubbleFn<T = number | string> = (
   value: number | null | undefined,
   minValue: number,
-  maxValue: number
+  maxValue: number,
+  scale?: Scale,
 ) => T;
 
 export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn => {
@@ -40,9 +44,19 @@ export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn =>
     value: number | null | undefined,
     minValue: number,
     maxValue: number,
+    scale?: Scale,
   ): string => {
     if (value == null || minValue === maxValue || minValue == null) return minColor;
-    const percent = (value - minValue) / (maxValue - minValue);
+    let percent = 0;
+    if (scale === Scale.Linear) {
+      percent = (value - minValue) / (maxValue - minValue);
+    }
+    if (scale === Scale.Log) {
+      const logMin = safeLog(minValue);
+      const logMax = safeLog(maxValue);
+      const logVal = safeLog(value);
+      percent = (logVal - logMin) / (logMax - logMin);
+    }
     const rgba = rgbaFromGradient(rgbaMin, rgbaMax, percent);
     return rgba2str(rgba);
   };

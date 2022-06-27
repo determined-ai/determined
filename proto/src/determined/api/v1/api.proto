@@ -478,6 +478,16 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+  // Return downsampled metrics from multiple trials to compare them
+  // side-by-side.
+  rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/compare"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Experiments" ]
+    };
+  }
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {
@@ -517,6 +527,15 @@ service Determined {
       tags: [ "Experiments", "Trials" ]
     };
     option deprecated = true;
+  }
+  // Downsample metrics collected during a trial.
+  rpc SummarizeTrial(SummarizeTrialRequest) returns (SummarizeTrialResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/summarize"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Experiments" ]
+    };
   }
   // Set allocation to ready state.
   rpc AllocationReady(AllocationReadyRequest)

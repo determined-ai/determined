@@ -999,7 +999,7 @@ func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Eve
 	ev.Description = a.req.Name
 	ev.IsReady = coalesceBool(a.model.IsReady, false)
 	if ev.State == "" {
-		ev.State = a.getModelState().String()
+		ev.State = string(a.getModelState())
 	}
 	if ev.Time.IsZero() {
 		ev.Time = time.Now().UTC()

@@ -4,9 +4,10 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
+
+import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
   const { agents, cluster: overview, resourcePools } = useStore();
