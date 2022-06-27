@@ -26,7 +26,6 @@ import css from './CompareCurve.module.scss';
 import HpTrialTable, { TrialHParams } from './CompareTable';
 
 interface Props {
-  experiments: ExperimentBase[];
   filters?: React.ReactNode;
   // fullHParams: string[];
   selectedMaxTrial: number;
@@ -56,7 +55,7 @@ const PAGE_ERROR_MESSAGES = {
 const MAX_DATAPOINTS = 5000;
 
 const LearningCurve: React.FC<Props> = ({
-  experiments,
+
   filters,
   // fullHParams,
   selectedMaxTrial,

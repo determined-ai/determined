@@ -1,15 +1,12 @@
 import { Alert, Tabs } from 'antd';
+import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 import Link from 'components/Link';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
-import {
-  GetHPImportanceResponseMetricHPImportance,
-  V1ExpTrial,
-  V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse, V1TrialsSampleResponse,
-} from 'services/api-ts-sdk';
+import { V1MetricNamesResponse, V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
@@ -18,8 +15,8 @@ import { hasObjectKeys, isEqual } from 'shared/utils/data';
 // import { union } from 'shared/utils/set'
 import { flattenObject } from 'shared/utils/data';
 import {
-  ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
-  HpImportanceMap, HpImportanceMetricMap, Hyperparameter, HyperparameterType, MetricName, MetricType, metricTypeParamMap,
+  ExperimentVisualizationType,
+  HpImportanceMap, Hyperparameter, HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
@@ -30,12 +27,6 @@ import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
 } from './CompareVisualization/CompareFilters';
 import { TrialHParams } from './CompareVisualization/CompareTable';
-
-interface Props {
-  basePath: string;
-  experiments: ExperimentBase[];
-  type?: ExperimentVisualizationType;
-}
 
 enum PageError {
   MetricBatches,
@@ -56,31 +47,24 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
 };
 
-const getHpImportanceMap = (
-  hpImportanceMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance },
-): HpImportanceMetricMap => {
-  const map: HpImportanceMetricMap = {};
+// const getHpImportanceMap = (
+//   hpImportanceMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance },
+// ): HpImportanceMetricMap => {
+//   const map: HpImportanceMetricMap = {};
 
-  Object.keys(hpImportanceMetrics).forEach(metricName => {
-    map[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
-  });
+//   Object.keys(hpImportanceMetrics).forEach(metricName => {
+//     map[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
+//   });
 
-  return map;
-};
+//   return map;
+// };
 
-const CompareVisualization: React.FC<Props> = ({
-  basePath,
-  experiments,
-  type,
-}: Props) => {
+const CompareVisualization: React.FC = () => {
   const { ui } = useStore();
   //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
 
   const fullHParams = useRef<string[]>(
-    (Object.keys(experiments?.[0]?.hyperparameters || {}).filter(key => {
-      // Constant hyperparameters are not useful for visualizations.
-      return experiments?.[0]?.hyperparameters?.[key]?.type !== HyperparameterType.Constant;
-    })),
+    [],
   );
 
   // const asd = useMemo(() => {
@@ -94,7 +78,8 @@ const CompareVisualization: React.FC<Props> = ({
 
   // Hack to show exp data
   const defaultMetric = {
-    name: experiments?.[0]?.config.searcher.metric,
+    // name: experiments?.[0]?.config.searcher.metric,
+    name: 'validation_loss',
     type: MetricType.Validation,
   };
 
@@ -109,6 +94,19 @@ const CompareVisualization: React.FC<Props> = ({
     view: DEFAULT_VIEW,
   };
   const initFilters = defaultFilters;
+  const location = useLocation();
+
+  const experimentIds: number[] = useMemo(() => {
+    const query = queryString.parse(location.search);
+    if(query.id && typeof query.id === 'string'){
+      return [ parseInt(query.id) ];
+
+    } else if(Array.isArray(query.id)){
+      return query.id.map(parseInt);
+    }
+    return [];
+
+  }, [ location.search ]);
 
   const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(defaultMetric);
@@ -126,15 +124,14 @@ const CompareVisualization: React.FC<Props> = ({
   const typeKey = DEFAULT_TYPE_KEY;
   const { hasData, isSupported, hasLoaded } = useMemo(() => {
     return {
-      hasData: (batches && batches.length !== 0) || (metrics && metrics.length !== 0) || (trialIds && trialIds.length > 0),
-      hasLoaded: batches.length > 0 || metrics && metrics.length > 0 || trialIds.length > 0,
-      // isSupported: ![
-      //   ExperimentSearcherName.Single,
-      //   ExperimentSearcherName.Pbt,
-      // ].includes(experiments?.[0]?.config?.searcher?.name),
+      hasData:
+        (batches && batches.length !== 0) ||
+        (metrics && metrics.length !== 0) ||
+        (trialIds && trialIds.length > 0),
+      hasLoaded: batches.length > 0 || (metrics && metrics.length > 0) || trialIds.length > 0,
       isSupported: true,
     };
-  }, [ batches, experiments, metrics ]);
+  }, [ batches, metrics, trialIds ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -150,24 +147,21 @@ const CompareVisualization: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if(!filters.metric?.name && experiments.length){
+    if(!filters.metric?.name && trialIds.length){
       setFilters({
         batch: DEFAULT_BATCH,
         batchMargin: DEFAULT_BATCH_MARGIN,
         hParams: [],
         maxTrial: DEFAULT_MAX_TRIALS,
-        metric: {
-          name: experiments[0].config.searcher.metric,
-          type: MetricType.Validation,
-        },
+        metric: defaultMetric,
         scale: Scale.Linear,
         view: DEFAULT_VIEW,
       });
     }
-  }, [ experiments.length ]);
+  }, [ trialIds, defaultMetric, filters.metric?.name ]);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experiments.length) return;
+    if (ui.isPageHidden || !experimentIds.length) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -180,7 +174,7 @@ const CompareVisualization: React.FC<Props> = ({
 
     readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.experimentsSample(
-        experiments.map(experiment => experiment.id),
+        experimentIds,
         filters.metric.name,
         metricTypeParam,
         undefined,
@@ -258,7 +252,7 @@ const CompareVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ trialIds, filters.metric, ui.isPageHidden ]);
+  }, [ trialIds, filters.metric, ui.isPageHidden, experimentIds ]);
 
   useEffect(() => {
     if (!isSupported || ui.isPageHidden || !trialIds?.length) return;
@@ -332,7 +326,7 @@ const CompareVisualization: React.FC<Props> = ({
     });
   }, [ hpImportanceMap, isSupported ]);
 
-  if (!experiments.length) {
+  if (!experimentIds.length) {
     return (
       <div className={css.alert}>
         <Spinner center className={css.alertSpinner} />
@@ -398,11 +392,10 @@ const CompareVisualization: React.FC<Props> = ({
         <Tabs.TabPane
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
-          {(experiments.length > 0 && filters.metric?.name && (
+          {(experimentIds.length > 0 && filters.metric?.name && (
             <LearningCurve
               batches={batches}
               chartData={chartData}
-              experiments={experiments}
               filters={visualizationFilters}
               hasLoaded={hasLoaded}
               hyperparameters={hyperparameters}
