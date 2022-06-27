@@ -1154,9 +1154,9 @@ class v1ExpTrial:
     def __init__(
         self,
         data: "typing.Sequence[v1ExpTrialDataPoint]",
+        experimentId: int,
         hparams: "typing.Dict[str, typing.Any]",
         trialId: int,
-        experimentId: "typing.Optional[int]" = None,
     ):
         self.trialId = trialId
         self.hparams = hparams
@@ -1169,7 +1169,7 @@ class v1ExpTrial:
             trialId=obj["trialId"],
             hparams=obj["hparams"],
             data=[v1ExpTrialDataPoint.from_json(x) for x in obj["data"]],
-            experimentId=obj.get("experimentId", None),
+            experimentId=obj["experimentId"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1177,7 +1177,7 @@ class v1ExpTrial:
             "trialId": self.trialId,
             "hparams": self.hparams,
             "data": [x.to_json() for x in self.data],
-            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "experimentId": self.experimentId,
         }
 
 class v1ExpTrialDataPoint:
@@ -8623,29 +8623,6 @@ def get_SummarizeTrial(
     if _resp.status_code == 200:
         return v1SummarizeTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_SummarizeTrial", _resp)
-
-def get_TrialsMetricNames(
-    session: "client.Session",
-    *,
-    trialId: "typing.Sequence[int]",
-    periodSeconds: "typing.Optional[int]" = None,
-) -> "v1TrialsMetricNamesResponse":
-    _params = {
-        "periodSeconds": periodSeconds,
-        "trialId": trialId,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/trials/metrics-stream/metric-names",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1TrialsMetricNamesResponse.from_json(_resp.json())
-    raise APIHttpError("get_TrialsMetricNames", _resp)
 
 def post_UnarchiveExperiment(
     session: "client.Session",

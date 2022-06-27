@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';

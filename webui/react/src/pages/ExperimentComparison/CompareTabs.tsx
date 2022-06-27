@@ -1,11 +1,9 @@
-import { Tabs } from 'antd';
 import React from 'react';
 import { useParams } from 'react-router';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 
-const { TabPane } = Tabs;
 interface Params {
   ids: string;
   viz?: ExperimentVisualizationType;

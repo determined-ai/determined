@@ -24,7 +24,7 @@ const ExperimentComparison: React.FC = () => {
   const experimentIds = useMemo(() => {
     const query: Query = queryString.parse(location.search);
     if(query.id && typeof query.id === 'string'){
-      return [query.id]
+      return [ query.id ];
     }
     return query.id ?? [];
   }, [ location.search ]);
@@ -53,7 +53,7 @@ const ExperimentComparison: React.FC = () => {
 
   useEffect(() => {
     fetchExperimentDetails();
-  }, []);
+  }, [ fetchExperimentDetails ]);
 
   useEffect(() => {
     return () => canceler.abort();

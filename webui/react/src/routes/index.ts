@@ -1,9 +1,9 @@
-import ExperimentComparison from 'pages/ExperimentComparison';
 import { FC } from 'react';
 
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Deprecated from 'pages/Deprecated';
+import ExperimentComparison from 'pages/ExperimentComparison';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
