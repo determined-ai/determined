@@ -168,7 +168,7 @@ export const canUserActionExperiment = (
   user: DetailedUser | undefined,
   action: ExperimentAction,
   experiment: ProjectExperiment,
-  trial ?: TrialDetails,
+  trial?: TrialDetails,
 ): boolean => !!experiment && experimentCheckers[action](experiment, user, trial);
 
 export const getActionsForExperiment = (
