@@ -68,14 +68,16 @@ export class Storage {
     return value !== null ? value : defaultValue;
   }
 
-  remove(key: string): void {
+  remove(key: string, storagePath?: string): void {
+    if(storagePath && this.getStoragePath() !== storagePath) return;
     const path = this.computeKey(key);
     this.store.removeItem(path);
   }
 
-  set<T>(key: string, value: T): void {
+  set<T>(key: string, value: T, storagePath?: string): void {
     if (value == null) throw new Error('Cannot set to a null or undefined value.');
     if (value instanceof Set) throw new Error('Convert the value to an Array before setting it.');
+    if(storagePath && this.getStoragePath() !== storagePath) return;
     const path = this.computeKey(key);
     const item = JSON.stringify(value);
     this.store.setItem(path, item);
@@ -111,6 +113,10 @@ export class Storage {
 
   reset(): void {
     this.keys().forEach(key => this.remove(key));
+  }
+
+  getStoragePath(): string {
+    return this.computeKey('').slice(0, -1); // because the last char is the delimiter
   }
 
   private computeKey(key: string): string {
