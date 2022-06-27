@@ -1987,13 +1987,13 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
-// TrialsMetricNames provides a mock function with given fields: trialIDS, sStartTime, vStartTime
-func (_m *DB) TrialsMetricNames(trialIDS []int, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
-	ret := _m.Called(trialIDS, sStartTime, vStartTime)
+// TrialsMetricNames provides a mock function with given fields: trialIDs, sStartTime, vStartTime
+func (_m *DB) TrialsMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
+	ret := _m.Called(trialIDs, sStartTime, vStartTime)
 
 	var r0 []string
-	if rf, ok := ret.Get(0).(func([]int, time.Time, time.Time) []string); ok {
-		r0 = rf(trialIDS, sStartTime, vStartTime)
+	if rf, ok := ret.Get(0).(func([]int32, time.Time, time.Time) []string); ok {
+		r0 = rf(trialIDs, sStartTime, vStartTime)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
@@ -2001,8 +2001,8 @@ func (_m *DB) TrialsMetricNames(trialIDS []int, sStartTime time.Time, vStartTime
 	}
 
 	var r1 []string
-	if rf, ok := ret.Get(1).(func([]int, time.Time, time.Time) []string); ok {
-		r1 = rf(trialIDS, sStartTime, vStartTime)
+	if rf, ok := ret.Get(1).(func([]int32, time.Time, time.Time) []string); ok {
+		r1 = rf(trialIDs, sStartTime, vStartTime)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).([]string)
@@ -2010,22 +2010,22 @@ func (_m *DB) TrialsMetricNames(trialIDS []int, sStartTime time.Time, vStartTime
 	}
 
 	var r2 time.Time
-	if rf, ok := ret.Get(2).(func([]int, time.Time, time.Time) time.Time); ok {
-		r2 = rf(trialIDS, sStartTime, vStartTime)
+	if rf, ok := ret.Get(2).(func([]int32, time.Time, time.Time) time.Time); ok {
+		r2 = rf(trialIDs, sStartTime, vStartTime)
 	} else {
 		r2 = ret.Get(2).(time.Time)
 	}
 
 	var r3 time.Time
-	if rf, ok := ret.Get(3).(func([]int, time.Time, time.Time) time.Time); ok {
-		r3 = rf(trialIDS, sStartTime, vStartTime)
+	if rf, ok := ret.Get(3).(func([]int32, time.Time, time.Time) time.Time); ok {
+		r3 = rf(trialIDs, sStartTime, vStartTime)
 	} else {
 		r3 = ret.Get(3).(time.Time)
 	}
 
 	var r4 error
-	if rf, ok := ret.Get(4).(func([]int, time.Time, time.Time) error); ok {
-		r4 = rf(trialIDS, sStartTime, vStartTime)
+	if rf, ok := ret.Get(4).(func([]int32, time.Time, time.Time) error); ok {
+		r4 = rf(trialIDs, sStartTime, vStartTime)
 	} else {
 		r4 = ret.Error(4)
 	}

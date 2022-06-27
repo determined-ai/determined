@@ -877,18 +877,14 @@ func (a *apiServer) TrialsMetricNames(req *apiv1.TrialsMetricNamesRequest,
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
 	var vStartTime time.Time
-	var trialIdList []int
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
 	}
-	for n := range req.TrialId {
-		trialIdList = append(trialIdList, int(n))
-	}
 	for {
 		var response apiv1.TrialsMetricNamesResponse
 
-		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.TrialsMetricNames(trialIdList,
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.TrialsMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
 			return nil

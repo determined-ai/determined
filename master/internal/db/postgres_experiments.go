@@ -146,7 +146,7 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 	return training, validation, sEndTime, vEndTime, err
 }
 
-func (db *PgDB) TrialsMetricNames(trialIDs []int, sStartTime time.Time, vStartTime time.Time) (
+func (db *PgDB) TrialsMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) (
 	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
 	type namesWrapper struct {
 		Name    string    `db:"name"`
