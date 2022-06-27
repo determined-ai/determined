@@ -483,6 +483,7 @@ message TrialsSampleRequest {
   int32 period_seconds = 8;
 }
 
+// Series of data points for an experiment trial.
 message ExpTrial {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
@@ -504,6 +505,7 @@ message ExpTrial {
     // Value of the requested metric at this point in the trial.
     double value = 2;
   }
+  // Data related to a trial.
   repeated DataPoint data = 3;
   // The id of the experiment for the trial
   int32 experiment_id = 4;
@@ -557,6 +559,7 @@ message ExperimentsSampleRequest {
   int32 period_seconds = 8;
 }
 
+// Response to ExperimentsSampleRequest
 message ExperimentsSampleResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
