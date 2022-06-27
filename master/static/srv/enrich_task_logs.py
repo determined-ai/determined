@@ -57,34 +57,35 @@ class LogCollector(threading.Thread):
         super().__init__()
 
     def run(self) -> None:
-        for line in sys.stdin:
-            try:
-                parsed_metadata = {}
+        try:
+            for line in sys.stdin:
+                try:
+                    parsed_metadata = {}
 
-                m = rank.match(line)
-                if m:
-                    parsed_metadata["rank"] = m.group("rank_id")
-                    line = m.group("log")
+                    m = rank.match(line)
+                    if m:
+                        parsed_metadata["rank"] = m.group("rank_id")
+                        line = m.group("log")
 
-                m = level.match(line)
-                if m:
-                    parsed_metadata["level"] = m.group("level")
-                    line = m.group("log")
+                    m = level.match(line)
+                    if m:
+                        parsed_metadata["level"] = m.group("level")
+                        line = m.group("log")
 
-                self.ship_queue.put(
-                    {
-                        "timestamp": datetime.datetime.now(
-                            datetime.timezone.utc
-                        ).isoformat(),
-                        "log": line + "\n",
-                        **self.task_logging_metadata,
-                        **parsed_metadata,
-                    }
-                )
-            except Exception as e:
-                print(f"fatal error collecting log {e}", file=sys.stderr)
-
-        self.ship_queue.put(ShutdownMessage())
+                    self.ship_queue.put(
+                        {
+                            "timestamp": datetime.datetime.now(
+                                datetime.timezone.utc
+                            ).isoformat(),
+                            "log": line + "\n",
+                            **self.task_logging_metadata,
+                            **parsed_metadata,
+                        }
+                    )
+                except Exception as e:
+                    print(f"fatal error collecting log {e}", file=sys.stderr)
+        finally:
+            self.ship_queue.put(ShutdownMessage())
 
 
 class LogShipper(threading.Thread):
