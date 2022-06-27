@@ -639,7 +639,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 
-    def _average_gradients(self, parameters: Any, divisor: int) -> None:
+    @staticmethod
+    def _average_gradients(parameters: Any, divisor: int) -> None:
         check.gt_eq(divisor, 1)
         if divisor == 1:
             return
