@@ -59,7 +59,7 @@ class LogCollector(threading.Thread):
     def run(self) -> None:
         try:
             for line in sys.stdin:
-                print(line, flush=True)
+                print(line, flush=True, end='')
                 try:
                     parsed_metadata = {}
 
