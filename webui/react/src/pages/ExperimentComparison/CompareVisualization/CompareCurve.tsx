@@ -1,21 +1,15 @@
 import { Alert } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
-import { useStore } from 'contexts/Store';
 import { openOrCreateTensorBoard } from 'services/api';
-import { V1ExpTrial, V1TrialsSampleResponse } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
-import { readStream } from 'services/utils';
-import Message from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Scale } from 'types';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, HyperparameterType,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   MetricName,
-  metricTypeParamMap,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
@@ -26,39 +20,24 @@ import css from './CompareCurve.module.scss';
 import HpTrialTable, { TrialHParams } from './CompareTable';
 
 interface Props {
+  batches: number[]
+  chartData: (number | null)[][];
   filters?: React.ReactNode;
   // fullHParams: string[];
+  hasLoaded: boolean;
+  hyperparameters: Record<string, Hyperparameter>;
   selectedMaxTrial: number;
   selectedMetric: MetricName
   selectedScale: Scale;
   trialHps: TrialHParams[];
-  chartData: (number | null)[][];
   trialIds: number[];
-  hyperparameters: Record<string, Hyperparameter>;
-  batches: number[]
-  hasLoaded: boolean;
 
 }
-enum PageError {
-  MetricBatches,
-  MetricHpImportance,
-  MetricNames,
-  ExperimentSample
-}
-const PAGE_ERROR_MESSAGES = {
-  [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
-  [PageError.MetricHpImportance]: 'Unable to retrieve experiment hp importance.',
-  [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
-  [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
-};
-
-const MAX_DATAPOINTS = 5000;
 
 const LearningCurve: React.FC<Props> = ({
 
   filters,
   // fullHParams,
-  selectedMaxTrial,
   selectedMetric,
   selectedScale,
   trialHps,
@@ -68,12 +47,10 @@ const LearningCurve: React.FC<Props> = ({
   hyperparameters,
   hasLoaded,
 }: Props) => {
-  const { ui } = useStore();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
 
   const hasTrials = trialIds.length !== 0;
-  // const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);

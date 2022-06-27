@@ -6,17 +6,19 @@ import { useLocation } from 'react-router';
 import Link from 'components/Link';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
-import { V1MetricNamesResponse, V1TrialsSampleResponse } from 'services/api-ts-sdk';
+import {
+  V1MetricNamesResponse, V1TrialsSampleResponse,
+} from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys, isEqual } from 'shared/utils/data';
-// import { union } from 'shared/utils/set'
 import { flattenObject } from 'shared/utils/data';
 import {
-  ExperimentVisualizationType,
-  HpImportanceMap, Hyperparameter, HyperparameterType, MetricName, MetricType, metricTypeParamMap,
+  ExperimentBase, ExperimentVisualizationType,
+  HpImportanceMap, Hyperparameter,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
@@ -46,20 +48,8 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
   [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
 };
-
-// const getHpImportanceMap = (
-//   hpImportanceMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance },
-// ): HpImportanceMetricMap => {
-//   const map: HpImportanceMetricMap = {};
-
-//   Object.keys(hpImportanceMetrics).forEach(metricName => {
-//     map[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
-//   });
-
-//   return map;
-// };
-
 const CompareVisualization: React.FC = () => {
+
   const { ui } = useStore();
   //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
 
@@ -109,10 +99,9 @@ const CompareVisualization: React.FC = () => {
   }, [ location.search ]);
 
   const [ filters, setFilters ] = useState<VisualizationFilters>(initFilters);
-  const [ activeMetric, setActiveMetric ] = useState<MetricName>(defaultMetric);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
+  const [ hpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
   //
@@ -124,11 +113,12 @@ const CompareVisualization: React.FC = () => {
   const typeKey = DEFAULT_TYPE_KEY;
   const { hasData, isSupported, hasLoaded } = useMemo(() => {
     return {
-      hasData:
-        (batches && batches.length !== 0) ||
-        (metrics && metrics.length !== 0) ||
-        (trialIds && trialIds.length > 0),
-      hasLoaded: batches.length > 0 || (metrics && metrics.length > 0) || trialIds.length > 0,
+      hasData: (batches && batches.length !== 0) ||
+      (metrics && metrics.length !== 0) ||
+      (trialIds && trialIds.length > 0),
+      hasLoaded: batches.length > 0 ||
+      metrics && metrics.length > 0 ||
+      trialIds.length > 0,
       isSupported: true,
     };
   }, [ batches, metrics, trialIds ]);
@@ -137,14 +127,6 @@ const CompareVisualization: React.FC = () => {
     if (!hpImportanceMap) return {};
     return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
   }, [ filters.metric, hpImportanceMap ]);
-
-  const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
-    setFilters(filters);
-  }, [ ]);
-
-  const handleMetricChange = useCallback((metric: MetricName) => {
-    setActiveMetric(metric);
-  }, []);
 
   useEffect(() => {
     if(!filters.metric?.name && trialIds.length){
@@ -301,23 +283,13 @@ const CompareVisualization: React.FC = () => {
     });
   }, [ batches ]);
 
-  // Validate active metric against metrics.
-  useEffect(() => {
-    setActiveMetric(prev => {
-      const activeMetricFound = (metrics || []).reduce((acc, metric) => {
-        return acc || (metric.type === prev.type && metric.name === prev.name);
-      }, false);
-      return activeMetricFound ? prev : searcherMetric.current;
-    });
-  }, [ metrics ]);
-
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
 
     setFilters(prev => {
-      if (prev.hParams.length !== 0) return prev;
-      const map = ((hpImportanceMap || {})[prev.metric.type] || {})[prev.metric.name];
+      if (prev.hParams.length !== 0 || !hpImportanceMap) return prev;
+      const map = hpImportanceMap[prev.metric.type][prev.metric.name];
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));
@@ -376,8 +348,6 @@ const CompareVisualization: React.FC = () => {
       hpImportance={hpImportance}
       metrics={metrics || []}
       type={typeKey}
-      onChange={handleFiltersChange}
-      onMetricChange={handleMetricChange}
       // onReset={handleFiltersReset}
     />
   );
@@ -387,8 +357,7 @@ const CompareVisualization: React.FC = () => {
       <Tabs
         activeKey={typeKey}
         destroyInactiveTabPane
-        type="card"
-        onChange={() => {}}>
+        type="card">
         <Tabs.TabPane
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">

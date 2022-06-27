@@ -48,9 +48,9 @@ import Spinner from 'shared/components/Spinner';
 import { RecordKey } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
-import { routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandTask,
