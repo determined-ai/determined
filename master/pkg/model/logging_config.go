@@ -11,9 +11,8 @@ import (
 
 // LoggingConfig configures logging for tasks (currently only trials) in Determined.
 type LoggingConfig struct {
-	DefaultLoggingConfig    *DefaultLoggingConfig `union:"type,default" json:"-"`
-	ElasticLoggingConfig    *ElasticLoggingConfig `union:"type,elastic" json:"-"`
-	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs"`
+	DefaultLoggingConfig *DefaultLoggingConfig `union:"type,default" json:"-"`
+	ElasticLoggingConfig *ElasticLoggingConfig `union:"type,elastic" json:"-"`
 }
 
 // Resolve resolves the parts of the TaskContainerDefaultsConfig that must be evaluated on
@@ -44,13 +43,16 @@ func (c *LoggingConfig) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultLoggingConfig configures logging for tasks using Fluent+HTTP to the master.
-type DefaultLoggingConfig struct{}
+type DefaultLoggingConfig struct {
+	AdditionalFluentOutputs *string `json:"additional_fluent_outputs"`
+}
 
 // ElasticLoggingConfig configures logging for tasks using Fluent+Elastic.
 type ElasticLoggingConfig struct {
-	Host     string                `json:"host"`
-	Port     int                   `json:"port"`
-	Security ElasticSecurityConfig `json:"security"`
+	Host                    string                `json:"host"`
+	Port                    int                   `json:"port"`
+	Security                ElasticSecurityConfig `json:"security"`
+	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs"`
 }
 
 // Resolve resolves the configuration.

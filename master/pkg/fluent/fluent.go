@@ -81,6 +81,10 @@ func makeOutputConfig(
   storage.total_limit_size 1G
 `, masterHost, masterPort)
 
+		if c := loggingConfig.DefaultLoggingConfig.AdditionalFluentOutputs; c != nil {
+			fmt.Fprint(config, *c)
+		}
+
 	case loggingConfig.ElasticLoggingConfig != nil:
 		elasticOpts := loggingConfig.ElasticLoggingConfig
 
@@ -111,12 +115,12 @@ func makeOutputConfig(
 `, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
 		}
 
+		if c := loggingConfig.ElasticLoggingConfig.AdditionalFluentOutputs; c != nil {
+			fmt.Fprint(config, *c)
+		}
+
 	default:
 		panic("no log driver set for agent")
-	}
-
-	if c := loggingConfig.AdditionalFluentOutputs; c != nil {
-		fmt.Fprint(config, *c)
 	}
 
 	const (
