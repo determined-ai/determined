@@ -208,7 +208,9 @@ def test_agent_restart_recover_cmd(
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [-1, 0, 20, 60])
-def test_agent_restart_recover_experiment(managed_cluster_restarts: ManagedCluster, downtime: int) -> None:
+def test_agent_restart_recover_experiment(
+    managed_cluster_restarts: ManagedCluster, downtime: int
+) -> None:
     if not managed_cluster_restarts.reattach:
         pytest.skip()
 
@@ -288,7 +290,9 @@ def test_agent_reconnect_keep_cmd(managed_cluster_restarts: ManagedCluster) -> N
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("slots", [0, 1])
-def test_agent_reconnect_trigger_schedule(managed_cluster_restarts: ManagedCluster, slots: int) -> None:
+def test_agent_reconnect_trigger_schedule(
+    managed_cluster_restarts: ManagedCluster, slots: int
+) -> None:
     if managed_cluster_restarts.reattach:
         pytest.skip()
 

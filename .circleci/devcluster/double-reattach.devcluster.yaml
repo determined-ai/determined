@@ -24,7 +24,7 @@ stages:
           default_compute_resource_pool: default
           scheduler:
             fitting_policy: best
-          type: fair_share
+            type: fair_share
           type: agent
         resource_pools:
           - agent_reattach_enabled: true

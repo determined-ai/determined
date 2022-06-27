@@ -37,7 +37,8 @@ def num_free_slots() -> int:
         for slot in agent_slots
     )
 
-def run_command_set_priority(sleep: int = 30, slots: int = 1, priority = 0) -> str:
+
+def run_command_set_priority(sleep: int = 30, slots: int = 1, priority=0) -> str:
     command = [
         "det",
         "-m",
@@ -48,11 +49,12 @@ def run_command_set_priority(sleep: int = 30, slots: int = 1, priority = 0) -> s
         "--config",
         f"resources.slots={slots}",
         "--config",
-        f"resources.priority={priority}"
+        f"resources.priority={priority}",
         "sleep",
         str(sleep),
     ]
     return subprocess.check_output(command).decode().strip()
+
 
 def run_command(sleep: int = 30, slots: int = 1) -> str:
     command = [
@@ -88,6 +90,8 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
 
 
 def command_succeeded(command_id: str) -> bool:
+    print(get_command_info(command_id))
+
     return "success" in get_command_info(command_id)["exitStatus"]
 
 
