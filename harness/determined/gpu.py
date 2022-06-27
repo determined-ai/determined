@@ -165,8 +165,6 @@ def _get_nvidia_processes() -> List[GPUProcess]:
                 logging.warning(f"Ignoring GPU process with unexpected nvidia-smi output: {fields}")
     if proc.returncode:
         logging.warning(f"nvidia-smi exited with failure status code {proc.returncode}")
-
-    logging.info(f"detected {len(processes)} gpu processes")
     return processes
 
 
