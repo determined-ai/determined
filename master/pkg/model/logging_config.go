@@ -44,7 +44,7 @@ func (c *LoggingConfig) UnmarshalJSON(data []byte) error {
 
 // DefaultLoggingConfig configures logging for tasks using Fluent+HTTP to the master.
 type DefaultLoggingConfig struct {
-	AdditionalFluentOutputs *string `json:"additional_fluent_outputs"`
+	AdditionalFluentOutputs *string `json:"additional_fluent_outputs,omitempty"`
 }
 
 // ElasticLoggingConfig configures logging for tasks using Fluent+Elastic.
@@ -52,7 +52,7 @@ type ElasticLoggingConfig struct {
 	Host                    string                `json:"host"`
 	Port                    int                   `json:"port"`
 	Security                ElasticSecurityConfig `json:"security"`
-	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs"`
+	AdditionalFluentOutputs *string               `json:"additional_fluent_outputs,omitempty"`
 }
 
 // Resolve resolves the configuration.
