@@ -59,6 +59,7 @@ class LogCollector(threading.Thread):
     def run(self) -> None:
         try:
             for line in sys.stdin:
+                print(line, flush=True)
                 try:
                     parsed_metadata = {}
 
@@ -77,7 +78,7 @@ class LogCollector(threading.Thread):
                             "timestamp": datetime.datetime.now(
                                 datetime.timezone.utc
                             ).isoformat(),
-                            "log": line + "\n",
+                            "log": line,
                             **self.task_logging_metadata,
                             **parsed_metadata,
                         }
