@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Modal } from 'antd';
-import { ModalFunc, ModalStaticFunctions } from 'antd/es/modal/confirm';
+import { ModalFunc } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -9,6 +9,7 @@ import { isAsyncFunction } from 'shared/utils/data';
 import usePrevious from '../usePrevious';
 
 export interface ModalHooks {
+  contextHolder: React.ReactElement;
   modalClose: (reason?: ModalCloseReason) => void;
   modalOpen: (modalProps?: ModalFuncProps) => void;
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
@@ -41,7 +42,6 @@ const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
 type AntModalPromise = (...args: any[]) => any;
 
 const useModal = (config: {
-  modal?: Omit<ModalStaticFunctions, 'warn'>,
   onClose?: (reason: ModalCloseReason) => void,
   options?: ModalOptions,
 } = {}): ModalHooks => {
@@ -49,6 +49,7 @@ const useModal = (config: {
   const componentUnmounting = useRef(false);
   const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
   const prevModalProps = usePrevious(modalProps, undefined);
+  const [ modal, contextHolder ] = Modal.useModal();
 
   const modalOpen = useCallback((props: ModalFuncProps = {}) => {
     setModalProps(props);
@@ -104,9 +105,9 @@ const useModal = (config: {
     if (modalRef.current) {
       modalRef.current.update(completeModalProps);
     } else {
-      modalRef.current = (config.modal || Modal).confirm(completeModalProps);
+      modalRef.current = modal.confirm(completeModalProps);
     }
-  }, [ config, extendEventHandler, modalProps, prevModalProps ]);
+  }, [ config, extendEventHandler, modal, modalProps, prevModalProps ]);
 
   /**
    * Sets componentUnmounting to true only when the parent component is unmounting so that the next
@@ -126,7 +127,7 @@ const useModal = (config: {
     };
   }, [ modalClose ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { contextHolder, modalClose, modalOpen, modalRef };
 };
 
 export default useModal;
