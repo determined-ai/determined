@@ -436,6 +436,16 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_compatibility_workloads(self) -> None:
+        """Test the call to layers.make_compatibility_workloads in the PyTorchTrialController constructor."""
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrial,
+            hparams=self.hparams,
+            workloads=None,
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
     def test_variable_workload_size(self) -> None:
         def make_workloads() -> workload.Stream:
             training_metrics = []
@@ -591,6 +601,24 @@ class TestPyTorchTrial:
             trial_seed=self.trial_seed,
         )
         controller.run()
+
+    # At the time of writing this test, supports_mixed_precision and
+    # supports_averaging_training_metrics are class methods, but we instantiate a
+    # PyTorchTrialController here in case that ever changes. We expect that a controller
+    # instantiated in the following way should always provide these supports.
+    def test_supports(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrialAccessContext,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        assert controller.supports_mixed_precision()
+        assert controller.supports_averaging_training_metrics()
 
 
 @pytest.mark.parametrize(
