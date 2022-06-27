@@ -41,7 +41,7 @@ def test_executing_eagerly():
 )
 def xor_trial_controller(request):
     """
-    This fixture will provide a function that takes a hyperparameters dictionary as input and
+    This fixture provides a function that takes a hyperparameter's dictionary as input and
     returns a trial controller. It is parameterized over different implementations, so that any test
     that uses it may test a full set of implementations.
     """
