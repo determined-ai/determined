@@ -126,9 +126,6 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_USER"] = t.Owner.Username
 	}
 
-	if t.TaskContainerDefaults.NCCLPortRange != "" {
-		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
-	}
 	if t.TaskContainerDefaults.GLOOPortRange != "" {
 		e["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.GLOOPortRange
 	}
