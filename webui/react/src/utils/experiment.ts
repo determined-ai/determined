@@ -108,6 +108,11 @@ export const alwaysTrueExperimentChecker = (
   user?: DetailedUser,
 ): boolean => true;
 
+export const canExperimentContinueTrial = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+): boolean => !experiment.archived && !experiment.parentArchived && !(experiment?.numTrials > 1);
+
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
    * for internal use: the typing ensures that checkers
@@ -124,7 +129,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.CompareTrials]: alwaysTrueExperimentChecker,
 
-  [ExperimentAction.ContinueTrial]: isExperimentModifiable,
+  [ExperimentAction.ContinueTrial]: canExperimentContinueTrial,
 
   [ExperimentAction.Delete]: (experiment, user) =>
     !!user && (user.isAdmin || user.id === experiment.userId)
