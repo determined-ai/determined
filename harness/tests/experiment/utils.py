@@ -13,7 +13,7 @@ from determined import core, gpu, keras, workload
 
 class TrainAndValidate:
     """
-    Offer a similar interface as WorkloadResponseInterceptor, execpt let send() yield a whole
+    Offer a similar interface as WorkloadResponseInterceptor, except let send() yield a whole
     progression of RUN_STEP and COMPUTE_VALIDATION_METRICS, and let result() return the accumulated
     metrics from each.
     """

@@ -2,23 +2,18 @@ import unittest
 
 import torch
 
+from determined import pytorch
 from determined.common.check import CheckFailedError
 from determined.errors import InternalException
-
-from determined import pytorch
-from determined.pytorch import _pytorch_context
-from tests.experiment.fixtures import (
-    estimator_linear_model,
-    pytorch_onevar_model,
-    pytorch_xor_model,
-    tf_keras_one_var_model,
-)
+from tests.experiment.fixtures import pytorch_onevar_model
 
 
 class TestPyTorchContext(unittest.TestCase):
     def setUp(self) -> None:
         self.config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
-        self.context: pytorch.PyTorchTrialContext = pytorch.PyTorchTrialContext.from_config(self.config)
+        self.context: pytorch.PyTorchTrialContext = pytorch.PyTorchTrialContext.from_config(
+            self.config
+        )
         assert isinstance(self.context, pytorch.PyTorchTrialContext)
 
         trial = pytorch_onevar_model.OneVarTrial(self.context)
@@ -39,7 +34,7 @@ class TestPyTorchContext(unittest.TestCase):
         self.assertIsNone(self.context._average_gradients(None, 1))
 
     def test_training_not_started(self) -> None:
-        #self.assertRaises(InternalException, self.context._should_communicate_and_update)
+        # self.assertRaises(InternalException, self.context._should_communicate_and_update)
         self.assertRaises(InternalException, self.context.is_epoch_start)
         self.assertRaises(InternalException, self.context.is_epoch_end)
         self.assertRaises(InternalException, self.context.current_train_batch)

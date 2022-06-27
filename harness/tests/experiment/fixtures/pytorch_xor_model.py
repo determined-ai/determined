@@ -1,6 +1,6 @@
 # type: ignore
 import logging
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, cast
 
 import numpy as np
 import torch
@@ -81,7 +81,7 @@ class XORNetMulti(XORNet):
 
 
 class StepableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
-    def get_lr(self) -> float:
+    def get_lr(self) -> List[float]:
         return [self._step_count for _ in self.base_lrs]
 
 
@@ -90,7 +90,7 @@ class ModifyableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
         self.lr = float(0)
         super().__init__(*args, **kwargs)
 
-    def get_lr(self) -> float:
+    def get_lr(self) -> List[float]:
         return [self.lr for _ in self.base_lrs]
 
     def set_lr(self, lr: float) -> None:

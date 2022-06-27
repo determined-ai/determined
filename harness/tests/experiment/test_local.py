@@ -4,7 +4,7 @@ import pytest
 import tensorflow as tf
 
 import determined as det
-from determined import estimator, experimental, keras, pytorch
+from determined import estimator, experimental, keras
 from tests.experiment.fixtures import (
     estimator_linear_model,
     pytorch_xor_model,
@@ -60,7 +60,7 @@ def test_keras_from_config() -> None:
             grad = trial.calc_gradient(weight, [data])
             weight -= lr * grad
 
-    # Simluate validation loss.
+    # Simulate validation loss.
     sim_loss = trial.calc_loss(weight, range(data_len))
 
     assert sim_loss == pytest.approx(eval_loss)
