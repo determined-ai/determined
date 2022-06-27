@@ -100,7 +100,7 @@ class PyTorchTrialController(det.TrialController):
     def _set_random_seeds(cls: Type["PyTorchTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will start at a unique
-        # offset in the dataset, ensuring it's processing a unique
+        # offset in the dataset, ensuring that it is processing a unique
         # training batch.
         random.seed(seed)
         np.random.seed(seed)
@@ -214,7 +214,7 @@ class PyTorchTrialController(det.TrialController):
                 fn(*args)
 
         # We define on_shutdown here instead of inside the `for callback in...` loop to ensure we
-        # don't bind a the loop iteration variable `callback`, which would likely cause us to call
+        # don't bind the loop iteration variable `callback`, which would likely cause us to call
         # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
         def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
             with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
@@ -322,9 +322,8 @@ class PyTorchTrialController(det.TrialController):
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
     ) -> None:
         """
-        This function aims at automatically step a LR scheduler. It should be called per batch.
+        This function automatically steps an LR scheduler. It should be called per batch.
         """
-
         # Never step lr when we do not step optimizer.
         if not self.context._should_communicate_and_update():
             return
@@ -819,7 +818,7 @@ class PyTorchTrialController(det.TrialController):
 
     @staticmethod
     def _add_prefix_in_state_dict_if_not_present(state_dict: Dict[str, Any], prefix: str) -> None:
-        """Adds the prefix in state_dict in place, if does not exist.
+        """Adds the prefix in state_dict in place, if it does not exist.
         ..note::
             Given a `state_dict` from a non-DDP model, a DDP model can load it by applying
             `_add_prefix_in_state_dict_if_present(state_dict, "module.")` before calling
@@ -974,7 +973,7 @@ class PyTorchTrial(det.Trial):
                 batch of data for training.
             epoch_idx (integer): index of the current epoch among all the batches processed
                 per device (slot) since the start of training.
-            batch_idx (integer): index of the current batch among all the epoches processed
+            batch_idx (integer): index of the current batch among all the epochs processed
                 per device (slot) since the start of training.
         Returns:
             torch.Tensor or Dict[str, Any]:
@@ -1031,6 +1030,8 @@ class PyTorchTrial(det.Trial):
         Arguments:
             batch (Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor):
                 batch of data for evaluating.
+            batch_idx (integer): index of the current batch among all the epochs processed
+                per device (slot) since the start of training.
         """
         pass
 
