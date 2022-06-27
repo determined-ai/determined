@@ -17,6 +17,7 @@ import {
   Project,
   ProjectExperiment,
   RunState,
+  TrialDetails,
   TrialHyperparameters,
 } from 'types';
 
@@ -108,10 +109,13 @@ export const alwaysTrueExperimentChecker = (
   user?: DetailedUser,
 ): boolean => true;
 
+// Single trial experiment or trial of multi trial experiment can be continued.
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
-): boolean => !experiment.archived && !experiment.parentArchived && !(experiment?.numTrials > 1);
+  trial?: TrialDetails,
+): boolean => !experiment.archived && !experiment.parentArchived && (
+  !!trial || !(experiment?.numTrials > 1));
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
@@ -163,7 +167,8 @@ export const canUserActionExperiment = (
   user: DetailedUser | undefined,
   action: ExperimentAction,
   experiment: ProjectExperiment,
-): boolean => !!experiment && experimentCheckers[action](experiment, user);
+  trial ?: TrialDetails,
+): boolean => !!experiment && experimentCheckers[action](experiment, user, trial);
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,
