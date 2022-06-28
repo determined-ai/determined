@@ -215,7 +215,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ trialIds, activeMetric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
+  }, [ activeMetric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
