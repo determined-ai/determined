@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet from 'components/ActionSheet';
-import AvatarCard from 'shared/components/AvatarCard/AvatarCard';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
@@ -11,6 +10,7 @@ import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
+import AvatarCard from 'shared/components/AvatarCard/AvatarCard';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 
 import Icon from '../shared/components/Icon/Icon';

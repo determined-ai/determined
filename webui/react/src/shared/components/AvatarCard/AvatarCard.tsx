@@ -4,6 +4,7 @@ import { DetailedUser, User } from 'types';
 import { getDisplayName } from 'utils/user';
 
 import Avatar from '../Avatar/Avatar';
+
 import css from './AvatarCard.module.scss';
 
 interface Props {

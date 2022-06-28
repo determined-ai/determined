@@ -1,13 +1,13 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
-import Avatar from 'shared/components/Avatar/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import ProgressBar from 'components/ProgressBar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
+import Avatar from 'shared/components/Avatar/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';

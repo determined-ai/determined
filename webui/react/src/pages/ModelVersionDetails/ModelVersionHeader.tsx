@@ -2,7 +2,6 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Avatar from 'shared/components/Avatar/Avatar';
 import CopyButton from 'components/CopyButton';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -13,6 +12,7 @@ import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
 import { paths } from 'routes/utils';
+import Avatar from 'shared/components/Avatar/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';

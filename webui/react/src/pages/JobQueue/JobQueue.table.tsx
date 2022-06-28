@@ -1,13 +1,13 @@
 import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
-import Avatar from 'shared/components/Avatar/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
+import Avatar from 'shared/components/Avatar/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType } from 'types';

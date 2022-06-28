@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef,
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import AvatarCard from 'shared/components/AvatarCard/AvatarCard';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
@@ -16,6 +15,7 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
+import AvatarCard from 'shared/components/AvatarCard/AvatarCard';
 
 import Icon from '../shared/components/Icon/Icon';
 
