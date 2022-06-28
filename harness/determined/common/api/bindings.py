@@ -5394,11 +5394,25 @@ class v1TrialLogsResponse:
         level: "v1LogLevel",
         message: str,
         timestamp: str,
+        trialId: int,
+        agentId: "typing.Optional[str]" = None,
+        containerId: "typing.Optional[str]" = None,
+        log: "typing.Optional[str]" = None,
+        rankId: "typing.Optional[int]" = None,
+        source: "typing.Optional[str]" = None,
+        stdtype: "typing.Optional[str]" = None,
     ):
         self.id = id
         self.timestamp = timestamp
         self.message = message
         self.level = level
+        self.trialId = trialId
+        self.agentId = agentId
+        self.containerId = containerId
+        self.rankId = rankId
+        self.log = log
+        self.source = source
+        self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialLogsResponse":
@@ -5407,6 +5421,13 @@ class v1TrialLogsResponse:
             timestamp=obj["timestamp"],
             message=obj["message"],
             level=v1LogLevel(obj["level"]),
+            trialId=obj["trialId"],
+            agentId=obj.get("agentId", None),
+            containerId=obj.get("containerId", None),
+            rankId=obj.get("rankId", None),
+            log=obj.get("log", None),
+            source=obj.get("source", None),
+            stdtype=obj.get("stdtype", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -5415,6 +5436,13 @@ class v1TrialLogsResponse:
             "timestamp": self.timestamp,
             "message": self.message,
             "level": self.level.value,
+            "trialId": self.trialId,
+            "agentId": self.agentId if self.agentId is not None else None,
+            "containerId": self.containerId if self.containerId is not None else None,
+            "rankId": self.rankId if self.rankId is not None else None,
+            "log": self.log if self.log is not None else None,
+            "source": self.source if self.source is not None else None,
+            "stdtype": self.stdtype if self.stdtype is not None else None,
         }
 
 class v1TrialMetrics:

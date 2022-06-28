@@ -521,6 +521,8 @@ type TrialLog struct {
 func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	resp := &apiv1.TrialLogsResponse{Message: t.Message}
 
+	panic("A:LSJKFHALKJHFLKAJSHDFLKAJHF")
+
 	switch {
 	case t.ID != nil:
 		resp.Id = strconv.Itoa(*t.ID)
@@ -553,6 +555,35 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 		default:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 		}
+	}
+
+	resp.TrialId = int32(t.TrialID)
+
+	if t.AgentID != nil {
+		resp.AgentId = *t.AgentID
+	}
+
+	if t.ContainerID != nil {
+		resp.ContainerId = *t.ContainerID
+	}
+
+	if t.RankID != nil {
+		resp.RankId = int32(*t.RankID)
+	}
+
+	if t.Log != nil {
+		panic("Log was not nil")
+		resp.Log = *t.Log
+	} else {
+		panic("Somehow, log was nil")
+	}
+
+	if t.Source != nil {
+		resp.Source = *t.Source
+	}
+
+	if t.StdType != nil {
+		resp.Stdtype = *t.StdType
 	}
 
 	return resp, nil

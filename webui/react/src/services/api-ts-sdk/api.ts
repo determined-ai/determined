@@ -6292,7 +6292,7 @@ export interface V1TrialLogsResponse {
      */
     timestamp: Date;
     /**
-     * The log message.
+     * The flat version of the log that UIs have shown historically.
      * @type {string}
      * @memberof V1TrialLogsResponse
      */
@@ -6303,6 +6303,48 @@ export interface V1TrialLogsResponse {
      * @memberof V1TrialLogsResponse
      */
     level: V1LogLevel;
+    /**
+     * The ID of the trial associated with this log entry.
+     * @type {number}
+     * @memberof V1TrialLogsResponse
+     */
+    trialId: number;
+    /**
+     * The ID of the agent that logged this.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    agentId?: string;
+    /**
+     * The ID of the container or, in the case of k8s, the pod name.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    containerId?: string;
+    /**
+     * The rank ID.
+     * @type {number}
+     * @memberof V1TrialLogsResponse
+     */
+    rankId?: number;
+    /**
+     * The text of the log entry.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    log?: string;
+    /**
+     * The source of the log entry.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    source?: string;
+    /**
+     * The output stream (e.g. stdout, stderr).
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    stdtype?: string;
 }
 
 /**
