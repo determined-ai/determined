@@ -9,6 +9,7 @@ export default {
   title: 'Avatar',
 };
 
-export const Default = (): React.ReactNode => <Avatar name="Anonymous" />;
+export const Default = (): React.ReactNode => <Avatar displayName="Anonymous" />;
 
-export const Custom = (): React.ReactNode => <Avatar name={text('Name', 'Martin Luther King')} />;
+export const Custom = (): React.ReactNode => (
+  <Avatar displayName={text('Name', 'Martin Luther King')} />);
