@@ -12,7 +12,7 @@ export interface Props {
 const AvatarCard: React.FC<Props> = ({ className, displayName }: Props) => {
   return (
     <div className={`${css.base} ${className || ''}`}>
-      <Avatar displayName={dispalayName} hideTooltip />
+      <Avatar displayName={displayName} hideTooltip />
       <span>{displayName}</span>
     </div>
   );
