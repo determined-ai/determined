@@ -923,7 +923,6 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
-
 	}
 }
 
@@ -1173,8 +1172,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
-func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
-	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
+func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
+	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
+	currentTrials map[int32]bool,
 	trialCursors map[int32]time.Time) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
 	var metricSeries []lttb.Point
 	var endTime time.Time
@@ -1337,9 +1337,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
 	resp apiv1.Determined_ExpCompareTrialsSampleServer) error {
 	experimentIDs := req.ExperimentIds
-	// if err := a.checkExperimentExists(experimentID); err != nil {
-	// 	return err
-	// }
 	maxTrials := int(req.MaxTrials)
 	if maxTrials == 0 {
 		maxTrials = 25
@@ -1377,10 +1374,13 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 
 		seenThisRound := make(map[int32]bool)
 
-		r, _ := regexp.Compile("(error|loss|mse|mae|mse|deviation|false)")
+		r := regexp.MustCompile("(error|loss|mse|mae|mse|deviation|false)")
 		smallerIsBetter := r.MatchString(metricName)
 
-		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs, maxTrials, metricName, smallerIsBetter)
+		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs,
+			maxTrials,
+			metricName,
+			smallerIsBetter)
 
 		if err != nil {
 			return err

@@ -145,8 +145,11 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 	return training, validation, sEndTime, vEndTime, err
 }
 
-func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) (
-	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
+// ExpCompareMetricNames returns the set of training and validation metric names
+// that have been recorded for a list of trials.
+func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
+	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
+	vEndTime time.Time, err error) {
 	type namesWrapper struct {
 		Name    string    `db:"name"`
 		EndTime time.Time `db:"end_time"`
@@ -384,6 +387,8 @@ SELECT t.id FROM (
 	return trials, err
 }
 
+// ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
+// that recorded the best values for the specified metric at any point during the trial.
 func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
 	smallerIsBetter bool) (trials []int32, err error) {
 	order := desc
