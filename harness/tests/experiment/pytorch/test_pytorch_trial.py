@@ -437,7 +437,9 @@ class TestPyTorchTrial:
         controller.run()
 
     def test_compatibility_workloads(self) -> None:
-        """Test the call to layers.make_compatibility_workloads in the PyTorchTrialController constructor."""
+        """Test the call to layers.make_compatibility_workloads in the PyTorchTrialController
+        constructor.
+        """
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrial,
             hparams=self.hparams,
