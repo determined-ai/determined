@@ -92,7 +92,7 @@ func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
 }
 
 func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
-	args := []string{"--showuniqueid", "--showproductname", "--showbus", "--json"}
+	args := []string{"--showuniqueid", "--showbus", "--json"}
 
 	if visibleGPUs != "" {
 		gpuIds := strings.Split(visibleGPUs, ",")
