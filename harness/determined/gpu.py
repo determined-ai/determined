@@ -104,7 +104,7 @@ def _get_rocm_gpus() -> List[GPU]:
 
     gpus = []
     for k, v in output.items():
-        gpus.append(GPU(id=int(k[len("card"):]), uuid=v["Unique ID"], load=0, memoryUtil=0))
+        gpus.append(GPU(id=int(k[len("card") :]), uuid=v["Unique ID"], load=0, memoryUtil=0))
 
     logging.info(f"detected {len(gpus)} rocm gpus")
     return gpus
@@ -125,6 +125,7 @@ class GPUProcess(NamedTuple):
     pid: int
     process_name: str
     gpu_uuid: str
+    used_memory: str  # This is a string that includes units, e.g. "123 MiB"
 
 
 def _get_nvidia_processes() -> List[GPUProcess]:
@@ -157,8 +158,9 @@ def _get_nvidia_processes() -> List[GPUProcess]:
                 processes.append(
                     GPUProcess(
                         pid=int(fields["pid"]),
-                        process_name=fields["process_name"],
+                        process_name=fields["process_name"].strip(),
                         gpu_uuid=fields["gpu_uuid"].strip(),
+                        used_memory=fields["used_memory"].strip(),
                     )
                 )
             except ValueError:
@@ -169,4 +171,6 @@ def _get_nvidia_processes() -> List[GPUProcess]:
 
 
 def get_gpu_processes() -> List[GPUProcess]:
+    # TODO This extra layer of method calls is to match get_gpus above, in case we are later
+    # interested in ROCm processes as well
     return _get_nvidia_processes()

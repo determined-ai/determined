@@ -265,7 +265,10 @@ if __name__ == "__main__":
             logging.warning(
                 f"process {process.process_name} "
                 f"with pid {process.pid} "
-                f"is using gpu with uuid {process.gpu_uuid}"
+                f"is using {process.used_memory} memory "
+                f"of the GPU with uuid {process.gpu_uuid}. "
+                "This process is not related to Determined tasks but may interfere with tasks' "
+                "ability to use the full GPU."
             )
 
     if args.rendezvous:
