@@ -392,25 +392,22 @@ func (db *PgDB) TopExperimentsByMetric(experimentIDs []int32, maxTrials int, met
 	smallerIsBetter bool) (trials []int32, err error) {
 	order := desc
 	aggregate := max
-	experimentIdsString := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(experimentIDs)), ","), "[]")
-	formattedExperimentIds := fmt.Sprintf("(%s)", experimentIdsString)
 	if smallerIsBetter {
 		order = asc
 		aggregate = min
 	}
-
 	err = db.sql.Select(&trials, fmt.Sprintf(`
 SELECT t.id FROM (
   SELECT t.id,
     %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
   FROM trials t
   JOIN validations v ON t.id = v.trial_id
-  WHERE t.experiment_id in %s
+  WHERE t.experiment_id in (SELECT unnest($2::int [])::int)
     AND v.state = 'COMPLETED'
   GROUP BY t.id
   ORDER BY best_metric %s
-  LIMIT $2
-) t;`, aggregate, formattedExperimentIds, order), metric, maxTrials)
+  LIMIT $3
+) t;`, aggregate, order), metric, experimentIDs, maxTrials)
 	return trials, err
 }
 

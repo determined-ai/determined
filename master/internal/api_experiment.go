@@ -1312,12 +1312,6 @@ func (a *apiServer) ExperimentsSample(req *apiv1.ExperimentsSampleRequest,
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 
-	// config, err := a.m.db.ExperimentConfig(experimentID)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "error fetching experiment config from database")
-	// }
-	// searcherConfig := config.Searcher()
-
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)
 	for {
