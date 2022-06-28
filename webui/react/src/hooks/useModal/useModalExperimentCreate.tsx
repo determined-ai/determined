@@ -141,8 +141,10 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
   }, []);
 
   const handleCancel = useCallback((close: () => void) => {
-    // 'close' is an indicator for if cancel button (show config) is clicked or not.
-    // If cancel button (show config) is not clicked, 'close' is undefined.
+    /**
+     * 'close' is an indicator for if cancel button (show config) is clicked or not.
+     * If cancel button (show config) is not clicked, 'close' is undefined.
+     */
     if (!close) {
       modalClose(ModalCloseReason.Cancel);
     } else {
@@ -235,8 +237,8 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     if (error) throw new Error(error);
 
     /**
-     * add back registry_auth if it was stripped
-     * and no new registry_auth was provided
+     * Add back `registry_auth` if it was stripped
+     * and no new `registry_auth` was provided.
      */
     let userConfig, fullConfig;
     if (!modalState.isAdvancedMode) {
@@ -284,7 +286,7 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
           className={css.form}
           hidden={isAdvancedMode}
           initialValues={{
-            maxLength: !isFork ? getMaxLengthValue(config) : undefined,
+            maxLength: undefined,
             name: getExperimentName(config),
           }}
           labelCol={{ span: 8 }}
