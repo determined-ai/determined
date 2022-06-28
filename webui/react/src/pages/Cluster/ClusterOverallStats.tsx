@@ -7,6 +7,8 @@ import { useStore } from 'contexts/Store';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 
+import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
+
 export const ClusterOverallStats: React.FC = () => {
   const { agents, cluster: overview, resourcePools } = useStore();
 
@@ -22,16 +24,9 @@ export const ClusterOverallStats: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  /** theoretical max capacity for each slot type in the cluster */
   const maxTotalSlots = useMemo(() => {
-    return agents.reduce((acc, agent) => {
-      agent.resources.forEach(resource => {
-        if (!(resource.type in acc)) acc[resource.type] = 0;
-        acc[resource.type] += 1;
-      });
-      return acc;
-    }, {} as { [key in ResourceType]: number });
-  }, [ agents ]);
+    return maxClusterSlotCapacity(resourcePools, agents);
+  }, [ resourcePools, agents ]);
 
   return (
     <Section hideTitle title="Overview Stats">
