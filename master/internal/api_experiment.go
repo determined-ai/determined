@@ -1374,7 +1374,7 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 
 		seenThisRound := make(map[int32]bool)
 
-		r := regexp.MustCompile("(error|loss|mse|mae|mse|deviation|false)")
+		r := regexp.MustCompile("(?i)(error|loss|mse|mae|mse|deviation|false)")
 		smallerIsBetter := r.MatchString(metricName)
 
 		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs,
