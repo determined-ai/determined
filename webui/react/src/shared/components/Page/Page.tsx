@@ -36,7 +36,7 @@ const Page: React.FC<Props> = (props: Props) => {
   return (
     <main className={classes.join(' ')} id={props.id} ref={props.containerRef}>
       {props.headerComponent}
-      {showHeader && props.pageHeader && props.pageHeader}
+      {showHeader && props.pageHeader}
       <div className={css.body}>
         <Spinner spinning={!!props.loading}>{props.children}</Spinner>
       </div>
