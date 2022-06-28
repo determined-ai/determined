@@ -88,7 +88,7 @@ class ZMQBroadcastServer:
 
     def safe_start(self) -> None:
         """
-        Broadcast Hello messages over and over until all clients response with a Hello message.
+        Broadcast Hello messages over and over until all clients respond with a Hello message.
 
         The reason for this is that the only way to be 100% confident that a subscriber has
         connected is for it to actually receive a message over the pub/sub connection.
@@ -144,7 +144,7 @@ class ZMQBroadcastServer:
         self._send_serial += 1
 
     def gather(self) -> List[Any]:
-        out = [self._recv_one() for i in range(self._num_connections)]
+        out = [self._recv_one() for _ in range(self._num_connections)]
 
         self._recv_serial += 1
 
@@ -305,7 +305,7 @@ class PIDServer:
                 self.listener = socket.socket()
                 self.listener.bind(("", self.addr))
             else:
-                # A address and a port.
+                # An address and a port.
                 self.listener = socket.socket()
                 self.listener.bind(self.addr)
             self.listener.listen(self.num_clients)
@@ -377,7 +377,7 @@ class PIDServer:
         if mask & selectors.EVENT_READ:
             data = conn.recv(4096)
         # Messages are all one-byte codes for easy parsing.
-        # The protocol is "any number of keepalive "k"s followed by a quit "q", so we can
+        # The protocol is "any number of keepalive "k"s followed by a quit "q"", so we can
         # safely ignore everything except the final byte of the message.
         if data:
             if data[-1:] == b"k":
@@ -506,7 +506,7 @@ class PIDClient:
                 self.sock = socket.socket()
                 self.sock.connect(("127.0.0.1", self.addr))
             else:
-                # A address and a port.
+                # An address and a port.
                 self.sock = socket.socket()
                 self.sock.connect(self.addr)
             # Send our PID to the PIDServer.
