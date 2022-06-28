@@ -1,6 +1,7 @@
-// adapted from MDN:
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#implementing_basic_set_operations
-
+/* adapted from MDN:
+ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/
+ Global_Objects/Set#implementing_basic_set_operations
+*/
 export const isSuperset = <T>(set: Set<T>, subset: Set<T>): boolean => {
   for (const elem of subset) {
     if (!set.has(elem)) {
