@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1322,7 +1323,10 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 
 		seenThisRound := make(map[int32]bool)
 
-		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs, maxTrials, metricName, true)
+		r, _ := regexp.Compile("(error|loss|mse|mae|mse|deviation|false)")
+		smallerIsBetter := r.MatchString(metricName)
+
+		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs, maxTrials, metricName, smallerIsBetter)
 
 		if err != nil {
 			return err
