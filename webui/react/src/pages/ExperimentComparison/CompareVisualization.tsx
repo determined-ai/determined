@@ -83,6 +83,8 @@ const CompareVisualization: React.FC = () => {
   const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ activeMetric, setActiveMetric ] = useState<MetricName>();
+
   const [ pageError, setPageError ] = useState<PageError>();
 
   useEffect(() => {
@@ -106,15 +108,19 @@ const CompareVisualization: React.FC = () => {
   const typeKey = DEFAULT_TYPE_KEY;
   const hasLoaded = useMemo(
     () =>
-      batches.length > 0
-      || metrics && metrics.length > 0
-      || trialIds.length > 0
-    , [ batches, metrics, trialIds ],
+
+      !!(trialIds.length && metrics.length > 0)
+
+    , [ metrics, trialIds ],
   );
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
   }, [ ]);
+
+  const handleMetricChange = useCallback((metric: MetricName) => {
+    setActiveMetric(metric);
+  }, []);
 
   useEffect(() => {
     if (ui.isPageHidden || !experimentIds.length || !filters.metric) return;
@@ -263,6 +269,10 @@ const CompareVisualization: React.FC = () => {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   }
 
+  if (!metrics.length) {
+    return <Spinner tip="Fetching metrics..." />;
+  }
+
   const visualizationFilters = (
     <CompareFilters
       batches={batches || []}
@@ -271,9 +281,9 @@ const CompareVisualization: React.FC = () => {
       metrics={metrics || []}
       type={typeKey}
       onChange={handleFiltersChange}
+      onMetricChange={handleMetricChange}
     />
   );
-
   return (
     <div className={css.base}>
       <Tabs

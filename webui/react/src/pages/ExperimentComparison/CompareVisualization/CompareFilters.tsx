@@ -94,7 +94,7 @@ const reducer = (state: VisualizationFilters, action: Action) => {
   }
 };
 
-const ExperimentVisualizationFilters: React.FC<Props> = ({
+const CompareFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
@@ -265,4 +265,4 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   );
 };
 
-export default ExperimentVisualizationFilters;
+export default CompareFilters;
