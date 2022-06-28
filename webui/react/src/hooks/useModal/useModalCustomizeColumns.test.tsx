@@ -52,7 +52,7 @@ const setup = async () => {
   return { user, view };
 };
 
-describe('useCustomizeColumnsModal', () => {
+describe('useModalCustomizeColumns', () => {
   it('opens modal', async () => {
     const { view } = await setup();
 
