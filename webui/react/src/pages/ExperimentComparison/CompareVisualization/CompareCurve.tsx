@@ -8,13 +8,14 @@ import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Scale } from 'types';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
+  ExperimentAction as Action, CommandTask, Hyperparameter,
   MetricName,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
 import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
+import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareCurve.module.scss';
 import HpTrialTable, { TrialHParams } from './CompareTable';
@@ -25,6 +26,7 @@ interface Props {
   filters?: React.ReactNode;
   // fullHParams: string[];
   hasLoaded: boolean;
+  hpVals: HpValsMap
   hyperparameters: Record<string, Hyperparameter>;
   selectedMaxTrial: number;
   selectedMetric: MetricName
@@ -34,8 +36,8 @@ interface Props {
 
 }
 
-const LearningCurve: React.FC<Props> = ({
-
+const CompareCurve: React.FC<Props> = ({
+  hpVals,
   filters,
   // fullHParams,
   selectedMetric,
@@ -135,6 +137,7 @@ const LearningCurve: React.FC<Props> = ({
           <HpTrialTable
             handleTableRowSelect={handleTableRowSelect}
             highlightedTrialId={highlightedTrialId}
+            hpVals={hpVals}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
             selectedRowKeys={selectedRowKeys}
@@ -151,4 +154,4 @@ const LearningCurve: React.FC<Props> = ({
   );
 };
 
-export default LearningCurve;
+export default CompareCurve;

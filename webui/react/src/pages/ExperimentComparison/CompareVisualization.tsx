@@ -13,6 +13,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive } from 'shared/types';
 import { hasObjectKeys, isEqual } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
 import {
@@ -24,7 +25,7 @@ import { Scale } from 'types';
 import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
 
 import css from './CompareVisualization.module.scss';
-import LearningCurve from './CompareVisualization/CompareCurve';
+import CompareCurve from './CompareVisualization/CompareCurve';
 import ExperimentVisualizationFilters, {
   MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
 } from './CompareVisualization/CompareFilters';
@@ -36,6 +37,7 @@ enum PageError {
   MetricNames,
   ExperimentSample
 }
+export type HpValsMap = Record<string, Set<Primitive>>
 
 const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
@@ -108,8 +110,9 @@ const CompareVisualization: React.FC = () => {
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
-  const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
 
+  const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
+  const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
   const { hasData, isSupported, hasLoaded } = useMemo(() => {
     return {
@@ -153,6 +156,7 @@ const CompareVisualization: React.FC = () => {
     const trialIdsMap: Record<number, number> = {};
     const trialDataMap: Record<number, number[]> = {};
     const trialHpMap: Record<number, TrialHParams> = {};
+    const hpValsMap: HpValsMap = {};
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
     const hyperparameters: Record<string, Hyperparameter> = {};
@@ -180,7 +184,7 @@ const CompareVisualization: React.FC = () => {
          */
 
         (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
-        (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
+        // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
         setTrialIds(prevTrialIds =>
           isEqual(prevTrialIds, newTrialIds)
@@ -191,7 +195,17 @@ const CompareVisualization: React.FC = () => {
           const id = trial.trialId;
           const flatHParams = flattenObject(trial.hparams || {});
           Object.keys(flatHParams).forEach(
-            (hpParam) => (hyperparameters[hpParam] = { type: HyperparameterType.Constant }),
+            (hpParam) => {
+              // distinguishing between constant vs not is irrelevant when constant
+              // hps can vary across experiments. placeholder code
+              (hyperparameters[hpParam] = { type: HyperparameterType.Constant });
+              //
+              if (hpValsMap[hpParam] == null) {
+                hpValsMap[hpParam] = new Set([ flatHParams[hpParam] ]);
+              } else {
+                hpValsMap[hpParam].add(flatHParams[hpParam]);
+              }
+            },
           );
           setHyperparameters(hyperparameters);
           const hasHParams = Object.keys(flatHParams).length !== 0;
@@ -214,6 +228,14 @@ const CompareVisualization: React.FC = () => {
             trialHpMap[id].metric = datapoint.value;
           });
         });
+
+        Object.keys(hpValsMap).forEach(hpParam => {
+          const hpVals = hpValsMap[hpParam];
+          if (!hpVals.has('-') && newTrialIds.some(id => trialHpMap[id] == null)) {
+            hpValsMap[hpParam].add('-');
+          }
+        });
+        setHpVals(hpValsMap);
 
         const newTrialHps = newTrialIds.map(id => trialHpMap[id]);
         setTrialHps(newTrialHps);
@@ -332,16 +354,6 @@ const CompareVisualization: React.FC = () => {
     );
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
-  } else if (!hasData && hasLoaded) {
-    return (
-      <div className={css.alert}>
-        <Alert
-          description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
-        />
-        <Spinner center className={css.alertSpinner} />
-      </div>
-    );
   }
 
   const visualizationFilters = (
@@ -366,11 +378,12 @@ const CompareVisualization: React.FC = () => {
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
           {(experimentIds.length > 0 && filters.metric?.name && (
-            <LearningCurve
+            <CompareCurve
               batches={batches}
               chartData={chartData}
               filters={visualizationFilters}
               hasLoaded={hasLoaded}
+              hpVals={hpVals}
               hyperparameters={hyperparameters}
               selectedMaxTrial={filters.maxTrial}
               selectedMetric={filters.metric}
@@ -380,46 +393,6 @@ const CompareVisualization: React.FC = () => {
             />
           ))}
         </Tabs.TabPane>
-        {/* <Tabs.TabPane
-          key={ExperimentVisualizationType.HpParallelCoordinates}
-          tab="HP Parallel Coordinates">
-          <HpParallelCoordinates
-            experiments={experiments}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-          />
-        </Tabs.TabPane> */}
-        {/* <Tabs.TabPane
-          key={ExperimentVisualizationType.HpScatterPlots}
-          tab="HP Scatter Plots">
-          <HpScatterPlots
-            experiments={experiments}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-          />
-        </Tabs.TabPane> */}
-        {/* <Tabs.TabPane
-          key={ExperimentVisualizationType.HpHeatMap}
-          tab="HP Heat Map">
-          <HpHeatMaps
-            experiments={experiments}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedView={filters.view}
-          />
-        </Tabs.TabPane> */}
       </Tabs>
     </div>
   );

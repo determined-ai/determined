@@ -15,6 +15,7 @@ import {
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
 import { Primitive, RecordKey } from '../../../shared/types';
+import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareTable.module.scss';
 
@@ -23,6 +24,7 @@ interface Props {
   filteredTrialIdMap?: Record<number, boolean>;
   handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
+  hpVals: HpValsMap
   hyperparameters: HyperparametersFlattened;
   metric: MetricName;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
@@ -45,6 +47,7 @@ const HpTrialTable: React.FC<Props> = ({
   filteredTrialIdMap,
   hyperparameters,
   highlightedTrialId,
+  hpVals,
   metric,
   onMouseEnter,
   onMouseLeave,
@@ -137,8 +140,10 @@ const HpTrialTable: React.FC<Props> = ({
         return primitiveSorter(a, b);
       };
     };
+
     const hpColumns = Object
       .keys(hyperparameters || {})
+      .filter(hpParam => hpVals[hpParam]?.size > 1)
       .map(key => {
         return {
           key,
@@ -149,7 +154,7 @@ const HpTrialTable: React.FC<Props> = ({
       });
 
     return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
-  }, [ colorScale, hyperparameters, metric, trialIds ]);
+  }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
