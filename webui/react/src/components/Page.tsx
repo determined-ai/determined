@@ -1,11 +1,12 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
+import PageHeader from 'components/PageHeader';
 import { useStore } from 'contexts/Store';
 import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import { BrandingType } from 'types';
 
-export interface Props extends BasePageProps {
+export interface Props extends Omit<BasePageProps, 'pageHeader'>{
   docTitle?: string;
 }
 
@@ -46,7 +47,18 @@ const Page: React.FC<Props> = (props: Props) => {
           </>
         )}
       </Helmet>
-      <BasePage {...props} />
+      <BasePage
+        {...props}
+        pageHeader={(
+          <PageHeader
+            breadcrumb={props.breadcrumb}
+            options={props.options}
+            sticky={props.stickyHeader}
+            subTitle={props.subTitle}
+            title={props.title}
+          />
+        )}
+      />
     </>
   );
 };
