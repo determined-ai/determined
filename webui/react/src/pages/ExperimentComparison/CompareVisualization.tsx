@@ -248,7 +248,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ trialIds, filters?.metric, ui.isPageHidden ]);
+  }, [ trialIds, ui.isPageHidden ]);
 
   if (!experimentIds.length) {
     return (
