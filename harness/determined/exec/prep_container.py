@@ -233,25 +233,19 @@ if __name__ == "__main__":
     parser.add_argument("--resources", action="store_true")
     parser.add_argument("--rendezvous", action="store_true")
     parser.add_argument("--proxy", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        default=os.getenv("DET_LOG_LEVEL", "INFO"),
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Set the logging level",
-    )
     args = parser.parse_args()
-
-    logging.basicConfig(
-        level=args.log_level,
-        format=det.LOG_FORMAT,
-    )
-    logging.debug("running prep_container")
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
     info = det.ClusterInfo._from_file()
     if info is None:
         info = det.ClusterInfo._from_env()
         info._to_file()
+
+    logging.basicConfig(
+        level=logging.DEBUG if info.task_type == "TRIAL" and info.trial._debug else logging.INFO,
+        format=det.LOG_FORMAT,
+    )
+    logging.debug("running prep_container")
 
     cert = certs.default_load(info.master_url)
     sess = Session(
