@@ -2,6 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Avatar from 'components/Avatar';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
@@ -10,7 +11,6 @@ import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
-import Avatar from 'shared/components/Avatar/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { ModelItem } from 'types';

@@ -1,22 +1,19 @@
 import React from 'react';
 
-import { DetailedUser, User } from 'types';
-import { getDisplayName } from 'utils/user';
-
 import Avatar from '../Avatar/Avatar';
 
 import css from './AvatarCard.module.scss';
 
-interface Props {
+export interface Props {
   className?: string;
-  user?: DetailedUser | User
+  displayName: string;
 }
 
-const AvatarCard: React.FC<Props> = ({ className, user }: Props) => {
+const AvatarCard: React.FC<Props> = ({ className, displayName }: Props) => {
   return (
     <div className={`${css.base} ${className || ''}`}>
-      <Avatar hideTooltip userId={user?.id} />
-      <span>{getDisplayName(user)}</span>
+      <Avatar displayName={dispalayName} hideTooltip />
+      <span>{displayName}</span>
     </div>
   );
 };

@@ -2,10 +2,10 @@ import { Button, Divider } from 'antd';
 import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback } from 'react';
 
+import Avatar from 'components/Avatar';
 import { useStore } from 'contexts/Store';
 import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
 import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
-import Avatar from 'shared/components/Avatar/Avatar';
 
 import useModal, { ModalHooks } from '../useModal';
 
