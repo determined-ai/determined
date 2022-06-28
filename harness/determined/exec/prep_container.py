@@ -241,8 +241,14 @@ if __name__ == "__main__":
         info = det.ClusterInfo._from_env()
         info._to_file()
 
+    try:
+        # See the ClusterInfo.trial property for explanation
+        debug = info.trial._debug
+    except (AssertionError, RuntimeError):
+        debug = False
+
     logging.basicConfig(
-        level=logging.DEBUG if info.task_type == "TRIAL" and info.trial._debug else logging.INFO,
+        level=logging.DEBUG if debug else logging.INFO,
         format=det.LOG_FORMAT,
     )
     logging.debug("running prep_container")
