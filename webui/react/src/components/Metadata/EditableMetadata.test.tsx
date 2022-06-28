@@ -61,15 +61,15 @@ describe('EditableMetadata', () => {
     const resultMetadata = Object.fromEntries(metadataArray.filter(
       ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
     ));
-    const { handleOnChange, user } = setup(initMetadata, true);
+    const { handleOnChange, user, view } = setup(initMetadata, true);
 
-    const metadataRow = screen.getByDisplayValue(removalMetadata[0]).closest('span') as HTMLElement;
+    const metadataRow = view.getByDisplayValue(removalMetadata[0]).closest('span') as HTMLElement;
     expect(metadataRow).not.toBeNull();
 
     const openOverflow = within(metadataRow).getByRole('button');
     await user.click(openOverflow);
 
-    const deleteRow = screen.getByText('Delete Row');
+    const deleteRow = view.getByText('Delete Row');
     await user.click(deleteRow);
 
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
