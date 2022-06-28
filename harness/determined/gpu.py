@@ -104,7 +104,7 @@ def _get_rocm_gpus() -> List[GPU]:
 
     gpus = []
     for k, v in output.items():
-        gpus.append(GPU(id=int(k[len("card") :]), uuid=v["Unique ID"], load=0, memoryUtil=0))
+        gpus.append(GPU(id=int(k[len("card"):]), uuid=v["Unique ID"], load=0, memoryUtil=0))
 
     logging.info(f"detected {len(gpus)} rocm gpus")
     return gpus

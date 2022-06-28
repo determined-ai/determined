@@ -123,7 +123,7 @@ def rendezvous_ifaces() -> List[str]:
     if not rendezvous_iface:
         rendezvous_iface = get_eth_interface_name()
 
-    # If none of these resolved, we can fallback to something naive.
+    # If none of these resolved, we can fall back to something naive.
     if not rendezvous_iface:
         return []
 
