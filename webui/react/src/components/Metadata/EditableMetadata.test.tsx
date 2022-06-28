@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
@@ -63,14 +63,8 @@ describe('EditableMetadata', () => {
     ));
     const { handleOnChange, user, view } = setup(initMetadata, true);
 
-    const metadataRow = view.getByDisplayValue(removalMetadata[0]).closest('span') as HTMLElement;
-    expect(metadataRow).not.toBeNull();
-
-    const openOverflow = within(metadataRow).getByRole('button');
-    await user.click(openOverflow);
-
-    const deleteRow = view.getByText('Delete Row');
-    await user.click(deleteRow);
+    await user.click(view.getAllByRole('button')[removalIndex]);
+    await user.click(view.getByText('Delete Row'));
 
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });
