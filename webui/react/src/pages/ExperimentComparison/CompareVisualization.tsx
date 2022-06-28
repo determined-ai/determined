@@ -90,13 +90,12 @@ const CompareVisualization: React.FC = () => {
   useEffect(() => {
     if (filters.metric) return;
     const id = experimentIds[0];
-    getExperimentDetails({ id }).then(experiment =>
-      setFilters((filters) =>
-        ({
-          ...filters,
-          metric: { name: experiment.config.searcher.metric, type: MetricType.Validation },
-        })));
+    getExperimentDetails({ id }).then(experiment => {
+      const metric = { name: experiment.config.searcher.metric, type: MetricType.Validation };
+      setFilters((filters) => ({ ...filters, metric }));
+      setActiveMetric(metric);
 
+    });
   }, [ filters.metric, experimentIds ]);
   //
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
@@ -106,13 +105,7 @@ const CompareVisualization: React.FC = () => {
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
   const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
-  const hasLoaded = useMemo(
-    () =>
-
-      !!(trialIds.length && metrics.length > 0)
-
-    , [ metrics, trialIds ],
-  );
+  const hasLoaded = useMemo(() => !!(trialIds.length && metrics.length > 0), [ metrics, trialIds ]);
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
@@ -123,7 +116,7 @@ const CompareVisualization: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experimentIds.length || !filters.metric) return;
+    if (ui.isPageHidden || !experimentIds.length || !activeMetric) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -133,12 +126,12 @@ const CompareVisualization: React.FC = () => {
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
     const hyperparameters: Record<string, Hyperparameter> = {};
-    const metricTypeParam = metricTypeParamMap[filters.metric.type];
+    const metricTypeParam = metricTypeParamMap[activeMetric.type];
 
     readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.experimentsSample(
         experimentIds,
-        filters.metric.name,
+        activeMetric.name,
         metricTypeParam,
         filters.maxTrial,
         undefined,
@@ -222,7 +215,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ trialIds, filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
+  }, [ trialIds, activeMetric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
@@ -249,8 +242,6 @@ const CompareVisualization: React.FC = () => {
           ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
         ];
         setMetrics(newMetrics);
-        setFilters((prevFilters) =>
-          prevFilters.metric ? prevFilters : { ...prevFilters, metric: newMetrics[0] });
       },
     ).catch(() => {
       setPageError(PageError.MetricNames);
