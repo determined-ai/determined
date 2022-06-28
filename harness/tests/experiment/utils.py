@@ -185,7 +185,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
             assert metrics_A[key] == metrics_B[key]
 
 
-def xor_data(dtype: np.dtype = np.int64) -> Tuple[np.ndarray, np.ndarray]:
+def xor_data(dtype: Type[Any] = np.int64) -> Tuple[np.ndarray, np.ndarray]:
     training_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=dtype)
     training_labels = np.array([0, 1, 1, 0], dtype=dtype)
     return training_data, training_labels
@@ -194,7 +194,7 @@ def xor_data(dtype: np.dtype = np.int64) -> Tuple[np.ndarray, np.ndarray]:
 def make_xor_data_sequences(
     shuffle: bool = False,
     seed: Optional[int] = None,
-    dtype: np.dtype = np.int64,
+    dtype: Type[Any] = np.int64,
     multi_input_output: bool = False,
     batch_size: int = 1,
 ) -> Tuple[keras_utils.Sequence, keras_utils.Sequence]:
