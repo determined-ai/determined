@@ -661,3 +661,28 @@ message MoveExperimentRequest {
 
 // Response to MoveExperimentRequest.
 message MoveExperimentResponse {}
+
+// Request to get the list of Searcher Events.
+message GetSearcherEventsRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  }
+
+// Response to GetSearcherEventsRequest.
+message GetSearcherEventsResponse {
+  // The requested list of searcher events.
+  repeated string searcher_event = 1; 
+  // str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed
+}
+
+// Request for sending operations from a custom user search method.
+message PostSearcherOperationsRequest {
+  // The experiment id
+   int32 experiment_id = 1;
+  // list of operations in the method.  
+  repeated determined.experiment.v1.SearcherOperation search_operations = 2;
+}
+
+// Response to PostSearcherOperationsResponse.
+message PostSearcherOperationsResponse {}
+

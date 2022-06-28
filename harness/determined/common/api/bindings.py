@@ -2105,6 +2105,24 @@ class v1GetResourcePoolsResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetSearcherEventsResponse:
+    def __init__(
+        self,
+        searcherEvent: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.searcherEvent = searcherEvent
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
+        return cls(
+            searcherEvent=obj.get("searcherEvent", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "searcherEvent": self.searcherEvent if self.searcherEvent is not None else None,
+        }
+
 class v1GetShellResponse:
     def __init__(
         self,
@@ -4020,6 +4038,28 @@ class v1PostProjectResponse:
     def to_json(self) -> typing.Any:
         return {
             "project": self.project.to_json(),
+        }
+
+class v1PostSearcherOperationsRequest:
+    def __init__(
+        self,
+        experimentId: "typing.Optional[int]" = None,
+        searchOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None,
+    ):
+        self.experimentId = experimentId
+        self.searchOperations = searchOperations
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostSearcherOperationsRequest":
+        return cls(
+            experimentId=obj.get("experimentId", None),
+            searchOperations=[v1SearcherOperation.from_json(x) for x in obj["searchOperations"]] if obj.get("searchOperations", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "searchOperations": [x.to_json() for x in self.searchOperations] if self.searchOperations is not None else None,
         }
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -7294,6 +7334,25 @@ def get_GetResourcePools(
         return v1GetResourcePoolsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetResourcePools", _resp)
 
+def get_GetSearcherEvents(
+    session: "client.Session",
+    *,
+    experimentId: int,
+) -> "v1GetSearcherEventsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/searcher_events",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetSearcherEventsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetSearcherEvents", _resp)
+
 def get_GetShell(
     session: "client.Session",
     *,
@@ -8297,6 +8356,26 @@ def post_PostProject(
     if _resp.status_code == 200:
         return v1PostProjectResponse.from_json(_resp.json())
     raise APIHttpError("post_PostProject", _resp)
+
+def post_PostSearcherOperations(
+    session: "client.Session",
+    *,
+    body: "v1PostSearcherOperationsRequest",
+    experimentId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/searcher_operations",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostSearcherOperations", _resp)
 
 def post_PostTrialProfilerMetricsBatch(
     session: "client.Session",

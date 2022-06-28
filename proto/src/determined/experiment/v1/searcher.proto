@@ -31,6 +31,13 @@ message SearcherOperation {
   }
 }
 
+// SearcherEvent is an event returned by custom searcher in master. 
+message SearcherEvent {
+  // A searcher event is one of the following strings: 
+  // TrialCreated, ValidationCompleted, TrialExitedEarly, TrialClosed
+  string searcher_event = 1; 
+}
+
 // RunnableType defines the type of operation that should be executed by trial
 // runners.
 enum RunnableType {
