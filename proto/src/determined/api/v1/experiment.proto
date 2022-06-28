@@ -483,44 +483,26 @@ message TrialsSampleRequest {
   int32 period_seconds = 8;
 }
 
-// Series of data points for an experiment trial.
-message ExpTrial {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "hparams", "data", "experiment_id" ]
-    }
-  };
-  // The id of the trial.
-  int32 trial_id = 1;
-  // Hyperparamters values for this specific trial.
-  google.protobuf.Struct hparams = 2;
-  // A possibly down-sampled series of metric readings through the progress of
-  // the trial.
-  message DataPoint {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: { required: [ "batches", "value" ] }
-    };
-    // Total batches processed by the time this measurement is taken.
-    int32 batches = 1;
-    // Value of the requested metric at this point in the trial.
-    double value = 2;
-  }
-  // Data related to a trial.
-  repeated DataPoint data = 3;
-  // The id of the experiment for the trial
-  int32 experiment_id = 4;
-}
-
 // Response to TrialsSampleRequest
 message TrialsSampleResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
   };
-  // One datapoint in a series of metrics from a trial.
-
   // Metadata and metrics stream from a trial.
+  message Trial {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: { required: [ "trial_id", "hparams", "data" ] }
+    };
+    // The id of the trial.
+    int32 trial_id = 1;
+    // Hyperparamters values for this specific trial.
+    google.protobuf.Struct hparams = 2;
+    // A possibly down-sampled series of metric readings through the progress of
+    // the trial.
+    repeated DataPoint data = 3;
+  }
   // A historical or incremental series of data points for the trials.
-  repeated ExpTrial trials = 1;
+  repeated Trial trials = 1;
   // IDs of trials that are newly included in the data.
   repeated int32 promoted_trials = 2;
   // IDs of trials that are no loger included in the top N trials.
@@ -564,6 +546,25 @@ message ExpCompareTrialsSampleResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
   };
+  // Series of data points for an experiment trial.
+  message ExpTrial {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: {
+        required: [ "trial_id", "hparams", "data", "experiment_id" ]
+      }
+    };
+    // The id of the trial.
+    int32 trial_id = 1;
+    // Hyperparamters values for this specific trial.
+    google.protobuf.Struct hparams = 2;
+    // A possibly down-sampled series of metric readings through the progress of
+    // the trial.
+
+    // Data related to a trial.
+    repeated DataPoint data = 3;
+    // The id of the experiment for the trial
+    int32 experiment_id = 4;
+  }
 
   // Metadata and metrics stream from a trial.
 

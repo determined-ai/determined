@@ -1121,12 +1121,66 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 
 func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
-	trialCursors map[int32]time.Time) (*apiv1.ExpTrial, error) {
+	trialCursors map[int32]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
 	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
-	var trial apiv1.ExpTrial
+	var trial apiv1.TrialsSampleResponse_Trial
+	trial.TrialId = trialID
+
+	if _, current := currentTrials[trialID]; !current {
+		var trialConfig *model.Trial
+		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error fetching trial metadata")
+		}
+		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
+	}
+
+	startTime, seenBefore := trialCursors[trialID]
+	if !seenBefore {
+		startTime = zeroTime
+	}
+	switch metricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	default:
+		panic("Invalid metric type")
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+	}
+	if len(metricSeries) > 0 {
+		// if we get empty results, the endTime is incorrectly zero
+		trialCursors[trialID] = endTime
+	}
+	if !seenBefore {
+		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
+	}
+
+	for _, in := range metricSeries {
+		out := apiv1.DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		trial.Data = append(trial.Data, &out)
+	}
+	return &trial, nil
+}
+
+func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
+	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
+	trialCursors map[int32]time.Time) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
+	var metricSeries []lttb.Point
+	var endTime time.Time
+	var zeroTime time.Time
+	var err error
+	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
 	trial.TrialId = trialID
 
 	if _, current := currentTrials[trialID]; !current {
@@ -1165,7 +1219,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 
 	for _, in := range metricSeries {
-		out := apiv1.ExpTrial_DataPoint{
+		out := apiv1.DataPoint{
 			Batches: int32(in.X),
 			Value:   in.Y,
 		}
@@ -1219,7 +1273,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		var response apiv1.TrialsSampleResponse
 		var promotedTrials []int32
 		var demotedTrials []int32
-		var trials []*apiv1.ExpTrial
+		var trials []*apiv1.TrialsSampleResponse_Trial
 
 		seenThisRound := make(map[int32]bool)
 
@@ -1228,7 +1282,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return errors.Wrapf(err, "error determining top trials")
 		}
 		for _, trialID := range trialIDs {
-			var trial *apiv1.ExpTrial
+			var trial *apiv1.TrialsSampleResponse_Trial
 			trial, err = a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
 				startBatches, endBatches, currentTrials, trialCursors)
 			if err != nil {
@@ -1319,7 +1373,7 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 		var response apiv1.ExpCompareTrialsSampleResponse
 		var promotedTrials []int32
 		var demotedTrials []int32
-		var trials []*apiv1.ExpTrial
+		var trials []*apiv1.ExpCompareTrialsSampleResponse_ExpTrial
 
 		seenThisRound := make(map[int32]bool)
 
@@ -1333,8 +1387,8 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 		}
 
 		for _, trialID := range trialIDs {
-			var trial *apiv1.ExpTrial
-			trial, err = a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+			var trial *apiv1.ExpCompareTrialsSampleResponse_ExpTrial
+			trial, err = a.expCompareFetchTrialSample(trialID, metricName, metricType, maxDatapoints,
 				startBatches, endBatches, currentTrials, trialCursors)
 			if err != nil {
 				return err
