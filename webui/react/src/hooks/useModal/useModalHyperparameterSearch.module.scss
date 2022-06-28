@@ -46,10 +46,12 @@
       justify-content: space-between;
       width: 100%;
     }
+    .searcherDescription {
+      color: var(--theme-stage-on-weak);
+    }
     .hyperparameterContainer {
       display: grid;
       gap: 8px;
-      grid-template-columns: 170px minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
 
       
       .hyperparameterName * {
@@ -86,13 +88,13 @@
   .error {
     color: #ff4d4f; //antd error color
     font-size: 12px;
-    grid-column: 1 / span 5;
+    grid-column: 1 / -1;
     margin-block: -8px !important;
   }
   .warning {
     color: #faad14; //antd warning color
     font-size: 12px;
-    grid-column: 1 / span 5;
+    grid-column: 1 / -1;
     margin-block: -8px !important;
   }
 }

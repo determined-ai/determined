@@ -79,7 +79,7 @@ interface HyperparameterRowValues {
 const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const [ modalError, setModalError ] = useState<string>();
-  const [ searchMethod, setSearchMethod ] = useState(SearchMethods.ASHA);
+  const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
   const [ form ] = Form.useForm();
@@ -88,8 +88,8 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
   const [ slotsError, setSlotsError ] = useState(false);
   const [ validationError, setValidationError ] = useState(false);
 
-  const handleSelectSearchMethod = useCallback((value: SelectValue) => {
-    setSearchMethod(
+  const handleSelectSearcher = useCallback((value: SelectValue) => {
+    setSearcher(
       Object.values(SearchMethods).find(searcher => searcher.name === value) ?? SearchMethods.ASHA,
     );
   }, []);
@@ -205,8 +205,16 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
 
   const validateForm = useCallback(() => {
     form.validateFields()
-      .catch((errorInfo) => setValidationError(errorInfo.errorFields.length !== 0));
+      .catch((errorInfo) => {
+        console.log(errorInfo);
+        setValidationError(errorInfo.errorFields.length !== 0);
+      });
   }, [ form ]);
+
+  useEffect(() => {
+    console.log('validating');
+    form.validateFields([ [ 'dropout1', 'count' ] ]).then(result => console.log(result)).catch(err => console.error(err));
+  }, [ form, searcher ]);
 
   const page1 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -232,7 +240,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
           )}
           name="searcher">
           <SelectFilter
-            onChange={handleSelectSearchMethod}>
+            onChange={handleSelectSearcher}>
             {Object.values(SearchMethods).map(searcher => (
               <Select.Option key={searcher.name} value={searcher.name}>
                 {searcher.displayName}
@@ -240,28 +248,31 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             ))}
           </SelectFilter>
         </Form.Item>
-        <p>{searchMethod.description}</p>
-        <div className={css.hyperparameterContainer}>
+        <p className={css.searcherDescription}>{searcher.description}</p>
+        <div
+          className={css.hyperparameterContainer}
+          style={{
+            gridTemplateColumns: `160px minmax(0, 1.3fr) 
+              repeat(${searcher === SearchMethods.Grid ? 4 : 3}, minmax(0, 1fr))`,
+          }}>
           <h2 className={css.hyperparameterName}>Hyperparameter</h2>
           <h2>Type</h2>
           <h2>Current</h2>
-          <h2>Min value</h2>
-          <h2>Max value</h2>
+          <h2>Min Value</h2>
+          <h2>Max Value</h2>
+          {searcher === SearchMethods.Grid && <h2>Grid Count</h2>}
           {hyperparameters.map(hp => (
             <HyperparameterRow
               form={form}
               key={hp.name}
+              searcher={searcher}
               {...hp}
             />
           ))}
         </div>
       </div>
     );
-  }, [ form,
-    handleSelectSearchMethod,
-    hyperparameters,
-    modalError,
-    searchMethod.description ]);
+  }, [ form, handleSelectSearcher, hyperparameters, modalError, searcher ]);
 
   const page2 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -312,6 +323,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         )}
         <p>Total slots: {maxSlots}</p>
         <Form.Item
+          hidden={searcher === SearchMethods.Grid}
           initialValue={1}
           label="Max Trials"
           name="max_trials"
@@ -323,7 +335,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             initialValue={maxLength}
             label="Max Length"
             name="max-length"
-            rules={[ { message: 'test', min: 1, required: true, type: 'number' } ]}>
+            rules={[ { min: 1, required: true, type: 'number' } ]}>
             <InputNumber precision={0} />
           </Form.Item>
           <Form.Item
@@ -347,19 +359,17 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
             </SelectFilter>
           </Form.Item>
         </div>
-        <p>
-          Note: HP search jobs (while more efficient than manual searching) can take longer
-          depending on the size of the HP search space and the resources you allocate to it.
-        </p>
       </div>
     );
   }, [ experiment.configRaw?.records_per_epoch,
+    experiment.name,
     handleSelectPool,
     maxLength,
     maxLengthUnit,
     maxSlots,
     modalError,
     resourcePools,
+    searcher,
     slotsError,
     validateSlots ]);
 
@@ -391,7 +401,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         </Form>),
       icon: null,
       title: 'Hyperparameter Search',
-      width: 600,
+      width: 700,
     };
   }, [ form, validateForm, pages, currentPage, footer ]);
 
@@ -416,10 +426,11 @@ interface RowProps {
   form: FormInstance;
   hyperparameter: Hyperparameter;
   name: string;
+  searcher: SearchMethod;
 }
 
 const HyperparameterRow: React.FC<RowProps> = (
-  { form, hyperparameter, name }: RowProps,
+  { form, hyperparameter, name, searcher }: RowProps,
 ) => {
   const [ checked, setChecked ] = useState(form.getFieldValue([ name, 'active' ]) ?? false);
   const [ type, setType ] = useState<HyperparameterType>(hyperparameter.type);
@@ -427,6 +438,7 @@ const HyperparameterRow: React.FC<RowProps> = (
   const [ minError, setMinError ] = useState<string>();
   const [ maxError, setMaxError ] = useState<string>();
   const [ rangeError, setRangeError ] = useState<string>();
+  const [ countError, setCountError ] = useState<string>();
 
   const handleCheck = useCallback((e: CheckboxChangeEvent) => {
     const { checked } = e.target;
@@ -478,6 +490,19 @@ const HyperparameterRow: React.FC<RowProps> = (
     }
   }, [ form, name ]);
 
+  const validateCount = useCallback((value: number | string | null) => {
+    console.log(value);
+    if (value == null) {
+      setCountError('Grid count is required.');
+    } else if (typeof value === 'string') {
+      setCountError('Grid count must be a number.');
+    } else if (value < 1) {
+      setCountError('Grid count must be greater than or equal to 1.');
+    } else {
+      setCountError(undefined);
+    }
+  }, []);
+
   return (
     <>
       <Space className={css.hyperparameterName}>
@@ -512,7 +537,11 @@ const HyperparameterRow: React.FC<RowProps> = (
         name={[ name, 'value' ]}
         rules={[ { required: !form.getFieldValue([ name, 'active' ]) } ]}
         validateStatus={valError ? 'error' : 'success'}>
-        <Input disabled={form.getFieldValue([ name, 'active' ])} onChange={validateValue} />
+        <Input
+          disabled={form.getFieldValue([ name, 'active' ])}
+          placeholder={form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+          onChange={validateValue}
+        />
       </Form.Item>
       {type === HyperparameterType.Categorical ? (
         <>
@@ -528,11 +557,17 @@ const HyperparameterRow: React.FC<RowProps> = (
             noStyle>
             <Input disabled />
           </Form.Item>
+          {searcher === SearchMethods.Grid && (
+            <Form.Item
+              hidden={searcher !== SearchMethods.Grid}
+              name={[ name, 'count' ]}>
+              <InputNumber disabled />
+            </Form.Item>
+          )}
         </>
       ) : (
         <>
           <Form.Item
-            dependencies={[ [ name, 'active' ], [ name, 'type' ] ]}
             initialValue={hyperparameter.minval}
             name={[ name, 'min' ]}
             rules={[ {
@@ -544,6 +579,7 @@ const HyperparameterRow: React.FC<RowProps> = (
         && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
             <InputNumber
               disabled={!form.getFieldValue([ name, 'active' ])}
+              placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
               precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
                 0 : undefined}
               onChange={validateMin}
@@ -561,11 +597,31 @@ const HyperparameterRow: React.FC<RowProps> = (
         && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
             <InputNumber
               disabled={!form.getFieldValue([ name, 'active' ])}
+              placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
               precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
                 0 : undefined}
               onChange={validateMax}
             />
           </Form.Item>
+          {searcher === SearchMethods.Grid && (
+            <Form.Item
+              hidden={searcher !== SearchMethods.Grid}
+              name={[ name, 'count' ]}
+              rules={[ {
+                min: 0,
+                required: form.getFieldValue([ name, 'active' ]) && searcher === SearchMethods.Grid,
+                type: 'number',
+              } ]}
+              validateStatus={(typeof countError === 'string' && searcher === SearchMethods.Grid
+                && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
+              <InputNumber
+                disabled={!form.getFieldValue([ name, 'active' ])}
+                placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+                precision={0}
+                onChange={validateCount}
+              />
+            </Form.Item>
+          )}
         </>
       )}
       {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Categorical &&
@@ -580,6 +636,8 @@ const HyperparameterRow: React.FC<RowProps> = (
         <p className={css.error}>{maxError}</p>}
       {(form.getFieldValue([ name, 'active' ]) && rangeError) &&
         <p className={css.error}>{rangeError}</p>}
+      {(form.getFieldValue([ name, 'active' ]) && countError && searcher === SearchMethods.Grid) &&
+        <p className={css.error}>{countError}</p>}
     </>
   );
 };
