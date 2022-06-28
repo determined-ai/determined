@@ -86,28 +86,10 @@ def run_webui_tests(web_dir: pathlib.Path):
         run(f'make {target}', cwd=web_dir)
 
 
-def overwrite_with_subtree(user, name: str, st_hash: t.Optional[str] = None):
-    """
-    runs a repo while overridding the shared code with the shared
-    directory from a repo set up using subtree
-    """
-    clone_dir = '/tmp' / pathlib.Path(name)
-    web_dir = clone_dir / user['web_dir']
-    run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
-    for repo_name, metadata in repos.items():
-        if repo_name == name or metadata['using_sm']: continue
-        src_dir = setup_user(metadata, repo_name, repo_hash=st_hash)
-        dest = web_dir / SHARED_DIR
-        src = src_dir / SHARED_DIR
-        run(f'rm -rf {dest}; mkdir -p {dest}')
-        run(f'cp -r {src} {dest}')
-        yield web_dir
-        run_webui_tests(web_dir)
-
 def overwrite_with_cur_shared(user, name: str):
     """
-    runs a repo while overridding the shared code with the shared
-    directory from the current repo
+    overrides the shared code in a repo with the shared
+    directory from the current local clone.
     """
     clone_dir = '/tmp' / pathlib.Path(name)
     web_dir = clone_dir / user['web_dir']
@@ -121,7 +103,7 @@ def overwrite_with_cur_shared(user, name: str):
     run(f'cp -r {src} {dest}')
 
 
-def test(sm_hash: str, repo_names: t.List[str], st_hash: t.Optional[str] = None):
+def test(sm_hash: str, repo_names: t.List[str]):
     for name in repo_names:
         if name not in repos:
             raise ValueError(f'unknown repo name: {name}')
@@ -129,12 +111,26 @@ def test(sm_hash: str, repo_names: t.List[str], st_hash: t.Optional[str] = None)
         clone_dir = setup_user(user, name, sm_hash)
         web_dir = clone_dir / user['web_dir']
         run_webui_tests(web_dir)
+
+def test_with_current_shared(repo_names: t.List[str]):
+    """
+    test the current shared code with target repos.
+    """
+    for name in repo_names:
+        if name not in repos:
+            raise ValueError(f'unknown repo name: {name}')
+        user = repos[name]
+        clone_dir = setup_user(user, name)
+        web_dir = clone_dir / user['web_dir']
         overwrite_with_cur_shared(user, name)
+        run_webui_tests(web_dir)
 
 
 if __name__ == '__main__':
     parser.add_argument('--sw-hash', help='desired shared-web githash to test')
-    parser.add_argument('--st-hash', help='desired subtree githash to test')
+    parser.add_argument('--test-local',
+                        help='test the repositories with the current shared code',
+                        action='store_true', default=False)
     parser.add_argument('--repos',
                         help=f'repos to test. available: {", ".join(repos.keys())}',
                         nargs='+')
@@ -147,4 +143,10 @@ if __name__ == '__main__':
     # get current git hash from cli args as first argument through sys.args if one is provided
     sm_hash = args.sw_hash if args.sw_hash else get_current_hash()
 
-    test(sm_hash, repos_to_test)
+    if args.test_local:
+        if pathlib.Path.cwd().name != 'shared':
+            raise argparse.ArgumentError(None,
+                                         '--test-local must be run from the shared directory root')
+        test_with_current_shared(repos_to_test)
+    else:
+        test(sm_hash, repos_to_test)
