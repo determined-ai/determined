@@ -44,6 +44,36 @@ class APIHttpError(Exception):
         return self.message
 
 
+class ExpCompareTrialsSampleResponseExpTrial:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        experimentId: int,
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
+    ):
+        self.trialId = trialId
+        self.hparams = hparams
+        self.data = data
+        self.experimentId = experimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
+        return cls(
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            experimentId=obj["experimentId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId,
+            "hparams": self.hparams,
+            "data": [x.to_json() for x in self.data],
+            "experimentId": self.experimentId,
+        }
+
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -89,28 +119,6 @@ class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
     PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
     PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
-
-class apiv1DataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "apiv1DataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
-        }
 
 class determinedcheckpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
@@ -1008,6 +1016,28 @@ class v1CurrentUserResponse:
             "user": self.user.to_json(),
         }
 
+class v1DataPoint:
+    def __init__(
+        self,
+        batches: int,
+        value: float,
+    ):
+        self.batches = batches
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPoint":
+        return cls(
+            batches=obj["batches"],
+            value=float(obj["value"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "batches": self.batches,
+            "value": dump_float(self.value),
+        }
+
 class v1DeleteCheckpointsRequest:
     def __init__(
         self,
@@ -1177,7 +1207,7 @@ class v1ExpCompareTrialsSampleResponse:
         self,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[v1ExpTrial]",
+        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
     ):
         self.trials = trials
         self.promotedTrials = promotedTrials
@@ -1186,7 +1216,7 @@ class v1ExpCompareTrialsSampleResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
         return cls(
-            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
+            trials=[ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
             promotedTrials=obj["promotedTrials"],
             demotedTrials=obj["demotedTrials"],
         )
@@ -1196,58 +1226,6 @@ class v1ExpCompareTrialsSampleResponse:
             "trials": [x.to_json() for x in self.trials],
             "promotedTrials": self.promotedTrials,
             "demotedTrials": self.demotedTrials,
-        }
-
-class v1ExpTrial:
-    def __init__(
-        self,
-        data: "typing.Sequence[v1ExpTrialDataPoint]",
-        experimentId: int,
-        hparams: "typing.Dict[str, typing.Any]",
-        trialId: int,
-    ):
-        self.trialId = trialId
-        self.hparams = hparams
-        self.data = data
-        self.experimentId = experimentId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpTrial":
-        return cls(
-            trialId=obj["trialId"],
-            hparams=obj["hparams"],
-            data=[v1ExpTrialDataPoint.from_json(x) for x in obj["data"]],
-            experimentId=obj["experimentId"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trialId": self.trialId,
-            "hparams": self.hparams,
-            "data": [x.to_json() for x in self.data],
-            "experimentId": self.experimentId,
-        }
-
-class v1ExpTrialDataPoint:
-    def __init__(
-        self,
-        batches: int,
-        value: float,
-    ):
-        self.batches = batches
-        self.value = value
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExpTrialDataPoint":
-        return cls(
-            batches=obj["batches"],
-            value=float(obj["value"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "batches": self.batches,
-            "value": dump_float(self.value),
         }
 
 class v1Experiment:
@@ -5291,7 +5269,7 @@ class v1SummarizeTrialResponse:
 class v1SummarizedMetric:
     def __init__(
         self,
-        data: "typing.Sequence[apiv1DataPoint]",
+        data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
     ):
@@ -5303,7 +5281,7 @@ class v1SummarizedMetric:
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
         return cls(
             name=obj["name"],
-            data=[apiv1DataPoint.from_json(x) for x in obj["data"]],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
             type=v1MetricType(obj["type"]),
         )
 
@@ -5721,7 +5699,7 @@ class v1TrialsSampleResponse:
         self,
         demotedTrials: "typing.Sequence[int]",
         promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[v1ExpTrial]",
+        trials: "typing.Sequence[v1TrialsSampleResponseTrial]",
     ):
         self.trials = trials
         self.promotedTrials = promotedTrials
@@ -5730,7 +5708,7 @@ class v1TrialsSampleResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialsSampleResponse":
         return cls(
-            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
+            trials=[v1TrialsSampleResponseTrial.from_json(x) for x in obj["trials"]],
             promotedTrials=obj["promotedTrials"],
             demotedTrials=obj["demotedTrials"],
         )
@@ -5740,6 +5718,32 @@ class v1TrialsSampleResponse:
             "trials": [x.to_json() for x in self.trials],
             "promotedTrials": self.promotedTrials,
             "demotedTrials": self.demotedTrials,
+        }
+
+class v1TrialsSampleResponseTrial:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
+    ):
+        self.trialId = trialId
+        self.hparams = hparams
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialsSampleResponseTrial":
+        return cls(
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId,
+            "hparams": self.hparams,
+            "data": [x.to_json() for x in self.data],
         }
 
 class v1TrialsSnapshotResponse:

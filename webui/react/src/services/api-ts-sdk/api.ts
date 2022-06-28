@@ -79,26 +79,6 @@ export class RequiredError extends Error {
 }
 
 /**
- * One datapoint in a series of metrics from a trial.
- * @export
- * @interface Apiv1DataPoint
- */
-export interface Apiv1DataPoint {
-    /**
-     * Total batches processed by the time this measurement is taken.
-     * @type {number}
-     * @memberof Apiv1DataPoint
-     */
-    batches: number;
-    /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
-     * @memberof Apiv1DataPoint
-     */
-    value: number;
-}
-
-/**
  * The current state of the checkpoint.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
  * @export
  * @enum {string}
@@ -199,6 +179,38 @@ export enum Determinedtaskv1State {
     RUNNING = <any> 'STATE_RUNNING',
     TERMINATED = <any> 'STATE_TERMINATED',
     TERMINATING = <any> 'STATE_TERMINATING'
+}
+
+/**
+ * Series of data points for an experiment trial.
+ * @export
+ * @interface ExpCompareTrialsSampleResponseExpTrial
+ */
+export interface ExpCompareTrialsSampleResponseExpTrial {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    trialId: number;
+    /**
+     * Hyperparamters values for this specific trial.
+     * @type {any}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    hparams: any;
+    /**
+     * Data related to a trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    data: Array<V1DataPoint>;
+    /**
+     * 
+     * @type {number}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    experimentId: number;
 }
 
 /**
@@ -1525,6 +1537,26 @@ export interface V1CurrentUserResponse {
 }
 
 /**
+ * One datapoint in a series of metrics from a trial.
+ * @export
+ * @interface V1DataPoint
+ */
+export interface V1DataPoint {
+    /**
+     * Total batches processed by the time this measurement is taken.
+     * @type {number}
+     * @memberof V1DataPoint
+     */
+    batches: number;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPoint
+     */
+    value: number;
+}
+
+/**
  * 
  * @export
  * @interface V1DeleteCheckpointsRequest
@@ -1730,10 +1762,10 @@ export interface V1ExpCompareMetricNamesResponse {
 export interface V1ExpCompareTrialsSampleResponse {
     /**
      * A historical or incremental series of data points for the trials.
-     * @type {Array<V1ExpTrial>}
+     * @type {Array<ExpCompareTrialsSampleResponseExpTrial>}
      * @memberof V1ExpCompareTrialsSampleResponse
      */
-    trials: Array<V1ExpTrial>;
+    trials: Array<ExpCompareTrialsSampleResponseExpTrial>;
     /**
      * IDs of trials that are newly included in the data.
      * @type {Array<number>}
@@ -1746,58 +1778,6 @@ export interface V1ExpCompareTrialsSampleResponse {
      * @memberof V1ExpCompareTrialsSampleResponse
      */
     demotedTrials: Array<number>;
-}
-
-/**
- * Series of data points for an experiment trial.
- * @export
- * @interface V1ExpTrial
- */
-export interface V1ExpTrial {
-    /**
-     * The id of the trial.
-     * @type {number}
-     * @memberof V1ExpTrial
-     */
-    trialId: number;
-    /**
-     * Hyperparamters values for this specific trial.
-     * @type {any}
-     * @memberof V1ExpTrial
-     */
-    hparams: any;
-    /**
-     * Data related to a trial.
-     * @type {Array<V1ExpTrialDataPoint>}
-     * @memberof V1ExpTrial
-     */
-    data: Array<V1ExpTrialDataPoint>;
-    /**
-     * 
-     * @type {number}
-     * @memberof V1ExpTrial
-     */
-    experimentId: number;
-}
-
-/**
- * A possibly down-sampled series of metric readings through the progress of the trial.
- * @export
- * @interface V1ExpTrialDataPoint
- */
-export interface V1ExpTrialDataPoint {
-    /**
-     * Total batches processed by the time this measurement is taken.
-     * @type {number}
-     * @memberof V1ExpTrialDataPoint
-     */
-    batches: number;
-    /**
-     * Value of the requested metric at this point in the trial.
-     * @type {number}
-     * @memberof V1ExpTrialDataPoint
-     */
-    value: number;
 }
 
 /**
@@ -6182,10 +6162,10 @@ export interface V1SummarizedMetric {
     name: string;
     /**
      * A possibly down-sampled series of metric readings through the progress of the trial.
-     * @type {Array<Apiv1DataPoint>}
+     * @type {Array<V1DataPoint>}
      * @memberof V1SummarizedMetric
      */
-    data: Array<Apiv1DataPoint>;
+    data: Array<V1DataPoint>;
     /**
      * Type of metrics (training, validation, or unset).
      * @type {V1MetricType}
@@ -6635,11 +6615,11 @@ export interface V1TrialSimulation {
  */
 export interface V1TrialsSampleResponse {
     /**
-     * Metadata and metrics stream from a trial. A historical or incremental series of data points for the trials.
-     * @type {Array<V1ExpTrial>}
+     * A historical or incremental series of data points for the trials.
+     * @type {Array<V1TrialsSampleResponseTrial>}
      * @memberof V1TrialsSampleResponse
      */
-    trials: Array<V1ExpTrial>;
+    trials: Array<V1TrialsSampleResponseTrial>;
     /**
      * IDs of trials that are newly included in the data.
      * @type {Array<number>}
@@ -6652,6 +6632,32 @@ export interface V1TrialsSampleResponse {
      * @memberof V1TrialsSampleResponse
      */
     demotedTrials: Array<number>;
+}
+
+/**
+ * Metadata and metrics stream from a trial.
+ * @export
+ * @interface V1TrialsSampleResponseTrial
+ */
+export interface V1TrialsSampleResponseTrial {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof V1TrialsSampleResponseTrial
+     */
+    trialId: number;
+    /**
+     * Hyperparamters values for this specific trial.
+     * @type {any}
+     * @memberof V1TrialsSampleResponseTrial
+     */
+    hparams: any;
+    /**
+     * A possibly down-sampled series of metric readings through the progress of the trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof V1TrialsSampleResponseTrial
+     */
+    data: Array<V1DataPoint>;
 }
 
 /**
