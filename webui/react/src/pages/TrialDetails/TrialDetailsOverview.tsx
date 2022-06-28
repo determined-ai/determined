@@ -28,7 +28,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const defaultValidationMetric = metricNames.find(metricName => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
-    const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
+    const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
     const settingMetrics: MetricName[] = (settings.metric || []).map(metric => {

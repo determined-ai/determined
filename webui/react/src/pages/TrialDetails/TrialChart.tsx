@@ -10,6 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
+import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, MetricType, Scale, WorkloadGroup } from 'types';
 
@@ -107,12 +108,21 @@ const TrialChart: React.FC<Props> = ({
     </ResponsiveFilters>
   );
 
+  const getChildren = (): JSX.Element => {
+    if (!trialId) return (
+      <Spinner className={css.spinner} spinning />
+    );
+
+    if (chartData[0].length === 0)
+      return <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+
+    return <UPlotChart data={chartData} options={chartOptions} />;
+  };
+
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {chartData[0].length === 0 ?
-          <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} /> :
-          <UPlotChart data={chartData} options={chartOptions} />}
+        {getChildren()}
       </div>
     </Section>
   );
