@@ -115,8 +115,8 @@ export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
   user?: DetailedUser,
   trial?: TrialDetails,
-): boolean => !experiment.archived && !experiment.parentArchived && (
-  !!trial || !(experiment?.numTrials > 1));
+): boolean => !experiment.archived && !experiment.parentArchived
+  && (!!trial || experiment?.numTrials === 1);
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
