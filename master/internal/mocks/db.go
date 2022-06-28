@@ -537,6 +537,52 @@ func (_m *DB) EndInstanceStats(a *model.InstanceStats) error {
 	return r0
 }
 
+// ExpCompareMetricNames provides a mock function with given fields: trialIDs, sStartTime, vStartTime
+func (_m *DB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
+	ret := _m.Called(trialIDs, sStartTime, vStartTime)
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func([]int32, time.Time, time.Time) []string); ok {
+		r0 = rf(trialIDs, sStartTime, vStartTime)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	var r1 []string
+	if rf, ok := ret.Get(1).(func([]int32, time.Time, time.Time) []string); ok {
+		r1 = rf(trialIDs, sStartTime, vStartTime)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]string)
+		}
+	}
+
+	var r2 time.Time
+	if rf, ok := ret.Get(2).(func([]int32, time.Time, time.Time) time.Time); ok {
+		r2 = rf(trialIDs, sStartTime, vStartTime)
+	} else {
+		r2 = ret.Get(2).(time.Time)
+	}
+
+	var r3 time.Time
+	if rf, ok := ret.Get(3).(func([]int32, time.Time, time.Time) time.Time); ok {
+		r3 = rf(trialIDs, sStartTime, vStartTime)
+	} else {
+		r3 = ret.Get(3).(time.Time)
+	}
+
+	var r4 error
+	if rf, ok := ret.Get(4).(func([]int32, time.Time, time.Time) error); ok {
+		r4 = rf(trialIDs, sStartTime, vStartTime)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
 // ExperimentBestSearcherValidation provides a mock function with given fields: id
 func (_m *DB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	ret := _m.Called(id)
@@ -1985,52 +2031,6 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	}
 
 	return r0, r1, r2
-}
-
-// TrialsMetricNames provides a mock function with given fields: trialIDs, sStartTime, vStartTime
-func (_m *DB) TrialsMetricNames(trialIDs []int32, sStartTime time.Time, vStartTime time.Time) ([]string, []string, time.Time, time.Time, error) {
-	ret := _m.Called(trialIDs, sStartTime, vStartTime)
-
-	var r0 []string
-	if rf, ok := ret.Get(0).(func([]int32, time.Time, time.Time) []string); ok {
-		r0 = rf(trialIDs, sStartTime, vStartTime)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	var r1 []string
-	if rf, ok := ret.Get(1).(func([]int32, time.Time, time.Time) []string); ok {
-		r1 = rf(trialIDs, sStartTime, vStartTime)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]string)
-		}
-	}
-
-	var r2 time.Time
-	if rf, ok := ret.Get(2).(func([]int32, time.Time, time.Time) time.Time); ok {
-		r2 = rf(trialIDs, sStartTime, vStartTime)
-	} else {
-		r2 = ret.Get(2).(time.Time)
-	}
-
-	var r3 time.Time
-	if rf, ok := ret.Get(3).(func([]int32, time.Time, time.Time) time.Time); ok {
-		r3 = rf(trialIDs, sStartTime, vStartTime)
-	} else {
-		r3 = ret.Get(3).(time.Time)
-	}
-
-	var r4 error
-	if rf, ok := ret.Get(4).(func([]int32, time.Time, time.Time) error); ok {
-		r4 = rf(trialIDs, sStartTime, vStartTime)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
 }
 
 // UpdateAllocationStartTime provides a mock function with given fields: allocation

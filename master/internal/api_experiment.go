@@ -871,8 +871,8 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
-func (a *apiServer) TrialsMetricNames(req *apiv1.TrialsMetricNamesRequest,
-	resp apiv1.Determined_TrialsMetricNamesServer) error {
+func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
+	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
@@ -888,9 +888,9 @@ func (a *apiServer) TrialsMetricNames(req *apiv1.TrialsMetricNamesRequest,
 		)
 	}
 	for {
-		var response apiv1.TrialsMetricNamesResponse
+		var response apiv1.ExpCompareMetricNamesResponse
 
-		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.TrialsMetricNames(req.TrialId,
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
 			return nil
@@ -1096,8 +1096,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByTrainingLength
 	case expconf.AdaptiveASHAConfig:
 		ranking = ByTrainingLength
-	// case expconf.SingleConfig:
-	// 	return nil, errors.New("single-trial experiments are not supported for trial sampling")
+	case expconf.SingleConfig:
+		return nil, errors.New("single-trial experiments are not supported for trial sampling")
 	// EOL searcher configs:
 	case expconf.AdaptiveConfig:
 		ranking = ByTrainingLength
@@ -1279,8 +1279,8 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
-func (a *apiServer) ExperimentsSample(req *apiv1.ExperimentsSampleRequest,
-	resp apiv1.Determined_ExperimentsSampleServer) error {
+func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
+	resp apiv1.Determined_ExpCompareTrialsSampleServer) error {
 	experimentIDs := req.ExperimentIds
 	// if err := a.checkExperimentExists(experimentID); err != nil {
 	// 	return err
@@ -1315,7 +1315,7 @@ func (a *apiServer) ExperimentsSample(req *apiv1.ExperimentsSampleRequest,
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)
 	for {
-		var response apiv1.ExperimentsSampleResponse
+		var response apiv1.ExpCompareTrialsSampleResponse
 		var promotedTrials []int32
 		var demotedTrials []int32
 		var trials []*apiv1.ExpTrial

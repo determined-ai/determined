@@ -1150,6 +1150,54 @@ class v1EnableSlotResponse:
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
 
+class v1ExpCompareMetricNamesResponse:
+    def __init__(
+        self,
+        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
+        return cls(
+            trainingMetrics=obj.get("trainingMetrics", None),
+            validationMetrics=obj.get("validationMetrics", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+        }
+
+class v1ExpCompareTrialsSampleResponse:
+    def __init__(
+        self,
+        demotedTrials: "typing.Sequence[int]",
+        promotedTrials: "typing.Sequence[int]",
+        trials: "typing.Sequence[v1ExpTrial]",
+    ):
+        self.trials = trials
+        self.promotedTrials = promotedTrials
+        self.demotedTrials = demotedTrials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
+        return cls(
+            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
+            promotedTrials=obj["promotedTrials"],
+            demotedTrials=obj["demotedTrials"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trials": [x.to_json() for x in self.trials],
+            "promotedTrials": self.promotedTrials,
+            "demotedTrials": self.demotedTrials,
+        }
+
 class v1ExpTrial:
     def __init__(
         self,
@@ -1336,32 +1384,6 @@ class v1ExperimentSimulation:
             "config": self.config if self.config is not None else None,
             "seed": self.seed if self.seed is not None else None,
             "trials": [x.to_json() for x in self.trials] if self.trials is not None else None,
-        }
-
-class v1ExperimentsSampleResponse:
-    def __init__(
-        self,
-        demotedTrials: "typing.Sequence[int]",
-        promotedTrials: "typing.Sequence[int]",
-        trials: "typing.Sequence[v1ExpTrial]",
-    ):
-        self.trials = trials
-        self.promotedTrials = promotedTrials
-        self.demotedTrials = demotedTrials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentsSampleResponse":
-        return cls(
-            trials=[v1ExpTrial.from_json(x) for x in obj["trials"]],
-            promotedTrials=obj["promotedTrials"],
-            demotedTrials=obj["demotedTrials"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trials": [x.to_json() for x in self.trials],
-            "promotedTrials": self.promotedTrials,
-            "demotedTrials": self.demotedTrials,
         }
 
 class v1File:
@@ -5692,28 +5714,6 @@ class v1TrialSimulation:
         return {
             "operations": [x.to_json() for x in self.operations] if self.operations is not None else None,
             "occurrences": self.occurrences if self.occurrences is not None else None,
-        }
-
-class v1TrialsMetricNamesResponse:
-    def __init__(
-        self,
-        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
-        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
-    ):
-        self.trainingMetrics = trainingMetrics
-        self.validationMetrics = validationMetrics
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialsMetricNamesResponse":
-        return cls(
-            trainingMetrics=obj.get("trainingMetrics", None),
-            validationMetrics=obj.get("validationMetrics", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
-            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
         }
 
 class v1TrialsSampleResponse:

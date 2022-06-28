@@ -6,7 +6,7 @@ import { useLocation } from 'react-router';
 import { useStore } from 'contexts/Store';
 import { getExperimentDetails } from 'services/api';
 import {
-  V1MetricNamesResponse, V1TrialsSampleResponse,
+  V1ExpCompareMetricNamesResponse, V1ExpCompareTrialsSampleResponse,
 } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -128,8 +128,8 @@ const CompareVisualization: React.FC = () => {
     const hyperparameters: Record<string, Hyperparameter> = {};
     const metricTypeParam = metricTypeParamMap[activeMetric.type];
 
-    readStream<V1TrialsSampleResponse>(
-      detApi.StreamingInternal.experimentsSample(
+    readStream<V1ExpCompareTrialsSampleResponse>(
+      detApi.StreamingInternal.expCompareTrialsSample(
         experimentIds,
         activeMetric.name,
         metricTypeParam,
@@ -224,8 +224,8 @@ const CompareVisualization: React.FC = () => {
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
-    readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.trialsMetricNames(
+    readStream<V1ExpCompareMetricNamesResponse>(
+      detApi.StreamingInternal.expCompareMetricNames(
         trialIds,
         undefined,
         { signal: canceler.signal },

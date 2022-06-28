@@ -334,7 +334,7 @@ message MetricNamesResponse {
 }
 
 // Request for the set of metrics recorded by an experiment.
-message TrialsMetricNamesRequest {
+message ExpCompareMetricNamesRequest {
   // The id of the experiment.
   repeated int32 trial_id = 1
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -346,7 +346,7 @@ message TrialsMetricNamesRequest {
 }
 
 // Response to MetricNamesRequest.
-message TrialsMetricNamesResponse {
+message ExpCompareMetricNamesResponse {
   // List of training metric names.
   repeated string training_metrics = 1;
   // List of validation metric names.
@@ -528,7 +528,7 @@ message TrialsSampleResponse {
 }
 
 // Request a sample of metrics over time for a sample of trials.
-message ExperimentsSampleRequest {
+message ExpCompareTrialsSampleRequest {
   // The id of the experiment.
   repeated int32 experiment_ids = 1
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
@@ -559,8 +559,8 @@ message ExperimentsSampleRequest {
   int32 period_seconds = 8;
 }
 
-// Response to ExperimentsSampleRequest
-message ExperimentsSampleResponse {
+// Response to ExpCompareTrialsSampleRequest
+message ExpCompareTrialsSampleResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trials", "promoted_trials", "demoted_trials" ] }
   };
