@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 SHARED_WEB_REPO='https://github.com/determined-ai/shared-web'
 SAAS_REPO='https://github.com/determined-ai/saas'
 CORE_REPO='https://github.com/determined-ai/determined'
-SM_DIR = 'src/shared'
+SHARED_DIR = 'src/shared'
 
 repos = {
     'saas': {
@@ -57,38 +57,84 @@ def get_current_hash():
     return get_output('git rev-parse HEAD')
 
 
-def setup_user(user, name: str, sm_hash: str, repo_hash: str = 'master'):
+def setup_user(user, name: str, sm_hash: t.Optional[str] = None, repo_hash: t.Optional[str] = None):
+    repo_hash = repo_hash or 'master'
     clone_dir = '/tmp' / pathlib.Path(name)
     web_dir = clone_dir / user['web_dir']
     run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
     # temporarily here to faciliate switching between sm and subtree
     run(f'rm -rf src/shared', cwd=web_dir)
     run(f'git checkout {repo_hash}', cwd=clone_dir)
+
+    if sm_hash is None: return clone_dir
     # update the shared code
     if user['using_sm']:
-        run(f'git checkout {sm_hash}', cwd=web_dir/SM_DIR)
+        run(f'git checkout {sm_hash}', cwd=web_dir/SHARED_DIR)
     else:
-        rel_shared_dir = pathlib.Path(user['web_dir'])/SM_DIR
+        rel_shared_dir = pathlib.Path(user['web_dir'])/SHARED_DIR
         cmd = f'git subtree pull --prefix {rel_shared_dir} {SHARED_WEB_REPO} {sm_hash} --squash'
         run(cmd, cwd=clone_dir)
+    return clone_dir
 
 
 
+def run_webui_tests(web_dir: pathlib.Path):
+    """
+    runs webui tests. requires web_dir to be set up
+    """
+    for target in ['get-deps', 'check', 'build', 'test']:
+        run(f'make {target}', cwd=web_dir)
 
-def test(sm_hash: str, repo_names: t.List[str]):
+
+def overwrite_with_subtree(user, name: str, st_hash: t.Optional[str] = None):
+    """
+    runs a repo while overridding the shared code with the shared
+    directory from a repo set up using subtree
+    """
+    clone_dir = '/tmp' / pathlib.Path(name)
+    web_dir = clone_dir / user['web_dir']
+    run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
+    for repo_name, metadata in repos.items():
+        if repo_name == name or metadata['using_sm']: continue
+        src_dir = setup_user(metadata, repo_name, repo_hash=st_hash)
+        dest = web_dir / SHARED_DIR
+        src = src_dir / SHARED_DIR
+        run(f'rm -rf {dest}; mkdir -p {dest}')
+        run(f'cp -r {src} {dest}')
+        yield web_dir
+        run_webui_tests(web_dir)
+
+def overwrite_with_cur_shared(user, name: str):
+    """
+    runs a repo while overridding the shared code with the shared
+    directory from the current repo
+    """
+    clone_dir = '/tmp' / pathlib.Path(name)
+    web_dir = clone_dir / user['web_dir']
+    run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
+    # for repo_name, metadata in repos.items():
+    #     if repo_name == name or metadata['using_sm']: continue
+    #     src_dir = setup_user(metadata, repo_name)
+    dest = web_dir / SHARED_DIR
+    src = pathlib.Path.cwd() # FIXME find out where the current shared dir is relative to the test script
+    run(f'rm -rf {dest}; mkdir -p {dest}')
+    run(f'cp -r {src} {dest}')
+
+
+def test(sm_hash: str, repo_names: t.List[str], st_hash: t.Optional[str] = None):
     for name in repo_names:
         if name not in repos:
             raise ValueError(f'unknown repo name: {name}')
         user = repos[name]
-        setup_user(user, name, sm_hash)
-        clone_dir = '/tmp' / pathlib.Path(name)
+        clone_dir = setup_user(user, name, sm_hash)
         web_dir = clone_dir / user['web_dir']
-        for target in ['get-deps', 'check', 'build', 'test']:
-            run(f'make {target}', cwd=web_dir)
+        run_webui_tests(web_dir)
+        overwrite_with_cur_shared(user, name)
 
 
 if __name__ == '__main__':
     parser.add_argument('--sw-hash', help='desired shared-web githash to test')
+    parser.add_argument('--st-hash', help='desired subtree githash to test')
     parser.add_argument('--repos',
                         help=f'repos to test. available: {", ".join(repos.keys())}',
                         nargs='+')
