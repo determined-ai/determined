@@ -119,3 +119,58 @@ def get_gpus() -> List[GPU]:
 
 def get_gpu_uuids() -> List[str]:
     return [gpu.uuid for gpu in sorted(get_gpus(), key=lambda gpu: gpu.id)]
+
+
+class GPUProcess(NamedTuple):
+    pid: int
+    process_name: str
+    gpu_uuid: str
+    used_memory: str  # This is a string that includes units, e.g. "123 MiB"
+
+
+def _get_nvidia_processes() -> List[GPUProcess]:
+    try:
+        proc = subprocess.Popen(
+            [
+                "nvidia-smi",
+                "--query-compute-apps=" + ",".join(GPUProcess._fields),
+                "--format=csv,noheader",
+            ],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        )
+    except FileNotFoundError:
+        logging.info("detected 0 gpu processes (nvidia-smi not found)")
+        # This case is expected if NVIDIA drivers are not available.
+        return []
+    except Exception as e:
+        logging.warning(f"detected 0 gpu processes (error with nvidia-smi: {e})")
+        return []
+
+    processes = []
+    with proc:
+        for field_list in csv.reader(proc.stdout):  # type: ignore
+            if len(field_list) != len(GPUProcess._fields):
+                logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
+                continue
+            fields = dict(zip(GPUProcess._fields, field_list))
+            try:
+                processes.append(
+                    GPUProcess(
+                        pid=int(fields["pid"]),
+                        process_name=fields["process_name"].strip(),
+                        gpu_uuid=fields["gpu_uuid"].strip(),
+                        used_memory=fields["used_memory"].strip(),
+                    )
+                )
+            except ValueError:
+                logging.warning(f"Ignoring GPU process with unexpected nvidia-smi output: {fields}")
+    if proc.returncode:
+        logging.warning(f"nvidia-smi exited with failure status code {proc.returncode}")
+    return processes
+
+
+def get_gpu_processes() -> List[GPUProcess]:
+    # TODO This extra layer of method calls is to match get_gpus above, in case we are later
+    # interested in ROCm processes as well
+    return _get_nvidia_processes()

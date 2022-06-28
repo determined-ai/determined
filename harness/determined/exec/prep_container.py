@@ -11,7 +11,7 @@ from typing import List, Optional
 import psutil
 
 import determined as det
-from determined import constants
+from determined import constants, gpu
 from determined.common import util
 from determined.common.api import bindings, certs, request
 from determined.common.experimental import Session, get_max_retries_config
@@ -127,7 +127,7 @@ def rendezvous_ifaces() -> List[str]:
     if not rendezvous_iface:
         rendezvous_iface = get_eth_interface_name()
 
-    # If none of these resolved, we can fallback to something naive.
+    # If none of these resolved, we can fall back to something naive.
     if not rendezvous_iface:
         return []
 
@@ -245,6 +245,18 @@ if __name__ == "__main__":
         info = det.ClusterInfo._from_env()
         info._to_file()
 
+    try:
+        # See the ClusterInfo.trial property for explanation
+        debug = info.trial._debug
+    except (AssertionError, RuntimeError):
+        debug = False
+
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.INFO,
+        format=det.LOG_FORMAT,
+    )
+    logging.debug("running prep_container")
+
     cert = certs.default_load(info.master_url)
     sess = Session(
         info.master_url,
@@ -259,6 +271,15 @@ if __name__ == "__main__":
 
     if args.resources:
         det.ResourcesInfo._by_inspection()._to_file()
+        for process in gpu.get_gpu_processes():
+            logging.warning(
+                f"process {process.process_name} "
+                f"with pid {process.pid} "
+                f"is using {process.used_memory} memory "
+                f"of the GPU with uuid {process.gpu_uuid}. "
+                "This process is not related to Determined tasks but may interfere with tasks' "
+                "ability to use the full GPU."
+            )
 
     if args.rendezvous:
         do_rendezvous(sess, info.allocation_id)
