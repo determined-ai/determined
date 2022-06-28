@@ -3,10 +3,10 @@ import { Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
-import PageHeader from 'shared/components/PageHeader';
 import { sentenceToCamelCase } from 'shared/utils/string';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';

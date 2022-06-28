@@ -4,7 +4,7 @@ import React from 'react';
 import { BreadCrumbRoute } from 'shared/components/Page';
 import { CommonProps } from 'shared/types';
 
-import Link from '../../../components/Link';
+import Link from '../Link';
 
 import css from './PageHeader.module.scss';
 
