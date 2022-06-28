@@ -583,6 +583,29 @@ func (_m *DB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time, vSta
 	return r0, r1, r2, r3, r4
 }
 
+// ExpCompareTopTrialsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
+func (_m *DB) ExpCompareTopTrialsByMetric(experimentID []int32, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
+	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
+
+	var r0 []int32
+	if rf, ok := ret.Get(0).(func([]int32, int, string, bool) []int32); ok {
+		r0 = rf(experimentID, maxTrials, metric, smallerIsBetter)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int32)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]int32, int, string, bool) error); ok {
+		r1 = rf(experimentID, maxTrials, metric, smallerIsBetter)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ExperimentBestSearcherValidation provides a mock function with given fields: id
 func (_m *DB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	ret := _m.Called(id)
@@ -1641,29 +1664,6 @@ func (_m *DB) TerminateExperimentInRestart(id int, state model.State) error {
 	}
 
 	return r0
-}
-
-// TopExperimentsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter
-func (_m *DB) TopExperimentsByMetric(experimentID []int32, maxTrials int, metric string, smallerIsBetter bool) ([]int32, error) {
-	ret := _m.Called(experimentID, maxTrials, metric, smallerIsBetter)
-
-	var r0 []int32
-	if rf, ok := ret.Get(0).(func([]int32, int, string, bool) []int32); ok {
-		r0 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]int32)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func([]int32, int, string, bool) error); ok {
-		r1 = rf(experimentID, maxTrials, metric, smallerIsBetter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // TopTrialsByMetric provides a mock function with given fields: experimentID, maxTrials, metric, smallerIsBetter

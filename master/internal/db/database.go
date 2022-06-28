@@ -129,7 +129,7 @@ type DB interface {
 		endTime time.Time, err error)
 	TopTrialsByMetric(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	TopExperimentsByMetric(experimentID []int32, maxTrials int, metric string,
+	ExpCompareTopTrialsByMetric(experimentID []int32, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)

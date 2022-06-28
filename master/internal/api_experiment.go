@@ -1322,7 +1322,7 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 
 		seenThisRound := make(map[int32]bool)
 
-		trialIDs, err := a.m.db.TopExperimentsByMetric(experimentIDs, maxTrials, metricName, true)
+		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs, maxTrials, metricName, true)
 
 		if err != nil {
 			return err

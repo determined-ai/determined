@@ -384,7 +384,7 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-func (db *PgDB) TopExperimentsByMetric(experimentIDs []int32, maxTrials int, metric string,
+func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
 	smallerIsBetter bool) (trials []int32, err error) {
 	order := desc
 	aggregate := max
