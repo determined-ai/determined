@@ -156,7 +156,7 @@ const HpTrialTable: React.FC<Props> = ({
     return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
   }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
 
-  const handleTableChange = useCallback((tablePagination) => {
+  const handleTableChange = useCallback((tablePagination, a, b) => {
     setPageSize(tablePagination.pageSize);
   }, []);
 
@@ -191,6 +191,7 @@ const HpTrialTable: React.FC<Props> = ({
       scroll={{ x: 1000 }}
       showSorterTooltip={false}
       size="small"
+      sortDirections={[ 'ascend', 'descend', 'ascend' ]}
       onChange={handleTableChange}
       onRow={handleTableRow}
     />

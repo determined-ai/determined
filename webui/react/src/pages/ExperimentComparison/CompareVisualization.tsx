@@ -1,11 +1,10 @@
-import { Alert, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 
-import Link from 'components/Link';
 import { useStore } from 'contexts/Store';
-import { paths } from 'routes/utils';
+import { getExperimentDetails } from 'services/api';
 import {
   V1MetricNamesResponse, V1TrialsSampleResponse,
 } from 'services/api-ts-sdk';
@@ -14,20 +13,20 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
-import { hasObjectKeys, isEqual } from 'shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
 import {
   ExperimentVisualizationType,
-  HpImportanceMap, Hyperparameter,
+  Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
-import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'utils/sort';
 
 import css from './CompareVisualization.module.scss';
 import CompareCurve from './CompareVisualization/CompareCurve';
-import ExperimentVisualizationFilters, {
-  MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
+import CompareFilters, {
+  ViewType, VisualizationFilters,
 } from './CompareVisualization/CompareFilters';
 import { TrialHParams } from './CompareVisualization/CompareTable';
 
@@ -53,35 +52,16 @@ const PAGE_ERROR_MESSAGES = {
 const CompareVisualization: React.FC = () => {
 
   const { ui } = useStore();
-  //const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
 
   const fullHParams = useRef<string[]>(
     [],
   );
 
-  // const asd = useMemo(() => {
-  //   const experimentHps = experiments.map(e => new Set(Object.keys(e.hyperparameters ?? {})))
-  //   const allHParams = experimentHps.reduce(union)
-  //   const differingHParams = [].filter(hp => {
-  //     const allHpVals = experiments.map(e => e.hyperparameters[hp] )
-  //   })
-
-  // }, [])
-
-  // Hack to show exp data
-  const defaultMetric = useMemo(() => ({
-    // name: experiments?.[0]?.config.searcher.metric,
-    name: 'validation_loss',
-    type: MetricType.Validation,
-  }), []);
-
-  const searcherMetric = useRef<MetricName>(defaultMetric);
   const defaultFilters: VisualizationFilters = {
     batch: DEFAULT_BATCH,
     batchMargin: DEFAULT_BATCH_MARGIN,
     hParams: [],
     maxTrial: DEFAULT_MAX_TRIALS,
-    metric: searcherMetric.current,
     scale: Scale.Linear,
     view: DEFAULT_VIEW,
   };
@@ -103,9 +83,19 @@ const CompareVisualization: React.FC = () => {
   const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ hpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
+  useEffect(() => {
+    if (filters.metric) return;
+    const id = experimentIds[0];
+    getExperimentDetails({ id }).then(experiment =>
+      setFilters((filters) =>
+        ({
+          ...filters,
+          metric: { name: experiment.config.searcher.metric, type: MetricType.Validation },
+        })));
+
+  }, [ filters.metric, experimentIds ]);
   //
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
@@ -114,43 +104,20 @@ const CompareVisualization: React.FC = () => {
   const [ hyperparameters, setHyperparameters ] = useState<Record<string, Hyperparameter>>({});
   const [ hpVals, setHpVals ] = useState<HpValsMap>({});
   const typeKey = DEFAULT_TYPE_KEY;
-  const { hasData, isSupported, hasLoaded } = useMemo(() => {
-    return {
-      hasData: (batches && batches.length !== 0) ||
-      (metrics && metrics.length !== 0) ||
-      (trialIds && trialIds.length > 0),
-      hasLoaded: batches.length > 0 ||
-      metrics && metrics.length > 0 ||
-      trialIds.length > 0,
-      isSupported: true,
-    };
-  }, [ batches, metrics, trialIds ]);
-
-  const hpImportance = useMemo(() => {
-    if (!hpImportanceMap) return {};
-    return hpImportanceMap[filters.metric.type][filters.metric.name] || {};
-  }, [ filters.metric, hpImportanceMap ]);
+  const hasLoaded = useMemo(
+    () =>
+      batches.length > 0
+      || metrics && metrics.length > 0
+      || trialIds.length > 0
+    , [ batches, metrics, trialIds ],
+  );
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
   }, [ ]);
 
   useEffect(() => {
-    if(!filters.metric?.name && trialIds.length){
-      setFilters({
-        batch: DEFAULT_BATCH,
-        batchMargin: DEFAULT_BATCH_MARGIN,
-        hParams: [],
-        maxTrial: DEFAULT_MAX_TRIALS,
-        metric: defaultMetric,
-        scale: Scale.Linear,
-        view: DEFAULT_VIEW,
-      });
-    }
-  }, [ trialIds, defaultMetric, filters.metric?.name ]);
-
-  useEffect(() => {
-    if (ui.isPageHidden || !experimentIds.length) return;
+    if (ui.isPageHidden || !experimentIds.length || !filters.metric) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -176,12 +143,6 @@ const CompareVisualization: React.FC = () => {
       ),
       event => {
         if (!event || !event.trials) return;
-
-        /*
-         * Cache trial ids, hparams, batches and metric values into easily searchable
-         * dictionaries, then construct the necessary data structures to render the
-         * chart and the table.
-         */
 
         (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
         // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
@@ -244,16 +205,11 @@ const CompareVisualization: React.FC = () => {
         setBatches(newBatches);
 
         const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
-          /**
-           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-           * dynamic min/max ranges via uPlot.Scales.
-           */
           const value = metricsMap[trialId][batch];
           return Number.isFinite(value) ? value : null;
         }));
         setChartData(newChartData);
 
-        // One successful event as come through.
       },
     ).catch(e => {
       setPageError(e);
@@ -263,7 +219,7 @@ const CompareVisualization: React.FC = () => {
   }, [ trialIds, filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
-    if (!isSupported || ui.isPageHidden || !trialIds?.length) return;
+    if (ui.isPageHidden || !trialIds?.length) return;
 
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
@@ -277,11 +233,6 @@ const CompareVisualization: React.FC = () => {
       ),
       event => {
         if (!event) return;
-        /*
-         * The metrics endpoint can intermittently send empty lists,
-         * so we keep track of what we have seen on our end and
-         * only add new metrics we have not seen to the list.
-         */
         (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
         (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
 
@@ -292,37 +243,15 @@ const CompareVisualization: React.FC = () => {
           ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
         ];
         setMetrics(newMetrics);
+        setFilters((prevFilters) =>
+          prevFilters.metric ? prevFilters : { ...prevFilters, metric: newMetrics[0] });
       },
     ).catch(() => {
       setPageError(PageError.MetricNames);
     });
 
     return () => canceler.abort();
-  }, [ trialIds, filters?.metric, isSupported, ui.isPageHidden ]);
-
-  // Set the default filter batch.
-  useEffect(() => {
-    if (!batches || batches.length === 0) return;
-    setFilters(prev => {
-      if (prev.batch !== DEFAULT_BATCH) return prev;
-      return { ...prev, batch: batches.first() };
-    });
-  }, [ batches ]);
-
-  // Update default filter hParams if not previously set.
-  useEffect(() => {
-    if (!isSupported) return;
-
-    setFilters(prev => {
-      if (prev.hParams.length !== 0 || !hpImportanceMap) return prev;
-      const map = hpImportanceMap[prev.metric.type][prev.metric.name];
-      let hParams = fullHParams.current;
-      if (hasObjectKeys(map)) {
-        hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));
-      }
-      return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
-    });
-  }, [ hpImportanceMap, isSupported ]);
+  }, [ trialIds, filters?.metric, ui.isPageHidden ]);
 
   if (!experimentIds.length) {
     return (
@@ -330,38 +259,15 @@ const CompareVisualization: React.FC = () => {
         <Spinner center className={css.alertSpinner} />
       </div>
     );
-  }if (!isSupported) {
-    const alertMessage = `
-      Hyperparameter visualizations are not applicable for single trial or PBT experiments.
-    `;
-    return (
-      <div className={css.alert}>
-        <Alert
-          description={(
-            <>
-              Learn about&nbsp;
-              <Link
-                external
-                path={paths.docs('/training-apis/experiment-config.html#searcher')}
-                popout>how to run a hyperparameter search
-              </Link>.
-            </>
-          )}
-          message={alertMessage}
-          type="warning"
-        />
-      </div>
-    );
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   }
 
   const visualizationFilters = (
-    <ExperimentVisualizationFilters
+    <CompareFilters
       batches={batches || []}
       filters={filters}
       fullHParams={fullHParams.current}
-      hpImportance={hpImportance}
       metrics={metrics || []}
       type={typeKey}
       onChange={handleFiltersChange}

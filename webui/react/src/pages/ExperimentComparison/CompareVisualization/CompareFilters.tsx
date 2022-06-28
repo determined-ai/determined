@@ -9,7 +9,7 @@ import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
 import { Scale } from 'types';
-import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
+import { ExperimentVisualizationType, MetricName } from 'types';
 
 import css from './CompareFilters.module.scss';
 
@@ -20,7 +20,7 @@ export interface VisualizationFilters {
   batchMargin: number;
   hParams: string[];
   maxTrial: number;
-  metric: MetricName;
+  metric?: MetricName;
   scale: Scale;
   view: ViewType;
 }
@@ -39,7 +39,6 @@ interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
-  hpImportance?: HpImportance;
   metrics: MetricName[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
@@ -99,7 +98,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
-  hpImportance,
   metrics,
   onChange,
   onMetricChange,
@@ -232,7 +230,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
       {showHParams && (
         <HpSelectFilter
           fullHParams={fullHParams}
-          hpImportance={hpImportance}
           label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
           onChange={handleHParamChange}

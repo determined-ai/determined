@@ -881,6 +881,12 @@ func (a *apiServer) TrialsMetricNames(req *apiv1.TrialsMetricNamesRequest,
 	if period == 0 {
 		period = defaultMetricsStreamPeriod
 	}
+	if len(req.TrialId) == 0 {
+		return status.Errorf(
+			codes.InvalidArgument,
+			"at least one trial id required",
+		)
+	}
 	for {
 		var response apiv1.TrialsMetricNamesResponse
 
@@ -1323,6 +1329,10 @@ func (a *apiServer) ExperimentsSample(req *apiv1.ExperimentsSampleRequest,
 		seenThisRound := make(map[int32]bool)
 
 		trialIDs, err := a.m.db.TopExperimentsByMetric(experimentIDs, maxTrials, metricName, true)
+
+		if err != nil {
+			return err
+		}
 
 		for _, trialID := range trialIDs {
 			var trial *apiv1.ExpTrial
