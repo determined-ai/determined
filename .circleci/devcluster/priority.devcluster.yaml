@@ -39,8 +39,6 @@ stages:
           type: agent
 
   - agent:
-      pre:
-        - sh: make -C agent build
       name: agent1
       config_file:
         master_host: 127.0.0.1
