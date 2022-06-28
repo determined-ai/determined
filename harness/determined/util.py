@@ -124,7 +124,7 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     for name, values in metric_dict.items():
         m = None  # type: Optional[float]
         try:
-            values = np.array(values)  # type: ignore
+            values = np.array(values)
             filtered_values = values[values != None]  # noqa: E711
             m = np.mean(filtered_values).item()
         except (TypeError, ValueError):
