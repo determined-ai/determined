@@ -10,7 +10,7 @@ import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
-import { isEqual } from 'shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
@@ -48,23 +48,29 @@ const DEFAULT_MODAL_STATE = {
 
 const useModalModelCreate = (): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
-  const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
+  const prevModalState = usePrevious(modalState, undefined);
 
-  const { modalOpen: showRegisterCheckpointModal } = useModalCheckpointRegister();
+  const handleOnCancel = useCallback(() => {
+    setModalState(DEFAULT_MODAL_STATE);
+  }, []);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+  const { modalOpen: modalOpenCheckpointRegister } = useModalCheckpointRegister(
+    { onClose: handleOnCancel },
+  );
+
+  const handleOnClose = useCallback(() => {
+    setModalState(DEFAULT_MODAL_STATE);
+  }, []);
+
+  const {
+    modalClose,
+    modalOpen: openOrUpdate,
+    ...modalHook
+  } = useModal({ onClose: handleOnClose });
 
   const modalOpen = useCallback(({ checkpointUuid }: OpenProps = {}) => {
-    setModalState({
-      checkpointUuid,
-      expandDetails: false,
-      isNameUnique: true,
-      metadata: {},
-      modelDescription: '',
-      modelName: '',
-      tags: [],
-      visible: true,
-    });
+    const newState = clone(DEFAULT_MODAL_STATE);
+    setModalState({ ...newState, checkpointUuid, visible: true });
   }, []);
 
   const createModel = useCallback(async (state: ModalState) => {
@@ -76,11 +82,11 @@ const useModalModelCreate = (): ModalHooks => {
         metadata: metadata,
         name: modelName,
       });
+
       if (!response?.id) return;
-      modalClose();
 
       if (checkpointUuid) {
-        showRegisterCheckpointModal({ checkpointUuid, selectedModelName: response.name });
+        modalOpenCheckpointRegister({ checkpointUuid, selectedModelName: response.name });
       }
 
       notification.open({
@@ -88,10 +94,9 @@ const useModalModelCreate = (): ModalHooks => {
         description: (
           <div className={css.toast}>
             <p>{`"${modelName}"`} created</p>
-            <Link path={paths.modelDetails(response.name)}>
-              View Model
-            </Link>
-          </div>),
+            <Link path={paths.modelDetails(response.name)}>View Model</Link>
+          </div>
+        ),
         message: '',
       });
     } catch (e) {
@@ -101,7 +106,7 @@ const useModalModelCreate = (): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ modalClose, showRegisterCheckpointModal ]);
+  }, [ modalOpenCheckpointRegister ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
     await createModel(state);
@@ -214,7 +219,7 @@ const useModalModelCreate = (): ModalHooks => {
     openOrUpdate(getModalProps(modalState));
   }, [ getModalProps, modalState, openOrUpdate, prevModalState ]);
 
-  return { modalClose, modalOpen, modalRef, ...modalHook };
+  return { modalClose, modalOpen, ...modalHook };
 };
 
 export default useModalModelCreate;

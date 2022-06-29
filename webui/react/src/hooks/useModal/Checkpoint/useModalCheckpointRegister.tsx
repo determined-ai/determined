@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
@@ -18,10 +18,10 @@ import handleError from 'utils/error';
 import css from './useModalCheckpointRegister.module.scss';
 
 interface Props {
-  onClose?: (checkpointUuid?: string) => void;
+  onClose?: (checkpointUuid?: string, reason?: ModalCloseReason) => void;
 }
 
-interface OpenProps {
+interface ModalOpenProps {
   checkpointUuid: string;
   selectedModelName?: string;
 }
@@ -38,7 +38,7 @@ interface ModalState {
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (openProps: OpenProps) => void;
+  modalOpen: (openProps: ModalOpenProps) => void;
 }
 
 const DEFAULT_MODAL_STATE = {
@@ -54,11 +54,11 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ canceler ] = useState(new AbortController());
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
-  const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
+  const prevModalState = usePrevious(modalState, undefined);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback((reason) => {
     setModalState(DEFAULT_MODAL_STATE);
-    onClose?.();
+    onClose?.(undefined, reason);
   }, [ onClose ]);
 
   const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal(
@@ -91,21 +91,22 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         },
         modelName: selectedModelName,
       });
+
       if (!response) return;
-      modalClose();
-      notification.open(
-        {
-          btn: null,
-          description: (
-            <div className={css.toast}>
-              <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-              <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
-                View Model Version
-              </Link>
-            </div>),
-          message: '',
-        },
-      );
+
+      modalClose(ModalCloseReason.Ok);
+
+      notification.open({
+        btn: null,
+        description: (
+          <div className={css.toast}>
+            <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
+            <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
+              View Model Version
+            </Link>
+          </div>),
+        message: '',
+      });
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to register checkpoint.',
@@ -145,8 +146,8 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, []);
 
   const launchNewModelModal = useCallback((state: ModalState) => {
-    modalClose();
-    onClose?.(state.checkpointUuid);
+    modalClose(ModalCloseReason.Cancel);
+    onClose?.(state.checkpointUuid, ModalCloseReason.Cancel);
   }, [ modalClose, onClose ]);
 
   const fetchModels = useCallback(async () => {
@@ -172,7 +173,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     }
   }, [ canceler.signal ]);
 
-  const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: OpenProps) => {
+  const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: ModalOpenProps) => {
     fetchModels();
     setModalState({
       ...DEFAULT_MODAL_STATE,

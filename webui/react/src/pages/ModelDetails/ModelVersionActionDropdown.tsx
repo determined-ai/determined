@@ -1,20 +1,15 @@
-import { Dropdown, Menu, Modal } from 'antd';
+import { Dropdown, Menu } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
-import showModalItemCannotDelete from 'components/ModalItemDelete';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import { deleteModelVersion } from 'services/api';
+import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
-import { ErrorType } from 'shared/utils/error';
-import { DetailedUser, ModelItem, ModelVersion } from 'types';
-import handleError from 'utils/error';
+import { ModelVersion } from 'types';
 
 interface Props {
   className?: string;
-  curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
-  model?: ModelItem;
   modelVersion: ModelVersion;
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
@@ -23,57 +18,27 @@ interface Props {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const ModelVersionActionDropdown: React.FC<Props> = (
-  {
-    model, modelVersion, children, curUser, onVisibleChange,
-    className, direction = 'vertical', onComplete, trigger,
-  }
-  : PropsWithChildren<Props>,
-) => {
-  const { contextHolder, modalOpen: openModelDownload } = useModalModelDownload({
-    modelVersion,
-    onClose: onComplete,
-  });
+const ModelVersionActionDropdown: React.FC<Props> = ({
+  modelVersion, children, onVisibleChange,
+  className, direction = 'vertical', onComplete, trigger,
+}: PropsWithChildren<Props>) => {
+  const {
+    contextHolder: modalModelDownloadContextHolder,
+    modalOpen: openModelDownload,
+  } = useModalModelDownload({ modelVersion, onClose: onComplete });
 
-  const isDeletable = useMemo(() => {
-    return curUser?.isAdmin
-    || curUser?.id === model?.userId
-    || curUser?.id === modelVersion.userId;
-  }, [ curUser?.id, curUser?.isAdmin, model?.userId, modelVersion.userId ]);
-
-  const deleteVersion = useCallback(async (version: ModelVersion) => {
-    try {
-      await deleteModelVersion({ modelName: version.model.name, versionId: version.id });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: `Unable to delete model version ${version.id}.`,
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, []);
-
-  const showConfirmDelete = useCallback((version: ModelVersion) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}"
-      from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: () => deleteVersion(version),
-      title: 'Confirm Delete',
-    });
-  }, [ deleteVersion ]);
+  const {
+    contextHolder: modalModelVersionDeleteContextHolder,
+    modalOpen: openModelVersionDelete,
+  } = useModalModelVersionDelete();
 
   const handleDownloadModel = useCallback(() => {
     openModelDownload({});
   }, [ openModelDownload ]);
 
   const handleDeleteClick = useCallback(() => {
-    isDeletable ? showConfirmDelete(modelVersion) : showModalItemCannotDelete();
-  }, [ isDeletable, modelVersion, showConfirmDelete ]);
+    openModelVersionDelete(modelVersion);
+  }, [ modelVersion, openModelVersionDelete ]);
 
   const ModelVersionActionMenu = useMemo(() => {
     return (
@@ -102,7 +67,8 @@ const ModelVersionActionDropdown: React.FC<Props> = (
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
-      {contextHolder}
+      {modalModelDownloadContextHolder}
+      {modalModelVersionDeleteContextHolder}
     </>
   ) : (
     <div
@@ -117,7 +83,8 @@ const ModelVersionActionDropdown: React.FC<Props> = (
           <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
-      {contextHolder}
+      {modalModelDownloadContextHolder}
+      {modalModelVersionDeleteContextHolder}
     </div>
   );
 };

@@ -1,15 +1,15 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
+import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -20,20 +20,22 @@ import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onDelete: () => void;
   onSaveDescription: (editedDescription: string) => Promise<void>
   onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
 }
 
-const ModelHeader: React.FC<Props> = (
-  {
-    model, onDelete, onSwitchArchive,
-    onSaveDescription, onUpdateTags, onSaveName,
-  }: Props,
-) => {
-  const { auth: { user }, users } = useStore();
+const ModelHeader: React.FC<Props> = ({
+  model,
+  onSaveDescription,
+  onSaveName,
+  onSwitchArchive,
+  onUpdateTags,
+}: Props) => {
+  const { users } = useStore();
+
+  const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -71,21 +73,7 @@ const ModelHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ model, onSaveDescription, onUpdateTags, users ]);
 
-  const isDeletable = user?.isAdmin || user?.id === model.userId;
-
-  const showConfirmDelete = useCallback((model: ModelItem) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this model "${model.name}" and all 
-      of its versions from the model registry?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Model',
-      okType: 'danger',
-      onOk: () => onDelete(),
-      title: 'Confirm Delete',
-    });
-  }, [ onDelete ]);
+  const handleDelete = useCallback(() => modalOpen(model), [ modalOpen, model ]);
 
   return (
     <header className={css.base}>
@@ -137,8 +125,7 @@ const ModelHeader: React.FC<Props> = (
                   <Menu.Item
                     danger
                     key="delete-model"
-                    onClick={() => isDeletable ?
-                      showConfirmDelete(model) : showModalItemCannotDelete()}>
+                    onClick={handleDelete}>
                     Delete
                   </Menu.Item>
                 </Menu>
@@ -152,6 +139,7 @@ const ModelHeader: React.FC<Props> = (
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
+      {contextHolder}
     </header>
   );
 };

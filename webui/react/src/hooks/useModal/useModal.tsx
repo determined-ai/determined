@@ -33,6 +33,17 @@ interface ModalOptions {
   rawOk?: boolean;
 }
 
+export const CANNOT_DELETE_MODAL_PROPS: Partial<ModalFuncProps> = {
+  cancelText: 'Okay',
+  closable: true,
+  content: 'Only the item creator or an admin can delete this item.',
+  icon: null,
+  maskClosable: true,
+  okButtonProps: { style: { display: 'none' } },
+  okText: undefined,
+  title: 'Unable to Delete',
+};
+
 const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
   maskClosable: true,
   style: { minWidth: 280 },
