@@ -62,8 +62,6 @@ def setup_user(user, name: str, sm_hash: t.Optional[str] = None, repo_hash: t.Op
     clone_dir = '/tmp' / pathlib.Path(name)
     web_dir = clone_dir / user['web_dir']
     run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
-    # temporarily here to faciliate switching between sm and subtree
-    run(f'rm -rf src/shared', cwd=web_dir)
     run(f'git checkout {repo_hash}', cwd=clone_dir)
 
     if sm_hash is None: return clone_dir
@@ -72,7 +70,7 @@ def setup_user(user, name: str, sm_hash: t.Optional[str] = None, repo_hash: t.Op
         run(f'git checkout {sm_hash}', cwd=web_dir/SHARED_DIR)
     else:
         rel_shared_dir = pathlib.Path(user['web_dir'])/SHARED_DIR
-        cmd = f'git subtree pull --prefix {rel_shared_dir} {SHARED_WEB_REPO} {sm_hash} --squash'
+        cmd = f'git subtree pull --prefix {rel_shared_dir} {SHARED_WEB_REPO} {sm_hash} --squash -m "update shared code"'
         run(cmd, cwd=clone_dir)
     return clone_dir
 
@@ -94,9 +92,6 @@ def overwrite_with_cur_shared(user, name: str):
     clone_dir = '/tmp' / pathlib.Path(name)
     web_dir = clone_dir / user['web_dir']
     run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
-    # for repo_name, metadata in repos.items():
-    #     if repo_name == name or metadata['using_sm']: continue
-    #     src_dir = setup_user(metadata, repo_name)
     dest = web_dir / SHARED_DIR
     src = pathlib.Path.cwd() # FIXME find out where the current shared dir is relative to the test script
     run(f'rm -rf {dest}; mkdir -p {dest}')
