@@ -62,6 +62,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import {
+  canUserActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
@@ -555,7 +556,8 @@ const ProjectDetails: React.FC = () => {
     }
     if (action === Action.Move) {
       return openMoveModal({
-        experimentIds: settings.row,
+        experimentIds: settings.row.filter((id) =>
+          canUserActionExperiment(user, Action.Move, experimentMap[id])),
         sourceProjectId: project?.id,
         sourceWorkspaceId: project?.workspaceId,
       });
