@@ -96,6 +96,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 			cachedTime: time.Now(),
 		}
 		f.caches[expID] = value
+		log.Infof("-----     finish creating cache for exp %d", expID)
 	}
 	f.prune()
 	return value, nil
