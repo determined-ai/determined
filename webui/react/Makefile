@@ -74,3 +74,15 @@ test:
 .PHONY: test-ci
 test-ci:
 	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --reporters=jest-junit
+
+# shared-web helpers
+
+.PHONY: test-shared
+test-shared:
+	cd src/shared; ./bin/test.py --repos saas --test-local
+
+.PHONY: push
+push-shared: test-shared-code
+	# CHECK should this be allowed only in core/master branch?
+	# TODO make sure changes are committed
+	cd ../../; git subtree push --prefix=webui/react/src/shared https://github.com/determined-ai/shared-web main
