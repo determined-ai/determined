@@ -223,6 +223,23 @@ describe('LogViewer', () => {
         expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
       });
     });
+
+    it('should not show log close button by default', async () => {
+      setup({ decoder });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show log close button when prop is supplied', async () => {
+      const handleCloseLogs = () => { return; };
+      setup({ decoder, handleCloseLogs });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('streaming logs', () => {
@@ -295,23 +312,6 @@ describe('LogViewer', () => {
         const lastLog = logsReference[logsReference.length - 1];
         expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       });
-    });
-  });
-
-  it('should not show log close button by default', async () => {
-    setup({ decoder });
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
-    });
-  });
-
-  it('should show log close button when prop is supplied', async () => {
-    const handleCloseLogs = () => { return; };
-    setup({ decoder, handleCloseLogs });
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
     });
   });
 });
