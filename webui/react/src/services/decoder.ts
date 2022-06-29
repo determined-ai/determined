@@ -100,7 +100,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
     return {
       id: agent.id,
       registeredTime: dayjs(agent.registeredTime).unix(),
-      resourcePool: agent.resourcePool,
+      resourcePools: agent.resourcePools,
       resources,
     } as types.Agent;
   });

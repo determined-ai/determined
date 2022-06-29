@@ -92,7 +92,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
@@ -197,7 +197,7 @@ const NavigationSideBar: React.FC = () => {
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ?
-                  clusterStatusText(overview, resourcePools) : undefined}
+                  clusterStatusText(overview, resourcePools, agents) : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />

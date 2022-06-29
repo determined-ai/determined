@@ -398,7 +398,7 @@ class v1Agent:
         enabled: "typing.Optional[bool]" = None,
         label: "typing.Optional[str]" = None,
         registeredTime: "typing.Optional[str]" = None,
-        resourcePool: "typing.Optional[str]" = None,
+        resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
         slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
         version: "typing.Optional[str]" = None,
     ):
@@ -407,11 +407,11 @@ class v1Agent:
         self.slots = slots
         self.containers = containers
         self.label = label
-        self.resourcePool = resourcePool
         self.addresses = addresses
         self.enabled = enabled
         self.draining = draining
         self.version = version
+        self.resourcePools = resourcePools
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
@@ -421,11 +421,11 @@ class v1Agent:
             slots={k: v1Slot.from_json(v) for k, v in obj["slots"].items()} if obj.get("slots", None) is not None else None,
             containers={k: v1Container.from_json(v) for k, v in obj["containers"].items()} if obj.get("containers", None) is not None else None,
             label=obj.get("label", None),
-            resourcePool=obj.get("resourcePool", None),
             addresses=obj.get("addresses", None),
             enabled=obj.get("enabled", None),
             draining=obj.get("draining", None),
             version=obj.get("version", None),
+            resourcePools=obj.get("resourcePools", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -435,11 +435,11 @@ class v1Agent:
             "slots": {k: v.to_json() for k, v in self.slots.items()} if self.slots is not None else None,
             "containers": {k: v.to_json() for k, v in self.containers.items()} if self.containers is not None else None,
             "label": self.label if self.label is not None else None,
-            "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "addresses": self.addresses if self.addresses is not None else None,
             "enabled": self.enabled if self.enabled is not None else None,
             "draining": self.draining if self.draining is not None else None,
             "version": self.version if self.version is not None else None,
+            "resourcePools": self.resourcePools if self.resourcePools is not None else None,
         }
 
 class v1AgentUserGroup:
@@ -1411,6 +1411,7 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_BEST = "FITTING_POLICY_BEST"
     FITTING_POLICY_WORST = "FITTING_POLICY_WORST"
     FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
+    FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
 
 class v1GetAgentResponse:
     def __init__(
@@ -4939,6 +4940,7 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
     SCHEDULER_TYPE_ROUND_ROBIN = "SCHEDULER_TYPE_ROUND_ROBIN"
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
+    SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
 
 class v1SearcherOperation:
     def __init__(
