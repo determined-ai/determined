@@ -32,14 +32,14 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="name">Name</label>
-        <Input id="name" value={name} onChange={handleNameInput} />
+        <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
       </div>
     );
   }, [ handleNameInput, name ]);
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createWorkspace({ name });
+      const response = await createWorkspace({ name: name.trim() });
       routeToReactUrl(paths.workspaceDetails(response.id));
     } catch (e) {
       handleError(e, {
@@ -57,7 +57,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',

@@ -39,7 +39,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       <div className={css.base}>
         <div>
           <label className={css.label} htmlFor="name">Name</label>
-          <Input id="name" value={name} onChange={handleNameInput} />
+          <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
@@ -51,7 +51,11 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createProject({ description, name, workspaceId });
+      const response = await createProject({
+        description: description.trim(),
+        name: name.trim(),
+        workspaceId,
+      });
       routeToReactUrl(paths.projectDetails(response.id));
     } catch (e) {
       handleError(e, {
@@ -69,7 +73,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
