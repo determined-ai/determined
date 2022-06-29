@@ -39,7 +39,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await patchWorkspace({ id: workspace.id, name: name });
+      await patchWorkspace({ id: workspace.id, name: name.trim() });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -56,7 +56,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
       okText: 'Save changes',
       onOk: handleOk,
       title: 'Edit Workspace',

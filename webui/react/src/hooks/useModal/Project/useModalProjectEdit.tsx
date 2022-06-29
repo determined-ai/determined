@@ -50,7 +50,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await patchProject({ description, id: project.id, name });
+      await patchProject({ description, id: project.id, name: name.trim() });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -67,7 +67,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
       okText: 'Save Changes',
       onOk: handleOk,
       title: 'Edit Project',
