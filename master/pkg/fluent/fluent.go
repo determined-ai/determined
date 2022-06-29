@@ -81,6 +81,10 @@ func makeOutputConfig(
   storage.total_limit_size 1G
 `, masterHost, masterPort)
 
+		if c := loggingConfig.DefaultLoggingConfig.AdditionalFluentOutputs; c != nil {
+			fmt.Fprint(config, *c)
+		}
+
 	case loggingConfig.ElasticLoggingConfig != nil:
 		elasticOpts := loggingConfig.ElasticLoggingConfig
 
@@ -109,6 +113,10 @@ func makeOutputConfig(
   HTTP_User   %s
   HTTP_Passwd %s
 `, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
+		}
+
+		if c := elasticOpts.AdditionalFluentOutputs; c != nil {
+			fmt.Fprint(config, *c)
 		}
 
 	default:
