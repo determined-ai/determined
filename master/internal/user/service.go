@@ -21,6 +21,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const (
+	AuthNone     int = 0
+	AuthStandard     = 1
+	AuthAdmin        = 2
+)
+
 var (
 	once        sync.Once
 	userService *Service
@@ -30,7 +36,7 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// unauthenticatedPathsMap contains the paths that are exempted from authentication.
+// unauthenticatedPathsMap contains the paths and URIs that are exempted from authentication.
 var unauthenticatedPathsMap = map[string]bool{
 	"/":                   true,
 	"/det/":               true,
@@ -48,23 +54,26 @@ var unauthenticatedPathsMap = map[string]bool{
 
 // unauthenticatedPointsList contains URIs that are exempted from authentication.
 var unauthenticatedPointsList = []string{
-	"/api/v1/notebooks/*",
-	"/api/v1/tasks/*",
-	"/api/v1/allocations/*",
+	"/api/v1/notebooks/.*",
+	"/api/v1/tasks/.*",
+	"/api/v1/allocations/.*",
 	"/api/v1/tensorboards/",
-	"/api/v1/shells/*",
-	"/api/v1/experiments/*",
-	"/api/v1/trials/*",
+	"/api/v1/shells/.*",
+	"/api/v1/experiments/.*",
+	"/api/v1/trials/.*",
 	"/api/v1/checkpoints",
-	"/agents\\?id=*",
+	"/agents\\\\?id=.*",
 }
 
-// adminAuthPointsMap contains the paths that require admin authentication.
+// adminAuthPointsList contains the paths that require admin authentication.
 var adminAuthPointsList = []string{
 	"/config",
-	"/agents/*/slots/*",
-	"/api/v1/agents/*",
+	"/agents/.*/slots/.*",
+	"/api/v1/agents/.*",
 }
+
+var unauthenticatedPointsPattern = regexp.MustCompile("^" + strings.Join(unauthenticatedPointsList, "$|^") + "$")
+var adminAuthPointsPattern = regexp.MustCompile("^" + strings.Join(adminAuthPointsList, "$|^") + "$")
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -157,50 +166,36 @@ func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.Handler
 	return s.processAuthentication(next)
 }
 
-func (s *Service) doesMatch(uri string, path string) bool {
-	regexStr := "^"
-	for i := range path {
-		if path[i] == "*"[0] {
-			regexStr += ".*"
-		} else {
-			regexStr += string(path[i])
-		}
-	}
-	regexStr += "$"
-	match, _ := regexp.MatchString(regexStr, uri)
-	return match
-}
-
-func (s *Service) pathMatches(uri string, paths []string) bool {
-	for _, path := range paths {
-		if s.doesMatch(uri, path) {
-			return true
-		}
-	}
-	return false
-}
-
 // getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
 // for whether the path requires admin authentication.
-func (s *Service) getAuthLevel(c echo.Context) (bool, bool) {
-	if s.pathMatches(c.Request().RequestURI, adminAuthPointsList) {
-		return true, true
-	} else if _, ok := unauthenticatedPathsMap[c.Path()]; ok {
-		return false, false
-	} else if _, ok = unauthenticatedPathsMap[c.Request().RequestURI]; ok {
-		return false, false
-	} else if s.pathMatches(c.Request().RequestURI, unauthenticatedPointsList) {
-		return false, false
+func (s *Service) getAuthLevel(c echo.Context) int {
+	_, noAuthPath := unauthenticatedPathsMap[c.Path()]
+	_, noAuthURI := unauthenticatedPathsMap[c.Request().RequestURI]
+
+	switch {
+	case adminAuthPointsPattern.MatchString(c.Request().RequestURI):
+		return AuthAdmin
+	case noAuthPath || noAuthURI:
+		return AuthNone
+	case unauthenticatedPointsPattern.MatchString(c.Request().RequestURI):
+		return AuthNone
+	default:
+		return AuthStandard
 	}
-	return true, false
 }
 
 func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authenticate, adminOnly := s.getAuthLevel(c)
-		if !authenticate {
+		adminOnly := false
+		doAuth := s.getAuthLevel(c)
+
+		switch doAuth {
+		case AuthNone:
 			return next(c)
+		case AuthAdmin:
+			adminOnly = true
 		}
+		
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
