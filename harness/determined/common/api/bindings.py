@@ -44,6 +44,36 @@ class APIHttpError(Exception):
         return self.message
 
 
+class ExpCompareTrialsSampleResponseExpTrial:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        experimentId: int,
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
+    ):
+        self.trialId = trialId
+        self.hparams = hparams
+        self.data = data
+        self.experimentId = experimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
+        return cls(
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            experimentId=obj["experimentId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId,
+            "hparams": self.hparams,
+            "data": [x.to_json() for x in self.data],
+            "experimentId": self.experimentId,
+        }
+
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -1148,6 +1178,54 @@ class v1EnableSlotResponse:
     def to_json(self) -> typing.Any:
         return {
             "slot": self.slot.to_json() if self.slot is not None else None,
+        }
+
+class v1ExpCompareMetricNamesResponse:
+    def __init__(
+        self,
+        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
+        return cls(
+            trainingMetrics=obj.get("trainingMetrics", None),
+            validationMetrics=obj.get("validationMetrics", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+        }
+
+class v1ExpCompareTrialsSampleResponse:
+    def __init__(
+        self,
+        demotedTrials: "typing.Sequence[int]",
+        promotedTrials: "typing.Sequence[int]",
+        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
+    ):
+        self.trials = trials
+        self.promotedTrials = promotedTrials
+        self.demotedTrials = demotedTrials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
+        return cls(
+            trials=[ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
+            promotedTrials=obj["promotedTrials"],
+            demotedTrials=obj["demotedTrials"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trials": [x.to_json() for x in self.trials],
+            "promotedTrials": self.promotedTrials,
+            "demotedTrials": self.demotedTrials,
         }
 
 class v1Experiment:

@@ -162,6 +162,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
     terminalRunStates.has(experiment.state) && experiment.archived,
 
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
+
+  [ExperimentAction.CompareExperiments]: alwaysTrueExperimentChecker,
 };
 
 export const canUserActionExperiment = (

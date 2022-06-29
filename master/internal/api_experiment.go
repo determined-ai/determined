@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -871,6 +872,60 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
+	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
+	seenTrain := make(map[string]bool)
+	seenValid := make(map[string]bool)
+	var tStartTime time.Time
+	var vStartTime time.Time
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
+	if len(req.TrialId) == 0 {
+		return status.Errorf(
+			codes.InvalidArgument,
+			"at least one trial id required",
+		)
+	}
+	for {
+		var response apiv1.ExpCompareMetricNamesResponse
+
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
+			tStartTime, vStartTime)
+		if err != nil {
+			return nil
+		}
+		tStartTime = tEndTime
+		vStartTime = vEndTime
+
+		for _, name := range newTrain {
+			if seen := seenTrain[name]; !seen {
+				response.TrainingMetrics = append(response.TrainingMetrics, name)
+				seenTrain[name] = true
+			}
+		}
+		for _, name := range newValid {
+			if seen := seenValid[name]; !seen {
+				response.ValidationMetrics = append(response.ValidationMetrics, name)
+				seenValid[name] = true
+			}
+		}
+
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+		if err = resp.Send(&response); err != nil {
+			return err
+		}
+
+		time.Sleep(period)
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+	}
+}
+
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer) error {
 	experimentID := int(req.ExperimentId)
@@ -1117,6 +1172,62 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
+	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
+	currentTrials map[int32]bool,
+	trialCursors map[int32]time.Time) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
+	var metricSeries []lttb.Point
+	var endTime time.Time
+	var zeroTime time.Time
+	var err error
+	var trial apiv1.ExpCompareTrialsSampleResponse_ExpTrial
+	trial.TrialId = trialID
+
+	if _, current := currentTrials[trialID]; !current {
+		var trialConfig *model.Trial
+		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error fetching trial metadata")
+		}
+		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
+		trial.ExperimentId = int32(trialConfig.ExperimentID)
+	}
+
+	startTime, seenBefore := trialCursors[trialID]
+	if !seenBefore {
+		startTime = zeroTime
+	}
+	switch metricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	default:
+		panic("Invalid metric type")
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+	}
+	if len(metricSeries) > 0 {
+		// if we get empty results, the endTime is incorrectly zero
+		trialCursors[trialID] = endTime
+	}
+	if !seenBefore {
+		metricSeries = lttb.Downsample(metricSeries, maxDatapoints, false)
+	}
+
+	for _, in := range metricSeries {
+		out := apiv1.DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		trial.Data = append(trial.Data, &out)
+	}
+	return &trial, nil
+}
+
 func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	resp apiv1.Determined_TrialsSampleServer) error {
 	experimentID := int(req.ExperimentId)
@@ -1214,6 +1325,103 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		}
 		if model.TerminalStates[state] {
 			return nil
+		}
+
+		time.Sleep(period)
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
+	resp apiv1.Determined_ExpCompareTrialsSampleServer) error {
+	experimentIDs := req.ExperimentIds
+	maxTrials := int(req.MaxTrials)
+	if maxTrials == 0 {
+		maxTrials = 25
+	}
+	maxDatapoints := int(req.MaxDatapoints)
+	if maxDatapoints == 0 {
+		maxDatapoints = 1000
+	}
+	startBatches := int(req.StartBatches)
+	endBatches := int(req.EndBatches)
+	if endBatches <= 0 {
+		endBatches = math.MaxInt32
+	}
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
+
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return status.Error(codes.InvalidArgument, "must specify a metric type")
+	}
+	if metricName == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+
+	trialCursors := make(map[int32]time.Time)
+	currentTrials := make(map[int32]bool)
+	for {
+		var response apiv1.ExpCompareTrialsSampleResponse
+		var promotedTrials []int32
+		var demotedTrials []int32
+		var trials []*apiv1.ExpCompareTrialsSampleResponse_ExpTrial
+
+		seenThisRound := make(map[int32]bool)
+
+		r := regexp.MustCompile("(?i)(error|loss|mse|mae|mse|deviation|false)")
+		smallerIsBetter := r.MatchString(metricName)
+
+		trialIDs, err := a.m.db.ExpCompareTopTrialsByMetric(experimentIDs,
+			maxTrials,
+			metricName,
+			smallerIsBetter)
+
+		if err != nil {
+			return err
+		}
+
+		for _, trialID := range trialIDs {
+			var trial *apiv1.ExpCompareTrialsSampleResponse_ExpTrial
+			trial, err = a.expCompareFetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+				startBatches, endBatches, currentTrials, trialCursors)
+			if err != nil {
+				return err
+			}
+
+			if _, current := currentTrials[trialID]; !current {
+				promotedTrials = append(promotedTrials, trialID)
+				currentTrials[trialID] = true
+			}
+			seenThisRound[trialID] = true
+
+			trials = append(trials, trial)
+		}
+		for oldTrial := range currentTrials {
+			if !seenThisRound[oldTrial] {
+				demotedTrials = append(demotedTrials, oldTrial)
+				delete(trialCursors, oldTrial)
+			}
+		}
+		// Deletes from currentTrials have to happen when not looping over currentTrials
+		for _, oldTrial := range demotedTrials {
+			delete(currentTrials, oldTrial)
+		}
+
+		response.Trials = trials
+		response.PromotedTrials = promotedTrials
+		response.DemotedTrials = demotedTrials
+
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+		if err = resp.Send(&response); err != nil {
+			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
 
 		time.Sleep(period)
