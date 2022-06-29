@@ -194,6 +194,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleDescriptionUpdate = useCallback(async (newValue: string) => {
     try {
       await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -204,11 +205,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       });
       return e as Error;
     }
-  }, [ experiment.id ]);
+  }, [ experiment.id, fetchExperimentDetails ]);
 
   const handleNameUpdate = useCallback(async (newValue: string) => {
     try {
       await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -219,7 +221,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       });
       return e as Error;
     }
-  }, [ experiment.id ]);
+  }, [ experiment.id, fetchExperimentDetails ]);
 
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
