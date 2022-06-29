@@ -86,6 +86,12 @@ reporting the states of **trial runner** to the master.
  Training
 **********
 
+.. _concept-workspace:
+
+We use **workspaces** and **projects** to organize experiments. A project is a collection of
+experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
+at :doc:`/sysadmin-basics/workspaces`.
+
 .. _concept-experiment:
 
 We use **experiments** to represent the basic unit of running the model training code. An experiment
