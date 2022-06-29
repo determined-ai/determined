@@ -8,7 +8,6 @@ import pytest
 from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import det_spawn
 
 from .managed_cluster import ManagedCluster
 from .utils import command_succeeded, run_command, wait_for_command_state
