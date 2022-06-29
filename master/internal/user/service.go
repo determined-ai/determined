@@ -160,14 +160,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 	return s.processAuthentication(next)
 }
 
-// ProcessAdminAuthentication is a middleware processing function that authenticates requests much
-// like ProcessAuthentication but requires the user to be an admin.
-func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next)
-}
-
-// getAuthLevel returns a boolean for whether the path requires authentication and a second boolean
-// for whether the path requires admin authentication.
+// getAuthLevel returns what level of authentication a request needs
 func (s *Service) getAuthLevel(c echo.Context) int {
 	_, noAuthPath := unauthenticatedPathsMap[c.Path()]
 	_, noAuthURI := unauthenticatedPathsMap[c.Request().RequestURI]
