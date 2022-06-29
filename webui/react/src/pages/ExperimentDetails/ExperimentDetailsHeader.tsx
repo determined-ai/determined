@@ -1,4 +1,4 @@
-import { Button, Modal, Space } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -76,9 +76,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
-
-  const [ experimentCreateModal, experimentCreateModalContextHolder ] = Modal.useModal();
-
   const [ isChangingState, setIsChangingState ] = useState(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
@@ -103,16 +100,25 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const isMovable = canUserActionExperiment(curUser, Action.Move, experiment);
 
-  const { modalOpen: openModalStop } = useModalExperimentStop({
-    experimentId: experiment.id,
-    onClose: handleModalClose,
-  });
+  const {
+    contextHolder: modalExperimentStopContextHolder,
+    modalOpen: openModalStop,
+  } = useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
 
-  const { modalOpen: openModalMove } = useModalExperimentMove({ onClose: handleModalClose });
+  const {
+    contextHolder: modalExperimentMoveContextHolder,
+    modalOpen: openModalMove,
+  } = useModalExperimentMove({ onClose: handleModalClose });
 
-  const { modalOpen: openModalDelete } = useModalExperimentDelete({ experiment: experiment });
+  const {
+    contextHolder: modalExperimentDeleteContextHolder,
+    modalOpen: openModalDelete,
+  } = useModalExperimentDelete({ experiment: experiment });
 
-  const { modalOpen: openModalCreate } = useModalExperimentCreate({ modal: experimentCreateModal });
+  const {
+    contextHolder: modalExperimentCreateContextHolder,
+    modalOpen: openModalCreate,
+  } = useModalExperimentCreate();
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),
@@ -432,7 +438,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         options={headerOptions}
       />
       <ExperimentHeaderProgress experiment={experiment} />
-      {experimentCreateModalContextHolder}
+      {modalExperimentCreateContextHolder}
+      {modalExperimentDeleteContextHolder}
+      {modalExperimentMoveContextHolder}
+      {modalExperimentStopContextHolder}
     </>
   );
 };

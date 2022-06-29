@@ -43,7 +43,6 @@ enum WorkspaceFilters {
 
 const WorkspaceList: React.FC = () => {
   const { users, auth: { user } } = useStore();
-  const { modalOpen } = useModalWorkspaceCreate({});
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ workspaceFilter, setWorkspaceFilter ] = useState<WorkspaceFilters>(WorkspaceFilters.All);
   const [ total, setTotal ] = useState(0);
@@ -52,14 +51,14 @@ const WorkspaceList: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const [ canceler ] = useState(new AbortController());
 
+  const { contextHolder, modalOpen } = useModalWorkspaceCreate();
+
   const {
     settings,
     updateSettings,
   } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(() => {
-    modalOpen();
-  }, [ modalOpen ]);
+  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -261,7 +260,8 @@ const WorkspaceList: React.FC = () => {
           />
         );
     }
-  }, [ actionDropdown,
+  }, [
+    actionDropdown,
     columns,
     fetchWorkspaces,
     isLoading,
@@ -269,7 +269,8 @@ const WorkspaceList: React.FC = () => {
     total,
     updateSettings,
     user,
-    workspaces ]);
+    workspaces,
+  ]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -343,6 +344,7 @@ const WorkspaceList: React.FC = () => {
               />
             )}
       </Spinner>
+      {contextHolder}
     </Page>
   );
 };

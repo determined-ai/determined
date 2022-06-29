@@ -31,12 +31,18 @@ const ProjectActionDropdown: React.FC<Props> = (
   }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openProjectMove } = useModalProjectMove({ onClose: onComplete, project });
-  const { modalOpen: openProjectDelete } = useModalProjectDelete({
-    onClose: onComplete,
-    project,
-  });
-  const { modalOpen: openProjectEdit } = useModalProjectEdit({ onClose: onComplete, project });
+  const {
+    contextHolder: modalProjectMoveContextHolder,
+    modalOpen: openProjectMove,
+  } = useModalProjectMove({ onClose: onComplete, project });
+  const {
+    contextHolder: modalProjectDeleteContextHolder,
+    modalOpen: openProjectDelete,
+  } = useModalProjectDelete({ onClose: onComplete, project });
+  const {
+    contextHolder: modalProjectEditContextHolder,
+    modalOpen: openProjectEdit,
+  } = useModalProjectEdit({ onClose: onComplete, project });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.id === project.userId;
@@ -86,32 +92,49 @@ const ProjectActionDropdown: React.FC<Props> = (
       items.push(<Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>);
     }
     return items;
-  }, [ handleArchiveClick,
+  }, [
+    handleArchiveClick,
     handleDeleteClick,
     handleEditClick,
     handleMoveClick,
     project.archived,
     project.numExperiments,
     userHasPermissions,
-    workspaceArchived ]);
+    workspaceArchived,
+  ]);
+
+  const contextHolders = useMemo(() => (
+    <>
+      {modalProjectDeleteContextHolder}
+      {modalProjectEditContextHolder}
+      {modalProjectMoveContextHolder}
+    </>
+  ), [
+    modalProjectDeleteContextHolder,
+    modalProjectEditContextHolder,
+    modalProjectMoveContextHolder,
+  ]);
 
   if (menuItems.length === 0 && !showChildrenIfEmpty) {
     return null;
   }
 
   return children ? (
-    <Dropdown
-      disabled={menuItems.length === 0}
-      overlay={(
-        <Menu>
-          {menuItems}
-        </Menu>
-      )}
-      placement="bottomLeft"
-      trigger={trigger ?? [ 'contextMenu', 'click' ]}
-      onVisibleChange={onVisibleChange}>
-      {children}
-    </Dropdown>
+    <>
+      <Dropdown
+        disabled={menuItems.length === 0}
+        overlay={(
+          <Menu>
+            {menuItems}
+          </Menu>
+        )}
+        placement="bottomLeft"
+        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+      {contextHolders}
+    </>
   ) : (
     <div
       className={[ css.base, className ].join(' ')}
@@ -130,6 +153,7 @@ const ProjectActionDropdown: React.FC<Props> = (
           <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
+      {contextHolders}
     </div>
   );
 };

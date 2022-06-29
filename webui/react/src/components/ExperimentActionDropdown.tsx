@@ -51,7 +51,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   children,
 }: PropsWithChildren<Props>) => {
   const id = experiment.id;
-  const { modalOpen: openExperimentMove } = useModalExperimentMove({ onClose: onComplete });
+  const {
+    contextHolder,
+    modalOpen: openExperimentMove,
+  } = useModalExperimentMove({ onClose: onComplete });
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -158,13 +161,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
   return children ? (
-    <Dropdown
-      overlay={menu}
-      placement="bottomLeft"
-      trigger={[ 'contextMenu' ]}
-      onVisibleChange={onVisibleChange}>
-      {children}
-    </Dropdown>
+    <>
+      <Dropdown
+        overlay={menu}
+        placement="bottomLeft"
+        trigger={[ 'contextMenu' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+      {contextHolder}
+    </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
@@ -172,6 +178,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           <Icon name="overflow-vertical" />
         </button>
       </Dropdown>
+      {contextHolder}
     </div>
   );
 };

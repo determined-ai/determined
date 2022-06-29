@@ -1,4 +1,4 @@
-import { Button, Menu, Modal, Tooltip, Typography } from 'antd';
+import { Button, Menu, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef,
   useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -94,11 +94,18 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
   const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useModalJupyterLab(jupyterLabModal);
-  const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
+  const {
+    contextHolder: modalUserSettingsContextHolder,
+    modalOpen: openUserSettingsModal,
+  } = useModalUserSettings();
+  const {
+    contextHolder: modalWorkspaceCreateContextHolder,
+    modalOpen: openWorkspaceCreateModal,
+  } = useModalWorkspaceCreate();
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -275,8 +282,9 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {userSettingsModalContextHolder}
-        {jupyterLabModalContextHolder}
+        {modalJupyterLabContextHolder}
+        {modalUserSettingsContextHolder}
+        {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>
   );

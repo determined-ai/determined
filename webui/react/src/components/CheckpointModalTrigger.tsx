@@ -3,9 +3,7 @@ import React, { PropsWithChildren, useCallback } from 'react';
 
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import Icon from 'shared/components/Icon/Icon';
-import {
-  CheckpointWorkloadExtended, ExperimentBase,
-} from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended;
@@ -14,34 +12,34 @@ interface Props {
   title: string;
 }
 
-const CheckpointModalTrigger: React.FC<Props> = (
-  {
-    checkpoint,
-    experiment,
-    title,
-    children,
-  }: PropsWithChildren<Props>,
-) => {
-  const { modalOpen: openModalDelete } = useModalCheckpoint({
+const CheckpointModalTrigger: React.FC<Props> = ({
+  checkpoint,
+  experiment,
+  title,
+  children,
+}: PropsWithChildren<Props>) => {
+  const { contextHolder, modalOpen } = useModalCheckpoint({
     checkpoint,
     config: experiment.config,
     title,
   });
-  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+
+  const handleModalCheckpointClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   return (
-    <span onClick={() => handleModalCheckpointClick()}>
-      {children !== undefined ? children :
-        (
+    <>
+      <span onClick={handleModalCheckpointClick}>
+        {children !== undefined ? children : (
           <Tooltip title="View Checkpoint">
             <Button
               aria-label="View Checkpoint"
               icon={<Icon name="checkpoint" />}
             />
           </Tooltip>
-        )
-      }
-    </span>
+        )}
+      </span>
+      {contextHolder}
+    </>
   );
 };
 

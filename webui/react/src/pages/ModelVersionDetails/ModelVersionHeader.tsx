@@ -37,7 +37,7 @@ const ModelVersionHeader: React.FC<Props> = (
 ) => {
   const { auth: { user }, users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
-  const { modalOpen: openModelDownload } = useModalModelDownload({ modelVersion });
+  const { contextHolder, modalOpen: openModelDownload } = useModalModelDownload({ modelVersion });
 
   const isDeletable = user?.isAdmin
         || user?.id === modelVersion.userId;
@@ -229,6 +229,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
+      {contextHolder}
       <Modal
         className={css.useNotebookModal}
         footer={null}

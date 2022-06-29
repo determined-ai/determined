@@ -1,4 +1,3 @@
-import { Modal } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -44,11 +43,15 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
-  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useModalJupyterLab(jupyterLabModal);
   const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
+  const {
+    contextHolder: modalUserSettingsContextHolder,
+    modalOpen: openUserSettingsModal,
+  } = useModalUserSettings();
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -159,8 +162,8 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {userSettingsModalContextHolder}
-      {jupyterLabModalContextHolder}
+      {modalUserSettingsContextHolder}
+      {modalJupyterLabContextHolder}
     </nav>
   );
 };

@@ -547,7 +547,10 @@ const ProjectDetails: React.FC = () => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [ columns ]);
 
-  const { modalOpen: openMoveModal } = useModalExperimentMove({ onClose: handleActionComplete });
+  const {
+    contextHolder: modalExperimentMoveContextHolder,
+    modalOpen: openMoveModal,
+  } = useModalExperimentMove({ onClose: handleActionComplete });
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> | void => {
     if (!settings.row) return;
@@ -668,7 +671,10 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ updateSettings ]);
 
-  const { modalOpen: openCustomizeColumns } = useModalColumnsCustomize({
+  const {
+    contextHolder: modalColumnsCustomizeContextHolder,
+    modalOpen: openCustomizeColumns,
+  } = useModalColumnsCustomize({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
     onSave: (handleUpdateColumns as (columns: string[]) => void),
@@ -730,10 +736,10 @@ const ProjectDetails: React.FC = () => {
     } catch (e) { handleError(e); }
   }, [ fetchProject, project?.id ]);
 
-  const { modalOpen: openNoteDelete } = useModalProjectNoteDelete({
-    onClose: fetchProject,
-    project,
-  });
+  const {
+    contextHolder: modalProjectNodeDeleteContextHolder,
+    modalOpen: openNoteDelete,
+  } = useModalProjectNoteDelete({ onClose: fetchProject, project });
 
   const handleDeleteNote = useCallback((pageNumber: number) => {
     if (!project?.id) return;
@@ -930,6 +936,9 @@ const ProjectDetails: React.FC = () => {
         project={project}
         tabs={tabs}
       />
+      {modalColumnsCustomizeContextHolder}
+      {modalExperimentMoveContextHolder}
+      {modalProjectNodeDeleteContextHolder}
     </Page>
   );
 };

@@ -30,7 +30,7 @@ const ModelVersionActionDropdown: React.FC<Props> = (
   }
   : PropsWithChildren<Props>,
 ) => {
-  const { modalOpen: openModelDownload } = useModalModelDownload({
+  const { contextHolder, modalOpen: openModelDownload } = useModalModelDownload({
     modelVersion,
     onClose: onComplete,
   });
@@ -94,13 +94,16 @@ const ModelVersionActionDropdown: React.FC<Props> = (
   }, [ handleDownloadModel, handleDeleteClick ]);
 
   return children ? (
-    <Dropdown
-      overlay={ModelVersionActionMenu}
-      placement="bottomLeft"
-      trigger={trigger ?? [ 'contextMenu', 'click' ]}
-      onVisibleChange={onVisibleChange}>
-      {children}
-    </Dropdown>
+    <>
+      <Dropdown
+        overlay={ModelVersionActionMenu}
+        placement="bottomLeft"
+        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+      {contextHolder}
+    </>
   ) : (
     <div
       className={[ css.base, className ].join(' ')}
@@ -114,6 +117,7 @@ const ModelVersionActionDropdown: React.FC<Props> = (
           <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
+      {contextHolder}
     </div>
   );
 };

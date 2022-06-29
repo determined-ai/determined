@@ -16,8 +16,8 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
-import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -50,8 +50,9 @@ const ModelRegistry: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
-  const { showModal } = useCreateModelModal();
   const pageRef = useRef<HTMLElement>(null);
+
+  const { contextHolder, modalOpen } = useModalModelCreate();
 
   const {
     activeSettings,
@@ -411,7 +412,8 @@ const ModelRegistry: React.FC = () => {
     users,
     setModelTags,
     ModelActionMenu,
-    saveModelDescription ]);
+    saveModelDescription,
+  ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -434,9 +436,7 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const showCreateModelModal = useCallback(() => {
-    showModal({});
-  }, [ showModal ]);
+  const showCreateModelModal = useCallback(() => modalOpen(), [ modalOpen ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ModelColumnName[];
@@ -500,40 +500,40 @@ const ModelRegistry: React.FC = () => {
         </Space>
       )}
       title="Model Registry">
-      {(models.length === 0 && !isLoading && filterCount === 0) ?
-        (
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="model" size="mega" />
-            </div>
-            <h4>No Models Registered</h4>
-            <p className={css.description}>
-              Track important checkpoints and versions from your experiments.&nbsp;
-              <Link external path={paths.docs('/post-training/model-registry.html')}>
-                Learn more
-              </Link>
-            </p>
+      {(models.length === 0 && !isLoading && filterCount === 0) ? (
+        <div className={css.emptyBase}>
+          <div className={css.icon}>
+            <Icon name="model" size="mega" />
           </div>
-        ) : (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            ContextMenu={ModelActionDropdown}
-            dataSource={models}
-            loading={isLoading}
-            pagination={getFullPaginationConfig({
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            }, total)}
-            rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="name"
-            settings={settings as InteractiveTableSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-            onChange={handleTableChange}
-          />
-        )}
+          <h4>No Models Registered</h4>
+          <p className={css.description}>
+            Track important checkpoints and versions from your experiments.&nbsp;
+            <Link external path={paths.docs('/post-training/model-registry.html')}>
+              Learn more
+            </Link>
+          </p>
+        </div>
+      ) : (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          ContextMenu={ModelActionDropdown}
+          dataSource={models}
+          loading={isLoading}
+          pagination={getFullPaginationConfig({
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          }, total)}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="name"
+          settings={settings as InteractiveTableSettings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          onChange={handleTableChange}
+        />
+      )}
+      {contextHolder}
     </Page>
   );
 };
