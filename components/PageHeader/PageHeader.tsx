@@ -33,7 +33,7 @@ const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: Bread
 };
 
 const PageHeader: React.FC<Props> = (props: Props) => {
-  const classes = [ css.base ];
+  const classes = [ css.base, props.className ];
 
   const showHeader = props.title || props.subTitle || props.options;
 
