@@ -504,7 +504,7 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleFullScreen}
           />
         </Tooltip>
-        {true && (
+        {handleCloseLogs && (
 
           <Link onClick={handleCloseLogs}>
             <Icon
