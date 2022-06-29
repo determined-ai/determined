@@ -19,6 +19,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
@@ -61,6 +62,7 @@ const WorkspaceList: React.FC = () => {
   }, [ modalOpen ]);
 
   const fetchWorkspaces = useCallback(async () => {
+    setIsLoading(true);
     try {
       const response = await getWorkspaces({
         archived: settings.archived ? undefined : false,
@@ -322,12 +324,24 @@ const WorkspaceList: React.FC = () => {
       <Spinner spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
-        ) : (
-          <Message
-            title="No workspaces matching the current filters"
-            type={MessageType.Empty}
-          />
-        )}
+        ) :
+          (workspaceFilter === WorkspaceFilters.All && settings.archived && !isLoading) ?
+            (
+              <div className={css.emptyBase}>
+                <div className={css.icon}>
+                  <Icon name="workspaces" size="mega" />
+                </div>
+                <h4>No Workspaces</h4>
+                <p className={css.description}>
+                  Create a workspace to keep track of related projects and experiments.
+                </p>
+              </div>
+            ) : (
+              <Message
+                title="No workspaces matching the current filters"
+                type={MessageType.Empty}
+              />
+            )}
       </Spinner>
     </Page>
   );

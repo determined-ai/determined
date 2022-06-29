@@ -630,7 +630,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard) {
+    if (action === Action.OpenTensorBoard || action === Action.Move) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);
