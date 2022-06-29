@@ -59,6 +59,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	defer f.lock.Unlock()
 	value, ok := f.caches[expID]
 	if !ok {
+		log.Infof("-----     create cache for exp %d", expID)
 		exp := struct {
 			ModelDefinition []byte
 		}{}
@@ -133,21 +134,30 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	folder.lock.RLock()
-	defer folder.lock.RUnlock()
-	file, err := os.ReadFile(f.genPath(expID, path))
+	fileTree, err := f.GetFileTree(expID)
 	if err != nil {
-		// This means memory and file system are out of sync.
-		_, ok := err.(*fs.PathError)
-		if ok {
-			err = os.RemoveAll(f.rootDir)
-			if err != nil {
-				return []byte{}, err
-			}
-			f.caches = make(map[int]*modelDefFolder)
-			return f.GetFileContent(expID, path)
-		}
 		return []byte{}, err
 	}
-	return file, err
+	for _, file := range fileTree {
+		if file.Path == path {
+			folder.lock.RLock()
+			defer folder.lock.RUnlock()
+			file, err := os.ReadFile(f.genPath(expID, path))
+			if err != nil {
+				// This means memory and file system are out of sync.
+				_, ok := err.(*fs.PathError)
+				if ok {
+					err = os.RemoveAll(f.rootDir)
+					if err != nil {
+						return []byte{}, err
+					}
+					f.caches = make(map[int]*modelDefFolder)
+					return f.GetFileContent(expID, path)
+				}
+				return []byte{}, err
+			}
+			return file, err
+		}
+	}
+	return nil, fs.ErrNotExist
 }
