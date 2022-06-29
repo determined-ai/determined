@@ -42,7 +42,7 @@ def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: 
 
 
 def is_overridden(full_method: Any, parent_class: Any) -> bool:
-    """Check if a function is overriden over the given parent class.
+    """Check if a function is overridden over the given parent class.
 
     Note that full_method should always be the name of a method, but users may override
     that name with a variable anyway. In that case we treat full_method as not overridden.
@@ -127,7 +127,7 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
         try:
             values = np.array(values)
             filtered_values = values[values != None]  # noqa: E711
-            m = np.mean(filtered_values)
+            m = np.mean(filtered_values).item()
         except (TypeError, ValueError):
             # If we get here, values are non-scalars, which cannot be averaged.
             # We keep the key so consumers can see all the metric names but
@@ -164,7 +164,7 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             if math.isnan(obj):
                 return "NaN"
             if math.isinf(obj):
-                return "Infinity" if obj > 0 else "-Infinity"
+                return "Infinity" if float(obj) > 0.0 else "-Infinity"
             return float(obj)
         if isinstance(obj, bytes):
             # Assume bytes are utf8 (json can't encode arbitrary binary data).

@@ -740,7 +740,7 @@ class PyTorchTrialController(det.TrialController):
                 self.callbacks[name].load_state_dict(callback_state[name])
             elif util.is_overridden(self.callbacks[name].load_state_dict, pytorch.PyTorchCallback):
                 logging.warning(
-                    "Callback '{}' implements load_state_dict(), but no callback state "
+                    f"Callback '{name}' implements load_state_dict(), but no callback state "
                     "was found for that name when restoring from checkpoint. This "
                     "callback will be initialized from scratch"
                 )
