@@ -16,7 +16,7 @@ interface Props {
 }
 
 const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose });
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
   const handleOk = useCallback(async () => {
     try {
@@ -47,7 +47,7 @@ const useModalExperimentDelete = ({ experiment, onClose }: Props): ModalHooks =>
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, ...modalHook };
 };
 
 export default useModalExperimentDelete;

@@ -22,7 +22,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelDownload = ({ modelVersion, onClose }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose });
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
   const downloadCommand = useMemo(() => {
     return `det checkpoint download ${modelVersion.checkpoint.uuid}`;
@@ -66,7 +66,7 @@ const useModalModelDownload = ({ modelVersion, onClose }: Props): ModalHooks => 
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, ...modalHook };
 };
 
 export default useModalModelDownload;

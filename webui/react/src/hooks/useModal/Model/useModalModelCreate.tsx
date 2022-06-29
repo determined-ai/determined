@@ -1,22 +1,23 @@
-import { Input, Modal, ModalFuncProps, notification } from 'antd';
-import { ModalFunc } from 'antd/es/modal/confirm';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Input, ModalFuncProps, notification } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 import { debounce } from 'throttle-debounce';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
+import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
+import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../shared/utils/error';
+import css from './useModalModelCreate.module.scss';
 
-import css from './useCreateModelModal.module.scss';
-import useRegisterCheckpointModal from './useRegisterCheckpointModal';
-
-export interface ShowCreateModelProps {
+interface OpenProps {
   checkpointUuid?: string;
 }
 
@@ -31,24 +32,29 @@ interface ModalState {
   visible: boolean;
 }
 
-interface ModalHooks {
-  showModal: (props: ShowCreateModelProps) => void;
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (openProps?: OpenProps) => void;
 }
 
-const useCreateModelModal = (): ModalHooks => {
-  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
-  const modalRef = useRef<ReturnType<ModalFunc>>();
-  const [ modalState, setModalState ] = useState<ModalState>({
-    expandDetails: false,
-    isNameUnique: true,
-    metadata: {},
-    modelDescription: '',
-    modelName: '',
-    tags: [],
-    visible: false,
-  });
+const DEFAULT_MODAL_STATE = {
+  expandDetails: false,
+  isNameUnique: true,
+  metadata: {},
+  modelDescription: '',
+  modelName: '',
+  tags: [],
+  visible: false,
+};
 
-  const showModal = useCallback(({ checkpointUuid }: ShowCreateModelProps) => {
+const useModalModelCreate = (): ModalHooks => {
+  const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
+  const prevModalState = usePrevious(modalState, DEFAULT_MODAL_STATE);
+
+  const { modalOpen: showRegisterCheckpointModal } = useModalCheckpointRegister();
+
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+
+  const modalOpen = useCallback(({ checkpointUuid }: OpenProps = {}) => {
     setModalState({
       checkpointUuid,
       expandDetails: false,
@@ -61,17 +67,6 @@ const useCreateModelModal = (): ModalHooks => {
     });
   }, []);
 
-  const closeModal = useCallback(() => {
-    if (!modalRef.current) return;
-    modalRef.current.destroy();
-    modalRef.current = undefined;
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    if (!modalRef.current) return;
-    closeModal();
-  }, [ closeModal ]);
-
   const createModel = useCallback(async (state: ModalState) => {
     const { checkpointUuid, modelDescription, tags, metadata, modelName } = state;
     try {
@@ -82,10 +77,12 @@ const useCreateModelModal = (): ModalHooks => {
         name: modelName,
       });
       if (!response?.id) return;
-      closeModal();
-      if (checkpointUuid){
+      modalClose();
+
+      if (checkpointUuid) {
         showRegisterCheckpointModal({ checkpointUuid, selectedModelName: response.name });
       }
+
       notification.open({
         btn: null,
         description: (
@@ -104,10 +101,9 @@ const useCreateModelModal = (): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ closeModal, showRegisterCheckpointModal ]);
+  }, [ modalClose, showRegisterCheckpointModal ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
-    if (!modalRef.current) return Promise.reject();
     await createModel(state);
   }, [ createModel ]);
 
@@ -140,7 +136,7 @@ const useCreateModelModal = (): ModalHooks => {
     setModalState(prev => ({ ...prev, tags: value }));
   }, []);
 
-  const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
+  const getModalContent = useCallback((state: ModalState): React.ReactNode => {
     const {
       modelDescription, isNameUnique,
       tags, metadata, modelName, expandDetails,
@@ -155,8 +151,9 @@ const useCreateModelModal = (): ModalHooks => {
         <div>
           <h2>Model name</h2>
           <Input value={modelName} onChange={updateModelName} />
-          {!isNameUnique &&
-          <p className={css.uniqueWarning}>A model with this name already exists</p>}
+          {!isNameUnique && (
+            <p className={css.uniqueWarning}>A model with this name already exists</p>
+          )}
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>
@@ -181,20 +178,23 @@ const useCreateModelModal = (): ModalHooks => {
           <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </div>
     );
-  }, [ openDetails,
+  }, [
+    openDetails,
     updateMetadata,
     updateTags,
     updateModelDescription,
-    updateModelName ]);
+    updateModelName,
+  ]);
 
-  const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
+  const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
+
+  const getModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
     const { modelName, isNameUnique } = state;
-
-    const modalProps = {
+    return {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
-      content: generateModalContent(state),
+      content: getModalContent(state),
       icon: null,
       maskClosable: true,
       okButtonProps: { disabled: modelName === '' || !isNameUnique },
@@ -203,32 +203,18 @@ const useCreateModelModal = (): ModalHooks => {
       onOk: () => handleOk(state),
       title: 'Create Model',
     };
+  }, [ getModalContent, handleCancel, handleOk ]);
 
-    return modalProps;
-  }, [ generateModalContent, handleCancel, handleOk ]);
-
-  // Detect modal state change and update.
+  /**
+   * When modal props changes are detected, such as modal content
+   * title, and buttons, update the modal.
+   */
   useEffect(() => {
-    if (!modalState.visible) return;
+    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    openOrUpdate(getModalProps(modalState));
+  }, [ getModalProps, modalState, openOrUpdate, prevModalState ]);
 
-    const modalProps = generateModalProps(modalState);
-    if (modalRef.current) {
-      modalRef.current.update(prev => ({ ...prev, ...modalProps }));
-    } else {
-      modalRef.current = Modal.confirm(modalProps);
-    }
-  }, [ generateModalProps, modalState ]);
-
-  // When the component using the hook unmounts, remove the modal automatically.
-  useEffect(() => {
-    return () => {
-      if (!modalRef.current) return;
-      modalRef.current.destroy();
-      modalRef.current = undefined;
-    };
-  }, []);
-
-  return { showModal };
+  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
-export default useCreateModelModal;
+export default useModalModelCreate;

@@ -82,11 +82,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ projects, setProjects ] = useState<Project[]>([]);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
+  const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -322,15 +320,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     ],
   );
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(experimentIds, destSettings.projectId));
   }, [ destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalExperimentMove;

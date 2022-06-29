@@ -1,4 +1,4 @@
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
@@ -13,8 +13,7 @@ export default {
 
 const Container = () => {
   const storeDispatch = useStoreDispatch();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useModalJupyterLab(jupyterLabModal);
+  const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
@@ -23,7 +22,7 @@ const Container = () => {
   return (
     <>
       <Button onClick={() => modalOpen()}>Open Jupyter Lab</Button>
-      {jupyterLabModalContextHolder}
+      {contextHolder}
     </>
   );
 };

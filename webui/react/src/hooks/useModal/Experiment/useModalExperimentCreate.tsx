@@ -1,5 +1,4 @@
 import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
-import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -30,7 +29,6 @@ export enum CreateExperimentType {
 }
 
 interface Props {
-  modal: Omit<ModalStaticFunctions, 'warn'>;
   onClose?: () => void;
 }
 
@@ -103,7 +101,7 @@ const DEFAULT_MODAL_STATE = {
   visible: false,
 };
 
-const useModalExperimentCreate = (props: Props): ModalHooks => {
+const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
   const formRef = useRef<FormInstance>(null);
   const [ registryCredentials, setRegistryCredentials ] = useState<RawJson>();
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
@@ -111,11 +109,10 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
 
   const handleModalClose = useCallback(() => {
     setModalState(DEFAULT_MODAL_STATE);
-    props?.onClose?.();
-  }, [ props ]);
+    onClose?.();
+  }, [ onClose ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({
-    modal: props.modal,
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({
     onClose: handleModalClose,
     options: { rawCancel: true },
   });
@@ -146,7 +143,7 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     });
   }, []);
 
-  const handleCancel = useCallback((close: () => void) => {
+  const handleCancel = useCallback((close?: () => void) => {
     /**
      * 'close' is an indicator for if cancel button (show config) is clicked or not.
      * If cancel button (show config) is not clicked, 'close' is undefined.
@@ -381,13 +378,13 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
       ...restConfig
     } = config;
     setRegistryCredentials(registry_auth);
+
     const publicConfig = {
       environment: restEnvironment,
       project: experiment.projectName,
       workspace: experiment.workspaceName,
       ...restConfig,
     };
-
     setModalState(prev => {
       const newModalState = {
         config: publicConfig,
@@ -409,18 +406,16 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     }
   }, [ getConfigFromForm, modalState.isAdvancedMode, prevModalState ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalState === prevModalState || !modalState.visible) return;
-
-    const modalProps = getModalProps(modalState);
-    openOrUpdate(modalProps);
+    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    openOrUpdate(getModalProps(modalState));
   }, [ getModalProps, modalRef, modalState, openOrUpdate, prevModalState ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalExperimentCreate;

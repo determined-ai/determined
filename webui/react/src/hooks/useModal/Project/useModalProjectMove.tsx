@@ -26,11 +26,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const [ destinationWorkspaceId, setDestinationWorkspaceId ] = useState<number>();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -146,18 +142,18 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setDestinationWorkspaceId(undefined);
     fetchWorkspaces();
-    openOrUpdate({ ...getModalProps(undefined), ...initialModalProps });
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
   }, [ fetchWorkspaces, getModalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(destinationWorkspaceId));
   }, [ destinationWorkspaceId, getModalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalProjectMove;

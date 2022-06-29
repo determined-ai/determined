@@ -31,7 +31,7 @@ const useModalColumnsCustomize = ({
 }: Props): ModalHooks => {
   const [ columnList ] = useState(columns); //this is only to prevent rerendering
   const [ searchTerm, setSearchTerm ] = useState('');
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal(
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal(
     { onClose: () => setSearchTerm('') },
   );
   const [ visibleColumns, setVisibleColumns ] = useState<string[]>([]);
@@ -222,15 +222,15 @@ const useModalColumnsCustomize = ({
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ defaultVisibleColumns, modalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalColumnsCustomize;
