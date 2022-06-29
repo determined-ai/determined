@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -39,8 +39,7 @@ jest.mock('components/MonacoEditor', () => ({
 const ModalTrigger: React.FC = () => {
 
   const storeDispatch = useStoreDispatch();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useModalJupyterLab(jupyterLabModal);
+  const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
@@ -49,12 +48,12 @@ const ModalTrigger: React.FC = () => {
   return (
     <>
       <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-      {jupyterLabModalContextHolder}
+      {contextHolder}
     </>
   );
 };
 
-const ModalTriggerContainer: React.FC = () => {
+const Container: React.FC = () => {
   return (
     <BrowserRouter>
       <StoreProvider>
@@ -65,45 +64,46 @@ const ModalTriggerContainer: React.FC = () => {
 };
 
 const setup = async () => {
+  const user = userEvent.setup();
 
-  render(
-    <ModalTriggerContainer />,
-  );
+  render(<Container />);
 
-  userEvent.click(await screen.findByRole('button'));
+  await user.click(screen.getByRole('button'));
+
+  return user;
 };
 
 describe('useModalJupyterLab', () => {
-  it('modal can be opened', async () => {
+  it('should open modal', async () => {
     await setup();
 
     expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
 
-  it('modal defaults to simple config', async () => {
+  it('should show modal in simple form mode', async () => {
     await setup();
 
     expect(await screen.findByText(SIMPLE_CONFIG_TEMPLATE_TEXT)).toBeInTheDocument();
   });
 
-  it('switch modal to full config', async () => {
-    await setup();
+  it('should switch modal to full config', async () => {
+    const user = await setup();
 
     await screen.findByText(MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /Show Full Config/i }));
+    await user.click(screen.getByRole('button', { name: /Show Full Config/i }));
 
     await waitFor(() => {
       expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
     });
   });
 
-  it('modal can be closed', async () => {
-    await setup();
+  it('should close modal', async () => {
+    const user = await setup();
 
     await screen.findByText(MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /Launch/i }));
+    await user.click(screen.getByRole('button', { name: /Launch/i }));
 
     await waitFor(() => {
       expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();

@@ -20,25 +20,27 @@ jest.mock('services/api', () => ({
 
 const ModalTriggerButton: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
-
   const storeDispatch = useStoreDispatch();
 
-  useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
-
-  const { modalOpen } = useModalCheckpoint({
+  const { contextHolder, modalOpen } = useModalCheckpoint({
     checkpoint: checkpoint,
     config: experiment.config,
     title: TEST_MODAL_TITLE,
   });
 
+  useEffect(() => {
+    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
+  }, [ storeDispatch ]);
+
   return (
-    <Button onClick={() => modalOpen()}>{MODAL_TRIGGER_TEXT}</Button>
+    <>
+      <Button onClick={() => modalOpen()}>{MODAL_TRIGGER_TEXT}</Button>
+      {contextHolder}
+    </>
   );
 };
 
-const ModalTriggerContainer: React.FC = () => {
+const Container: React.FC = () => {
   return (
     <StoreProvider>
       <ModalTriggerButton />
@@ -47,26 +49,28 @@ const ModalTriggerContainer: React.FC = () => {
 };
 
 const setup = async () => {
+  const user = userEvent.setup();
 
-  render(
-    <ModalTriggerContainer />,
-  );
-  userEvent.click(await screen.findByText(MODAL_TRIGGER_TEXT));
+  render(<Container />);
+
+  await user.click(screen.getByText(MODAL_TRIGGER_TEXT));
+
+  return user;
 };
 
 describe('useModalCheckpoint', () => {
-  it('open modal', async () => {
+  it('should open modal', async () => {
     await setup();
 
     expect(await screen.findByText(TEST_MODAL_TITLE)).toBeInTheDocument();
   });
 
-  it('close modal', async () => {
-    await setup();
+  it('should close modal', async () => {
+    const user = await setup();
 
     await screen.findByText(TEST_MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
 
     await waitFor(() => {
       expect(screen.queryByText(TEST_MODAL_TITLE)).not.toBeInTheDocument();
@@ -74,15 +78,15 @@ describe('useModalCheckpoint', () => {
   });
 
   it('open register checkpoint modal', async () => {
-    await setup();
+    const user = await setup();
 
     await screen.findByText(TEST_MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /Register Checkpoint/i }));
+    await user.click(screen.getByRole('button', { name: REGISTER_CHECKPOINT_TEXT }));
 
     await waitFor(() => {
+      screen.debug();
       expect(screen.queryByText(REGISTER_CHECKPOINT_TEXT)).toBeInTheDocument();
     });
   });
-
 });
