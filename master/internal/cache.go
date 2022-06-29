@@ -23,6 +23,21 @@ var modelDefCache *FileCache
 
 const cacheDir = "/tmp/determined/cache/exp_model_def"
 
+type modelDefFolder struct {
+	fileTree   []*experimentv1.FileNode
+	cachedTime time.Time
+	lock       sync.RWMutex
+	path       string
+}
+
+// FileCache is metadata for files cached at file system.
+type FileCache struct {
+	rootDir string
+	maxAge  time.Duration
+	caches  map[int]*modelDefFolder
+	lock    sync.Mutex
+}
+
 // GetModelDefCache returns FileCache object.
 func GetModelDefCache() *FileCache {
 	if modelDefCache == nil {
@@ -39,27 +54,11 @@ func GetModelDefCache() *FileCache {
 	return modelDefCache
 }
 
-type modelDefFolder struct {
-	fileTree   []*experimentv1.FileNode
-	cachedTime time.Time
-	lock       sync.RWMutex
-	path       string
-}
-
-// FileCache is metadata for files cached at file system.
-type FileCache struct {
-	rootDir string
-	maxAge  time.Duration
-	caches  map[int]*modelDefFolder
-	lock    sync.Mutex
-}
-
 func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 	value, ok := f.caches[expID]
 	if !ok {
-		log.Infof("-----     create cache for exp %d", expID)
 		exp := struct {
 			ModelDefinition []byte
 		}{}
@@ -70,6 +69,10 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 		}
 		var fileTree []*experimentv1.FileNode
 		arc, err := archive.FromTarGz(exp.ModelDefinition)
+		if err != nil {
+			return nil, err
+		}
+		err = os.MkdirAll(f.genPath(expID, ""), fs.ModePerm)
 		if err != nil {
 			return nil, err
 		}
@@ -96,9 +99,8 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 			cachedTime: time.Now(),
 		}
 		f.caches[expID] = value
-		log.Infof("-----     finish creating cache for exp %d", expID)
+		f.prune()
 	}
-	f.prune()
 	return value, nil
 }
 
@@ -145,8 +147,8 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 			defer folder.lock.RUnlock()
 			file, err := os.ReadFile(f.genPath(expID, path))
 			if err != nil {
-				// This means memory and file system are out of sync.
 				_, ok := err.(*fs.PathError)
+				// This means memory and file system are out of sync.
 				if ok {
 					err = os.RemoveAll(f.rootDir)
 					if err != nil {

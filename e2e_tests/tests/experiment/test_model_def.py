@@ -1,5 +1,10 @@
+import os
+import random
+import string
+
 import pytest
 
+from determined.common.api import errors
 from tests import config as conf
 from tests import experiment as exp
 
@@ -15,3 +20,9 @@ def test_fetch_experiment_model_def() -> None:
     assert len(files) > 0
     file = files[0]
     exp.fetch_model_def_file(experiment_id, file["path"])
+    # fetch some non exist path
+    with pytest.raises(errors.APIException):
+        exp.fetch_model_def_file(
+            experiment_id,
+            os.path.join("".join(random.choices(string.ascii_letters, k=9)), file["path"]),
+        )
