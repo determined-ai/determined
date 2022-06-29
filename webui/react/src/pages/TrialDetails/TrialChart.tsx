@@ -108,21 +108,18 @@ const TrialChart: React.FC<Props> = ({
     </ResponsiveFilters>
   );
 
-  const getChildren = (): JSX.Element => {
-    if (!trialId) return (
-      <Spinner className={css.spinner} spinning />
-    );
-
-    if (chartData[0].length === 0)
-      return <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />;
-
-    return <UPlotChart data={chartData} options={chartOptions} />;
-  };
-
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {getChildren()}
+        {
+          <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
+            {
+              chartData[0].length === 0
+                ? <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                : <UPlotChart data={chartData} options={chartOptions} />
+            }
+          </Spinner>
+        }
       </div>
     </Section>
   );

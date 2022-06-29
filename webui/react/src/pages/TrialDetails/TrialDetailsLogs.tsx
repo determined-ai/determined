@@ -172,17 +172,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   return (
     <div className={css.base}>
-      {
-        trial ? (
-          <LogViewer
-            decoder={mapV1LogsResponse}
-            title={logFilters}
-            onDownload={handleDownloadLogs}
-            onFetch={handleFetch}
-          />
-        )
-          : <Spinner spinning />
-      }
+      <Spinner conditionalRender spinning={!trial}>
+        <LogViewer
+          decoder={mapV1LogsResponse}
+          title={logFilters}
+          onDownload={handleDownloadLogs}
+          onFetch={handleFetch}
+        />
+      </Spinner>
     </div>
   );
 };

@@ -58,23 +58,20 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
 
   return (
     <div className={css.base}>
-      {
-        trial ? (
-          <InteractiveTable
-            columns={columns}
-            containerRef={pageRef}
-            dataSource={dataSource}
-            pagination={false}
-            rowClassName={defaultRowClassName({ clickable: false })}
-            rowKey="hyperparameter"
-            settings={settings as InteractiveTableSettings}
-            showSorterTooltip={false}
-            size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          />
-        )
-          : <Spinner spinning />
-      }
+      <Spinner conditionalRender spinning={!trial}>
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={dataSource}
+          pagination={false}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="hyperparameter"
+          settings={settings as InteractiveTableSettings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+        />
+      </Spinner>
     </div>
   );
 };

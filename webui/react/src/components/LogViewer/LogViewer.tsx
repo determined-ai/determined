@@ -115,7 +115,7 @@ const LogViewer: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
-  const [ isFetching, setIsFectching ] = useState(false);
+  const [ isFetching, setIsFetching ] = useState(false);
   const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
   const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
@@ -178,7 +178,8 @@ const LogViewer: React.FC<Props> = ({
 
     const buffer: Log[] = [];
 
-    setIsFectching(true);
+    setIsFetching(true);
+    local.current.isFetching = true;
 
     await readStream(
       onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
@@ -188,7 +189,8 @@ const LogViewer: React.FC<Props> = ({
       },
     );
 
-    setIsFectching(false);
+    setIsFetching(false);
+    local.current.isFetching = false;
 
     return processLogs(buffer);
   }, [ decoder, fetchDirection, onFetch, processLogs ]);
@@ -542,16 +544,6 @@ const LogViewer: React.FC<Props> = ({
     />
   ), [ dateTimeWidth ]);
 
-  const getChildrenWhenEmpty = (): JSX.Element | undefined => {
-    // TODO: improve the usage of the prop onFetch...
-    if (isFetching) return <Spinner className={css.empty} spinning />;
-    if (logs.length === 0) return (
-      <div className={css.empty}>
-        <Message title="No logs to show." type={MessageType.Empty} />
-      </div>
-    );
-  };
-
   return (
     <Section
       bodyNoPadding
@@ -575,7 +567,17 @@ const LogViewer: React.FC<Props> = ({
               {LogViewerRow}
             </VariableSizeList>
           </div>
-          {getChildrenWhenEmpty()}
+          {
+            <Spinner className={css.empty} conditionalRender spinning={isFetching}>
+              {
+                (logs.length === 0) && (
+                  <div className={css.empty}>
+                    <Message title="No logs to show." type={MessageType.Empty} />
+                  </div>
+                )
+              }
+            </Spinner>
+          }
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>

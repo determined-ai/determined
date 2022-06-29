@@ -86,17 +86,14 @@ const ResponsiveTable: ResponsiveTable = ({
 
   return (
     <div ref={tableRef}>
-      {
-        spinning ? <Spinner spinning={true} />
-          : (
-            <Table
-              bordered
-              scroll={tableScroll}
-              tableLayout="auto"
-              {...props}
-            />
-          )
-      }
+      <Spinner conditionalRender spinning={spinning}>
+        <Table
+          bordered
+          scroll={tableScroll}
+          tableLayout="auto"
+          {...props}
+        />
+      </Spinner>
     </div>
   );
 };
