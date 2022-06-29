@@ -1,9 +1,9 @@
 import { Tooltip, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
-import Avatar from 'components/UserAvatar';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
+import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';

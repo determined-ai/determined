@@ -2,9 +2,9 @@ import { PushpinOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
-import Avatar from 'components/UserAvatar';
 import DynamicIcon from 'components/DynamicIcon';
 import Link from 'components/Link';
+import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';

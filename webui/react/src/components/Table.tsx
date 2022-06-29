@@ -1,11 +1,11 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
-import UserAvatar from 'components/UserAvatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import ProgressBar from 'components/ProgressBar';
+import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';

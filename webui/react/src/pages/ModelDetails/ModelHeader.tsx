@@ -2,13 +2,13 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import Avatar from 'components/UserAvatar';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
