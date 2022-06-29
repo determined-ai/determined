@@ -5,11 +5,11 @@ reproducibility:
 data:
   dataset_name: imagenet
   # TODO: Change this to the name of your bucket.
-  gcs_bucket: determined-ai-datasets
+  gcs_bucket: null
   # TODO: Path to files inside the above bucket that contain newline separated list of all image blob paths.
   # Generate using generate_blob_list.py
-  gcs_train_blob_list_path: imagenet/imagenet/train-blob-list.txt
-  gcs_validation_blob_list_path: imagenet/imagenet/validation-blob-list.txt
+  gcs_train_blob_list_path: null
+  gcs_validation_blob_list_path: null
   num_workers: 8
   pin_memory: True
   persistent_workers: True
