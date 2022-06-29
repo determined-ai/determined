@@ -8,11 +8,9 @@ import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
-import { maxPoolSlotCapacity } from '../Clusters/ClustersOverview';
-
 export const ClusterOverallBar: React.FC = () => {
 
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const { agents, cluster: overview } = useStore();
 
   const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CUDA);
@@ -26,46 +24,27 @@ export const ClusterOverallBar: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.CPU);
   }, [ agents ]);
 
-  const [ cudaTotalSlots, rocmTotalSlots ] = useMemo(() => {
-    return resourcePools.reduce((acc, pool) => {
-      let index;
-      switch (pool.slotType) {
-        case ResourceType.CUDA:
-          index = 0;
-          break;
-        case ResourceType.ROCM:
-          index = 1;
-          break;
-        default:
-          index = undefined;
-      }
-      if (index === undefined) return acc;
-      acc[index] += maxPoolSlotCapacity(pool);
-      return acc;
-    }, [ 0, 0 ]);
-  }, [ resourcePools ]);
-
   return (
     <Section hideTitle title="Overall Allocation">
-      {cudaTotalSlots + rocmTotalSlots + overview.CPU.total === 0 ? (
+      {overview.CUDA.total + overview.ROCM.total + overview.CPU.total === 0 ? (
         <Message title="No connected agents." type={MessageType.Empty} />
       ) : null }
-      {cudaTotalSlots > 0 && (
+      {overview.CUDA.total > 0 && (
         <SlotAllocationBar
           resourceStates={cudaSlotStates}
           showLegends
           size={ShirtSize.large}
           title={`Compute (${ResourceType.CUDA})`}
-          totalSlots={cudaTotalSlots}
+          totalSlots={overview.CUDA.total}
         />
       )}
-      {rocmTotalSlots > 0 && (
+      {overview.ROCM.total > 0 && (
         <SlotAllocationBar
           resourceStates={rocmSlotStates}
           showLegends
           size={ShirtSize.large}
           title={`Compute (${ResourceType.ROCM})`}
-          totalSlots={rocmTotalSlots}
+          totalSlots={overview.ROCM.total}
         />
       )}
       {overview.CPU.total > 0 && (

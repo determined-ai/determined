@@ -42,7 +42,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
   const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
@@ -87,7 +87,7 @@ const NavigationTabbar: React.FC = () => {
           icon="cluster"
           label="Cluster"
           path={paths.cluster()}
-          status={clusterStatusText(overview, resourcePools)}
+          status={clusterStatusText(overview, resourcePools, agents)}
         />
         <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />

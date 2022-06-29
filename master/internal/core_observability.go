@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"strings"
+
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -23,7 +25,7 @@ func (m *Master) getPrometheusTargets(c echo.Context) (interface{}, error) {
 		agentTargetConfig := prom.TargetSDConfig{
 			Labels: map[string]string{
 				prom.DetAgentIDLabel:      agentSummary.Id,
-				prom.DetResourcePoolLabel: agentSummary.ResourcePool,
+				prom.DetResourcePoolLabel: strings.Join(agentSummary.ResourcePools, ","),
 			},
 		}
 		for _, address := range agentSummary.Addresses {

@@ -34,6 +34,9 @@ enum SchedulerType {
   SCHEDULER_TYPE_ROUND_ROBIN = 3;
   // The kubernetes scheduler.
   SCHEDULER_TYPE_KUBERNETES = 4;
+  // A slurm placeholder. When running on slurm, all scheduling behavior is
+  // delegated.
+  SCHEDULER_TYPE_SLURM = 5;
 }
 
 // The fitting policy of the scheduler.
@@ -50,6 +53,8 @@ enum FittingPolicy {
   // A kubernetes placeholder. In k8s, the task placement is delegated to the
   // k8s scheduler so the fitting policy is not relevant.
   FITTING_POLICY_KUBERNETES = 3;
+  // A slurm placeholder. When running on slurm, task placement is delegated.
+  FITTING_POLICY_SLURM = 4;
 }
 
 // A Resource Pool is a pool of resources where containers are run.

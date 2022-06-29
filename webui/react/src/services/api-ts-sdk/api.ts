@@ -845,12 +845,6 @@ export interface V1Agent {
      */
     label?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof V1Agent
-     */
-    resourcePool?: string;
-    /**
      * The addresses of the agent.
      * @type {Array<string>}
      * @memberof V1Agent
@@ -874,6 +868,12 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     version?: string;
+    /**
+     * The name of the resource pools the agent is in. Only slurm can contain multiples.
+     * @type {Array<string>}
+     * @memberof V1Agent
+     */
+    resourcePools?: Array<string>;
 }
 
 /**
@@ -2009,7 +2009,7 @@ export interface V1File {
 }
 
 /**
- * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.
+ * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
  * @export
  * @enum {string}
  */
@@ -2017,7 +2017,8 @@ export enum V1FittingPolicy {
     UNSPECIFIED = <any> 'FITTING_POLICY_UNSPECIFIED',
     BEST = <any> 'FITTING_POLICY_BEST',
     WORST = <any> 'FITTING_POLICY_WORST',
-    KUBERNETES = <any> 'FITTING_POLICY_KUBERNETES'
+    KUBERNETES = <any> 'FITTING_POLICY_KUBERNETES',
+    SLURM = <any> 'FITTING_POLICY_SLURM'
 }
 
 /**
@@ -5816,7 +5817,7 @@ export enum V1Scale {
 }
 
 /**
- * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.
+ * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.
  * @export
  * @enum {string}
  */
@@ -5825,7 +5826,8 @@ export enum V1SchedulerType {
     PRIORITY = <any> 'SCHEDULER_TYPE_PRIORITY',
     FAIRSHARE = <any> 'SCHEDULER_TYPE_FAIR_SHARE',
     ROUNDROBIN = <any> 'SCHEDULER_TYPE_ROUND_ROBIN',
-    KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES'
+    KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
+    SLURM = <any> 'SCHEDULER_TYPE_SLURM'
 }
 
 /**
