@@ -12,7 +12,6 @@ from timm.data import create_transform
 import torch.nn as nn
 from torch.utils.data import Dataset
 import torchvision
-import torchvision.transforms as T
 
 ImageStat = Union[Tuple[float], Tuple[float, float, float]]
 
@@ -61,16 +60,16 @@ class GCSImageNetStreamDataset(Dataset):
     ) -> None:
         """
         Args:
-            data_config (attrdict.AttrDict): AttrDict containing 'gcs_bucket', 'gcs_train_blob_list_path', and
-                'gcs_validation_blob_list_path' keys.
+            data_config (attrdict.AttrDict): AttrDict containing 'gcs_bucket',
+                'gcs_train_blob_list_path', and 'gcs_validation_blob_list_path' keys.
             train (bool): flag for building the training (True) or validation (False) datasets.
             transform (nn.Module): transforms to be applied to the dataset.
         """
         self._transform = transform
         self._storage_client = storage.Client()
         self._bucket = self._storage_client.bucket(data_config.gcs_bucket)
-        # When the dataset is first initialized, we'll loop through to catalogue the classes (subdirectories)
-        # This step might take a long time.
+        # When the dataset is first initialized, we'll loop through to catalogue the classes
+        # (subdirectories). This step might take a long time.
         self._imgs_paths = []
         self._labels = []
         self._subdir_to_class: Dict[str, int] = {}
@@ -81,9 +80,9 @@ class GCSImageNetStreamDataset(Dataset):
             blob_list_path = data_config.gcs_validation_blob_list_path
         blob_list_blob = self._bucket.blob(blob_list_path)
         blob_list_io = StringIO(
-            download_gcs_blob_with_backoff(
-                blob_list_blob, n_retries=4, max_backoff=2
-            ).decode("utf-8")
+            download_gcs_blob_with_backoff(blob_list_blob, n_retries=4, max_backoff=2).decode(
+                "utf-8"
+            )
         )
         blob_list = [s.strip() for s in blob_list_io.readlines()]
         for path in blob_list:
@@ -116,12 +115,10 @@ DATASET_DICT = {
 }
 
 
-def get_dataset(
-    data_config: attrdict.AttrDict, train: bool, transform: nn.Module
-) -> Dataset:
+def get_dataset(data_config: attrdict.AttrDict, train: bool, transform: nn.Module) -> Dataset:
     """
-    Downloads or streams (in the case of ImageNet) the training or validation dataset, and applies `transform`
-    to the corresponding images.
+    Downloads (or streams, in the case of ImageNet) the training or validation dataset, and applies
+    `transform` to the corresponding images.
     """
     dataset_name = data_config.dataset_name
     dataset = DATASET_DICT[dataset_name]
