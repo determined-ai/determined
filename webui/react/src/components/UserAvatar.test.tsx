@@ -4,9 +4,10 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 
-import Avatar from './Avatar';
+import Avatar from './UserAvatar';
 
 const testUser = { displayName: 'Bugs Bunny', id: 44, initials: 'BB', username: 'elmerFudd01' };
+const mockUsers = [ testUser ];
 
 jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
@@ -31,10 +32,16 @@ jest.mock('antd', () => {
   };
 });
 
+jest.mock('services/api', () => ({
+  getUsers: () => {
+    return Promise.resolve(mockUsers);
+  },
+}));
+
 const TestApp: React.FC = () => {
   return (
     <div>
-      <Avatar displayName={testUser.displayName} hideTooltip={false} />
+      <Avatar hideTooltip={false} userId={testUser.id} />
     </div>
   );
 };

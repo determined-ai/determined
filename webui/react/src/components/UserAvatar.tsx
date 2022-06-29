@@ -2,14 +2,11 @@ import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import Avatar, { Props } from 'shared/components/Avatar/Avatar';
+import Avatar, { Props } from 'shared/components/Avatar';
 import { getDisplayName } from 'utils/user';
 
 const UserAvatar: React.FC<{
   name?: string;
-  // TODO: separate components for
-  // 1) displaying an abbreviated string as an Avatar and
-  // 2) finding user by userId in the store and displaying string Avatar or profile image
   userId?: number;
 } & Omit<Props, 'displayName'>> = ({ name, userId, ...rest }) => {
 
@@ -29,7 +26,7 @@ const UserAvatar: React.FC<{
     }
   }, [ fetchUsers, userId, name, users ]);
 
-  return <Avatar {...rest} displayName={displayName} />;
+  return <Avatar {...rest} displayName={name || displayName} />;
 };
 
 export default UserAvatar;

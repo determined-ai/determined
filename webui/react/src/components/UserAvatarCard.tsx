@@ -9,8 +9,8 @@ export interface Props {
   user?: DetailedUser | User
 }
 
-const AvatarCardCore: React.FC<Props> = ({ className, user }) => {
+const UserAvatarCard: React.FC<Props> = ({ className, user }) => {
   return <AvatarCard className={className} displayName={getDisplayName(user)} />;
 };
 
-export default AvatarCardCore;
+export default UserAvatarCard;

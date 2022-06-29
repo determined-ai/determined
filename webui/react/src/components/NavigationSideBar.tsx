@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef,
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import AvatarCard from 'components/AvatarCard';
+import AvatarCard from 'components/UserAvatarCard';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';

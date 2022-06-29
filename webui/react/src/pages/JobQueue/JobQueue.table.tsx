@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
-import Avatar from 'components/Avatar';
+import Avatar from 'components/UserAvatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';

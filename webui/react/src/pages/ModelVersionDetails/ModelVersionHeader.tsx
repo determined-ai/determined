@@ -2,7 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Avatar from 'components/Avatar';
+import Avatar from 'components/UserAvatar';
 import CopyButton from 'components/CopyButton';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';

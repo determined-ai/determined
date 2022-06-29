@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet from 'components/ActionSheet';
-import AvatarCard from 'components/AvatarCard';
+import AvatarCard from 'components/UserAvatarCard';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import { useStore } from 'contexts/Store';
