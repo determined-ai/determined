@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.18.3-rc2
+    default: 0.18.3-rc3
   docker-image:
     type: string
     default: cimg/base:2021.11
