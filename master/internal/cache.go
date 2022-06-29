@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"errors"
 	"io/fs"
 	"net/http"
 	"os"
@@ -13,20 +12,25 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var modelDefCache *fileCache
+var modelDefCache *FileCache
 
 const cacheDir = "/tmp/determined/cache/exp_model_def"
 
-func GetModelDefCache() *fileCache {
+// GetModelDefCache returns FileCache object.
+func GetModelDefCache() *FileCache {
 	if modelDefCache == nil {
-		os.RemoveAll(cacheDir)
-		modelDefCache = &fileCache{
+		err := os.RemoveAll(cacheDir)
+		if err != nil {
+			log.WithError(err).Errorf("failed to initialize model def cache at %s", cacheDir)
+		}
+		modelDefCache = &FileCache{
 			rootDir: cacheDir,
 			maxAge:  24 * time.Hour,
 			caches:  make(map[int]*modelDefFolder),
@@ -42,23 +46,24 @@ type modelDefFolder struct {
 	path       string
 }
 
-type fileCache struct {
+// FileCache is metadata for files cached at file system.
+type FileCache struct {
 	rootDir string
 	maxAge  time.Duration
 	caches  map[int]*modelDefFolder
 	lock    sync.Mutex
 }
 
-func (f *fileCache) getOrCreateFolder(exp_id int) (*modelDefFolder, error) {
+func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	value, ok := f.caches[exp_id]
+	value, ok := f.caches[expID]
 	if !ok {
 		exp := struct {
 			ModelDefinition []byte
 		}{}
 		err := db.Bun().NewSelect().TableExpr(
-			"experiments").Column("model_definition").Where("id = ?", exp_id).Scan(context.TODO(), &exp)
+			"experiments").Column("model_definition").Where("id = ?", expID).Scan(context.TODO(), &exp)
 		if err != nil {
 			return nil, err
 		}
@@ -69,9 +74,9 @@ func (f *fileCache) getOrCreateFolder(exp_id int) (*modelDefFolder, error) {
 		}
 		for _, ar := range arc {
 			if ar.IsDir() {
-				err = os.MkdirAll(f.genPath(exp_id, ar.Path), fs.ModePerm)
+				err = os.MkdirAll(f.genPath(expID, ar.Path), fs.ModePerm)
 			} else {
-				err = os.WriteFile(f.genPath(exp_id, ar.Path), ar.Content, fs.ModePerm)
+				err = os.WriteFile(f.genPath(expID, ar.Path), ar.Content, fs.ModePerm)
 			}
 			if err != nil {
 				return nil, err
@@ -85,34 +90,35 @@ func (f *fileCache) getOrCreateFolder(exp_id int) (*modelDefFolder, error) {
 			})
 		}
 		value = &modelDefFolder{
-			path:       f.genPath(exp_id, ""),
+			path:       f.genPath(expID, ""),
 			fileTree:   fileTree,
 			cachedTime: time.Now(),
 		}
-		f.caches[exp_id] = value
+		f.caches[expID] = value
 	}
 	f.prune()
 	return value, nil
 }
 
-func (f *fileCache) prune() {
-	for exp_id, folder := range f.caches {
+func (f *FileCache) prune() {
+	for expID, folder := range f.caches {
 		if folder.cachedTime.Add(f.maxAge).Before(time.Now()) {
 			err := os.RemoveAll(folder.path)
 			if err != nil {
 				log.WithError(err).Errorf("failed to prune model definition cache under %s", folder.path)
 			}
-			delete(f.caches, exp_id)
+			delete(f.caches, expID)
 		}
 	}
 }
 
-func (f *fileCache) genPath(exp_id int, path string) string {
-	return filepath.Join(f.rootDir, strconv.Itoa(exp_id), path)
+func (f *FileCache) genPath(expID int, path string) string {
+	return filepath.Join(f.rootDir, strconv.Itoa(expID), path)
 }
 
-func (f *fileCache) GetFileTree(exp_id int) ([]*experimentv1.FileNode, error) {
-	folder, err := f.getOrCreateFolder(exp_id)
+// GetFileTree returns folder tree structure with given experiment id.
+func (f *FileCache) GetFileTree(expID int) ([]*experimentv1.FileNode, error) {
+	folder, err := f.getOrCreateFolder(expID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,23 +127,27 @@ func (f *fileCache) GetFileTree(exp_id int) ([]*experimentv1.FileNode, error) {
 	return folder.fileTree, nil
 }
 
-func (f *fileCache) GetFileContent(exp_id int, path string) ([]byte, error) {
-	folder, err := f.getOrCreateFolder(exp_id)
+// GetFileContent returns file with given experiment id and path.
+func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
+	folder, err := f.getOrCreateFolder(expID)
 	if err != nil {
 		return []byte{}, err
 	}
 	folder.lock.RLock()
 	defer folder.lock.RUnlock()
-	file, err := os.ReadFile(f.genPath(exp_id, path))
+	file, err := os.ReadFile(f.genPath(expID, path))
 	if err != nil {
 		// This means memory and file system are out of sync.
-		if errors.Is(err, fs.ErrNotExist) {
+		_, ok := err.(*fs.PathError)
+		if ok {
+			err = os.RemoveAll(f.rootDir)
+			if err != nil {
+				return []byte{}, err
+			}
 			f.caches = make(map[int]*modelDefFolder)
-			os.RemoveAll(f.rootDir)
-			return f.GetFileContent(exp_id, path)
-		} else {
-			return []byte{}, err
+			return f.GetFileContent(expID, path)
 		}
+		return []byte{}, err
 	}
 	return file, err
 }
