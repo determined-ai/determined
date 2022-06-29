@@ -297,4 +297,15 @@ describe('LogViewer', () => {
       });
     });
   });
+
+  it('should not show log close button by default', async () => {
+    setup({ decoder });
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
+    });
+  });
+});
+
+  
 });
