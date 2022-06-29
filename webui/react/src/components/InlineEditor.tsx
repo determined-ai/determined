@@ -16,7 +16,6 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
   placeholder?: string;
-  showSpinner?: boolean;
   value: string;
 }
 
@@ -34,7 +33,6 @@ const InlineEditor: React.FC<Props> = ({
   onCancel,
   onSave,
   focusSignal,
-  showSpinner = true,
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
@@ -47,7 +45,7 @@ const InlineEditor: React.FC<Props> = ({
 
   if (isOnDark) classes.push(css.onDark);
   if (isEditable) classes.push(css.editable);
-  if (isSaving && showSpinner) classes.push(css.loading);
+  if (isSaving) classes.push(css.loading);
   if (maxLength && currentValue && currentValue.length === maxLength) {
     classes.push(css.maxLength);
   }
@@ -156,13 +154,9 @@ const InlineEditor: React.FC<Props> = ({
           onKeyPress={handleTextareaKeyPress}
           onKeyUp={handleTextareaKeyUp}
         />
-        {
-          showSpinner && (
-            <div className={css.spinner}>
-              <Spinner spinning={isSaving} />
-            </div>
-          )
-        }
+        <div className={css.spinner}>
+          <Spinner spinning={isSaving} />
+        </div>
       </div>
     </div>
   );

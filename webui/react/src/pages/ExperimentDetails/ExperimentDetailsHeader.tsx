@@ -415,7 +415,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 isOnDark
                 maxLength={128}
                 placeholder="experiment name"
-                showSpinner={false}
                 value={experiment.name}
                 onSave={handleNameUpdate}
               />
