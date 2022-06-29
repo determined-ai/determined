@@ -2,6 +2,10 @@
   flex: 1 1 auto;
   flex-grow: 1;
   height: 100%;
+
+  .header {
+    padding-top: 6px;
+  }
 }
 .tabPane {
   display: flex;
