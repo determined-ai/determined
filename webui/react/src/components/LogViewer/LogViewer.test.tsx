@@ -305,4 +305,13 @@ describe('LogViewer', () => {
       expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
     });
   });
+
+  it('should show log close button when prop is supplied', async () => {
+    const handleCloseLogs = () => { return; };
+    setup({ decoder, handleCloseLogs });
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
+    });
+  });
 });
