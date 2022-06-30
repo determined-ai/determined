@@ -192,7 +192,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   }, [ experiment, openModalCreate ]);
 
   const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch({});
+    openModalHyperparameterSearch();
   }, [ openModalHyperparameterSearch ]);
 
   useEffect(() => {

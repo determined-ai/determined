@@ -12,27 +12,21 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { Primitive } from 'shared/types';
-import { clone } from 'shared/utils/data';
+import { Primitive, RecordKey } from 'shared/types';
+import { clone, flattenObject } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase, ExperimentSearcherName, Hyperparameter,
-  HyperparameterType, ResourcePool } from 'types';
+  HyperparametersFlattened,
+  HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters } from 'types';
 
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
+import useModal, { ModalCloseReason, ModalHooks } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
-}
-
-export interface ShowModalProps {
-  initialModalProps?: ModalFuncProps;
-}
-
-interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (props: ShowModalProps) => void;
+  trial?: TrialDetails;
 }
 
 interface SearchMethod {
@@ -75,7 +69,7 @@ interface HyperparameterRowValues {
   value: number | string,
 }
 
-const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
+const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
@@ -93,10 +87,24 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     );
   }, []);
 
+  const trialHyperparameters = useMemo(() => {
+    if (!trial) return;
+    const continueFn = (value: unknown) => value === 'object';
+    return flattenObject<TrialHyperparameters>(
+      trial.hyperparameters,
+      { continueFn },
+    ) as unknown as Record<string, Primitive>;
+  }, [ trial ]);
+
   const hyperparameters = useMemo(() => {
-    return Object.entries(experiment.hyperparameters)
-      .map(hp => ({ hyperparameter: hp[1], name: hp[0] }));
-  }, [ experiment.hyperparameters ]);
+    return Object.entries(experiment.hyperparameters).map(hp => {
+      const hpObject = ({ hyperparameter: hp[1], name: hp[0] });
+      if (trialHyperparameters?.[hp[0]]) {
+        hpObject.hyperparameter.val = trialHyperparameters[hp[0]];
+      }
+      return hpObject;
+    });
+  }, [ experiment.hyperparameters, trialHyperparameters ]);
 
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
@@ -399,7 +407,7 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
     };
   }, [ form, validateForm, pages, currentPage, footer ]);
 
-  const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
+  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setCurrentPage(0);
     form.resetFields();
     openOrUpdate({ ...modalProps, ...initialModalProps });
