@@ -11,7 +11,7 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { Primitive, RawJson } from 'shared/types';
+import { Primitive } from 'shared/types';
 import { clone, flattenObject, unflattenObject } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
@@ -140,21 +140,19 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
 
     baseConfig.hyperparameters = unflattenObject(baseConfig.hyperparameters);
 
-    console.log(baseConfig);
-
     const newConfig = yaml.dump(baseConfig);
 
     try {
-      // const { id: newExperimentId } = await createExperiment({
-      //   activate: true,
-      //   experimentConfig: newConfig,
-      //   parentId: experiment.id,
-      //   projectId: experiment.projectId,
-      // }, { signal: canceler.signal });
+      const { id: newExperimentId } = await createExperiment({
+        activate: true,
+        experimentConfig: newConfig,
+        parentId: experiment.id,
+        projectId: experiment.projectId,
+      }, { signal: canceler.signal });
 
-      // // Route to reload path to forcibly remount experiment page.
-      // const newPath = paths.experimentDetails(newExperimentId);
-      // routeToReactUrl(paths.reload(newPath));
+      // Route to reload path to forcibly remount experiment page.
+      const newPath = paths.experimentDetails(newExperimentId);
+      routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = 'Unable to create experiment.';
       if (isDetError(e)) {
@@ -479,14 +477,12 @@ const HyperparameterRow: React.FC<RowProps> = (
       name: [ name, 'type' ],
       value: checked ? HyperparameterType.Double : HyperparameterType.Constant,
     } ]);
-    form.validateFields();
   }, [ form, name ]);
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
     setType(value);
     setChecked(value !== HyperparameterType.Constant);
-    form.validateFields();
-  }, [ form ]);
+  }, []);
 
   const validateValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -521,7 +517,6 @@ const HyperparameterRow: React.FC<RowProps> = (
   }, [ form, name ]);
 
   const validateCount = useCallback((value: number | string | null) => {
-    console.log(value);
     if (value == null) {
       setCountError('Grid count is required.');
     } else if (typeof value === 'string') {
