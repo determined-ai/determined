@@ -1,0 +1,5 @@
+:orphan:
+
+**New Features**
+
+- Kubernetes: Init container no longer requires root privileges.
