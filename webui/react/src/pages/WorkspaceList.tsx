@@ -62,7 +62,6 @@ const WorkspaceList: React.FC = () => {
   }, [ modalOpen ]);
 
   const fetchWorkspaces = useCallback(async () => {
-    setIsLoading(true);
     try {
       const response = await getWorkspaces({
         archived: settings.archived ? undefined : false,
