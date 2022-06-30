@@ -106,16 +106,32 @@ func (p *pod) configureEnvVars(
 }
 
 func (p *pod) configureConfigMapSpec(
-	runArchives []cproto.RunArchive, fluentFiles map[string][]byte,
+	runArchives []cproto.RunArchive,
+	fluentFiles map[string][]byte,
+	agentUserGroup *model.AgentUserGroup,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
-		zippedArchive, err := archive.ToTarGz(runArchive.Archive)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to zip archive")
+		var c archive.Archive
+		for _, i := range runArchive.Archive {
+			if i.NeedsRoot {
+				if _, ok := configMapData[path.Base(i.Path)]; ok {
+					return nil, fmt.Errorf("multiple rooted files have same file name %s", i.Path)
+				}
+				configMapData[path.Base(i.Path)] = i.Content
+			} else {
+				c = append(c, i)
+			}
 		}
-		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
+
+		if len(c) > 0 {
+			zippedArchive, err := archive.ToTarGz(c)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to zip archive")
+			}
+			configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
+		}
 	}
 
 	for fn, content := range fluentFiles {
@@ -379,6 +395,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		initContainerVolumeMounts,
 		env.Image().For(deviceType),
 		configureImagePullPolicy(env),
+		spec.AgentUserGroup,
 	)
 
 	var sidecars []k8sV1.Container
@@ -478,7 +495,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
+	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles, spec.AgentUserGroup)
 	if err != nil {
 		return err
 	}
@@ -530,6 +547,7 @@ func configureInitContainer(
 	volumeMounts []k8sV1.VolumeMount,
 	image string,
 	imagePullPolicy k8sV1.PullPolicy,
+	agentUserGroup *model.AgentUserGroup,
 ) k8sV1.Container {
 	return k8sV1.Container{
 		Name:    "determined-init-container",
@@ -540,5 +558,6 @@ func configureInitContainer(
 		ImagePullPolicy: imagePullPolicy,
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      initContainerWorkDir,
+		SecurityContext: configureSecurityContext(agentUserGroup),
 	}
 }

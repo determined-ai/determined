@@ -41,6 +41,7 @@ type Item struct {
 	ModifiedTime UnixTime    `json:"mtime"`
 	UserID       int         `json:"uid"`
 	GroupID      int         `json:"gid"`
+	NeedsRoot    bool        `josn:"needsRoot"`
 }
 
 // BaseName returns the base name of the file.
@@ -86,7 +87,9 @@ func (ar Archive) ContainsFilePrefix(prefix string) bool {
 
 // RootItem returns a new Item which will be owned by root when embedded in a container.
 func RootItem(path string, content []byte, mode int, fileType byte) Item {
-	return UserItem(path, content, mode, fileType, 0, 0)
+	i := UserItem(path, content, mode, fileType, 0, 0)
+	i.NeedsRoot = true
+	return i
 }
 
 // UserItem returns a new Item which will be owned by the user under which the container runs.
