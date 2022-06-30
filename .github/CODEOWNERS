@@ -11,3 +11,6 @@
 /master/internal/sproto/ @ioga
 /proto/src/determined/ @ioga
 /agent/ @ioga
+
+# Hamid and Trent care about shared code
+/webui/react/src/shared/ @hamidzr @trentwatt
