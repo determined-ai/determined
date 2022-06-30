@@ -1,11 +1,11 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
-import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import ProgressBar from 'components/ProgressBar';
+import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -92,7 +92,7 @@ export const tooltipRenderer: Renderer = text => (
 );
 
 export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
-  <Avatar userId={record.userId} />
+  <UserAvatar userId={record.userId} />
 );
 
 /* Command Task Table Column Renderers */
