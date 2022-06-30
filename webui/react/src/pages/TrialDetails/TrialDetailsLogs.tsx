@@ -11,6 +11,7 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
+import Spinner from 'shared/components/Spinner';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
@@ -171,12 +172,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   return (
     <div className={css.base}>
-      <LogViewer
-        decoder={mapV1LogsResponse}
-        title={logFilters}
-        onDownload={handleDownloadLogs}
-        onFetch={trial && handleFetch}
-      />
+      <Spinner conditionalRender spinning={!trial}>
+        <LogViewer
+          decoder={mapV1LogsResponse}
+          title={logFilters}
+          onDownload={handleDownloadLogs}
+          onFetch={handleFetch}
+        />
+      </Spinner>
     </div>
   );
 };

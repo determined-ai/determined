@@ -15,6 +15,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -114,6 +115,7 @@ const LogViewer: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
+  const [ isFetching, setIsFetching ] = useState(false);
   const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
   const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
@@ -176,6 +178,7 @@ const LogViewer: React.FC<Props> = ({
 
     const buffer: Log[] = [];
 
+    setIsFetching(true);
     local.current.isFetching = true;
 
     await readStream(
@@ -186,6 +189,7 @@ const LogViewer: React.FC<Props> = ({
       },
     );
 
+    setIsFetching(false);
     local.current.isFetching = false;
 
     return processLogs(buffer);
@@ -563,11 +567,17 @@ const LogViewer: React.FC<Props> = ({
               {LogViewerRow}
             </VariableSizeList>
           </div>
-          {logs.length === 0 && (
-            <div className={css.empty}>
-              <Message title="No logs to show." type={MessageType.Empty} />
-            </div>
-          )}
+          {
+            <Spinner className={css.empty} conditionalRender spinning={isFetching}>
+              {
+                (logs.length === 0) && (
+                  <div className={css.empty}>
+                    <Message title="No logs to show." type={MessageType.Empty} />
+                  </div>
+                )
+              }
+            </Spinner>
+          }
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
