@@ -1,6 +1,6 @@
 import React, { MutableRefObject } from 'react';
 
-import Spinner from 'shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner';
 import { CommonProps } from 'shared/types';
 
 import css from './Page.module.scss';
