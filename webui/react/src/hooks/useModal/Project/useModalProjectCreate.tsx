@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
@@ -51,11 +52,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createProject({
-        description: description.trim(),
-        name: name.trim(),
-        workspaceId,
-      });
+      const response = await createProject({ description, name, workspaceId });
       routeToReactUrl(paths.projectDetails(response.id));
     } catch (e) {
       handleError(e, {
@@ -73,7 +70,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',

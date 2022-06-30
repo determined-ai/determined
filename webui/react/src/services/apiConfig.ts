@@ -675,8 +675,9 @@ export const createWorkspace: DetApi<
   postProcess: (response) => {
     return decoder.mapV1Workspace(response.workspace);
   },
-  request: (params) => detApi.Workspaces.postWorkspace(
-    { name: params.name },
+  request: (params, options) => detApi.Workspaces.postWorkspace(
+    { name: params.name.trim() },
+    options,
   ),
 };
 
@@ -724,8 +725,8 @@ export const patchWorkspace: DetApi<
   postProcess: (response) => {
     return decoder.mapV1Workspace(response.workspace);
   },
-  request: (params) => {
-    return detApi.Workspaces.patchWorkspace(params.id, { name: params.name });
+  request: (params, options) => {
+    return detApi.Workspaces.patchWorkspace(params.id, { name: params.name?.trim() }, options);
   },
 };
 
@@ -848,8 +849,8 @@ export const createProject: DetApi<
   request: (params) => detApi.Projects.postProject(
     params.workspaceId,
     {
-      description: params.description,
-      name: params.name,
+      description: params.description?.trim(),
+      name: params.name.trim(),
       workspaceId: params.workspaceId,
     },
   ),
@@ -865,8 +866,8 @@ export const patchProject: DetApi<
   request: (params) => detApi.Projects.patchProject(
     params.id,
     {
-      description: params.description,
-      name: params.name,
+      description: params.description?.trim(),
+      name: params.name?.trim(),
     },
   ),
 };

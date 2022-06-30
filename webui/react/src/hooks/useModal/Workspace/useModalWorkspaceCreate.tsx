@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalWorkspaceCreate.module.scss';
@@ -39,7 +40,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await createWorkspace({ name: name.trim() });
+      const response = await createWorkspace({ name });
       routeToReactUrl(paths.workspaceDetails(response.id));
     } catch (e) {
       handleError(e, {
@@ -57,7 +58,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',

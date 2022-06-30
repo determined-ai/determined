@@ -5,6 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { validateLength } from 'shared/utils/string';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
@@ -50,7 +51,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await patchProject({ description, id: project.id, name: name.trim() });
+      await patchProject({ description, id: project.id, name });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -67,7 +68,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Save Changes',
       onOk: handleOk,
       title: 'Edit Project',

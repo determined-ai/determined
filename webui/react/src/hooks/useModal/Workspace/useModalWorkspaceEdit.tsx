@@ -5,6 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchWorkspace } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { validateLength } from 'shared/utils/string';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -39,7 +40,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await patchWorkspace({ id: workspace.id, name: name.trim() });
+      await patchWorkspace({ id: workspace.id, name });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -56,7 +57,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.trim().length === 0 || name.trim().length > 80 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Save changes',
       onOk: handleOk,
       title: 'Edit Workspace',
