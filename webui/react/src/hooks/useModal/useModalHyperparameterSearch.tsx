@@ -69,7 +69,6 @@ const SearchMethods: Record<string, SearchMethod> = {
 } as const;
 
 interface HyperparameterRowValues {
-  active: boolean,
   max_val: number,
   min_val:number
   type: HyperparameterType,
@@ -116,7 +115,12 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         const hpName = hp[0];
         const hpInfo = hp[1] as HyperparameterRowValues;
         if (hpInfo.type === HyperparameterType.Categorical) return;
-        if (hpInfo.active) {
+        else if (hpInfo.type === HyperparameterType.Constant) {
+          baseConfig.hyperparameters[hpName] = {
+            type: hpInfo.type,
+            val: hpInfo.value,
+          };
+        } else {
           baseConfig.hyperparameters[hpName] = {
             maxval: hpInfo.type === HyperparameterType.Int ?
               roundToPrecision(hpInfo.max_val, 0) :
@@ -125,11 +129,6 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
               roundToPrecision(hpInfo.min_val, 0) :
               hpInfo.min_val,
             type: hpInfo.type,
-          };
-        } else {
-          baseConfig.hyperparameters[hpName] = {
-            type: hpInfo.type,
-            val: hpInfo.value,
           };
         }
         if (hpInfo.type === HyperparameterType.Log) baseConfig.hyperparameters[hpName].base = 10.0;
@@ -210,11 +209,6 @@ const useModalHyperparameterSearch = ({ experiment }: Props): ModalHooks => {
         setValidationError(errorInfo.errorFields.length !== 0);
       });
   }, [ form ]);
-
-  useEffect(() => {
-    console.log('validating');
-    form.validateFields([ [ 'dropout1', 'count' ] ]).then(result => console.log(result)).catch(err => console.error(err));
-  }, [ form, searcher ]);
 
   const page1 = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
@@ -432,7 +426,7 @@ interface RowProps {
 const HyperparameterRow: React.FC<RowProps> = (
   { form, hyperparameter, name, searcher }: RowProps,
 ) => {
-  const [ checked, setChecked ] = useState(form.getFieldValue([ name, 'active' ]) ?? false);
+  const [ checked, setChecked ] = useState(hyperparameter.type !== HyperparameterType.Constant);
   const [ type, setType ] = useState<HyperparameterType>(hyperparameter.type);
   const [ valError, setValError ] = useState<string>();
   const [ minError, setMinError ] = useState<string>();
@@ -454,9 +448,8 @@ const HyperparameterRow: React.FC<RowProps> = (
   const handleTypeChange = useCallback((value: HyperparameterType) => {
     setType(value);
     setChecked(value !== HyperparameterType.Constant);
-    form.setFields([ { name: [ name, 'active' ], value: value !== HyperparameterType.Constant } ]);
     form.validateFields();
-  }, [ form, name ]);
+  }, [ form ]);
 
   const validateValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -506,13 +499,7 @@ const HyperparameterRow: React.FC<RowProps> = (
   return (
     <>
       <Space className={css.hyperparameterName}>
-        <Form.Item
-          initialValue={hyperparameter.type !== HyperparameterType.Constant}
-          name={[ name, 'active' ]}
-          noStyle
-          valuePropName="checked">
-          <Checkbox onChange={handleCheck} />
-        </Form.Item>
+        <Checkbox checked={checked} onChange={handleCheck} />
         <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
       </Space>
       <Form.Item
@@ -535,11 +522,11 @@ const HyperparameterRow: React.FC<RowProps> = (
       <Form.Item
         initialValue={hyperparameter.val}
         name={[ name, 'value' ]}
-        rules={[ { required: !form.getFieldValue([ name, 'active' ]) } ]}
+        rules={[ { required: !checked } ]}
         validateStatus={valError ? 'error' : 'success'}>
         <Input
-          disabled={form.getFieldValue([ name, 'active' ])}
-          placeholder={form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+          disabled={checked}
+          placeholder={checked ? 'n/a' : ''}
           onChange={validateValue}
         />
       </Form.Item>
@@ -572,14 +559,14 @@ const HyperparameterRow: React.FC<RowProps> = (
             name={[ name, 'min' ]}
             rules={[ {
               max: form.getFieldValue([ name, 'max' ]),
-              required: form.getFieldValue([ name, 'active' ]),
+              required: checked,
               type: 'number',
             } ]}
             validateStatus={((typeof minError === 'string' || typeof rangeError === 'string')
-        && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
+        && checked) ? 'error' : undefined}>
             <InputNumber
-              disabled={!form.getFieldValue([ name, 'active' ])}
-              placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+              disabled={!checked}
+              placeholder={!checked ? 'n/a' : ''}
               precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
                 0 : undefined}
               onChange={validateMin}
@@ -590,14 +577,14 @@ const HyperparameterRow: React.FC<RowProps> = (
             name={[ name, 'max' ]}
             rules={[ {
               min: form.getFieldValue([ name, 'min' ]),
-              required: form.getFieldValue([ name, 'active' ]),
+              required: checked,
               type: 'number',
             } ]}
             validateStatus={((typeof maxError === 'string' || typeof rangeError === 'string')
-        && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
+        && checked) ? 'error' : undefined}>
             <InputNumber
-              disabled={!form.getFieldValue([ name, 'active' ])}
-              placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+              disabled={!checked}
+              placeholder={!checked ? 'n/a' : ''}
               precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
                 0 : undefined}
               onChange={validateMax}
@@ -609,14 +596,14 @@ const HyperparameterRow: React.FC<RowProps> = (
               name={[ name, 'count' ]}
               rules={[ {
                 min: 0,
-                required: form.getFieldValue([ name, 'active' ]) && searcher === SearchMethods.Grid,
+                required: checked && searcher === SearchMethods.Grid,
                 type: 'number',
               } ]}
               validateStatus={(typeof countError === 'string' && searcher === SearchMethods.Grid
-                && form.getFieldValue([ name, 'active' ])) ? 'error' : undefined}>
+                && checked) ? 'error' : undefined}>
               <InputNumber
-                disabled={!form.getFieldValue([ name, 'active' ])}
-                placeholder={!form.getFieldValue([ name, 'active' ]) ? 'n/a' : ''}
+                disabled={!checked}
+                placeholder={!checked ? 'n/a' : ''}
                 precision={0}
                 onChange={validateCount}
               />
@@ -628,15 +615,15 @@ const HyperparameterRow: React.FC<RowProps> = (
         <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
       {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Log &&
         <p className={css.warning}>Logs are base 10.</p>}
-      {(!form.getFieldValue([ name, 'active' ]) && valError) &&
+      {(!checked && valError) &&
         <p className={css.error}>{valError}</p>}
-      {(form.getFieldValue([ name, 'active' ]) && minError) &&
+      {(checked && minError) &&
         <p className={css.error}>{minError}</p>}
-      {(form.getFieldValue([ name, 'active' ]) && maxError) &&
+      {(checked && maxError) &&
         <p className={css.error}>{maxError}</p>}
-      {(form.getFieldValue([ name, 'active' ]) && rangeError) &&
+      {(checked && rangeError) &&
         <p className={css.error}>{rangeError}</p>}
-      {(form.getFieldValue([ name, 'active' ]) && countError && searcher === SearchMethods.Grid) &&
+      {(checked && countError && searcher === SearchMethods.Grid) &&
         <p className={css.error}>{countError}</p>}
     </>
   );
