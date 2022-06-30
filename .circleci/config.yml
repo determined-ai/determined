@@ -1243,7 +1243,7 @@ jobs:
       - image: cimg/node:16.14.2
         environment:
           CI: "true"
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout-with-sm
       - skip-if-docs-only
