@@ -313,7 +313,7 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
           label="Experiment Name"
           name="name"
           rules={[ { required: true } ]}>
-          <Input />
+          <Input maxLength={80} />
         </Form.Item>
         <div className={css.poolRow}>
           <Form.Item
