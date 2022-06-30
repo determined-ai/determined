@@ -11,8 +11,8 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { Primitive } from 'shared/types';
-import { clone, flattenObject } from 'shared/utils/data';
+import { Primitive, RawJson } from 'shared/types';
+import { clone, flattenObject, unflattenObject } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -137,6 +137,8 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
         }
         if (hpInfo.type === HyperparameterType.Log) baseConfig.hyperparameters[hpName].base = 10.0;
       });
+
+    baseConfig.hyperparameters = unflattenObject(baseConfig.hyperparameters);
 
     console.log(baseConfig);
 
