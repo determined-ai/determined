@@ -48,6 +48,7 @@ Depending on your installation method, some of these services will be installed 
    upgrades
    troubleshoot
    users
+   workspaces
    oauth
    oidc
    saml
