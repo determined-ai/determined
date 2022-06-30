@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import { useStore } from 'contexts/Store';
-import { maxPoolSlotCapacity } from 'pages/Cluster/ClusterOverview';
+import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { Primitive } from 'shared/types';
