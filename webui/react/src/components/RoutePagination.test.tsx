@@ -51,9 +51,7 @@ const setup = (initialId: number) => {
     />,
   );
 
-  const user = userEvent.setup();
-
-  return { navigateToId, user };
+  return navigateToId;
 };
 
 describe('RoutePagination', () => {
@@ -74,37 +72,37 @@ describe('RoutePagination', () => {
     expect(screen.getByText(`${TOOLTIP_NEXT} ${TOOLTIP_LABEL}`)).toBeInTheDocument();
   });
 
-  it('allows user to click to previous page', async () => {
-    const { navigateToId, user } = setup(MIDDLE_ID);
+  it('allows user to click to previous page', () => {
+    const navigateToId = setup(MIDDLE_ID);
 
-    await user.click(screen.getByRole('listitem', { name: TITLE_PREV }));
+    userEvent.click(screen.getByRole('listitem', { name: TITLE_PREV }));
     expect(navigateToId).toHaveBeenCalledWith(FIRST_ID);
   });
 
-  it('allows user to click to next page', async () => {
-    const { navigateToId, user } = setup(MIDDLE_ID);
+  it('allows user to click to next page', () => {
+    const navigateToId = setup(MIDDLE_ID);
 
-    await user.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
+    userEvent.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
     expect(navigateToId).toHaveBeenCalledWith(LAST_ID);
   });
 
-  it('disables prev button on first page', async () => {
-    const { navigateToId, user } = setup(FIRST_ID);
+  it('disables prev button on first page', () => {
+    const navigateToId = setup(FIRST_ID);
 
-    await user.click(screen.getByRole('listitem', { name: TITLE_PREV }));
+    userEvent.click(screen.getByRole('listitem', { name: TITLE_PREV }));
     expect(navigateToId).not.toHaveBeenCalled();
 
-    await user.hover(screen.getByRole('button', { name: BUTTON_PREV }));
+    userEvent.hover(screen.getByRole('button', { name: BUTTON_PREV }));
     expect(screen.queryByText(`${TOOLTIP_PREV} ${TOOLTIP_LABEL}`)).not.toBeInTheDocument();
   });
 
-  it('disables next button on last page', async () => {
-    const { navigateToId, user } = setup(LAST_ID);
+  it('disables next button on last page', () => {
+    const navigateToId = setup(LAST_ID);
 
-    await user.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
+    userEvent.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
     expect(navigateToId).not.toHaveBeenCalled();
 
-    await user.hover(screen.getByRole('button', { name: BUTTON_NEXT }));
+    userEvent.hover(screen.getByRole('button', { name: BUTTON_NEXT }));
     expect(screen.queryByText(`${TOOLTIP_NEXT} ${TOOLTIP_LABEL}`)).not.toBeInTheDocument();
   });
 });

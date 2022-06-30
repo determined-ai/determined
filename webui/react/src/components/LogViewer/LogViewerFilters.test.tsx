@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { generateAlphaNumeric, generateUUID } from 'shared/utils/string';
@@ -27,8 +27,7 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
       onReset={handleOnReset}
     />,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-  return { handleOnChange, handleOnReset, user, view };
+  return { handleOnChange, handleOnReset, view };
 };
 
 describe('LogViewerFilter', () => {
@@ -72,10 +71,10 @@ describe('LogViewerFilter', () => {
       levels: [],
       rankIds: [ 0, undefined ],
     };
-    const { user } = setup(values, { ...values, rankIds: [] });
+    setup(values, { ...values, rankIds: [] });
 
     const agentOption1 = screen.getByText('All Ranks');
-    await user.click(agentOption1);
+    userEvent.click(agentOption1, undefined, { skipPointerEventsCheck: true });
     await waitFor(async () => {
       expect(await screen.findAllByText('0')).toHaveLength(2);
       expect(screen.queryByText('No Rank')).toBeInTheDocument();
@@ -83,19 +82,19 @@ describe('LogViewerFilter', () => {
   });
 
   it('should call onChange when options are selected', async () => {
-    const { handleOnChange, user } = setup(DEFAULT_FILTER_OPTIONS, {});
+    const { handleOnChange } = setup(DEFAULT_FILTER_OPTIONS, {});
 
     const agentRegex = new RegExp(`All ${LABELS.agentIds}`, 'i');
     const agentOptionText1 = DEFAULT_FILTER_OPTIONS.agentIds[1];
     const agentOptionText2 = DEFAULT_FILTER_OPTIONS.agentIds[2];
 
     const agent = screen.getByText(agentRegex);
-    await user.click(agent);
+    userEvent.click(agent);
 
     const agentOption1 = screen.getByText(agentOptionText1);
     const agentOption2 = screen.getByText(agentOptionText2);
-    await user.click(agentOption1);
-    await user.click(agentOption2);
+    userEvent.click(agentOption1, undefined, { skipPointerEventsCheck: true });
+    userEvent.click(agentOption2, undefined, { skipPointerEventsCheck: true });
 
     await waitFor(() => {
       /**
@@ -121,11 +120,11 @@ describe('LogViewerFilter', () => {
     expect(screen.queryByText(ARIA_LABEL_RESET)).toBeInTheDocument();
   });
 
-  it('should call onReset when reset button is clicked', async () => {
+  it('should call onReset when reset button is clicked', () => {
     const values = { agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ] };
-    const { handleOnReset, user } = setup(DEFAULT_FILTER_OPTIONS, values);
+    const { handleOnReset } = setup(DEFAULT_FILTER_OPTIONS, values);
 
-    await user.click(screen.getByText(ARIA_LABEL_RESET));
+    userEvent.click(screen.getByText(ARIA_LABEL_RESET));
 
     expect(handleOnReset).toHaveBeenCalled();
   });

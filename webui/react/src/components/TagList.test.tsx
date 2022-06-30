@@ -1,70 +1,73 @@
-import { render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_TRIGGER } from './TagList';
+import TagList, { ARIA_LABEL_CONTAINER, ARIA_LABEL_INPUT, ARIA_LABEL_TRIGGER } from './TagList';
 
 const initTags = [ 'hello', 'world', 'space gap' ].sort();
 
 const setup = (tags: string[] = []) => {
   const handleOnChange = jest.fn();
   const view = render(<TagList tags={tags} onChange={handleOnChange} />);
-  const user = userEvent.setup();
-  return { handleOnChange, user, view };
+  return { handleOnChange, view };
 };
 
 describe('TagList', () => {
   it('displays list of tags in order', () => {
-    const { view } = setup(initTags);
+    setup(initTags);
 
-    const container = view.getByLabelText(ARIA_LABEL_CONTAINER);
+    const container = screen.getByLabelText(ARIA_LABEL_CONTAINER);
     initTags.forEach((tag, index) => {
-      expect(view.getByText(tag)).toBeInTheDocument();
+      expect(screen.getByText(tag)).toBeInTheDocument();
       expect(container.children[index].textContent).toBe(tag);
     });
   });
 
-  it('handles tag addition', async () => {
+  it('handles tag addition', () => {
     const addition = 'fox';
-    const { handleOnChange, view, user } = setup();
+    const { handleOnChange } = setup();
 
-    const trigger = view.getByLabelText(ARIA_LABEL_TRIGGER);
-    await user.click(trigger);
+    const trigger = screen.getByLabelText(ARIA_LABEL_TRIGGER);
+    userEvent.click(trigger);
 
-    await user.keyboard(addition);
-    await user.click(view.getByLabelText(ARIA_LABEL_CONTAINER));
+    const input = screen.getByRole('textbox', { name: ARIA_LABEL_INPUT });
+    userEvent.type(input, `${addition}{enter}`);
+
     expect(handleOnChange).toHaveBeenCalledWith([ addition ]);
   });
 
-  it('handles tag removal', async () => {
+  it('handles tag removal', () => {
     const removalIndex = Math.floor(Math.random() * initTags.length);
     const removalTag = initTags[removalIndex];
     const resultTags = [ ...initTags.slice(0, removalIndex), ...initTags.slice(removalIndex + 1) ];
-    const { handleOnChange, view, user } = setup(initTags);
+    const { handleOnChange } = setup(initTags);
 
-    const tag = view.getByText(removalTag).closest('[id]') as HTMLElement;
+    const tag = screen.getByText(removalTag).closest('[id]') as HTMLElement;
     expect(tag).not.toBeNull();
 
     const tagClose = within(tag).getByLabelText('close');
-    await user.click(tagClose);
+    userEvent.click(tagClose);
 
     expect(handleOnChange).toHaveBeenCalledWith(resultTags);
   });
 
-  it('handles tag renaming', async () => {
+  it('handles tag renaming', () => {
     const rename = 'jump';
     const renameIndex = Math.floor(Math.random() * initTags.length);
     const renameTag = initTags[renameIndex];
-    const { handleOnChange, user, view } = setup(initTags);
+    const { handleOnChange } = setup(initTags);
 
-    const tag = view.getByText(renameTag);
-    await user.click(tag);
+    const tag = screen.getByText(renameTag);
+    userEvent.click(tag);
 
-    await user.keyboard(rename);
-    await user.click(view.getByLabelText(ARIA_LABEL_CONTAINER));
+    const input = screen.getByLabelText(ARIA_LABEL_INPUT);
+    userEvent.type(input, `${rename}{enter}`);
+
+    //screen.debug();
 
     const resultTags = initTags.filter((tag: string) => tag !== renameTag);
     resultTags.push(rename);
+
     expect(handleOnChange).toHaveBeenCalledWith(resultTags);
   });
 });

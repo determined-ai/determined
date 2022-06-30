@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { Select } from 'antd';
 import React from 'react';
 
@@ -29,11 +29,10 @@ const setup = () => {
       ))}
     </MultiSelect>,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-  return { handleOpen, user, view };
+  return { handleOpen, view };
 };
 
-describe('MultiSelect', () => {
+describe('SelectFilter', () => {
   it('displays label and placeholder', async () => {
     setup();
 
@@ -45,10 +44,10 @@ describe('MultiSelect', () => {
   });
 
   it('opens select list', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
     expect(handleOpen).not.toHaveBeenCalled();
-    await waitFor(async () => {
-      await user.click(screen.getByText(PLACEHOLDER));
+    await waitFor(() => {
+      userEvent.click(screen.getByText(PLACEHOLDER));
       expect(handleOpen).toHaveBeenCalled();
 
       expect(screen.getAllByTitle(OPTION_TITLE)).toHaveLength(NUM_OPTIONS);
@@ -57,14 +56,14 @@ describe('MultiSelect', () => {
   });
 
   it('selects option', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
-    await user.click(screen.getByText(PLACEHOLDER));
+    userEvent.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
 
     const list = screen.getAllByTitle(OPTION_TITLE);
 
-    await user.click(list[0]);
+    userEvent.click(list[0], undefined, { skipPointerEventsCheck: true });
 
     await waitFor(() => {
       expect(list[0].querySelector('.anticon-check')).toBeInTheDocument();
@@ -73,15 +72,16 @@ describe('MultiSelect', () => {
   });
 
   it('selects multiple option', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
-    await user.click(screen.getByText(PLACEHOLDER));
+    userEvent.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
 
     const list = screen.getAllByTitle(OPTION_TITLE);
 
-    await user.click(list[0]);
-    await user.click(list[1]);
+    userEvent.click(list[0], undefined, { skipPointerEventsCheck: true });
+
+    userEvent.click(list[1], undefined, { skipPointerEventsCheck: true });
 
     await waitFor(() => {
       expect(document.querySelectorAll('.anticon-check')).toHaveLength(2);
@@ -89,14 +89,14 @@ describe('MultiSelect', () => {
 
   });
   it('selects all', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
-    await user.click(screen.getByText(PLACEHOLDER));
+    userEvent.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
 
     const all = screen.getByTitle('All Agents');
 
-    await user.click(all);
+    userEvent.click(all, undefined, { skipPointerEventsCheck: true });
     await waitFor(() => {
       expect(all.querySelector('.anticon-check')).toBeInTheDocument();
     });

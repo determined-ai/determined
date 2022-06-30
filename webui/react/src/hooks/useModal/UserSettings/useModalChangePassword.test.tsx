@@ -77,16 +77,13 @@ const TestApp: React.FC = () => {
 };
 
 const setup = async () => {
-  const view = render(
+  render(
     <StoreProvider>
       <TestApp />
     </StoreProvider>,
   );
-  const user = userEvent.setup();
-  await user.click(await screen.findByText(OPEN_MODAL_TEXT));
-  await user.click(await screen.findByText(CHANGE_PASSWORD_TEXT));
-
-  return { user, view };
+  userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
+  userEvent.click(await screen.findByText(CHANGE_PASSWORD_TEXT));
 };
 
 describe('useModalChangePassword', () => {
@@ -100,13 +97,13 @@ describe('useModalChangePassword', () => {
   });
 
   it('validates the password update request', async () => {
-    const { user } = await setup();
+    await setup();
 
     await screen.findByRole('heading', { name: CHANGE_PASSWORD_TEXT });
-    await user.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
-    await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), '.');
-    await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), '/');
-    await user.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
+    userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
+    userEvent.type(screen.getByLabelText(NEW_PASSWORD_LABEL), '.');
+    userEvent.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), '/');
+    userEvent.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
 
     await waitFor(() => {
       expect(screen.getAllByRole('alert')).toHaveLength(6);
@@ -114,13 +111,13 @@ describe('useModalChangePassword', () => {
   });
 
   it('submits a valid password update request', async () => {
-    const { user } = await setup();
+    await setup();
 
     await screen.findByRole('heading', { name: CHANGE_PASSWORD_TEXT });
-    await user.type(screen.getByLabelText(OLD_PASSWORD_LABEL), FIRST_PASSWORD_VALUE);
-    await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
-    await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
-    await user.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
+    userEvent.type(screen.getByLabelText(OLD_PASSWORD_LABEL), FIRST_PASSWORD_VALUE);
+    userEvent.type(screen.getByLabelText(NEW_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
+    userEvent.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
+    userEvent.click(screen.getAllByRole('button', { name: CHANGE_PASSWORD_TEXT })[1]);
 
     // TODO: test for toast message appearance?
 
@@ -138,10 +135,10 @@ describe('useModalChangePassword', () => {
   });
 
   it('closes the modal and returns to User Settings modal', async () => {
-    const { user } = await setup();
+    await setup();
 
-    await waitFor(async () => {
-      await user.click(screen.getAllByRole('button', { name: /close/i })[1]);
+    await waitFor(() => {
+      userEvent.click(screen.getAllByRole('button', { name: /close/i })[1]);
     });
 
     await waitFor(() => {

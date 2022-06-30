@@ -66,16 +66,13 @@ const TestApp: React.FC = () => {
 };
 
 const setup = async () => {
-  const view = render(
+  render(
     <StoreProvider>
       <TestApp />
     </StoreProvider>,
   );
-  const user = userEvent.setup();
-  await user.click(await screen.findByText(OPEN_MODAL_TEXT));
-  await user.click(await screen.findByText(CHANGE_NAME_TEXT));
-
-  return { user, view };
+  userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
+  userEvent.click(await screen.findByText(CHANGE_NAME_TEXT));
 };
 
 describe('useModalChangeName', () => {
@@ -87,11 +84,11 @@ describe('useModalChangeName', () => {
   });
 
   it('validates the display name update request', async () => {
-    const { user } = await setup();
+    await setup();
 
     const input = await screen.findByRole('textbox', { name: 'Display name' });
-    await user.type(input, 'a'.repeat(81));
-    await user.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
+    userEvent.type(input, 'a'.repeat(81));
+    userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -99,19 +96,19 @@ describe('useModalChangeName', () => {
   });
 
   it('submits a valid display name update request', async () => {
-    const { user } = await setup();
+    await setup();
 
     await screen.findByRole('heading', { name: CHANGE_NAME_TEXT });
-    await user.clear(screen.getByRole('textbox', { name: 'Display name' }));
-    await user.click(screen.getByRole('textbox', { name: 'Display name' }));
-    await user.keyboard(UPDATED_DISPLAY_NAME);
+    userEvent.type(
+      screen.getByRole('textbox', { name: 'Display name' }),
+      `{selectall}{del}${UPDATED_DISPLAY_NAME}`,
+    );
+    userEvent.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
 
     mockPatchUser.mockResolvedValue({
       ...currentUser,
       displayName: UPDATED_DISPLAY_NAME,
     });
-
-    await user.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
 
     // TODO: test for toast message appearance?
 
@@ -135,10 +132,10 @@ describe('useModalChangeName', () => {
   });
 
   it('closes the modal and returns to User Settings modal', async () => {
-    const { user } = await setup();
+    await setup();
 
-    await waitFor(async () => {
-      await user.click(screen.getAllByRole('button', { name: /close/i })[1]);
+    await waitFor(() => {
+      userEvent.click(screen.getAllByRole('button', { name: /close/i })[1]);
     });
 
     await waitFor(() => {

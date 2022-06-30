@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { Metadata } from 'types';
@@ -17,11 +17,10 @@ const setup = (metadata: Metadata = {}, editing = false) => {
       updateMetadata={handleOnChange}
     />,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-  return { handleOnChange, user, view };
+  return { handleOnChange, view };
 };
 
-describe('EditableMetadata', () => {
+describe('TagList', () => {
   it('displays list of metadata', () => {
     setup(initMetadata);
 
@@ -31,25 +30,25 @@ describe('EditableMetadata', () => {
     });
   });
 
-  it('handles metadata addition', async () => {
+  it('handles metadata addition', () => {
     const [ additionKey, additionValue ] = [ 'animal', 'fox' ];
     const resultMetadata = {
       ...initMetadata,
       ...Object.fromEntries([ [ additionKey, additionValue ] ]),
     };
-    const { handleOnChange, user } = setup(initMetadata, true);
+    const { handleOnChange } = setup(initMetadata, true);
 
     const addRow = screen.getByText('+ Add Row');
-    await user.click(addRow);
+    userEvent.click(addRow);
 
     const keyInputs = screen.getAllByPlaceholderText('Enter metadata label');
     const keyInput = keyInputs.last();
-    await user.click(keyInput);
-    await user.type(keyInput, additionKey);
+    userEvent.click(keyInput);
+    userEvent.type(keyInput, additionKey);
 
     const valueInput = keyInput.nextSibling as HTMLElement;
-    await user.click(valueInput);
-    await user.type(valueInput, additionValue);
+    userEvent.click(valueInput);
+    userEvent.type(valueInput, additionValue);
 
     expect(handleOnChange).toHaveBeenLastCalledWith(resultMetadata);
   });
@@ -61,10 +60,16 @@ describe('EditableMetadata', () => {
     const resultMetadata = Object.fromEntries(metadataArray.filter(
       ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
     ));
-    const { handleOnChange, user, view } = setup(initMetadata, true);
+    const { handleOnChange } = setup(initMetadata, true);
 
-    await user.click(view.getAllByRole('button')[removalIndex]);
-    await user.click(view.getByText('Delete Row'));
+    const metadataRow = screen.getByDisplayValue(removalMetadata[0]).closest('span') as HTMLElement;
+    expect(metadataRow).not.toBeNull();
+
+    const openOverflow = within(metadataRow).getByRole('button');
+    userEvent.click(openOverflow);
+
+    const deleteRow = screen.getByText('Delete Row');
+    await waitFor(() => userEvent.click(deleteRow, undefined, { skipPointerEventsCheck: true }));
 
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });

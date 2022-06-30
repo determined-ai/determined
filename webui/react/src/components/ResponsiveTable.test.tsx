@@ -158,14 +158,11 @@ const setup = (options?: { pagination?: Pagination }) => {
     />,
   );
 
-  const user = userEvent.setup();
-
   return {
     data,
     handlers: { onChange, onIdFilter, onIdReset },
     paginationConfig,
     rerender,
-    user,
     view,
   };
 };
@@ -236,9 +233,9 @@ describe('ResponsiveTable', () => {
     }
   });
 
-  it('filter table by ID', async () => {
+  it('filter table by ID', () => {
     const PICK_COUNT = 3;
-    const { data, handlers, user } = setup();
+    const { data, handlers } = setup();
 
     // Click on the ID column filter.
     screen.getByLabelText(ARIA_LABEL_FILTER).click();
@@ -262,20 +259,20 @@ describe('ResponsiveTable', () => {
       idSearchList.push(id);
 
       const filterInput = screen.getByLabelText(ARIA_LABEL_INPUT);
-      await user.click(filterInput);
-      await user.type(filterInput, `${id}{enter}`);
+      userEvent.click(filterInput);
+      userEvent.type(filterInput, `${id}{enter}`);
 
       const filterContainer = screen.getByLabelText(ARIA_LABEL_CONTAINER);
       const option = within(filterContainer).getByText(id).closest('[data-value]');
-      if (option) await user.click(option);
+      if (option) userEvent.click(option);
 
       const filterInputClear = screen.getByLabelText(ARIA_LABEL_FILTER_CLEAR);
-      await user.click(filterInputClear);
+      userEvent.click(filterInputClear);
     }
 
     // Apply filter.
     const filterApply = screen.getByLabelText(ARIA_LABEL_APPLY);
-    await user.click(filterApply);
+    userEvent.click(filterApply);
 
     expect(handlers.onIdFilter).toHaveBeenCalledWith(idSearchList);
   });

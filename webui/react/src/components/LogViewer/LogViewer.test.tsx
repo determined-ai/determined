@@ -70,12 +70,7 @@ const generateLogs = (
   });
 };
 
-const setup = (props: src.Props) => {
-  const view = render(<src.default {...props} />);
-  const user = userEvent.setup();
-
-  return { user, view };
-};
+const setup = (props: src.Props) => render(<src.default {...props} />);
 
 /**
  * canceler -        AbortController to manually stop ongoing API calls.
@@ -195,7 +190,7 @@ describe('LogViewer', () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
-      const { user } = setup({ decoder, initialLogs });
+      setup({ decoder, initialLogs });
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -207,7 +202,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      await user.click(enableTailingButton);
+      userEvent.click(enableTailingButton);
 
       expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       await waitFor(() => {
@@ -256,7 +251,7 @@ describe('LogViewer', () => {
     });
 
     it('should show oldest logs', async () => {
-      const { user } = setup({ decoder, onFetch });
+      setup({ decoder, onFetch });
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
@@ -269,7 +264,7 @@ describe('LogViewer', () => {
       });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      await user.click(scrollToOldestButton);
+      userEvent.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -278,10 +273,10 @@ describe('LogViewer', () => {
     });
 
     it('should show newest logs when enabling tailing', async () => {
-      const { user } = setup({ decoder, onFetch });
+      setup({ decoder, onFetch });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      await user.click(scrollToOldestButton);
+      userEvent.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -289,7 +284,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      await user.click(enableTailingButton);
+      userEvent.click(enableTailingButton);
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
