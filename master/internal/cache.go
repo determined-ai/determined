@@ -22,6 +22,7 @@ import (
 var modelDefCache *FileCache
 
 const cacheDir = "/tmp/determined/cache/exp_model_def"
+const DEFAULT_CACHE_MAX_AGE = 24 * time.Hour
 
 type modelDefFolder struct {
 	fileTree   []*experimentv1.FileNode
@@ -39,15 +40,21 @@ type FileCache struct {
 }
 
 // GetModelDefCache returns FileCache object.
-func GetModelDefCache() *FileCache {
+func GetModelDefCache(cacheMaxAge *time.Duration) *FileCache {
 	if modelDefCache == nil {
 		err := os.RemoveAll(cacheDir)
 		if err != nil {
 			log.WithError(err).Errorf("failed to initialize model def cache at %s", cacheDir)
 		}
+		var maxAge time.Duration
+		if cacheMaxAge != nil {
+			maxAge = *cacheMaxAge
+		} else {
+			maxAge = DEFAULT_CACHE_MAX_AGE
+		}
 		modelDefCache = &FileCache{
 			rootDir: cacheDir,
-			maxAge:  24 * time.Hour,
+			maxAge:  maxAge,
 			caches:  make(map[int]*modelDefFolder),
 		}
 	}
@@ -148,8 +155,8 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 			file, err := os.ReadFile(f.genPath(expID, path))
 			if err != nil {
 				_, ok := err.(*fs.PathError)
-				// This means memory and file system are out of sync.
 				if ok {
+					// This means memory and file system are out of sync.
 					err = os.RemoveAll(f.rootDir)
 					if err != nil {
 						return []byte{}, err

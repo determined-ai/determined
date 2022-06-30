@@ -1394,7 +1394,7 @@ func (a *apiServer) MoveExperiment(
 func (a *apiServer) GetModelDefTree(
 	_ context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
-	modelDefCache := GetModelDefCache()
+	modelDefCache := GetModelDefCache(nil)
 	fileTree, err := modelDefCache.GetFileTree(int(req.ExperimentId))
 	if err != nil {
 		return nil, err
@@ -1405,7 +1405,7 @@ func (a *apiServer) GetModelDefTree(
 func (a *apiServer) GetModelDefFile(
 	_ context.Context, req *apiv1.GetModelDefFileRequest,
 ) (*apiv1.GetModelDefFileResponse, error) {
-	modelDefCache := GetModelDefCache()
+	modelDefCache := GetModelDefCache(nil)
 	file, err := modelDefCache.GetFileContent(int(req.ExperimentId), req.Path)
 	if err != nil {
 		return nil, err
