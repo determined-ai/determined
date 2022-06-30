@@ -1,45 +1,88 @@
 package db
 
-func (db *PgDB) AddGroup() {
-	return
+import (
+	"context"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+)
+
+func (db *PgDB) AddGroup(ctx context.Context, group model.Group) error {
+	_, err := Bun().NewInsert().Table("groups").Model(group).Exec(ctx)
+	return err
 }
 
-func (db *PgDB) GroupByID(gid int) {
-	return
+func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
+	var g model.Group
+	err := Bun().NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
+	return g, err
 }
 
-func (db *PgDB) SearchGroups(userBelongsTo, groupIsOrDescendsFrom int) {
-	return
+func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo int) ([]model.Group, error) {
+	var groups []model.Group
+	query := Bun().NewSelect().Distinct().Model(&groups)
+
+	if userBelongsTo > 0 {
+		query = query.
+			Join("INNER JOIN user_group_membership AS ugm ON ugm.group_id=groups.id").
+			Where("ugm.user_id = ?", userBelongsTo)
+	}
+
+	err := query.Scan(ctx)
+	return groups, err
 }
 
-func (db *PgDB) DeleteGroup(gid int) {
-	return
+func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
+	_, err := Bun().NewDelete().Table("groups").Where("id = ?", gid).Exec(ctx)
+	return err
 }
 
-func (db *PgDB) DeleteGroupRecursive(gid int) {
-	return
+func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
+	_, err := Bun().NewUpdate().Model(group).Exec(ctx)
+	return err
 }
 
-func (db *PgDB) UpdateGroup() {
-	return
+func (db *PgDB) RemoveUserFromGroup(ctx context.Context, gid, uid int) error {
+	_, err := Bun().NewDelete().Model(model.GroupMembership{
+		UserID:  model.UserID(uid),
+		GroupID: gid,
+	}).Exec(ctx)
+	// TODO: check rest of package for idioms around things like "not found" errors
+	return err
 }
 
-func (db *PgDB) AddUserToGroup(gid, uid int) {
-	return
+func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...int) error {
+	groupMem := make([]model.GroupMembership, 0, len(uids))
+	for _, uid := range uids {
+		groupMem = append(groupMem, model.GroupMembership{
+			UserID:  model.UserID(uid),
+			GroupID: gid,
+		})
+	}
+
+	_, err := Bun().NewInsert().Model(groupMem).Exec(ctx)
+	return err
 }
 
-func (db *PgDB) DeleteUserFromGroup(gid, uid int) {
-	return
+// TODO: consider changing the signature to accept UserID type instead of int
+func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...int) error {
+	groupMem := make([]model.GroupMembership, 0, len(uids))
+	for _, uid := range uids {
+		groupMem = append(groupMem, model.GroupMembership{
+			UserID:  model.UserID(uid),
+			GroupID: gid,
+		})
+	}
+
+	_, err := Bun().NewDelete().Model(groupMem).Exec(ctx)
+	return err
 }
 
-func (db *PgDB) AddUsersToGroup(gid int, uids ...int) {
-	return
-}
+func (db *PgDB) GetUsersInGroupRecursive(ctx context.Context, gid int) ([]model.User, error) {
+	var users []model.User
+	err := Bun().NewSelect().Table("users").Model(&users).
+		Join("INNER JOIN user_group_membership AS ugm ON users.id=ugm.user_id").
+		Where("ugm.group_id = ?", gid).
+		Scan(ctx)
 
-func (db *PgDB) DeleteUsersFromGroup(gid int, uids ...int) {
-	return
-}
-
-func (db *PgDB) GetUsersInGroupRecursive(gid int) {
-	return
+	return users, err
 }
