@@ -70,9 +70,9 @@ USERPORT_rcorujo=8085
 USERPORT_phillipgaisford=8086
 USERPORT_pankaj=8087
 USERPORT_alyssa=8088
-USERPORT_charles=8089
+USERPORT_charlestran=8089
 USERPORT_jerryharrow=8090
-USERPORT_cam=8091
+USERPORT_cameronquilici=8093
 USERPORT_cobble=8092
 
 USERPORT=$(lookup "USERPORT_$USER")
