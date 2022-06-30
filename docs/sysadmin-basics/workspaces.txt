@@ -4,23 +4,24 @@
  Workspaces and Projects
 #########################
 
-Experiments can be organized into **projects** and **workspaces**. A project is a collection of
-experiments, and a workspace is a collection of projects. The location of a newly created experiment
-is specified in the :doc:`Experiment Config </training-apis/experiment-config>`. If a workspace and
-project aren’t specified, the experiment will be created in the default ``Uncategorized`` project.
-Experiments can be moved between projects, and projects can be moved between workspaces.
+Experiments can be organized into *projects* and *workspaces*. A project is a collection of
+experiments, and a workspace is a collection of projects. See the :doc:`Experiment Configuration
+</training-apis/experiment-config>` document, which specifies the location of a newly created
+experiment. If a workspace and project are not specified, the experiment is created in the default,
+``Uncategorized`` project. Experiments can be moved between projects, and projects can be moved
+between workspaces.
 
 *****************
  Getting Started
 *****************
 
 Initially, a Determined installation has one workspace containing one project, both titled
-``Uncategorized``. These are both considered immutable, meaning that they cannot be renamed,
-archived, or deleted, and the project cannot be moved to a different workspace, though experiments
-can be moved in or out of the ``Uncategorized`` project at will.
+``Uncategorized``. Both are considered immutable, which means that they cannot be renamed, archived,
+or deleted, and the project cannot be moved to a different workspace, although, experiments can be
+moved in or out of an ``Uncategorized`` project at any time.
 
 Use ``det workspace create`` and ``det project create`` to create workspaces and projects for
-indidivuals or teams using Determined. This is highly recommended, especially for larger teams.
+individuals or teams using Determined. This is recommended for larger teams.
 
 .. code::
 
@@ -34,36 +35,37 @@ indidivuals or teams using Determined. This is highly recommended, especially fo
 WebUI
 =====
 
-Once logged in, the default landing page for the WebUI is the Uncategorized Experiments List. This
-is where any experiments that don't have a ``workspace`` and ``project`` in their config files will
-end up (as well as any experiments that were created prior to this feature's existence).
+After logging in, the default landing page for the WebUI is **Uncategorized Experiments List**. This
+is where experiments that do not have a configuration file ``workspace`` and ``project`` are put,
+including experiments created before the workspaces feature was released.
 
-Clicking on the "Workspaces" button on the navigation sidebar will take the user to the Workspaces
-List page. This page shows all of the workspaces that currently exist on a cluster. Clicking on the
-icon in the upper right corner of a workspace card brings up an action menu. The action menu always
-contains the option to pin a workspace, which will create a link to it on the sidebar for easy
-access. If the workspace in question was created by the currently logged in user (or if the current
-user is an admin), the action menu will also provide the choice to edit the workspace's name,
-archive the workspace, or delete the workspace. Deleting a workspace is permanent, and will also
-delete all projects contained within it. A workspace cannot be deleted if it's projects contain any
+Click the navigation sidebar **Workspaces** button to go to the **Workspaces List** page. This page
+shows all of the workspaces that currently exist on a cluster.
+
+Click the icon in the upper right corner of a workspace card to access the action menu. The action
+menu always contains the option to pin a workspace, which creates an easy access link to the
+workspace on the sidebar. If the workspace was created by the currently logged-in user, or if the
+current user is an administrator, the action menu also provides the options to edit the workspace
+name, archive the workspace, or delete the workspace. Deleting a workspace is permanent and also
+deletes all projects contained within it. A workspace cannot be deleted if its projects contain
 experiments.
 
-Clicking on a workspace card will take the user to the Workspace Details page. This page shows all
-of the projects that currently exist inside the selected workspace. If a project was created by the
-currently logged in user (or if the current user is an admin), clicking on the icon in the upper
-right corner of the project card brings up another action menu. This action menu contains the
-options to edit the project's name and/or description, move the project to a different workspace,
-archive the project, or (if the project is empty of experiments) delete the project.
+Click a workspace card to go to the **Workspace Details** page. This page shows all currently
+selected workspace projects. If a project was created by the currently logged-in user, or if the
+current user is an administrator, click the icon in the upper right corner of the project card to
+bring up another action menu. This action menu contains the options to edit the project name and
+description, move the project to a different workspace, archive the project, or delete the project
+if it does not contain experiments.
 
-Clicking on a project card will take the user to the Project Details page. This page shows all of
-the experiments that currently exist inside the selected project. There is another tab that lets
-users create, read, edit, and delete multiple pages of notes about the selected project.
+Click a project card to go to the **Project Details** page. This page shows the experiments that
+currently exist for the selected project. The Notes tab lets users create, read, edit, and delete
+multiple pages of notes about the selected project.
 
 CLI
 ===
 
-In the CLI, the ``det workspace`` and ``det project`` commands can be used to interact with
-workspaces and projects. The `-h` flag can be used to get a list of all possible commands.
+In the CLI, use the ``det workspace`` and ``det project`` commands to interact with workspaces and
+projects. Use the `-h` flag to get a list of all possible commands.
 
 .. code::
 
