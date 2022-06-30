@@ -14,6 +14,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -21,8 +22,8 @@ import (
 
 var modelDefCache *FileCache
 
-const cacheDir = "/tmp/determined/cache/exp_model_def"
-const DEFAULT_CACHE_MAX_AGE = 24 * time.Hour
+const cacheDir = "exp_model_def"
+const defaultCacheMaxAge = 24 * time.Hour
 
 type modelDefFolder struct {
 	fileTree   []*experimentv1.FileNode
@@ -41,19 +42,21 @@ type FileCache struct {
 
 // GetModelDefCache returns FileCache object.
 func GetModelDefCache(cacheMaxAge *time.Duration) *FileCache {
+	config := config.GetMasterConfig()
 	if modelDefCache == nil {
-		err := os.RemoveAll(cacheDir)
+		rootDir := filepath.Join(config.Cache, cacheDir)
+		err := os.RemoveAll(rootDir)
 		if err != nil {
-			log.WithError(err).Errorf("failed to initialize model def cache at %s", cacheDir)
+			log.WithError(err).Errorf("failed to initialize model def cache at %s", rootDir)
 		}
 		var maxAge time.Duration
 		if cacheMaxAge != nil {
 			maxAge = *cacheMaxAge
 		} else {
-			maxAge = DEFAULT_CACHE_MAX_AGE
+			maxAge = defaultCacheMaxAge
 		}
 		modelDefCache = &FileCache{
-			rootDir: cacheDir,
+			rootDir: rootDir,
 			maxAge:  maxAge,
 			caches:  make(map[int]*modelDefFolder),
 		}

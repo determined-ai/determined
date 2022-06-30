@@ -99,6 +99,8 @@ func DefaultConfig() *Config {
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
+		// For developers this should be a writable directory for caching files.
+		Cache: "/var/cache/determined",
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -130,6 +132,7 @@ type Config struct {
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
+	Cache                 string                            `json:"cache"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
