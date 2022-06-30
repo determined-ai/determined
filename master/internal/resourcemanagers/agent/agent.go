@@ -117,7 +117,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.socketDisconnected(ctx)
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
 			// agentReconnectWait if it never reconnects.
-			ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: a.agentState.Label})
+			// Ensure RP is aware of the agent.
+			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: a.agentState.Label}).Get()
 		}
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
