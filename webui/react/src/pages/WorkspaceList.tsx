@@ -273,8 +273,7 @@ const WorkspaceList: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchWorkspaces();
-    setIsLoading(false);
+    fetchWorkspaces().then(() => setIsLoading(false));
   }, [ fetchWorkspaces ]);
 
   useEffect(() => {
