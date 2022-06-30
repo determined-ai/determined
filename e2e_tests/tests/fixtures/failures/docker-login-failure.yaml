@@ -1,0 +1,14 @@
+description: Creates an experiment that fails to download due to the lack of a docker login.
+environment:
+  image: ilumb/mylolcow
+  # determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu
+  registry_auth:
+    username: jjharrow
+    password: thisiswrong
+searcher:
+  name: single
+  metric: error
+  max_length:
+    batches: 1000
+max_restarts: 0
+entrypoint: failures:FailureTrial

@@ -1,0 +1,12 @@
+description: An experiment that attempts to supply a slurm option that is controlled by Determined
+environment:
+  slurm:
+   - -G7
+   - --error=xxx
+searcher:
+  name: single
+  metric: error
+  max_length:
+    batches: 1000
+max_restarts: 0
+entrypoint: failures:FailureTrial

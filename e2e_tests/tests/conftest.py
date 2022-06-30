@@ -29,6 +29,7 @@ _INTEG_MARKERS = {
     "e2e_cpu_rbac",
     "e2e_gpu",
     "e2e_k8s",
+    "e2e_slurm",
     "det_deploy_local",
     "stress_test",
     "distributed",

@@ -1,0 +1,10 @@
+description: An experiment with a configuration that cannot be satisfied.
+resources:
+  slots_per_trial: 100
+searcher:
+  name: single
+  metric: error
+  max_length:
+    batches: 1000
+max_restarts: 0
+entrypoint: failures:FailureTrial
