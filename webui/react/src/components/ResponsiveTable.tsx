@@ -8,6 +8,8 @@ import useResize from 'hooks/useResize';
 
 import Spinner from '../shared/components/Spinner/Spinner';
 
+import SkeletonTable from './Skeleton/SkeletonTable';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
 
@@ -18,8 +20,13 @@ interface Settings {
   tableOffset: number;
 }
 
+type TableWithSkeleton = {
+  skeletonColumns?: number;
+  skeletonRows?: number;
+}
+
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
+type ResponsiveTable = <T extends object>(props: TableProps<T> & TableWithSkeleton) => JSX.Element;
 
 export const handleTableChange = (
   columns: {key?: Comparable}[],
@@ -48,6 +55,8 @@ export const handleTableChange = (
 const ResponsiveTable: ResponsiveTable = ({
   loading,
   scroll,
+  skeletonColumns = 2,
+  skeletonRows = 2,
   ...props
 }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
@@ -86,13 +95,19 @@ const ResponsiveTable: ResponsiveTable = ({
 
   return (
     <div ref={tableRef}>
-      <Spinner conditionalRender spinning={spinning}>
-        <Table
-          bordered
-          scroll={tableScroll}
-          tableLayout="auto"
-          {...props}
-        />
+      <Spinner spinning={spinning}>
+        {
+          spinning
+            ? <SkeletonTable columns={skeletonColumns} rows={skeletonRows} />
+            : (
+              <Table
+                bordered
+                scroll={tableScroll}
+                tableLayout="auto"
+                {...props}
+              />
+            )
+        }
       </Spinner>
     </div>
   );

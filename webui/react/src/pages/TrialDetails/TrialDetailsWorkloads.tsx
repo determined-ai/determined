@@ -174,6 +174,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"
+          skeletonColumns={3}
+          skeletonRows={4}
           onChange={handleTableChange}
         />
       </Section>
