@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
@@ -39,7 +40,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       <div className={css.base}>
         <div>
           <label className={css.label} htmlFor="name">Name</label>
-          <Input id="name" value={name} onChange={handleNameInput} />
+          <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
@@ -69,7 +70,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',

@@ -115,3 +115,9 @@ export const stringToVersion = (version: string): SemanticVersion => {
     patch: parseInt(patch),
   };
 };
+
+export const validateLength = (str: string, minLen = 1, maxLen = 80, trim = true): boolean => {
+  let strLen = str.length;
+  if (trim) strLen = str.trim().length;
+  return strLen >= minLen && strLen <= maxLen;
+};
