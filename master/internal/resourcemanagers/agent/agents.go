@@ -27,8 +27,9 @@ import (
 func Initialize(
 	system *actor.System, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
 ) {
-	_, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts})
+	agentsRef, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts})
 	check.Panic(check.True(ok, "agents address already taken"))
+	system.Ask(agentsRef, actor.Ping{}).Get()
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
 	e.PATCH("/agents*", api.Route(system, nil),
@@ -57,12 +58,15 @@ func (a *agents) Receive(ctx *actor.Context) error {
 
 			for agentID := range agentStates {
 				agentState := agentStates[agentID]
-				_, err := a.createAgentActor(
+				agentRef, err := a.createAgentActor(
 					ctx, agentID, agentState.resourcePoolName, a.opts, &agentState)
 				if err != nil {
 					ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
 					badAgentIds = append(badAgentIds, agentID)
+					continue
 				}
+				ctx.Ask(agentRef, actor.Ping{}).Get()
+				ctx.Log().Debugf("restored agent state: %s", agentID)
 			}
 
 			if len(badAgentIds) > 0 {
