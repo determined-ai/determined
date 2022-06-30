@@ -62,7 +62,6 @@ const WorkspaceList: React.FC = () => {
   }, [ modalOpen ]);
 
   const fetchWorkspaces = useCallback(async () => {
-    setIsLoading(true);
     try {
       const response = await getWorkspaces({
         archived: settings.archived ? undefined : false,
@@ -94,7 +93,7 @@ const WorkspaceList: React.FC = () => {
     settings.tableOffset,
     settings.user ]);
 
-  usePolling(fetchWorkspaces, { rerunOnNewFn: true });
+  usePolling(fetchWorkspaces);
 
   const handleViewSelect = useCallback((value) => {
     setWorkspaceFilter(value as WorkspaceFilters);
@@ -273,7 +272,8 @@ const WorkspaceList: React.FC = () => {
     workspaces ]);
 
   useEffect(() => {
-    fetchWorkspaces();
+    setIsLoading(true);
+    fetchWorkspaces().then(() => setIsLoading(false));
   }, [ fetchWorkspaces ]);
 
   useEffect(() => {
