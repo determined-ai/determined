@@ -21,10 +21,15 @@ jobs:
   test-repo-integration:
     docker:
       - image: cimg/node:16.14
+    environment:
+      - GIT_AUTHOR_NAME: "Tester"
+      - GIT_AUTHOR_EMAIL: tester@determined.ai
+      - GIT_COMMITTER_NAME: "Tester"
+      - GIT_COMMITTER_EMAIL: tester@determined.ai
     steps:
       - checkout
       - install-python
-      - run: ./bin/test.py --repos core
+      - run: ./bin/test.py --repos core --sw-hash $CIRCLE_SHA1
 
 # Orchestrate our job run sequence
 workflows:
