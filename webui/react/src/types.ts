@@ -301,6 +301,7 @@ export enum ExperimentAction {
   Delete = 'Delete',
   DownloadCode = 'Download Experiment Code',
   Fork = 'Fork',
+  HyperparameterSearch = 'Hyperparameter Search',
   Kill = 'Kill',
   Move = 'Move',
   Pause = 'Pause',

@@ -45,6 +45,7 @@ import { canUserActionExperiment, getActionsForExperiment } from 'utils/experime
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
+import useModalHyperparameterSearch from 'hooks/useModal/useModalHyperparameterSearch';
 
 interface Props {
   curUser?: DetailedUser;
@@ -63,6 +64,7 @@ const headerActions = [
   Action.ContinueTrial,
   Action.Move,
   Action.OpenTensorBoard,
+  Action.HyperparameterSearch,
   Action.DownloadCode,
   Action.Archive,
   Action.Unarchive,
@@ -118,6 +120,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     contextHolder: modalExperimentCreateContextHolder,
     modalOpen: openModalCreate,
   } = useModalExperimentCreate();
+
+  const { modalOpen: openModalHyperparameterSearch } = useModalHyperparameterSearch({ experiment });
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),
@@ -186,6 +190,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleForkClick = useCallback(() => {
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
   }, [ experiment, openModalCreate ]);
+
+  const handleHyperparameterSearch = useCallback(() => {
+    openModalHyperparameterSearch({});
+  }, [ openModalHyperparameterSearch ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -256,6 +264,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Delete',
         onClick: handleDeleteClick,
       },
+      [Action.HyperparameterSearch]: {
+        key: 'hyperparameter-search',
+        label: 'Hyperparameter Search',
+        onClick: handleHyperparameterSearch,
+      },
       [Action.DownloadCode]: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
@@ -310,19 +323,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const availableActions = getActionsForExperiment(experiment, headerActions, curUser);
 
     return availableActions.map((action) => options[action]) as Option[];
-  }, [
-    curUser,
-    isRunningDelete,
-    experiment,
-    fetchExperimentDetails,
+  }, [ isRunningArchive,
     handleContinueTrialClick,
+    isRunningDelete,
     handleDeleteClick,
+    handleHyperparameterSearch,
     handleForkClick,
     handleMoveClick,
-    isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
-  ]);
+    experiment,
+    curUser,
+    fetchExperimentDetails ]);
 
   const jobInfoLinkText = useMemo(() => {
     if (!experiment.jobSummary) return 'Not available';
