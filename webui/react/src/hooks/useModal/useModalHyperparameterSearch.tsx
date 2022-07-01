@@ -107,7 +107,8 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
     const baseConfig = clone(experiment.configRaw, true);
     baseConfig.name = (fields.name as string).trim();
     baseConfig.searcher.name = fields.searcher;
-    baseConfig.searcher.max_trials = fields.max_trials;
+    baseConfig.searcher.max_trials = fields.searcher === SearchMethods.Grid.name ?
+      undefined : fields.max_trials;
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.max_slots = fields.slots;
@@ -269,6 +270,7 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
           )}
           name="searcher">
           <SelectFilter
+            showSearch={false}
             onChange={handleSelectSearcher}>
             {Object.values(SearchMethods).map(searcher => (
               <Select.Option key={searcher.name} value={searcher.name}>
@@ -461,8 +463,8 @@ const HyperparameterRow: React.FC<RowProps> = (
   { hyperparameter, name, searcher }: RowProps,
 ) => {
   const form = Form.useFormInstance();
-  const [ checked, setChecked ] = useState(hyperparameter.type !== HyperparameterType.Constant);
-  const [ type, setType ] = useState<HyperparameterType>(hyperparameter.type);
+  const type = Form.useWatch([ name, 'type' ]);
+  const checked = Form.useWatch([ name, 'active' ]);
   const [ valError, setValError ] = useState<string>();
   const [ minError, setMinError ] = useState<string>();
   const [ maxError, setMaxError ] = useState<string>();
@@ -471,8 +473,6 @@ const HyperparameterRow: React.FC<RowProps> = (
 
   const handleCheck = useCallback((e: CheckboxChangeEvent) => {
     const { checked } = e.target;
-    setChecked(e.target.checked);
-    setType(checked ? HyperparameterType.Double : HyperparameterType.Constant);
     form.setFields([ {
       name: [ name, 'type' ],
       value: checked ? HyperparameterType.Double : HyperparameterType.Constant,
@@ -480,9 +480,11 @@ const HyperparameterRow: React.FC<RowProps> = (
   }, [ form, name ]);
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
-    setType(value);
-    setChecked(value !== HyperparameterType.Constant);
-  }, []);
+    form.setFields([ {
+      name: [ name, 'type' ],
+      value: value !== HyperparameterType.Constant,
+    } ]);
+  }, [ form, name ]);
 
   const validateValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -531,11 +533,16 @@ const HyperparameterRow: React.FC<RowProps> = (
   return (
     <>
       <Space className={css.hyperparameterName}>
-        <Checkbox checked={checked} onChange={handleCheck} />
+        <Form.Item
+          initialValue={hyperparameter.type !== HyperparameterType.Constant}
+          name={[ name, 'active' ]}
+          noStyle
+          valuePropName="checked">
+          <Checkbox onChange={handleCheck} />
+        </Form.Item>
         <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
       </Space>
       <Form.Item
-        dependencies={[ [ name, 'max' ], [ name, 'min' ] ]}
         initialValue={hyperparameter.type}
         name={[ name, 'type' ]}
         noStyle>
