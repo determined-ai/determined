@@ -317,6 +317,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
+    // trial?.id,
   ]);
 
   const jobInfoLinkText = useMemo(() => {

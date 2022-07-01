@@ -127,12 +127,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [ fetchWorkspaces, modalRef ]);
 
   const handleWorkspaceSelect = useCallback((workspaceId: SelectValue) => {
-    updateDestSettings({
-      projectId: (workspaceId === 1 && sourceProjectId !== 1) ? 1 : undefined,
-      workspaceId: workspaceId as number,
-    });
+    updateDestSettings({ projectId: undefined, workspaceId: workspaceId as number });
     setProjects([]);
-  }, [ sourceProjectId, updateDestSettings ]);
+  }, [ updateDestSettings ]);
 
   const handleProjectSelect = useCallback(
     (project: Project) => {
@@ -195,39 +192,35 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             })}
           </SelectFilter>
         </div>
-        {destSettings.workspaceId !== 1 && (
-          <div>
-            <label className={css.label} htmlFor="project">Project</label>
-            {destSettings.workspaceId === undefined ? (
+        <div>
+          <label className={css.label} htmlFor="project">Project</label>
+          {destSettings.workspaceId === undefined ? (
+            <div className={css.emptyContainer}>
+              <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            </div>
+          ) :
+            projects.length === 0 ? (
               <div className={css.emptyContainer}>
-                <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty
+                  description="Workspace contains no projects"
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
               </div>
-            ) :
-              projects.length === 0 ? (
-                <div className={css.emptyContainer}>
-                  <Empty
-                    description="Workspace contains no projects"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  />
-                </div>
-              ) : (
-                <List
-                  className={css.listContainer}
-                  height={200}
-                  innerElementType="ul"
-                  itemCount={projects.length}
-                  itemSize={24}
-                  width="100%">
-                  {renderRow}
-                </List>
-              )}
-          </div>
-        )}
+            ) : (
+              <List
+                className={css.listContainer}
+                height={200}
+                innerElementType="ul"
+                itemCount={projects.length}
+                itemSize={24}
+                width="100%">
+                {renderRow}
+              </List>
+            )}
+        </div>
       </div>
     );
   }, [ handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces ]);
-
-  const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleOk = useCallback(async () => {
     if (!destSettings.projectId || !experimentIds?.length) return;
@@ -249,7 +242,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       notification.open({
         btn: null,
         description: (
-          <div onClick={closeNotification}>
+          <div>
             <p>
               {experimentText} moved to project {destinationProjectName}
             </p>
@@ -266,7 +259,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     } else {
       notification.warn({
         description: (
-          <div onClick={closeNotification}>
+          <div>
             <p>
               {numFailures} out of {experimentIds.length} experiments failed to move
               to project {destinationProjectName}
@@ -274,11 +267,10 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
           </div>
         ),
-        key: 'move-notification',
         message: 'Partial Move Failure',
       });
     }
-  }, [ closeNotification, destSettings.projectId, experimentIds, projects ]);
+  }, [ destSettings.projectId, experimentIds, projects ]);
 
   const getModalProps = useCallback((experimentIds, destinationProjectId): ModalFuncProps => {
     const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';

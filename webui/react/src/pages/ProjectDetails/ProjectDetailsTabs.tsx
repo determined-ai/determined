@@ -64,7 +64,6 @@ const ProjectDetailsTabs: React.FC<Props> = (
     return (
       <div className={css.base}>
         <PageHeader
-          className={css.header}
           options={experimentsTab?.options}
           title="Uncategorized"
         />
