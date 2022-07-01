@@ -8,6 +8,11 @@ import { isAsyncFunction } from 'shared/utils/data';
 
 import usePrevious from '../usePrevious';
 
+export enum ModalCloseReason {
+  Cancel = 'Cancel',
+  Ok = 'Ok',
+}
+
 export interface ModalHooks {
   contextHolder: React.ReactElement;
   modalClose: (reason?: ModalCloseReason) => void;
@@ -15,7 +20,7 @@ export interface ModalHooks {
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
 }
 
-/*
+/**
  * By default we add modal close calls to the tail end of both `Ok` and
  * `Cancel` callbacks. `rawCancel` and `rawOk` allow us to override and
  * skip this automatic addition as we might not want this behavior.
@@ -28,11 +33,6 @@ interface ModalOptions {
   rawOk?: boolean;
 }
 
-export enum ModalCloseReason {
-  Cancel = 'Cancel',
-  Ok = 'Ok',
-}
-
 const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
   maskClosable: true,
   style: { minWidth: 280 },
@@ -42,7 +42,7 @@ const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
 type AntModalPromise = (...args: any[]) => any;
 
 const useModal = (config: {
-  onClose?: (reason: ModalCloseReason) => void,
+  onClose?: (reason?: ModalCloseReason) => void,
   options?: ModalOptions,
 } = {}): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
@@ -51,18 +51,28 @@ const useModal = (config: {
   const prevModalProps = usePrevious(modalProps, undefined);
   const [ modal, contextHolder ] = Modal.useModal();
 
+  /**
+   * The code to close the antd modal is separated out from the code that
+   * calls the `onClose` handler to distinguish the motivation for closing.
+   * `internalClose` is directly used when dealing with closing due to unmounting.
+   * `modalClose` is used when we want to call `onClose` handler if applicable.
+   */
+  const internalClose = useCallback(() => {
+    if (!modalRef.current) return;
+    modalRef.current.destroy();
+    modalRef.current = undefined;
+  }, []);
+
   const modalOpen = useCallback((props: ModalFuncProps = {}) => {
     setModalProps(props);
   }, []);
 
-  const modalClose = useCallback((reason?: ModalCloseReason) => {
-    if (!modalRef.current) return;
-    modalRef.current.destroy();
-    modalRef.current = undefined;
-    if (reason) config.onClose?.(reason);
-  }, [ config ]);
+  const modalClose = useCallback((reason: ModalCloseReason = ModalCloseReason.Cancel) => {
+    internalClose();
+    config.onClose?.(reason);
+  }, [ config, internalClose ]);
 
-  /*
+  /**
    * Adds `modalClose` to event handlers `onOk` and `onCancel`.
    * Handles `undefined`, asynchronous and synchronous event handlers.
    */
@@ -111,7 +121,7 @@ const useModal = (config: {
 
   /**
    * Sets componentUnmounting to true only when the parent component is unmounting so that the next
-   * useEffect only runs modalClose on unmount, rather than every time modalClose updates.
+   * useEffect only runs internalClose on unmount, rather than every time internalClose updates.
    * The order of these two useEffects matters, this one has to be first.
    */
   useEffect(() => {
@@ -123,9 +133,9 @@ const useModal = (config: {
   // When the component using the hook unmounts, remove the modal automatically.
   useEffect(() => {
     return () => {
-      if (componentUnmounting.current) modalClose();
+      if (componentUnmounting.current) internalClose();
     };
-  }, [ modalClose ]);
+  }, [ internalClose ]);
 
   return { contextHolder, modalClose, modalOpen, modalRef };
 };
