@@ -18,14 +18,23 @@ import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
 import { ExperimentBase, ExperimentSearcherName, Hyperparameter,
-  HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters } from 'types';
+  HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters, TrialItem } from 'types';
 
-import useModal, { ModalCloseReason, ModalHooks } from './useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
-  trial?: TrialDetails;
+  trial?: TrialDetails | TrialItem;
+}
+
+export interface ShowModalProps {
+  initialModalProps?: ModalFuncProps;
+  trial?: TrialDetails | TrialItem;
+}
+
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (props?: ShowModalProps) => void;
 }
 
 interface SearchMethod {
@@ -69,8 +78,9 @@ interface HyperparameterRowValues {
   value?: number | string,
 }
 
-const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks => {
+const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+  const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
   const { resourcePools } = useStore();
@@ -448,11 +458,11 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
     };
   }, [ form, pages, currentPage, footer ]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
+  const modalOpen = useCallback((props?: ShowModalProps) => {
     setCurrentPage(0);
     form.resetFields();
-    //validateForm();
-    openOrUpdate({ ...modalProps, ...initialModalProps });
+    if (props?.trial) setTrial(props?.trial);
+    openOrUpdate({ ...modalProps, ...props?.initialModalProps });
   }, [ form, modalProps, openOrUpdate ]);
 
   /*
