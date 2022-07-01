@@ -14,7 +14,10 @@ hyperparameters:
   overwrite_deepspeed_args:
       zero_optimization.stage: 2
 environment:
-    #environment_variables:
+    environment_variables:                                                                          
+        - NCCL_DEBUG=INFO                                                                           
+        # You may need to modify this to match your network configuration.                          
+        - NCCL_SOCKET_IFNAME=ens,eth,ib
     #    - CUDA_LAUNCH_BLOCKING=1
     #    - NCCL_BLOCKING_WAIT=1
     #    - NCCL_DEBUG=INFO
