@@ -19,7 +19,7 @@ import { checkpointSize } from 'utils/workload';
 
 import css from './useModalCheckpoint.module.scss';
 
-interface Props {
+export interface Props {
   checkpoint: CheckpointWorkloadExtended;
   config: ExperimentConfig;
   onClose?: (reason?: ModalCloseReason) => void;
@@ -78,6 +78,8 @@ const useModalCheckpoint = ({
   ...props
 }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+
+  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [ onClose ]);
 
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
 
@@ -139,10 +141,11 @@ const useModalCheckpoint = ({
     content,
     icon: <ExclamationCircleOutlined />,
     okText: 'Register Checkpoint',
+    onCancel: handleCancel,
     onOk: handleOk,
     title: title,
     width: 768,
-  }), [ content, handleOk, title ]);
+  }), [ content, handleCancel, handleOk, title ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     openOrUpdate({ ...modalProps, ...initialModalProps });

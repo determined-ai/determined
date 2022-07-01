@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
-import React, { useEffect } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
-import useModalCheckpoint from './useModalCheckpoint';
+import { ModalCloseReason } from '../useModal';
+
+import useModalCheckpoint, { Props } from './useModalCheckpoint';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const MODAL_TRIGGER_TEXT = 'Open Checkpoint Modal';
@@ -18,40 +19,30 @@ jest.mock('services/api', () => ({
   },
 }));
 
-const ModalTriggerButton: React.FC = () => {
-  const { experiment, checkpoint } = generateTestExperimentData();
-  const storeDispatch = useStoreDispatch();
+const { experiment, checkpoint } = generateTestExperimentData();
 
+const Container: React.FC = (props: PropsWithChildren<Partial<Props>> = {}) => {
   const { contextHolder, modalOpen } = useModalCheckpoint({
     checkpoint: checkpoint,
     config: experiment.config,
     title: TEST_MODAL_TITLE,
+    ...props,
   });
 
-  useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  const handleClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   return (
     <>
-      <Button onClick={() => modalOpen()}>{MODAL_TRIGGER_TEXT}</Button>
+      <Button onClick={handleClick}>{MODAL_TRIGGER_TEXT}</Button>
       {contextHolder}
     </>
   );
 };
 
-const Container: React.FC = () => {
-  return (
-    <StoreProvider>
-      <ModalTriggerButton />
-    </StoreProvider>
-  );
-};
-
-const setup = async () => {
+const setup = async (props: PropsWithChildren<Partial<Props>> = {}) => {
   const user = userEvent.setup();
 
-  render(<Container />);
+  render(<Container {...props} />);
 
   await user.click(screen.getByText(MODAL_TRIGGER_TEXT));
 
@@ -66,27 +57,28 @@ describe('useModalCheckpoint', () => {
   });
 
   it('should close modal', async () => {
-    const user = await setup();
+    const onClose = jest.fn();
+    const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);
 
     await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(onClose).toHaveBeenCalledWith(ModalCloseReason.Cancel);
 
     await waitFor(() => {
       expect(screen.queryByText(TEST_MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
 
-  it('open register checkpoint modal', async () => {
-    const user = await setup();
+  it('should call `onClose` handler with Okay', async () => {
+    const onClose = jest.fn();
+    const user = await setup({ onClose });
 
     await screen.findByText(TEST_MODAL_TITLE);
 
     await user.click(screen.getByRole('button', { name: REGISTER_CHECKPOINT_TEXT }));
 
-    await waitFor(() => {
-      screen.debug();
-      expect(screen.queryByText(REGISTER_CHECKPOINT_TEXT)).toBeInTheDocument();
-    });
+    expect(onClose).toHaveBeenCalledWith(ModalCloseReason.Ok);
   });
 });
