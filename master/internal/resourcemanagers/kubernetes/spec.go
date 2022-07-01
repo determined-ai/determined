@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -108,30 +109,15 @@ func (p *pod) configureEnvVars(
 func (p *pod) configureConfigMapSpec(
 	runArchives []cproto.RunArchive,
 	fluentFiles map[string][]byte,
-	agentUserGroup *model.AgentUserGroup,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
-		var c archive.Archive
-		for _, i := range runArchive.Archive {
-			if i.NeedsRoot {
-				if _, ok := configMapData[path.Base(i.Path)]; ok {
-					return nil, fmt.Errorf("multiple rooted files have same file name %s", i.Path)
-				}
-				configMapData[path.Base(i.Path)] = i.Content
-			} else {
-				c = append(c, i)
-			}
+		zippedArchive, err := archive.ToTarGz(runArchive.Archive)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to zip archive")
 		}
-
-		if len(c) > 0 {
-			zippedArchive, err := archive.ToTarGz(c)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to zip archive")
-			}
-			configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
-		}
+		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}
 
 	for fn, content := range fluentFiles {
@@ -495,10 +481,18 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles, spec.AgentUserGroup)
+	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
 		return err
 	}
+
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(runArchives, p.configMap)
+	if err != nil {
+		return err
+	}
+	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, rootVolumes...)
+	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
+
 	return nil
 }
 
@@ -560,4 +554,56 @@ func configureInitContainer(
 		WorkingDir:      initContainerWorkDir,
 		SecurityContext: configureSecurityContext(agentUserGroup),
 	}
+}
+
+func handleRootArchiveFiles(
+	rootArchives []cproto.RunArchive, cm *k8sV1.ConfigMap,
+) ([]k8sV1.Volume, []k8sV1.VolumeMount, error) {
+	// Add root archive files to config map with the
+	// base of their path (/etc/ssh_config -> ssh_config) as the key
+	// and keep track of what directory they need to be placed in.
+
+	rootPathsToKeys := make(map[string][]k8sV1.KeyToPath)
+	for _, a := range rootArchives {
+		for _, item := range a.Archive {
+			base := path.Base(item.Path)
+			if _, ok := cm.BinaryData[base]; ok {
+				return nil, nil, fmt.Errorf("multiple rooted files have same file name %s", item.Path)
+			}
+			cm.BinaryData[base] = item.Content
+
+			dir := path.Dir(item.Path)
+			rootPathsToKeys[dir] = append(rootPathsToKeys[dir], k8sV1.KeyToPath{
+				Key:  base,
+				Path: base,
+				Mode: ptrs.Ptr(int32(item.FileMode)),
+			})
+		}
+	}
+
+	var volumes []k8sV1.Volume
+	var volumeMounts []k8sV1.VolumeMount
+	i := 0
+	for dir, keys := range rootPathsToKeys {
+		volumeName := fmt.Sprintf("root-volume-%d", i)
+		i++
+		volumes = append(volumes, k8sV1.Volume{
+			Name: volumeName,
+			VolumeSource: k8sV1.VolumeSource{
+				ConfigMap: &k8sV1.ConfigMapVolumeSource{
+					LocalObjectReference: k8sV1.LocalObjectReference{
+						Name: cm.Name,
+					},
+					Items: keys,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, k8sV1.VolumeMount{
+			Name:      volumeName,
+			MountPath: dir,
+			ReadOnly:  true, // Assume root files will be read only.
+		})
+	}
+	return volumes, volumeMounts, nil
 }

@@ -2,4 +2,4 @@
 
 **New Features**
 
-- Kubernetes: Init container no longer requires root privileges.
+-  Kubernetes: Task init containers no longer require root privileges.

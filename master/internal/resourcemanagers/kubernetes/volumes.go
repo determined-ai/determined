@@ -10,7 +10,6 @@ import (
 
 	k8sV1 "k8s.io/api/core/v1"
 
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
@@ -143,56 +142,14 @@ func configureAdditionalFilesVolumes(
 	}
 	initContainerVolumeMounts = append(initContainerVolumeMounts, dstVolumeMount)
 
-	rootPathsToItem := make(map[string][]archive.Item)
 	for idx, runArchive := range runArchives {
 		for _, item := range runArchive.Archive {
-			// Files that aren't owned by root can get extracted.
-			if !item.NeedsRoot {
-				mainContainerVolumeMounts = append(mainContainerVolumeMounts, k8sV1.VolumeMount{
-					Name:      additionalFilesVolumeName,
-					MountPath: path.Join(runArchive.Path, item.Path),
-					SubPath:   path.Join(fmt.Sprintf("%d", idx), item.Path),
-				})
-			} else {
-				dir := path.Dir(item.Path)
-				rootPathsToItem[dir] = append(rootPathsToItem[dir], item)
-			}
-		}
-	}
-
-	// Files owned by root will be added as a config map unextracted.
-	i := 0
-	for dir, items := range rootPathsToItem {
-		volumeName := fmt.Sprintf("root-volume-%d", i)
-		i++
-
-		var keyToPaths []k8sV1.KeyToPath
-		for _, item := range items {
-			itemBase := path.Base(item.Path)
-			mode := int32(item.FileMode)
-			keyToPaths = append(keyToPaths, k8sV1.KeyToPath{
-				Key:  itemBase,
-				Path: itemBase,
-				Mode: &mode,
+			mainContainerVolumeMounts = append(mainContainerVolumeMounts, k8sV1.VolumeMount{
+				Name:      additionalFilesVolumeName,
+				MountPath: path.Join(runArchive.Path, item.Path),
+				SubPath:   path.Join(fmt.Sprintf("%d", idx), item.Path),
 			})
 		}
-		volumes = append(volumes, k8sV1.Volume{
-			Name: volumeName,
-			VolumeSource: k8sV1.VolumeSource{
-				ConfigMap: &k8sV1.ConfigMapVolumeSource{
-					LocalObjectReference: k8sV1.LocalObjectReference{
-						Name: configMapName,
-					},
-					Items: keyToPaths,
-				},
-			},
-		})
-
-		mainContainerVolumeMounts = append(mainContainerVolumeMounts, k8sV1.VolumeMount{
-			Name:      volumeName,
-			MountPath: dir,
-			ReadOnly:  true, // Assume root files will be read only.
-		})
 	}
 
 	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes
