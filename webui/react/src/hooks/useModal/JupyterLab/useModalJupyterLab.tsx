@@ -68,18 +68,18 @@ const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const useModalJupyterLab = (): ModalHooks => {
   const [ visible, setVisible ] = useState(false);
+  const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ config, setConfig ] = useState<string>();
+  const [ configError, setConfigError ] = useState<string>();
+  const [ buttonDisabled, setButtonDisabled ] = useState(false);
+  const previousConfig = usePrevious(config, config);
+  const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
 
   const handleModalClose = useCallback(() => setVisible(false), []);
 
   const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal(
     { onClose: handleModalClose },
   );
-
-  const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ config, setConfig ] = useState<string | undefined>();
-  const previousConfig = usePrevious(config, config);
-  const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
-  const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
   const { settings: fields, updateSettings: updateFields } = useSettings<JupyterLabOptions>(
     settingsConfig,
@@ -97,6 +97,7 @@ const useModalJupyterLab = (): ModalHooks => {
       setConfig(yaml.dump(newConfig));
     } catch (e) {
       setConfig(undefined);
+      setConfigError('Unable to fetch JupyterLab config.');
     }
   }, [ fields ]);
 
@@ -119,17 +120,21 @@ const useModalJupyterLab = (): ModalHooks => {
     modalClose();
   }, [ config, fields, showFullConfig, modalClose ]);
 
-  const handleConfigChange = useCallback((config: string) => setConfig(config), []);
+  const handleConfigChange = useCallback((config: string) => {
+    setConfig(config);
+    setConfigError(undefined);
+  }, []);
 
   const formContent = useMemo(() => showFullConfig ? (
     <JupyterLabFullConfig
       config={config}
+      configError={configError}
       setButtonDisabled={setButtonDisabled}
       onChange={handleConfigChange}
     />
   ) : (
     <JupyterLabForm fields={fields} updateFields={updateFields} />
-  ), [ config, fields, handleConfigChange, showFullConfig, updateFields ]);
+  ), [ config, configError, fields, handleConfigChange, showFullConfig, updateFields ]);
 
   const content = useMemo(() => (
     <>
@@ -183,9 +188,12 @@ const useModalJupyterLab = (): ModalHooks => {
   return { modalClose, modalOpen, ...modalHook };
 };
 
-const JupyterLabFullConfig: React.FC<FullConfigProps> = (
-  { config, onChange, setButtonDisabled }: FullConfigProps,
-) => {
+const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
+  config,
+  configError,
+  onChange,
+  setButtonDisabled,
+}: FullConfigProps) => {
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
 
   const handleConfigChange = useCallback((_, allFields) => {
@@ -238,15 +246,13 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = (
             }}
           />
         </Item>
-        {!config && <Alert message="Unable to load JupyterLab config" type="error" />}
       </React.Suspense>
+      {configError && <Alert message={configError} type="error" />}
     </Form>
   );
 };
 
-const JupyterLabForm: React.FC<FormProps> = (
-  { updateFields, fields }: FormProps,
-) => {
+const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps) => {
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
 
@@ -254,7 +260,7 @@ const JupyterLabForm: React.FC<FormProps> = (
     const selectedPool = resourcePools.find(pool => pool.name === fields.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
-    /*
+    /**
      * For static resource pools, the slots-per-agent comes through as -1,
      * meaning it is unknown how many we may have.
      */

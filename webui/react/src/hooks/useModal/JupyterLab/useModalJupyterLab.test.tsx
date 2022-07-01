@@ -22,22 +22,17 @@ jest.mock('services/api', () => ({
 ));
 
 jest.mock('wait', () => ({
-  openCommand: () => {
-    return null;
-  },
+  openCommand: () => null,
   waitPageUrl: () => '',
 }
 ));
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => {
-    return MonacoEditorMock;
-  },
+  default: () => MonacoEditorMock,
 }));
 
 const ModalTrigger: React.FC = () => {
-
   const storeDispatch = useStoreDispatch();
   const { contextHolder, modalOpen } = useModalJupyterLab();
 
