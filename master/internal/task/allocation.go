@@ -49,6 +49,8 @@ type (
 		killedWhileRunning bool
 		// Marks that the trial exited successfully, but we killed some daemon containers.
 		killedDaemons bool
+		// Marks that we killed some daemon containers but after a nonzero exit.
+		killedDaemonsNominal bool
 		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
 		// exits non zero. we don't need to send all these kills, so this exists.
 		killCooldown *time.Time
@@ -86,8 +88,10 @@ type (
 	AllocationExited struct {
 		// userRequestedStop is when a container unexpectedly exits with 0.
 		UserRequestedStop bool
-		Err               error
-		FinalState        AllocationState
+		// DaemonsKilled is when a container stops with 0, but reports 137 due to kill command.
+		DaemonsKilledNominal bool
+		Err                  error
+		FinalState           AllocationState
 	}
 	// BuildTaskSpec is a message to request the task spec from the parent task. This
 	// is just a hack since building a task spec cant be semi-costly and we want to defer it
@@ -686,6 +690,9 @@ func (a *Allocation) Exit(ctx *actor.Context, reason string) (exited bool) {
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
+		if strings.Contains(reason, normalLogSubstr) {
+			a.killedDaemonsNominal = true
+		}
 		a.kill(ctx, reason)
 	case len(a.resources.failed()) > 0:
 		a.kill(ctx, reason)
@@ -907,12 +914,11 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
-				if a.killedDaemons {
-					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
-					ctx.Log().Info(exitReason)
-					return
-				}
 				exitReason = fmt.Sprintf("allocation failed: %s", err)
+				if a.killedDaemonsNominal {
+					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
+					exit.DaemonsKilledNominal = true
+				}
 				ctx.Log().Info(exitReason)
 				exit.Err = err
 				return
@@ -965,6 +971,7 @@ func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
 }
 
 const killedLogSubstr = "exit code 137"
+const normalLogSubstr = "zero exit code"
 
 func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
