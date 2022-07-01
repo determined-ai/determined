@@ -93,7 +93,6 @@ const CompareVisualization: React.FC = () => {
       const metric = { name: experiment.config.searcher.metric, type: MetricType.Validation };
       setFilters((filters) => ({ ...filters, metric }));
 
-
     });
   }, [ filters.metric, experimentIds ]);
   //
@@ -214,7 +213,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ filters.metric?.name, ui.isPageHidden, filters.maxTrial, experimentIds ]);
+  }, [ filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
