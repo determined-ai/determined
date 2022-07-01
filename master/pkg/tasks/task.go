@@ -106,10 +106,9 @@ func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	}
 	res = append(res, t.ExtraArchives...)
 
-	// Split into root and non root required files.
-	// In the case the all files are root we will
-	// still differentiate files that need to be root
-	// verse files that owned by the user.
+	// Split into root and non root required files. In the case the user
+	// is root we will still differentiate files that need to be root
+	// versus files that should be owned by the user.
 	var user, root []cproto.RunArchive
 	for _, a := range res {
 		var uItems, rItems archive.Archive
