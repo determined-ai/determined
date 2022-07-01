@@ -96,7 +96,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 }
 
 // Archives returns all the archives.
-func (t *TaskSpec) Archives() []cproto.RunArchive {
+func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		runDirHelpersArchive(t.AgentUserGroup),
@@ -105,7 +105,36 @@ func (t *TaskSpec) Archives() []cproto.RunArchive {
 		masterCertArchive(t.MasterCert),
 	}
 	res = append(res, t.ExtraArchives...)
-	return res
+
+	// Split into root and non root required files.
+	// In the case the all files are root we will
+	// still differentiate files that need to be root
+	// verse files that owned by the user.
+	var user, root []cproto.RunArchive
+	for _, a := range res {
+		var uItems, rItems archive.Archive
+		for _, item := range a.Archive {
+			if item.IsRootItem {
+				rItems = append(rItems, item)
+			} else {
+				uItems = append(uItems, item)
+			}
+		}
+
+		if len(rItems) > 0 {
+			root = append(root, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     rItems})
+		}
+		if len(uItems) > 0 {
+			user = append(user, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     uItems})
+		}
+	}
+	return user, root
 }
 
 // EnvVars returns all the environment variables.
@@ -196,6 +225,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 		})
 	}
 
+	runArchives, rootArchives := t.Archives()
 	spec := cproto.Spec{
 		TaskType: string(t.TaskType),
 		PullSpec: cproto.PullSpec{
@@ -223,7 +253,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 					Devices: devices,
 				},
 			},
-			Archives:         t.Archives(),
+			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
 		},
 	}

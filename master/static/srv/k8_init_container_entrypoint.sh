@@ -13,9 +13,5 @@ do
     SRC=$2/$IDX.tar.gz
     DST=$3/$IDX
     mkdir $DST
-
-    if [ -f $SRC ]
-    then
-        tar -xvf $SRC -C $DST
-    fi
+    tar -xvf $SRC -C $DST
 done

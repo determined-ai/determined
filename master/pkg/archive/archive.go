@@ -1,6 +1,8 @@
 package archive
 
 import (
+	"fmt"
+
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
@@ -41,7 +43,7 @@ type Item struct {
 	ModifiedTime UnixTime    `json:"mtime"`
 	UserID       int         `json:"uid"`
 	GroupID      int         `json:"gid"`
-	NeedsRoot    bool        `josn:"needsRoot"`
+	IsRootItem   bool        `json:"isRootItem"`
 }
 
 // BaseName returns the base name of the file.
@@ -87,8 +89,9 @@ func (ar Archive) ContainsFilePrefix(prefix string) bool {
 
 // RootItem returns a new Item which will be owned by root when embedded in a container.
 func RootItem(path string, content []byte, mode int, fileType byte) Item {
+	fmt.Println("ROOT ITEM!!!", path)
 	i := UserItem(path, content, mode, fileType, 0, 0)
-	i.NeedsRoot = true
+	i.IsRootItem = true
 	return i
 }
 

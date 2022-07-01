@@ -107,8 +107,7 @@ func (p *pod) configureEnvVars(
 }
 
 func (p *pod) configureConfigMapSpec(
-	runArchives []cproto.RunArchive,
-	fluentFiles map[string][]byte,
+	runArchives []cproto.RunArchive, fluentFiles map[string][]byte,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
@@ -359,7 +358,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	spec := p.taskSpec
 
-	runArchives := spec.Archives()
+	runArchives, rootArchives := spec.Archives()
 
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, spec.Mounts, runArchives,
@@ -478,21 +477,20 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		WorkingDir:      spec.WorkDir,
 	}
 
-	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
-
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
 		return err
 	}
 
-	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(runArchives, p.configMap)
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
 	if err != nil {
 		return err
 	}
-	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, rootVolumes...)
+	volumes = append(volumes, rootVolumes...)
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 
+	p.pod = p.configurePodSpec(
+		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 	return nil
 }
 
@@ -559,20 +557,16 @@ func configureInitContainer(
 func handleRootArchiveFiles(
 	rootArchives []cproto.RunArchive, cm *k8sV1.ConfigMap,
 ) ([]k8sV1.Volume, []k8sV1.VolumeMount, error) {
-	// Add root archive files to config map with the
-	// base of their path (/etc/ssh_config -> ssh_config) as the key
-	// and keep track of what directory they need to be placed in.
-
 	rootPathsToKeys := make(map[string][]k8sV1.KeyToPath)
 	for _, a := range rootArchives {
 		for _, item := range a.Archive {
-			base := path.Base(item.Path)
+			base := item.BaseName()
 			if _, ok := cm.BinaryData[base]; ok {
 				return nil, nil, fmt.Errorf("multiple rooted files have same file name %s", item.Path)
 			}
 			cm.BinaryData[base] = item.Content
 
-			dir := path.Dir(item.Path)
+			dir := item.DirName()
 			rootPathsToKeys[dir] = append(rootPathsToKeys[dir], k8sV1.KeyToPath{
 				Key:  base,
 				Path: base,
