@@ -88,10 +88,8 @@ type (
 	AllocationExited struct {
 		// userRequestedStop is when a container unexpectedly exits with 0.
 		UserRequestedStop bool
-		// DaemonsKilled is when a container stops with 0, but reports 137 due to kill command.
-		DaemonsKilledNominal bool
-		Err                  error
-		FinalState           AllocationState
+		Err               error
+		FinalState        AllocationState
 	}
 	// BuildTaskSpec is a message to request the task spec from the parent task. This
 	// is just a hack since building a task spec cant be semi-costly and we want to defer it
@@ -914,11 +912,12 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
-				exitReason = fmt.Sprintf("allocation failed: %s", err)
 				if a.killedDaemonsNominal {
 					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
-					exit.DaemonsKilledNominal = true
+					ctx.Log().Info(exitReason)
+					return
 				}
+				exitReason = fmt.Sprintf("allocation failed: %s", err)
 				ctx.Log().Info(exitReason)
 				exit.Err = err
 				return
