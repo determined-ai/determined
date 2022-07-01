@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 
@@ -54,6 +55,12 @@ func runRoot() error {
 		return err
 	}
 	log.Infof("master configuration: %s", printableConfig)
+
+	err = os.MkdirAll(config.Cache, fs.ModePerm)
+	if err != nil {
+		log.WithError(err).Errorf("Failed allocating cache direatory at %s", config.Cache)
+		return err
+	}
 
 	m := internal.New(logStore, config)
 	return m.Run(context.TODO())
