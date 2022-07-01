@@ -129,6 +129,11 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
       baseConfig.searcher.max_rungs = baseConfig.max_rungs ?? 5;
       baseConfig.searcher.divisor = baseConfig.divisor ?? 4;
       baseConfig.searcher.mode = baseConfig.mode ?? 'standard';
+    } else if (fields.searcher === SearchMethods.AsyncHalving.name) {
+      baseConfig.searcher.stop_once = baseConfig.stop_once ?? false;
+      baseConfig.searcher.max_rungs = undefined;
+      baseConfig.searcher.divisor = baseConfig.divisor ?? 4;
+      baseConfig.searcher.mode = undefined;
     } else {
       baseConfig.searcher.stop_once = undefined;
       baseConfig.searcher.max_rungs = undefined;
