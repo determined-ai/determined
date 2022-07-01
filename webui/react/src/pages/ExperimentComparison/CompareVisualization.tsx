@@ -83,7 +83,6 @@ const CompareVisualization: React.FC = () => {
   const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ activeMetric, setActiveMetric ] = useState<MetricName>();
 
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -93,7 +92,7 @@ const CompareVisualization: React.FC = () => {
     getExperimentDetails({ id }).then(experiment => {
       const metric = { name: experiment.config.searcher.metric, type: MetricType.Validation };
       setFilters((filters) => ({ ...filters, metric }));
-      setActiveMetric(metric);
+
 
     });
   }, [ filters.metric, experimentIds ]);
@@ -112,11 +111,11 @@ const CompareVisualization: React.FC = () => {
   }, [ ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
-    setActiveMetric(metric);
+    setFilters((filters) => ({ ...filters, metric }));
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experimentIds.length || !activeMetric) return;
+    if (ui.isPageHidden || !experimentIds.length || !filters.metric?.name) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -126,12 +125,12 @@ const CompareVisualization: React.FC = () => {
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
     const hyperparameters: Record<string, Hyperparameter> = {};
-    const metricTypeParam = metricTypeParamMap[activeMetric.type];
+    const metricTypeParam = metricTypeParamMap[filters.metric.type];
 
     readStream<V1ExpCompareTrialsSampleResponse>(
       detApi.StreamingInternal.expCompareTrialsSample(
         experimentIds,
-        activeMetric.name,
+        filters.metric.name,
         metricTypeParam,
         filters.maxTrial,
         undefined,
@@ -215,7 +214,7 @@ const CompareVisualization: React.FC = () => {
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
+  }, [ filters.metric?.name, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
