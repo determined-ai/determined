@@ -67,10 +67,7 @@ message PatchUserResponse {
   determined.user.v1.User user = 1;
 }
 // Get user settings.
-message GetUserSettingRequest {
-  // The id of the user.
-  int32 user_id = 1;
-}
+message GetUserSettingRequest {}
 // Response to GetUserSettingRequest.
 message GetUserSettingResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -82,14 +79,12 @@ message GetUserSettingResponse {
 // Update user settings.
 message PostUserSettingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "user_id", "storage_path", "setting" ] }
+    json_schema: { required: [ "storage_path", "setting" ] }
   };
-  // The id of the user.
-  int32 user_id = 1;
   // Storage path for setting.
-  string storage_path = 2;
+  string storage_path = 1;
   // Setting key value pair.
-  determined.user.v1.UserWebSetting setting = 3;
+  determined.user.v1.UserWebSetting setting = 2;
 }
 // Response to PostUserSettingRequest.
 message PostUserSettingResponse {}

@@ -135,13 +135,11 @@ export const patchUser: DetApi<
 };
 
 export const getUserSetting: DetApi<
-  Service.GetUserSettingParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
+EmptyParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
   > = {
     name: 'getUserSetting',
     postProcess: (response) => response,
-    request: (params) => detApi.Users.getUserSetting(
-      params.userId,
-    ),
+    request: () => detApi.Users.getUserSetting(),
   };
 
 export const updateUserSetting: DetApi<
@@ -150,11 +148,9 @@ Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
     name: 'updateUserSetting',
     postProcess: (response) => response,
     request: (params) => detApi.Users.postUserSetting(
-      params.userId,
       {
         setting: params.setting,
         storagePath: params.storagePath,
-        userId: params.userId,
       },
     ),
   };
