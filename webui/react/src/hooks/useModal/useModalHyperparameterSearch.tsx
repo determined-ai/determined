@@ -148,9 +148,20 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         const hpInfo = hp[1] as HyperparameterRowValues;
         if (hpInfo.type === HyperparameterType.Categorical) return;
         else if (hpInfo.type === HyperparameterType.Constant) {
+          if (!hpInfo.value) return;
+          let parsedVal;
+          try {
+            if (typeof hpInfo.value === 'string'){
+              parsedVal = JSON.parse(hpInfo.value);
+            } else {
+              parsedVal = hpInfo.value;
+            }
+          } catch (e) {
+            parsedVal = hpInfo.value;
+          }
           baseConfig.hyperparameters[hpName] = {
             type: hpInfo.type,
-            val: hpInfo.value,
+            val: parsedVal,
           };
         } else {
           baseConfig.hyperparameters[hpName] = {
