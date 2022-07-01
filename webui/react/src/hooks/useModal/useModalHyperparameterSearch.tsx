@@ -509,7 +509,7 @@ const HyperparameterRow: React.FC<RowProps> = (
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
     form.setFields([ {
-      name: [ name, 'type' ],
+      name: [ name, 'active' ],
       value: value !== HyperparameterType.Constant,
     } ]);
   }, [ form, name ]);
