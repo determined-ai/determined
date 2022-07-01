@@ -907,6 +907,11 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
+				if a.killedDaemons {
+					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
+					ctx.Log().Info(exitReason)
+					return
+				}
 				exitReason = fmt.Sprintf("allocation failed: %s", err)
 				ctx.Log().Info(exitReason)
 				exit.Err = err
