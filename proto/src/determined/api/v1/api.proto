@@ -518,6 +518,17 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+
+  rpc QueryTrials(QueryTrialsRequest) returns (stream QueryTrialsResponse) {
+
+    option (google.api.http) = {
+      get: "/api/v1/trials/query"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials", "Experiments" ]
+    };
+  }
+  
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
       returns (GetTrialWorkloadsResponse) {

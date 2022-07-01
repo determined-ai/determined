@@ -441,3 +441,6 @@ WHERE t.id = $1;
 `, id)
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
 }
+
+
+func queryTrials

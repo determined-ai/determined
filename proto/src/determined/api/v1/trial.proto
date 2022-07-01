@@ -44,6 +44,22 @@ message WorkloadContainer {
   }
 }
 
+
+
+message QueryTrialsRequest {
+  message QueryFilters {
+    // experiment ids to include
+    repeated int32 experiment_ids = 1;
+    
+
+  }
+  QueryFilters filters = 1;
+}
+
+message QueryTrialsResponse {
+  repeated int32 trial_id = 1;
+}
+
 // Stream trial logs.
 message TrialLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
