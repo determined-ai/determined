@@ -112,6 +112,19 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.max_slots = fields.slots;
+    baseConfig.searcher.bracket_rungs = undefined;
+
+    if (fields.searcher === SearchMethods.ASHA.name) {
+      baseConfig.searcher.stop_once = baseConfig.stop_once ?? false;
+      baseConfig.searcher.max_rungs = baseConfig.max_rungs ?? 5;
+      baseConfig.searcher.divisor = baseConfig.divisor ?? 4;
+      baseConfig.searcher.mode = baseConfig.mode ?? 'standard';
+    } else {
+      baseConfig.searcher.stop_once = undefined;
+      baseConfig.searcher.max_rungs = undefined;
+      baseConfig.searcher.divisor = undefined;
+      baseConfig.searcher.mode = undefined;
+    }
 
     Object.entries(fields)
       .filter(field => typeof field[1] === 'object')
@@ -126,7 +139,7 @@ const useModalHyperparameterSearch = ({ experiment, trial }: Props): ModalHooks 
           };
         } else {
           baseConfig.hyperparameters[hpName] = {
-            count: hpInfo.count,
+            count: fields.searcher === SearchMethods.Grid.name ? hpInfo.count : undefined,
             maxval: hpInfo.type === HyperparameterType.Int ?
               roundToPrecision(hpInfo.max ?? 0, 0) :
               hpInfo.max,
