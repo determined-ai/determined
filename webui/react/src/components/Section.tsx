@@ -1,3 +1,4 @@
+import classnames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -21,29 +22,31 @@ interface Props {
   title?: string | React.ReactNode;
 }
 
-const defaultProps = { divider: false };
+const defaultProps = { divider: false, flexRow: false };
 
 const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
-  const classes = [ css.base ];
-  const titleClasses = [ css.title ];
-
-  if (props.bodyBorder) classes.push(css.bodyBorder);
-  if (props.bodyDynamic) classes.push(css.bodyDynamic);
-  if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
-  if (props.bodyScroll) classes.push(css.bodyScroll);
-  if (props.divider) classes.push(css.divider);
-  if (props.filters) classes.push(css.filters);
-  if (props.maxHeight) classes.push(css.maxHeight);
-  if (typeof props.title === 'string') titleClasses.push(css.string);
+  const classes = classnames(
+    css.base,
+    {
+      [css.bodyBorder]: props.bodyBorder,
+      [css.bodyDynamic]: props.bodyDynamic,
+      [css.bodyNoPadding]: props.bodyNoPadding,
+      [css.bodyScroll]: props.bodyScroll,
+      [css.divider]: props.divider,
+      [css.filters]: props.filters,
+      [css.maxHeight]: props.maxHeight,
+    },
+  );
+  const titleClasses = classnames(css.title, { [css.string]: typeof props.title === 'string' });
 
   return (
-    <section className={classes.join(' ')} id={id}>
+    <section className={classes} id={id}>
       {(props.title || props.options) && (
         <div className={css.header}>
           {props.title && !props.hideTitle &&
-            <h5 className={titleClasses.join(' ')}>{props.title}</h5>}
+            <h5 className={titleClasses}>{props.title}</h5>}
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}

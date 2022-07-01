@@ -1,0 +1,12 @@
+.base {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 15% auto;
+  grid-template-rows: auto;
+
+  .fileTree {
+    height: 100%;
+    background-color: transparent;
+    color: var(--theme-colors-monochrome-10);
+  }
+}
