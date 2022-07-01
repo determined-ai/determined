@@ -18,7 +18,7 @@ import handleError from 'utils/error';
 import css from './useModalCheckpointRegister.module.scss';
 
 interface Props {
-  onClose?: (checkpointUuid?: string, reason?: ModalCloseReason) => void;
+  onClose?: (reason?: ModalCloseReason, checkpointUuid?: string) => void;
 }
 
 interface ModalOpenProps {
@@ -58,7 +58,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
 
   const handleClose = useCallback((reason) => {
     setModalState(DEFAULT_MODAL_STATE);
-    onClose?.(undefined, reason);
+    onClose?.(reason);
   }, [ onClose ]);
 
   const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal(
@@ -147,7 +147,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
 
   const launchNewModelModal = useCallback((state: ModalState) => {
     modalClose(ModalCloseReason.Cancel);
-    onClose?.(state.checkpointUuid, ModalCloseReason.Cancel);
+    onClose?.(ModalCloseReason.Cancel, state.checkpointUuid);
   }, [ modalClose, onClose ]);
 
   const fetchModels = useCallback(async () => {

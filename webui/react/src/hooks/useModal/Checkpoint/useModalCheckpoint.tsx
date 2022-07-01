@@ -5,9 +5,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
+import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { formatDatetime } from 'shared/utils/datetime';
 import { humanReadableBytes } from 'shared/utils/string';
@@ -24,6 +22,7 @@ import css from './useModalCheckpoint.module.scss';
 interface Props {
   checkpoint: CheckpointWorkloadExtended;
   config: ExperimentConfig;
+  onClose?: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
   title: string;
 }
@@ -54,14 +53,12 @@ const getStorageLocation = (
   return `${location}/${checkpoint.uuid}`;
 };
 
-const renderRow = (label: string, content: React.ReactNode): React.ReactNode => {
-  return (
-    <div className={css.row} key={label}>
-      <div className={css.label}>{label}</div>
-      <div className={css.content}>{content}</div>
-    </div>
-  );
-};
+const renderRow = (label: string, content: React.ReactNode): React.ReactNode => (
+  <div className={css.row} key={label}>
+    <div className={css.label}>{label}</div>
+    <div className={css.content}>{content}</div>
+  </div>
+);
 
 const renderResource = (resource: string, size: string): React.ReactNode => {
   return (
@@ -73,48 +70,16 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): ModalHooks => {
-  const {
-    contextHolder: modalModalCheckpointContextHolder,
-    modalOpen: openOrUpdate,
-    modalRef,
-    ...modalHook
-  } = useModal();
+const useModalCheckpoint = ({
+  checkpoint,
+  config,
+  title,
+  onClose,
+  ...props
+}: Props): ModalHooks => {
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
 
-  const {
-    contextHolder: modalModelCreateContextHolder,
-    modalOpen: showCreateModelModal,
-  } = useModalModelCreate();
-
-  const handleRegisterCheckpointClose = useCallback((checkpointUuid?: string) => {
-    if (checkpointUuid) showCreateModelModal({ checkpointUuid });
-  }, [ showCreateModelModal ]);
-
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: showRegisterCheckpointModal,
-  } = useModalCheckpointRegister({ onClose: handleRegisterCheckpointClose });
-
-  const launchRegisterCheckpointModal = useCallback(() => {
-    if (!checkpoint.uuid) return;
-    showRegisterCheckpointModal({ checkpointUuid: checkpoint.uuid });
-  }, [ checkpoint.uuid, showRegisterCheckpointModal ]);
-
-  const contextHolder = useMemo(() => (
-    <>
-      {modalModalCheckpointContextHolder}
-      {modalModelCreateContextHolder}
-      {modalCheckpointRegisterContextHolder}
-    </>
-  ), [
-    modalModalCheckpointContextHolder,
-    modalModelCreateContextHolder,
-    modalCheckpointRegisterContextHolder,
-  ]);
-
-  const handleOk = useCallback(() => {
-    launchRegisterCheckpointModal();
-  }, [ launchRegisterCheckpointModal ]);
+  const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
 
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
@@ -191,7 +156,7 @@ const useModalCheckpoint = ({ checkpoint, config, title, ...props }: Props): Mod
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { contextHolder, modalOpen, modalRef, ...modalHook };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalCheckpoint;
