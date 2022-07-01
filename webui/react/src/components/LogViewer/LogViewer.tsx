@@ -567,17 +567,9 @@ const LogViewer: React.FC<Props> = ({
               {LogViewerRow}
             </VariableSizeList>
           </div>
-          {
-            <Spinner className={css.empty} conditionalRender spinning={isFetching}>
-              {
-                (logs.length === 0) && (
-                  <div className={css.empty}>
-                    <Message title="No logs to show." type={MessageType.Empty} />
-                  </div>
-                )
-              }
-            </Spinner>
-          }
+          <Spinner className={css.empty} conditionalRender spinning={isFetching}>
+            {(logs.length === 0) && <Message title="No logs to show." type={MessageType.Empty} />}
+          </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
