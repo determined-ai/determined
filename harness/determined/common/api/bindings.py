@@ -4006,23 +4006,19 @@ class v1PostUserSettingRequest:
         self,
         setting: "v1UserWebSetting",
         storagePath: str,
-        userId: int,
     ):
-        self.userId = userId
         self.storagePath = storagePath
         self.setting = setting
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
         return cls(
-            userId=obj["userId"],
             storagePath=obj["storagePath"],
             setting=v1UserWebSetting.from_json(obj["setting"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "userId": self.userId,
             "storagePath": self.storagePath,
             "setting": self.setting.to_json(),
         }
@@ -7537,13 +7533,11 @@ def get_GetUser(
 
 def get_GetUserSetting(
     session: "client.Session",
-    *,
-    userId: int,
 ) -> "v1GetUserSettingResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/setting/{userId}",
+        path="/api/v1/users/setting",
         params=_params,
         json=None,
         data=None,
@@ -8286,12 +8280,11 @@ def post_PostUserSetting(
     session: "client.Session",
     *,
     body: "v1PostUserSettingRequest",
-    userId: int,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/users/setting/{userId}",
+        path="/api/v1/users/setting",
         params=_params,
         json=body.to_json(),
         data=None,
