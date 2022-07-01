@@ -366,6 +366,46 @@ func (a *apiServer) GetTrialCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
+// func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
+// 	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
+func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
+	resp apiv1.Determined_QueryTrialsServer) error {
+	period := 30 * time.Second
+	experimentIDs := req.Filters.ExperimentIds
+	if len(experimentIDs) == 0 {
+		return status.Errorf(
+			codes.InvalidArgument,
+			"at least one filter",
+		)
+	}
+
+	for {
+		var response apiv1.QueryTrialsResponse
+
+		trialIDs, err := a.m.db.QueryTrials(experimentIDs)
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching trials")
+		}
+
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+		if err = resp.Send(&response); err != nil {
+			return err
+		}
+
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
+		}
+
+		time.Sleep(period)
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
+	}
+}
+
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
