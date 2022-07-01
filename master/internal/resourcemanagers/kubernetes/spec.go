@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -357,7 +358,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	spec := p.taskSpec
 
-	runArchives := spec.Archives()
+	runArchives, rootArchives := spec.Archives()
 
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, spec.Mounts, runArchives,
@@ -379,6 +380,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		initContainerVolumeMounts,
 		env.Image().For(deviceType),
 		configureImagePullPolicy(env),
+		spec.AgentUserGroup,
 	)
 
 	var sidecars []k8sV1.Container
@@ -475,13 +477,20 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		WorkingDir:      spec.WorkDir,
 	}
 
-	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
-
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
 		return err
 	}
+
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
+	if err != nil {
+		return err
+	}
+	volumes = append(volumes, rootVolumes...)
+	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
+
+	p.pod = p.configurePodSpec(
+		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 	return nil
 }
 
@@ -530,6 +539,7 @@ func configureInitContainer(
 	volumeMounts []k8sV1.VolumeMount,
 	image string,
 	imagePullPolicy k8sV1.PullPolicy,
+	agentUserGroup *model.AgentUserGroup,
 ) k8sV1.Container {
 	return k8sV1.Container{
 		Name:    "determined-init-container",
@@ -540,5 +550,54 @@ func configureInitContainer(
 		ImagePullPolicy: imagePullPolicy,
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      initContainerWorkDir,
+		SecurityContext: configureSecurityContext(agentUserGroup),
 	}
+}
+
+func handleRootArchiveFiles(
+	rootArchives []cproto.RunArchive, cm *k8sV1.ConfigMap,
+) ([]k8sV1.Volume, []k8sV1.VolumeMount, error) {
+	rootPathsToKeys := make(map[string][]k8sV1.KeyToPath)
+	for _, a := range rootArchives {
+		for _, item := range a.Archive {
+			base := item.BaseName()
+			if _, ok := cm.BinaryData[base]; ok {
+				return nil, nil, fmt.Errorf("multiple rooted files have same file name %s", item.Path)
+			}
+			cm.BinaryData[base] = item.Content
+
+			dir := item.DirName()
+			rootPathsToKeys[dir] = append(rootPathsToKeys[dir], k8sV1.KeyToPath{
+				Key:  base,
+				Path: base,
+				Mode: ptrs.Ptr(int32(item.FileMode)),
+			})
+		}
+	}
+
+	var volumes []k8sV1.Volume
+	var volumeMounts []k8sV1.VolumeMount
+	i := 0
+	for dir, keys := range rootPathsToKeys {
+		volumeName := fmt.Sprintf("root-volume-%d", i)
+		i++
+		volumes = append(volumes, k8sV1.Volume{
+			Name: volumeName,
+			VolumeSource: k8sV1.VolumeSource{
+				ConfigMap: &k8sV1.ConfigMapVolumeSource{
+					LocalObjectReference: k8sV1.LocalObjectReference{
+						Name: cm.Name,
+					},
+					Items: keys,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, k8sV1.VolumeMount{
+			Name:      volumeName,
+			MountPath: dir,
+			ReadOnly:  true, // Assume root files will be read only.
+		})
+	}
+	return volumes, volumeMounts, nil
 }

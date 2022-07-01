@@ -51,7 +51,7 @@ func (c *AgentUserGroup) OwnedArchiveItem(
 	path string, content []byte, mode int, fileType byte,
 ) archive.Item {
 	if c == nil {
-		return archive.RootItem(path, content, mode, fileType)
+		return archive.UserItem(path, content, mode, fileType, 0, 0)
 	}
 	return archive.UserItem(path, content, mode, fileType, c.UID, c.GID)
 }
