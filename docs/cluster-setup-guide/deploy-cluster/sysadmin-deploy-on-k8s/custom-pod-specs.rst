@@ -68,7 +68,7 @@ Determined currently supports configuring:
 *******************
 
 Default pod specs must be configured when :ref:`installing or upgrading <install-on-kubernetes>`
-Determined. The default pod specs are configured in ``values.yaml`` of the :doc:`/reference-config/config/helm-config-reference` under ``taskContainerDefaults.cpuPodSpec`` and
+Determined. The default pod specs are configured in ``values.yaml`` of the :doc:`/reference/reference-deploy/config/helm-config-reference` under ``taskContainerDefaults.cpuPodSpec`` and
 ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to all tasks that use GPUs
 (e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all tasks that only use CPUs (e.g.,
 TensorBoards, CPU-only notebooks). Fields that are not specified will remain at their default

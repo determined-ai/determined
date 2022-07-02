@@ -80,3 +80,4 @@ An intuitive interface is provided to use hyperparameter searching as described 
    hp-constraints-det
    instrument-model-code
    handle-trial-errors
+   Search Methods <search-methods/overview>

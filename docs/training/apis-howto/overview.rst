@@ -12,7 +12,7 @@ way, Determined is able to run the training loop and provide advanced training a
 capabilities.
 
 Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
-configuration </reference-config/config/experiment-config-reference>` to configure how Determined should train the model
+configuration </reference/reference-training/experiment-config-reference>` to configure how Determined should train the model
 - e.g. multi-GPU, hyperparameter search, etc.
 
 If you have existing model code that you'd like to train with Determined, continue to one of the API

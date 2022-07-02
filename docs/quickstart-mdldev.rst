@@ -19,7 +19,7 @@ for all of your experiments.
 
 Each of these quickstart examples uses the same model code and example dataset, differing only in
 their configuration settings. For a list of all experiment configuration settings and more detailed
-information about each, see :doc:`/reference-config/config/experiment-config-reference`.
+information about each, see :doc:`/reference/reference-training/experiment-config-reference`.
 
 ***************
  Prerequisites

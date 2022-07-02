@@ -2,15 +2,15 @@
  Estimator API
 ##########################
 
-+--------------------------------------------------------+
-| API reference                                          |
-+========================================================+
-| :doc:`/reference-api/training/api-estimator-reference` |
-+--------------------------------------------------------+
++-----------------------------------------------------------------------+
+| API reference                                                         |
++=======================================================================+
+| :doc:`/reference/reference-training/training/api-estimator-reference` |
++-----------------------------------------------------------------------+
 
 This document guides you through training a Estimator model in Determined. You need to implement a
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
-entrypoint in the :doc:`experiment configuration </reference-config/config/experiment-config-reference>`.
+entrypoint in the :doc:`experiment configuration </reference/reference-training/experiment-config-reference>`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
@@ -22,7 +22,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with    different sources of data.
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with    different sources of data.
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and

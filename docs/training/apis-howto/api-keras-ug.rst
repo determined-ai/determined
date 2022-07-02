@@ -2,15 +2,15 @@
  Keras API
 ######################
 
-+------------------------------------------------------+
-| API reference                                        |
-+======================================================+
-| :doc:`/reference-api/training/api-keras-reference`   |
-+------------------------------------------------------+
++---------------------------------------------------------------------+
+| API reference                                                       |
++=====================================================================+
+| :doc:`/reference/reference-training/training/api-keras-reference`   |
++---------------------------------------------------------------------+
 
 This document guides you through training a Keras model in Determined. You need to implement a trial
 class that inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the
-:doc:`experiment configuration </reference-config/config/experiment-config-reference>`.
+:doc:`experiment configuration </reference/reference-training/experiment-config-reference>`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
@@ -23,7 +23,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read :doc:`/training/best-practices/load-model-data` to understand how to work with
+   Before loading data, read :doc:`/training/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`

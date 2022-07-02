@@ -2,11 +2,11 @@
  Helm and Kubectl Command Examples
 ###################################
 
-+-------------------------------------------------------+
-| Configuration Reference                               |
-+=======================================================+
-| :doc:`/reference-config/config/helm-config-reference` |
-+-------------------------------------------------------+
++-----------------------------------------------------------------+
+| Configuration Reference                                         |
++=================================================================+
+| :doc:`/reference/reference-deploy/config/helm-config-reference` |
++-----------------------------------------------------------------+
 
 `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ is a command-line tool for
 interacting with a Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to

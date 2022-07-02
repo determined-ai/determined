@@ -144,11 +144,11 @@ A Determined cluster comprises a master and one or more agents. The cluster can 
 Step 7 - Configure the Cluster
 ***************************************
 
-Common configuration reference: :doc:`/reference-config/config/common-config-options`
+Common configuration reference: :doc:`/reference/reference-deploy/config/common-config-options`
 
-Master configuration reference: :doc:`/reference-config/config/master-config-reference`
+Master configuration reference: :doc:`/reference/reference-deploy/config/master-config-reference`
 
-Agent configuration reference: :doc:`/reference-config/config/agent-config-reference`
+Agent configuration reference: :doc:`/reference/reference-deploy/config/agent-config-reference`
 
 Basic Configuration
 ======================

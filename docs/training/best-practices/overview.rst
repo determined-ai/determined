@@ -83,7 +83,6 @@ Do not:
    :maxdepth: 1
    :hidden:
 
-   load-model-data
    optimize-training
    debug-models
    reproducibility

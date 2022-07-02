@@ -1,5 +1,5 @@
 ###################
-API Reference
+Training Reference
 ###################
 
 TBD
@@ -14,4 +14,5 @@ TBD
    Keras API Reference <training/api-keras-reference>
    DeepSpeed API Reference <training/api-deepspeed-reference>
    Estimator API Reference <training/api-estimator-reference>
+   Experiment Configuration <experiment-config-reference>
    Model Hub API Reference <modelhub/index>

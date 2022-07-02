@@ -2,9 +2,9 @@
 
 .. _multi-gpu-training:
 
-########################
- Training
-########################
+##############
+ Introduction
+##############
 
 Determined provides three main methods to take advantage of multiple GPUs:
 
@@ -232,14 +232,3 @@ batch inference job, create a new PyTorchTrial and follow these steps:
 Once the new PyTorchTrial object is created, use the experiment configuration to distribute
 inference in the same way as training. cifar10_pytorch_inference_ is an example of distributed batch
 inference.
-
-.. toctree::
-   :hidden:
-
-   Basic Workflow <basic-workflow>
-   Prepare Environment <setup-guide/overview>
-   Training API Guides <apis-howto/overview>
-   Hyperparameter Tuning <hyperparameter/overview>
-   Search Methods <search-methods/overview>
-   Model Management <model-management/overview>
-   Best Practices <best-practices/overview>

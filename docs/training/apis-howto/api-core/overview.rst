@@ -2,11 +2,11 @@
  Core API
 ##########
 
-+---------------------------------------------------+
-| API reference                                     |
-+===================================================+
-| :doc:`/reference-api/training/api-core-reference` |
-+---------------------------------------------------+
++------------------------------------------------------------------+
+| API reference                                                    |
++==================================================================+
+| :doc:`/reference/reference-training/training/api-core-reference` |
++------------------------------------------------------------------+
 
 With Core API you can train arbitrary models on the Determined platform with seamless access to the
 the following capabilities:

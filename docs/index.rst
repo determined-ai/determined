@@ -5,11 +5,24 @@
    quickstart-mdldev
    Tutorials <tutorials/index>
    Examples <example-solutions/examples>
+   Model Hub <model-hub-library/index>
    System Architecture <architecture/index>
-   glossary
 
 .. toctree::
-   :caption: Administration Guide
+   :caption: Model Developer Guide
+   :hidden:
+
+   Introduction <training/introduction>
+   Basic Workflow <training/basic-workflow>
+   Prepare Environment <training/setup-guide/overview>
+   Load Model Data <training/load-model-data>
+   Training API Guides <training/apis-howto/overview>
+   Hyperparameter Tuning <training/hyperparameter/overview>
+   Model Management <training/model-management/overview>
+   Best Practices <training/best-practices/overview>
+
+.. toctree::
+   :caption: Administrator Guide
    :hidden:
 
    Basic Setup <cluster-setup-guide/basic>
@@ -22,33 +35,24 @@
    Troubleshooting <cluster-setup-guide/troubleshooting>
 
 .. toctree::
-   :caption: Distributed Training Guide
+   :caption: Reference
    :hidden:
 
-   Training <training/index>
-
-   API Reference <reference-api/index>
-
-   Configuration Reference <reference-config/index>
+   Python API <reference/python-api>
+   REST API <reference/rest-api>
+   Training Reference <reference/reference-training/index>
+   Deployment Reference <reference/reference-deploy/index>
+   Job Configuration Reference <reference/reference-interface/job-config-reference>
 
 .. toctree::
-   :caption: Interfaces
+   :caption: Tools
    :hidden:
 
-   WebUI Interface <interfaces/webui-if>
    Commands and Shells <interfaces/commands-and-shells>
+   WebUI Interface <interfaces/webui-if>
    IDE Integration <interfaces/ide-integration>
-   Python API <interfaces/python-api>
-   REST API <interfaces/rest-api>
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
-
-.. toctree::
-   :caption: Model Hub Library
-   :hidden:
-
-   Huggingface Trainsformers <model-hub-library/transformers/overview>
-   MMDetection <model-hub-library/mmdetection/overview>
 
 .. toctree::
    :caption: Integrations
@@ -56,10 +60,6 @@
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
    Prometheus and Grafana <integrations/prometheus/prometheus>
-
-.. toctree::
-   :hidden:
-
    attributions
 
 #############################
@@ -112,32 +112,20 @@ environment so you can spend your time building models instead of managing infra
               <p class="tile-description">Learn about core concepts and key features to get helpful context before diving into more detailed information.</p>
           </a>
           <a class="tile" href="cluster-setup-guide/index.html">
-              <h2 class="tile-title">Cluster Setup Guide</h2>
+              <h2 class="tile-title">Administrator Guide</h2>
               <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
           </a>
           <a class="tile" href="training/index.html">
-              <h2 class="tile-title">Training</h2>
+              <h2 class="tile-title">Model Developer Guide</h2>
               <p class="tile-description">Learn how to work with Training APIs, and how to configure your distributed training experiments.</p>
-          </a>
-          <a class="tile" href="reference-api/index.html">
-              <h2 class="tile-title">API Reference</h2>
-              <p class="tile-description">Explore the training and model hub API reference documentation.</p>
-          </a>
-          <a class="tile" href="reference-api/index.html">
-              <h2 class="tile-title">Configuration Reference</h2>
-              <p class="tile-description">Explore the Determined configuration file reference documentation.</p>
           </a>
           <a class="tile" href="tutorials/index.html">
               <h2 class="tile-title">Tutorials</h2>
               <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
           </a>
-          <a class="tile" href="example-solutions/examples.html">
-              <h2 class="tile-title">Example Solutions</h2>
-              <p class="tile-description">Explore example machine learning models that have been ported to the Determined APIs.</p>
-          </a>
-          <a class="tile" href="interfaces/python-api.html">
-              <h2 class="tile-title">Python API</h2>
-              <p class="tile-description">Use the Python API to interface with Determined to get many of the same capabilities available through the CLI.</p>
+          <a class="tile" href="reference-api/index.html">
+              <h2 class="tile-title">Reference</h2>
+              <p class="tile-description">The Determined reference documentation provides detailed information about configuration files, APIs, and the CLI.</p>
           </a>
       </div>
    </div>

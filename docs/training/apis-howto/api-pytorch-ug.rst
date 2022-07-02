@@ -2,15 +2,15 @@
  PyTorch API
 ########################
 
-+------------------------------------------------------+
-| API reference                                        |
-+======================================================+
-| :doc:`/reference-api/training/api-pytorch-reference` |
-+------------------------------------------------------+
++---------------------------------------------------------------------+
+| API reference                                                       |
++=====================================================================+
+| :doc:`/reference/reference-training/training/api-pytorch-reference` |
++---------------------------------------------------------------------+
 
 This document guides you through training a PyTorch model in Determined. You need to implement a
 trial class that inherits :class:`~determined.pytorch.PyTorchTrial` and specify it as the entrypoint
-in the :doc:`experiment configuration </reference-config/config/experiment-config-reference>`.
+in the :doc:`experiment configuration </reference/reference-training/experiment-config-reference>`.
 
 To implement :class:`~determined.pytorch.PyTorchTrial`, you need to override specific functions that
 represent the components that are used in the training procedure. It is helpful to work off of a
@@ -59,7 +59,7 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with
    different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
@@ -96,7 +96,7 @@ directories on different ranks. See the following code example:
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/best-practices/load-model-data` to understand how to work with
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with
    different sources of data.
 
 Loading data into :class:`~determined.pytorch.PyTorchTrial` models is done by defining two
@@ -113,7 +113,7 @@ to the :meth:`~determined.pytorch.PyTorchTrial.train_batch` and
 :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` functions. The batch size of the data loader
 will be set to the per-slot batch size, which is calculated based on ``global_batch_size`` and
 ``slots_per_trial`` as defined in the :doc:`experiment configuration
-</reference-config/config/experiment-config-reference>`.
+</reference/reference-training/experiment-config-reference>`.
 
 See the following code as an example:
 
@@ -649,7 +649,7 @@ Take the following code for example.
            model = models.__dict__[args.arch]()
 
 ``args.arch`` is a hyperparameter. You should define the hyperparameter space in the
-:doc:`experiment configuration </reference-config/config/experiment-config-reference>` and use
+:doc:`experiment configuration </reference/reference-training/experiment-config-reference>` and use
 ``self.context.get_hparams()``, which gives you access to all the hyperparameters for the current
 trial. By doing so, you get better tracking in the WebUI, especially for experiments that use a
 searcher.

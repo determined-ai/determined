@@ -2,11 +2,11 @@
 DeepSpeed API
 ########################
 
-+--------------------------------------------------------+
-| API reference                                          |
-+========================================================+
-| :doc:`/reference-api/training/api-deepspeed-reference` |
-+--------------------------------------------------------+
++-----------------------------------------------------------------------+
+| API reference                                                         |
++=======================================================================+
+| :doc:`/reference/reference-training/training/api-deepspeed-reference` |
++-----------------------------------------------------------------------+
 
 `DeepSpeed <https://deepspeed.ai/>`_ is a Microsoft library that supports large-scale,
 distributed learning with sharded optimizer state training and pipeline parallelism.  Determined
