@@ -1,3 +1,4 @@
+import csv
 import logging
 import os
 import re
@@ -5,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import typing
 from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
@@ -66,6 +68,16 @@ def activate_experiment(experiment_id: int) -> None:
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(determined_test_session(), id=experiment_id)
     wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
+
+
+def list_experiment_ids() -> typing.List[int]:
+    command = ["det", "-m", conf.make_master_url(), "experiment", "list", "--csv"]
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    exp_ids = []
+    for exp in csv.reader(res.stdout.split("\n"), delimiter=","):
+        if len(exp) > 0 and exp[0].isnumeric():
+            exp_ids.append(int(exp[0]))
+    return exp_ids
 
 
 def wait_for_experiment_state(

@@ -4,12 +4,17 @@
 package db
 
 import (
+	"archive/tar"
 	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/archive"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
@@ -74,7 +79,7 @@ func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
 		Config:               cfg,
-		ModelDefinitionBytes: []byte{1, 0, 1, 0, 1, 0},
+		ModelDefinitionBytes: readTestModelDefiniton(t),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
@@ -173,4 +178,25 @@ func requireMockCheckpoint(
 	err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
 	require.NoError(t, err)
 	return &ckpt
+}
+
+func readTestModelDefiniton(t *testing.T) []byte {
+	folderPath := "../../../examples/tutorials/mnist_pytorch"
+	path, err := filepath.Abs(folderPath)
+	require.NoError(t, err)
+	files, err := ioutil.ReadDir(path)
+	require.NoError(t, err)
+	var arcs []archive.Item
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		name := file.Name()
+		bytes, err := ioutil.ReadFile(filepath.Join(path, name))
+		require.NoError(t, err)
+		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(file.Mode()), 0, 0))
+	}
+	targz, err := archive.ToTarGz(archive.Archive(arcs))
+	require.NoError(t, err)
+	return targz
 }

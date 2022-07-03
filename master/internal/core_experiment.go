@@ -97,7 +97,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 		return err
 	}
 
-	modelDefCache := GetModelDefCache(nil)
+	modelDefCache := GetModelDefCache()
 	file, err := modelDefCache.GetFileContent(args.ExperimentID, args.Path)
 	if err != nil {
 		return err
