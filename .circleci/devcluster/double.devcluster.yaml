@@ -19,7 +19,7 @@ stages:
         log:
           level: debug
         root: tools/build
-        cache: /home/ubuntu/.cache/determined
+        cache: /tmp/determined-cache
 
   - custom:
       name: proxy
