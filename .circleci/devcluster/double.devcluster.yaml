@@ -19,7 +19,8 @@ stages:
         log:
           level: debug
         root: tools/build
-        cache: /tmp/determined-cache
+        cache: 
+          cache_dir: /tmp/determined-cache
 
   - custom:
       name: proxy

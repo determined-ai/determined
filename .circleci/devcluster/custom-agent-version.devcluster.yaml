@@ -19,6 +19,8 @@ stages:
         log:
           level: debug
         root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
 
   - custom_docker:
       name: agent
