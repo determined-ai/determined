@@ -56,9 +56,9 @@ func runRoot() error {
 	}
 	log.Infof("master configuration: %s", printableConfig)
 
-	err = os.MkdirAll(config.Cache, fs.ModePerm)
+	err = os.MkdirAll(config.Cache.CacheDir, fs.ModePerm)
 	if err != nil {
-		log.WithError(err).Errorf("Failed allocating cache direatory at %s", config.Cache)
+		log.WithError(err).Errorf("Failed allocating cache direatory at %s", config.Cache.CacheDir)
 		return err
 	}
 

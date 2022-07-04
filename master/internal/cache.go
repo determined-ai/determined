@@ -14,18 +14,20 @@ import (
 var modelDefCache *db.FileCache
 
 const cacheDir = "exp_model_def"
-const defaultCacheMaxAge = 24 * time.Hour
 
 // GetModelDefCache returns FileCache object.
 func GetModelDefCache() *db.FileCache {
 	config := config.GetMasterConfig()
 	if modelDefCache == nil {
-		rootDir := filepath.Join(config.Cache, cacheDir)
+		rootDir := filepath.Join(config.Cache.CacheDir, cacheDir)
 		err := os.RemoveAll(rootDir)
 		if err != nil {
 			log.WithError(err).Errorf("failed to initialize model def cache at %s", rootDir)
 		}
-		maxAge := defaultCacheMaxAge
+		maxAge, err := time.ParseDuration(config.Cache.MaxAge)
+		if err != nil {
+			log.WithError(err).Errorf("failed to parse cache max age for %s", config.Cache.MaxAge)
+		}
 		modelDefCache = db.NewFileCache(rootDir, maxAge)
 	}
 	return modelDefCache

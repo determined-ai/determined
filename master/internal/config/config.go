@@ -45,6 +45,12 @@ func DefaultDBConfig() *DBConfig {
 	}
 }
 
+// CacheConfig is the configuration for file cache.
+type CacheConfig struct {
+	CacheDir string `json:"cache_dir"`
+	MaxAge   string `json:"max_age"`
+}
+
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
 type HPImportanceConfig struct {
 	WorkersLimit   uint `json:"workers_limit"`
@@ -100,7 +106,10 @@ func DefaultConfig() *Config {
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
 		// For developers this should be a writable directory for caching files.
-		Cache: "/var/cache/determined",
+		Cache: CacheConfig{
+			CacheDir: "/var/cache/determined",
+			MaxAge:   "24h",
+		},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -132,7 +141,7 @@ type Config struct {
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
-	Cache                 string                            `json:"cache"`
+	Cache                 CacheConfig                       `json:"cache"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
