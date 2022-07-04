@@ -3023,6 +3023,20 @@ export interface V1GetUserResponse {
 }
 
 /**
+ * Response to GetUserSettingRequest.
+ * @export
+ * @interface V1GetUserSettingResponse
+ */
+export interface V1GetUserSettingResponse {
+    /**
+     * List of user settings.
+     * @type {Array<V1UserWebSetting>}
+     * @memberof V1GetUserSettingResponse
+     */
+    settings: Array<V1UserWebSetting>;
+}
+
+/**
  * Response to GetUsersRequest.
  * @export
  * @interface V1GetUsersResponse
@@ -4755,6 +4769,34 @@ export interface V1PostUserResponse {
 }
 
 /**
+ * Update user settings.
+ * @export
+ * @interface V1PostUserSettingRequest
+ */
+export interface V1PostUserSettingRequest {
+    /**
+     * Storage path for setting.
+     * @type {string}
+     * @memberof V1PostUserSettingRequest
+     */
+    storagePath: string;
+    /**
+     * Setting key value pair.
+     * @type {V1UserWebSetting}
+     * @memberof V1PostUserSettingRequest
+     */
+    setting: V1UserWebSetting;
+}
+
+/**
+ * Response to PostUserSettingRequest.
+ * @export
+ * @interface V1PostUserSettingResponse
+ */
+export interface V1PostUserSettingResponse {
+}
+
+/**
  * Request for creating a workspace.
  * @export
  * @interface V1PostWorkspaceRequest
@@ -5098,6 +5140,14 @@ export interface V1ReportTrialTrainingMetricsResponse {
  * @interface V1ReportTrialValidationMetricsResponse
  */
 export interface V1ReportTrialValidationMetricsResponse {
+}
+
+/**
+ * Response to ResetUserSettingRequest.
+ * @export
+ * @interface V1ResetUserSettingResponse
+ */
+export interface V1ResetUserSettingResponse {
 }
 
 /**
@@ -6818,6 +6868,32 @@ export interface V1User {
      * @memberof V1User
      */
     modifiedAt?: Date;
+}
+
+/**
+ * UserWebSetting represents user web setting.
+ * @export
+ * @interface V1UserWebSetting
+ */
+export interface V1UserWebSetting {
+    /**
+     * The key of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    key: string;
+    /**
+     * The storage path of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    storagePath?: string;
+    /**
+     * The value of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    value?: string;
 }
 
 /**
@@ -20657,6 +20733,37 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/setting`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20774,6 +20881,77 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserSetting.');
+            }
+            const localVarPath = `/api/v1/users/setting`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostUserSettingRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/setting/reset`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -20848,6 +21026,24 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20905,6 +21101,43 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -20944,6 +21177,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options?: any) {
+            return UsersApiFp(configuration).getUserSetting(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20971,6 +21213,25 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         postUser(body: V1PostUserRequest, options?: any) {
             return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+            return UsersApiFp(configuration).postUserSetting(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options?: any) {
+            return UsersApiFp(configuration).resetUserSetting(options)(fetch, basePath);
         },
         /**
          * 
@@ -21007,6 +21268,17 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get a user's settings for website
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).getUserSetting(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a list of users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -21039,6 +21311,29 @@ export class UsersApi extends BaseAPI {
      */
     public postUser(body: V1PostUserRequest, options?: any) {
         return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's settings for website
+     * @param {V1PostUserSettingRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserSetting(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Reset a user's settings for website
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public resetUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).resetUserSetting(options)(this.fetch, this.basePath);
     }
 
     /**

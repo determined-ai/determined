@@ -2452,6 +2452,24 @@ class v1GetUserResponse:
             "user": self.user.to_json() if self.user is not None else None,
         }
 
+class v1GetUserSettingResponse:
+    def __init__(
+        self,
+        settings: "typing.Sequence[v1UserWebSetting]",
+    ):
+        self.settings = settings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserSettingResponse":
+        return cls(
+            settings=[v1UserWebSetting.from_json(x) for x in obj["settings"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "settings": [x.to_json() for x in self.settings],
+        }
+
 class v1GetUsersResponse:
     def __init__(
         self,
@@ -4060,6 +4078,28 @@ class v1PostUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
+        }
+
+class v1PostUserSettingRequest:
+    def __init__(
+        self,
+        setting: "v1UserWebSetting",
+        storagePath: str,
+    ):
+        self.storagePath = storagePath
+        self.setting = setting
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
+        return cls(
+            storagePath=obj["storagePath"],
+            setting=v1UserWebSetting.from_json(obj["setting"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "storagePath": self.storagePath,
+            "setting": self.setting.to_json(),
         }
 
 class v1PostWorkspaceRequest:
@@ -5856,6 +5896,32 @@ class v1User:
             "modifiedAt": self.modifiedAt if self.modifiedAt is not None else None,
         }
 
+class v1UserWebSetting:
+    def __init__(
+        self,
+        key: str,
+        storagePath: "typing.Optional[str]" = None,
+        value: "typing.Optional[str]" = None,
+    ):
+        self.key = key
+        self.storagePath = storagePath
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserWebSetting":
+        return cls(
+            key=obj["key"],
+            storagePath=obj.get("storagePath", None),
+            value=obj.get("value", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "key": self.key,
+            "storagePath": self.storagePath if self.storagePath is not None else None,
+            "value": self.value if self.value is not None else None,
+        }
+
 class v1ValidateAfterOperation:
     def __init__(
         self,
@@ -7545,6 +7611,23 @@ def get_GetUser(
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
+def get_GetUserSetting(
+    session: "client.Session",
+) -> "v1GetUserSettingResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/setting",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserSettingResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserSetting", _resp)
+
 def get_GetUsers(
     session: "client.Session",
 ) -> "v1GetUsersResponse":
@@ -8273,6 +8356,25 @@ def post_PostUser(
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
 
+def post_PostUserSetting(
+    session: "client.Session",
+    *,
+    body: "v1PostUserSettingRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/setting",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostUserSetting", _resp)
+
 def post_PostWorkspace(
     session: "client.Session",
     *,
@@ -8449,6 +8551,23 @@ def post_ReportTrialValidationMetrics(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
+
+def post_ResetUserSetting(
+    session: "client.Session",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/setting/reset",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ResetUserSetting", _resp)
 
 def get_ResourceAllocationAggregated(
     session: "client.Session",
