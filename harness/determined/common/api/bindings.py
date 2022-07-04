@@ -1333,33 +1333,41 @@ class v1FileNode:
         self,
         contentLength: "typing.Optional[int]" = None,
         contentType: "typing.Optional[str]" = None,
+        files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
         isDir: "typing.Optional[bool]" = None,
         modifiedTime: "typing.Optional[str]" = None,
+        name: "typing.Optional[str]" = None,
         path: "typing.Optional[str]" = None,
     ):
         self.path = path
+        self.name = name
         self.modifiedTime = modifiedTime
         self.contentLength = contentLength
         self.isDir = isDir
         self.contentType = contentType
+        self.files = files
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FileNode":
         return cls(
             path=obj.get("path", None),
+            name=obj.get("name", None),
             modifiedTime=obj.get("modifiedTime", None),
             contentLength=obj.get("contentLength", None),
             isDir=obj.get("isDir", None),
             contentType=obj.get("contentType", None),
+            files=[v1FileNode.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "path": self.path if self.path is not None else None,
+            "name": self.name if self.name is not None else None,
             "modifiedTime": self.modifiedTime if self.modifiedTime is not None else None,
             "contentLength": self.contentLength if self.contentLength is not None else None,
             "isDir": self.isDir if self.isDir is not None else None,
             "contentType": self.contentType if self.contentType is not None else None,
+            "files": [x.to_json() for x in self.files] if self.files is not None else None,
         }
 
 class v1FittingPolicy(enum.Enum):

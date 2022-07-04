@@ -1903,6 +1903,12 @@ export interface V1FileNode {
      */
     path?: string;
     /**
+     * Name of file.
+     * @type {string}
+     * @memberof V1FileNode
+     */
+    name?: string;
+    /**
      * Modification time of file.
      * @type {Date}
      * @memberof V1FileNode
@@ -1926,6 +1932,12 @@ export interface V1FileNode {
      * @memberof V1FileNode
      */
     contentType?: string;
+    /**
+     * Subdirectory files.
+     * @type {Array<V1FileNode>}
+     * @memberof V1FileNode
+     */
+    files?: Array<V1FileNode>;
 }
 
 /**
