@@ -1395,7 +1395,7 @@ func (a *apiServer) GetModelDefTree(
 	_ context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
 	modelDefCache := GetModelDefCache()
-	fileTree, err := modelDefCache.GetFileTree(int(req.ExperimentId))
+	fileTree, err := modelDefCache.GetFileTreeNested(int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}

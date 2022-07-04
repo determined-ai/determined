@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -79,6 +80,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 				ContentLength: int32(len(ar.Content)),
 				IsDir:         ar.IsDir(),
 				ContentType:   http.DetectContentType(ar.Content),
+				Name:          filepath.Base(ar.Path),
 			})
 		}
 		value = &modelDefFolder{
@@ -108,8 +110,7 @@ func (f *FileCache) genPath(expID int, path string) string {
 	return filepath.Join(f.rootDir, strconv.Itoa(expID), path)
 }
 
-// GetFileTree returns folder tree structure with given experiment id.
-func (f *FileCache) GetFileTree(expID int) ([]*experimentv1.FileNode, error) {
+func (f *FileCache) getFileTree(expID int) ([]*experimentv1.FileNode, error) {
 	folder, err := f.getOrCreateFolder(expID)
 	if err != nil {
 		return nil, err
@@ -119,13 +120,27 @@ func (f *FileCache) GetFileTree(expID int) ([]*experimentv1.FileNode, error) {
 	return folder.fileTree, nil
 }
 
+// GetFileTreeNested returns folder tree structure with given experiment id.
+func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, error) {
+	fileTree, err := f.getFileTree(expID)
+	if err != nil {
+		return nil, err
+	}
+	var fileTreeNested []*experimentv1.FileNode
+	for _, file := range fileTree {
+		fileTreeNested = insertToTree(
+			fileTreeNested, strings.Split(file.Path, string(os.PathSeparator)), file)
+	}
+	return fileTreeNested, nil
+}
+
 // GetFileContent returns file with given experiment id and path.
 func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 	folder, err := f.getOrCreateFolder(expID)
 	if err != nil {
 		return []byte{}, err
 	}
-	fileTree, err := f.GetFileTree(expID)
+	fileTree, err := f.getFileTree(expID)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -151,4 +166,22 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 		}
 	}
 	return nil, fs.ErrNotExist
+}
+
+func insertToTree(
+	root []*experimentv1.FileNode, paths []string, node *experimentv1.FileNode,
+) []*experimentv1.FileNode {
+	if len(paths) > 0 {
+		var i int
+		for i = 0; i < len(root); i++ {
+			if root[i].Name == paths[0] {
+				break
+			}
+		}
+		if i == len(root) {
+			root = append(root, node)
+		}
+		root[i].Files = insertToTree(root[i].Files, paths[1:], node)
+	}
+	return root
 }

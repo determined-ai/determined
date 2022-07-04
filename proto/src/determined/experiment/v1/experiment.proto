@@ -144,12 +144,16 @@ message ValidationHistoryEntry {
 message FileNode {
   // Path of file.
   string path = 1;
+  // Name of file.
+  string name = 2;
   // Modification time of file.
-  google.protobuf.Timestamp modified_time = 2;
+  google.protobuf.Timestamp modified_time = 3;
   // Number of bytes in file content.
-  int32 content_length = 3;
+  int32 content_length = 4;
   // Is this a directory.
-  bool is_dir = 4;
+  bool is_dir = 5;
   // MIME type of file.
-  string content_type = 5;
+  string content_type = 6;
+  // Subdirectory files.
+  repeated FileNode files = 7;
 }

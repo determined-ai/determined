@@ -22,13 +22,18 @@ func TestCache(t *testing.T) {
 	expID := requireMockExperiment(t, db, user).ID
 
 	testCacheDir := "/tmp/determined-cache"
-
 	cache := NewFileCache(testCacheDir, 1*time.Hour)
-	files, err := cache.GetFileTree(expID)
+
+	// Test fetch
+	files, err := cache.getFileTree(expID)
 	require.NoError(t, err)
 	require.True(t, len(files) > 0)
 	path := files[0].Path
 	_, err = cache.GetFileContent(expID, path)
+	require.NoError(t, err)
+
+	// Test fetch to nested tree structure
+	files, err = cache.GetFileTreeNested(expID)
 	require.NoError(t, err)
 
 	// Test prune, first verify the file exists, then modify cached time to make cache expire
