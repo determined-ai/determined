@@ -31,7 +31,10 @@ def list_agents(args: argparse.Namespace) -> None:
                 ("registered_time", render.format_time(a.registeredTime)),
                 ("num_slots", len(a.slots) if a.slots is not None else ""),
                 ("num_containers", len(a.containers) if a.containers is not None else ""),
-                ("resource_pool", a.resourcePool),
+                (
+                    "resource_pools",
+                    ", ".join(a.resourcePools) if a.resourcePools is not None else "",
+                ),
                 ("enabled", a.enabled),
                 ("draining", a.draining),
                 ("label", a.label),

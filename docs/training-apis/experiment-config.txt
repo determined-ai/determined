@@ -609,8 +609,8 @@ Double
 A ``double`` hyperparameter is a floating point variable. The minimum and maximum values of the
 variable are defined by the ``minval`` and ``maxval`` keys, respectively (inclusive of endpoints).
 
-When doing a grid search, the ``count`` key can also be specified; this defines the number of points
-in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
+When doing a grid search, the ``count`` key must also be specified; this defines the number of
+points in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
 ``maxval``. See :ref:`topic-guides_hp-tuning-det_grid` for details.
 
 Integer
@@ -619,8 +619,8 @@ Integer
 An ``int`` hyperparameter is an integer variable. The minimum and maximum values of the variable are
 defined by the ``minval`` and ``maxval`` keys, respectively (inclusive of endpoints).
 
-When doing a grid search, the ``count`` key can also be specified; this defines the number of points
-in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
+When doing a grid search, the ``count`` key must also be specified; this defines the number of
+points in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
 ``maxval``. See :ref:`topic-guides_hp-tuning-det_grid` for details.
 
 Log
@@ -631,8 +631,8 @@ base of the logarithm is specified by the ``base`` field; the minimum and maximu
 the hyperparameter are given by the ``minval`` and ``maxval`` fields, respectively (inclusive of
 endpoints).
 
-When doing a grid search, the ``count`` key can also be specified; this defines the number of points
-in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
+When doing a grid search, the ``count`` key must also be specified; this defines the number of
+points in the grid for this hyperparameter. Grid points are evenly spaced between ``minval`` and
 ``maxval``. See :ref:`topic-guides_hp-tuning-det_grid` for details.
 
 .. _experiment-configuration_searcher:

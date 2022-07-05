@@ -6,16 +6,19 @@ It launches the entrypoint script using DeepSpeed's launch process.
 import argparse
 import logging
 import os
-import pathlib
+import shlex
 import subprocess
 import sys
 import tempfile
 import time
-from typing import List
+from typing import List, Optional
 
+import deepspeed
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
+from packaging import version
 
 import determined as det
+import determined.common
 from determined import constants, util
 from determined.common import api
 from determined.common.api import certs
@@ -43,7 +46,9 @@ def is_nccl_socket_ifname_env_var_set() -> bool:
         return True
 
 
-def get_hostfile_path() -> str:
+def get_hostfile_path(multi_machine: bool) -> Optional[str]:
+    if not multi_machine:
+        return None
 
     global hostfile_path
 
@@ -69,8 +74,11 @@ def get_hostfile_path() -> str:
     return hostfile_path
 
 
+deepspeed_version = version.parse(deepspeed.__version__)
+
+
 def create_hostlist_file(
-    hostfile_path: pathlib.Path, num_proc_per_machine: int, ip_addresses: List[str]
+    hostfile_path: Optional[str], num_proc_per_machine: int, ip_addresses: List[str]
 ) -> str:
     trial_runner_hosts = ip_addresses.copy()
     # In the single node case, deepspeed doesn't use pdsh so we don't need to launch sshd.
@@ -78,10 +86,11 @@ def create_hostlist_file(
     if len(ip_addresses) == 1:
         trial_runner_hosts[0] = "localhost"
 
-    os.makedirs(hostfile_path.parent, exist_ok=True)
-    with open(hostfile_path, "w") as hostfile:
-        lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
-        hostfile.writelines(lines)
+    if hostfile_path is not None:
+        os.makedirs(os.path.dirname(hostfile_path), exist_ok=True)
+        with open(hostfile_path, "w") as hostfile:
+            lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
+            hostfile.writelines(lines)
     return trial_runner_hosts[0]
 
 
@@ -153,28 +162,53 @@ def create_deepspeed_env_file() -> None:
         environ = os.environ.copy()
         for k, v in environ.items():
             if k in INCLUDE:
-                f.write(f"{k}={v}\n")
+                # We need to turn our envvars into shell-escaped strings to export them correctly
+                # since values may contain spaces and quotes.  shlex.quote was removed from the
+                # deepspeed launcher in 0.6.2 so we add it here for this version onwards.
+                if deepspeed_version >= version.parse("0.6.2"):
+                    f.write(f"{k}={shlex.quote(v)}\n")
+                else:
+                    f.write(f"{k}={v}\n")
 
 
-def create_run_command(master_address: str, hostfile_path: str) -> List[str]:
+def create_run_command(master_address: str, hostfile_path: Optional[str]) -> List[str]:
     # Construct the deepspeed command.
-    deepspeed_process_cmd = [
-        "deepspeed",
-        "-H",
-        hostfile_path,
-        "--master_addr",
-        master_address,
-        "--no_python",
-        "--no_local_rank",
-        "--",
-    ]
+    deepspeed_process_cmd = ["deepspeed"]
+    if hostfile_path is not None:
+        deepspeed_process_cmd += ["-H", hostfile_path]
+    deepspeed_process_cmd += ["--master_addr", master_address, "--no_python", "--no_local_rank"]
+    if deepspeed_version > version.parse("0.6.4"):
+        deepspeed_process_cmd.append("--no_ssh_check")  # Bypass deepspeed's ssh check.
+    deepspeed_process_cmd.append("--")
     return deepspeed_process_cmd
+
+
+def check_deepspeed_version(multi_machine: bool) -> None:
+    if not multi_machine:
+        return
+    # Upstream deepspeed added an ssh check from 0.6.1 onwards that does not have the
+    # StrictHostKeyChecking=no arg and fails with our agents.  A PR adding a no_ssh_check arg
+    # to bypass this should land for versions 0.6.5 and onwards.
+    if deepspeed_version <= version.parse("0.6.0"):
+        return
+    if deepspeed_version > version.parse("0.6.4"):
+        return
+    raise ValueError(
+        "This launcher is incompatible with deepspeed versions 0.6.1 to 0.6.4 due to an ssh check "
+        "in the upstream launcher that fails with our setup.  We perform our own ssh check by "
+        "default and can bypass this ssh check for deepspeed versions >= 0.6.5."
+    )
 
 
 def main(script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
+    experiment_config = det.ExperimentConfig(info.trial._config)
+    determined.common.set_logger(experiment_config.debug_enabled())
+
+    multi_machine = len(info.container_addrs) > 1
+    check_deepspeed_version(multi_machine)
 
     # Hack: get the resources id from the environment.
     resources_id = os.environ.get("DET_RESOURCES_ID")
@@ -242,10 +276,10 @@ def main(script: List[str]) -> int:
 
     pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
-    hostfile_path = get_hostfile_path()
+    hostfile_path = get_hostfile_path(multi_machine)
 
     master_address = create_hostlist_file(
-        hostfile_path=pathlib.Path(hostfile_path),
+        hostfile_path=hostfile_path,
         num_proc_per_machine=len(info.slot_ids),
         ip_addresses=info.container_addrs,
     )
@@ -261,7 +295,6 @@ def main(script: List[str]) -> int:
 
     full_cmd = pid_server_cmd + cmd + pid_client_cmd + log_redirect_cmd + harness_cmd
 
-    multi_machine = len(info.container_addrs) > 1
     if not multi_machine:
         p = subprocess.Popen(full_cmd)
         with det.util.forward_signals(p):

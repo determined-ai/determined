@@ -2,9 +2,9 @@ import { Breadcrumb, Tooltip } from 'antd';
 import React from 'react';
 
 import { BreadCrumbRoute } from 'shared/components/Page';
+import { CommonProps } from 'shared/types';
 
-import Link from '../../../components/Link';
-import { CommonProps } from '../../types';
+import Link from '../Link';
 
 import css from './PageHeader.module.scss';
 
@@ -33,7 +33,7 @@ const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: Bread
 };
 
 const PageHeader: React.FC<Props> = (props: Props) => {
-  const classes = [ css.base ];
+  const classes = [ css.base, props.className ];
 
   const showHeader = props.title || props.subTitle || props.options;
 

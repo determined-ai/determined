@@ -44,6 +44,36 @@ class APIHttpError(Exception):
         return self.message
 
 
+class ExpCompareTrialsSampleResponseExpTrial:
+    def __init__(
+        self,
+        data: "typing.Sequence[v1DataPoint]",
+        experimentId: int,
+        hparams: "typing.Dict[str, typing.Any]",
+        trialId: int,
+    ):
+        self.trialId = trialId
+        self.hparams = hparams
+        self.data = data
+        self.experimentId = experimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ExpCompareTrialsSampleResponseExpTrial":
+        return cls(
+            trialId=obj["trialId"],
+            hparams=obj["hparams"],
+            data=[v1DataPoint.from_json(x) for x in obj["data"]],
+            experimentId=obj["experimentId"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId,
+            "hparams": self.hparams,
+            "data": [x.to_json() for x in self.data],
+            "experimentId": self.experimentId,
+        }
+
 class GetHPImportanceResponseMetricHPImportance:
     def __init__(
         self,
@@ -368,7 +398,7 @@ class v1Agent:
         enabled: "typing.Optional[bool]" = None,
         label: "typing.Optional[str]" = None,
         registeredTime: "typing.Optional[str]" = None,
-        resourcePool: "typing.Optional[str]" = None,
+        resourcePools: "typing.Optional[typing.Sequence[str]]" = None,
         slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None,
         version: "typing.Optional[str]" = None,
     ):
@@ -377,11 +407,11 @@ class v1Agent:
         self.slots = slots
         self.containers = containers
         self.label = label
-        self.resourcePool = resourcePool
         self.addresses = addresses
         self.enabled = enabled
         self.draining = draining
         self.version = version
+        self.resourcePools = resourcePools
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Agent":
@@ -391,11 +421,11 @@ class v1Agent:
             slots={k: v1Slot.from_json(v) for k, v in obj["slots"].items()} if obj.get("slots", None) is not None else None,
             containers={k: v1Container.from_json(v) for k, v in obj["containers"].items()} if obj.get("containers", None) is not None else None,
             label=obj.get("label", None),
-            resourcePool=obj.get("resourcePool", None),
             addresses=obj.get("addresses", None),
             enabled=obj.get("enabled", None),
             draining=obj.get("draining", None),
             version=obj.get("version", None),
+            resourcePools=obj.get("resourcePools", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -405,11 +435,11 @@ class v1Agent:
             "slots": {k: v.to_json() for k, v in self.slots.items()} if self.slots is not None else None,
             "containers": {k: v.to_json() for k, v in self.containers.items()} if self.containers is not None else None,
             "label": self.label if self.label is not None else None,
-            "resourcePool": self.resourcePool if self.resourcePool is not None else None,
             "addresses": self.addresses if self.addresses is not None else None,
             "enabled": self.enabled if self.enabled is not None else None,
             "draining": self.draining if self.draining is not None else None,
             "version": self.version if self.version is not None else None,
+            "resourcePools": self.resourcePools if self.resourcePools is not None else None,
         }
 
 class v1AgentUserGroup:
@@ -1150,6 +1180,54 @@ class v1EnableSlotResponse:
             "slot": self.slot.to_json() if self.slot is not None else None,
         }
 
+class v1ExpCompareMetricNamesResponse:
+    def __init__(
+        self,
+        trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[str]]" = None,
+    ):
+        self.trainingMetrics = trainingMetrics
+        self.validationMetrics = validationMetrics
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareMetricNamesResponse":
+        return cls(
+            trainingMetrics=obj.get("trainingMetrics", None),
+            validationMetrics=obj.get("validationMetrics", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trainingMetrics": self.trainingMetrics if self.trainingMetrics is not None else None,
+            "validationMetrics": self.validationMetrics if self.validationMetrics is not None else None,
+        }
+
+class v1ExpCompareTrialsSampleResponse:
+    def __init__(
+        self,
+        demotedTrials: "typing.Sequence[int]",
+        promotedTrials: "typing.Sequence[int]",
+        trials: "typing.Sequence[ExpCompareTrialsSampleResponseExpTrial]",
+    ):
+        self.trials = trials
+        self.promotedTrials = promotedTrials
+        self.demotedTrials = demotedTrials
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExpCompareTrialsSampleResponse":
+        return cls(
+            trials=[ExpCompareTrialsSampleResponseExpTrial.from_json(x) for x in obj["trials"]],
+            promotedTrials=obj["promotedTrials"],
+            demotedTrials=obj["demotedTrials"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trials": [x.to_json() for x in self.trials],
+            "promotedTrials": self.promotedTrials,
+            "demotedTrials": self.demotedTrials,
+        }
+
 class v1Experiment:
     def __init__(
         self,
@@ -1375,6 +1453,7 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_BEST = "FITTING_POLICY_BEST"
     FITTING_POLICY_WORST = "FITTING_POLICY_WORST"
     FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
+    FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
 
 class v1GetAgentResponse:
     def __init__(
@@ -2471,6 +2550,24 @@ class v1GetUserResponse:
     def to_json(self) -> typing.Any:
         return {
             "user": self.user.to_json() if self.user is not None else None,
+        }
+
+class v1GetUserSettingResponse:
+    def __init__(
+        self,
+        settings: "typing.Sequence[v1UserWebSetting]",
+    ):
+        self.settings = settings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserSettingResponse":
+        return cls(
+            settings=[v1UserWebSetting.from_json(x) for x in obj["settings"]],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "settings": [x.to_json() for x in self.settings],
         }
 
 class v1GetUsersResponse:
@@ -4083,6 +4180,28 @@ class v1PostUserResponse:
             "user": self.user.to_json() if self.user is not None else None,
         }
 
+class v1PostUserSettingRequest:
+    def __init__(
+        self,
+        setting: "v1UserWebSetting",
+        storagePath: str,
+    ):
+        self.storagePath = storagePath
+        self.setting = setting
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserSettingRequest":
+        return cls(
+            storagePath=obj["storagePath"],
+            setting=v1UserWebSetting.from_json(obj["setting"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "storagePath": self.storagePath,
+            "setting": self.setting.to_json(),
+        }
+
 class v1PostWorkspaceRequest:
     def __init__(
         self,
@@ -4961,6 +5080,7 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_FAIR_SHARE = "SCHEDULER_TYPE_FAIR_SHARE"
     SCHEDULER_TYPE_ROUND_ROBIN = "SCHEDULER_TYPE_ROUND_ROBIN"
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
+    SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
 
 class v1SearcherOperation:
     def __init__(
@@ -5874,6 +5994,32 @@ class v1User:
             "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
             "modifiedAt": self.modifiedAt if self.modifiedAt is not None else None,
+        }
+
+class v1UserWebSetting:
+    def __init__(
+        self,
+        key: str,
+        storagePath: "typing.Optional[str]" = None,
+        value: "typing.Optional[str]" = None,
+    ):
+        self.key = key
+        self.storagePath = storagePath
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserWebSetting":
+        return cls(
+            key=obj["key"],
+            storagePath=obj.get("storagePath", None),
+            value=obj.get("value", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "key": self.key,
+            "storagePath": self.storagePath if self.storagePath is not None else None,
+            "value": self.value if self.value is not None else None,
         }
 
 class v1ValidateAfterOperation:
@@ -7604,6 +7750,23 @@ def get_GetUser(
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
+def get_GetUserSetting(
+    session: "client.Session",
+) -> "v1GetUserSettingResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/users/setting",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserSettingResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserSetting", _resp)
+
 def get_GetUsers(
     session: "client.Session",
 ) -> "v1GetUsersResponse":
@@ -8332,6 +8495,25 @@ def post_PostUser(
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
 
+def post_PostUserSetting(
+    session: "client.Session",
+    *,
+    body: "v1PostUserSettingRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/setting",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostUserSetting", _resp)
+
 def post_PostWorkspace(
     session: "client.Session",
     *,
@@ -8508,6 +8690,23 @@ def post_ReportTrialValidationMetrics(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ReportTrialValidationMetrics", _resp)
+
+def post_ResetUserSetting(
+    session: "client.Session",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/setting/reset",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ResetUserSetting", _resp)
 
 def get_ResourceAllocationAggregated(
     session: "client.Session",

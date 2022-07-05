@@ -817,6 +817,11 @@ The master supports the following configuration settings:
                if the certificate is not signed by a well-known CA; cannot be specified if
                ``skip_verify`` is enabled.
 
+   -  ``additional_fluent_outputs``: An optional configuration string containing additional Fluent
+      Bit outputs for advanced users to specify logging integrations. See the `Fluent Bit
+      documentation <https://docs.fluentbit.io/manual/pipeline/outputs>`__ for the format and
+      supported logging outputs.
+
 -  ``scim``: (EE-only) Specifies whether the SCIM service is enabled and the credentials for clients
    to use it.
 

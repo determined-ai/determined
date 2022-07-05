@@ -49,6 +49,18 @@ export const patchUser = generateDetApi<
   Service.PatchUserParams, Api.V1PatchUserResponse, Type.DetailedUser
 >(Config.patchUser);
 
+export const getUserSetting = generateDetApi<
+EmptyParams, Api.V1GetUserSettingResponse, Api.V1GetUserSettingResponse
+>(Config.getUserSetting);
+
+export const updateUserSetting = generateDetApi<
+  Service.UpdateUserSettingParams, Api.V1PostUserSettingResponse, void
+>(Config.updateUserSetting);
+
+export const resetUserSetting = generateDetApi<
+  EmptyParams, Api.V1ResetUserSettingResponse, void
+>(Config.resetUserSetting);
+
 /* Info */
 
 export const getInfo = generateDetApi<

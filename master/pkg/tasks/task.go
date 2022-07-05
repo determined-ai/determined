@@ -3,6 +3,7 @@ package tasks
 import (
 	"archive/tar"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -95,7 +96,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 }
 
 // Archives returns all the archives.
-func (t *TaskSpec) Archives() []cproto.RunArchive {
+func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		runDirHelpersArchive(t.AgentUserGroup),
@@ -104,7 +105,35 @@ func (t *TaskSpec) Archives() []cproto.RunArchive {
 		masterCertArchive(t.MasterCert),
 	}
 	res = append(res, t.ExtraArchives...)
-	return res
+
+	// Split into root and non root required files. In the case the user
+	// is root we will still differentiate files that need to be root
+	// versus files that should be owned by the user.
+	var user, root []cproto.RunArchive
+	for _, a := range res {
+		var uItems, rItems archive.Archive
+		for _, item := range a.Archive {
+			if item.IsRootItem {
+				rItems = append(rItems, item)
+			} else {
+				uItems = append(uItems, item)
+			}
+		}
+
+		if len(rItems) > 0 {
+			root = append(root, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     rItems})
+		}
+		if len(uItems) > 0 {
+			user = append(user, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     uItems})
+		}
+	}
+	return user, root
 }
 
 // EnvVars returns all the environment variables.
@@ -119,7 +148,14 @@ func (t TaskSpec) EnvVars() map[string]string {
 		"DET_CONTAINER_ID":  t.ContainerID,
 		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 		"DET_USER_TOKEN":    t.UserSessionToken,
-		"DET_USER":          t.Owner.Username,
+		"DET_WORKDIR":       t.WorkDir,
+	}
+	if t.Owner != nil {
+		e["DET_USER"] = t.Owner.Username
+	}
+
+	if t.TaskContainerDefaults.GLOOPortRange != "" {
+		e["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.GLOOPortRange
 	}
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
@@ -137,6 +173,15 @@ func (t TaskSpec) EnvVars() map[string]string {
 	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
 	if t.SegmentEnabled {
 		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
+	}
+
+	if t.LoggingFields != nil {
+		j, err := json.Marshal(t.LoggingFields)
+		if err != nil {
+			// TODO(DET-7565): propagate errors.
+			panic(fmt.Errorf("serializing logging fields: %w", err))
+		}
+		e["DET_TASK_LOGGING_METADATA"] = string(j)
 	}
 
 	for k, v := range t.ExtraEnvVars {
@@ -179,6 +224,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 		})
 	}
 
+	runArchives, rootArchives := t.Archives()
 	spec := cproto.Spec{
 		TaskType: string(t.TaskType),
 		PullSpec: cproto.PullSpec{
@@ -206,7 +252,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 					Devices: devices,
 				},
 			},
-			Archives:         t.Archives(),
+			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
 		},
 	}
@@ -239,6 +285,12 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			tar.TypeReg,
 		),
 		aug.OwnedArchiveItem(
+			taskEnrichLogsScript,
+			etc.MustStaticFile(etc.TaskEnrichLogsResource),
+			taskEnrichLogsScriptMode,
+			tar.TypeReg,
+		),
+		aug.OwnedArchiveItem(
 			taskLoggingTeardownScript,
 			etc.MustStaticFile(etc.TaskLoggingTeardownScriptResource),
 			taskLoggingTeardownMode,
@@ -261,7 +313,9 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 	passwdBytes := []byte(
 		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
-	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
+	// Disable login via password by * in shadow file.  Cannot use ! as that locks the account
+	// when using SLURM/Singularity.
+	shadowBytes := []byte(fmt.Sprintf("%v:*:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))
 
 	return wrapArchive(

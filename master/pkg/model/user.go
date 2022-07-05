@@ -127,3 +127,11 @@ type ExternalSessions struct {
 	LogoutURI string `json:"logout_uri"`
 	JwtKey    string `json:"jwt_key"`
 }
+
+// UserWebSetting is a record of user web setting.
+type UserWebSetting struct {
+	UserID      UserID
+	Key         string
+	Value       string
+	StoragePath string
+}

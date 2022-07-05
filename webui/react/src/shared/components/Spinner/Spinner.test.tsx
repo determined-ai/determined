@@ -6,25 +6,25 @@ import Spinner from './Spinner';
 
 const spinnerTextContent = 'Spinner Text Content';
 const setup = (spinning: boolean) => {
-
   const handleButtonClick = jest.fn();
   const { container, rerender } = render(
     <Spinner spinning={spinning} tip={spinnerTextContent}>
       <button onClick={handleButtonClick}>click</button>
     </Spinner>,
   );
-  return { container, handleButtonClick, rerender };
+  const user = userEvent.setup();
+  return { container, handleButtonClick, rerender, user };
 };
 
 describe('Spinner', () => {
   loadAntdStyleSheet(); // defined in setupTests.ts
 
-  it('blocks inner content while spinning', () => {
-    const { handleButtonClick } = setup(true);
+  it('blocks inner content while spinning', async () => {
+    const { handleButtonClick, user } = setup(true);
     const button = screen.getByRole('button');
     let error = null;
     try {
-      userEvent.click(button);
+      await user.click(button);
     } catch (e) {
       error = e;
     }
@@ -32,10 +32,10 @@ describe('Spinner', () => {
     expect(handleButtonClick).toHaveBeenCalledTimes(0);
   });
 
-  it('doesnt block inner content when not spinning', () => {
-    const { handleButtonClick } = setup(false);
+  it('doesnt block inner content when not spinning', async () => {
+    const { handleButtonClick, user } = setup(false);
     const button = screen.getByRole('button');
-    userEvent.click(button);
+    await user.click(button);
     expect(handleButtonClick).toHaveBeenCalledTimes(1);
   });
 

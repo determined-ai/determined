@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  Logging: Master configuration now supports ```logging.additional_fluent_outputs``` allowing
+   advanced users to specify custom integrations for task logs.

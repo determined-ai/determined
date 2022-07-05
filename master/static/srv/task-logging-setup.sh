@@ -73,11 +73,11 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
 	fi
 
 	exec 1> >(
-		tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout) >&1
+		"$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
 		printf x >$DET_LOG_WAIT_FIFO
 	) \
 	2> >(
-		tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr) >&2
+		"$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
 		printf x >$DET_LOG_WAIT_FIFO
 	)
 

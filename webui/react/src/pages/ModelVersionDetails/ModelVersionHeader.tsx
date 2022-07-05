@@ -2,7 +2,6 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Avatar from 'components/Avatar';
 import CopyButton from 'components/CopyButton';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
@@ -10,6 +9,7 @@ import Link from 'components/Link';
 import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
 import { paths } from 'routes/utils';

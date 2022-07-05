@@ -9,6 +9,8 @@ from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Uni
 
 from determined.common import yaml
 
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+
 T = TypeVar("T")
 
 
@@ -105,7 +107,7 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
     ---------------------------------------------------------------------------------------------
     """
     try:
-        config = yaml.safe_load(yaml_file)
+        config = yaml.load(yaml_file)
     except (
         yaml.error.MarkedYAMLWarning,
         yaml.error.MarkedYAMLError,

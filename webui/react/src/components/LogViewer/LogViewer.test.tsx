@@ -70,7 +70,12 @@ const generateLogs = (
   });
 };
 
-const setup = (props: src.Props) => render(<src.default {...props} />);
+const setup = (props: src.Props) => {
+  const view = render(<src.default {...props} />);
+  const user = userEvent.setup();
+
+  return { user, view };
+};
 
 /**
  * canceler -        AbortController to manually stop ongoing API calls.
@@ -190,7 +195,7 @@ describe('LogViewer', () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
-      setup({ decoder, initialLogs });
+      const { user } = setup({ decoder, initialLogs });
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -202,7 +207,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      userEvent.click(enableTailingButton);
+      await user.click(enableTailingButton);
 
       expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       await waitFor(() => {
@@ -216,6 +221,23 @@ describe('LogViewer', () => {
       await waitFor(() => {
         expect(screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST)).not.toBeVisible();
         expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
+      });
+    });
+
+    it('should not show log close button by default', async () => {
+      setup({ decoder });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show log close button when prop is supplied', async () => {
+      const handleCloseLogs = () => { return; };
+      setup({ decoder, handleCloseLogs });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
       });
     });
   });
@@ -251,7 +273,7 @@ describe('LogViewer', () => {
     });
 
     it('should show oldest logs', async () => {
-      setup({ decoder, onFetch });
+      const { user } = setup({ decoder, onFetch });
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
@@ -264,7 +286,7 @@ describe('LogViewer', () => {
       });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      userEvent.click(scrollToOldestButton);
+      await user.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -273,10 +295,10 @@ describe('LogViewer', () => {
     });
 
     it('should show newest logs when enabling tailing', async () => {
-      setup({ decoder, onFetch });
+      const { user } = setup({ decoder, onFetch });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      userEvent.click(scrollToOldestButton);
+      await user.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -284,7 +306,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      userEvent.click(enableTailingButton);
+      await user.click(enableTailingButton);
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];

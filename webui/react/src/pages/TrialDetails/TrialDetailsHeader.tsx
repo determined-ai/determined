@@ -69,7 +69,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment)) {
+    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
           icon: <Icon name="fork" size="small" />,

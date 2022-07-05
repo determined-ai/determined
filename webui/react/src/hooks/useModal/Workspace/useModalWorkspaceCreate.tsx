@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalWorkspaceCreate.module.scss';
@@ -32,7 +33,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="name">Name</label>
-        <Input id="name" value={name} onChange={handleNameInput} />
+        <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
       </div>
     );
   }, [ handleNameInput, name ]);
@@ -57,7 +58,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',

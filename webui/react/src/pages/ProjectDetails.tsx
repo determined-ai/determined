@@ -48,6 +48,7 @@ import Spinner from 'shared/components/Spinner';
 import { RecordKey } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
@@ -61,6 +62,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import {
+  canUserActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
@@ -80,6 +82,7 @@ interface Params {
 }
 
 const batchActions = [
+  Action.CompareExperiments,
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
@@ -553,11 +556,17 @@ const ProjectDetails: React.FC = () => {
     }
     if (action === Action.Move) {
       return openMoveModal({
-        experimentIds: settings.row,
+        experimentIds: settings.row.filter((id) =>
+          canUserActionExperiment(user, Action.Move, experimentMap[id])),
         sourceProjectId: project?.id,
         sourceWorkspaceId: project?.workspaceId,
       });
     }
+    if (action === Action.CompareExperiments) {
+      if (settings.row?.length)
+        return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
+    }
+
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {
         case Action.Activate:
@@ -578,7 +587,7 @@ const ProjectDetails: React.FC = () => {
           return Promise.resolve();
       }
     }));
-  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id ]);
+  }, [ settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap, user ]);
 
   const submitBatchAction = useCallback(async (action: Action) => {
     try {
@@ -623,7 +632,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard) {
+    if (action === Action.OpenTensorBoard || action === Action.Move) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);

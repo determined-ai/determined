@@ -173,16 +173,17 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   const overview: PoolOverview = {};
   agents.forEach(agent => {
-    const pname = agent.resourcePool;
-    overview[pname] = clone(initResourceTally);
-    agent.resources
-      .filter(resource => resource.enabled)
-      .forEach(resource => {
-        const isResourceFree = resource.container == null;
-        const availableResource = isResourceFree ? 1 : 0;
-        overview[pname].available = availableResource;
-        overview[pname].total += 1;
-      });
+    agent.resourcePools.forEach(pname => {
+      overview[pname] = clone(initResourceTally);
+      agent.resources
+        .filter(resource => resource.enabled)
+        .forEach(resource => {
+          const isResourceFree = resource.container == null;
+          const availableResource = isResourceFree ? 1 : 0;
+          overview[pname].available += availableResource;
+          overview[pname].total += 1;
+        });
+    });
   });
 
   for (const key in overview) {

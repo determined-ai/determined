@@ -4,7 +4,7 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 
-import Avatar from './Avatar';
+import Avatar from './UserAvatar';
 
 const testUser = { displayName: 'Bugs Bunny', id: 44, initials: 'BB', username: 'elmerFudd01' };
 const mockUsers = [ testUser ];

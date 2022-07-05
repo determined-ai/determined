@@ -10,6 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
+import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, MetricType, Scale, WorkloadGroup } from 'types';
 
@@ -110,9 +111,15 @@ const TrialChart: React.FC<Props> = ({
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {chartData[0].length === 0 ?
-          <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} /> :
-          <UPlotChart data={chartData} options={chartOptions} />}
+        {
+          <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
+            {
+              chartData[0].length === 0
+                ? <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                : <UPlotChart data={chartData} options={chartOptions} />
+            }
+          </Spinner>
+        }
       </div>
     </Section>
   );

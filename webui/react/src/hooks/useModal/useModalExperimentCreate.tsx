@@ -121,6 +121,13 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     options: { rawCancel: true },
   });
 
+  const handleFieldsChange = useCallback(() => {
+    setModalState(prev => {
+      if (prev.error) return { ...prev, error: undefined };
+      return prev;
+    });
+  }, []);
+
   const handleEditorChange = useCallback((newConfigString: string) => {
     // Update config string and config error upon each keystroke change.
     setModalState(prev => {
@@ -140,8 +147,12 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     });
   }, []);
 
-  const handleCancel = useCallback((close) => {
-    if (close?.triggerCancel) {
+  const handleCancel = useCallback((close: () => void) => {
+    /**
+     * 'close' is an indicator for if cancel button (show config) is clicked or not.
+     * If cancel button (show config) is not clicked, 'close' is undefined.
+     */
+    if (!close) {
       modalClose(ModalCloseReason.Cancel);
     } else {
       setModalState(prev => {
@@ -232,18 +243,17 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
     const error = modalState.error || modalState.configError;
     if (error) throw new Error(error);
 
-    /**
-     * add back registry_auth if it was stripped
-     * and no new registry_auth was provided
-     */
+    const { isAdvancedMode } = modalState;
     let userConfig, fullConfig;
-    if (!modalState.isAdvancedMode) {
+    if (isAdvancedMode) {
+      userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
+    } else {
       await formRef.current?.validateFields();
       userConfig = modalState.config;
-    } else {
-      userConfig = (yaml.load(modalState.configString) || {}) as RawJson;
     }
-    if(!userConfig?.environment?.registry_auth && registryCredentials) {
+
+    // Add back `registry_auth` if it was stripped and no new `registry_auth` was provided.
+    if (!userConfig?.environment?.registry_auth && registryCredentials) {
       const { environment, ...restConfig } = userConfig;
       fullConfig = {
         environment: { registry_auth: registryCredentials, ...environment },
@@ -253,7 +263,7 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
       fullConfig = userConfig;
     }
 
-    const configString = getConfigFromForm(fullConfig);
+    const configString = isAdvancedMode ? yaml.dump(fullConfig) : getConfigFromForm(fullConfig);
     await submitExperiment(configString);
   }, [ getConfigFromForm, modalState, submitExperiment, registryCredentials ]);
 
@@ -282,12 +292,13 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
           className={css.form}
           hidden={isAdvancedMode}
           initialValues={{
-            maxLength: !isFork ? getMaxLengthValue(config) : undefined,
+            maxLength: undefined,
             name: getExperimentName(config),
           }}
           labelCol={{ span: 8 }}
           name="basic"
-          ref={formRef}>
+          ref={formRef}
+          onFieldsChange={handleFieldsChange}>
           <Form.Item
             label="Experiment name"
             name="name"
@@ -298,14 +309,24 @@ const useModalExperimentCreate = (props: Props): ModalHooks => {
             <Form.Item
               label={`Max ${getMaxLengthType(config) || 'length'}`}
               name="maxLength"
-              rules={[ { message: 'Please provide a max length.', required: true } ]}>
+              rules={[
+                {
+                  required: true,
+                  validator: (rule, value) => {
+                    let errorMessage = '';
+                    if (!value) errorMessage = 'Please provide a max length.';
+                    if (value < 1) errorMessage = 'Max length must be at least 1.';
+                    return errorMessage ? Promise.reject(errorMessage) : Promise.resolve();
+                  },
+                },
+              ]}>
               <Input type="number" />
             </Form.Item>
           )}
         </Form>
       </>
     );
-  }, [ handleEditorChange ]);
+  }, [ handleEditorChange, handleFieldsChange ]);
 
   const getModalProps = useCallback((state: ModalState): ModalFuncProps | undefined => {
     const { experiment, isAdvancedMode, trial, type, visible } = state;

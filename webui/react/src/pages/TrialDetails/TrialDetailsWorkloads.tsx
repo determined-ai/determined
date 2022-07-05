@@ -164,6 +164,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         <ResponsiveTable<Step>
           columns={columns}
           dataSource={workloadSteps}
+          loading={!trial}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,

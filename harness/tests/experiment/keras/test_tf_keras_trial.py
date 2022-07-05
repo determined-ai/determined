@@ -349,7 +349,11 @@ class TestKerasTrial:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
 
-        hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
+        hparams = {
+            "learning_rate": 0.001,
+            "global_batch_size": 3,
+            "dataset_range": 10,
+        }
         controller = utils.make_trial_controller_from_trial_implementation(
             ancient_keras_ckpt.AncientTrial,
             hparams,
