@@ -38,6 +38,9 @@ func DefaultEnvConfig(taskContainerDefaults *TaskContainerDefaultsConfig) Enviro
 	if taskContainerDefaults.Image != nil {
 		config.Image = *taskContainerDefaults.Image
 	}
+	if taskContainerDefaults.EnvironmentVariables != nil {
+		config.EnvironmentVariables = *taskContainerDefaults.EnvironmentVariables
+	}
 
 	config.AddCapabilities = taskContainerDefaults.AddCapabilities
 	config.DropCapabilities = taskContainerDefaults.DropCapabilities

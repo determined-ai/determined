@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  Configuration: Add support for ``task_container_defaults.environment_variables`` in master
+   config.

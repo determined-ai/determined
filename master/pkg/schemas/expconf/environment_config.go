@@ -138,6 +138,25 @@ type EnvironmentVariablesMapV0 struct {
 	RawROCM []string `json:"rocm"`
 }
 
+// Merge implemenets the mergable interface.
+func (e EnvironmentVariablesMapV0) Merge(other interface{}) interface{} {
+	e1 := other.(EnvironmentVariablesMapV0)
+
+	// Order is relevant here. We want to append items to allow the following
+	// override order, expConf -> templates -> taskContainerDefaults.
+	// Items placed later in the array over items placed earlier.
+	var out EnvironmentVariablesMapV0
+	out.RawCPU = append(out.RawCPU, e1.RawCPU...)
+	out.RawCUDA = append(out.RawCUDA, e1.RawCUDA...)
+	out.RawROCM = append(out.RawROCM, e1.RawROCM...)
+
+	out.RawCPU = append(out.RawCPU, e.RawCPU...)
+	out.RawCUDA = append(out.RawCUDA, e.RawCUDA...)
+	out.RawROCM = append(out.RawROCM, e.RawROCM...)
+
+	return out
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	var plain []string
