@@ -12,6 +12,13 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 
 
+# Apex is included only for GPU trials.
+try:
+    import apex
+except ImportError:
+    pass
+
+
 def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
     """
     Check that two objects, consisting of any nested structures of lists and
@@ -621,6 +628,24 @@ class TestPyTorchTrial:
         )
         assert controller.supports_mixed_precision()
         assert controller.supports_averaging_training_metrics()
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.gpu
+    def test_apex_amp(self) -> None:
+        apex.amp.register_float_function(torch, "sigmoid")
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrialWithApexAmp,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+            expose_gpus=True,
+        )
+        controller.run()
 
 
 @pytest.mark.parametrize(
