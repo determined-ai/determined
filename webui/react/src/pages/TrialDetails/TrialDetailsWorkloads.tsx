@@ -93,10 +93,16 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           (smallerIsBetter ? 'ascend' : 'descend') : undefined,
         key: metricName.name,
         render: metricRenderer(metricName),
-        sorter: (a, b) => numericSorter(
-          extractMetricValue(a, metricName),
-          extractMetricValue(b, metricName),
-        ),
+        sorter: (a, b) => {
+          const aVal = extractMetricValue(a, metricName),
+                bVal = extractMetricValue(b, metricName);
+          if (aVal === undefined && bVal !== undefined) {
+            return settings.sortDesc ? -1 : 1;
+          } else if (aVal !== undefined && bVal === undefined){
+            return settings.sortDesc ? 1 : -1;
+          }
+          return numericSorter(aVal, bVal);
+        },
         title: <MetricBadgeTag metric={metricName} />,
       });
     });
@@ -147,7 +153,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.filter,
   ]);
 
-  // const { stopPolling } =
   usePolling(fetchWorkloads);
 
   useEffect(() => {
@@ -155,7 +160,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   }, [ fetchWorkloads, settings.sortDesc, settings.sortKey, trial?.id ]);
 
   const workloadSteps = useMemo(() => {
-    const data = workloads || [];
+    const data = workloads ?? [];
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps

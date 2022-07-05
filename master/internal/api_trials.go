@@ -510,8 +510,8 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 		},
 		&workloads,
 		req.TrialId,
-		0,
-		1000000,
+		nil,
+		nil,
 		"All",
 	); {
 	case err == db.ErrNotFound:

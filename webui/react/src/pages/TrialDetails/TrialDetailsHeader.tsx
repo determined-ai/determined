@@ -17,7 +17,7 @@ import { openCommand } from 'wait';
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
-    .map(w => w.checkpoint || w.training || w.validation)
+    .map(w => w.checkpoint ?? w.training ?? w.validation)
     .filter(workload => workload && isMetricsWorkload(workload) && !!workload.metrics);
   return isTerminal && workloadsWithSomeMetric.length === 0;
 };
