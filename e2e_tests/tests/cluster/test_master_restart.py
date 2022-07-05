@@ -23,15 +23,17 @@ def _sanity_check(managed_cluster_restarts: ManagedCluster) -> None:
 
 
 @pytest.fixture
-def restartable_managed_cluster(managed_cluster: ManagedCluster) -> Iterator[ManagedCluster]:
-    _sanity_check(managed_cluster)
+def restartable_managed_cluster(
+    managed_cluster_restarts: ManagedCluster,
+) -> Iterator[ManagedCluster]:
+    _sanity_check(managed_cluster_restarts)
 
     try:
-        yield managed_cluster
-        managed_cluster.wait_for_agent_ok(20)
+        yield managed_cluster_restarts
+        managed_cluster_restarts.wait_for_agent_ok(20)
     except Exception:
-        managed_cluster.restart_master()
-        managed_cluster.restart_agent()
+        managed_cluster_restarts.restart_master()
+        managed_cluster_restarts.restart_agent()
         raise
 
 
