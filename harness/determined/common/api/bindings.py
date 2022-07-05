@@ -108,6 +108,24 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
+class QueryTrialsRequestQueryFilters:
+    def __init__(
+        self,
+        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "QueryTrialsRequestQueryFilters":
+        return cls(
+            experimentIds=obj.get("experimentIds", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
+        }
+
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -4260,6 +4278,24 @@ class v1PutTemplateResponse:
     def to_json(self) -> typing.Any:
         return {
             "template": self.template.to_json() if self.template is not None else None,
+        }
+
+class v1QueryTrialsResponse:
+    def __init__(
+        self,
+        trialId: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1QueryTrialsResponse":
+        return cls(
+            trialId=obj.get("trialId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId if self.trialId is not None else None,
         }
 
 class v1QueueControl:

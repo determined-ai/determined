@@ -368,7 +368,7 @@ func (a *apiServer) GetTrialCheckpoints(
 
 // func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 // 	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
-func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
+func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest, 
 	resp apiv1.Determined_QueryTrialsServer) error {
 	period := 30 * time.Second
 	experimentIDs := req.Filters.ExperimentIds
@@ -383,6 +383,11 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 		var response apiv1.QueryTrialsResponse
 
 		trialIDs, err := a.m.db.QueryTrials(experimentIDs)
+		var trialIdArray []int32
+		for _, trial := range trialIDs {
+			trialIdArray = append(trialIdArray, int32(trial.ID))
+		}
+
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching trials")
@@ -391,6 +396,7 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
+		response.TrialId = trialIdArray
 		if err = resp.Send(&response); err != nil {
 			return err
 		}
@@ -399,10 +405,11 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 			return errors.Wrap(err, "error looking up experiment state")
 		}
 
-		time.Sleep(period)
 		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
+
+		time.Sleep(period)
 	}
 }
 
