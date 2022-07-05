@@ -48,20 +48,16 @@ const ModalTrigger: React.FC = () => {
   );
 };
 
-const Container: React.FC = () => {
-  return (
+const setup = async () => {
+  const user = userEvent.setup();
+
+  render(
     <BrowserRouter>
       <StoreProvider>
         <ModalTrigger />
       </StoreProvider>
-    </BrowserRouter>
+    </BrowserRouter>,
   );
-};
-
-const setup = async () => {
-  const user = userEvent.setup();
-
-  render(<Container />);
 
   await user.click(screen.getByRole('button'));
 
