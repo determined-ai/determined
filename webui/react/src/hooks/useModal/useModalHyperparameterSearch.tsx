@@ -322,7 +322,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <div
           className={css.hyperparameterContainer}
           style={{
-            gridTemplateColumns: `160px minmax(0, 1.3fr) 
+            gridTemplateColumns: `180px minmax(0, 1.25fr) 
               repeat(${searcher === SearchMethods.Grid ? 4 : 3}, minmax(0, 1fr))`,
           }}>
           <h2 className={css.hyperparameterName}>Hyperparameter</h2>
