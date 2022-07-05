@@ -198,6 +198,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
   const [ treeMap ] = useState(() => new Map<string, string>());
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileDir, setFileDir ] = useState('');
+  const [ fileName, setFileName ] = useState('');
 
   // TODO: after integration, create a proper fn for data fetching.
   const getFile = () => {
@@ -223,13 +224,14 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
   }, [ treeMap ]);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const onSelectFile = (keys: React.Key[]) => {
+  const onSelectFile = (keys: React.Key[], info: { [key:string]: unknown, node: DataNode }) => {
     // TODO: after backend integration, check data structure and create implementation
-    // to navigate it, check if we need the second "info" arg..
+    // to navigate it
     const filePath = treeMap.get(String(keys[0])) as string;
 
     if (filePath.includes('.')) { // check if the selected node is a file
       setFileDir(filePath);
+      setFileName(info.node.title as string);
       setIsFetching(true);
       setPublicConfig({});
 
@@ -258,7 +260,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
               <div className={css.fileInfo}>
                 <div>
                   <FileOutlined />
-                  <span className={css.filePath}>{fileDir.split('/')[1]}</span>
+                  <span className={css.filePath}>{fileName}</span>
                 </div>
                 <div className={css.buttonsContainer}>
                   <Button className={css.noBorderButton}>Open in Notebook</Button>
