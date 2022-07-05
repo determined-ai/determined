@@ -1,5 +1,7 @@
-import { text, withKnobs } from '@storybook/addon-knobs';
+import { select, text, withKnobs } from '@storybook/addon-knobs';
 import React from 'react';
+
+import { DarkLight } from 'shared/themes';
 
 import Avatar from './Avatar';
 
@@ -9,7 +11,15 @@ export default {
   title: 'Avatar',
 };
 
-export const Default = (): React.ReactNode => <Avatar displayName="Anonymous" />;
+const DARK_LIGHT_OPTIONS = [ DarkLight.Dark, DarkLight.Light ];
+
+export const Default = (): React.ReactNode => (
+  <Avatar darkLight={DarkLight.Light} displayName="Anonymous" />
+);
 
 export const Custom = (): React.ReactNode => (
-  <Avatar displayName={text('Name', 'Martin Luther King')} />);
+  <Avatar
+    darkLight={select('Theme', DARK_LIGHT_OPTIONS, DarkLight.Light)}
+    displayName={text('Name', 'Martin Luther King')}
+  />
+);

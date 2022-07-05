@@ -1,9 +1,9 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+import { DarkLight } from 'shared/themes';
 import { hex2hsl, hsl2str } from 'shared/utils/color';
 import md5 from 'shared/utils/md5';
-import { DarkLight } from 'types';
 
 import css from './Avatar.module.scss';
 

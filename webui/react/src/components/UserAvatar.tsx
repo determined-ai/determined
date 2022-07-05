@@ -7,7 +7,7 @@ import { getDisplayName } from 'utils/user';
 
 const UserAvatar: React.FC<{
   userId?: number;
-} & Omit<Props, 'displayName'>> = ({ userId, ...rest }) => {
+} & Omit<Props, 'darkLight' | 'displayName'>> = ({ userId, ...rest }) => {
   const [ displayName, setDisplayName ] = useState('');
   const { ui, users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
