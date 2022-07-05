@@ -52,17 +52,17 @@
   }
   .growWrap > .spinner {
     display: none;
+    left: 50%;
     position: absolute;
     top: 45%;
-    left: 50%;
     transform: translate(-50%, -50%);
   }
   .growWrap > .backdrop {
-    display: none;
-    position: absolute;
     background-color: var(--theme-overlay-weak);
-    width: 100%;
+    display: none;
     height: 100%;
+    position: absolute;
+    width: 100%;
   }
 }
 .base.editable {

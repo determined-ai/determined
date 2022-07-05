@@ -159,7 +159,9 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 			if err != nil {
 				_, ok := err.(*fs.PathError)
 				if ok {
-					// This means memory and file system are out of sync.
+					log.Debugf(`File system cache (%s) is likely out of sync. 
+					File system cache is about to re-initialize and this message should not appear again.`,
+						f.rootDir)
 					err = os.RemoveAll(f.rootDir)
 					if err != nil {
 						return []byte{}, err
