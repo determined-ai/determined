@@ -502,8 +502,10 @@ const HyperparameterRow: React.FC<RowProps> = (
   { hyperparameter, name, searcher }: RowProps,
 ) => {
   const form = Form.useFormInstance();
-  const type = Form.useWatch([ name, 'type' ]);
-  const checked = Form.useWatch([ name, 'active' ]);
+  const type: HyperparameterType | undefined = Form.useWatch([ name, 'type' ]);
+  const checked: boolean | undefined = Form.useWatch([ name, 'active' ]);
+  const min: number | undefined = Form.useWatch([ name, 'min' ]);
+  const max: number | undefined = Form.useWatch([ name, 'max' ]);
   const [ valError, setValError ] = useState<string>();
   const [ minError, setMinError ] = useState<string>();
   const [ maxError, setMaxError ] = useState<string>();
@@ -535,27 +537,27 @@ const HyperparameterRow: React.FC<RowProps> = (
       setMinError('Minimum value is required.');
     } else if (typeof value === 'string') {
       setMinError('Minimum value must be a number.');
-    } else if (value > (form.getFieldValue([ name, 'max' ]) as number)) {
+    } else if (max != null && value > max) {
       setRangeError('Maximum value must be greater or equal to than minimum value.');
       setMinError(undefined);
     } else {
       setMinError(undefined);
       setRangeError(undefined);
     }
-  }, [ form, name ]);
+  }, [ max ]);
 
   const validateMax = useCallback((value: number | string | null) => {
     if (value == null) {
       setMaxError('Maximum value is required.');
     } else if (typeof value === 'string') {
       setMaxError('Maximum value must be a number.');
-    } else if (value < (form.getFieldValue([ name, 'min' ]) as number)) {
+    } else if (min != null && value < min) {
       setRangeError('Maximum value must be greater or equal to than minimum value.');
     } else {
       setMaxError(undefined);
       setRangeError(undefined);
     }
-  }, [ form, name ]);
+  }, [ min ]);
 
   const validateCount = useCallback((value: number | string | null) => {
     if (value == null) {
@@ -634,17 +636,15 @@ const HyperparameterRow: React.FC<RowProps> = (
             initialValue={hyperparameter.minval}
             name={[ name, 'min' ]}
             rules={[ {
-              max: form.getFieldValue([ name, 'max' ]),
+              max: max,
               required: checked,
               type: 'number',
             } ]}
-            validateStatus={((typeof minError === 'string' || typeof rangeError === 'string')
-        && checked) ? 'error' : undefined}>
+            validateStatus={((minError || rangeError) && checked) ? 'error' : undefined}>
             <InputNumber
               disabled={!checked}
               placeholder={!checked ? 'n/a' : ''}
-              precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
-                0 : undefined}
+              precision={type === HyperparameterType.Int ? 0 : undefined}
               onChange={validateMin}
             />
           </Form.Item>
@@ -652,17 +652,15 @@ const HyperparameterRow: React.FC<RowProps> = (
             initialValue={hyperparameter.maxval}
             name={[ name, 'max' ]}
             rules={[ {
-              min: form.getFieldValue([ name, 'min' ]),
+              min: min,
               required: checked,
               type: 'number',
             } ]}
-            validateStatus={((typeof maxError === 'string' || typeof rangeError === 'string')
-        && checked) ? 'error' : undefined}>
+            validateStatus={((maxError || rangeError) && checked) ? 'error' : undefined}>
             <InputNumber
               disabled={!checked}
               placeholder={!checked ? 'n/a' : ''}
-              precision={form.getFieldValue([ name, 'type' ]) === HyperparameterType.Int ?
-                0 : undefined}
+              precision={type === HyperparameterType.Int ? 0 : undefined}
               onChange={validateMax}
             />
           </Form.Item>
@@ -685,9 +683,9 @@ const HyperparameterRow: React.FC<RowProps> = (
           </Form.Item>
         </>
       )}
-      {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Categorical &&
+      {type === HyperparameterType.Categorical &&
         <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
-      {form.getFieldValue([ name, 'type' ]) === HyperparameterType.Log &&
+      {type === HyperparameterType.Log &&
         <p className={css.warning}>Logs are base 10.</p>}
       {(!checked && valError) &&
         <p className={css.error}>{valError}</p>}
