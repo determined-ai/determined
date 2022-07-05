@@ -154,6 +154,7 @@ const InlineEditor: React.FC<Props> = ({
           onKeyPress={handleTextareaKeyPress}
           onKeyUp={handleTextareaKeyUp}
         />
+        <div className={css.backdrop} />
         <div className={css.spinner}>
           <Spinner spinning={isSaving} />
         </div>
