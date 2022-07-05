@@ -8,14 +8,13 @@ import React from 'react';
 
 import InlineEditor from './InlineEditor';
 
-const setup = (
-  { disabled, onSaveReturnsError, value } = {
-    disabled: false,
-    onSaveReturnsError: false,
-    value: 'before',
-  },
-) => {
-  // const onSave=jest.fn(async () => {})
+const user = userEvent.setup();
+
+const setup = ({ disabled, onSaveReturnsError, value } = {
+  disabled: false,
+  onSaveReturnsError: false,
+  value: 'before',
+}) => {
   const onSave = onSaveReturnsError
     ? jest.fn(() => Promise.resolve(new Error()))
     : jest.fn(() => Promise.resolve());
@@ -33,7 +32,7 @@ const setup = (
     if (container.querySelector('.ant-spin-spinning') == null) return;
     await waitForElementToBeRemoved(container.querySelector('.ant-spin-spinning'));
   };
-  const user = userEvent.setup();
+
   return { onCancel, onSave, user, waitForSpinnerToDisappear };
 };
 
@@ -44,7 +43,7 @@ describe('InlineEditor', () => {
   });
 
   it('preserves input when focus leaves', async () => {
-    const { waitForSpinnerToDisappear, user } = setup();
+    const { waitForSpinnerToDisappear } = setup();
     await user.click(screen.getByRole('textbox'));
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
@@ -55,7 +54,7 @@ describe('InlineEditor', () => {
   });
 
   it('calls save with input on blur', async () => {
-    const { onSave, waitForSpinnerToDisappear, user } = setup();
+    const { onSave, waitForSpinnerToDisappear } = setup();
     await user.click(screen.getByRole('textbox'));
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
@@ -66,7 +65,7 @@ describe('InlineEditor', () => {
   });
 
   it('restores value when save fails', async () => {
-    const { onSave, waitForSpinnerToDisappear, user } = setup({
+    const { onSave, waitForSpinnerToDisappear } = setup({
       disabled: false,
       onSaveReturnsError: true,
       value: 'before',
@@ -81,7 +80,7 @@ describe('InlineEditor', () => {
   });
 
   it('calls cancel and restores previous value when esc is pressed', async () => {
-    const { onCancel, user } = setup();
+    const { onCancel } = setup();
     await user.click(screen.getByRole('textbox'));
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
@@ -91,7 +90,7 @@ describe('InlineEditor', () => {
   });
 
   it('doesnt allow user input when disabled', async () => {
-    const { user } = setup({ disabled: true, onSaveReturnsError: true, value: 'before' });
+    setup({ disabled: true, onSaveReturnsError: true, value: 'before' });
     await user.type(screen.getByRole('textbox'), 'after');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
   });

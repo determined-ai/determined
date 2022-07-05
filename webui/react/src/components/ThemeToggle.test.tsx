@@ -17,6 +17,8 @@ const ThemeToggleContainer: React.FC = () => (
   </StoreProvider>
 );
 
+const user = userEvent.setup();
+
 const setup = () => render(<ThemeToggleContainer />);
 
 describe('ThemeToggle', () => {
@@ -34,7 +36,7 @@ describe('ThemeToggle', () => {
 
     for (let i = 0; i < optionCount; i++) {
       expect(await screen.findByText(option.displayName)).toBeInTheDocument();
-      userEvent.click(screen.getByText(option.displayName));
+      await user.click(screen.getByText(option.displayName));
       option = ThemeOptions[option.next];
     }
   });

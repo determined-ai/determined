@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-
 import { Metadata } from 'types';
 
 import EditableMetadata from './EditableMetadata';
@@ -62,10 +61,10 @@ describe('EditableMetadata', () => {
     const resultMetadata = Object.fromEntries(metadataArray.filter(
       ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
     ));
-    const { handleOnChange, view } = setup(initMetadata, true);
+    const { handleOnChange } = setup(initMetadata, true);
 
-    await user.click(view.getAllByRole('button')[removalIndex]);
-    await user.click(view.getByText('Delete Row'));
+    await user.click(screen.getAllByRole('button')[removalIndex]);
+    await user.click(screen.getByText('Delete Row'));
 
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });

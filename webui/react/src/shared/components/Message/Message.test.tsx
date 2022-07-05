@@ -2,13 +2,11 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { MessageType } from './Message';
-import Message from './Message';
+import Message, { Props } from './Message';
 
-const setup = ({ message, title, type }) => {
+const setup = (props: Props) => {
   const handleOnChange = jest.fn();
-  const view = render(
-    <Message message={message} title={title} type={type} />,
-  );
+  const view = render(<Message {...props} />);
   return { handleOnChange, view };
 };
 

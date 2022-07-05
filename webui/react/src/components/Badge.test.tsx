@@ -12,27 +12,28 @@ import Badge, { BadgeProps, BadgeType } from './Badge';
 const CONTENT = generateAlphaNumeric();
 const CONTENT_TOOLTIP = generateAlphaNumeric();
 
+const user = userEvent.setup();
+
 const setup = ({
   children = CONTENT,
   tooltip = CONTENT_TOOLTIP,
   type = BadgeType.Header,
   ...props
 }: PropsWithChildren<BadgeProps> = {}) => {
-  const view = render(
+  return render(
     <StoreProvider>
       <Badge tooltip={tooltip} type={type} {...props}>{children}</Badge>
     </StoreProvider>,
   );
-  return { view };
 };
 
 describe('Badge', () => {
-  it('displays content from children', () => {
-    const { view } = setup();
+  it('should display content from children', () => {
+    const view = setup();
     expect(view.getByText(CONTENT)).toBeInTheDocument();
   });
 
-  it('displays dynamic content from state prop', async () => {
+  it('should display dynamic content from state prop', async () => {
     const TestComponent = () => {
       const [ value, setValue ] = useState(SlotState.Free);
       return (
@@ -47,29 +48,29 @@ describe('Badge', () => {
 
     expect(slotFree).toHaveClass('state neutral');
 
-    userEvent.click(view.getByRole('button'));
+    await user.click(view.getByRole('button'));
 
     await waitFor(() => {
       expect(view.getByText(stateToLabel(SlotState.Running))).toBeInTheDocument();
     });
   });
 
-  it('applies className by type', () => {
-    const { view } = setup();
+  it('should apply className by type', () => {
+    const view = setup();
     expect(view.getByText(CONTENT)).toHaveClass('header');
   });
 
-  it('displays tooltip on hover', async () => {
-    const { view } = setup();
-    userEvent.hover(view.getByText(CONTENT));
+  it('should display tooltip on hover', async () => {
+    const view = setup();
+    await user.hover(view.getByText(CONTENT));
     await waitFor(() => {
       expect(view.getByRole('tooltip').textContent).toEqual(CONTENT_TOOLTIP);
     });
   });
 
-  it('displays correct style for potential', () => {
+  it('should display correct style for potential', () => {
     const label = stateToLabel(ResourceState.Potential);
-    const { view } = setup({
+    const view = setup({
       children: label,
       state: ResourceState.Potential,
       type: BadgeType.State,

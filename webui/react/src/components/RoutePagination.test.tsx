@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
 import RoutePagination from './RoutePagination';
@@ -10,7 +11,7 @@ jest.mock('antd', () => {
   /** We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
    * sets the DOM container and if this prop is set, the popup div may not be available in the body
    */
-  const Tooltip = (props: unknown) => {
+  const Tooltip = (props: TooltipProps) => {
     return (
       <antd.Tooltip
         {...props}
@@ -39,6 +40,8 @@ const TOOLTIP_NEXT = 'Next';
 const BUTTON_PREV = 'left';
 const BUTTON_NEXT = 'right';
 
+const user = userEvent.setup();
+
 const setup = (initialId: number) => {
   const navigateToId = jest.fn();
 
@@ -51,45 +54,43 @@ const setup = (initialId: number) => {
     />,
   );
 
-  const user = userEvent.setup();
-
-  return { navigateToId, user };
+  return navigateToId;
 };
 
 describe('RoutePagination', () => {
-  it('displays both buttons', () => {
+  it('should display both buttons', () => {
     setup(MIDDLE_ID);
 
     expect(screen.getByRole('listitem', { name: TITLE_PREV })).toBeInTheDocument();
     expect(screen.getByRole('listitem', { name: TITLE_NEXT })).toBeInTheDocument();
   });
 
-  it('displays tooltips on hover', () => {
+  it('should display tooltips on hover', async () => {
     setup(MIDDLE_ID);
 
-    userEvent.hover(screen.getByRole('button', { name: BUTTON_PREV }));
+    await user.hover(screen.getByRole('button', { name: BUTTON_PREV }));
     expect(screen.getByText(`${TOOLTIP_PREV} ${TOOLTIP_LABEL}`)).toBeInTheDocument();
 
-    userEvent.hover(screen.getByRole('button', { name: BUTTON_NEXT }));
+    await user.hover(screen.getByRole('button', { name: BUTTON_NEXT }));
     expect(screen.getByText(`${TOOLTIP_NEXT} ${TOOLTIP_LABEL}`)).toBeInTheDocument();
   });
 
-  it('allows user to click to previous page', async () => {
-    const { navigateToId, user } = setup(MIDDLE_ID);
+  it('should allow user to click to previous page', async () => {
+    const navigateToId = setup(MIDDLE_ID);
 
     await user.click(screen.getByRole('listitem', { name: TITLE_PREV }));
     expect(navigateToId).toHaveBeenCalledWith(FIRST_ID);
   });
 
-  it('allows user to click to next page', async () => {
-    const { navigateToId, user } = setup(MIDDLE_ID);
+  it('should allow user to click to next page', async () => {
+    const navigateToId = setup(MIDDLE_ID);
 
     await user.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
     expect(navigateToId).toHaveBeenCalledWith(LAST_ID);
   });
 
-  it('disables prev button on first page', async () => {
-    const { navigateToId, user } = setup(FIRST_ID);
+  it('should disable prev button on first page', async () => {
+    const navigateToId = setup(FIRST_ID);
 
     await user.click(screen.getByRole('listitem', { name: TITLE_PREV }));
     expect(navigateToId).not.toHaveBeenCalled();
@@ -98,8 +99,8 @@ describe('RoutePagination', () => {
     expect(screen.queryByText(`${TOOLTIP_PREV} ${TOOLTIP_LABEL}`)).not.toBeInTheDocument();
   });
 
-  it('disables next button on last page', async () => {
-    const { navigateToId, user } = setup(LAST_ID);
+  it('should disable next button on last page', async () => {
+    const navigateToId = setup(LAST_ID);
 
     await user.click(screen.getByRole('listitem', { name: TITLE_NEXT }));
     expect(navigateToId).not.toHaveBeenCalled();

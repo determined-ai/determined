@@ -14,6 +14,8 @@ jest.mock('services/api', () => ({
   },
 }));
 
+const user = userEvent.setup();
+
 const ModalTrigger: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
 
