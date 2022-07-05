@@ -74,6 +74,29 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 	return exp, nil
 }
 
+func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherEventsRequest) (*apiv1.GetSearcherEventsResponse, error) {
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from db")
+	}
+
+	print(exp)
+	print(err)
+	return &apiv1.GetSearcherEventsResponse{}, nil
+}
+
+func (a *apiServer) PostSearcherOperations(_ context.Context, req *apiv1.PostSearcherOperationsRequest) (*apiv1.PostSearcherOperationsResponse, error) {
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from db")
+	}
+
+	print(exp)
+	print(err)
+
+	return &apiv1.PostSearcherOperationsResponse{}, nil
+}
+
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
