@@ -95,7 +95,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         render: metricRenderer(metricName),
         sorter: (a, b) => {
           const aVal = extractMetricValue(a, metricName),
-                bVal = extractMetricValue(b, metricName);
+            bVal = extractMetricValue(b, metricName);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
           } else if (aVal !== undefined && bVal === undefined){
