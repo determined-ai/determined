@@ -4,3 +4,6 @@ resources:
   slots: 100
   slots_per_trial: 100
   weight: 1
+environment:
+  environment_variables:
+    - SHOULDBE=SET
