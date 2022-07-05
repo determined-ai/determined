@@ -2,11 +2,46 @@
   height: 100%;
   display: grid;
   grid-template-columns: 15% auto;
-  grid-template-rows: auto;
+  grid-template-rows: 5em auto;
 
   .fileTree {
     height: 100%;
     background-color: transparent;
-    color: var(--theme-colors-monochrome-10);
+    color: var(--theme-background-on-strong);
+  }
+
+  h5 {
+    margin-top: 5em;
+    color: var(--theme-background-on-strong);
+    text-align: center;
+  }
+
+  .fileDir {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    padding: 1em 0;
+    
+    .fileInfo {
+      padding: 0.5em 1em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0;
+      background-color: var(--theme-stage);
+      border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
+      border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
+      
+      .filePath {
+        margin-left: 10px;
+      }
+
+      .buttonsContainer {
+        display: flex;
+
+        .noBorderButton {
+          border: 0;
+        }
+      }
+    }
   }
 }

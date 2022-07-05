@@ -22,7 +22,7 @@ interface Props {
   title?: string | React.ReactNode;
 }
 
-const defaultProps = { divider: false, flexRow: false };
+const defaultProps = { divider: false };
 
 const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();

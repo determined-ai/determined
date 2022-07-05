@@ -1,10 +1,13 @@
+import { FileOutlined } from '@ant-design/icons';
 import { Tree } from 'antd';
+import Button from 'antd/es/button';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
 import React, { useEffect, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
+import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ExperimentBase } from 'types';
 
@@ -194,6 +197,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
   const [ publicConfig, setPublicConfig ] = useState({});
   const [ treeMap ] = useState(() => new Map<string, string>());
   const [ isFetching, setIsFetching ] = useState(false);
+  const [ fileDir, setFileDir ] = useState('');
 
   // TODO: after integration, create a proper fn for data fetching.
   const getFile = () => {
@@ -205,27 +209,18 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
     } = experiment.configRaw;
     setPublicConfig({ environment: restEnvironment, ...restConfig });
   };
-  const navigateTree = (node: FileNode, key: string) => {
-    treeMap.set(key, node.Path);
-
-    if (node.files) {
-      node.files.forEach((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
-    }
-  };
 
   useEffect(() => {
-    if (experiment.configRaw) {
-      getFile();
-    }
+    const navigateTree = (node: FileNode, key: string) => {
+      treeMap.set(key, node.Path);
 
-    return () => {
-      setPublicConfig({});
+      if (node.files) {
+        node.files.forEach((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
+      }
     };
-  }, []);
 
-  useEffect(() => {
     backendResponse.files.forEach((node, idx) => navigateTree(node, `0-${idx}`));
-  }, []);
+  }, [ treeMap ]);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
   const onSelectFile = (keys: React.Key[]) => {
@@ -234,6 +229,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
     const filePath = treeMap.get(String(keys[0])) as string;
 
     if (filePath.includes('.')) { // check if the selected node is a file
+      setFileDir(filePath);
       setIsFetching(true);
       setPublicConfig({});
 
@@ -247,7 +243,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
 
   return (
     <section className={css.base}>
-      <Section>
+      <Section id="fileTree">
         <DirectoryTree
           className={css.fileTree}
           defaultExpandAll
@@ -255,16 +251,50 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
           onSelect={onSelectFile}
         />
       </Section>
-      <Section bodyNoPadding bodyScroll maxHeight>
+      {
+        !!fileDir && (
+          <Spinner spinning={isFetching}>
+            <section className={css.fileDir}>
+              <div className={css.fileInfo}>
+                <div>
+                  <FileOutlined />
+                  <span className={css.filePath}>{fileDir.split('/')[1]}</span>
+                </div>
+                <div className={css.buttonsContainer}>
+                  <Button className={css.noBorderButton}>Open in Notebook</Button>
+                  <Button
+                    className={css.noBorderButton}
+                    ghost
+                    icon={<Icon name="overflow-vertical" />}
+                  />
+                </div>
+              </div>
+            </section>
+          </Spinner>
+        )
+      }
+      <Section bodyNoPadding bodyScroll id="editor" maxHeight>
         <Spinner spinning={isFetching}>
-          <MonacoEditor
-            height="100%"
-            options={{
-              occurrencesHighlight: false,
-              readOnly: true,
-            }}
-            value={yaml.dump(publicConfig)}
-          />
+          {
+            !isFetching && !Object.keys(publicConfig).length
+              ? <h5>Please, choose a file to preview.</h5>
+              : (
+                <MonacoEditor
+                  height="100%"
+                  language="yaml"
+                  options={{
+                    minimap: {
+                      enabled: !!Object.keys(publicConfig).length,
+                      showSlider: 'mouseover',
+                      size: 'fit',
+                    },
+                    occurrencesHighlight: false,
+                    readOnly: true,
+                  }}
+                  value={yaml.dump(publicConfig)}
+                />
+              )
+          }
         </Spinner>
       </Section>
     </section>
