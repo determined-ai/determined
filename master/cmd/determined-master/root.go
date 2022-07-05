@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"os"
 
@@ -56,9 +55,9 @@ func runRoot() error {
 	}
 	log.Infof("master configuration: %s", printableConfig)
 
-	err = os.MkdirAll(config.Cache.CacheDir, fs.ModePerm)
+	err = os.MkdirAll(config.Cache.CacheDir, 0700)
 	if err != nil {
-		log.WithError(err).Errorf("Failed allocating cache direatory at %s", config.Cache.CacheDir)
+		log.WithError(err).Errorf("Failed to make cache directory (%s)", config.Cache.CacheDir)
 		return err
 	}
 

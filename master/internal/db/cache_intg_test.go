@@ -36,6 +36,10 @@ func TestCache(t *testing.T) {
 	files, err = cache.GetFileTreeNested(expID)
 	require.NoError(t, err)
 
+	// Test fetch invalid path
+	_, err = cache.GetFileContent(expID, "invalid-path")
+	require.Error(t, err)
+
 	// Test prune, first verify the file exists, then modify cached time to make cache expire
 	// after prune, file no longer exist
 	_, err = os.ReadFile(cache.genPath(expID, path))

@@ -36,6 +36,10 @@ type FileCache struct {
 
 // NewFileCache initialize FileCache obj.
 func NewFileCache(rootDir string, maxAge time.Duration) *FileCache {
+	err := os.RemoveAll(rootDir)
+	if err != nil {
+		log.WithError(err).Errorf("failed to initialize model def cache at %s", rootDir)
+	}
 	return &FileCache{
 		rootDir: rootDir,
 		maxAge:  maxAge,
@@ -47,50 +51,53 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 	value, ok := f.caches[expID]
-	if !ok {
-		exp := struct {
-			ModelDefinition []byte
-		}{}
-		err := Bun().NewSelect().TableExpr(
-			"experiments").Column("model_definition").Where("id = ?", expID).Scan(context.TODO(), &exp)
-		if err != nil {
-			return nil, err
-		}
-		var fileTree []*experimentv1.FileNode
-		arc, err := archive.FromTarGz(exp.ModelDefinition)
-		if err != nil {
-			return nil, err
-		}
-		err = os.MkdirAll(f.genPath(expID, ""), fs.ModePerm)
-		if err != nil {
-			return nil, err
-		}
-		for _, ar := range arc {
-			if ar.IsDir() {
-				err = os.MkdirAll(f.genPath(expID, ar.Path), fs.ModePerm)
-			} else {
-				err = os.WriteFile(f.genPath(expID, ar.Path), ar.Content, fs.ModePerm)
-			}
-			if err != nil {
-				return nil, err
-			}
-			fileTree = append(fileTree, &experimentv1.FileNode{
-				Path:          ar.Path,
-				ModifiedTime:  timestamppb.New(ar.ModifiedTime.Time),
-				ContentLength: int32(len(ar.Content)),
-				IsDir:         ar.IsDir(),
-				ContentType:   http.DetectContentType(ar.Content),
-				Name:          filepath.Base(ar.Path),
-			})
-		}
-		value = &modelDefFolder{
-			path:       f.genPath(expID, ""),
-			fileTree:   fileTree,
-			cachedTime: time.Now(),
-		}
-		f.caches[expID] = value
-		f.prune()
+	if ok {
+		return value, nil
 	}
+
+	exp := struct {
+		ModelDefinition []byte
+	}{}
+	err := Bun().NewSelect().TableExpr(
+		"experiments").Column("model_definition").Where("id = ?", expID).Scan(context.Background(), &exp)
+	if err != nil {
+		return nil, err
+	}
+	var fileTree []*experimentv1.FileNode
+	arc, err := archive.FromTarGz(exp.ModelDefinition)
+	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(f.genPath(expID, ""), 0700)
+	if err != nil {
+		return nil, err
+	}
+	for _, ar := range arc {
+		if ar.IsDir() {
+			err = os.MkdirAll(f.genPath(expID, ar.Path), 0700)
+		} else {
+			err = os.WriteFile(f.genPath(expID, ar.Path), ar.Content, 0600)
+		}
+		if err != nil {
+			return nil, err
+		}
+		fileTree = append(fileTree, &experimentv1.FileNode{
+			Path:          ar.Path,
+			ModifiedTime:  timestamppb.New(ar.ModifiedTime.Time),
+			ContentLength: int32(len(ar.Content)),
+			IsDir:         ar.IsDir(),
+			ContentType:   http.DetectContentType(ar.Content),
+			Name:          filepath.Base(ar.Path),
+		})
+	}
+	value = &modelDefFolder{
+		path:       f.genPath(expID, ""),
+		fileTree:   fileTree,
+		cachedTime: time.Now(),
+	}
+	f.caches[expID] = value
+	f.prune()
+
 	return value, nil
 }
 
