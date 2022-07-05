@@ -443,4 +443,13 @@ WHERE t.id = $1;
 }
 
 
-func queryTrials
+func (db *PgDB) QueryTrials(
+	experimentIDs []int32,
+) ([]model.Trial, error) {
+	var trial []model.Trial
+	err := db.query(`
+SELECT id
+FROM trials
+WHERE trial.experiment_id in (SELECT unnest($1::int [])::int)`, &trial)
+	return *&trial, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
+}

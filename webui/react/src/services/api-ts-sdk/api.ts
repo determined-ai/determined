@@ -283,6 +283,20 @@ export enum ProtobufNullValue {
 /**
  * 
  * @export
+ * @interface QueryTrialsRequestQueryFilters
+ */
+export interface QueryTrialsRequestQueryFilters {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof QueryTrialsRequestQueryFilters
+     */
+    experimentIds?: Array<number>;
+}
+
+/**
+ * 
+ * @export
  * @interface RuntimeError
  */
 export interface RuntimeError {
@@ -506,6 +520,26 @@ export interface StreamResultOfV1MetricNamesResponse {
      * 
      * @type {RuntimeStreamError}
      * @memberof StreamResultOfV1MetricNamesResponse
+     */
+    error?: RuntimeStreamError;
+}
+
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1QueryTrialsResponse
+ */
+export interface StreamResultOfV1QueryTrialsResponse {
+    /**
+     * 
+     * @type {V1QueryTrialsResponse}
+     * @memberof StreamResultOfV1QueryTrialsResponse
+     */
+    result?: V1QueryTrialsResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1QueryTrialsResponse
      */
     error?: RuntimeStreamError;
 }
@@ -5088,6 +5122,20 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1QueryTrialsResponse
+ */
+export interface V1QueryTrialsResponse {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1QueryTrialsResponse
+     */
+    trialId?: Array<number>;
 }
 
 /**
@@ -10517,6 +10565,41 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/query`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (filtersExperimentIds) {
+                localVarQueryParameter['filters.experimentIds'] = filtersExperimentIds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -11236,6 +11319,24 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).queryTrials(filtersExperimentIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -11601,6 +11702,15 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
             return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
+            return ExperimentsApiFp(configuration).queryTrials(filtersExperimentIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -11979,6 +12089,17 @@ export class ExperimentsApi extends BaseAPI {
      */
     public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
+        return ExperimentsApiFp(this.configuration).queryTrials(filtersExperimentIds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20394,6 +20515,41 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/query`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (filtersExperimentIds) {
+                localVarQueryParameter['filters.experimentIds'] = filtersExperimentIds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -20713,6 +20869,24 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).queryTrials(filtersExperimentIds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -20861,6 +21035,15 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
+            return TrialsApiFp(configuration).queryTrials(filtersExperimentIds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Downsample metrics collected during a trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
@@ -20989,6 +21172,17 @@ export class TrialsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
+        return TrialsApiFp(this.configuration).queryTrials(filtersExperimentIds, options)(this.fetch, this.basePath);
     }
 
     /**
