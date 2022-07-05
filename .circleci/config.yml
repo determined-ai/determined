@@ -1677,6 +1677,9 @@ jobs:
             - store_artifacts:
                 path: /tmp/devcluster/
                 destination: devcluster-logs
+            - store_artifacts:
+                path: /tmp/priority_scheduler
+                destination: devcluster-priority_scheduler-logs
 
   deploy:
     parameters:

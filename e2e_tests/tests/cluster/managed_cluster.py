@@ -15,6 +15,7 @@ from .test_users import ADMIN_CREDENTIALS, logged_in_user
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
+DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
@@ -162,14 +163,35 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
         yield mc
 
 
+@pytest.fixture(scope="session")
+def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
+
+    with ManagedCluster(config, reattach=False) as mc:
+        mc.initial_startup()
+        yield mc
+
+
 def _now_ts() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat()
 
 
 @pytest.fixture
-def managed_cluster(
-    managed_cluster_session: ManagedCluster, request: Any
+def managed_cluster_priority_scheduler(
+    managed_cluster_session_priority_scheduler: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:
+    nodeid = request.node.nodeid
+    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    yield managed_cluster_session_priority_scheduler
+    managed_cluster_session_priority_scheduler.log_marker(
+        f"pytest [{_now_ts()}] {nodeid} teardown\n"
+    )
+
+
+@pytest.fixture
+def managed_cluster_restarts(
+    managed_cluster_session: ManagedCluster, request: Any
+) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
     nodeid = request.node.nodeid
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
