@@ -149,9 +149,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// they are launched.   The equivalent capability  is provided by the launcher
 	// via the --custom Archive capsules argument.   Encode the archives
 	// into a format that can be set as custom launch arguments.
+	allArchives := *getAllArchives(t)
 	encodedArchiveParams, err := encodeArchiveParameters(
 		dispatcherArchive(t.AgentUserGroup,
-			generateRunDeterminedLinkNames(t.Archives())), t.Archives())
+			generateRunDeterminedLinkNames(allArchives)), allArchives)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -225,6 +226,15 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// manifest.SetManifestVersion("latest") //?
 
 	return &manifest, impersonatedUser, payloadName, err
+}
+
+// getAllArchives returns all the experiment archives.
+func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
+	r, u := t.Archives()
+	allArchives := []cproto.RunArchive{}
+	allArchives = append(allArchives, r...)
+	allArchives = append(allArchives, u...)
+	return &allArchives
 }
 
 // Return true if the archive specified should be treated
