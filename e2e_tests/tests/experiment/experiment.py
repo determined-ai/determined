@@ -1,4 +1,3 @@
-import csv
 import logging
 import os
 import re
@@ -6,7 +5,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import typing
 from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
@@ -68,16 +66,6 @@ def activate_experiment(experiment_id: int) -> None:
 def cancel_experiment(experiment_id: int) -> None:
     bindings.post_CancelExperiment(determined_test_session(), id=experiment_id)
     wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
-
-
-def list_experiment_ids() -> typing.List[int]:
-    command = ["det", "-m", conf.make_master_url(), "experiment", "list", "--csv"]
-    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-    exp_ids = []
-    for exp in csv.reader(res.stdout.split("\n"), delimiter=","):
-        if len(exp) > 0 and exp[0].isnumeric():
-            exp_ids.append(int(exp[0]))
-    return exp_ids
 
 
 def wait_for_experiment_state(
@@ -246,18 +234,6 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
 
         trial = trials[0].trial
         assert trial.state == determinedexperimentv1State.STATE_CANCELED
-
-
-def fetch_model_def_tree(experiment_id: int) -> bindings.v1GetModelDefTreeResponse:
-    return bindings.get_GetModelDefTree(determined_test_session(), experimentId=experiment_id)
-
-
-def fetch_model_def_file(experiment_id: int, path: str) -> None:
-    bindings.post_GetModelDefFile(
-        determined_test_session(),
-        body=bindings.v1GetModelDefFileRequest(path=path),
-        experimentId=experiment_id,
-    )
 
 
 def is_terminal_state(state: determinedexperimentv1State) -> bool:

@@ -270,14 +270,14 @@ def test_agent_reconnect_keep_cmd(managed_cluster: ManagedCluster) -> None:
     managed_cluster.ensure_agent_ok()
 
     try:
-        command_id = run_command(30, slots=0)
+        command_id = run_command(20, slots=0)
         wait_for_command_state(command_id, "RUNNING", 10)
 
         managed_cluster.kill_proxy()
         time.sleep(1)
         managed_cluster.restart_proxy()
 
-        wait_for_command_state(command_id, "TERMINATED", 30)
+        wait_for_command_state(command_id, "TERMINATED", 40)
 
         assert "success" in get_command_info(command_id)["exitStatus"]
     except Exception:

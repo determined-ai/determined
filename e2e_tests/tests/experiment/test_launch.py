@@ -1,11 +1,7 @@
-import os
-import random
-import string
 from typing import Callable
 
 import pytest
 
-from determined.common.api import errors
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -58,20 +54,3 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
     assert exp.check_if_string_present_in_trial_logs(
         trials[0].trial.id, "container failed with non-zero exit code: 1"
     )
-
-
-@pytest.mark.e2e_cpu
-def test_fetch_experiment_model_def() -> None:
-    exp_ids = exp.list_experiment_ids()
-    assert len(exp_ids) > 0, "No existing experiments found"
-    experiment_id = random.choice(exp_ids)
-    files = exp.fetch_model_def_tree(experiment_id).to_json()["files"]
-    assert len(files) > 0
-    file = files[0]
-    exp.fetch_model_def_file(experiment_id, file["path"])
-    # fetch some non exist path
-    with pytest.raises(errors.APIException):
-        exp.fetch_model_def_file(
-            experiment_id,
-            os.path.join("".join(random.choices(string.ascii_letters, k=9)), file["path"]),
-        )
