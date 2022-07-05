@@ -73,6 +73,15 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 	return exp, nil
 }
 
+func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherEventsRequest) (*apiv1.GetSearcherEventsResponse, error) {
+	req.ExperimentID
+	return &apiv1.GetSearcherEventsResponse{}, nil
+}
+
+func (a *apiServer) PostSearcherOperations(_ context.Context, req *apiv1.PostSearcherOperationsRequest) (*apiv1.PostSearcherOperationsResponse, error) {
+	return &apiv1.PostSearcherOperationsResponse{}, nil
+}
+
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
