@@ -518,7 +518,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <Space>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
-            {currentPage === 0 ? 'Select Resources' : 'Run Experiment'}
+            {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
         </Space>
       </div>
