@@ -11,6 +11,8 @@ import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
+import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
@@ -71,12 +73,30 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelName, pageError, settings ]);
 
+  const {
+    contextHolder: modalModelDownloadContextHolder,
+    modalOpen: openModelDownload,
+  } = useModalModelDownload();
+
+  const {
+    contextHolder: modalModelVersionDeleteContextHolder,
+    modalOpen: openModelVersionDelete,
+  } = useModalModelVersionDelete();
+
   usePolling(fetchModel, { rerunOnNewFn: true });
 
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
   }, [ fetchModel ]);
+
+  const downloadModel = useCallback((version: ModelVersion) => {
+    openModelDownload(version);
+  }, [ openModelDownload ]);
+
+  const deleteModelVersion = useCallback((version: ModelVersion) => {
+    openModelVersionDelete(version);
+  }, [ openModelVersionDelete ]);
 
   const saveModelVersionTags = useCallback(async (modelName, versionId, tags) => {
     try {
@@ -123,7 +143,10 @@ const ModelDetails: React.FC = () => {
     );
 
     const actionRenderer = (_:string, record: ModelVersion) => (
-      <ModelVersionActionDropdown modelVersion={record} onComplete={fetchModel} />
+      <ModelVersionActionDropdown
+        onDelete={() => deleteModelVersion(record)}
+        onDownload={() => downloadModel(record)}
+      />
     );
 
     const descriptionRenderer = (value:string, record: ModelVersion) => (
@@ -183,7 +206,12 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [ saveModelVersionTags, fetchModel, saveVersionDescription ]);
+  }, [
+    deleteModelVersion,
+    downloadModel,
+    saveModelVersionTags,
+    saveVersionDescription,
+  ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -293,13 +321,13 @@ const ModelDetails: React.FC = () => {
 
   const actionDropdown = useCallback(({ record, onVisibleChange, children }) => (
     <ModelVersionActionDropdown
-      modelVersion={record}
       trigger={[ 'contextMenu' ]}
-      onComplete={fetchModel}
+      onDelete={() => deleteModelVersion(record)}
+      onDownload={() => downloadModel(record)}
       onVisibleChange={onVisibleChange}>
       {children}
     </ModelVersionActionDropdown>
-  ), [ fetchModel ]);
+  ), [ deleteModelVersion, downloadModel ]);
 
   if (!modelName) {
     return <Message title="Model name is empty" />;
@@ -365,6 +393,8 @@ const ModelDetails: React.FC = () => {
           onSave={saveMetadata}
         />
       </div>
+      {modalModelDownloadContextHolder}
+      {modalModelVersionDeleteContextHolder}
     </Page>
   );
 };

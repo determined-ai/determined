@@ -1,38 +1,27 @@
-import { Input, ModalFuncProps } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import { Input } from 'antd';
+import React, { useCallback } from 'react';
 
 import CopyButton from 'components/CopyButton';
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import { copyToClipboard } from 'shared/utils/dom';
 import { ModelVersion } from 'types';
 
 import css from './useModalModelDownload.module.scss';
 
 interface Props {
-  modelVersion: ModelVersion;
-  onClose?: () => void;
-}
-
-export interface ShowModalProps {
-  initialModalProps?: ModalFuncProps;
+  onClose?: (reason?: ModalCloseReason) => void;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
-  modalOpen: (props: ShowModalProps) => void;
+  modalOpen: (version: ModelVersion) => void;
 }
 
-const useModalModelDownload = ({ modelVersion, onClose }: Props): ModalHooks => {
+const useModalModelDownload = ({ onClose }: Props = {}): ModalHooks => {
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
-  const downloadCommand = useMemo(() => {
-    return `det checkpoint download ${modelVersion.checkpoint.uuid}`;
-  }, [ modelVersion.checkpoint.uuid ]);
-
-  const handleCopy = useCallback(async () => {
-    await copyToClipboard(downloadCommand);
-  }, [ downloadCommand ]);
-
-  const modalContent = useMemo(() => {
+  const getModalContent = useCallback((version: ModelVersion) => {
+    const downloadCommand = `det checkpoint download ${version?.checkpoint.uuid}`;
+    const handleCopy = async () => await copyToClipboard(downloadCommand);
     return (
       <div className={css.base}>
         <div className={css.topLine}>
@@ -48,23 +37,25 @@ const useModalModelDownload = ({ modelVersion, onClose }: Props): ModalHooks => 
         </p>
       </div>
     );
-  }, [ downloadCommand, handleCopy ]);
+  }, []);
 
-  const modalProps: ModalFuncProps = useMemo(() => {
+  const getModalProps = useCallback((version: ModelVersion) => {
     return {
       bodyStyle: { padding: 0 },
+      cancelText: 'Okay',
       closable: true,
-      content: modalContent,
+      content: getModalContent(version),
       footer: null,
       icon: null,
       maskClosable: true,
+      okButtonProps: { style: { display: 'none' } },
       title: 'Download',
     };
-  }, [ modalContent ]);
+  }, [ getModalContent ]);
 
-  const modalOpen = useCallback(({ initialModalProps }: ShowModalProps) => {
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  const modalOpen = useCallback((version: ModelVersion) => {
+    openOrUpdate(getModalProps(version));
+  }, [ getModalProps, openOrUpdate ]);
 
   return { modalOpen, ...modalHook };
 };

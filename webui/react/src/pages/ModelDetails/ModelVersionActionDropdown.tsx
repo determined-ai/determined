@@ -1,17 +1,14 @@
 import { Dropdown, Menu } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
-import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
-import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
-import { ModelVersion } from 'types';
 
 interface Props {
   className?: string;
   direction?: 'vertical' | 'horizontal';
-  modelVersion: ModelVersion;
-  onComplete?: () => void;
+  onDelete?: () => void;
+  onDownload?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
 }
@@ -19,33 +16,24 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const ModelVersionActionDropdown: React.FC<Props> = ({
-  modelVersion, children, onVisibleChange,
-  className, direction = 'vertical', onComplete, trigger,
+  children,
+  className,
+  direction = 'vertical',
+  onDelete,
+  onDownload,
+  onVisibleChange,
+  trigger,
 }: PropsWithChildren<Props>) => {
-  const {
-    contextHolder: modalModelDownloadContextHolder,
-    modalOpen: openModelDownload,
-  } = useModalModelDownload({ modelVersion, onClose: onComplete });
+  const handleDownloadClick = useCallback(() => onDownload?.(), [ onDownload ]);
 
-  const {
-    contextHolder: modalModelVersionDeleteContextHolder,
-    modalOpen: openModelVersionDelete,
-  } = useModalModelVersionDelete();
-
-  const handleDownloadModel = useCallback(() => {
-    openModelDownload({});
-  }, [ openModelDownload ]);
-
-  const handleDeleteClick = useCallback(() => {
-    openModelVersionDelete(modelVersion);
-  }, [ modelVersion, openModelVersionDelete ]);
+  const handleDeleteClick = useCallback(() => onDelete?.(), [ onDelete ]);
 
   const ModelVersionActionMenu = useMemo(() => {
     return (
       <Menu>
         <Menu.Item
           key="download"
-          onClick={handleDownloadModel}>
+          onClick={handleDownloadClick}>
           Download
         </Menu.Item>
         <Menu.Item
@@ -56,20 +44,16 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
         </Menu.Item>
       </Menu>
     );
-  }, [ handleDownloadModel, handleDeleteClick ]);
+  }, [ handleDeleteClick, handleDownloadClick ]);
 
   return children ? (
-    <>
-      <Dropdown
-        overlay={ModelVersionActionMenu}
-        placement="bottomLeft"
-        trigger={trigger ?? [ 'contextMenu', 'click' ]}
-        onVisibleChange={onVisibleChange}>
-        {children}
-      </Dropdown>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
-    </>
+    <Dropdown
+      overlay={ModelVersionActionMenu}
+      placement="bottomLeft"
+      trigger={trigger ?? [ 'contextMenu', 'click' ]}
+      onVisibleChange={onVisibleChange}>
+      {children}
+    </Dropdown>
   ) : (
     <div
       className={[ css.base, className ].join(' ')}
@@ -83,8 +67,6 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
           <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
-      {modalModelDownloadContextHolder}
-      {modalModelVersionDeleteContextHolder}
     </div>
   );
 };

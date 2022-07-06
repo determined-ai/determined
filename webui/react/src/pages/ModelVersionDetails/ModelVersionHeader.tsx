@@ -41,7 +41,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   const {
     contextHolder: modalModelDownloadContextHolder,
     modalOpen: openModelDownload,
-  } = useModalModelDownload({ modelVersion });
+  } = useModalModelDownload();
 
   const {
     contextHolder: modalModelVersionDeleteContextHolder,
@@ -49,8 +49,8 @@ const ModelVersionHeader: React.FC<Props> = ({
   } = useModalModelVersionDelete();
 
   const handleDownloadModel = useCallback(() => {
-    openModelDownload({});
-  }, [ openModelDownload ]);
+    openModelDownload(modelVersion);
+  }, [ modelVersion, openModelDownload ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
