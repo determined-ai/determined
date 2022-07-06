@@ -28,14 +28,45 @@ message SearcherOperation {
   oneof union {
     // ValidateAfter is issued to tell a trial to train some then validate.
     ValidateAfterOperation validate_after = 1;
+    // CreateTrial is issued to create trial. TODO: Might need to create a message like ValidateAfter to include info needed? 
+    string create_trial = 2; 
+    // CloseTrial is issued to close trial. TODO: Might need to create a message like ValidateAfter to include info needed? 
+    string close_trial = 3; 
   }
 }
 
-// SearcherEvent is an event returned by custom searcher in master. 
-message SearcherEvent {
-  // A searcher event is one of the following strings: 
-  // TrialCreated, ValidationCompleted, TrialExitedEarly, TrialClosed
-  string searcher_event = 1; 
+// SearcherState is the state of the searcher. 
+message SearcherState {
+  // Number of trials requested. 
+  int32 trials_requested = 1; 
+ // TrialCreated maps model request ids to a boolean that is true
+ // when a trial is created. 
+  map<string,bool> trials_created = 2; 
+  // TrialCreated maps model request ids to a boolean that is true
+  // when a trial is closed. 
+  map<string,bool> trials_closed = 3; 
+  // Exits maps model request ids to a boolean that is true
+  // when a trial exits. 
+  map<string,bool> exits = 4; 
+  // Failures maps model request ids to a boolean that is true
+  // when a trial is fails. 
+  map<string,bool> failures = 5; 
+  // Trial progress maps model request ids to the number of epochs or
+  // batches that are completed. 
+  map<string, double> trial_progress = 6; 
+  // Shutdown is true when the searcher is done. 
+  bool shutdown = 7; 
+  // Maps the ValidateAfter.String() to the ValidateAfter operations when 
+  // a Validation for trial has completed. 
+  map<string,ValidateAfterOperation> completed_validate_operations = 8;
+  // Note: The following fields are created specifically for custom searcher. 
+  // A queue of all operations received from the Client. 
+  repeated SearcherOperation received_searcher_operations = 10;  
+  // Maps a SearcherOperation.String() to true when the operation is completed.   
+  map<string, bool> completed_searcher_operations = 11;  
+  // A queue of all events recieved from the client. 
+  // Each event string is appended with a counter id.  
+  repeated string created_searcher_events = 12;  
 }
 
 // RunnableType defines the type of operation that should be executed by trial

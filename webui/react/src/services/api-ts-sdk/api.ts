@@ -2698,6 +2698,32 @@ export interface V1GetResourcePoolsResponse {
 }
 
 /**
+ * Response to GetSearcherEventsRequest.
+ * @export
+ * @interface V1GetSearcherEventsResponse
+ */
+export interface V1GetSearcherEventsResponse {
+    /**
+     * The requested list of searcher events.
+     * @type {Array<string>}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    searcherEvent?: Array<string>;
+    /**
+     * str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed  appended with a counter id to represent order.
+     * @type {V1SearcherOperation}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    searcherState?: V1SearcherOperation;
+    /**
+     * The last event that triggered client which sent the appropriate events  to master which sent them successfully to the experiment actor.
+     * @type {string}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    lastTriggeringEvent?: string;
+}
+
+/**
  * Response to GetShellRequest.
  * @export
  * @interface V1GetShellResponse
@@ -4705,6 +4731,40 @@ export interface V1PostProjectResponse {
 }
 
 /**
+ * Request for sending operations from a custom user search method.
+ * @export
+ * @interface V1PostSearcherOperationsRequest
+ */
+export interface V1PostSearcherOperationsRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    experimentId?: number;
+    /**
+     * list of operations in the method.
+     * @type {Array<V1SearcherOperation>}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    searchOperations?: Array<V1SearcherOperation>;
+    /**
+     * The event that triggered client to send the above operations to master.
+     * @type {string}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    triggeredByEvent?: string;
+}
+
+/**
+ * Response to PostSearcherOperationsResponse.
+ * @export
+ * @interface V1PostSearcherOperationsResponse
+ */
+export interface V1PostSearcherOperationsResponse {
+}
+
+/**
  * Create a batch of trial profiler metrics.
  * @export
  * @interface V1PostTrialProfilerMetricsBatchRequest
@@ -5892,6 +5952,18 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     validateAfter?: V1ValidateAfterOperation;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1SearcherOperation
+     */
+    createTrial?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1SearcherOperation
+     */
+    closeTrial?: string;
 }
 
 /**
@@ -9945,6 +10017,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10239,6 +10348,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling postSearcherOperations.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostSearcherOperationsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -10788,6 +10943,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10916,6 +11090,26 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          */
         pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11196,6 +11390,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11270,6 +11474,17 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         pauseExperiment(id: number, options?: any) {
             return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).postSearcherOperations(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11521,6 +11736,18 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get list of SearcherEvents.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getSearcherEvents(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
@@ -11608,6 +11835,19 @@ export class ExperimentsApi extends BaseAPI {
      */
     public pauseExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).pauseExperiment(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Post list of SearcherOperations.
+     * @param {number} experimentId The experiment id
+     * @param {V1PostSearcherOperationsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).postSearcherOperations(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**

@@ -2108,19 +2108,27 @@ class v1GetResourcePoolsResponse:
 class v1GetSearcherEventsResponse:
     def __init__(
         self,
+        lastTriggeringEvent: "typing.Optional[str]" = None,
         searcherEvent: "typing.Optional[typing.Sequence[str]]" = None,
+        searcherState: "typing.Optional[v1SearcherOperation]" = None,
     ):
         self.searcherEvent = searcherEvent
+        self.searcherState = searcherState
+        self.lastTriggeringEvent = lastTriggeringEvent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
         return cls(
             searcherEvent=obj.get("searcherEvent", None),
+            searcherState=v1SearcherOperation.from_json(obj["searcherState"]) if obj.get("searcherState", None) is not None else None,
+            lastTriggeringEvent=obj.get("lastTriggeringEvent", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "searcherEvent": self.searcherEvent if self.searcherEvent is not None else None,
+            "searcherState": self.searcherState.to_json() if self.searcherState is not None else None,
+            "lastTriggeringEvent": self.lastTriggeringEvent if self.lastTriggeringEvent is not None else None,
         }
 
 class v1GetShellResponse:
@@ -4045,21 +4053,25 @@ class v1PostSearcherOperationsRequest:
         self,
         experimentId: "typing.Optional[int]" = None,
         searchOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None,
+        triggeredByEvent: "typing.Optional[str]" = None,
     ):
         self.experimentId = experimentId
         self.searchOperations = searchOperations
+        self.triggeredByEvent = triggeredByEvent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostSearcherOperationsRequest":
         return cls(
             experimentId=obj.get("experimentId", None),
             searchOperations=[v1SearcherOperation.from_json(x) for x in obj["searchOperations"]] if obj.get("searchOperations", None) is not None else None,
+            triggeredByEvent=obj.get("triggeredByEvent", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experimentId": self.experimentId if self.experimentId is not None else None,
             "searchOperations": [x.to_json() for x in self.searchOperations] if self.searchOperations is not None else None,
+            "triggeredByEvent": self.triggeredByEvent if self.triggeredByEvent is not None else None,
         }
 
 class v1PostTrialProfilerMetricsBatchRequest:
@@ -5025,19 +5037,27 @@ class v1SchedulerType(enum.Enum):
 class v1SearcherOperation:
     def __init__(
         self,
+        closeTrial: "typing.Optional[str]" = None,
+        createTrial: "typing.Optional[str]" = None,
         validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
     ):
         self.validateAfter = validateAfter
+        self.createTrial = createTrial
+        self.closeTrial = closeTrial
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherOperation":
         return cls(
             validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
+            createTrial=obj.get("createTrial", None),
+            closeTrial=obj.get("closeTrial", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
+            "createTrial": self.createTrial if self.createTrial is not None else None,
+            "closeTrial": self.closeTrial if self.closeTrial is not None else None,
         }
 
 class v1SetCommandPriorityRequest:

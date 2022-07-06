@@ -672,15 +672,22 @@ message GetSearcherEventsRequest {
 message GetSearcherEventsResponse {
   // The requested list of searcher events.
   repeated string searcher_event = 1; 
-  // str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed
+  // str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed 
+  // appended with a counter id to represent order. 
+  determined.experiment.v1.SearcherOperation searcher_state = 2; 
+  // The last event that triggered client which sent the appropriate events 
+  // to master which sent them successfully to the experiment actor. 
+  string last_triggering_event = 3; 
 }
 
 // Request for sending operations from a custom user search method.
 message PostSearcherOperationsRequest {
   // The experiment id
-   int32 experiment_id = 1;
+  int32 experiment_id = 1;
   // list of operations in the method.  
   repeated determined.experiment.v1.SearcherOperation search_operations = 2;
+  // The event that triggered client to send the above operations to master.  
+  string triggered_by_event = 3; 
 }
 
 // Response to PostSearcherOperationsResponse.
