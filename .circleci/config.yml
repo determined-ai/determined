@@ -1257,6 +1257,14 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
+    test-unit-downstream:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout-with-sm
+      - install-python
+      - run: cd webui/react/src/shared && ./bin/test.py --test-local --repos saas 
+
   build-storybook:
     docker:
       - image: cimg/node:16.14.2
@@ -2053,6 +2061,7 @@ workflows:
       - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
+      - test-unit-downstream
       # Exclude gpu tests for now since we do not have access to those instance types on circleci.
       #- test-unit-harness-gpu
       - test-unit-harness-tf2
