@@ -51,7 +51,6 @@
 
    Commands and Shells <interfaces/commands-and-shells>
    WebUI Interface <interfaces/webui-if>
-   IDE Integration <interfaces/ide-integration>
    Jupyter Notebooks <interfaces/notebooks>
    TensorBoards <interfaces/tensorboard>
 
@@ -60,6 +59,7 @@
    :hidden:
 
    Works with Determined <integrations/ecosystem/ecosystem-integration>
+   IDE Integration <interfaces/ide-integration>
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
