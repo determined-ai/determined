@@ -115,7 +115,7 @@ class Authentication:
 
         self.token_store.set_token(session_user, token)
 
-        return Session(session_user, token, auth.get_user_id())
+        return Session(session_user, token, auth.user_id)
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
@@ -144,16 +144,7 @@ class Authentication:
         return self.session.token
 
 
-class AuthContext:
-    def __init__(self, token: str, user_id: str):
-        self.token = token
-        self.user_id = user_id
-
-    def get_user_id(self) -> str:
-        return self.user_id
-
-    def get_token(self) -> str:
-        return self.token
+AuthContext = NamedTuple("AuthContext", [("token", str), ("user_id", str)])
 
 
 def do_login(
