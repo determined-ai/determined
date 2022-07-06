@@ -156,7 +156,7 @@ const useModalJupyterLab = (): ModalHooks => {
   const modalProps: ModalFuncProps = useMemo(() => ({
     className: css.noFooter,
     closable: true,
-    content: content,
+    content,
     icon: null,
     title: 'Launch JupyterLab',
     width: 540,
@@ -167,23 +167,30 @@ const useModalJupyterLab = (): ModalHooks => {
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
-  /**
-   * Update the modal when user toggles the `Show Full Config` button.
-   */
-  useEffect(() => {
-    if(config !== previousConfig || showFullConfig !== previousShowConfig){
-      openOrUpdate(modalProps);
-    }
-  }, [ config, modalProps, openOrUpdate, previousConfig, previousShowConfig, showFullConfig ]);
-
+  // Fetch full config when showing advanced mode.
   useEffect(() => {
     if (showFullConfig) fetchConfig();
   }, [ fetchConfig, showFullConfig ]);
 
+  // Update modal when any form fields change.
   useEffect(() => {
-    if (visible && fields !== previousFields)
-      openOrUpdate(modalProps);
+    if (visible && fields !== previousFields) openOrUpdate(modalProps);
   }, [ fields, previousFields, openOrUpdate, modalProps, visible ]);
+
+  // Update the modal when user toggles the `Show Full Config` button.
+  useEffect(() => {
+    if (visible && (config !== previousConfig || showFullConfig !== previousShowConfig)) {
+      openOrUpdate(modalProps);
+    }
+  }, [
+    config,
+    modalProps,
+    openOrUpdate,
+    previousConfig,
+    previousShowConfig,
+    showFullConfig,
+    visible,
+  ]);
 
   return { modalClose, modalOpen, ...modalHook };
 };
