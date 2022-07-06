@@ -1268,7 +1268,7 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
-    test-unit-downstream:
+  test-unit-downstream:
     docker:
       - image: cimg/node:16.14
     steps:
