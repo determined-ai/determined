@@ -42,9 +42,9 @@ hyperparameters:
   # timm.scheduler.create_schedulers args, using ShiftViT training defaults
   scheduler:
     sched: cosine
-    # ShiftViT ImageNet experiments train for 300 epochs, reduced here for cost. Other scheduler parameters
-    # follow ShiftViT defaults.
-    epochs: 5 # 280
+    # ShiftViT ImageNet experiments train for 300 epochs, reduced here for cost. Other scheduler
+    # parameters follow ShiftViT defaults.
+    epochs: 10 # 280
     lr_noise: null
     lr_noise_pct: 0.67
     lr_noise_std: 1.0
@@ -73,7 +73,7 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-    epochs: 5 # 300 for full ShiftViT; epochs + cooldown_epochs from scheduler
+    epochs: 30 # 300 for full ShiftViT; epochs + cooldown_epochs from scheduler
   smaller_is_better: true
 max_restarts: 0
 profiling:

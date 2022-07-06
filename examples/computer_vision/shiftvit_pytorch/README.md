@@ -26,16 +26,18 @@ Configuration files:
 * `const_cifar10.yaml`: Train on CIFAR10 using a single slot and fixed hyperparameters.
 * `distributed_cifar10.yaml`: Train on CIFAR10 using a multiple slots and fixed hyperparameters.
 * `adaptive_cifar10.yaml`: CIFAR10 hyperparameter search using ASHA.
-* `distributed_imagenet.yaml`: Train on ImageNet using a multiple slots and fixed hyperparameters, following the ShiftViT training defaults.
+* `distributed_imagenet.yaml`: Train on ImageNet using a multiple slots and fixed hyperparameters,
+following the ShiftViT training defaults.
 
 ## Data
-The MNIST and CIFAR10 datasets are downloaded via [`torchvision` `Dataset` objects](https://pytorch.org/vision/stable/datasets.html).
-ImageNet is expected to have been downloaded by the user and placed in a GCS bucket, along with the outputs
-of `generate_blob_list.py`.
+The MNIST and CIFAR10 datasets are downloaded via
+[`torchvision` `Dataset` objects](https://pytorch.org/vision/stable/datasets.html).
+ImageNet is expected to have been downloaded by the user and placed in a GCS bucket, along with the
+outputs of `generate_blob_list.py`.
 
 ## To Run
 If you have not yet installed Determined, installation instructions can be found
-under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
+under `docs/install-admin.html` or [here](https://docs.determined.ai/latest/index.html).
 
 A constant MNIST trial can be run via `det -m <master host:port> experiment create -f
 const_mnist.yaml .`. The other configurations can be run by specifying the appropriate
@@ -45,7 +47,8 @@ configuration file in place of `const_mnist.yaml`.
 
 ### MNIST and CIFAR10
 
-MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node and the above `yaml` configs:
+MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node and the above `yaml`
+configs:
 
 | Config File                | Accuracy (%) |
 |----------------------------|--------------|
@@ -56,8 +59,8 @@ MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node and t
 
 ### ImageNet Timing
 
-ImageNet trials were run on a GCP cluster with eight V100 GPUs using a batch size of 1024, following
-the ShiftViT training procedure.  Whereas ShiftViT paper's model was trained for 300 epochs, we performed a truncated
-five-epoch training in order to profile Determined's throughput metrics and estimate the total time and cost
-for performing a full-training.
+The graphic below demonstrates the timing results for training the ShiftVit model on ImageNet data
+using 1, 2, 4, and 8 GPUs.  Each model was trained on a fixed number of records and the speed-up
+due to distributed training is evident. The durations are measured relative to the beginning of
+of each experiment.
 ![ShiftVit Timing Tests](ShiftVitTimingTest.png)
