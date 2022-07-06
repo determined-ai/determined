@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
+
 import { Metadata } from 'types';
 
 import EditableMetadata from './EditableMetadata';

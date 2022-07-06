@@ -1,16 +1,17 @@
 import { Input, ModalFuncProps, notification } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { debounce } from 'throttle-debounce';
+
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
-import React, { useCallback, useEffect, useState } from 'react';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { debounce } from 'throttle-debounce';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 

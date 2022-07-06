@@ -4,7 +4,7 @@ import React, { CSSProperties, PropsWithChildren, useMemo } from 'react';
 import { stateToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { DarkLight, getCssVar } from 'shared/themes';
-import { hsl2str, str2hsl, str2rgba } from 'shared/utils/color';
+import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
 
