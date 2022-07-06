@@ -144,7 +144,7 @@ func (e EnvironmentVariablesMapV0) Merge(other interface{}) interface{} {
 
 	// Order is relevant here. We want to append items to allow the following
 	// override order, expConf -> templates -> taskContainerDefaults.
-	// Items placed later in the array over items placed earlier.
+	// Items placed later in the array override items placed earlier.
 	var out EnvironmentVariablesMapV0
 	out.RawCPU = append(out.RawCPU, e1.RawCPU...)
 	out.RawCUDA = append(out.RawCUDA, e1.RawCUDA...)
