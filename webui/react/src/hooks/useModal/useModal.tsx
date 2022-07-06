@@ -33,6 +33,12 @@ interface ModalOptions {
   rawOk?: boolean;
 }
 
+/**
+ * Clone these set of props to create a new modal reference,
+ * so that re-opening of this modal will work properly.
+ * If you skip the clone step, when attempting to re-open the
+ * same modal to show the "cannot delete" message will fail.
+ */
 export const CANNOT_DELETE_MODAL_PROPS: Partial<ModalFuncProps> = {
   cancelText: 'Okay',
   closable: true,

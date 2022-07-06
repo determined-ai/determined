@@ -1,5 +1,5 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
@@ -23,35 +23,25 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
   const { auth: { user } } = useStore();
-  const [ model, setModel ] = useState<ModelItem>();
 
-  const isDeletable = useMemo(() => user?.isAdmin || user?.id === model?.userId, [ user, model ]);
-
-  const handleOnClose = useCallback(() => {
-    setModel(undefined);
-    onClose?.(ModalCloseReason.Cancel);
-  }, [ onClose ]);
-
-  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleOnClose });
-
-  const handleOk = useCallback(async () => {
-    if (!model) return Promise.reject();
-
-    try {
-      await deleteModel({ modelName: model.name });
-      routeToReactUrl(paths.modelList());
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to delete model.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ model ]);
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose });
 
   const getModalProps = useCallback((model: ModelItem): ModalFuncProps => {
+    const isDeletable = user?.isAdmin || user?.id === model?.userId;
+    const handleOk = async () => {
+      try {
+        await deleteModel({ modelName: model.name });
+        routeToReactUrl(paths.modelList());
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to delete model.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    };
     return isDeletable ? {
       closable: true,
       content: `
@@ -59,24 +49,17 @@ const useModalModelDelete = ({ onClose }: Props = {}): ModalHooks => {
         and all of its versions from the model registry?
       `,
       icon: null,
-      maskClosable: true,
       okButtonProps: { type: 'primary' },
       okText: 'Delete Model',
       okType: 'danger',
       onOk: handleOk,
       title: 'Confirm Delete',
     } : CANNOT_DELETE_MODAL_PROPS;
-  }, [ handleOk, isDeletable ]);
+  }, [ user?.id, user?.isAdmin ]);
 
-  const modalOpen = useCallback((model: ModelItem) => setModel(model), []);
-
-  /**
-   * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal.
-   */
-  useEffect(() => {
-    if (model) openOrUpdate(getModalProps(model));
-  }, [ getModalProps, model, openOrUpdate ]);
+  const modalOpen = useCallback((model: ModelItem) => {
+    openOrUpdate(getModalProps(model));
+  }, [ getModalProps, openOrUpdate ]);
 
   return { modalOpen, ...modalHook };
 };
