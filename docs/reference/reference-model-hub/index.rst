@@ -8,5 +8,5 @@ TBD
    :maxdepth: 1
    :hidden:
 
-   mmdetection-api
-   transformers-api
+   MMDetection API <modelhub/mmdetection-api>
+   Transformers API <modelhub/transformers-api>

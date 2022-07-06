@@ -1,8 +1,8 @@
 .. _model-hub-transformers-api:
 
-###################
- Transformers TAPI
-###################
+##################
+ Transformers API
+##################
 
 ***************************
  ``model_hub.huggingface``
