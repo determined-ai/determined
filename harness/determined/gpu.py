@@ -81,7 +81,6 @@ def _get_rocm_gpus() -> List[GPU]:
                 "rocm-smi",
                 "--showid",
                 "--showuniqueid",
-                "--showproductname",
                 "--json",
             ],
             check=True,
