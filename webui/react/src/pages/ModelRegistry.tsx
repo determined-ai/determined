@@ -483,39 +483,40 @@ const ModelRegistry: React.FC = () => {
         </Space>
       )}
       title="Model Registry">
-      {(models.length === 0 && !isLoading && filterCount === 0) ? (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="model" size="mega" />
+      {(models.length === 0 && !isLoading && filterCount === 0) ?
+        (
+          <div className={css.emptyBase}>
+            <div className={css.icon}>
+              <Icon name="model" size="mega" />
+            </div>
+            <h4>No Models Registered</h4>
+            <p className={css.description}>
+              Track important checkpoints and versions from your experiments.&nbsp;
+              <Link external path={paths.docs('/post-training/model-registry.html')}>
+                Learn more
+              </Link>
+            </p>
           </div>
-          <h4>No Models Registered</h4>
-          <p className={css.description}>
-            Track important checkpoints and versions from your experiments.&nbsp;
-            <Link external path={paths.docs('/post-training/model-registry.html')}>
-              Learn more
-            </Link>
-          </p>
-        </div>
-      ) : (
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          ContextMenu={ModelActionDropdown}
-          dataSource={models}
-          loading={isLoading}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, total)}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="name"
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          onChange={handleTableChange}
-        />
-      )}
+        ) : (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            ContextMenu={ModelActionDropdown}
+            dataSource={models}
+            loading={isLoading}
+            pagination={getFullPaginationConfig({
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            }, total)}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="name"
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            onChange={handleTableChange}
+          />
+        )}
       {modalModelCreateContextHolder}
       {modalModelDeleteContextHolder}
     </Page>

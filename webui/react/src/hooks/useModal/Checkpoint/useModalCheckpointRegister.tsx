@@ -41,7 +41,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (openProps: ModalOpenProps) => void;
 }
 
-const DEFAULT_MODAL_STATE = {
+const INITIAL_MODAL_STATE = {
   expandDetails: false,
   metadata: {},
   tags: [],
@@ -53,11 +53,11 @@ const DEFAULT_MODAL_STATE = {
 const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ canceler ] = useState(new AbortController());
-  const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
+  const [ modalState, setModalState ] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
 
   const handleClose = useCallback((reason) => {
-    setModalState(DEFAULT_MODAL_STATE);
+    setModalState(INITIAL_MODAL_STATE);
     onClose?.(reason);
   }, [ onClose ]);
 
@@ -117,7 +117,6 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, [ modalClose, selectedModelNumVersions ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
-    // if (!modalRef.current) return Promise.reject();
     await registerModelVersion(state);
   }, [ registerModelVersion ]);
 
@@ -176,7 +175,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: ModalOpenProps) => {
     fetchModels();
     setModalState({
-      ...DEFAULT_MODAL_STATE,
+      ...INITIAL_MODAL_STATE,
       checkpointUuid,
       selectedModelName,
       visible: true,
