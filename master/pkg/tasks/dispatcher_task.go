@@ -21,8 +21,7 @@ import (
 )
 
 const (
-	trueValue  = "true"
-	falseValue = "false"
+	trueValue = "true"
 	// dispatcherEntrypointScriptResource is the script to handle container initialization
 	// before transferring to the defined entrypoint script.
 	dispatcherEntrypointScriptResource = "dispatcher-wrapper.sh"
@@ -130,19 +129,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 		workDir = "/var/tmp"
 	}
 
-	enableNvidia := falseValue
-	if slotType == device.CUDA {
-		enableNvidia = trueValue
-	}
-
-	launchParameters.SetConfiguration(map[string]string{
-		"workingDir":          workDir,
-		"enableNvidia":        enableNvidia, // triggers 'singularity run --nv ...'
-		"enableWritableTmpFs": trueValue,    // Make container filesystem writable (for links in /)
-	})
-	if slurmPartition != "" {
-		launchParameters.GetConfiguration()["partition"] = slurmPartition
-	}
+	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition)
+	launchParameters.SetConfiguration(*launchConfig)
 
 	// Determined generates tar archives including initialization, garbage collection,
 	// and security configuration and then maps them into generic containers when
@@ -235,6 +223,26 @@ func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
 	allArchives = append(allArchives, r...)
 	allArchives = append(allArchives, u...)
 	return &allArchives
+}
+
+// computeLaunchConfig computes the launch configuration for the Slurm job manifest.
+func (t *TaskSpec) computeLaunchConfig(
+	slotType device.Type, workDir string,
+	slurmPartition string) *map[string]string {
+	launchConfig := map[string]string{
+		"workingDir":          workDir,
+		"enableWritableTmpFs": trueValue,
+	}
+	if slurmPartition != "" {
+		launchConfig["partition"] = slurmPartition
+	}
+	if slotType == device.CUDA {
+		launchConfig["enableNvidia"] = trueValue
+	}
+	if slotType == device.ROCM {
+		launchConfig["enableROCM"] = trueValue
+	}
+	return &launchConfig
 }
 
 // Return true if the archive specified should be treated
