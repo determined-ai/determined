@@ -740,7 +740,7 @@ func (a *Allocation) allNonDaemonsExited() bool {
 	return true
 }
 
-func (a *Allocation) exitWithoutErr() bool {
+func (a *Allocation) exitedWithoutErr() bool {
 	for _, r := range a.resources.failed() {
 		code := r.Exited.Failure.ExitCode
 		if code != nil && *code != 0 {
