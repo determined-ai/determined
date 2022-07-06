@@ -88,6 +88,7 @@ type (
 	AllocationExited struct {
 		// userRequestedStop is when a container unexpectedly exits with 0.
 		UserRequestedStop bool
+		DaemonsKilled     bool
 		Err               error
 		FinalState        AllocationState
 	}
@@ -688,7 +689,7 @@ func (a *Allocation) Exit(ctx *actor.Context, reason string) (exited bool) {
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
-		if strings.Contains(reason, normalLogSubstr) {
+		if a.exitWithoutErr() {
 			a.killedDaemonsNominal = true
 		}
 		a.kill(ctx, reason)
@@ -739,6 +740,16 @@ func (a *Allocation) allNonDaemonsExited() bool {
 	return true
 }
 
+func (a *Allocation) exitWithoutErr() bool {
+	for _, r := range a.resources.failed() {
+		code := r.Exited.Failure.ExitCode
+		if code != nil && *code != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func (a *Allocation) preempt(ctx *actor.Context, reason string) {
 	ctx.Log().WithField("reason", reason).Info("decided to gracefully terminate allocation")
 	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
@@ -758,15 +769,6 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 		ctx.Log().Debug("still inside of kill cooldown")
 		return
 	}
-
-	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
-	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
-		Level: ptrs.Ptr(model.LogLevelInfo),
-		Log: fmt.Sprintf(
-			"forcibly killing allocation's remaining resources (reason: %s)",
-			reason,
-		),
-	}))
 
 	for _, r := range a.resources.active() {
 		r.Kill(ctx, a.logCtx)
@@ -914,6 +916,7 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsNominal {
 					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
+					exit.DaemonsKilled = true
 					ctx.Log().Info(exitReason)
 					return
 				}
@@ -970,7 +973,6 @@ func (a *Allocation) purgeRestorableResources(ctx *actor.Context) error {
 }
 
 const killedLogSubstr = "exit code 137"
-const normalLogSubstr = "zero exit code"
 
 func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
