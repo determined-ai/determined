@@ -1260,8 +1260,9 @@ service Determined {
     };
   }
 
-// Get list of SearcherEvents. 
-  rpc GetSearcherEvents(GetSearcherEventsRequest) returns (GetSearcherEventsResponse) {
+  // Get list of SearcherEvents.
+  rpc GetSearcherEvents(GetSearcherEventsRequest)
+      returns (GetSearcherEventsResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments/{experiment_id}/searcher_events"
     };
@@ -1270,8 +1271,9 @@ service Determined {
     };
   }
 
-// Post list of SearcherOperations. 
-  rpc PostSearcherOperations(PostSearcherOperationsRequest) returns (PostSearcherOperationsResponse){
+  // Post list of SearcherOperations.
+  rpc PostSearcherOperations(PostSearcherOperationsRequest)
+      returns (PostSearcherOperationsResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{experiment_id}/searcher_operations"
       body: "*"
