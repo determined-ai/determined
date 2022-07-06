@@ -49,8 +49,8 @@ type (
 		killedWhileRunning bool
 		// Marks that the trial exited successfully, but we killed some daemon containers.
 		killedDaemons bool
-		// Marks that we killed some daemon containers but after a nonzero exit.
-		killedDaemonsNominal bool
+		// Marks that we killed some daemon containers but after a zero exit.
+		killedDaemonsGracefully bool
 		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
 		// exits non zero. we don't need to send all these kills, so this exists.
 		killCooldown *time.Time
@@ -88,7 +88,6 @@ type (
 	AllocationExited struct {
 		// userRequestedStop is when a container unexpectedly exits with 0.
 		UserRequestedStop bool
-		DaemonsKilled     bool
 		Err               error
 		FinalState        AllocationState
 	}
@@ -689,8 +688,8 @@ func (a *Allocation) Exit(ctx *actor.Context, reason string) (exited bool) {
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
-		if a.exitWithoutErr() {
-			a.killedDaemonsNominal = true
+		if a.exitedWithoutErr() {
+			a.killedDaemonsGracefully = true
 		}
 		a.kill(ctx, reason)
 	case len(a.resources.failed()) > 0:
@@ -923,9 +922,8 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
-				if a.killedDaemonsNominal {
+				if a.killedDaemonsGracefully {
 					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
-					exit.DaemonsKilled = true
 					ctx.Log().Info(exitReason)
 					return
 				}
