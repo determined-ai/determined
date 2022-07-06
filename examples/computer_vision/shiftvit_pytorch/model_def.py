@@ -59,13 +59,6 @@ class ShiftViTTrial(PyTorchTrial):
         )
         self._curr_epoch_idx = 0
 
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        """Builds the callback for stepping the ShiftViT learning-rate scheduler used when training
-        on ImageNet."""
-        callbacks = {}
-        callbacks["timing_callback"] = TimingCallback()
-        return callbacks
-
     def build_training_data_loader(self) -> DataLoader:
         training_data_loader = self._get_data_loader(train=True)
         return training_data_loader

@@ -54,9 +54,10 @@ MNIST and CIFAR10 trial data using GCP clusters with four T4 GPUs per node and t
 | `const_cifar10.yaml`       | 81.7         |
 | `distributed_cifar10.yaml` | 84.4         |
 
-### ImageNet
+### ImageNet Timing
 
 ImageNet trials were run on a GCP cluster with eight V100 GPUs using a batch size of 1024, following
 the ShiftViT training procedure.  Whereas ShiftViT paper's model was trained for 300 epochs, we performed a truncated
 five-epoch training in order to profile Determined's throughput metrics and estimate the total time and cost
 for performing a full-training.
+![ShiftVit Timing Tests](ShiftVitTimingTest.png)
