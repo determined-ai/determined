@@ -476,11 +476,6 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			State:               model.CompletedState,
 			InformationalReason: "hp search is finished",
 		})
-	case exit.Err != nil && exit.DaemonsKilled:
-		return t.transition(ctx, model.StateWithReason{
-			State:               model.CompletedState,
-			InformationalReason: "trial stopped",
-		})
 	case exit.Err != nil && sproto.IsUnrecoverableSystemError(exit.Err):
 		ctx.Log().
 			WithError(exit.Err).

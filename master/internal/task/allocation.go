@@ -770,6 +770,15 @@ func (a *Allocation) kill(ctx *actor.Context, reason string) {
 		return
 	}
 
+	ctx.Log().WithField("reason", reason).Info("decided to kill allocation")
+	a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
+		Level: ptrs.Ptr(model.LogLevelInfo),
+		Log: fmt.Sprintf(
+			"forcibly killing allocation's remaining resources (reason: %s)",
+			reason,
+		),
+	}))
+
 	for _, r := range a.resources.active() {
 		r.Kill(ctx, a.logCtx)
 	}
