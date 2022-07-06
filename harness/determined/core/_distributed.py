@@ -19,7 +19,7 @@ class DistributedContext:
      - local_rank: the index of this worker on this machine
      - local_size: the number of workers on this machine
      - cross_rank: the index of this machine in the entire job
-     - cross_size: the number of this machines in the entire job
+     - cross_size: the number of machines in the entire job
 
     Additionally, any time that cross_size > 1, you must also provide:
      - chief_ip: the ip address to reach the chief worker (where rank==0)
@@ -176,8 +176,8 @@ class DistributedContext:
            hvd.init()
            distributed = DistributedContext.from_horovod(hvd)
 
-        The IP address for the chief worker is required whenver ``hvd.cross_size() > 1``.  The value
-        may be provided using the ``chief_ip`` arugment or the ``DET_CHIEF_IP`` environment
+        The IP address for the chief worker is required whenever ``hvd.cross_size() > 1``.  The value
+        may be provided using the ``chief_ip`` argument or the ``DET_CHIEF_IP`` environment
         variable.
         """
 
