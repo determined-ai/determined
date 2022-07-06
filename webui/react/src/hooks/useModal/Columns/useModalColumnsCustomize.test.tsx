@@ -10,7 +10,7 @@ import {
   sentenceToCamelCase,
 } from 'shared/utils/string';
 
-import useModalCustomizeColumns from './useModalCustomizeColumns';
+import useModalColumnsCustomize from './useModalColumnsCustomize';
 
 const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
@@ -28,7 +28,7 @@ const ColumnsButton: React.FC = () => {
     return arr;
   }, []);
 
-  const { modalOpen } = useModalCustomizeColumns({
+  const { contextHolder, modalOpen } = useModalColumnsCustomize({
     columns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
   });
@@ -38,29 +38,31 @@ const ColumnsButton: React.FC = () => {
   }, [ modalOpen ]);
 
   return (
-    <Button onClick={openModal}>{BUTTON_TEXT}</Button>
+    <>
+      <Button onClick={openModal}>{BUTTON_TEXT}</Button>
+      {contextHolder}
+    </>
   );
 };
 
 const setup = async () => {
   const user = userEvent.setup();
-  const view = render(
-    <ColumnsButton />,
-  );
+  const view = render(<ColumnsButton />);
+
   await user.click(view.getByText(BUTTON_TEXT));
 
   return { user, view };
 };
 
 describe('useModalCustomizeColumns', () => {
-  it('opens modal', async () => {
+  it('should open modal', async () => {
     const { view } = await setup();
 
     // waiting for modal to render
     expect(await view.findByText('Customize Columns')).toBeInTheDocument();
   });
 
-  it('closes modal', async () => {
+  it('should close modal', async () => {
     const { user, view } = await setup();
 
     // waiting for modal to render
@@ -73,17 +75,17 @@ describe('useModalCustomizeColumns', () => {
     });
   });
 
-  it('renders lists', async () => {
+  it('should renders lists', async () => {
     const { view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
     const hidden = lists[0];
     const visible = lists[1];
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -97,16 +99,16 @@ describe('useModalCustomizeColumns', () => {
       .toContain(camelCaseToListItem(DEFAULT_COLUMNS[0]));
   });
 
-  it('searches', async () => {
+  it('should searche', async () => {
     const { user, view } = await setup();
     const searchTerm = DEFAULT_COLUMNS[1];
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -120,15 +122,15 @@ describe('useModalCustomizeColumns', () => {
     });
   });
 
-  it('hides column', async () => {
+  it('should hide column', async () => {
     const { user, view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -144,15 +146,15 @@ describe('useModalCustomizeColumns', () => {
     expect(parseInt(lists[1].style.height)).toBeLessThan(initialVisibleHeight);
   });
 
-  it('shows column', async () => {
+  it('should show column', async () => {
     const { user, view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -168,15 +170,15 @@ describe('useModalCustomizeColumns', () => {
     expect(parseInt(lists[1].style.height)).toBeGreaterThan(initialVisibleHeight);
   });
 
-  it('resets', async () => {
+  it('should reset', async () => {
     const { user, view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -206,15 +208,15 @@ describe('useModalCustomizeColumns', () => {
     expect(resetButton).not.toBeInTheDocument();
   });
 
-  it('adds all', async () => {
+  it('should add all', async () => {
     const { user, view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
@@ -229,15 +231,15 @@ describe('useModalCustomizeColumns', () => {
     });
   });
 
-  it('removes all', async () => {
+  it('should remove all', async () => {
     const { user, view } = await setup();
 
-    // waiting for modal to render
+    // Waiting for modal to render.
     await view.findByText('Customize Columns');
 
     const lists = view.getAllByRole('list');
 
-    // waiting for list items to render
+    // Waiting for list items to render.
     expect((await view.findAllByRole('listitem')).length)
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 

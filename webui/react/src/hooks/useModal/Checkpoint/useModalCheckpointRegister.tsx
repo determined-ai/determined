@@ -1,23 +1,27 @@
-import { Input, Modal, ModalFuncProps, notification, Select } from 'antd';
-import { ModalFunc } from 'antd/es/modal/confirm';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Input, ModalFuncProps, notification, Select } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
+import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { Metadata, ModelItem } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../shared/utils/error';
-import { validateDetApiEnum } from '../shared/utils/service';
+import css from './useModalCheckpointRegister.module.scss';
 
-import css from './useRegisterCheckpointModal.module.scss';
+interface Props {
+  onClose?: (reason?: ModalCloseReason, checkpointUuid?: string) => void;
+}
 
-export interface ShowRegisterCheckpointProps {
+interface ModalOpenProps {
   checkpointUuid: string;
   selectedModelName?: string;
 }
@@ -31,25 +35,119 @@ interface ModalState {
   versionDescription: string;
   versionName: string;
   visible: boolean;
-
 }
 
-interface ModalHooks {
-  showModal: (props: ShowRegisterCheckpointProps) => void;
+interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
+  modalOpen: (openProps: ModalOpenProps) => void;
 }
 
-const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void): ModalHooks => {
-  const modalRef = useRef<ReturnType<ModalFunc>>();
+const INITIAL_MODAL_STATE = {
+  expandDetails: false,
+  metadata: {},
+  tags: [],
+  versionDescription: '',
+  versionName: '',
+  visible: false,
+};
+
+const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ canceler ] = useState(new AbortController());
-  const [ modalState, setModalState ] = useState<ModalState>({
-    expandDetails: false,
-    metadata: {},
-    tags: [],
-    versionDescription: '',
-    versionName: '',
-    visible: false,
-  });
+  const [ modalState, setModalState ] = useState<ModalState>(INITIAL_MODAL_STATE);
+  const prevModalState = usePrevious(modalState, undefined);
+
+  const handleClose = useCallback((reason) => {
+    setModalState(INITIAL_MODAL_STATE);
+    onClose?.(reason);
+  }, [ onClose ]);
+
+  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal(
+    { onClose: handleClose },
+  );
+
+  const selectedModelNumVersions = useMemo(() => {
+    return models.find(model => model.name === modalState.selectedModelName)?.numVersions ?? 0;
+  }, [ models, modalState.selectedModelName ]);
+
+  const modelOptions = useMemo(() => {
+    return models.map(model => ({ id: model.id, name: model.name }));
+  }, [ models ]);
+
+  const registerModelVersion = useCallback(async (state: ModalState) => {
+    const {
+      selectedModelName, versionDescription, tags,
+      metadata, versionName, checkpointUuid,
+    } = state;
+    if (!selectedModelName || !checkpointUuid) return;
+    try {
+      const response = await postModelVersion({
+        body: {
+          checkpointUuid,
+          comment: versionDescription,
+          labels: tags,
+          metadata,
+          modelName: selectedModelName,
+          name: versionName,
+        },
+        modelName: selectedModelName,
+      });
+
+      if (!response) return;
+
+      modalClose(ModalCloseReason.Ok);
+
+      notification.open({
+        btn: null,
+        description: (
+          <div className={css.toast}>
+            <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
+            <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
+              View Model Version
+            </Link>
+          </div>),
+        message: '',
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to register checkpoint.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ modalClose, selectedModelNumVersions ]);
+
+  const handleOk = useCallback(async (state: ModalState) => {
+    await registerModelVersion(state);
+  }, [ registerModelVersion ]);
+
+  const updateModel = useCallback((value) => {
+    setModalState(prev => ({ ...prev, selectedModelName: value }));
+  }, []);
+
+  const updateVersionName = useCallback((e) => {
+    setModalState(prev => ({ ...prev, versionName: e.target.value }));
+  }, []);
+
+  const updateVersionDescription = useCallback((e) => {
+    setModalState(prev => ({ ...prev, versionDescription: e.target.value }));
+  }, []);
+
+  const openDetails = useCallback(() => {
+    setModalState(prev => ({ ...prev, expandDetails: true }));
+  }, []);
+
+  const updateMetadata = useCallback((value) => {
+    setModalState(prev => ({ ...prev, metadata: value }));
+  }, []);
+
+  const updateTags = useCallback((value) => {
+    setModalState(prev => ({ ...prev, tags: value }));
+  }, []);
+
+  const launchNewModelModal = useCallback((state: ModalState) => {
+    modalClose(ModalCloseReason.Cancel);
+    onClose?.(ModalCloseReason.Cancel, state.checkpointUuid);
+  }, [ modalClose, onClose ]);
 
   const fetchModels = useCallback(async () => {
     try {
@@ -74,126 +172,19 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
     }
   }, [ canceler.signal ]);
 
-  useEffect(() => {
-    fetchModels();
-  }, [ fetchModels ]);
-
-  useEffect(() => {
-    return () => canceler.abort();
-  }, [ canceler ]);
-
-  const showModal = useCallback((
-    { checkpointUuid, selectedModelName }: ShowRegisterCheckpointProps,
-  ) => {
+  const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: ModalOpenProps) => {
     fetchModels();
     setModalState({
+      ...INITIAL_MODAL_STATE,
       checkpointUuid,
-      expandDetails: false,
-      metadata: {},
       selectedModelName,
-      tags: [],
-      versionDescription: '',
-      versionName: '',
       visible: true,
     });
   }, [ fetchModels ]);
 
-  const closeModal = useCallback(() => {
-    if (!modalRef.current) return;
-    modalRef.current.destroy();
-    modalRef.current = undefined;
-  }, []);
+  const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
 
-  const handleCancel = useCallback(() => {
-    closeModal();
-  }, [ closeModal ]);
-
-  const selectedModelNumVersions = useMemo(() => {
-    return models.find(model => model.name === modalState.selectedModelName)?.numVersions ?? 0;
-  }, [ models, modalState.selectedModelName ]);
-
-  const registerModelVersion = useCallback(async (state: ModalState) => {
-    const {
-      selectedModelName, versionDescription, tags,
-      metadata, versionName, checkpointUuid,
-    } = state;
-    if (!selectedModelName || !checkpointUuid) return;
-    try {
-      const response = await postModelVersion({
-        body: {
-          checkpointUuid,
-          comment: versionDescription,
-          labels: tags,
-          metadata,
-          modelName: selectedModelName,
-          name: versionName,
-        },
-        modelName: selectedModelName,
-      });
-      if (!response) return;
-      closeModal();
-      notification.open(
-        {
-          btn: null,
-          description: (
-            <div className={css.toast}>
-              <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-              <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
-                View Model Version
-              </Link>
-            </div>),
-          message: '',
-        },
-      );
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to register checkpoint.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ closeModal, selectedModelNumVersions ]);
-
-  const handleOk = useCallback(async (state: ModalState) => {
-    if (!modalRef.current) return Promise.reject();
-    await registerModelVersion(state);
-  }, [ registerModelVersion ]);
-
-  const updateModel = useCallback((value) => {
-    setModalState(prev => ({ ...prev, selectedModelName: value }));
-  }, []);
-
-  const updateVersionName = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionName: e.target.value }));
-  }, []);
-
-  const updateVersionDescription = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionDescription: e.target.value }));
-  }, []);
-
-  const modelOptions = useMemo(() => {
-    return models.map(model => ({ id: model.id, name: model.name }));
-  }, [ models ]);
-
-  const openDetails = useCallback(() => {
-    setModalState(prev => ({ ...prev, expandDetails: true }));
-  }, []);
-
-  const updateMetadata = useCallback((value) => {
-    setModalState(prev => ({ ...prev, metadata: value }));
-  }, []);
-
-  const updateTags = useCallback((value) => {
-    setModalState(prev => ({ ...prev, tags: value }));
-  }, []);
-
-  const launchNewModelModal = useCallback((state: ModalState) => {
-    const { checkpointUuid } = state;
-    closeModal();
-    onClose?.(checkpointUuid);
-  }, [ closeModal, onClose ]);
-
-  const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
+  const getModalContent = useCallback((state: ModalState): React.ReactNode => {
     const {
       selectedModelName, versionDescription,
       tags, metadata, versionName, expandDetails,
@@ -255,7 +246,8 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
         )}
       </div>
     );
-  }, [ launchNewModelModal,
+  }, [
+    launchNewModelModal,
     modelOptions,
     openDetails,
     selectedModelNumVersions,
@@ -263,16 +255,17 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
     updateModel,
     updateTags,
     updateVersionDescription,
-    updateVersionName ]);
+    updateVersionName,
+  ]);
 
-  const generateModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
+  const getModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
     const { selectedModelName } = state;
 
     const modalProps = {
       bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
-      content: generateModalContent(state),
+      content: getModalContent(state),
       icon: null,
       maskClosable: true,
       okButtonProps: { disabled: selectedModelName == null },
@@ -283,30 +276,26 @@ const useRegisterCheckpointModal = (onClose?: (checkpointUuid?: string) => void)
     };
 
     return modalProps;
-  }, [ generateModalContent, handleCancel, handleOk ]);
+  }, [ getModalContent, handleCancel, handleOk ]);
 
-  // Detect modal state change and update.
   useEffect(() => {
-    if (!modalState.visible) return;
+    fetchModels();
+  }, [ fetchModels ]);
 
-    const modalProps = generateModalProps(modalState);
-    if (modalRef.current) {
-      modalRef.current.update(prev => ({ ...prev, ...modalProps }));
-    } else {
-      modalRef.current = Modal.confirm(modalProps);
-    }
-  }, [ generateModalProps, modalState ]);
-
-  // When the component using the hook unmounts, remove the modal automatically.
   useEffect(() => {
-    return () => {
-      if (!modalRef.current) return;
-      modalRef.current.destroy();
-      modalRef.current = undefined;
-    };
-  }, []);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
-  return { showModal };
+  /**
+   * When modal props changes are detected, such as modal content
+   * title, and buttons, update the modal.
+   */
+  useEffect(() => {
+    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    openOrUpdate(getModalProps(modalState));
+  }, [ getModalProps, modalState, openOrUpdate, prevModalState ]);
+
+  return { modalClose, modalOpen, ...modalHook };
 };
 
-export default useRegisterCheckpointModal;
+export default useModalCheckpointRegister;

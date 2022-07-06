@@ -33,20 +33,18 @@ const ModalTrigger: React.FC = () => {
   );
 };
 
-const ModalTriggerContainer: React.FC = () => {
-  return (
-    <StoreProvider>
-      <ModalTrigger />
-    </StoreProvider>
-  );
-};
-
 const setup = async () => {
+  const user = userEvent.setup();
 
   render(
-    <ModalTriggerContainer />,
+    <StoreProvider>
+      <ModalTrigger />
+    </StoreProvider>,
   );
-  userEvent.click(await screen.findByRole('button'));
+
+  await user.click(screen.getByRole('button'));
+
+  return user;
 };
 
 describe('CheckpointModalTrigger', () => {
@@ -57,11 +55,11 @@ describe('CheckpointModalTrigger', () => {
   });
 
   it('close modal', async () => {
-    await setup();
+    const user = await setup();
 
     await screen.findByText(TEST_MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
 
     await waitFor(() => {
       expect(screen.queryByText(TEST_MODAL_TITLE)).not.toBeInTheDocument();
@@ -69,15 +67,16 @@ describe('CheckpointModalTrigger', () => {
   });
 
   it('open register checkpoint modal', async () => {
-    await setup();
+    const user = await setup();
 
     await screen.findByText(TEST_MODAL_TITLE);
 
-    userEvent.click(screen.getByRole('button', { name: /Register Checkpoint/i }));
+    await user.click(screen.getByRole('button', { name: REGISTER_CHECKPOINT_TEXT }));
 
     await waitFor(() => {
-      expect(screen.queryByText(REGISTER_CHECKPOINT_TEXT)).toBeInTheDocument();
+      // One for the title and one for the confirm button label.
+      const elements = screen.queryAllByText(REGISTER_CHECKPOINT_TEXT);
+      expect(elements).toHaveLength(2);
     });
   });
-
 });

@@ -1,25 +1,25 @@
 import { Button, Divider } from 'antd';
-import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback } from 'react';
 
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
-import useModalChangeName from 'hooks/useModal/UserSettings/useModalChangeName';
-import useModalChangePassword from 'hooks/useModal/UserSettings/useModalChangePassword';
+import useModalNameChange from 'hooks/useModal/UserSettings/useModalNameChange';
+import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 
 import useModal, { ModalHooks } from '../useModal';
 
 import css from './useModalUserSettings.module.scss';
 
-interface Props {
-  modal: Omit<ModalStaticFunctions, 'warn'>
-}
-
-const UserSettings: React.FC<Props> = ({ modal }) => {
+const UserSettings: React.FC = () => {
   const { auth } = useStore();
-
-  const { modalOpen: openChangeDisplayNameModal } = useModalChangeName(modal);
-  const { modalOpen: openChangePasswordModal } = useModalChangePassword(modal);
+  const {
+    contextHolder: modalNameChangeContextHolder,
+    modalOpen: openChangeDisplayNameModal,
+  } = useModalNameChange();
+  const {
+    contextHolder: modalPasswordChangeContextHolder,
+    modalOpen: openChangePasswordModal,
+  } = useModalPasswordChange();
 
   const handlePasswordClick = useCallback(() => {
     openChangePasswordModal();
@@ -61,24 +61,26 @@ const UserSettings: React.FC<Props> = ({ modal }) => {
           </Button>
         </span>
       </div>
+      {modalNameChangeContextHolder}
+      {modalPasswordChangeContextHolder}
     </div>
   );
 };
 
-const useModalUserSettings = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
+const useModalUserSettings = (): ModalHooks => {
+  const { modalOpen: openOrUpdate, ...modalHooks } = useModal();
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       className: css.noFooter,
       closable: true,
-      content: <UserSettings modal={modal} />,
+      content: <UserSettings />,
       icon: null,
       title: <h5>Account</h5>,
     });
-  }, [ modal, openOrUpdate ]);
+  }, [ openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, ...modalHooks };
 };
 
 export default useModalUserSettings;

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
@@ -21,42 +21,37 @@ jest.mock('services/api', () => ({
 ));
 
 jest.mock('wait', () => ({
-  openCommand: () => {
-    return null;
-  },
+  openCommand: () => null,
   waitPageUrl: () => '',
 }
 ));
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
-  default: () => {
-    return MonacoEditorMock;
-  },
+  default: () => MonacoEditorMock,
 }));
 
 const ModalTrigger: React.FC = () => {
-
   const storeDispatch = useStoreDispatch();
-  const [ createExperimentModal, createExperimentModalContextHolder ] = Modal.useModal();
-  const { modalOpen } = useModalExperimentCreate({ modal: createExperimentModal });
+  const { contextHolder, modalOpen } = useModalExperimentCreate();
   const { experiment, trial } = generateTestExperimentData();
+
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
   return (
     <>
-      {createExperimentModalContextHolder}
       <Button onClick={() =>
         modalOpen({ experiment: experiment, trial: trial, type: CreateExperimentType.Fork })}>
         Show Jupyter Lab
       </Button>
+      {contextHolder}
     </>
   );
 };
 
-const ModalTriggerContainer: React.FC = () => {
+const Container: React.FC = () => {
   return (
     <StoreProvider>
       <ModalTrigger />
@@ -65,12 +60,11 @@ const ModalTriggerContainer: React.FC = () => {
 };
 
 const setup = async () => {
+  const user = userEvent.setup();
 
-  render(
-    <ModalTriggerContainer />,
-  );
+  render(<Container />);
 
-  userEvent.click(await screen.findByRole('button'));
+  await user.click(screen.getByRole('button'));
 };
 
 describe('useModalExperimentCreate', () => {
@@ -85,5 +79,4 @@ describe('useModalExperimentCreate', () => {
 
     expect(await screen.findByText(SHOW_FULL_CONFIG_TEXT)).toBeInTheDocument();
   });
-
 });

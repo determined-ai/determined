@@ -21,7 +21,9 @@ interface Props {
 }
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWorkspace }: Props) => {
-  const { modalOpen: openProjectCreate } = useModalProjectCreate({ workspaceId: workspace.id });
+  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
+    { workspaceId: workspace.id },
+  );
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -78,8 +80,10 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           </WorkspaceActionDropdown>
         )}
       </Space>
-      {(!workspace.immutable && !workspace.archived) &&
-        <Button onClick={handleProjectCreateClick}>New Project</Button>}
+      {(!workspace.immutable && !workspace.archived) && (
+        <Button onClick={handleProjectCreateClick}>New Project</Button>
+      )}
+      {contextHolder}
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import { Button, Form, Input, message } from 'antd';
-import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback, useState } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
@@ -8,13 +7,13 @@ import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
 
-import css from './useModalChangeName.module.scss';
+import css from './useModalNameChange.module.scss';
 
 interface Props {
   onComplete: () => void;
 }
 
-const ChangeName: React.FC<Props> = ({ onComplete }) => {
+const NameChange: React.FC<Props> = ({ onComplete }) => {
   const { auth } = useStore();
   const userId = auth.user?.id ?? 0;
   const existingDisplayName = auth.user?.displayName;
@@ -76,20 +75,20 @@ const ChangeName: React.FC<Props> = ({ onComplete }) => {
   );
 };
 
-const useModalChangeName = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
+const useModalNameChange = (): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       className: css.noFooter,
       closable: true,
-      content: <ChangeName onComplete={modalClose} />,
+      content: <NameChange onComplete={modalClose} />,
       icon: null,
       title: <h5>Change name</h5>,
     });
   }, [ modalClose, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalClose, modalOpen, ...modalHook };
 };
 
-export default useModalChangeName;
+export default useModalNameChange;

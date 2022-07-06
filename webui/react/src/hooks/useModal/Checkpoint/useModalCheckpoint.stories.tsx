@@ -13,8 +13,8 @@ export default {
   title: 'useModalCheckpoint',
 };
 
-const UseCheckpointModalContainer = () => {
-
+const Container = () => {
+  const storeDispatch = useStoreDispatch();
   const { checkpoint, experiment } = generateTestExperimentData();
 
   const { modalOpen } = useModalCheckpoint({
@@ -23,8 +23,6 @@ const UseCheckpointModalContainer = () => {
     title: 'Use Checkpoint Modal',
   });
 
-  const storeDispatch = useStoreDispatch();
-
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
@@ -32,6 +30,4 @@ const UseCheckpointModalContainer = () => {
   return <Button onClick={() => modalOpen()}>View Checkpoint</Button>;
 };
 
-export const Default = (): React.ReactNode => {
-  return <UseCheckpointModalContainer />;
-};
+export const Default = (): React.ReactNode => <Container />;

@@ -8,6 +8,8 @@ import EditableMetadata from './EditableMetadata';
 
 const initMetadata = { hello: 'world', testing: 'metadata' };
 
+const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+
 const setup = (metadata: Metadata = {}, editing = false) => {
   const handleOnChange = jest.fn();
   const view = render(
@@ -17,8 +19,7 @@ const setup = (metadata: Metadata = {}, editing = false) => {
       updateMetadata={handleOnChange}
     />,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-  return { handleOnChange, user, view };
+  return { handleOnChange, view };
 };
 
 describe('EditableMetadata', () => {
@@ -37,7 +38,7 @@ describe('EditableMetadata', () => {
       ...initMetadata,
       ...Object.fromEntries([ [ additionKey, additionValue ] ]),
     };
-    const { handleOnChange, user } = setup(initMetadata, true);
+    const { handleOnChange } = setup(initMetadata, true);
 
     const addRow = screen.getByText('+ Add Row');
     await user.click(addRow);
@@ -61,7 +62,7 @@ describe('EditableMetadata', () => {
     const resultMetadata = Object.fromEntries(metadataArray.filter(
       ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
     ));
-    const { handleOnChange, user, view } = setup(initMetadata, true);
+    const { handleOnChange, view } = setup(initMetadata, true);
 
     await user.click(view.getAllByRole('button')[removalIndex]);
     await user.click(view.getByText('Delete Row'));

@@ -19,11 +19,9 @@ interface Props {
 const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
   const [ name, setName ] = useState(workspace.name);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
+  const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -69,15 +67,15 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
     openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
   }, [ getModalProps, openOrUpdate, workspace.name ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalWorkspaceEdit;

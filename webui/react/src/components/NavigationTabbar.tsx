@@ -1,4 +1,3 @@
-import { Modal } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -7,7 +6,7 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
@@ -44,11 +43,15 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
-  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
   const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
+  const {
+    contextHolder: modalUserSettingsContextHolder,
+    modalOpen: openUserSettingsModal,
+  } = useModalUserSettings();
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -159,8 +162,8 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {userSettingsModalContextHolder}
-      {jupyterLabModalContextHolder}
+      {modalUserSettingsContextHolder}
+      {modalJupyterLabContextHolder}
     </nav>
   );
 };
