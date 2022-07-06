@@ -4052,25 +4052,25 @@ class v1PostSearcherOperationsRequest:
     def __init__(
         self,
         experimentId: "typing.Optional[int]" = None,
-        searchOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None,
+        searcherOperations: "typing.Optional[typing.Sequence[v1SearcherOperation]]" = None,
         triggeredByEvent: "typing.Optional[str]" = None,
     ):
         self.experimentId = experimentId
-        self.searchOperations = searchOperations
+        self.searcherOperations = searcherOperations
         self.triggeredByEvent = triggeredByEvent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostSearcherOperationsRequest":
         return cls(
             experimentId=obj.get("experimentId", None),
-            searchOperations=[v1SearcherOperation.from_json(x) for x in obj["searchOperations"]] if obj.get("searchOperations", None) is not None else None,
+            searcherOperations=[v1SearcherOperation.from_json(x) for x in obj["searcherOperations"]] if obj.get("searcherOperations", None) is not None else None,
             triggeredByEvent=obj.get("triggeredByEvent", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experimentId": self.experimentId if self.experimentId is not None else None,
-            "searchOperations": [x.to_json() for x in self.searchOperations] if self.searchOperations is not None else None,
+            "searcherOperations": [x.to_json() for x in self.searcherOperations] if self.searcherOperations is not None else None,
             "triggeredByEvent": self.triggeredByEvent if self.triggeredByEvent is not None else None,
         }
 

@@ -24,6 +24,6 @@ def test_post_searcher_ops() -> None:
         createTrial="createTrial"
     )  # what do we need to include for an operation such as createTrial?
     body = bindings.v1PostSearcherOperationsRequest(
-        experimentId=exp_id, searchOperations=[op1], triggeredByEvent="Initial_Operations_0"
+        experimentId=exp_id, searcherOperations=[op1], triggeredByEvent="Initial_Operations_0"
     )
     bindings.post_PostSearcherOperations(sess, experimentId=exp_id, body=body)

@@ -2710,13 +2710,13 @@ export interface V1GetSearcherEventsResponse {
      */
     searcherEvent?: Array<string>;
     /**
-     * str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed  appended with a counter id to represent order.
+     * str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
      * @type {V1SearcherOperation}
      * @memberof V1GetSearcherEventsResponse
      */
     searcherState?: V1SearcherOperation;
     /**
-     * The last event that triggered client which sent the appropriate events  to master which sent them successfully to the experiment actor.
+     * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
      * @type {string}
      * @memberof V1GetSearcherEventsResponse
      */
@@ -4747,7 +4747,7 @@ export interface V1PostSearcherOperationsRequest {
      * @type {Array<V1SearcherOperation>}
      * @memberof V1PostSearcherOperationsRequest
      */
-    searchOperations?: Array<V1SearcherOperation>;
+    searcherOperations?: Array<V1SearcherOperation>;
     /**
      * The event that triggered client to send the above operations to master.
      * @type {string}

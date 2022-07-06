@@ -686,7 +686,7 @@ message PostSearcherOperationsRequest {
   // The experiment id
   int32 experiment_id = 1;
   // list of operations in the method.
-  repeated determined.experiment.v1.SearcherOperation search_operations = 2;
+  repeated determined.experiment.v1.SearcherOperation searcher_operations = 2;
   // The event that triggered client to send the above operations to master.
   string triggered_by_event = 3;
 }
