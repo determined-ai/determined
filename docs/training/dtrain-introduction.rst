@@ -2,9 +2,9 @@
 
 .. _multi-gpu-training:
 
-##############
- Introduction
-##############
+######################################
+ Introduction to Distributed Training
+######################################
 
 Determined provides three main methods to take advantage of multiple GPUs:
 

@@ -1,7 +1,7 @@
 .. _experiments:
 
 ###################
- Run Training Code
+ Submit Experiment
 ###################
 
 This section covers how to run training code by submitting your code to a cluster and running it as
