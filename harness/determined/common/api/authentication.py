@@ -107,7 +107,7 @@ class Authentication:
 
         try:
             auth = do_login(self.master_address, session_user, password, cert)
-            token = auth.get_token()
+            token = auth.token
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
