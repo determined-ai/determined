@@ -1,3 +1,4 @@
+//nolint:exhaustivestruct
 package kubernetes
 
 import (
