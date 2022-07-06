@@ -429,13 +429,33 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 			// Terminate and cleanup, on failure leave Dispatch in DB for later retry
 			if m.terminateDispatcherJob(ctx, dispatchID, impersonatedUser) {
-				// Debugging aid, if we need access to the dispatcher environment logs
-				// When trace is enabled leave them until the job is deleted, or we restart.
-				if ctx.Log().Logger.Level != logrus.TraceLevel {
+				// Do not remove the dispatch environment if the job is being
+				// monitored by the job watcher, as it is needed in order for
+				// the launcher to report the job status. If we remove the
+				// dispatch environment, then the launcher will no longer be
+				// able to provide job information and will return an HTTP 404
+				// status when the job watcher asks it for status. As a result,
+				// the Detemined AI job status will never get updated from
+				// "Running" to "Canceled", for example.  When the job watcher
+				// gets a terminatal state from the launcher, it will take care
+				// of removing the dispatch environment at that time.
+				if m.jobWatcher.isJobBeingMonitored(dispatchID) {
+					ctx.Log().Debug(
+						fmt.Sprintf(
+							"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
+							dispatchID))
+				} else if ctx.Log().Logger.Level != logrus.TraceLevel {
+					// If we are here, then we are likely being called from
+					// startup, as opposed to a user explicitly canceling
+					// a job. It's OK to remove the environment in this case
+					// because we aren't actively monitoring any jobs.
+					//
+					// Note: We do not remove the environment when trace is
+					// enabled to allow us access the dispatcher environment
+					// logs, if needed.
 					m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
 				}
 			}
-			m.jobWatcher.removeJob(dispatchID)
 		}
 
 	case DispatchStateChange:
@@ -901,9 +921,7 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 // The Dispatch is left in the DB, for a future cleanup attempt on startup.
 func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
 	dispatchID string, owner string) {
-	if m.terminateDispatcherJob(ctx, dispatchID, owner) {
-		m.removeDispatchEnvironment(ctx, owner, dispatchID)
-	}
+	m.terminateDispatcherJob(ctx, dispatchID, owner)
 }
 
 // terminateDispatcherJob terminates the dispatcher job with the given ID.

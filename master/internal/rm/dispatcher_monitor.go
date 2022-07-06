@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -53,6 +54,7 @@ type launcherMonitor struct {
 	checkLauncherJob  chan launcherJob
 	schedulerTick     *time.Ticker
 	authToken         string
+	mu                sync.RWMutex
 }
 
 // newDispatchWatcher initiates the process of monitoring the progress of launched jobs.
@@ -167,10 +169,34 @@ func filterOutSuperfluousMessages(allMessages []string) []string {
 	return messagesMatchingPattern
 }
 
+// Returns true if the job with the given dispatch ID is being monitored by
+// the job watcher; false otherwise.
+func (m *launcherMonitor) isJobBeingMonitored(dispatchID string) bool {
+	// Obtain a read lock, so that "processedWatchedJobs()" doesn't manipulate
+	// the "monitoredJobs" list while we're iterating through it. Because it's
+	// a read lock, another thread will still be able to come in here and
+	// iterate the "monitoredJobs" list.
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, job := range m.monitoredJobs {
+		if job.dispatcherID == dispatchID {
+			return true
+		}
+	}
+
+	return false
+}
+
 // processWatchedJobs is called periodically to poll for the completion status
 // of launched jobs. The exit status of any completed job is reported to Determined; such
 // jobs are them removed from further consideration.
 func (m *launcherMonitor) processWatchedJobs(ctx *actor.Context) {
+	// Obtain a RW lock, so that "isJobBeingMonitored()" doesn't try to iterate
+	// through the "monitoredJobs" list while we're manipulating it.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	// Loop through the jobs in the monitoredJobs map and update status accordingly
 	for _, job := range m.monitoredJobs {
 		// Check if the current job is in the jobsToRemove map. If it is, then delete the
