@@ -478,6 +478,7 @@ const ProjectDetails: React.FC = () => {
         title: 'Archived',
       },
       {
+        dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
