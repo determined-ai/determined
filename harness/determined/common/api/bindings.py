@@ -108,24 +108,6 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-class QueryTrialsRequestQueryFilters:
-    def __init__(
-        self,
-        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
-    ):
-        self.experimentIds = experimentIds
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "QueryTrialsRequestQueryFilters":
-        return cls(
-            experimentIds=obj.get("experimentIds", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
-        }
-
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -4418,6 +4400,42 @@ class v1PutTemplateResponse:
     def to_json(self) -> typing.Any:
         return {
             "template": self.template.to_json() if self.template is not None else None,
+        }
+
+class v1QueryFilters:
+    def __init__(
+        self,
+        experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.experimentIds = experimentIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1QueryFilters":
+        return cls(
+            experimentIds=obj.get("experimentIds", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentIds": self.experimentIds if self.experimentIds is not None else None,
+        }
+
+class v1QueryTrialsRequest:
+    def __init__(
+        self,
+        filters: "typing.Optional[v1QueryFilters]" = None,
+    ):
+        self.filters = filters
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1QueryTrialsRequest":
+        return cls(
+            filters=v1QueryFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "filters": self.filters.to_json() if self.filters is not None else None,
         }
 
 class v1QueryTrialsResponse:

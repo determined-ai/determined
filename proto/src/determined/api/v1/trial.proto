@@ -44,15 +44,24 @@ message WorkloadContainer {
   }
 }
 
-
+message QueryFilters {
+  // experiment ids to include
+  repeated int32 experiment_ids = 1;
+}
 
 message QueryTrialsRequest {
-  message QueryFilters {
-    // experiment ids to include
-    repeated int32 experiment_ids = 1;
-    
+  QueryFilters filters = 1;
+}
 
-  }
+message PatchTrialsRequest {
+  QueryFilters filters = 1;
+}
+
+message ExportTrialsRequest {
+  QueryFilters filters = 1;
+}
+
+message TrialsMetricsNamesRequest {
   QueryFilters filters = 1;
 }
 

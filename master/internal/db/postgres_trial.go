@@ -450,6 +450,6 @@ func (db *PgDB) QueryTrials(
 	err := db.query(`
 SELECT id
 FROM trials
-WHERE trial.experiment_id in (SELECT unnest($1::int [])::int)`, &trial)
+WHERE experiment_id in (SELECT unnest($1::int []))`, &trial, experimentIDs)
 	return *&trial, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
 }

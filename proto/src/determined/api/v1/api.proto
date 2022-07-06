@@ -522,7 +522,8 @@ service Determined {
   rpc QueryTrials(QueryTrialsRequest) returns (stream QueryTrialsResponse) {
 
     option (google.api.http) = {
-      get: "/api/v1/trials/query"
+      post: "/api/v1/trials/query"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Trials", "Experiments" ]
