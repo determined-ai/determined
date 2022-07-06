@@ -1262,7 +1262,8 @@ jobs:
       - image: cimg/node:16.14
     steps:
       - checkout-with-sm
-      - install-python
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
       - run: cd webui/react/src/shared && ./bin/test.py --test-local --repos saas 
 
   build-storybook:
