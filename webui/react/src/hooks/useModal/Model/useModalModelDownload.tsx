@@ -47,7 +47,6 @@ const useModalModelDownload = ({ onClose }: Props = {}): ModalHooks => {
       content: getModalContent(version),
       footer: null,
       icon: null,
-      maskClosable: true,
       okButtonProps: { style: { display: 'none' } },
       title: 'Download',
     };

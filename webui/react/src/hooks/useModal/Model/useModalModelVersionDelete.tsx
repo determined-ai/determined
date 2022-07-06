@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
+import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
@@ -70,7 +71,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
       okType: 'danger',
       onOk: handleOk,
       title: 'Confirm Delete',
-    } : CANNOT_DELETE_MODAL_PROPS;
+    } : clone(CANNOT_DELETE_MODAL_PROPS);
   }, [ handleOk, isDeletable ]);
 
   const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);
