@@ -221,7 +221,7 @@ def make_xor_data_sequences(
 def make_trial_controller_from_trial_implementation(
     trial_class: Type[det.Trial],
     hparams: Dict,
-    workloads: workload.Stream,
+    workloads: Optional[workload.Stream] = None,
     scheduling_unit: int = 1,
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
