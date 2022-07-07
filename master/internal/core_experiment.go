@@ -92,7 +92,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 // @Tags Experiments
 // @ID get-experiment-model-file
 // @Accept  json
-// @Produce  attachment
+// @Produce  text/plain; charset=utf-8
 // @Param   experiment_id query string true "Id of the experiment"
 // @Param   path query string true "Path to the target file"
 // @Success 200 {} string ""
