@@ -171,6 +171,16 @@ type DB interface {
 	EndAllTaskStats() error
 	RecordTaskEndStats(stats *model.TaskStats) error
 	RecordTaskStats(stats *model.TaskStats) error
+
+	// Groups
+	AddGroup(ctx context.Context, group model.Group) (model.Group, error)
+	GroupByID(ctx context.Context, gid int) (model.Group, error)
+	SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error)
+	DeleteGroup(ctx context.Context, gid int) error
+	UpdateGroup(ctx context.Context, group model.Group) error
+	AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error
+	RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error
+	GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error)
 }
 
 // ErrNotFound is returned if nothing is found.

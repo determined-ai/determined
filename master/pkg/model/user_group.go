@@ -5,7 +5,7 @@ import (
 )
 
 type Group struct {
-	bun.BaseModel `bun:"table:groups"`
+	bun.BaseModel `bun:"table:groups,alias:groups"`
 
 	ID     int    `bun:"id,pk,autoincrement" json:"id"`
 	Name   string `bun:"group_name,notnull"  json:"name"`
