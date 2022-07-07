@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package api
+package db
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/db"
+	// "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -28,6 +28,7 @@ var (
 
 func TestHelloWorld(t *testing.T) {
 	ctx := context.Background()
+	db := MustResolveTestPostgres(t)
 
 	t.Cleanup(func() { cleanUp(ctx, t) })
 	setUp(ctx, t)
@@ -60,7 +61,7 @@ func TestHelloWorld(t *testing.T) {
 	})
 
 	t.Run("update group", func(t *testing.T) {
-		// Put it back the way it was
+		// Put it back the way it was when we're done
 		defer func(name string) {
 			testGroup.Name = name
 			pgDB.UpdateGroup(ctx, testGroup)
@@ -160,7 +161,7 @@ func errAlreadyExists(err error) bool {
 		return false
 	}
 
-	if err == db.ErrDuplicateRecord {
+	if err == ErrDuplicateRecord {
 		return true
 	}
 
@@ -175,7 +176,7 @@ func errAlreadyExists(err error) bool {
 }
 
 func deleteUser(ctx context.Context, id model.UserID) error {
-	_, err := db.Bun().NewDelete().Table("users").Where("id = ?", id).Exec(ctx)
+	_, err := Bun().NewDelete().Table("users").Where("id = ?", id).Exec(ctx)
 	return err
 }
 
