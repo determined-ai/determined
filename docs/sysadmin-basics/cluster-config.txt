@@ -241,7 +241,7 @@ The master supports the following configuration settings:
       -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
       -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
 
-   -  ``environment_variables``: A list of environment variables that will be set in every trial
+   -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
       :ref:`environment-variables` for more details. Environment variables specified in experiment
       config will override default values specified here. Users can customize environment variables
