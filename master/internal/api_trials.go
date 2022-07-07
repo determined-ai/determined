@@ -382,12 +382,7 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 
 	for {
 		var response apiv1.QueryTrialsResponse
-
 		trialIDs, err := a.m.db.QueryTrials(experimentIDs)
-		var trialIdArray []int32
-		for _, trial := range trialIDs {
-			trialIdArray = append(trialIdArray, int32(trial.ID))
-		}
 
 		if err != nil {
 			return errors.Wrapf(err,
@@ -397,7 +392,8 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
-		response.TrialId = trialIdArray
+		response.TrialId = trialIDs
+
 		if err = resp.Send(&response); err != nil {
 			return err
 		}
