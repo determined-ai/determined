@@ -72,7 +72,7 @@ const shouldRecreate = (
       || (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
     );
   });
-  if(someSeriesHasChanged) return true;
+  if (someSeriesHasChanged) return true;
 
   return false;
 };
