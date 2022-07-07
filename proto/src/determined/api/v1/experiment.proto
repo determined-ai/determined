@@ -677,7 +677,7 @@ message GetSearcherEventsResponse {
   repeated string searcher_event = 1;
   // The last event that triggered client which sent the appropriate events
   // to master which sent them successfully to the experiment actor.
-  string last_triggering_event = 3;
+  string last_triggering_event = 2;
 }
 
 // Request for sending operations from a custom user search method.

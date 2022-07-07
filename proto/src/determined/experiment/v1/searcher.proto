@@ -51,13 +51,6 @@ message CloseTrialOperation {
   string trial_id = 1;
 }
 
-// Get progress of custom searcher method.
-message GetProgressOperation {
-  // A message field can't be empty because bindings won't compile.
-  // Making this a message to keep it consistent with other operations.
-  int32 empty_field = 1;
-}
-
 // Shutdown custom searcher method.
 message ShutdownOperation {
   // A message field can't be empty because bindings won't compile.
@@ -75,11 +68,8 @@ message SearcherOperation {
     CreateTrialOperation create_trial = 2;
     // CloseTrial is issued to close trial.
     CloseTrialOperation close_trial = 3;
-    // GetProgressOperation is issued to get the progress of the custom searcher
-    // method.
-    GetProgressOperation get_progress = 4;
     // ShutdownOperation is issued to shutdown the custom searcher method.
-    ShutdownOperation shutdown = 5;
+    ShutdownOperation shutdown = 4;
   }
 }
 
