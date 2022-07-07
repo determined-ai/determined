@@ -11,7 +11,6 @@ from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 
-
 # Apex is included only for GPU trials.
 try:
     import apex

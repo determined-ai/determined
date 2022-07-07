@@ -176,7 +176,7 @@ class DistributedContext:
            hvd.init()
            distributed = DistributedContext.from_horovod(hvd)
 
-        The IP address for the chief worker is required whenever ``hvd.cross_size() > 1``.  The value
+        The IP address for the chief worker is required whenever ``hvd.cross_size() > 1``. The value
         may be provided using the ``chief_ip`` argument or the ``DET_CHIEF_IP`` environment
         variable.
         """
