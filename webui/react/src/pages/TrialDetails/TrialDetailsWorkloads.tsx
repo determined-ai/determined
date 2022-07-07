@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
