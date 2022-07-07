@@ -131,7 +131,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           sortKey: settings.sortKey,
         });
         setWorkloads(wl.workloads);
-        setWorkloadCount(wl.count);
+        setWorkloadCount(wl.pagination.total || 0);
       } else {
         setWorkloads([]);
         setWorkloadCount(0);

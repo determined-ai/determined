@@ -451,8 +451,7 @@ export interface TrialDetails extends TrialItem {
   workloads: WorkloadGroup[];
 }
 
-export interface TrialWorkloads {
-  count: number;
+export interface TrialWorkloads extends WithPagination {
   workloads: WorkloadGroup[];
 }
 
