@@ -66,9 +66,20 @@ class TrialInfo:
         unique_port_offset: int,
         inter_node_network_interface: Optional[str],
     ):
+        """
+        TrialInfo contains information about the trial that is currently running.
+        """
+
+        #: The Trial ID for the current task.
         self.trial_id = trial_id
+
+        #: The Experiment ID for the current task.
         self.experiment_id = experiment_id
+
+        #: The random seed for the current Trial.
         self.trial_seed = trial_seed
+
+        #: The hyperparameter values selected for the current Trial.
         self.hparams = hparams
 
         # _config is private because it's not a stable API; as the experiment config version
@@ -150,6 +161,9 @@ class ClusterInfo:
     ClusterInfo exposes various properties that are set for tasks while running on the cluster.
 
     Examples:
+
+    .. code:: python
+
         info = det.get_cluster_info()
         assert info is not None, "this code only runs on-cluster!"
 
@@ -165,7 +179,7 @@ class ClusterInfo:
             print("trial.id", info.trial.id)
             print("trial.hparams", info.trial.hparams)
 
-    .. warn::
+    .. warning::
 
        Be careful with this object!  If you depend on a ClusterInfo object during training for
        anything more than e.g.  informational logging, you run the risk of making your training code
@@ -192,17 +206,45 @@ class ClusterInfo:
         rendezvous_info: Optional[RendezvousInfo] = None,
         resources_info: Optional[ResourcesInfo] = None,
     ):
+        #: The url for reaching the master.
         self.master_url = master_url
+
+        #: The unique identifier for this cluster.
         self.cluster_id = cluster_id
+
+        #: The identifier of the Determined agent this container is running on.
         self.agent_id = agent_id
+
+        #: The slot ids assigned to this container.
         self.slot_ids = slot_ids
+
+        #: The unique identifier for the current task.
         self.task_id = task_id
+
+        #: The unique identifier for the current allocation.
         self.allocation_id = allocation_id
+
+        #: The Determined login session token created for the current task.
         self.session_token = session_token
+
+        #: The type of task.  Currently one of the following string literals:
+        #:    - ``"TRIAL"``
+        #:    - ``"NOTEBOOK"``
+        #:    - ``"SHELL"``
+        #:    - ``"COMMAND"``
+        #:    - ``"TENSORBOARD"``
+        #:    - ``"CHECKPOINT_GC"``
+        #:
+        #: Additional values may be added in the future.
         self.task_type = task_type
 
+        #: The name on the master certificate, when using TLS.
         self.master_cert_name = master_cert_name
+
+        #: The file location for the master certificate, if present, or "noverify" if it has been
+        #: configured not to verify the master cert.
         self.master_cert_file = master_cert_file
+
         self._latest_checkpoint = latest_checkpoint
 
         self._trial_info = trial_info
@@ -264,24 +306,35 @@ class ClusterInfo:
 
     @property
     def latest_checkpoint(self) -> Optional[str]:
+        """
+        The checkpoint ID of the most recent checkpoint that should be loaded.
+
+        Since non-trial-type tasks cannot currently save checkpoints, ``.latest_checkpoint`` is
+        currently always None for non-trial-type tasks.
+        """
         if self.task_type != "TRIAL":
-            raise RuntimeError(
-                "the .latest_checkpoint property is not yet supported when .task_type "
-                f'("{self.task_type}") != "TRIAL"'
-            )
+            return None
         return self._latest_checkpoint
 
     @property
     def user_data(self) -> Dict[str, Any]:
+        """
+        The content of the ``data`` field of the experiment configuration.
+
+        Since other types of configuration files don't allow a ``data`` field, accessing
+        ``user_data`` from non-trial-type tasks will always return an empty dictionary.
+        """
         if self.task_type != "TRIAL":
-            raise RuntimeError(
-                "the .user_data property is not yet supported when .task_type "
-                f'("{self.task_type}") != "TRIAL"'
-            )
+            return {}
         return self.trial._config.get("data", {})
 
     @property
     def trial(self) -> TrialInfo:
+        """
+        The :class:`~determined.TrialInfo` sub-info object for the current trial task.
+
+        Attempting to read ``.trial`` in a non-trial task type will raise a RuntimeError.
+        """
         if self.task_type != "TRIAL":
             raise RuntimeError(
                 f'you cannot use the .trial property when .task_type ("{self.task_type}") != '
@@ -292,16 +345,24 @@ class ClusterInfo:
 
     @property
     def container_addrs(self) -> List[str]:
+        """A list of addresses for all containers in the allocation, ordered by rank."""
         assert self._rendezvous_info is not None
         return self._rendezvous_info.container_addrs
 
     @property
     def container_rank(self) -> int:
+        """
+        The rank assigned to this container.
+
+        When using a distributed training framework, the framework may choose a different rank for
+        this container.
+        """
         assert self._rendezvous_info is not None
         return self._rendezvous_info.container_rank
 
     @property
     def gpu_uuids(self) -> List[str]:
+        """The UUIDs to the gpus assigned to this container."""
         assert self._resources_info is not None
         return self._resources_info.gpu_uuids
 
@@ -310,6 +371,11 @@ _info = "unloaded"  # type: Union[ClusterInfo, str, None]
 
 
 def get_cluster_info() -> Optional[ClusterInfo]:
+    """
+    Returns either the :class:`~determined.ClusterInfo` object for the current task, or ``None`` if
+    not running in a task.
+    """
+
     global _info
     if isinstance(_info, str):
         _info = ClusterInfo._from_file()
