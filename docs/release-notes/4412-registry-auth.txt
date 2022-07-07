@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Since 0.17.15, there was a bug where ``task_container_defaults.registry_auth`` was not correctly
-   passed to tasks, resulting in tasks being unable to pull images.
