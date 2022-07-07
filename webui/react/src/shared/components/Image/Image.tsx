@@ -19,6 +19,7 @@ export const ImageAlert: React.FC<Props> = ({ darkLight }) => {
       viewBox="0 0 1024 1024"
       width="100"
       xmlns="http://www.w3.org/2000/svg">
+      <title>Alert</title>
       <ellipse className={css.shadow1} cx="512" cy="844" rx="400" ry="60" />
       <ellipse className={css.shadow2} cx="512" cy="844" rx="300" ry="40" />
       <ellipse className={css.shadow3} cx="502" cy="844" rx="200" ry="20" />
@@ -42,6 +43,7 @@ export const ImageEmpty: React.FC<Props> = () => (
     viewBox="-8 -5 80 51"
     width="100"
     xmlns="http://www.w3.org/2000/svg">
+    <title>Empty</title>
     <g fill="none" fillRule="evenodd" transform="translate(0 1)">
       <ellipse className="ant-empty-img-simple-ellipse" cx="32" cy="33" rx="32" ry="7" />
       <g className="ant-empty-img-simple-g" fillRule="nonzero">
@@ -71,6 +73,7 @@ export const ImageWarning: React.FC<Props> = ({ darkLight }) => {
       viewBox="0 0 1024 1024"
       width="100"
       xmlns="http://www.w3.org/2000/svg">
+      <title>Warning</title>
       <ellipse className={css.shadow1} cx="512" cy="844" rx="400" ry="60" />
       <ellipse className={css.shadow2} cx="512" cy="844" rx="300" ry="40" />
       <ellipse className={css.shadow3} cx="502" cy="844" rx="200" ry="20" />
