@@ -20,7 +20,7 @@ trainings_vt AS (
         s.total_batches
       FROM steps s
       WHERE s.trial_id = $1
-      AND $4 = 'All'
+      AND $4 = 'FILTER_OPTION_UNSPECIFIED'
     ) AS r1
 ),
 checkpoints_vt AS (
@@ -34,7 +34,7 @@ checkpoints_vt AS (
         c.resources
       FROM checkpoints_view c
       WHERE c.trial_id = $1
-      AND $4 != 'Has Validation'
+      AND $4 != 'FILTER_OPTION_VALIDATION'
     ) AS r1
 ),
 workloads AS (

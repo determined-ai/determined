@@ -497,6 +497,17 @@ export const compareTrials: DetApi<
   ),
 };
 
+type TrialWorkloadFilterOption =
+  'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT'
+  | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION' | 'FILTER_OPTION_VALIDATION';
+
+export const WorkloadFilterParamMap: Record<string, TrialWorkloadFilterOption> = {
+  [Type.TrialWorkloadFilter.All]: 'FILTER_OPTION_UNSPECIFIED',
+  [Type.TrialWorkloadFilter.Checkpoint]: 'FILTER_OPTION_CHECKPOINT',
+  [Type.TrialWorkloadFilter.CheckpointOrValidation]: 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION',
+  [Type.TrialWorkloadFilter.Validation]: 'FILTER_OPTION_VALIDATION',
+};
+
 export const getTrialWorkloads: DetApi<
   Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
 > = {
@@ -510,7 +521,8 @@ export const getTrialWorkloads: DetApi<
     params.offset,
     params.limit,
     params.sortKey || 'batches',
-    params.filter || 'All',
+    WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED']
+      || 'FILTER_OPTION_UNSPECIFIED',
   ),
 };
 

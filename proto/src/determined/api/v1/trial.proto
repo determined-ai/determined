@@ -244,6 +244,19 @@ message GetTrialWorkloadsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
   };
+
+  // Filter workloads with training, validation, and checkpoint information.
+  enum FilterOption {
+    // Any workload.
+    FILTER_OPTION_UNSPECIFIED = 0;
+    // Only workloads with an associated checkpoint.
+    FILTER_OPTION_CHECKPOINT = 1;
+    // Only validation workloads.
+    FILTER_OPTION_VALIDATION = 2;
+    // Only validation workloads or ones with an associated checkpoint.
+    FILTER_OPTION_CHECKPOINT_OR_VALIDATION = 3;
+  }
+
   // Order workloads in either ascending or descending order.
   OrderBy order_by = 1;
   // Skip the number of workloads before returning results. Negative values
@@ -253,10 +266,10 @@ message GetTrialWorkloadsRequest {
   int32 limit = 3;
   // Limit workloads to those that are owned by the specified trial.
   int32 trial_id = 4;
-  // Sort workloads by this column.
+  // Sort workloads by batches, a training metric, or a validation metric.
   string sort_key = 5;
   // Filter workloads with validation and/or checkpoint information.
-  string filter = 6;
+  FilterOption filter = 6;
 }
 // Response to GetTrialWorkloadsRequest.
 message GetTrialWorkloadsResponse {

@@ -17,14 +17,14 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import {
   CommandTask, ExperimentBase, MetricName,
-  Step, TrialDetails, WorkloadGroup,
+  Step, TrialDetails, TrialWorkloadFilter, WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
 import { extractMetricValue } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
-import { Settings, TrialWorkloadFilter } from './TrialDetailsOverview.settings';
+import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 const { Option } = Select;

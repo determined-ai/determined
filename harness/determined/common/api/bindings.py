@@ -108,6 +108,12 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
+class GetTrialWorkloadsRequestFilterOption(enum.Enum):
+    FILTER_OPTION_UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
+    FILTER_OPTION_CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
+    FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
+    FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
+
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -7706,14 +7712,14 @@ def get_GetTrialWorkloads(
     session: "client.Session",
     *,
     trialId: int,
-    filter: "typing.Optional[str]" = None,
+    filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
-        "filter": filter,
+        "filter": filter.value if filter is not None else None,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
