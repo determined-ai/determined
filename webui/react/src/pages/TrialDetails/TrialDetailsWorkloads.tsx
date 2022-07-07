@@ -153,11 +153,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.filter,
   ]);
 
-  usePolling(fetchWorkloads);
-
-  useEffect(() => {
-    fetchWorkloads();
-  }, [ fetchWorkloads, settings.sortDesc, settings.sortKey, trial?.id ]);
+  usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
     const data = workloads ?? [];
