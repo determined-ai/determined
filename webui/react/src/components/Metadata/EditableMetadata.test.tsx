@@ -64,9 +64,8 @@ describe('EditableMetadata', () => {
     ));
     const { handleOnChange } = setup(initMetadata, true);
 
-    await user.click(screen.getAllByRole('button')[removalIndex]);
-    await user.click(screen.getByText('Delete Row'));
-
+    await user.click((await screen.findAllByRole('button'))[removalIndex]);
+    await user.click(await screen.findByText('Delete Row'));
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });
 });
