@@ -55,14 +55,14 @@ message CloseTrialOperation {
 message GetProgressOperation {
   // A message field can't be empty because bindings won't compile.
   // Making this a message to keep it consistent with other operations.
-  int32 holder = 1;
+  int32 empty_field = 1;
 }
 
 // Shutdown custom searcher method.
 message ShutdownOperation {
   // A message field can't be empty because bindings won't compile.
   // Making this a message to keep it consistent with other operations.
-  int32 holder = 2;
+  int32 empty_field = 2;
 }
 
 // SearcherOperation is an operation issued by the searcher.

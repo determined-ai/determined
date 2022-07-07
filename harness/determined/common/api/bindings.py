@@ -2100,19 +2100,19 @@ class v1GetNotebooksResponse:
 class v1GetProgressOperation:
     def __init__(
         self,
-        holder: "typing.Optional[int]" = None,
+        emptyField: "typing.Optional[int]" = None,
     ):
-        self.holder = holder
+        self.emptyField = emptyField
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetProgressOperation":
         return cls(
-            holder=obj.get("holder", None),
+            emptyField=obj.get("emptyField", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "holder": self.holder if self.holder is not None else None,
+            "emptyField": self.emptyField if self.emptyField is not None else None,
         }
 
 class v1GetProjectExperimentsResponse:
@@ -5409,19 +5409,19 @@ class v1Shell:
 class v1ShutdownOperation:
     def __init__(
         self,
-        holder: "typing.Optional[int]" = None,
+        emptyField: "typing.Optional[int]" = None,
     ):
-        self.holder = holder
+        self.emptyField = emptyField
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ShutdownOperation":
         return cls(
-            holder=obj.get("holder", None),
+            emptyField=obj.get("emptyField", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "holder": self.holder if self.holder is not None else None,
+            "emptyField": self.emptyField if self.emptyField is not None else None,
         }
 
 class v1Slot:

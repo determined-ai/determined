@@ -1447,7 +1447,7 @@ export interface V1ComputeHPImportanceResponse {
  */
 export interface V1ConstantHyperparameter {
     /**
-     * 
+     * value of the constant hyperparameter.
      * @type {number}
      * @memberof V1ConstantHyperparameter
      */
@@ -2692,11 +2692,11 @@ export interface V1GetNotebooksResponse {
  */
 export interface V1GetProgressOperation {
     /**
-     * 
+     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
      * @type {number}
      * @memberof V1GetProgressOperation
      */
-    holder?: number;
+    emptyField?: number;
 }
 
 /**
@@ -3212,7 +3212,7 @@ export interface V1GetWorkspacesResponse {
  */
 export interface V1Hyperparameter {
     /**
-     * 
+     * Constant hyperparameter.
      * @type {V1ConstantHyperparameter}
      * @memberof V1Hyperparameter
      */
@@ -6297,11 +6297,11 @@ export interface V1Shell {
  */
 export interface V1ShutdownOperation {
     /**
-     * 
+     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
      * @type {number}
      * @memberof V1ShutdownOperation
      */
-    holder?: number;
+    emptyField?: number;
 }
 
 /**
