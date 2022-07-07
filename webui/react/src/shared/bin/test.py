@@ -100,16 +100,16 @@ def overwrite_with_cur_shared(user, name: str):
     run(f'cp -r . {dest}') # copy the current dir (SHARED_DIR) to dest
 
 
-def test(sm_hash: str, repo_names: t.List[str]):
+def test(sm_hash: str, repo_names: t.List[str], args):
     for name in repo_names:
         if name not in repos:
             raise ValueError(f'unknown repo name: {name}')
         user = repos[name]
-        clone_dir = setup_user(user, name, sm_hash)
+        clone_dir = setup_user(user, name, sm_hash, repo_hash=args.repo_hash)
         web_dir = clone_dir / user['web_dir']
         run_webui_tests(web_dir)
 
-def test_with_current_shared(repo_names: t.List[str]):
+def test_local_shared(repo_names: t.List[str], args):
     """
     test the current shared code with target repos.
     """
@@ -117,13 +117,13 @@ def test_with_current_shared(repo_names: t.List[str]):
         if name not in repos:
             raise ValueError(f'unknown repo name: {name}')
         user = repos[name]
-        clone_dir = setup_user(user, name)
+        clone_dir = setup_user(user, name, repo_hash=args.repo_hash)
         web_dir = clone_dir / user['web_dir']
         overwrite_with_cur_shared(user, name)
         run_webui_tests(web_dir)
 
 
-if __name__ == '__main__':
+def get_user_inputs():
     parser.add_argument('--sw-hash', help='desired shared-web githash to test')
     parser.add_argument('--test-local',
                         help='test the repositories with the current shared code',
@@ -131,19 +131,32 @@ if __name__ == '__main__':
     parser.add_argument('--repos',
                         help=f'repos to test. available: {", ".join(repos.keys())}',
                         nargs='+')
+    parser.add_argument('--repo-hash', type=str,
+                        help='git hash of the repo to test. defaults to master')
     args = parser.parse_args()
     repos_to_test = args.repos or repos.keys()
+
     # we cannot deduce the current shared-web git hash when using subtree
     for repo in repos_to_test:
         if not repos[repo]['using_sm'] and args.sw_hash is None:
             raise argparse.ArgumentError(None, '--sw-hash is required for subtree setup')
+
+    if args.repo_hash and len(repos_to_test) > 1:
+        # implementation limitation
+        raise argparse.ArgumentError(None, '--repo-hash can only be used with one repo')
+
     # get current git hash from cli args as first argument through sys.args if one is provided
-    sm_hash = args.sw_hash if args.sw_hash else get_current_hash()
+    sw_hash = args.sw_hash if args.sw_hash else get_current_hash()
+
+    return args, repos_to_test, sw_hash
+
+if __name__ == '__main__':
+    args, repos_to_test, sw_hash = get_user_inputs()
 
     if args.test_local:
         if pathlib.Path.cwd().name != 'shared':
             raise argparse.ArgumentError(None,
                                          '--test-local must be run from the shared directory root')
-        test_with_current_shared(repos_to_test)
+        test_local_shared(repos_to_test, args)
     else:
-        test(sm_hash, repos_to_test)
+        test(sw_hash, repos_to_test, args)
