@@ -13,105 +13,117 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestHelloWorld(t *testing.T) {
-	ctx := context.Background()
-
-	group, err := pgDB.AddGroup(ctx, model.Group{
+var (
+	testGroup = model.Group{
 		ID:   9001,
 		Name: "kljhadsflkgjhjklsfhg",
-	})
-	failNowIfErrOtherThanAlreadyExists(t, err)
-
-	// Clean up after ourselves in case there's a failure along the way
-	defer func(id int) {
-		err := pgDB.DeleteGroup(ctx, id)
-		if err != nil {
-			t.Logf("Error cleaning up after ourselves: %v", err)
-		}
-	}(group.ID)
-
-	groups, err := pgDB.SearchGroups(ctx, 0)
-	failNowIfErr(t, err)
-
-	index := groupsContain(groups, group.ID)
-	if index == -1 {
-		t.Fatalf("Expected groups to contain the new one")
 	}
-
-	foundGroup := groups[index]
-	if foundGroup.Name != group.Name {
-		t.Fatalf("Expected found group to have the same name ('%s' vs '%s')", foundGroup.Name, group.Name)
-	}
-
-	foundGroup, err = pgDB.GroupByID(ctx, group.ID)
-	failNowIfErr(t, err)
-	if foundGroup.Name != group.Name {
-		t.Fatalf("Expected group found by id to have the same name")
-	}
-
-	newName := "kljhadsflkgjhjklsfhgasdhj"
-	group.Name = newName
-	err = pgDB.UpdateGroup(ctx, group)
-	failNowIfErr(t, err)
-
-	foundGroup, err = pgDB.GroupByID(ctx, group.ID)
-	failNowIfErrOtherThanAlreadyExists(t, err)
-	if foundGroup.Name != newName {
-		t.Fatalf("Expected updated group to have new name")
-	}
-
-	var userID model.UserID = 1217651234
-	newUser := model.User{
-		ID:       userID,
-		Username: fmt.Sprintf("IntegrationTest%d", userID),
+	testUser = model.User{
+		ID:       1217651234,
+		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
 		Admin:    false,
 		Active:   false,
 	}
-	_, err = pgDB.AddUser(&newUser, nil)
-	failNowIfErrOtherThanAlreadyExists(t, err)
+)
 
-	err = pgDB.AddUsersToGroup(ctx, group.ID, newUser.ID)
-	failNowIfErrOtherThanAlreadyExists(t, err)
-	defer func(groupID int, userID model.UserID) {
-		err = pgDB.RemoveUsersFromGroup(ctx, groupID, newUser.ID)
-	}(group.ID, newUser.ID)
+func TestHelloWorld(t *testing.T) {
+	ctx := context.Background()
 
-	users, err := pgDB.GetUsersInGroup(ctx, group.ID)
-	failNowIfErr(t, err)
+	t.Cleanup(func() { cleanUp(ctx, t) })
+	setUp(ctx, t)
 
-	index = usersContain(users, newUser.ID)
-	if index == -1 {
-		t.Fatal("Expected to find user in group we added them to")
-	}
+	t.Run("group creation", func(t *testing.T) {
+		_, err := pgDB.AddGroup(ctx, testGroup)
+		failNowIfErr(t, err)
+	})
 
-	groups, err = pgDB.SearchGroups(ctx, newUser.ID)
-	failNowIfErr(t, err)
-	if i := groupsContain(groups, group.ID); i == -1 {
-		t.Fatalf("Expected to find group that our user belongs to")
-	}
+	t.Run("search groups", func(t *testing.T) {
+		groups, err := pgDB.SearchGroups(ctx, 0)
+		failNowIfErr(t, err)
 
-	err = pgDB.RemoveUsersFromGroup(ctx, group.ID, newUser.ID)
-	failNowIfErr(t, err)
+		index := groupsContain(groups, testGroup.ID)
+		if index == -1 {
+			t.Fatalf("Expected groups to contain the new one")
+		}
+		foundGroup := groups[index]
+		if foundGroup.Name != testGroup.Name {
+			t.Fatalf("Expected found group to have the same name ('%s' vs '%s')", foundGroup.Name, testGroup.Name)
+		}
+	})
 
-	users, err = pgDB.GetUsersInGroup(ctx, group.ID)
-	failNowIfErr(t, err)
-	if i := usersContain(users, newUser.ID); i != -1 {
-		t.Fatal("Expected not to find user in group after removing them")
-	}
+	t.Run("find group by id", func(t *testing.T) {
+		foundGroup, err := pgDB.GroupByID(ctx, testGroup.ID)
+		failNowIfErr(t, err)
+		if foundGroup.Name != testGroup.Name {
+			t.Fatalf("Expected group found by id to have the same name")
+		}
+	})
+
+	t.Run("update group", func(t *testing.T) {
+		// Put it back the way it was
+		defer func(name string) {
+			testGroup.Name = name
+			pgDB.UpdateGroup(ctx, testGroup)
+		}(testGroup.Name)
+
+		newName := "kljhadsflkgjhjklsfhgasdhj"
+		testGroup.Name = newName
+		err := pgDB.UpdateGroup(ctx, testGroup)
+		failNowIfErr(t, err)
+
+		foundGroup, err := pgDB.GroupByID(ctx, testGroup.ID)
+		failNowIfErr(t, err)
+		if foundGroup.Name != newName {
+			t.Fatalf("Expected updated group to have new name")
+		}
+	})
+
+	t.Run("add users to groups", func(t *testing.T) {
+		err := pgDB.AddUsersToGroup(ctx, testGroup.ID, testUser.ID)
+		failNowIfErr(t, err)
+		// Clean up
+		defer func(groupID int, userID model.UserID) {
+
+		}(testGroup.ID, testUser.ID)
+
+		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
+		failNowIfErr(t, err)
+
+		index := usersContain(users, testUser.ID)
+		if index == -1 {
+			t.Fatal("Expected to find user in group we added them to")
+		}
+	})
+
+	t.Run("search groups by user membership", func(t *testing.T) {
+		groups, err := pgDB.SearchGroups(ctx, testUser.ID)
+		failNowIfErr(t, err)
+
+		if i := groupsContain(groups, testGroup.ID); i == -1 {
+			t.Fatalf("Expected to find group that our user belongs to")
+		}
+	})
+
+	t.Run("remove users from group", func(t *testing.T) {
+		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
+		failNowIfErr(t, err)
+
+		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
+		failNowIfErr(t, err)
+
+		if i := usersContain(users, testUser.ID); i != -1 {
+			t.Fatal("Expected not to find user in group after removing them")
+		}
+	})
 }
+
+// TODO: test creating several groups and make sure it only deletes the one in question
+// TODO: move to master/internal/db, where other integration tests are
 
 func failNowIfErr(t *testing.T, err error) {
 	if err != nil {
 		panic(fmt.Sprintf("Failed because of an error: %s", err.Error()))
 	}
-}
-
-func failNowIfErrOtherThanAlreadyExists(t *testing.T, err error) {
-	if errAlreadyExists(err) {
-		return
-	}
-
-	failNowIfErr(t, err)
 }
 
 // groupsContains returns -1 if group id was not found, else returns the index
@@ -160,4 +172,31 @@ func errAlreadyExists(err error) bool {
 	}
 
 	return false
+}
+
+func deleteUser(ctx context.Context, id model.UserID) error {
+	_, err := db.Bun().NewDelete().Table("users").Where("id = ?", id).Exec(ctx)
+	return err
+}
+
+func setUp(ctx context.Context, t *testing.T) {
+	_, err := pgDB.AddUser(&testUser, nil)
+	failNowIfErr(t, err)
+}
+
+func cleanUp(ctx context.Context, t *testing.T) {
+	err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
+	if err != nil {
+		t.Logf("Error cleaning up group membership: %v", err)
+	}
+
+	err = pgDB.DeleteGroup(ctx, testGroup.ID)
+	if err != nil {
+		t.Logf("Error cleaning up group: %v", err)
+	}
+
+	err = deleteUser(ctx, testUser.ID)
+	if err != nil {
+		t.Logf("Error cleaning up user: %v\n", err)
+	}
 }

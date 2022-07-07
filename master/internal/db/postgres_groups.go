@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddGroup(ctx context.Context, group model.Group) (model.Group, error) {
 	_, err := Bun().NewInsert().Model(&group).Exec(ctx)
 	return group, err
@@ -48,6 +49,7 @@ func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
 	return err
 }
 
+// TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 	groupMem := make([]model.GroupMembership, 0, len(uids))
 	for _, uid := range uids {
