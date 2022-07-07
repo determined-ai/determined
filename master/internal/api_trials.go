@@ -512,7 +512,7 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 		req.TrialId,
 		nil,
 		nil,
-		"All",
+		"FILTER_OPTION_UNSPECIFIED",
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
