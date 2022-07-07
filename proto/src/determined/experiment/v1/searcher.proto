@@ -22,53 +22,57 @@ message CompleteValidateAfterOperation {
   double searcher_metric = 2;
 }
 
+// Constant Hyperparameter
+message ConstantHyperparameter {
+  double val = 1; 
+}
+
+// Hyperparameter.
+message Hyperparameter {
+  oneof union{
+    ConstantHyperparameter constant_hyperparam = 1; 
+  }
+}
+
+// Create a trial with given hyperparameters.
+message CreateTrialOperation {
+  // The key refers to which part of the model this hyperparameters are for.
+  // An example in this map would be: {"optimizer": {"learning_rate": 0.01}}
+  map<string, Hyperparameter> hyperparams = 1;
+}
+
+// Close a trial with given id.
+message CloseTrialOperation {
+  // trial_id is the id of the trial to close.
+  string trial_id = 1;
+}
+
+// Get progress of custom searcher method.
+message GetProgressOperation {
+  int32 holder = 1; 
+}
+
+// Shutdown custom searcher method.
+message ShutdownOperation {
+   int32 holder = 2; 
+}
+
 // SearcherOperation is an operation issued by the searcher.
 message SearcherOperation {
   // A searcher operation is one of the following operations.
   oneof union {
     // ValidateAfter is issued to tell a trial to train some then validate.
     ValidateAfterOperation validate_after = 1;
-    // CreateTrial is issued to create trial. TODO: Might need to create a
-    // message like ValidateAfter to include info needed?
-    string create_trial = 2;
-    // CloseTrial is issued to close trial. TODO: Might need to create a message
-    // like ValidateAfter to include info needed?
-    string close_trial = 3;
+    // CreateTrial is issued to create trial.
+    CreateTrialOperation create_trial = 2;
+    // CloseTrial is issued to close trial.
+    CloseTrialOperation close_trial = 3;
+    // GetProgressOperation is issued to get the progress of the custom searcher
+    // method.
+    GetProgressOperation get_progress = 4;
+    // ShutdownOperation is issued to shutdown the custom searcher method.
+    ShutdownOperation shutdown = 5;
   }
-}
-
-// SearcherState is the state of the searcher.
-message SearcherState {
-  // Number of trials requested.
-  int32 trials_requested = 1;
-  // TrialCreated maps model request ids to a boolean that is true
-  // when a trial is created.
-  map<string, bool> trials_created = 2;
-  // TrialCreated maps model request ids to a boolean that is true
-  // when a trial is closed.
-  map<string, bool> trials_closed = 3;
-  // Exits maps model request ids to a boolean that is true
-  // when a trial exits.
-  map<string, bool> exits = 4;
-  // Failures maps model request ids to a boolean that is true
-  // when a trial is fails.
-  map<string, bool> failures = 5;
-  // Trial progress maps model request ids to the number of epochs or
-  // batches that are completed.
-  map<string, double> trial_progress = 6;
-  // Shutdown is true when the searcher is done.
-  bool shutdown = 7;
-  // Maps the ValidateAfter.String() to the ValidateAfter operations when
-  // a Validation for trial has completed.
-  map<string, ValidateAfterOperation> completed_validate_operations = 8;
-  // Note: The following fields are created specifically for custom searcher.
-  // A queue of all operations received from the Client.
-  repeated SearcherOperation received_searcher_operations = 10;
-  // Maps a SearcherOperation.String() to true when the operation is completed.
-  map<string, bool> completed_searcher_operations = 11;
-  // A queue of all events recieved from the client.
-  // Each event string is appended with a counter id.
-  repeated string created_searcher_events = 12;
 }
 
 // RunnableType defines the type of operation that should be executed by trial

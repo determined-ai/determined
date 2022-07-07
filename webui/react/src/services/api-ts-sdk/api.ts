@@ -1283,6 +1283,20 @@ export interface V1CheckpointWorkload {
 }
 
 /**
+ * Close a trial with given id.
+ * @export
+ * @interface V1CloseTrialOperation
+ */
+export interface V1CloseTrialOperation {
+    /**
+     * trial_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1CloseTrialOperation
+     */
+    trialId?: string;
+}
+
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1427,6 +1441,20 @@ export interface V1ComputeHPImportanceResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1ConstantHyperparameter
+ */
+export interface V1ConstantHyperparameter {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ConstantHyperparameter
+     */
+    val?: number;
+}
+
+/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -1520,6 +1548,20 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+}
+
+/**
+ * Create a trial with given hyperparameters.
+ * @export
+ * @interface V1CreateTrialOperation
+ */
+export interface V1CreateTrialOperation {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1CreateTrialOperation
+     */
+    hyperparams?: { [key: string]: V1Hyperparameter; };
 }
 
 /**
@@ -2644,6 +2686,20 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
+ * Get progress of custom searcher method.
+ * @export
+ * @interface V1GetProgressOperation
+ */
+export interface V1GetProgressOperation {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GetProgressOperation
+     */
+    holder?: number;
+}
+
+/**
  * Response to GetProjectExperimentsRequest.
  * @export
  * @interface V1GetProjectExperimentsResponse
@@ -2704,17 +2760,11 @@ export interface V1GetResourcePoolsResponse {
  */
 export interface V1GetSearcherEventsResponse {
     /**
-     * The requested list of searcher events.
+     * The requested list of searcher events. str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
      * @type {Array<string>}
      * @memberof V1GetSearcherEventsResponse
      */
     searcherEvent?: Array<string>;
-    /**
-     * str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
-     * @type {V1SearcherOperation}
-     * @memberof V1GetSearcherEventsResponse
-     */
-    searcherState?: V1SearcherOperation;
     /**
      * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
      * @type {string}
@@ -3153,6 +3203,20 @@ export interface V1GetWorkspacesResponse {
      * @memberof V1GetWorkspacesResponse
      */
     pagination: V1Pagination;
+}
+
+/**
+ * Hyperparameter.
+ * @export
+ * @interface V1Hyperparameter
+ */
+export interface V1Hyperparameter {
+    /**
+     * 
+     * @type {V1ConstantHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    constantHyperparam?: V1ConstantHyperparameter;
 }
 
 /**
@@ -5953,17 +6017,29 @@ export interface V1SearcherOperation {
      */
     validateAfter?: V1ValidateAfterOperation;
     /**
-     * 
-     * @type {string}
+     * CreateTrial is issued to create trial.
+     * @type {V1CreateTrialOperation}
      * @memberof V1SearcherOperation
      */
-    createTrial?: string;
+    createTrial?: V1CreateTrialOperation;
     /**
-     * 
-     * @type {string}
+     * CloseTrial is issued to close trial.
+     * @type {V1CloseTrialOperation}
      * @memberof V1SearcherOperation
      */
-    closeTrial?: string;
+    closeTrial?: V1CloseTrialOperation;
+    /**
+     * GetProgressOperation is issued to get the progress of the custom searcher method.
+     * @type {V1GetProgressOperation}
+     * @memberof V1SearcherOperation
+     */
+    getProgress?: V1GetProgressOperation;
+    /**
+     * ShutdownOperation is issued to shutdown the custom searcher method.
+     * @type {V1ShutdownOperation}
+     * @memberof V1SearcherOperation
+     */
+    shutdown?: V1ShutdownOperation;
 }
 
 /**
@@ -6212,6 +6288,20 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     jobId: string;
+}
+
+/**
+ * Shutdown custom searcher method.
+ * @export
+ * @interface V1ShutdownOperation
+ */
+export interface V1ShutdownOperation {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ShutdownOperation
+     */
+    holder?: number;
 }
 
 /**

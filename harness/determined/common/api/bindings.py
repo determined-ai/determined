@@ -788,6 +788,24 @@ class v1CheckpointWorkload:
             "totalBatches": self.totalBatches,
         }
 
+class v1CloseTrialOperation:
+    def __init__(
+        self,
+        trialId: "typing.Optional[str]" = None,
+    ):
+        self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CloseTrialOperation":
+        return cls(
+            trialId=obj.get("trialId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialId": self.trialId if self.trialId is not None else None,
+        }
+
 class v1Command:
     def __init__(
         self,
@@ -908,6 +926,24 @@ class v1CompleteValidateAfterOperation:
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
         }
 
+class v1ConstantHyperparameter:
+    def __init__(
+        self,
+        val: "typing.Optional[float]" = None,
+    ):
+        self.val = val
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ConstantHyperparameter":
+        return cls(
+            val=float(obj["val"]) if obj.get("val", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "val": dump_float(self.val) if self.val is not None else None,
+        }
+
 class v1Container:
     def __init__(
         self,
@@ -996,6 +1032,24 @@ class v1CreateExperimentResponse:
         return {
             "experiment": self.experiment.to_json(),
             "config": self.config,
+        }
+
+class v1CreateTrialOperation:
+    def __init__(
+        self,
+        hyperparams: "typing.Optional[typing.Dict[str, v1Hyperparameter]]" = None,
+    ):
+        self.hyperparams = hyperparams
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateTrialOperation":
+        return cls(
+            hyperparams={k: v1Hyperparameter.from_json(v) for k, v in obj["hyperparams"].items()} if obj.get("hyperparams", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "hyperparams": {k: v.to_json() for k, v in self.hyperparams.items()} if self.hyperparams is not None else None,
         }
 
 class v1CurrentUserResponse:
@@ -2043,6 +2097,24 @@ class v1GetNotebooksResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
+class v1GetProgressOperation:
+    def __init__(
+        self,
+        holder: "typing.Optional[int]" = None,
+    ):
+        self.holder = holder
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProgressOperation":
+        return cls(
+            holder=obj.get("holder", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "holder": self.holder if self.holder is not None else None,
+        }
+
 class v1GetProjectExperimentsResponse:
     def __init__(
         self,
@@ -2110,24 +2182,20 @@ class v1GetSearcherEventsResponse:
         self,
         lastTriggeringEvent: "typing.Optional[str]" = None,
         searcherEvent: "typing.Optional[typing.Sequence[str]]" = None,
-        searcherState: "typing.Optional[v1SearcherOperation]" = None,
     ):
         self.searcherEvent = searcherEvent
-        self.searcherState = searcherState
         self.lastTriggeringEvent = lastTriggeringEvent
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
         return cls(
             searcherEvent=obj.get("searcherEvent", None),
-            searcherState=v1SearcherOperation.from_json(obj["searcherState"]) if obj.get("searcherState", None) is not None else None,
             lastTriggeringEvent=obj.get("lastTriggeringEvent", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "searcherEvent": self.searcherEvent if self.searcherEvent is not None else None,
-            "searcherState": self.searcherState.to_json() if self.searcherState is not None else None,
             "lastTriggeringEvent": self.lastTriggeringEvent if self.lastTriggeringEvent is not None else None,
         }
 
@@ -2587,6 +2655,24 @@ class v1GetWorkspacesResponse:
         return {
             "workspaces": [x.to_json() for x in self.workspaces],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1Hyperparameter:
+    def __init__(
+        self,
+        constantHyperparam: "typing.Optional[v1ConstantHyperparameter]" = None,
+    ):
+        self.constantHyperparam = constantHyperparam
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Hyperparameter":
+        return cls(
+            constantHyperparam=v1ConstantHyperparameter.from_json(obj["constantHyperparam"]) if obj.get("constantHyperparam", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "constantHyperparam": self.constantHyperparam.to_json() if self.constantHyperparam is not None else None,
         }
 
 class v1IdleNotebookRequest:
@@ -5037,27 +5123,35 @@ class v1SchedulerType(enum.Enum):
 class v1SearcherOperation:
     def __init__(
         self,
-        closeTrial: "typing.Optional[str]" = None,
-        createTrial: "typing.Optional[str]" = None,
+        closeTrial: "typing.Optional[v1CloseTrialOperation]" = None,
+        createTrial: "typing.Optional[v1CreateTrialOperation]" = None,
+        getProgress: "typing.Optional[v1GetProgressOperation]" = None,
+        shutdown: "typing.Optional[v1ShutdownOperation]" = None,
         validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
     ):
         self.validateAfter = validateAfter
         self.createTrial = createTrial
         self.closeTrial = closeTrial
+        self.getProgress = getProgress
+        self.shutdown = shutdown
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherOperation":
         return cls(
             validateAfter=v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj.get("validateAfter", None) is not None else None,
-            createTrial=obj.get("createTrial", None),
-            closeTrial=obj.get("closeTrial", None),
+            createTrial=v1CreateTrialOperation.from_json(obj["createTrial"]) if obj.get("createTrial", None) is not None else None,
+            closeTrial=v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj.get("closeTrial", None) is not None else None,
+            getProgress=v1GetProgressOperation.from_json(obj["getProgress"]) if obj.get("getProgress", None) is not None else None,
+            shutdown=v1ShutdownOperation.from_json(obj["shutdown"]) if obj.get("shutdown", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "validateAfter": self.validateAfter.to_json() if self.validateAfter is not None else None,
-            "createTrial": self.createTrial if self.createTrial is not None else None,
-            "closeTrial": self.closeTrial if self.closeTrial is not None else None,
+            "createTrial": self.createTrial.to_json() if self.createTrial is not None else None,
+            "closeTrial": self.closeTrial.to_json() if self.closeTrial is not None else None,
+            "getProgress": self.getProgress.to_json() if self.getProgress is not None else None,
+            "shutdown": self.shutdown.to_json() if self.shutdown is not None else None,
         }
 
 class v1SetCommandPriorityRequest:
@@ -5310,6 +5404,24 @@ class v1Shell:
             "addresses": self.addresses if self.addresses is not None else None,
             "agentUserGroup": self.agentUserGroup if self.agentUserGroup is not None else None,
             "jobId": self.jobId,
+        }
+
+class v1ShutdownOperation:
+    def __init__(
+        self,
+        holder: "typing.Optional[int]" = None,
+    ):
+        self.holder = holder
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ShutdownOperation":
+        return cls(
+            holder=obj.get("holder", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "holder": self.holder if self.holder is not None else None,
         }
 
 class v1Slot:

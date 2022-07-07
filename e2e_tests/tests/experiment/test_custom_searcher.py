@@ -20,9 +20,13 @@ def test_post_searcher_ops() -> None:
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
     sess = exp.determined_test_session()
-    op1 = bindings.v1SearcherOperation(
-        createTrial="createTrial"
-    )  # what do we need to include for an operation such as createTrial?
+    const_hp = bindings.v1ConstantHyperparameter(val = 0.2)
+    lr = bindings.v1Hyperparameter(constantHyperparam = const_hp)
+    # need to add more variations above according to what's in the HyperParameterVO struct,
+    # will do that after i figure out some of the types.
+    hyperparams = {"optimizer": lr}
+    create_trial_op = bindings.v1CreateTrialOperation(hyperparams=hyperparams)
+    op1 = bindings.v1SearcherOperation(createTrial=create_trial_op)
     body = bindings.v1PostSearcherOperationsRequest(
         experimentId=exp_id, searcherOperations=[op1], triggeredByEvent="Initial_Operations_0"
     )
