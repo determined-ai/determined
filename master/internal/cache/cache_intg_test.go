@@ -27,7 +27,7 @@ func TestCache(t *testing.T) {
 	cache := NewFileCache(testCacheDir, 1*time.Hour)
 
 	// Test fetch
-	files, err := cache.getFileTree(expID)
+	files, _, err := cache.getFileTree(expID)
 	require.NoError(t, err)
 	require.True(t, len(files) > 0)
 	path := files[0].Path

@@ -118,19 +118,19 @@ func (f *FileCache) genPath(expID int, path string) string {
 	return filepath.Join(f.rootDir, strconv.Itoa(expID), path)
 }
 
-func (f *FileCache) getFileTree(expID int) ([]*experimentv1.FileNode, error) {
+func (f *FileCache) getFileTree(expID int) ([]*experimentv1.FileNode, *modelDefFolder, error) {
 	folder, err := f.getOrCreateFolder(expID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	folder.lock.RLock()
 	defer folder.lock.RUnlock()
-	return folder.fileTree, nil
+	return folder.fileTree, folder, nil
 }
 
 // GetFileTreeNested returns folder tree structure with given experiment id.
 func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, error) {
-	fileTree, err := f.getFileTree(expID)
+	fileTree, _, err := f.getFileTree(expID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +139,7 @@ func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, erro
 
 // GetFileContent returns file with given experiment id and path.
 func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
-	folder, err := f.getOrCreateFolder(expID)
-	if err != nil {
-		return []byte{}, err
-	}
-	fileTree, err := f.getFileTree(expID)
+	fileTree, folder, err := f.getFileTree(expID)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -156,13 +152,13 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 				_, ok := err.(*fs.PathError)
 				if ok {
 					log.Debugf(`File system cache (%s) is likely out of sync. 
-					File system cache is about to re-initialize and this message should not appear again.`,
+File system cache is about to re-initialize and this message should not appear again.`,
 						f.rootDir)
-					err = os.RemoveAll(f.rootDir)
+					delete(f.caches, expID)
+					err = os.RemoveAll(f.genPath(expID, ""))
 					if err != nil {
 						return []byte{}, err
 					}
-					f.caches = make(map[int]*modelDefFolder)
 					return f.GetFileContent(expID, path)
 				}
 				return []byte{}, err
