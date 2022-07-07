@@ -4266,18 +4266,22 @@ class v1QueryFilters:
     def __init__(
         self,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
+        projectIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.experimentIds = experimentIds
+        self.projectIds = projectIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryFilters":
         return cls(
             experimentIds=obj.get("experimentIds", None),
+            projectIds=obj.get("projectIds", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
+            "projectIds": self.projectIds if self.projectIds is not None else None,
         }
 
 class v1QueryTrialsRequest:
