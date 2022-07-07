@@ -24,13 +24,17 @@ message CompleteValidateAfterOperation {
 
 // Constant Hyperparameter
 message ConstantHyperparameter {
-  double val = 1; 
+  // value of the constant hyperparameter.
+  double val = 1;
 }
 
 // Hyperparameter.
 message Hyperparameter {
-  oneof union{
-    ConstantHyperparameter constant_hyperparam = 1; 
+  // A user can provide one of the hyperparameter types for
+  // the custom searcher.
+  oneof union {
+    // Constant hyperparameter.
+    ConstantHyperparameter constant_hyperparam = 1;
   }
 }
 
@@ -49,12 +53,16 @@ message CloseTrialOperation {
 
 // Get progress of custom searcher method.
 message GetProgressOperation {
-  int32 holder = 1; 
+  // A message field can't be empty because bindings won't compile.
+  // Making this a message to keep it consistent with other operations.
+  int32 holder = 1;
 }
 
 // Shutdown custom searcher method.
 message ShutdownOperation {
-   int32 holder = 2; 
+  // A message field can't be empty because bindings won't compile.
+  // Making this a message to keep it consistent with other operations.
+  int32 holder = 2;
 }
 
 // SearcherOperation is an operation issued by the searcher.

@@ -20,8 +20,8 @@ def test_post_searcher_ops() -> None:
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
     sess = exp.determined_test_session()
-    const_hp = bindings.v1ConstantHyperparameter(val = 0.2)
-    lr = bindings.v1Hyperparameter(constantHyperparam = const_hp)
+    const_hp = bindings.v1ConstantHyperparameter(val=0.2)
+    lr = bindings.v1Hyperparameter(constantHyperparam=const_hp)
     # need to add more variations above according to what's in the HyperParameterVO struct,
     # will do that after i figure out some of the types.
     hyperparams = {"optimizer": lr}
