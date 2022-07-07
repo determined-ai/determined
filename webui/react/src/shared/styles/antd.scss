@@ -88,6 +88,10 @@ html {
 
   /* Modal */
 
+  .ant-modal > .ant-modal-content {
+    border-radius: var(--theme-border-radius-strong);
+    box-shadow: var(--theme-elevation-strong);
+  }
   .ant-modal > .ant-modal-content > .ant-modal-header,
   .ant-modal > .ant-modal-content > .ant-modal-body {
     padding: 16px;
