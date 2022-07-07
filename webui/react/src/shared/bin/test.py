@@ -30,7 +30,10 @@ def print_colored(skk): print("\033[93m {}\033[00m" .format(skk))
 
 
 def run(command, cwd: t.Optional[pathlib.Path] = None):
-    print_colored(f'{command} [cwd: {cwd}]')
+    msg = command
+    if cwd is not None:
+        msg = f'{command} [cwd: {cwd}]'
+    print_colored(msg)
     subprocess.run(command, cwd=cwd, check=True, shell=True)
 
 
@@ -63,6 +66,7 @@ def setup_user(user, name: str, sm_hash: t.Optional[str] = None, repo_hash: t.Op
     web_dir = clone_dir / user['web_dir']
     run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
     run(f'git checkout {repo_hash}', cwd=clone_dir)
+    run('make get-deps', cwd=web_dir) # calls submodule update
 
     if sm_hash is None: return clone_dir
     # update the shared code
@@ -80,7 +84,7 @@ def run_webui_tests(web_dir: pathlib.Path):
     """
     runs webui tests. requires web_dir to be set up
     """
-    for target in ['get-deps', 'check', 'build', 'test']:
+    for target in ['check', 'build', 'test']:
         run(f'make {target}', cwd=web_dir)
 
 
@@ -91,11 +95,9 @@ def overwrite_with_cur_shared(user, name: str):
     """
     clone_dir = '/tmp' / pathlib.Path(name)
     web_dir = clone_dir / user['web_dir']
-    run(f'rm -rf {clone_dir}; git clone {user["repo"]} {clone_dir} --recurse-submodules')
     dest = web_dir / SHARED_DIR
-    src = pathlib.Path.cwd() # FIXME find out where the current shared dir is relative to the test script
-    run(f'rm -rf {dest}; mkdir -p {dest}')
-    run(f'cp -r {src} {dest}')
+    run(f'rm -rf {dest}')
+    run(f'cp -r . {dest}') # copy the current dir (SHARED_DIR) to dest
 
 
 def test(sm_hash: str, repo_names: t.List[str]):
