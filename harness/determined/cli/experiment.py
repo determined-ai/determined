@@ -474,7 +474,8 @@ def config(args: Namespace) -> None:
 @authentication.required
 def download_model_def(args: Namespace) -> None:
     resp = bindings.get_GetModelDef(setup_session(args), experimentId=args.experiment_id)
-    with args.output_dir.joinpath(str(args.experiment_id)).open("wb") as f:
+    dst = f"experiment_{args.experiment_id}_model_def.tgz"
+    with args.output_dir.joinpath(dst).open("wb") as f:
         f.write(base64.b64decode(resp.b64Tgz))
 
 
