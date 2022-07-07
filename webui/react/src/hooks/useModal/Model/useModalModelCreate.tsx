@@ -1,30 +1,22 @@
 import { Input, ModalFuncProps, notification } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-import { debounce } from 'throttle-debounce';
-
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
+import React, { useCallback, useEffect, useState } from 'react';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { debounce } from 'throttle-debounce';
 import { Metadata } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
 
-<<<<<<<< HEAD:webui/react/src/hooks/useModal/Model/useModalModelCreate.tsx
 interface OpenProps {
-========
-import css from './useModalModelCreate.module.scss';
-import useRegisterCheckpointModal from './useRegisterCheckpointModal';
-
-export interface ShowCreateModelProps {
->>>>>>>> 457e9f186 (style: update disable button style):webui/react/src/hooks/useModalModelCreate.tsx
   checkpointUuid?: string;
 }
 
@@ -43,7 +35,6 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (openProps?: OpenProps) => void;
 }
 
-<<<<<<<< HEAD:webui/react/src/hooks/useModal/Model/useModalModelCreate.tsx
 const DEFAULT_MODAL_STATE = {
   expandDetails: false,
   isNameUnique: true,
@@ -53,20 +44,6 @@ const DEFAULT_MODAL_STATE = {
   tags: [],
   visible: false,
 };
-========
-const useModalModelCreate = (): ModalHooks => {
-  const { showModal: showRegisterCheckpointModal } = useRegisterCheckpointModal();
-  const modalRef = useRef<ReturnType<ModalFunc>>();
-  const [ modalState, setModalState ] = useState<ModalState>({
-    expandDetails: false,
-    isNameUnique: true,
-    metadata: {},
-    modelDescription: '',
-    modelName: '',
-    tags: [],
-    visible: false,
-  });
->>>>>>>> 457e9f186 (style: update disable button style):webui/react/src/hooks/useModalModelCreate.tsx
 
 const useModalModelCreate = (): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
