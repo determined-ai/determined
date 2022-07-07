@@ -1,13 +1,12 @@
 import { Alert, Button, InputNumber } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalFuncProps } from 'antd';
-import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-
 import Link from 'components/Link';
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
+import yaml from 'js-yaml';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { RawJson } from 'shared/types';
@@ -159,8 +158,8 @@ const useModalJupyterLab = (): ModalHooks => {
     content,
     icon: null,
     title: 'Launch JupyterLab',
-    width: 540,
-  }), [ content ]);
+    width: showFullConfig ? 1000 : undefined,
+  }), [ content, showFullConfig ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setVisible(true);
