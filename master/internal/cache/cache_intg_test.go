@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package db
+package cache
 
 import (
 	"github.com/stretchr/testify/require"
@@ -11,15 +11,17 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/db"
 )
 
 func TestCache(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
-	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	etc.SetRootPath(db.RootFromDB)
+	dbIns := db.MustResolveTestPostgres(t)
+	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
 
-	user := requireMockUser(t, db)
-	expID := requireMockExperiment(t, db, user).ID
+	user := db.RequireMockUser(t, dbIns)
+	expID := db.RequireMockExperiment(t, dbIns, user).ID
 
 	testCacheDir := "/tmp/determined-cache"
 	cache := NewFileCache(testCacheDir, 1*time.Hour)

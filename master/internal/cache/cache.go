@@ -1,4 +1,4 @@
-package db
+package cache
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
@@ -38,7 +39,7 @@ type FileCache struct {
 func NewFileCache(rootDir string, maxAge time.Duration) *FileCache {
 	err := os.RemoveAll(rootDir)
 	if err != nil {
-		log.WithError(err).Errorf("failed to initialize model def cache at %s", rootDir)
+		log.WithError(err).Errorf("failed to clear the content of cache folder at %s", rootDir)
 	}
 	return &FileCache{
 		rootDir: rootDir,
@@ -58,7 +59,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	exp := struct {
 		ModelDefinition []byte
 	}{}
-	err := Bun().NewSelect().TableExpr(
+	err := db.Bun().NewSelect().TableExpr(
 		"experiments").Column("model_definition").Where("id = ?", expID).Scan(context.Background(), &exp)
 	if err != nil {
 		return nil, err
@@ -133,12 +134,7 @@ func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, erro
 	if err != nil {
 		return nil, err
 	}
-	var fileTreeNested []*experimentv1.FileNode
-	for _, file := range fileTree {
-		fileTreeNested = insertToTree(
-			fileTreeNested, strings.Split(file.Path, string(os.PathSeparator)), file)
-	}
-	return fileTreeNested, nil
+	return genNestedTree(fileTree), nil
 }
 
 // GetFileContent returns file with given experiment id and path.
@@ -153,8 +149,8 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 	}
 	for _, file := range fileTree {
 		if file.Path == path {
-			folder.lock.RLock()
-			defer folder.lock.RUnlock()
+			folder.lock.Lock()
+			defer folder.lock.Unlock()
 			file, err := os.ReadFile(f.genPath(expID, path))
 			if err != nil {
 				_, ok := err.(*fs.PathError)
@@ -175,6 +171,17 @@ func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
 		}
 	}
 	return nil, fs.ErrNotExist
+}
+
+// This function assumes fileTree is a valid input generated from file system.
+// Which means all nodes are presented, and parent folder comes before child.
+func genNestedTree(fileTree []*experimentv1.FileNode) []*experimentv1.FileNode {
+	var fileTreeNested []*experimentv1.FileNode
+	for _, file := range fileTree {
+		fileTreeNested = insertToTree(
+			fileTreeNested, strings.Split(file.Path, string(os.PathSeparator)), file)
+	}
+	return fileTreeNested
 }
 
 func insertToTree(
