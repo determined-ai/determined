@@ -18,12 +18,14 @@ from tests.cluster import utils as cluster_utils
 
 
 def maybe_create_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None, master_url = None
 ) -> subprocess.CompletedProcess:
+    if master_url is None: 
+        master_url = conf.make_master_url()
     command = [
         "det",
         "-m",
-        conf.make_master_url(),
+        master_url,
         "experiment",
         "create",
         config_file,
@@ -42,9 +44,9 @@ def maybe_create_experiment(
 
 
 def create_experiment(
-    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
+    config_file: str, model_def_file: str, create_args: Optional[List[str]] = None, master_url: str = None
 ) -> int:
-    completed_process = maybe_create_experiment(config_file, model_def_file, create_args)
+    completed_process = maybe_create_experiment(config_file, model_def_file, create_args, master_url)
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr
     )
@@ -535,9 +537,10 @@ def run_basic_test(
     expect_workloads: bool = True,
     expect_checkpoints: bool = True,
     priority: int = -1,
+    master_url:str = None
 ) -> int:
     assert os.path.isdir(model_def_file)
-    experiment_id = create_experiment(config_file, model_def_file, create_args)
+    experiment_id = create_experiment(config_file, model_def_file, create_args, master_url)
     if priority != -1:
         set_priority(experiment_id=experiment_id, priority=priority)
 

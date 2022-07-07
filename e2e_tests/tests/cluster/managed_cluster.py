@@ -12,6 +12,8 @@ from tests import config as conf
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
 
+from .utils import get_master_port
+
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
@@ -24,8 +26,7 @@ def _get_agent_data(master_url: str) -> List[Dict[str, Any]]:
     output = subprocess.check_output(command).decode()
     agent_data = cast(List[Dict[str, Any]], json.loads(output))
     return agent_data
-
-
+                
 class ManagedCluster:
     # This utility wrapper uses double agent yaml configurations,
     # but provides helpers to run/kill a single agent setup.
@@ -35,9 +36,11 @@ class ManagedCluster:
         from devcluster import Devcluster
 
         self.dc = Devcluster(config=config)
-        self.master_url = conf.make_master_url()
+        lc = conf.load_config(config_path=config)
+        port = get_master_port(lc)
+        self.master_url = conf.make_master_url(master_port=port)
         self.reattach = reattach
-
+    
     def __enter__(self) -> "ManagedCluster":
         self.old_cd = os.getcwd()
         os.chdir(str(conf.PROJECT_ROOT_PATH))
