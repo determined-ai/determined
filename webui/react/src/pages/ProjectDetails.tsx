@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -11,7 +11,6 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
@@ -23,6 +22,7 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -35,11 +35,11 @@ import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNot
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
-  getExperimentLabels, getProject, getProjectExperiments,
-  killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
-  setProjectNotes,
-  unarchiveExperiment } from 'services/api';
+import {
+  activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
+  getExperimentLabels, getProject, getProjectExperiments, killExperiment, openOrCreateTensorBoard,
+  patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
+} from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
@@ -798,8 +798,11 @@ const ProjectDetails: React.FC = () => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>

@@ -117,6 +117,22 @@ describe('Color Utilities', () => {
     });
   });
 
+  describe('rgba2hex', () => {
+    it('should convert all rgb colors to hex string', () => {
+      colors.forEach(color => {
+        expect(utils.rgba2hex(color.rgb)).toEqual(color.hex);
+      });
+    });
+  });
+
+  describe('rgba2hsl', () => {
+    it('should convert all rgb colors to hex string', () => {
+      colors.forEach(color => {
+        expect(utils.rgba2hsl(color.rgb)).toEqual(color.hsl);
+      });
+    });
+  });
+
   describe('rgba2str', () => {
     it('should convert all rgb colors to rgb string', () => {
       colors.forEach(color => {
@@ -166,6 +182,22 @@ describe('Color Utilities', () => {
       const result1 = { a: 1.0, b: 206, g: 161, r: 116 };
       expect(utils.rgbaMix(color, black, amount)).toStrictEqual(result0);
       expect(utils.rgbaMix(color, white, amount)).toStrictEqual(result1);
+    });
+  });
+
+  describe('str2hsl', () => {
+    it('should convert all hex colors to hsl', () => {
+      colors.forEach(color => {
+        expect(utils.str2hsl(color.hex)).toEqual(color.hsl);
+      });
+    });
+
+    it('should convert all rgba string colors to hsl', () => {
+      expect(utils.str2hsl('rgba(255, 128, 64, 0.5)')).toEqual({ h: 20, l: 63, s: 100 });
+    });
+
+    it('should handle invalid rgba string colors', () => {
+      expect(utils.str2hsl('rgba(1000, 1000, 1000, 10')).toEqual({ h: 0, l: 0, s: 0 });
     });
   });
 

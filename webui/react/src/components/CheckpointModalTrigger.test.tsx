@@ -15,6 +15,8 @@ jest.mock('services/api', () => ({
   },
 }));
 
+const user = userEvent.setup();
+
 const ModalTrigger: React.FC = () => {
   const { experiment, checkpoint } = generateTestExperimentData();
 
@@ -34,8 +36,6 @@ const ModalTrigger: React.FC = () => {
 };
 
 const setup = async () => {
-  const user = userEvent.setup();
-
   render(
     <StoreProvider>
       <ModalTrigger />

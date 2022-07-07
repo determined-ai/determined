@@ -9,6 +9,9 @@
   padding: 0 6px;
   text-align: center;
 }
+.dashed {
+  border: dashed var(--theme-stroke-width) var(--theme-float-border-strong);
+}
 .id {
   font-family: var(--font-family-code);
   font-size: 12px;
@@ -18,4 +21,8 @@
 }
 .state {
   text-transform: uppercase;
+}
+.state.neutral {
+  background-color: var(--theme-float);
+  color: var(--theme-float-on);
 }

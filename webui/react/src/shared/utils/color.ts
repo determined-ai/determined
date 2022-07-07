@@ -44,10 +44,40 @@ export const glasbeyColor = (seriesIdx: number): string => {
 };
 
 export const hex2hsl = (hex: string): HslColor => {
-  const rgb = hex2rgb(hex);
-  const r = rgb.r / 255;
-  const g = rgb.g / 255;
-  const b = rgb.b / 255;
+  return rgba2hsl(hex2rgb(hex));
+};
+
+export const hex2rgb = (hex: string): RgbaColor => {
+  const rgb = { b: 0, g: 0, r: 0 };
+  const result = hexRegex.exec(hex);
+
+  if (result && result.length > 3) {
+    rgb.r = parseInt(result[1], 16);
+    rgb.g = parseInt(result[2], 16);
+    rgb.b = parseInt(result[3], 16);
+  }
+
+  return rgb;
+};
+
+export const hsl2str = (hsl: HslColor): string => {
+  return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+};
+
+export const rgba2hex = (rgba: RgbaColor): string => {
+  const r = rgba.r.toString(16);
+  const g = rgba.g.toString(16);
+  const b = rgba.b.toString(16);
+  const rr = (r.length < 2 ? '0' : '') + r;
+  const gg = (g.length < 2 ? '0' : '') + g;
+  const bb = (b.length < 2 ? '0' : '') + b;
+  return `#${rr}${gg}${bb}`;
+};
+
+export const rgba2hsl = (rgba: RgbaColor): HslColor => {
+  const r = rgba.r / 255;
+  const g = rgba.g / 255;
+  const b = rgba.b / 255;
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const avg = (max + min) / 2;
@@ -72,23 +102,6 @@ export const hex2hsl = (hex: string): HslColor => {
   hsl.l = Math.round(hsl.l * 100);
 
   return hsl;
-};
-
-export const hex2rgb = (hex: string): RgbaColor => {
-  const rgb = { b: 0, g: 0, r: 0 };
-  const result = hexRegex.exec(hex);
-
-  if (result && result.length > 3) {
-    rgb.r = parseInt(result[1], 16);
-    rgb.g = parseInt(result[2], 16);
-    rgb.b = parseInt(result[3], 16);
-  }
-
-  return rgb;
-};
-
-export const hsl2str = (hsl: HslColor): string => {
-  return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
 };
 
 export const rgba2str = (rgba: RgbaColor): string => {
@@ -140,6 +153,10 @@ export const rgbaMix = (
     g: rounded ? Math.round(g) : g,
     r: rounded ? Math.round(r) : r,
   };
+};
+
+export const str2hsl = (str: string): HslColor => {
+  return rgba2hsl(str2rgba(str));
 };
 
 export const str2rgba = (str: string): RgbaColor => {

@@ -63,10 +63,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
       <span onClick={handleModalCheckpointClick}>
         {children !== undefined ? children : (
           <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-            />
+            <Button aria-label="View Checkpoint" icon={<Icon name="checkpoint" />} />
           </Tooltip>
         )}
       </span>

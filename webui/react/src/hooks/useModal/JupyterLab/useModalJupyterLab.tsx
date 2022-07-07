@@ -159,8 +159,8 @@ const useModalJupyterLab = (): ModalHooks => {
     content,
     icon: null,
     title: 'Launch JupyterLab',
-    width: 540,
-  }), [ content ]);
+    width: showFullConfig ? 1000 : undefined,
+  }), [ content, showFullConfig ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setVisible(true);

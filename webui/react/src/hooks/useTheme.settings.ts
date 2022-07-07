@@ -1,21 +1,17 @@
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-
-export enum Mode {
-  System = 'system',
-  Light = 'light',
-  Dark = 'dark'
-}
+import { Mode } from 'shared/themes';
 
 export interface Settings {
-  theme: Mode;
+  mode: Mode;
 }
 
 export const config: SettingsConfig = {
   settings: [
     {
       defaultValue: Mode.System,
-      key: 'theme',
-      storageKey: 'theme',
+      key: 'mode',
+      skipUrlEncoding: true,
+      storageKey: 'mode',
       type: { baseType: BaseType.String },
     },
   ],
