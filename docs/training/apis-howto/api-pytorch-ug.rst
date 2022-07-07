@@ -43,7 +43,7 @@ If you want to port training code that defines the training procedure and can al
 Determined, we suggest you read through the whole document to ensure you understand the API. Also,
 we suggest you use a couple of PyTorch API features at one time and running the code will help
 debug. You can also use fake data to test your training code with PyTorch API to get quicker
-iteration. For more debugging tips, see :doc:`/training/best-practices/debug-models`.
+iteration. For more debugging tips, see :doc:`/training/debug-models`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 

@@ -1,6 +1,6 @@
-####################
-Prepare Environment
-####################
+#############################
+Prepare Container Environment
+#############################
 
 This section covers resources and operations you might need to set up your environment for training:
 
@@ -13,10 +13,6 @@ This section covers resources and operations you might need to set up your envir
 | :doc:`custom-env`             | Set environment variables, use a startup hook, and use custom  |
 |                               | and default Docker images.                                     |
 +-------------------------------+----------------------------------------------------------------+
-| :doc:`config-template`        | Create configuration templates to reduce redundancy in your    |
-|                               | organization.                                                  |
-+-------------------------------+----------------------------------------------------------------+
-
 
 .. toctree::
    :maxdepth: 1
@@ -24,4 +20,3 @@ This section covers resources and operations you might need to set up your envir
 
    set-environment-images
    custom-env
-   config-template

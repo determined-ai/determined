@@ -13,11 +13,12 @@
    :hidden:
 
    Introduction to Distributed Training <training/dtrain-introduction>
-   Prepare Environment <training/setup-guide/overview>
+   Prepare Container Environment <training/setup-guide/overview>
    Load Model Data <training/load-model-data>
    Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Submit Experiment <training/submit-experiment>
+   How to Debug Models <training/debug-models>
    Model Management <training/model-management/overview>
    Best Practices <training/best-practices/overview>
 
