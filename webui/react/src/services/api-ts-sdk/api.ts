@@ -283,20 +283,6 @@ export enum ProtobufNullValue {
 /**
  * 
  * @export
- * @interface QueryTrialsRequestQueryFilters
- */
-export interface QueryTrialsRequestQueryFilters {
-    /**
-     * 
-     * @type {Array<number>}
-     * @memberof QueryTrialsRequestQueryFilters
-     */
-    experimentIds?: Array<number>;
-}
-
-/**
- * 
- * @export
  * @interface RuntimeError
  */
 export interface RuntimeError {
@@ -5122,6 +5108,40 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1QueryFilters
+ */
+export interface V1QueryFilters {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1QueryFilters
+     */
+    experimentIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1QueryFilters
+     */
+    projectIds?: Array<number>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1QueryTrialsRequest
+ */
+export interface V1QueryTrialsRequest {
+    /**
+     * 
+     * @type {V1QueryFilters}
+     * @memberof V1QueryTrialsRequest
+     */
+    filters?: V1QueryFilters;
 }
 
 /**
@@ -10565,14 +10585,18 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options: any = {}): FetchArgs {
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+            }
             const localVarPath = `/api/v1/trials/query`;
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -10584,14 +10608,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
-            if (filtersExperimentIds) {
-                localVarQueryParameter['filters.experimentIds'] = filtersExperimentIds;
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -11319,12 +11343,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).queryTrials(filtersExperimentIds, options);
+        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).queryTrials(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11705,12 +11729,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
-            return ExperimentsApiFp(configuration).queryTrials(filtersExperimentIds, options)(fetch, basePath);
+        queryTrials(body: V1QueryTrialsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).queryTrials(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12093,13 +12117,13 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+     * @param {V1QueryTrialsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
-        return ExperimentsApiFp(this.configuration).queryTrials(filtersExperimentIds, options)(this.fetch, this.basePath);
+    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20515,14 +20539,18 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options: any = {}): FetchArgs {
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
+            }
             const localVarPath = `/api/v1/trials/query`;
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -20534,14 +20562,14 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
-            if (filtersExperimentIds) {
-                localVarQueryParameter['filters.experimentIds'] = filtersExperimentIds;
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1QueryTrialsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -20869,12 +20897,12 @@ export const TrialsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).queryTrials(filtersExperimentIds, options);
+        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).queryTrials(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21035,12 +21063,12 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
-         * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+         * @param {V1QueryTrialsRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
-            return TrialsApiFp(configuration).queryTrials(filtersExperimentIds, options)(fetch, basePath);
+        queryTrials(body: V1QueryTrialsRequest, options?: any) {
+            return TrialsApiFp(configuration).queryTrials(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21176,13 +21204,13 @@ export class TrialsApi extends BaseAPI {
 
     /**
      * 
-     * @param {Array<number>} [filtersExperimentIds] experiment ids to include.
+     * @param {V1QueryTrialsRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public queryTrials(filtersExperimentIds?: Array<number>, options?: any) {
-        return TrialsApiFp(this.configuration).queryTrials(filtersExperimentIds, options)(this.fetch, this.basePath);
+    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
+        return TrialsApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
     }
 
     /**

@@ -47,6 +47,7 @@ message WorkloadContainer {
 message QueryFilters {
   // experiment ids to include
   repeated int32 experiment_ids = 1;
+  repeated int32 project_ids = 2;
 }
 
 message QueryTrialsRequest {
