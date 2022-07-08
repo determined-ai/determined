@@ -120,6 +120,10 @@ func (f *FileCache) prune() {
 	}
 }
 
+// genPathWithValidation checks if given path is under cache directory
+// by checking if the relative path of given path to cache directory
+// refer to parent directory. This is to aviod paths in tarball
+// are tempting to affect file system outside of cache directory.
 func (f *FileCache) genPathWithValidation(expID int, path string) (string, error) {
 	p := f.genPath(expID, path)
 	rp, err := filepath.Rel(f.genPath(expID, ""), p)
