@@ -6,10 +6,10 @@ package db
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
-	// "github.com/determined-ai/determined/master/internal/db"
+	"github.com/stretchr/testify/require"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -28,36 +28,30 @@ var (
 
 func TestHelloWorld(t *testing.T) {
 	ctx := context.Background()
-	db := MustResolveTestPostgres(t)
+	pgDB := MustResolveTestPostgres(t)
 
-	t.Cleanup(func() { cleanUp(ctx, t) })
-	setUp(ctx, t)
+	t.Cleanup(func() { cleanUp(ctx, t, pgDB) })
+	setUp(ctx, t, pgDB)
 
 	t.Run("group creation", func(t *testing.T) {
 		_, err := pgDB.AddGroup(ctx, testGroup)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to create group")
 	})
 
 	t.Run("search groups", func(t *testing.T) {
 		groups, err := pgDB.SearchGroups(ctx, 0)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to search for groups")
 
 		index := groupsContain(groups, testGroup.ID)
-		if index == -1 {
-			t.Fatalf("Expected groups to contain the new one")
-		}
 		foundGroup := groups[index]
-		if foundGroup.Name != testGroup.Name {
-			t.Fatalf("Expected found group to have the same name ('%s' vs '%s')", foundGroup.Name, testGroup.Name)
-		}
+		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
+		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 	})
 
 	t.Run("find group by id", func(t *testing.T) {
 		foundGroup, err := pgDB.GroupByID(ctx, testGroup.ID)
-		failNowIfErr(t, err)
-		if foundGroup.Name != testGroup.Name {
-			t.Fatalf("Expected group found by id to have the same name")
-		}
+		require.NoError(t, err, "failed to find group by id")
+		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 	})
 
 	t.Run("update group", func(t *testing.T) {
@@ -70,62 +64,45 @@ func TestHelloWorld(t *testing.T) {
 		newName := "kljhadsflkgjhjklsfhgasdhj"
 		testGroup.Name = newName
 		err := pgDB.UpdateGroup(ctx, testGroup)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to update group")
 
 		foundGroup, err := pgDB.GroupByID(ctx, testGroup.ID)
-		failNowIfErr(t, err)
-		if foundGroup.Name != newName {
-			t.Fatalf("Expected updated group to have new name")
-		}
+		require.NoError(t, err, "failed to find group by id")
+		require.Equal(t, newName, foundGroup.Name, "Expected found group to have the new name")
 	})
 
-	t.Run("add users to groups", func(t *testing.T) {
+	t.Run("add users to group", func(t *testing.T) {
 		err := pgDB.AddUsersToGroup(ctx, testGroup.ID, testUser.ID)
-		failNowIfErr(t, err)
-		// Clean up
-		defer func(groupID int, userID model.UserID) {
-
-		}(testGroup.ID, testUser.ID)
+		require.NoError(t, err, "failed to add users to group")
 
 		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to search for users that belong to group")
 
 		index := usersContain(users, testUser.ID)
-		if index == -1 {
-			t.Fatal("Expected to find user in group we added them to")
-		}
+		require.NotEqual(t, -1, index, "Expected users in group to contain the newly added one")
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
 		groups, err := pgDB.SearchGroups(ctx, testUser.ID)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to search for groups that user blongs to")
 
-		if i := groupsContain(groups, testGroup.ID); i == -1 {
-			t.Fatalf("Expected to find group that our user belongs to")
-		}
+		index := groupsContain(groups, testGroup.ID)
+		require.NotEqual(t, -1, index, "Group user was added to not found when searching by user membership")
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
 		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to remove users from group")
 
 		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
-		failNowIfErr(t, err)
+		require.NoError(t, err, "failed to look for users in group")
 
-		if i := usersContain(users, testUser.ID); i != -1 {
-			t.Fatal("Expected not to find user in group after removing them")
-		}
+		i := usersContain(users, testUser.ID)
+		require.Equal(t, -1, i, "User found in group after removing them from it")
 	})
 }
 
 // TODO: test creating several groups and make sure it only deletes the one in question
-// TODO: move to master/internal/db, where other integration tests are
-
-func failNowIfErr(t *testing.T, err error) {
-	if err != nil {
-		panic(fmt.Sprintf("Failed because of an error: %s", err.Error()))
-	}
-}
 
 // groupsContains returns -1 if group id was not found, else returns the index
 func groupsContain(groups []model.Group, id int) int {
@@ -142,6 +119,7 @@ func groupsContain(groups []model.Group, id int) int {
 	return -1
 }
 
+// usersContains returns -1 if user id was not found, else returns the index
 func usersContain(users []model.User, id model.UserID) int {
 	if len(users) < 1 {
 		return -1
@@ -156,36 +134,17 @@ func usersContain(users []model.User, id model.UserID) int {
 	return -1
 }
 
-func errAlreadyExists(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	if err == ErrDuplicateRecord {
-		return true
-	}
-
-	msg := err.Error()
-
-	// FIXME: hack! Try to find another way to detect this
-	if strings.Contains(msg, "duplicate key value violates unique constraint") {
-		return true
-	}
-
-	return false
-}
-
 func deleteUser(ctx context.Context, id model.UserID) error {
 	_, err := Bun().NewDelete().Table("users").Where("id = ?", id).Exec(ctx)
 	return err
 }
 
-func setUp(ctx context.Context, t *testing.T) {
+func setUp(ctx context.Context, t *testing.T, pgDB *PgDB) {
 	_, err := pgDB.AddUser(&testUser, nil)
-	failNowIfErr(t, err)
+	require.NoError(t, err, "failure creating user in setup")
 }
 
-func cleanUp(ctx context.Context, t *testing.T) {
+func cleanUp(ctx context.Context, t *testing.T, pgDB *PgDB) {
 	err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
 	if err != nil {
 		t.Logf("Error cleaning up group membership: %v", err)
