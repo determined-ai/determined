@@ -1293,6 +1293,29 @@ service Determined {
     };
   }
 
+  // Get list of SearcherEvents.
+  rpc GetSearcherEvents(GetSearcherEventsRequest)
+      returns (GetSearcherEventsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/searcher_events"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Post list of SearcherOperations.
+  rpc PostSearcherOperations(PostSearcherOperationsRequest)
+      returns (PostSearcherOperationsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/searcher_operations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
   // Get the set of metric names recorded for an experiment.
   rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
     option (google.api.http) = {
