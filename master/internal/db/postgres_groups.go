@@ -35,10 +35,7 @@ func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([
 	}
 
 	err := query.Scan(ctx)
-
-	if len(groups) < 1 || errors.Is(err, sql.ErrNoRows) {
-		return groups, ErrNotFound
-	}
+	
 	return groups, err
 }
 
@@ -89,9 +86,6 @@ func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, err
 		Where("ugm.group_id = ?", gid).
 		Scan(ctx)
 
-	if len(users) < 1 || errors.Is(err, sql.ErrNoRows) {
-		return users, ErrNotFound
-	}
 	return users, err
 }
 
