@@ -1603,7 +1603,7 @@ func (a *apiServer) GetModelDefTree(
 	_ context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
 	modelDefCache := GetModelDefCache()
-	fileTree, err := modelDefCache.GetFileTreeNested(int(req.ExperimentId))
+	fileTree, err := modelDefCache.FileTreeNested(int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
@@ -1614,7 +1614,7 @@ func (a *apiServer) GetModelDefFile(
 	_ context.Context, req *apiv1.GetModelDefFileRequest,
 ) (*apiv1.GetModelDefFileResponse, error) {
 	modelDefCache := GetModelDefCache()
-	file, err := modelDefCache.GetFileContent(int(req.ExperimentId), req.Path)
+	file, err := modelDefCache.FileContent(int(req.ExperimentId), req.Path)
 	if err != nil {
 		return nil, err
 	}

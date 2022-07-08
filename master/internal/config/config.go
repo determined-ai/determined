@@ -48,7 +48,6 @@ func DefaultDBConfig() *DBConfig {
 // CacheConfig is the configuration for file cache.
 type CacheConfig struct {
 	CacheDir string `json:"cache_dir"`
-	MaxAge   string `json:"max_age"`
 }
 
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
@@ -108,7 +107,6 @@ func DefaultConfig() *Config {
 		// For developers this should be a writable directory for caching files.
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
-			MaxAge:   "24h",
 		},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,

@@ -3,6 +3,7 @@ package cache
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -156,5 +157,42 @@ func TestNestedFile(t *testing.T) {
 		require.Truef(t, reflect.DeepEqual(nestedFileTree, test.nestedFileTree),
 			"Failed test %s \nGot: %+v\nExpected: %+v",
 			test.description, nestedFileTree, test.nestedFileTree)
+	}
+}
+
+func TestGenPathWithValidation(t *testing.T) {
+	testExpID := 1
+	type testStruct struct {
+		description string
+		path        string
+		expected    string
+		hasErr      bool
+	}
+	tests := []testStruct{
+		{
+			description: "#1 normal case",
+			path:        "a/b",
+			expected:    "/tmp/1/a/b",
+			hasErr:      false,
+		}, {
+			description: "#2 invalid case",
+			path:        "../a",
+			expected:    "",
+			hasErr:      true,
+		}, {
+			description: "#3 invalid case",
+			path:        "../../a",
+			expected:    "",
+			hasErr:      true,
+		},
+	}
+	f := NewFileCache("/tmp", 2*time.Hour)
+	for _, test := range tests {
+		p, err := f.genPathWithValidation(testExpID, test.path)
+		if test.hasErr {
+			require.Errorf(t, err, test.description)
+		} else {
+			require.Equalf(t, p, test.expected, test.description)
+		}
 	}
 }

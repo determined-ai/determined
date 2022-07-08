@@ -31,15 +31,15 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, len(files) > 0)
 	path := files[0].Path
-	_, err = cache.GetFileContent(expID, path)
+	_, err = cache.FileContent(expID, path)
 	require.NoError(t, err)
 
 	// Test fetch to nested tree structure
-	files, err = cache.GetFileTreeNested(expID)
+	files, err = cache.FileTreeNested(expID)
 	require.NoError(t, err)
 
 	// Test fetch invalid path
-	_, err = cache.GetFileContent(expID, "invalid-path")
+	_, err = cache.FileContent(expID, "invalid-path")
 	require.Error(t, err)
 
 	// Test prune, first verify the file exists, then modify cached time to make cache expire

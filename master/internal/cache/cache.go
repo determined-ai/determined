@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -74,10 +76,14 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 		return nil, err
 	}
 	for _, ar := range arc {
+		path, err := f.genPathWithValidation(expID, ar.Path)
+		if err != nil {
+			return nil, err
+		}
 		if ar.IsDir() {
-			err = os.MkdirAll(f.genPath(expID, ar.Path), 0700)
+			err = os.MkdirAll(path, 0700)
 		} else {
-			err = os.WriteFile(f.genPath(expID, ar.Path), ar.Content, 0600)
+			err = os.WriteFile(path, ar.Content, 0600)
 		}
 		if err != nil {
 			return nil, err
@@ -114,6 +120,18 @@ func (f *FileCache) prune() {
 	}
 }
 
+func (f *FileCache) genPathWithValidation(expID int, path string) (string, error) {
+	p := f.genPath(expID, path)
+	rp, err := filepath.Rel(f.genPath(expID, ""), p)
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(rp, "..") {
+		return "", errors.Errorf("%s is not a valid path.", path)
+	}
+	return p, nil
+}
+
 func (f *FileCache) genPath(expID int, path string) string {
 	return filepath.Join(f.rootDir, strconv.Itoa(expID), path)
 }
@@ -128,8 +146,8 @@ func (f *FileCache) getFileTree(expID int) ([]*experimentv1.FileNode, *modelDefF
 	return folder.fileTree, folder, nil
 }
 
-// GetFileTreeNested returns folder tree structure with given experiment id.
-func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, error) {
+// FileTreeNested returns folder tree structure with given experiment id.
+func (f *FileCache) FileTreeNested(expID int) ([]*experimentv1.FileNode, error) {
 	fileTree, _, err := f.getFileTree(expID)
 	if err != nil {
 		return nil, err
@@ -137,29 +155,24 @@ func (f *FileCache) GetFileTreeNested(expID int) ([]*experimentv1.FileNode, erro
 	return genNestedTree(fileTree), nil
 }
 
-// GetFileContent returns file with given experiment id and path.
-func (f *FileCache) GetFileContent(expID int, path string) ([]byte, error) {
+// FileContent returns file with given experiment id and path.
+func (f *FileCache) FileContent(expID int, path string) ([]byte, error) {
 	fileTree, folder, err := f.getFileTree(expID)
 	if err != nil {
 		return []byte{}, err
 	}
 	for _, file := range fileTree {
-		if file.Path == path {
+		if file.Path == path && !file.IsDir {
 			folder.lock.Lock()
 			defer folder.lock.Unlock()
 			file, err := os.ReadFile(f.genPath(expID, path))
 			if err != nil {
 				_, ok := err.(*fs.PathError)
 				if ok {
-					log.Debugf(`File system cache (%s) is likely out of sync. 
-File system cache is about to re-initialize and this message should not appear again.`,
+					log.Errorf(`File system cache (%s) is likely out of sync. 
+File system cache is about to re-initialize.`,
 						f.rootDir)
-					delete(f.caches, expID)
-					err = os.RemoveAll(f.genPath(expID, ""))
-					if err != nil {
-						return []byte{}, err
-					}
-					return f.GetFileContent(expID, path)
+					return f.fileContentAfterReInitialization(expID, path)
 				}
 				return []byte{}, err
 			}
@@ -167,6 +180,21 @@ File system cache is about to re-initialize and this message should not appear a
 		}
 	}
 	return nil, fs.ErrNotExist
+}
+
+func (f *FileCache) fileContentAfterReInitialization(expID int, path string) ([]byte, error) {
+	delete(f.caches, expID)
+	err := os.RemoveAll(f.genPath(expID, ""))
+	if err != nil {
+		return []byte{}, err
+	}
+	_, folder, err := f.getFileTree(expID)
+	if err != nil {
+		return []byte{}, err
+	}
+	folder.lock.Lock()
+	defer folder.lock.Unlock()
+	return os.ReadFile(f.genPath(expID, path))
 }
 
 // This function assumes fileTree is a valid input generated from file system.
