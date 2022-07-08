@@ -2508,22 +2508,18 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
         self.trial = trial
-        self.workloads = workloads
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads],
         }
 
 class v1GetTrialWorkloadsResponse:
