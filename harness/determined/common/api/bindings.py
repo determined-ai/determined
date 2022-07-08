@@ -108,12 +108,6 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
-class TrialEarlyExitExitedReason(enum.Enum):
-    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
-    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
-    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
-    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
-
 class TrialProfilerMetricLabelsProfilerMetricType(enum.Enum):
     PROFILER_METRIC_TYPE_UNSPECIFIED = "PROFILER_METRIC_TYPE_UNSPECIFIED"
     PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
@@ -2163,7 +2157,7 @@ class v1GetSearcherEventsResponse:
     def __init__(
         self,
         lastTriggeringEvent: "typing.Optional[str]" = None,
-        searcherEvent: "typing.Optional[typing.Sequence[str]]" = None,
+        searcherEvent: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None,
     ):
         self.searcherEvent = searcherEvent
         self.lastTriggeringEvent = lastTriggeringEvent
@@ -2171,13 +2165,13 @@ class v1GetSearcherEventsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetSearcherEventsResponse":
         return cls(
-            searcherEvent=obj.get("searcherEvent", None),
+            searcherEvent=[v1SearcherEvent.from_json(x) for x in obj["searcherEvent"]] if obj.get("searcherEvent", None) is not None else None,
             lastTriggeringEvent=obj.get("lastTriggeringEvent", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "searcherEvent": self.searcherEvent if self.searcherEvent is not None else None,
+            "searcherEvent": [x.to_json() for x in self.searcherEvent] if self.searcherEvent is not None else None,
             "lastTriggeringEvent": self.lastTriggeringEvent if self.lastTriggeringEvent is not None else None,
         }
 
@@ -2681,6 +2675,24 @@ class v1IdleNotebookRequest:
         return {
             "notebookId": self.notebookId if self.notebookId is not None else None,
             "idle": self.idle if self.idle is not None else None,
+        }
+
+class v1InitialOperations:
+    def __init__(
+        self,
+        id: "typing.Optional[int]" = None,
+    ):
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1InitialOperations":
+        return cls(
+            id=obj.get("id", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
         }
 
 class v1Job:
@@ -5124,6 +5136,40 @@ class v1SchedulerType(enum.Enum):
     SCHEDULER_TYPE_KUBERNETES = "SCHEDULER_TYPE_KUBERNETES"
     SCHEDULER_TYPE_SLURM = "SCHEDULER_TYPE_SLURM"
 
+class v1SearcherEvent:
+    def __init__(
+        self,
+        initialOperations: "typing.Optional[v1InitialOperations]" = None,
+        trialClosed: "typing.Optional[v1TrialClosed]" = None,
+        trialCreated: "typing.Optional[v1TrialCreated]" = None,
+        trialExitedEarly: "typing.Optional[v1TrialExitedEarly]" = None,
+        validationCompleted: "typing.Optional[v1ValidationCompleted]" = None,
+    ):
+        self.initialOperations = initialOperations
+        self.trialCreated = trialCreated
+        self.validationCompleted = validationCompleted
+        self.trialClosed = trialClosed
+        self.trialExitedEarly = trialExitedEarly
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearcherEvent":
+        return cls(
+            initialOperations=v1InitialOperations.from_json(obj["initialOperations"]) if obj.get("initialOperations", None) is not None else None,
+            trialCreated=v1TrialCreated.from_json(obj["trialCreated"]) if obj.get("trialCreated", None) is not None else None,
+            validationCompleted=v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj.get("validationCompleted", None) is not None else None,
+            trialClosed=v1TrialClosed.from_json(obj["trialClosed"]) if obj.get("trialClosed", None) is not None else None,
+            trialExitedEarly=v1TrialExitedEarly.from_json(obj["trialExitedEarly"]) if obj.get("trialExitedEarly", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "initialOperations": self.initialOperations.to_json() if self.initialOperations is not None else None,
+            "trialCreated": self.trialCreated.to_json() if self.trialCreated is not None else None,
+            "validationCompleted": self.validationCompleted.to_json() if self.validationCompleted is not None else None,
+            "trialClosed": self.trialClosed.to_json() if self.trialClosed is not None else None,
+            "trialExitedEarly": self.trialExitedEarly.to_json() if self.trialExitedEarly is not None else None,
+        }
+
 class v1SearcherOperation:
     def __init__(
         self,
@@ -5688,23 +5734,105 @@ class v1Tensorboard:
             "jobId": self.jobId,
         }
 
+class v1TrialClosed:
+    def __init__(
+        self,
+        id: "typing.Optional[int]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.requestId = requestId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialClosed":
+        return cls(
+            id=obj.get("id", None),
+            requestId=obj.get("requestId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
+        }
+
+class v1TrialCreated:
+    def __init__(
+        self,
+        id: "typing.Optional[int]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.requestId = requestId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialCreated":
+        return cls(
+            id=obj.get("id", None),
+            requestId=obj.get("requestId", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
+        }
+
 class v1TrialEarlyExit:
     def __init__(
         self,
-        reason: "TrialEarlyExitExitedReason",
+        reason: "v1TrialEarlyExitExitedReason",
     ):
         self.reason = reason
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialEarlyExit":
         return cls(
-            reason=TrialEarlyExitExitedReason(obj["reason"]),
+            reason=v1TrialEarlyExitExitedReason(obj["reason"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "reason": self.reason.value,
         }
+
+class v1TrialEarlyExitExitedReason(enum.Enum):
+    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
+    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
+    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
+
+class v1TrialExitedEarly:
+    def __init__(
+        self,
+        exitedReason: "typing.Optional[v1TrialExitedEarlyExitedReason]" = None,
+        id: "typing.Optional[int]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.requestId = requestId
+        self.exitedReason = exitedReason
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialExitedEarly":
+        return cls(
+            id=obj.get("id", None),
+            requestId=obj.get("requestId", None),
+            exitedReason=v1TrialExitedEarlyExitedReason(obj["exitedReason"]) if obj.get("exitedReason", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
+            "exitedReason": self.exitedReason.value if self.exitedReason is not None else None,
+        }
+
+class v1TrialExitedEarlyExitedReason(enum.Enum):
+    EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
+    EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
+    EXITED_REASON_USER_REQUESTED_STOP = "EXITED_REASON_USER_REQUESTED_STOP"
+    EXITED_REASON_INIT_INVALID_HP = "EXITED_REASON_INIT_INVALID_HP"
 
 class v1TrialLogsFieldsResponse:
     def __init__(
@@ -6110,6 +6238,32 @@ class v1ValidateAfterOperation:
     def to_json(self) -> typing.Any:
         return {
             "length": self.length if self.length is not None else None,
+        }
+
+class v1ValidationCompleted:
+    def __init__(
+        self,
+        id: "typing.Optional[int]" = None,
+        metric: "typing.Optional[float]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.id = id
+        self.requestId = requestId
+        self.metric = metric
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ValidationCompleted":
+        return cls(
+            id=obj.get("id", None),
+            requestId=obj.get("requestId", None),
+            metric=float(obj["metric"]) if obj.get("metric", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
+            "metric": dump_float(self.metric) if self.metric is not None else None,
         }
 
 class v1ValidationHistoryEntry:
