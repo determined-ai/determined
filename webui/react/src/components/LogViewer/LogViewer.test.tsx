@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import StoreProvider from 'contexts/Store';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { generateAlphaNumeric } from 'shared/utils/string';
@@ -32,6 +33,8 @@ const NOW = Date.now();
 const VISIBLE_LINES = 57;
 const DEFAULT_SIZE = { height: 1024, width: 1280, x: 0, y: 0 };
 const DEFAULT_CHAR_SIZE = { height: 18, width: 7 };
+
+const user = userEvent.setup();
 
 const generateMessage = (options: {
   maxWordCount?: number,
@@ -71,10 +74,11 @@ const generateLogs = (
 };
 
 const setup = (props: src.Props) => {
-  const view = render(<src.default {...props} />);
-  const user = userEvent.setup();
-
-  return { user, view };
+  return render(
+    <StoreProvider>
+      <src.default {...props} />
+    </StoreProvider>,
+  );
 };
 
 /**
@@ -195,7 +199,7 @@ describe('LogViewer', () => {
       const initialLogs = generateLogs(VISIBLE_LINES + 100);
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
-      const { user } = setup({ decoder, initialLogs });
+      setup({ decoder, initialLogs });
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -273,7 +277,7 @@ describe('LogViewer', () => {
     });
 
     it('should show oldest logs', async () => {
-      const { user } = setup({ decoder, onFetch });
+      setup({ decoder, onFetch });
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
@@ -295,7 +299,7 @@ describe('LogViewer', () => {
     });
 
     it('should show newest logs when enabling tailing', async () => {
-      const { user } = setup({ decoder, onFetch });
+      setup({ decoder, onFetch });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
       await user.click(scrollToOldestButton);

@@ -23,14 +23,10 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-const useModalProjectNoteDelete = ({ onClose, project }: Props): ModalHooks => {
+const useModalProjectNoteDelete = ({ onClose, project }: Props = {}): ModalHooks => {
   const [ pageNumber, setPageNumber ] = useState(0);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
     return (
@@ -78,15 +74,15 @@ const useModalProjectNoteDelete = ({ onClose, project }: Props): ModalHooks => {
     openOrUpdate({ ...getModalProps(), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps());
   }, [ getModalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalProjectNoteDelete;

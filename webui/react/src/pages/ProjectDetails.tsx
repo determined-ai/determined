@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -11,7 +11,6 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
@@ -23,23 +22,24 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
-import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
-import useModalCustomizeColumns from 'hooks/useModal/useModalCustomizeColumns';
+import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove, {
   Settings as MoveExperimentSettings,
   settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/useModalExperimentMove';
+} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
-  getExperimentLabels, getProject, getProjectExperiments,
-  killExperiment, openOrCreateTensorBoard, patchExperiment, pauseExperiment,
-  setProjectNotes,
-  unarchiveExperiment } from 'services/api';
+import {
+  activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
+  getExperimentLabels, getProject, getProjectExperiments, killExperiment, openOrCreateTensorBoard,
+  patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
+} from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import Icon from 'shared/components/Icon/Icon';
@@ -547,7 +547,10 @@ const ProjectDetails: React.FC = () => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [ columns ]);
 
-  const { modalOpen: openMoveModal } = useModalExperimentMove({ onClose: handleActionComplete });
+  const {
+    contextHolder: modalExperimentMoveContextHolder,
+    modalOpen: openMoveModal,
+  } = useModalExperimentMove({ onClose: handleActionComplete });
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> | void => {
     if (!settings.row) return;
@@ -668,7 +671,10 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ updateSettings ]);
 
-  const { modalOpen: openCustomizeColumns } = useModalCustomizeColumns({
+  const {
+    contextHolder: modalColumnsCustomizeContextHolder,
+    modalOpen: openCustomizeColumns,
+  } = useModalColumnsCustomize({
     columns: transferColumns,
     defaultVisibleColumns: DEFAULT_COLUMNS,
     onSave: (handleUpdateColumns as (columns: string[]) => void),
@@ -730,10 +736,10 @@ const ProjectDetails: React.FC = () => {
     } catch (e) { handleError(e); }
   }, [ fetchProject, project?.id ]);
 
-  const { modalOpen: openNoteDelete } = useModalProjectNoteDelete({
-    onClose: fetchProject,
-    project,
-  });
+  const {
+    contextHolder: modalProjectNodeDeleteContextHolder,
+    modalOpen: openNoteDelete,
+  } = useModalProjectNoteDelete({ onClose: fetchProject, project });
 
   const handleDeleteNote = useCallback((pageNumber: number) => {
     if (!project?.id) return;
@@ -792,8 +798,11 @@ const ProjectDetails: React.FC = () => {
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <Button onClick={handleCustomizeColumnsClick}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
@@ -930,6 +939,9 @@ const ProjectDetails: React.FC = () => {
         project={project}
         tabs={tabs}
       />
+      {modalColumnsCustomizeContextHolder}
+      {modalExperimentMoveContextHolder}
+      {modalProjectNodeDeleteContextHolder}
     </Page>
   );
 };

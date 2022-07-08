@@ -1,4 +1,4 @@
-import { Select, Space, Switch } from 'antd';
+import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
@@ -8,12 +8,12 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, userRenderer } from 'components/Table';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -375,36 +375,33 @@ const WorkspaceDetails: React.FC = () => {
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter
-          bordered={false}
           dropdownMatchSelectWidth={140}
-          label="View:"
           showSearch={false}
           value={projectFilter}
           onSelect={handleViewSelect}>
-          <Option value={ProjectFilters.All}>All projects</Option>
-          <Option value={ProjectFilters.Mine}>My projects</Option>
-          <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
+          <Option value={ProjectFilters.All}>All Projects</Option>
+          <Option value={ProjectFilters.Mine}>My Projects</Option>
+          <Option value={ProjectFilters.Others}>Others&apos; Projects</Option>
         </SelectFilter>
         <Space wrap>
           {!workspace.archived && (
-            <>
-              <Switch checked={settings.archived} onChange={switchShowArchived} />
-              <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-            </>
+            <Toggle
+              checked={settings.archived}
+              prefixLabel="Show Archived"
+              onChange={switchShowArchived}
+            />
           )}
           <SelectFilter
-            bordered={false}
             dropdownMatchSelectWidth={150}
-            label="Sort:"
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last updated
+              Last Updated
             </Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to oldest
+              Newest to Oldest
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />

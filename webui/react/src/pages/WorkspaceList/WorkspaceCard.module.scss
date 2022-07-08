@@ -1,7 +1,7 @@
 .base {
   background-color: var(--theme-surface);
   border: solid var(--theme-stroke-width) var(--theme-surface-border);
-  border-radius: 12px;
+  border-radius: var(--theme-border-radius-strong);
   color: var(--theme-surface-on);
   cursor: pointer;
   display: grid;

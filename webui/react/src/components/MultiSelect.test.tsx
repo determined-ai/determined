@@ -14,6 +14,8 @@ const PLACEHOLDER = generateAlphaNumeric();
 const NUM_OPTIONS = 5;
 const OPTION_TITLE = 'option';
 
+const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+
 const setup = () => {
   const handleOpen = jest.fn();
   const view = render(
@@ -29,12 +31,11 @@ const setup = () => {
       ))}
     </MultiSelect>,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-  return { handleOpen, user, view };
+  return { handleOpen, view };
 };
 
 describe('MultiSelect', () => {
-  it('displays label and placeholder', async () => {
+  it('should display label and placeholder', async () => {
     setup();
 
     await waitFor(() => {
@@ -44,8 +45,8 @@ describe('MultiSelect', () => {
 
   });
 
-  it('opens select list', async () => {
-    const { handleOpen, user } = setup();
+  it('should open select list', async () => {
+    const { handleOpen } = setup();
     expect(handleOpen).not.toHaveBeenCalled();
     await waitFor(async () => {
       await user.click(screen.getByText(PLACEHOLDER));
@@ -56,8 +57,8 @@ describe('MultiSelect', () => {
 
   });
 
-  it('selects option', async () => {
-    const { handleOpen, user } = setup();
+  it('should select option', async () => {
+    const { handleOpen } = setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
@@ -69,11 +70,10 @@ describe('MultiSelect', () => {
     await waitFor(() => {
       expect(list[0].querySelector('.anticon-check')).toBeInTheDocument();
     });
-
   });
 
-  it('selects multiple option', async () => {
-    const { handleOpen, user } = setup();
+  it('should select multiple option', async () => {
+    const { handleOpen } = setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
@@ -86,10 +86,10 @@ describe('MultiSelect', () => {
     await waitFor(() => {
       expect(document.querySelectorAll('.anticon-check')).toHaveLength(2);
     });
-
   });
-  it('selects all', async () => {
-    const { handleOpen, user } = setup();
+
+  it('should select all', async () => {
+    const { handleOpen } = setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
@@ -100,7 +100,5 @@ describe('MultiSelect', () => {
     await waitFor(() => {
       expect(all.querySelector('.anticon-check')).toBeInTheDocument();
     });
-
   });
-
 });

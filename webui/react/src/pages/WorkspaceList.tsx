@@ -1,4 +1,4 @@
-import { Button, Select, Space, Switch } from 'antd';
+import { Button, Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -6,12 +6,12 @@ import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup'
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer,
   getFullPaginationConfig, userRenderer } from 'components/Table';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePolling from 'hooks/usePolling';
@@ -43,7 +43,6 @@ enum WorkspaceFilters {
 
 const WorkspaceList: React.FC = () => {
   const { users, auth: { user } } = useStore();
-  const { modalOpen } = useModalWorkspaceCreate({});
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
   const [ workspaceFilter, setWorkspaceFilter ] = useState<WorkspaceFilters>(WorkspaceFilters.All);
   const [ total, setTotal ] = useState(0);
@@ -52,14 +51,14 @@ const WorkspaceList: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const [ canceler ] = useState(new AbortController());
 
+  const { contextHolder, modalOpen } = useModalWorkspaceCreate();
+
   const {
     settings,
     updateSettings,
   } = useSettings<WorkspaceListSettings>(settingsConfig);
 
-  const handleWorkspaceCreateClick = useCallback(() => {
-    modalOpen();
-  }, [ modalOpen ]);
+  const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [ modalOpen ]);
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -261,7 +260,8 @@ const WorkspaceList: React.FC = () => {
           />
         );
     }
-  }, [ actionDropdown,
+  }, [
+    actionDropdown,
     columns,
     fetchWorkspaces,
     isLoading,
@@ -269,7 +269,8 @@ const WorkspaceList: React.FC = () => {
     total,
     updateSettings,
     user,
-    workspaces ]);
+    workspaces,
+  ]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -293,29 +294,28 @@ const WorkspaceList: React.FC = () => {
       title="Workspaces">
       <div className={css.controls}>
         <SelectFilter
-          bordered={false}
           dropdownMatchSelectWidth={160}
-          label="View:"
           showSearch={false}
           value={workspaceFilter}
           onSelect={handleViewSelect}>
-          <Option value={WorkspaceFilters.All}>All workspaces</Option>
-          <Option value={WorkspaceFilters.Mine}>My workspaces</Option>
-          <Option value={WorkspaceFilters.Others}>Others&apos; workspaces</Option>
+          <Option value={WorkspaceFilters.All}>All Workspaces</Option>
+          <Option value={WorkspaceFilters.Mine}>My Workspaces</Option>
+          <Option value={WorkspaceFilters.Others}>Others&apos; Workspaces</Option>
         </SelectFilter>
         <Space wrap>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           <SelectFilter
-            bordered={false}
             dropdownMatchSelectWidth={150}
-            label="Sort:"
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>
-              Newest to oldest
+              Newest to Oldest
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
@@ -343,6 +343,7 @@ const WorkspaceList: React.FC = () => {
               />
             )}
       </Spinner>
+      {contextHolder}
     </Page>
   );
 };

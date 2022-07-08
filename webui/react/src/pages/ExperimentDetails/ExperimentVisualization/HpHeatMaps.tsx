@@ -11,7 +11,6 @@ import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
-import useTheme from 'hooks/useTheme';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -91,8 +90,6 @@ const HpHeatMaps: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
 
-  const { theme } = useTheme();
-
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
         selectedMetric.name === experiment.config.searcher.metric) {
@@ -102,8 +99,8 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [ experiment.config.searcher, selectedMetric ]);
 
   const colorScale = useMemo(() => {
-    return getColorScale(theme, chartData?.metricRange, smallerIsBetter);
-  }, [ chartData, smallerIsBetter, theme ]);
+    return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
+  }, [ chartData, smallerIsBetter, ui.theme ]);
 
   const chartProps = useMemo(() => {
     if (!chartData) return undefined;

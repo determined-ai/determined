@@ -1,5 +1,4 @@
 import { Button, Form, Input, message } from 'antd';
-import { ModalStaticFunctions } from 'antd/es/modal/confirm';
 import React, { useCallback, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
@@ -8,7 +7,7 @@ import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
 
-import css from './useModalChangePassword.module.scss';
+import css from './useModalPasswordChange.module.scss';
 
 interface Props {
   onComplete: () => void;
@@ -128,8 +127,8 @@ const ChangePassword: React.FC<Props> = ({ onComplete }) => {
   );
 };
 
-const useModalChangePassword = (modal: Omit<ModalStaticFunctions, 'warn'>): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ modal });
+const useModalPasswordChange = (): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
@@ -141,7 +140,7 @@ const useModalChangePassword = (modal: Omit<ModalStaticFunctions, 'warn'>): Moda
     });
   }, [ modalClose, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalClose, modalOpen, ...modalHook };
 };
 
-export default useModalChangePassword;
+export default useModalPasswordChange;

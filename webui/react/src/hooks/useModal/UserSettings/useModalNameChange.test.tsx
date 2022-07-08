@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
@@ -21,7 +21,7 @@ const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
 const USER_ID = 1;
 const DISPLAY_NAME = 'Test Name';
-const CHANGE_NAME_TEXT = 'Change name';
+const NAME_CHANGE_TEXT = 'Change name';
 const USER_SETTINGS_HEADER = 'Account';
 const UPDATED_DISPLAY_NAME = 'New Displayname';
 
@@ -36,8 +36,7 @@ const currentUser: DetailedUser = {
 const users: Array<DetailedUser> = [ currentUser ];
 
 const TestApp: React.FC = () => {
-  const [ modal, contextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
+  const { contextHolder, modalOpen: openUserSettingsModal } = useModalUserSettings();
   const storeDispatch = useStoreDispatch();
 
   const loadUsers = useCallback(() => {
@@ -73,16 +72,16 @@ const setup = async () => {
   );
   const user = userEvent.setup();
   await user.click(await screen.findByText(OPEN_MODAL_TEXT));
-  await user.click(await screen.findByText(CHANGE_NAME_TEXT));
+  await user.click(await screen.findByText(NAME_CHANGE_TEXT));
 
   return { user, view };
 };
 
-describe('useModalChangeName', () => {
+describe('useModalNameChange', () => {
   it('opens modal with correct values', async () => {
     await setup();
 
-    await screen.findByRole('heading', { name: CHANGE_NAME_TEXT });
+    await screen.findByRole('heading', { name: NAME_CHANGE_TEXT });
     expect(screen.getByRole('textbox', { name: 'Display name' })).toHaveValue(DISPLAY_NAME);
   });
 
@@ -91,7 +90,7 @@ describe('useModalChangeName', () => {
 
     const input = await screen.findByRole('textbox', { name: 'Display name' });
     await user.type(input, 'a'.repeat(81));
-    await user.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
+    await user.click(screen.getAllByRole('button', { name: NAME_CHANGE_TEXT })[1]);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -101,7 +100,7 @@ describe('useModalChangeName', () => {
   it('submits a valid display name update request', async () => {
     const { user } = await setup();
 
-    await screen.findByRole('heading', { name: CHANGE_NAME_TEXT });
+    await screen.findByRole('heading', { name: NAME_CHANGE_TEXT });
     await user.clear(screen.getByRole('textbox', { name: 'Display name' }));
     await user.click(screen.getByRole('textbox', { name: 'Display name' }));
     await user.keyboard(UPDATED_DISPLAY_NAME);
@@ -111,23 +110,21 @@ describe('useModalChangeName', () => {
       displayName: UPDATED_DISPLAY_NAME,
     });
 
-    await user.click(screen.getAllByRole('button', { name: CHANGE_NAME_TEXT })[1]);
+    await user.click(screen.getAllByRole('button', { name: NAME_CHANGE_TEXT })[1]);
 
     // TODO: test for toast message appearance?
 
     // modal closes:
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: NAME_CHANGE_TEXT })).not.toBeInTheDocument();
     });
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
 
     // api method was called:
-    expect(mockPatchUser).toHaveBeenCalledWith(
-      {
-        userId: USER_ID,
-        userParams: { displayName: UPDATED_DISPLAY_NAME },
-      },
-    );
+    expect(mockPatchUser).toHaveBeenCalledWith({
+      userId: USER_ID,
+      userParams: { displayName: UPDATED_DISPLAY_NAME },
+    });
 
     // store was updated:
     expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
@@ -142,7 +139,7 @@ describe('useModalChangeName', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: CHANGE_NAME_TEXT })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: NAME_CHANGE_TEXT })).not.toBeInTheDocument();
     });
     expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
   });

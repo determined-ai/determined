@@ -116,6 +116,22 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
+func TestOverrideMasterEnvironmentVariables(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		EnvironmentVariables: &RuntimeItems{
+			CPU: []string{"a=from_master", "b=from_master"},
+		},
+	}
+	actual := DefaultEnvConfig(masterDefault)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+    "environment_variables": ["a=from_exp", "c=from_master"]
+}`), &actual))
+	assert.DeepEqual(t, actual.EnvironmentVariables.CPU, []string{
+		"a=from_master", "b=from_master",
+		"a=from_exp", "c=from_master", // Exp config overwriters master config by being later.
+	})
+}
+
 // Helper function to setup and verify slurm option test cases.
 func testEnvironmentSlurm(t *testing.T, slurm []string, expected ...string) {
 	env := Environment{

@@ -14,6 +14,8 @@ const PLACEHOLDER = generateAlphaNumeric();
 const NUM_OPTIONS = 5;
 const OPTION_TITLE = 'option';
 
+const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+
 const setup = () => {
   const handleOpen = jest.fn();
   const view = render(
@@ -25,7 +27,6 @@ const setup = () => {
       ))}
     </SelectFilter>,
   );
-  const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
   return { handleOpen, user, view };
 };
 
@@ -40,7 +41,7 @@ describe('SelectFilter', () => {
   });
 
   it('opens select list', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
     expect(handleOpen).not.toHaveBeenCalled();
     await user.click(screen.getByText(PLACEHOLDER));
@@ -52,7 +53,7 @@ describe('SelectFilter', () => {
   });
 
   it('selects option', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();
@@ -68,7 +69,7 @@ describe('SelectFilter', () => {
   });
 
   it('searches', async () => {
-    const { handleOpen, user } = setup();
+    const { handleOpen } = setup();
 
     await user.click(screen.getByText(PLACEHOLDER));
     expect(handleOpen).toHaveBeenCalled();

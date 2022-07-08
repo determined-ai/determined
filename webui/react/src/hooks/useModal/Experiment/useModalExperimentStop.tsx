@@ -27,7 +27,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
   }, [ onClose, type ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const modalContent = useMemo(() => {
     const isCancel = type === ActionType.Cancel;
@@ -84,15 +84,15 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
     openOrUpdate({ ...modalProps, ...initialModalProps });
   }, [ modalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalExperimentStop;

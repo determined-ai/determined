@@ -18,6 +18,7 @@ profiler_file_extensions = [
     ".kernel_stats.pb",
     ".overview_page.pb",
     ".trace.json.gz",
+    ".trace.json",
 ]
 
 
