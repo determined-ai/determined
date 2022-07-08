@@ -124,7 +124,10 @@ def test_local_shared(repo_names: t.List[str], args):
 
 
 def get_user_inputs():
-    parser.add_argument('--sw-hash', help='desired shared-web githash to test')
+    """
+    parse and validate user inputs
+    """
+    parser.add_argument('--sw-hash', help='desired shared-web githash to test with')
     parser.add_argument('--test-local',
                         help='test the repositories with the current shared code',
                         action='store_true', default=False)
@@ -137,9 +140,10 @@ def get_user_inputs():
     repos_to_test = args.repos or repos.keys()
 
     # we cannot deduce the current shared-web git hash when using subtree
-    for repo in repos_to_test:
-        if not repos[repo]['using_sm'] and args.sw_hash is None:
-            raise argparse.ArgumentError(None, '--sw-hash is required for subtree setup')
+    if not args.test_local:
+        for repo in repos_to_test:
+            if not repos[repo]['using_sm'] and args.sw_hash is None:
+                raise argparse.ArgumentError(None, '--sw-hash is required for subtree setup')
 
     if args.repo_hash and len(repos_to_test) > 1:
         # implementation limitation
@@ -148,15 +152,21 @@ def get_user_inputs():
     # get current git hash from cli args as first argument through sys.args if one is provided
     sw_hash = args.sw_hash if args.sw_hash else get_current_hash()
 
+    if args.test_local:
+        if args.sw_hash:
+            raise argparse.ArgumentError(None,
+                                     '--sw-hash cannot be used with --test-local')
+        dir_name = pathlib.Path.cwd().name
+        if dir_name != 'shared' and dir_name != 'shared-web':
+            raise argparse.ArgumentError(None,
+                                         '--test-local must be run from the shared directory root')
+
     return args, repos_to_test, sw_hash
 
 if __name__ == '__main__':
     args, repos_to_test, sw_hash = get_user_inputs()
 
     if args.test_local:
-        if pathlib.Path.cwd().name != 'shared':
-            raise argparse.ArgumentError(None,
-                                         '--test-local must be run from the shared directory root')
         test_local_shared(repos_to_test, args)
     else:
         test(sw_hash, repos_to_test, args)
