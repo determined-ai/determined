@@ -18,7 +18,15 @@ commands:
 
 # Define the jobs
 jobs:
-  test-repo-integration:
+  test-repo-integration-local:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout
+      - install-python
+      - run: ./bin/test.py --repos core --test-local
+
+  test-repo-integration-gitsubtree:
     docker:
       - image: cimg/node:16.14
     environment:
@@ -35,4 +43,5 @@ jobs:
 workflows:
   test:
     jobs:
-      - test-repo-integration
+      - test-repo-integration-local
+      - test-repo-integration-gitsubtree
