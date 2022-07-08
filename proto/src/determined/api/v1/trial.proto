@@ -46,8 +46,8 @@ message WorkloadContainer {
 
 message NumberRangeFilter {
   string name = 1;
-  int32 min = 2;
-  int32 max = 3;
+  float min = 2;
+  float max = 3;
 }
 
 message QueryFilters {
