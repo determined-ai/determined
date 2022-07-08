@@ -66,20 +66,36 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 	}
 
 	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
-	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
-	tx.Commit()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
+	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
 	return checkIfFound(res, err)
 }
 
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	res, err := tx.NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
-	tx.Commit()
+	if err != nil {
+		return err
+	}
 
+	err = tx.Commit()
 	return checkIfFound(res, err)
 }
 
