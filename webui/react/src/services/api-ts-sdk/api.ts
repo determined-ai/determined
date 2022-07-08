@@ -2686,20 +2686,6 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
- * Get progress of custom searcher method.
- * @export
- * @interface V1GetProgressOperation
- */
-export interface V1GetProgressOperation {
-    /**
-     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
-     * @type {number}
-     * @memberof V1GetProgressOperation
-     */
-    emptyField?: number;
-}
-
-/**
  * Response to GetProjectExperimentsRequest.
  * @export
  * @interface V1GetProjectExperimentsResponse
@@ -3217,6 +3203,12 @@ export interface V1Hyperparameter {
      * @memberof V1Hyperparameter
      */
     constantHyperparam?: V1ConstantHyperparameter;
+    /**
+     * 
+     * @type {V1RawNestedHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    nestedHyperparam?: V1RawNestedHyperparameter;
 }
 
 /**
@@ -5207,6 +5199,20 @@ export interface V1RPQueueStat {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1RawNestedHyperparameter
+ */
+export interface V1RawNestedHyperparameter {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1RawNestedHyperparameter
+     */
+    mapHyperparam?: { [key: string]: V1Hyperparameter; };
+}
+
+/**
  * The rendezvous info for the trial to rendezvous with sibling containers.
  * @export
  * @interface V1RendezvousInfo
@@ -6028,12 +6034,6 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     closeTrial?: V1CloseTrialOperation;
-    /**
-     * GetProgressOperation is issued to get the progress of the custom searcher method.
-     * @type {V1GetProgressOperation}
-     * @memberof V1SearcherOperation
-     */
-    getProgress?: V1GetProgressOperation;
     /**
      * ShutdownOperation is issued to shutdown the custom searcher method.
      * @type {V1ShutdownOperation}

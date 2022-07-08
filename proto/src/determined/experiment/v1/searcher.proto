@@ -28,6 +28,12 @@ message ConstantHyperparameter {
   double val = 1;
 }
 
+// Nested Hyperparamater 
+message RawNestedHyperparameter {
+  // An example in a nested param would be: {"optimizer": {"learning_rate": 0.01}}
+  map<string, Hyperparameter> map_hyperparam = 1; 
+}
+
 // Hyperparameter.
 message Hyperparameter {
   // A user can provide one of the hyperparameter types for
@@ -35,13 +41,15 @@ message Hyperparameter {
   oneof union {
     // Constant hyperparameter.
     ConstantHyperparameter constant_hyperparam = 1;
+    // Nested hyperparameter. 
+    RawNestedHyperparameter nested_hyperparam = 2; 
   }
 }
 
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
   // The key refers to which part of the model this hyperparameters are for.
-  // An example in this map would be: {"optimizer": {"learning_rate": 0.01}}
+  // TODO: add support for nested hyperparameter would be: {"optimizer": {"learning_rate": 0.01}}
   map<string, Hyperparameter> hyperparams = 1;
 }
 
