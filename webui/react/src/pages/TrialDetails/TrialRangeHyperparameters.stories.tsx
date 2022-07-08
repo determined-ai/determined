@@ -232,44 +232,8 @@ const TrialRangeHyperparametersContainer = () => {
     startTime: '2021-06-09T15:26:58.003220Z',
     state: RunState.Completed,
     totalBatchesProcessed: 58,
-    workloads: [
-      {
-        validation: {
-          endTime: '2021-06-09T15:28:20.278182Z',
-          metrics: {
-            accuracy: 0.9087380573248408,
-            validation_loss: 0.29681510450970977,
-          },
-          totalBatches: 58,
-        },
-      },
-      {
-        checkpoint: {
-          endTime: '2021-06-09T15:28:16.314554Z',
-          resources: {
-            'code/': 0,
-            'code/adaptive.yaml': 678,
-            'code/const.yaml': 434,
-            'code/data.py': 1444,
-            'code/distributed.yaml': 499,
-            'code/layers.py': 568,
-            'code/model_def.py': 3789,
-            'code/README.md': 1407,
-            'state_dict.pth': 13691537,
-          },
-          state: CheckpointState.Completed,
-          totalBatches: 58,
-          uuid: '08b7345e-1dd8-4ec2-a49c-054814d8929e',
-        },
-      },
-      {
-        training: {
-          endTime: '2021-06-09T15:28:16.099435Z',
-          metrics: { loss: 0.9266772866249084 },
-          totalBatches: 58,
-        },
-      },
-    ],
+    totalCheckpointSize: 13700356,
+    workloadCount: 3,
   };
 
   const storeDispatch = useStoreDispatch();

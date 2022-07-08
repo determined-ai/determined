@@ -774,6 +774,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     totalCheckpointSize?: string;
+    /**
+     * Number of workloads with metrics.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    workloadCount?: number;
 }
 
 /**

@@ -147,6 +147,15 @@ latest_training AS (
     ) s
   JOIN searcher_info ON searcher_info.trial_id = s.trial_id
   WHERE s.rank = 1
+),
+all_wls AS (
+  SELECT all_wl.trial_id, COUNT(*) AS count
+  FROM (
+    SELECT trial_id FROM steps
+    UNION ALL (SELECT trial_id FROM validations)
+    UNION ALL (SELECT trial_id FROM checkpoints_view)
+  ) all_wl
+  GROUP BY all_wl.trial_id
 )
 SELECT
   row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
@@ -185,7 +194,8 @@ SELECT
   ) AS total_checkpoint_size,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
   -- so trials in terminal state have restarts = max + 1
-  LEAST(t.restarts, max_restarts) as restarts
+  LEAST(t.restarts, max_restarts) as restarts,
+  all_wls.count AS workload_count
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
@@ -197,4 +207,5 @@ FROM searcher_info
   LEFT JOIN raw_checkpoints old_ckpt ON old_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   LEFT JOIN latest_training lt ON lt.trial_id = searcher_info.trial_id
+  LEFT JOIN all_wls ON all_wls.trial_id = t.id
   ORDER BY searcher_info.ordering

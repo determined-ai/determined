@@ -571,22 +571,13 @@ export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
-  let workloads;
-
-  if (data.workloads) {
-    workloads = data.workloads.map((ww) => ({
-      checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-      training: ww.training && decodeMetricsWorkload(ww.training),
-      validation: ww.validation && decodeMetricsWorkload(ww.validation),
-    }));
-  }
-
   const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
 
   return {
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
-    workloads: workloads || [],
+    totalCheckpointSize: 0, //data.totalCheckpointSize || 0,
+    workloadCount: 0, //data.workloadCount || 0,
   };
 };
 

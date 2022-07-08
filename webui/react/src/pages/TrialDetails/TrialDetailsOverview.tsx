@@ -1,9 +1,14 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import { V1MetricNamesResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
+import { readStream } from 'services/utils';
 import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
-import { extractMetricNames } from 'utils/metric';
+import handleError from 'utils/error';
+import { alphaNumericSorter } from 'utils/sort';
+import { ErrorType } from 'shared/utils/error';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
@@ -22,10 +27,50 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     updateSettings,
   } = useSettings<Settings>(settingsConfig, { storagePath });
 
-  const { defaultMetrics, metricNames, metrics } = useMemo(() => {
+  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+
+  // Stream available metrics.
+  useEffect(() => {
+    const canceler = new AbortController();
+    const trainingMetricsMap: Record<string, boolean> = {};
+    const validationMetricsMap: Record<string, boolean> = {};
+
+    readStream<V1MetricNamesResponse>(
+      detApi.StreamingInternal.metricNames(
+        experiment.id,
+        undefined,
+        { signal: canceler.signal },
+      ),
+      event => {
+        if (!event) return;
+        /*
+         * The metrics endpoint can intermittently send empty lists,
+         * so we keep track of what we have seen on our end and
+         * only add new metrics we have not seen to the list.
+         */
+        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
+        const newMetrics = [
+          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+        ];
+        setMetricNames(newMetrics);
+      },
+    ).catch(() => {
+      handleError({
+        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+        publicSubject: 'Experiment metric name stream failed.',
+        type: ErrorType.Api,
+      });
+    });
+    return () => canceler.abort();
+  }, [ experiment.id ]);
+
+  const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const metricNames = extractMetricNames(trial?.workloads || []);
-    const defaultValidationMetric = metricNames.find((metricName) => (
+    const defaultValidationMetric = metricNames.find(metricName => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
     const fallbackMetric = metricNames[0];
@@ -36,8 +81,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
-    return { defaultMetrics, metricNames, metrics };
-  }, [ experiment?.config?.searcher, settings.metric, trial?.workloads ]);
+    return { defaultMetrics, metrics };
+  }, [ experiment?.config?.searcher, settings.metric ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
@@ -52,7 +97,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metricNames={metricNames}
         metrics={metrics}
         trialId={trial?.id}
-        workloads={trial?.workloads}
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads
