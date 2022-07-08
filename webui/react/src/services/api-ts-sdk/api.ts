@@ -2741,10 +2741,10 @@ export interface V1GetSearcherEventsResponse {
     searcherEvent?: Array<V1SearcherEvent>;
     /**
      * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
-     * @type {string}
+     * @type {V1SearcherEvent}
      * @memberof V1GetSearcherEventsResponse
      */
-    lastTriggeringEvent?: string;
+    lastTriggeringEvent?: V1SearcherEvent;
 }
 
 /**
@@ -3192,7 +3192,7 @@ export interface V1Hyperparameter {
      */
     constantHyperparam?: V1ConstantHyperparameter;
     /**
-     * 
+     * Nested hyperparameter.
      * @type {V1RawNestedHyperparameter}
      * @memberof V1Hyperparameter
      */
@@ -4808,10 +4808,10 @@ export interface V1PostSearcherOperationsRequest {
     searcherOperations?: Array<V1SearcherOperation>;
     /**
      * The event that triggered client to send the above operations to master.
-     * @type {string}
+     * @type {V1SearcherEvent}
      * @memberof V1PostSearcherOperationsRequest
      */
-    triggeredByEvent?: string;
+    triggeredByEvent?: V1SearcherEvent;
 }
 
 /**

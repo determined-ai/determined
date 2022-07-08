@@ -677,7 +677,7 @@ message GetSearcherEventsResponse {
   repeated determined.experiment.v1.SearcherEvent searcher_event = 1;
   // The last event that triggered client which sent the appropriate events
   // to master which sent them successfully to the experiment actor.
-  string last_triggering_event = 2;
+  determined.experiment.v1.SearcherEvent last_triggering_event = 2;
 }
 
 // Request for sending operations from a custom user search method.
@@ -687,7 +687,7 @@ message PostSearcherOperationsRequest {
   // list of operations in the method.
   repeated determined.experiment.v1.SearcherOperation searcher_operations = 2;
   // The event that triggered client to send the above operations to master.
-  string triggered_by_event = 3;
+  determined.experiment.v1.SearcherEvent triggered_by_event = 3;
 }
 
 // Response to PostSearcherOperationsResponse.
