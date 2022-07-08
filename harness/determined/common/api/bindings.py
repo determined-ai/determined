@@ -3457,6 +3457,32 @@ class v1Notebook:
             "jobId": self.jobId,
         }
 
+class v1NumberRangeFilter:
+    def __init__(
+        self,
+        max: "typing.Optional[int]" = None,
+        min: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.name = name
+        self.min = min
+        self.max = max
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1NumberRangeFilter":
+        return cls(
+            name=obj.get("name", None),
+            min=obj.get("min", None),
+            max=obj.get("max", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name if self.name is not None else None,
+            "min": self.min if self.min is not None else None,
+            "max": self.max if self.max is not None else None,
+        }
+
 class v1OrderBy(enum.Enum):
     ORDER_BY_UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ORDER_BY_ASC = "ORDER_BY_ASC"
@@ -4267,21 +4293,33 @@ class v1QueryFilters:
         self,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         projectIds: "typing.Optional[typing.Sequence[int]]" = None,
+        trainingMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
+        validationMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
+        workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
         self.experimentIds = experimentIds
         self.projectIds = projectIds
+        self.workspaceIds = workspaceIds
+        self.validationMetrics = validationMetrics
+        self.trainingMetrics = trainingMetrics
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryFilters":
         return cls(
             experimentIds=obj.get("experimentIds", None),
             projectIds=obj.get("projectIds", None),
+            workspaceIds=obj.get("workspaceIds", None),
+            validationMetrics=[v1NumberRangeFilter.from_json(x) for x in obj["validationMetrics"]] if obj.get("validationMetrics", None) is not None else None,
+            trainingMetrics=[v1NumberRangeFilter.from_json(x) for x in obj["trainingMetrics"]] if obj.get("trainingMetrics", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experimentIds": self.experimentIds if self.experimentIds is not None else None,
             "projectIds": self.projectIds if self.projectIds is not None else None,
+            "workspaceIds": self.workspaceIds if self.workspaceIds is not None else None,
+            "validationMetrics": [x.to_json() for x in self.validationMetrics] if self.validationMetrics is not None else None,
+            "trainingMetrics": [x.to_json() for x in self.trainingMetrics] if self.trainingMetrics is not None else None,
         }
 
 class v1QueryTrialsRequest:

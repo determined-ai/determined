@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // AddTrial adds the trial to the database and sets its ID.
@@ -443,12 +444,34 @@ WHERE t.id = $1;
 }
 
 
+func intArraytoString(ints []int32) string {
+	var intString []string
+	for _, v := range ints{
+		intString = append(intString, fmt.Sprint(v))
+	}
+	intStringList := strings.Join(intString, ",")
+	return intStringList 
+}
 func (db *PgDB) QueryTrials(
-	experimentIDs []int32,
-) (trials []int32, err error) {
-	err = db.sql.Select(&trials,`
-SELECT id
-FROM trials
-WHERE experiment_id in (SELECT unnest($1::int []))`, experimentIDs)
+	experimentIDs []int32, projectIDs []int32, workspaceIDs []int32, validation_metrics []*apiv1.NumberRangeFilter) (trials []int32, err error) {
+	var statement string = `SELECT trials.id FROM trials INNER JOIN experiments ON trials.experiment_id = experiments.id INNER JOIN validations ON trials.id = validations.trial_id INNER JOIN projects ON experiments.project_id = projects.id WHERE `
+	var where []string
+	if len(experimentIDs) > 0 {
+		where = append(where, fmt.Sprintf(`trials.experiment_id IN (%s) `, intArraytoString(experimentIDs)))
+	}
+	if len(projectIDs) > 0 {
+		where = append(where, fmt.Sprintf(`experiments.project_id IN (%s) `, intArraytoString(projectIDs)))
+	}
+	if len(workspaceIDs) > 0 {
+		where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
+	}
+	if len(validation_metrics ) > 0 {
+		for _, vm := range validation_metrics{
+			where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
+		}
+	}
+	var sq = statement + strings.Join(where, "AND ")
+	fmt.Println(sq)
+	err = db.sql.Select(&trials,sq)
 	return trials, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
 }
