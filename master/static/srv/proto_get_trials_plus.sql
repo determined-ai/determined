@@ -151,9 +151,8 @@ latest_training AS (
 all_wls AS (
   SELECT all_wl.trial_id, COUNT(*) AS count
   FROM (
-    SELECT trial_id FROM steps
-    UNION ALL (SELECT trial_id FROM validations)
-    UNION ALL (SELECT trial_id FROM checkpoints_view)
+    SELECT trial_id FROM steps WHERE metrics IS NOT NULL
+    UNION ALL (SELECT trial_id FROM validations WHERE metrics IS NOT NULL)
   ) all_wl
   GROUP BY all_wl.trial_id
 )
