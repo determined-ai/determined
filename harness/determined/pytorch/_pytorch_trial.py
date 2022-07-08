@@ -303,6 +303,8 @@ class PyTorchTrialController(det.TrialController):
                             storage_id,
                         ):
                             self._save(path)
+                        for callback in self.callbacks.values():
+                            callback.on_checkpoint_upload_end(uuid=storage_id)
                         response = {"uuid": storage_id}
                     else:
                         response = {}

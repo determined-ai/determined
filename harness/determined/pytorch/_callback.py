@@ -95,6 +95,15 @@ class PyTorchCallback:
         """
         pass
 
+    def on_checkpoint_upload_end(self, uuid: str) -> None:
+        """
+        Run after every checkpoint finishes uploading.
+
+        .. warning::
+            This callback only executes on the chief GPU when doing distributed training.
+        """
+        pass
+
     def state_dict(self) -> Dict[str, Any]:
         """
         Serialize the state of this callback to a dictionary. Return value must
