@@ -53,15 +53,19 @@ func (r *response) Source() *Ref {
 	return r.source
 }
 
-func (r *response) get() Message {
+func (r *response) get(cancel <-chan bool) Message {
 	if r.fetched {
 		return r.result
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	r.fetched = true
-	r.result = <-r.future
-	return r.result
+	select {
+	case r.result = <-r.future:
+		return r.result
+	case <-cancel:
+		return nil
+	}
 }
 
 func (r *response) Get() Message {
@@ -76,13 +80,15 @@ func (r *response) GetOrElse(defaultValue Message) Message {
 	if r.Empty() {
 		return defaultValue
 	}
-	return r.get()
+	return r.get(nil)
 }
 
 func (r *response) GetOrElseTimeout(defaultValue Message, timeout time.Duration) (Message, bool) {
 	future := make(chan Message, 1)
+	cancel := make(chan bool, 1)
+
 	go func() {
-		future <- r.get()
+		future <- r.get(cancel)
 	}()
 	t := time.NewTimer(timeout)
 	defer t.Stop()
@@ -90,6 +96,7 @@ func (r *response) GetOrElseTimeout(defaultValue Message, timeout time.Duration)
 	case result := <-future:
 		return result, true
 	case <-t.C:
+		cancel <- true
 		r.lock.Lock()
 		defer r.lock.Unlock()
 		r.fetched = true
@@ -99,11 +106,11 @@ func (r *response) GetOrElseTimeout(defaultValue Message, timeout time.Duration)
 }
 
 func (r *response) Empty() bool {
-	return r.get() == errNoResponse
+	return r.get(nil) == errNoResponse
 }
 
 func (r *response) Error() error {
-	err, ok := r.get().(error)
+	err, ok := r.get(nil).(error)
 	if r.Empty() || !ok {
 		return nil
 	}
