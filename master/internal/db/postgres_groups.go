@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"github.com/pkg/errors"
 
 	"github.com/uptrace/bun"
 
@@ -16,6 +18,9 @@ func (db *PgDB) AddGroup(ctx context.Context, group model.Group) (model.Group, e
 func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 	var g model.Group
 	err := Bun().NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return g, ErrNotFound
+	}
 	return g, err
 }
 
@@ -30,22 +35,28 @@ func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([
 	}
 
 	err := query.Scan(ctx)
+
+	if len(groups) < 1 || errors.Is(err, sql.ErrNoRows) {
+		return groups, ErrNotFound
+	}
 	return groups, err
 }
 
 func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
-	_, err := Bun().NewDelete().Table("user_group_membership").Where("group_id = ?", gid).Exec(ctx)
-	if err != nil {
-		return err
+	res, err := Bun().NewDelete().Table("user_group_membership").Where("group_id = ?", gid).Exec(ctx)
+
+	if foundErr := checkIfFound(res, err); foundErr != nil {
+		return foundErr
 	}
 
-	_, err = Bun().NewDelete().Table("groups").Where("id = ?", gid).Exec(ctx)
-	return err
+	res, err = Bun().NewDelete().Table("groups").Where("id = ?", gid).Exec(ctx)
+	return checkIfFound(res, err)
 }
 
 func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
-	_, err := Bun().NewUpdate().Model(&group).WherePK().Exec(ctx)
-	return err
+	res, err := Bun().NewUpdate().Model(&group).WherePK().Exec(ctx)
+
+	return checkIfFound(res, err)
 }
 
 func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
@@ -57,17 +68,18 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 		})
 	}
 
-	_, err := Bun().NewInsert().Model(&groupMem).Exec(ctx)
-	return err
+	res, err := Bun().NewInsert().Model(&groupMem).Exec(ctx)
+
+	return checkIfFound(res, err)
 }
 
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
-	_, err := Bun().NewDelete().Table("user_group_membership").
+	res, err := Bun().NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
 
-	return err
+	return checkIfFound(res, err)
 }
 
 func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
@@ -77,5 +89,22 @@ func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, err
 		Where("ugm.group_id = ?", gid).
 		Scan(ctx)
 
+	if len(users) < 1 || errors.Is(err, sql.ErrNoRows) {
+		return users, ErrNotFound
+	}
 	return users, err
+}
+
+// checkIfFound checks if bun has affected rows in a table or not.
+// Returns ErrNotFound if no rows were affected and returns the provided error otherwise
+func checkIfFound(result sql.Result, err error) error {
+	if err == nil {
+		rowsAffected, affectedErr := result.RowsAffected()
+		if affectedErr == nil && rowsAffected == 0 {
+			return ErrNotFound
+		}
+	} else if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound
+	}
+	return err
 }
