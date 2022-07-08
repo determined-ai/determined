@@ -3578,8 +3578,8 @@ class v1Notebook:
 class v1NumberRangeFilter:
     def __init__(
         self,
-        max: "typing.Optional[int]" = None,
-        min: "typing.Optional[int]" = None,
+        max: "typing.Optional[float]" = None,
+        min: "typing.Optional[float]" = None,
         name: "typing.Optional[str]" = None,
     ):
         self.name = name
@@ -3590,15 +3590,15 @@ class v1NumberRangeFilter:
     def from_json(cls, obj: Json) -> "v1NumberRangeFilter":
         return cls(
             name=obj.get("name", None),
-            min=obj.get("min", None),
-            max=obj.get("max", None),
+            min=float(obj["min"]) if obj.get("min", None) is not None else None,
+            max=float(obj["max"]) if obj.get("max", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "name": self.name if self.name is not None else None,
-            "min": self.min if self.min is not None else None,
-            "max": self.max if self.max is not None else None,
+            "min": dump_float(self.min) if self.min is not None else None,
+            "max": dump_float(self.max) if self.max is not None else None,
         }
 
 class v1OrderBy(enum.Enum):

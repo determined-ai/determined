@@ -465,9 +465,9 @@ func (db *PgDB) QueryTrials(
 	if len(workspaceIDs) > 0 {
 		where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
 	}
-	if len(validation_metrics ) > 0 {
+	if len(validation_metrics) > 0 {
 		for _, vm := range validation_metrics{
-			where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
+			where = append(where, fmt.Sprintf(`(validations.metrics->'validation_metrics'->>'%s')::float8 BETWEEN %d AND %d`, vm.Name, vm.Min, vm.Max))
 		}
 	}
 	var sq = statement + strings.Join(where, "AND ")
