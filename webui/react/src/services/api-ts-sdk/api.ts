@@ -4274,6 +4274,32 @@ export interface V1Notebook {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1NumberRangeFilter
+ */
+export interface V1NumberRangeFilter {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1NumberRangeFilter
+     */
+    name?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1NumberRangeFilter
+     */
+    min?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1NumberRangeFilter
+     */
+    max?: number;
+}
+
+/**
  * Order records in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
  * @export
  * @enum {string}
@@ -5128,6 +5154,24 @@ export interface V1QueryFilters {
      * @memberof V1QueryFilters
      */
     projectIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1QueryFilters
+     */
+    workspaceIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1QueryFilters
+     */
+    validationMetrics?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {Array<V1NumberRangeFilter>}
+     * @memberof V1QueryFilters
+     */
+    trainingMetrics?: Array<V1NumberRangeFilter>;
 }
 
 /**
