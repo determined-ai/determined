@@ -631,18 +631,6 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
- * @export
- * @enum {string}
- */
-export enum TrialEarlyExitExitedReason {
-    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
-    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
-    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
-}
-
-/**
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  * @enum {string}
@@ -1283,6 +1271,20 @@ export interface V1CheckpointWorkload {
 }
 
 /**
+ * Close a trial with given id.
+ * @export
+ * @interface V1CloseTrialOperation
+ */
+export interface V1CloseTrialOperation {
+    /**
+     * trial_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1CloseTrialOperation
+     */
+    trialId?: string;
+}
+
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1427,6 +1429,20 @@ export interface V1ComputeHPImportanceResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1ConstantHyperparameter
+ */
+export interface V1ConstantHyperparameter {
+    /**
+     * value of the constant hyperparameter.
+     * @type {number}
+     * @memberof V1ConstantHyperparameter
+     */
+    val?: number;
+}
+
+/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -1520,6 +1536,20 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+}
+
+/**
+ * Create a trial with given hyperparameters.
+ * @export
+ * @interface V1CreateTrialOperation
+ */
+export interface V1CreateTrialOperation {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1CreateTrialOperation
+     */
+    hyperparams?: { [key: string]: V1Hyperparameter; };
 }
 
 /**
@@ -2776,6 +2806,26 @@ export interface V1GetResourcePoolsResponse {
 }
 
 /**
+ * Response to GetSearcherEventsRequest.
+ * @export
+ * @interface V1GetSearcherEventsResponse
+ */
+export interface V1GetSearcherEventsResponse {
+    /**
+     * The requested list of searcher events. str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
+     * @type {Array<V1SearcherEvent>}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    searcherEvent?: Array<V1SearcherEvent>;
+    /**
+     * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
+     * @type {V1SearcherEvent}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    lastTriggeringEvent?: V1SearcherEvent;
+}
+
+/**
  * Response to GetShellRequest.
  * @export
  * @interface V1GetShellResponse
@@ -3228,6 +3278,26 @@ export interface V1GetWorkspacesResponse {
 }
 
 /**
+ * Hyperparameter.
+ * @export
+ * @interface V1Hyperparameter
+ */
+export interface V1Hyperparameter {
+    /**
+     * Constant hyperparameter.
+     * @type {V1ConstantHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    constantHyperparam?: V1ConstantHyperparameter;
+    /**
+     * Nested hyperparameter.
+     * @type {V1RawNestedHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    nestedHyperparam?: V1RawNestedHyperparameter;
+}
+
+/**
  * Kill the requested notebook if idle.
  * @export
  * @interface V1IdleNotebookRequest
@@ -3253,6 +3323,20 @@ export interface V1IdleNotebookRequest {
  * @interface V1IdleNotebookResponse
  */
 export interface V1IdleNotebookResponse {
+}
+
+/**
+ * InitialOperations is a searcher event signaling the creation of an experiment.
+ * @export
+ * @interface V1InitialOperations
+ */
+export interface V1InitialOperations {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1InitialOperations
+     */
+    id?: number;
 }
 
 /**
@@ -4803,6 +4887,40 @@ export interface V1PostProjectResponse {
 }
 
 /**
+ * Request for sending operations from a custom user search method.
+ * @export
+ * @interface V1PostSearcherOperationsRequest
+ */
+export interface V1PostSearcherOperationsRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    experimentId?: number;
+    /**
+     * list of operations in the method.
+     * @type {Array<V1SearcherOperation>}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    searcherOperations?: Array<V1SearcherOperation>;
+    /**
+     * The event that triggered client to send the above operations to master.
+     * @type {V1SearcherEvent}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    triggeredByEvent?: V1SearcherEvent;
+}
+
+/**
+ * Response to PostSearcherOperationsResponse.
+ * @export
+ * @interface V1PostSearcherOperationsResponse
+ */
+export interface V1PostSearcherOperationsResponse {
+}
+
+/**
  * Create a batch of trial profiler metrics.
  * @export
  * @interface V1PostTrialProfilerMetricsBatchRequest
@@ -5178,6 +5296,20 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1RawNestedHyperparameter
+ */
+export interface V1RawNestedHyperparameter {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1RawNestedHyperparameter
+     */
+    mapHyperparam?: { [key: string]: V1Hyperparameter; };
 }
 
 /**
@@ -5979,6 +6111,44 @@ export enum V1SchedulerType {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1SearcherEvent
+ */
+export interface V1SearcherEvent {
+    /**
+     * 
+     * @type {V1InitialOperations}
+     * @memberof V1SearcherEvent
+     */
+    initialOperations?: V1InitialOperations;
+    /**
+     * 
+     * @type {V1TrialCreated}
+     * @memberof V1SearcherEvent
+     */
+    trialCreated?: V1TrialCreated;
+    /**
+     * 
+     * @type {V1ValidationCompleted}
+     * @memberof V1SearcherEvent
+     */
+    validationCompleted?: V1ValidationCompleted;
+    /**
+     * 
+     * @type {V1TrialClosed}
+     * @memberof V1SearcherEvent
+     */
+    trialClosed?: V1TrialClosed;
+    /**
+     * 
+     * @type {V1TrialExitedEarly}
+     * @memberof V1SearcherEvent
+     */
+    trialExitedEarly?: V1TrialExitedEarly;
+}
+
+/**
  * SearcherOperation is an operation issued by the searcher.
  * @export
  * @interface V1SearcherOperation
@@ -5990,6 +6160,24 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     validateAfter?: V1ValidateAfterOperation;
+    /**
+     * CreateTrial is issued to create trial.
+     * @type {V1CreateTrialOperation}
+     * @memberof V1SearcherOperation
+     */
+    createTrial?: V1CreateTrialOperation;
+    /**
+     * CloseTrial is issued to close trial.
+     * @type {V1CloseTrialOperation}
+     * @memberof V1SearcherOperation
+     */
+    closeTrial?: V1CloseTrialOperation;
+    /**
+     * ShutdownOperation is issued to shutdown the custom searcher method.
+     * @type {V1ShutdownOperation}
+     * @memberof V1SearcherOperation
+     */
+    shutdown?: V1ShutdownOperation;
 }
 
 /**
@@ -6238,6 +6426,20 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     jobId: string;
+}
+
+/**
+ * Shutdown custom searcher method.
+ * @export
+ * @interface V1ShutdownOperation
+ */
+export interface V1ShutdownOperation {
+    /**
+     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
+     * @type {number}
+     * @memberof V1ShutdownOperation
+     */
+    emptyField?: number;
 }
 
 /**
@@ -6533,6 +6735,46 @@ export interface V1Tensorboard {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1TrialClosed
+ */
+export interface V1TrialClosed {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialClosed
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialClosed
+     */
+    requestId?: string;
+}
+
+/**
+ * TrialCreated is a searcher event singaling the creation of a trial.
+ * @export
+ * @interface V1TrialCreated
+ */
+export interface V1TrialCreated {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialCreated
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialCreated
+     */
+    requestId?: string;
+}
+
+/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -6540,10 +6782,60 @@ export interface V1Tensorboard {
 export interface V1TrialEarlyExit {
     /**
      * The reason for the exit.
-     * @type {TrialEarlyExitExitedReason}
+     * @type {V1TrialEarlyExitExitedReason}
      * @memberof V1TrialEarlyExit
      */
-    reason: TrialEarlyExitExitedReason;
+    reason: V1TrialEarlyExitExitedReason;
+}
+
+/**
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
+ * @export
+ * @enum {string}
+ */
+export enum V1TrialEarlyExitExitedReason {
+    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialExitedEarly
+ */
+export interface V1TrialExitedEarly {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialExitedEarly
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialExitedEarly
+     */
+    requestId?: string;
+    /**
+     * The reason for the exit.
+     * @type {V1TrialExitedEarlyExitedReason}
+     * @memberof V1TrialExitedEarly
+     */
+    exitedReason?: V1TrialExitedEarlyExitedReason;
+}
+
+/**
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
+ * @export
+ * @enum {string}
+ */
+export enum V1TrialExitedEarlyExitedReason {
+    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
 }
 
 /**
@@ -7006,6 +7298,32 @@ export interface V1ValidateAfterOperation {
      * @memberof V1ValidateAfterOperation
      */
     length?: string;
+}
+
+/**
+ * ValidationCompleted is a searcher event triggered when a validation has been completed.
+ * @export
+ * @interface V1ValidationCompleted
+ */
+export interface V1ValidationCompleted {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ValidationCompleted
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ValidationCompleted
+     */
+    requestId?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ValidationCompleted
+     */
+    metric?: number;
 }
 
 /**
@@ -10180,6 +10498,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10474,6 +10829,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling postSearcherOperations.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostSearcherOperationsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -11088,6 +11489,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11216,6 +11636,26 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          */
         pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11530,6 +11970,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11604,6 +12054,17 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         pauseExperiment(id: number, options?: any) {
             return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).postSearcherOperations(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11895,6 +12356,18 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get list of SearcherEvents.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getSearcherEvents(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
@@ -11982,6 +12455,19 @@ export class ExperimentsApi extends BaseAPI {
      */
     public pauseExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).pauseExperiment(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Post list of SearcherOperations.
+     * @param {number} experimentId The experiment id
+     * @param {V1PostSearcherOperationsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).postSearcherOperations(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
