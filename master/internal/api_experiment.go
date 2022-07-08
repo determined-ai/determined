@@ -194,6 +194,40 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	return e, *curUser, nil
 }
 
+func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
+	*apiv1.GetSearcherEventsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from db")
+	}
+
+	print(exp)
+	print(err)
+	return &apiv1.GetSearcherEventsResponse{}, nil
+}
+
+func (a *apiServer) PostSearcherOperations(ctx context.Context,
+	req *apiv1.PostSearcherOperationsRequest) (*apiv1.PostSearcherOperationsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from db")
+	}
+
+	print(exp)
+	print(err)
+
+	return &apiv1.PostSearcherOperationsResponse{}, nil
+}
+
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
