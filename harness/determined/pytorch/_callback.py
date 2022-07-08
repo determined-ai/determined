@@ -135,6 +135,16 @@ class PyTorchCallback:
         """
         pass
 
+    def on_training_workload_end(self, metrics: Dict[str, Any]) -> None:
+        """
+        Run on end of a training workload. Each workload contain a maximum of ``scheduling_unit``
+        batches, as defined in the experiment config.
+
+        .. warning::
+            This callback only executes on the chief GPU when doing distributed training.
+        """
+        pass
+
     def on_validation_epoch_start(self) -> None:
         """
         Run on start of a new validation epoch
