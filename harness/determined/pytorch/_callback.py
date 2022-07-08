@@ -88,7 +88,7 @@ class PyTorchCallback:
 
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         """
-        Run after every checkpoint.
+        Run after every checkpoint finishes uploading.
 
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.

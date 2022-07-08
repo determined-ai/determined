@@ -795,9 +795,6 @@ class PyTorchTrialController(det.TrialController):
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
-        for callback in self.callbacks.values():
-            callback.on_checkpoint_end(str(path))
-
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
@@ -813,6 +810,9 @@ class PyTorchTrialController(det.TrialController):
                 },
                 f2,
             )
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_end(str(path))
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
