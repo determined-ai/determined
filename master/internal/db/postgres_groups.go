@@ -35,7 +35,7 @@ func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([
 	}
 
 	err := query.Scan(ctx)
-	
+
 	return groups, err
 }
 
@@ -65,16 +65,20 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 		})
 	}
 
-	res, err := Bun().NewInsert().Model(&groupMem).Exec(ctx)
+	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
+	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
+	tx.Commit()
 
 	return checkIfFound(res, err)
 }
 
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
-	res, err := Bun().NewDelete().Table("user_group_membership").
+	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
+	res, err := tx.NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
+	tx.Commit()
 
 	return checkIfFound(res, err)
 }
