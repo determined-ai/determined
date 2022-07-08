@@ -61,8 +61,7 @@ func (r *response) get(cancel <-chan bool) Message {
 	defer r.lock.Unlock()
 	r.fetched = true
 	select {
-	case result := <-r.future:
-		r.result = result
+	case r.result = <-r.future:
 		return r.result
 	case <-cancel:
 		return nil
