@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-deploy",
-    version="0.18.3-rc7",
+    version="0.18.3-rc8",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -13,6 +13,6 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.6",
     install_requires=[
-        "determined==0.18.3-rc7",
+        "determined==0.18.3-rc8",
     ],
 )
