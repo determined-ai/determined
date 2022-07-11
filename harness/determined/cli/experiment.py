@@ -63,7 +63,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     """
     try:
         from git import Repo
-    except ImportError as e:
+    except ImportError as e:  # pragma: no cover
         print("Error: Please verify that git is installed correctly: {}".format(e))
         sys.exit(1)
 

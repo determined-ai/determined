@@ -23,7 +23,8 @@ from determined.util import has_param
 # Apex is included only for GPU trials.
 try:
     import apex
-except ImportError:
+except ImportError:  # pragma: no cover
+    apex = None
     pass
 
 

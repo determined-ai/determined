@@ -14,7 +14,8 @@ from determined.tensorboard import get_base_path
 # Apex is included only for GPU trials.
 try:
     import apex
-except ImportError:
+except ImportError:  # pragma: no cover
+    apex = None
     if torch.cuda.is_available():
         logging.warning("Failed to import apex.")
     pass
@@ -24,7 +25,8 @@ try:
     import torch.cuda.amp as amp
 
     amp_import_error = False
-except ImportError:
+except ImportError:  # pragma: no cover
+    amp = None
     amp_import_error = True
     if torch.cuda.is_available():
         logging.warning("PyTorch AMP is unavailable.")

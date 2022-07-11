@@ -51,7 +51,7 @@ class _PolyHorovod:
             # If horovod has not been imported yet, do it now.
             try:
                 self._poly_hvd_module = importlib.import_module(f"horovod.{horovod_type}")
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 pass
 
     def __getattr__(self, attr: str) -> Any:
