@@ -11,6 +11,13 @@
     source_checkpoint_uuid: null
     source_trial_id: null
 
+- name: custom searcher (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-custom.json
+  case:
+    name: custom
+
 - name: random searcher (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
