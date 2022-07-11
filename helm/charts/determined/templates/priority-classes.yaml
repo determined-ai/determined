@@ -4,7 +4,7 @@ metadata:
   name: determined-system-priority
 value: 1000000
 preemptionPolicy: Never
-globalDefault: false
+globalDefault: true
 description: "This priority class should be used for Determined system pods only."
 ---
 apiVersion: scheduling.k8s.io/v1
@@ -13,5 +13,5 @@ metadata:
   name: determined-medium-priority
 value: 50
 preemptionPolicy: Never
-globalDefault: false
+globalDefault: true
 description: "This priority class should be used for medium priority Determined jobs."

@@ -58,7 +58,7 @@ db:
   # Determined deployed database. This can be left blank if a default storage class is specified in
   # the cluster. If dynamic provisioning of PersistentVolumes is disabled, users must manually
   # create a PersistentVolume that will match the PersistentVolumeClaim.
-  # storageClassName:
+  storageClassName: block-nvme-ord1
 
   # ssl_mode and ssl_root_cert configure the TLS connection to the database. Users must first
   # create a kubernetes secret or configMap containing their certificate and specify its name in
@@ -81,8 +81,8 @@ checkpointStorage:
   # Comment out if not using `shared_fs`. Users are strongly discouraged from using `shared_fs` for
   # storage beyond initial testing as most Kubernetes cluster nodes do not have a shared file
   # system.
-  type: shared_fs
-  hostPath: /checkpoints
+  # type: shared_fs
+  # hostPath: /data
 
   # For storing in GCS.
   # type: gcs
@@ -90,12 +90,12 @@ checkpointStorage:
   # prefix: <prefix>
   
   # For storing in S3.
-  # type: s3
-  # bucket: <bucket_name>
-  # accessKey: <access_key>
-  # secretKey: <secret_key>
-  # endpointUrl: <endpoint_url>
-  # prefix: <prefix>
+  type: s3
+  bucket: model-checkpoints
+  accessKey: TV8MB1K8OJZXY1K00GEG
+  secretKey: v6WpwwGqTZH5ap7Bq2cYcdDG3DkNQ5le3u3vzQDz
+  endpointUrl: http://s3.ord1.coreweave.com
+  prefix: determined-model-checkpoints
 
   # For storing in Azure Blob Storage with a connection string.
   # Do NOT use if already using Azure Blob Storage with account URL
@@ -117,7 +117,7 @@ checkpointStorage:
 # Distributed tasks with sizes that are not divisible by `maxSlotsPerPod` are never scheduled. If
 # you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set `maxSlotsPerPod` to
 # the greatest common divisor of all the sizes (4, in that case).
-maxSlotsPerPod:
+maxSlotsPerPod: 8
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
