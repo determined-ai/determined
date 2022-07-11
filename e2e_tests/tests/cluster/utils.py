@@ -32,7 +32,7 @@ def get_master_port(loaded_config: dict) -> str:
             if k == "master":
                 if "port" in d["master"]["config_file"]:
                     return str(d["master"]["config_file"]["port"])
-                    
+
     return "8080"  # default value if not explicit in config file
 
 
