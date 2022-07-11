@@ -26,180 +26,184 @@ type Props = {
  * the following mocked const is assuming this data structure from the backend
  */
 
-const backendResponse: { files: FileNode[] } = {
-  files: [
-    {
-      content_length: 0,
-      files: [
-        {
-          content_length: 434,
-          content_type: 'text/plain; charset=utf-8',
-          is_dir: false,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: 'file_a.yaml',
-          path: 'example_folder1/file_a.yaml',
-        },
-        {
-          content_length: 434,
-          content_type: 'text/plain; charset=utf-8',
-          is_dir: false,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: 'file_b.yaml',
-          path: 'example_folder1/file_b.yaml',
-        },
-        {
-          content_length: 434,
-          content_type: 'text/plain; charset=utf-8',
-          is_dir: false,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: 'file_c.yaml',
-          path: 'example_folder1/file_c.yaml',
-        },
-      ],
-      is_dir: true,
-      modified_time: '2022-01-03 18:58:09 -0600 CST',
-      name: 'example_folder1',
-      path: 'example_folder1',
-    },
-    {
-      content_length: 0,
-      files: [
-        {
-          content_length: 0,
-          files: [
-            {
-              content_length: 434,
-              content_type: 'text/plain; charset=utf-8',
-              is_dir: false,
-              modified_time: '2022-01-03 18:58:09 -0600 CST',
-              name: 'file_d.yaml',
-              path: 'example_folder2/example_folder3/file_d.yaml',
-            },
-            {
-              content_length: 434,
-              content_type: 'text/plain; charset=utf-8',
-              is_dir: false,
-              modified_time: '2022-01-03 18:58:09 -0600 CST',
-              name: 'file_e.yaml',
-              path: 'example_folder2/example_folder3/file_e.yaml',
-            },
-          ],
-          is_dir: true,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: '',
-          path: 'example_folder2/example_folder3',
-        },
-        {
-          content_length: 434,
-          content_type: 'text/plain; charset=utf-8',
-          is_dir: false,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: 'file_f.yaml',
-          path: 'example_folder2/file_f.yaml',
-        },
-        {
-          content_length: 434,
-          content_type: 'text/plain; charset=utf-8',
-          is_dir: false,
-          modified_time: '2022-01-03 18:58:09 -0600 CST',
-          name: 'file_g.yaml',
-          path: 'example_folder2/file_g.yaml',
-        },
-      ],
-      is_dir: true,
-      modified_time: '2022-01-03 18:58:09 -0600 CST',
-      name: 'example_folder2',
-      path: 'example_folder2',
-    },
-    {
-      content_length: 434,
-      content_type: 'text/plain; charset=utf-8',
-      is_dir: false,
-      modified_time: '2022-01-03 18:58:09 -0600 CST',
-      name: 'file_h.yaml',
-      path: 'file_h.yaml',
-    },
-    {
-      content_length: 434,
-      content_type: 'text/plain; charset=utf-8',
-      is_dir: false,
-      modified_time: '2022-01-03 18:58:09 -0600 CST',
-      name: 'file_i.yaml',
-      path: 'file_i.yaml',
-    },
-  ],
-};
+// const backendResponse: { files: FileNode[] } = {
+//   files: [
+//     {
+//       content_length: 0,
+//       files: [
+//         {
+//           content_length: 434,
+//           content_type: 'text/plain; charset=utf-8',
+//           is_dir: false,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: 'file_a.yaml',
+//           path: 'example_folder1/file_a.yaml',
+//         },
+//         {
+//           content_length: 434,
+//           content_type: 'text/plain; charset=utf-8',
+//           is_dir: false,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: 'file_b.yaml',
+//           path: 'example_folder1/file_b.yaml',
+//         },
+//         {
+//           content_length: 434,
+//           content_type: 'text/plain; charset=utf-8',
+//           is_dir: false,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: 'file_c.yaml',
+//           path: 'example_folder1/file_c.yaml',
+//         },
+//       ],
+//       is_dir: true,
+//       modified_time: '2022-01-03 18:58:09 -0600 CST',
+//       name: 'example_folder1',
+//       path: 'example_folder1',
+//     },
+//     {
+//       content_length: 0,
+//       files: [
+//         {
+//           content_length: 0,
+//           files: [
+//             {
+//               content_length: 434,
+//               content_type: 'text/plain; charset=utf-8',
+//               is_dir: false,
+//               modified_time: '2022-01-03 18:58:09 -0600 CST',
+//               name: 'file_d.yaml',
+//               path: 'example_folder2/example_folder3/file_d.yaml',
+//             },
+//             {
+//               content_length: 434,
+//               content_type: 'text/plain; charset=utf-8',
+//               is_dir: false,
+//               modified_time: '2022-01-03 18:58:09 -0600 CST',
+//               name: 'file_e.yaml',
+//               path: 'example_folder2/example_folder3/file_e.yaml',
+//             },
+//           ],
+//           is_dir: true,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: '',
+//           path: 'example_folder2/example_folder3',
+//         },
+//         {
+//           content_length: 434,
+//           content_type: 'text/plain; charset=utf-8',
+//           is_dir: false,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: 'file_f.yaml',
+//           path: 'example_folder2/file_f.yaml',
+//         },
+//         {
+//           content_length: 434,
+//           content_type: 'text/plain; charset=utf-8',
+//           is_dir: false,
+//           modified_time: '2022-01-03 18:58:09 -0600 CST',
+//           name: 'file_g.yaml',
+//           path: 'example_folder2/file_g.yaml',
+//         },
+//       ],
+//       is_dir: true,
+//       modified_time: '2022-01-03 18:58:09 -0600 CST',
+//       name: 'example_folder2',
+//       path: 'example_folder2',
+//     },
+//     {
+//       content_length: 434,
+//       content_type: 'text/plain; charset=utf-8',
+//       is_dir: false,
+//       modified_time: '2022-01-03 18:58:09 -0600 CST',
+//       name: 'file_h.yaml',
+//       path: 'file_h.yaml',
+//     },
+//     {
+//       content_length: 434,
+//       content_type: 'text/plain; charset=utf-8',
+//       is_dir: false,
+//       modified_time: '2022-01-03 18:58:09 -0600 CST',
+//       name: 'file_i.yaml',
+//       path: 'file_i.yaml',
+//     },
+//   ],
+// };
 
-const treeData: DataNode[] = [ // TODO: this has to go after integration
-  {
-    children: [
-      {
-        isLeaf: true,
-        key: '0-0-0',
-        title: 'file_a.yaml',
-      },
-      {
-        isLeaf: true,
-        key: '0-0-1',
-        title: 'file_b.yaml',
-      },
-      {
-        isLeaf: true,
-        key: '0-0-2',
-        title: 'file_c.yaml',
-      },
-    ],
-    key: '0-0', // following the type DataNode where the first 0 is the root and 0 is the node
-    title: 'example_folder1',
-  },
-  {
-    children: [
-      {
-        children: [
-          {
-            isLeaf: true,
-            key: '0-1-0-0',
-            title: 'file_d.yaml',
-          },
-          {
-            isLeaf: true,
-            key: '0-1-0-1',
-            title: 'file_e.yaml',
-          },
-        ],
-        isLeaf: false,
-        key: '0-1-0',
-        title: 'example_folder3',
-      },
-      {
-        isLeaf: true,
-        key: '0-1-1',
-        title: 'file_f.yaml',
-      },
-      {
-        isLeaf: true,
-        key: '0-1-2',
-        title: 'file_g.yaml',
-      },
-    ],
-    key: '0-1', // following the type DataNode where the first 0 is the root and 1 is the node
-    title: 'example_folder2',
-  },
-  {
-    isLeaf: true,
-    key: '0-2',
-    title: 'file_h.yaml',
-  },
-  {
-    isLeaf: true,
-    key: '0-3',
-    title: 'file_i.yaml',
-  },
-];
+// const treeData: DataNode[] = [ // TODO: this has to go after integration
+//   {
+//     children: [
+//       {
+//         isLeaf: true,
+//         key: '0-0-0',
+//         title: 'file_a.yaml',
+//       },
+//       {
+//         isLeaf: true,
+//         key: '0-0-1',
+//         title: 'file_b.yaml',
+//       },
+//       {
+//         isLeaf: true,
+//         key: '0-0-2',
+//         title: 'file_c.yaml',
+//       },
+//     ],
+//     key: '0-0', // following the type DataNode where the first 0 is the root and 0 is the node
+//     title: 'example_folder1',
+//   },
+//   {
+//     children: [
+//       {
+//         children: [
+//           {
+//             isLeaf: true,
+//             key: '0-1-0-0',
+//             title: 'file_d.yaml',
+//           },
+//           {
+//             isLeaf: true,
+//             key: '0-1-0-1',
+//             title: 'file_e.yaml',
+//           },
+//         ],
+//         isLeaf: false,
+//         key: '0-1-0',
+//         title: 'example_folder3',
+//       },
+//       {
+//         isLeaf: true,
+//         key: '0-1-1',
+//         title: 'file_f.yaml',
+//       },
+//       {
+//         isLeaf: true,
+//         key: '0-1-2',
+//         title: 'file_g.yaml',
+//       },
+//     ],
+//     key: '0-1', // following the type DataNode where the first 0 is the root and 1 is the node
+//     title: 'example_folder2',
+//   },
+//   {
+//     isLeaf: true,
+//     key: '0-2',
+//     title: 'file_h.yaml',
+//   },
+//   {
+//     isLeaf: true,
+//     key: '0-3',
+//     title: 'file_i.yaml',
+//   },
+// ];
 
 const CodeViewer: React.FC<Props> = ({ experiment }) => {
   // TODO: remove this after integration (taken from the config tab)
   const [ publicConfig, setPublicConfig ] = useState({});
+
+  const [ fileData, setFileData ] = useState(undefined);
+  const [ files, setFiles ] = useState<FileNode[]>([]);
+  const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
   const [ treeMap ] = useState(() => new Map<string, string>());
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileDir, setFileDir ] = useState('');
@@ -216,22 +220,39 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
     setPublicConfig({ environment: restEnvironment, ...restConfig });
   };
 
+  // get the file tree from backend
   useEffect(() => {
-    const navigateTree = (node: FileNode, key: string) => {
+    (async () => {
+      const files = await getExperimentFileTree({ experimentId: experiment.id });
+
+      setFiles(files);
+    })();
+    return () => {
+      setFiles([]);
+    };
+  }, [ experiment.id ]);
+
+  // map the file tree
+  useEffect(() => {
+    const navigateTree = (node: FileNode, key: string): DataNode => {
       treeMap.set(key, node.path);
 
-      if (node.files) {
-        node.files.forEach((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
+      const newNode: DataNode = {
+        isLeaf: true,
+        key,
+        title: node.name,
+      };
+
+      if (node.files?.length) {
+        newNode.children = node.files.map((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
+        newNode.isLeaf = false;
       }
+
+      return newNode;
     };
 
-    backendResponse.files.forEach((node, idx) => navigateTree(node, `0-${idx}`));
-
-    (async () => {
-      const foo = await getExperimentFileTree({ experimentId: experiment.id });
-      console.log('file tree', foo);
-    })();
-  }, [ treeMap ]);
+    setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
+  }, [ treeMap, files ]);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
   const onSelectFile = (keys: React.Key[], info: { [key:string]: unknown, node: DataNode }) => {
@@ -259,7 +280,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
         <DirectoryTree
           className={css.fileTree}
           defaultExpandAll
-          treeData={treeData}
+          treeData={fileTree}
           onSelect={onSelectFile}
         />
       </Section>
