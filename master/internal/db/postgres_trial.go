@@ -452,18 +452,23 @@ func intArraytoString(ints []int32) string {
 	intStringList := strings.Join(intString, ",")
 	return intStringList 
 }
+
 func (db *PgDB) QueryTrials(
 	experimentIDs []int32, projectIDs []int32, workspaceIDs []int32, validation_metrics []*apiv1.NumberRangeFilter) (trials []int32, err error) {
+	qb, err := Bun().NewSelect().TableExpr("trials").Column("id").QueryBuilder()
 	var statement string = `SELECT trials.id FROM trials INNER JOIN experiments ON trials.experiment_id = experiments.id INNER JOIN validations ON trials.id = validations.trial_id INNER JOIN projects ON experiments.project_id = projects.id WHERE `
 	var where []string
 	if len(experimentIDs) > 0 {
 		where = append(where, fmt.Sprintf(`trials.experiment_id IN (%s) `, intArraytoString(experimentIDs)))
+		qb = qb.Where("? IN (?)", Bun().Ident("experiment_id"), experimentIDs)
 	}
 	if len(projectIDs) > 0 {
 		where = append(where, fmt.Sprintf(`experiments.project_id IN (%s) `, intArraytoString(projectIDs)))
+		qb = qb.Where("? IN (?)", Bun().Ident("experiments.project_id"), projectIDs)
 	}
 	if len(workspaceIDs) > 0 {
 		where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
+		qb = qb.Where("? IN (?)", Bun().Ident("projects.workspace_id"), workspaceIDs)
 	}
 	if len(validation_metrics) > 0 {
 		for _, vm := range validation_metrics{
