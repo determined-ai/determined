@@ -37,6 +37,7 @@ export const sentenceToCamelCase = (text: string): string => {
   return result.join('');
 };
 
+/** titlecase a sentence */
 export const capitalize = (str: string): string => {
   return str.split(/\s+/).map(part => capitalizeWord(part)).join(' ');
 };
