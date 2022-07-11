@@ -227,10 +227,10 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
 
     backendResponse.files.forEach((node, idx) => navigateTree(node, `0-${idx}`));
 
-    (async () => {
-      const foo = await getExperimentFileTree({ experimentId: experiment.id });
-      console.log('file tree', foo);
-    })();
+    // (async () => {
+    //   const foo = await getExperimentFileTree({ experimentId: experiment.id });
+    //   console.log('file tree', foo);
+    // })();
   }, [ treeMap ]);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
