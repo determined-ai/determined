@@ -2630,6 +2630,26 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/searcher-custom.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-custom.json",
+    "title": "CustomConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "properties": {
+        "name": {
+            "const": "custom"
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/searcher-grid.json": json.loads(
         r"""
 {
@@ -2970,7 +2990,7 @@ schemas = {
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', or 'adaptive_asha'",
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'custom', or 'adaptive_asha'",
             "items": [
                 {
                     "unionKey": "const:name=single",
@@ -2983,6 +3003,10 @@ schemas = {
                 {
                     "unionKey": "const:name=grid",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                },
+                {
+                    "unionKey": "const:name=custom",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
                 },
                 {
                     "unionKey": "const:name=adaptive_asha",
