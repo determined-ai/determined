@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func TestGetDockerAuths(t *testing.T) {
