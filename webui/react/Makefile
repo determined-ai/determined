@@ -74,3 +74,20 @@ test:
 .PHONY: test-ci
 test-ci:
 	JEST_JUNIT_OUTPUT_DIR=coverage npm run test:coverage -- --reporters=jest-junit
+
+# shared-web helpers
+
+.PHONY: test-shared
+test-shared:
+	cd src/shared; ./bin/test.py --repos saas --test-local
+
+.PHONY: push
+push-shared: test-shared
+	# fail if the branch name is not master
+	if [ "$(git rev-parse --abbrev-ref HEAD)" != "master" ]; then \
+		echo "You must be on the master branch to push to shared-web"; \
+		false; \
+	fi
+	# fail if there are uncommitted changes.
+	git diff --exit-code || (echo "uncommitted changes, please commit or stash" ; false)
+	cd $(git rev-parse --show-toplevel) && git subtree push --prefix=webui/react/src/shared https://github.com/determined-ai/shared-web main
