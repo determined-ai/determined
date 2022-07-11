@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 
+	"github.com/jackc/pgconn"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -51,6 +52,10 @@ func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
 
 // TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
+	if len(uids) < 1 {
+		return nil
+	}
+
 	groupMem := make([]model.GroupMembership, 0, len(uids))
 	for _, uid := range uids {
 		groupMem = append(groupMem, model.GroupMembership{
@@ -64,6 +69,10 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 }
 
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
+	if len(uids) < 1 {
+		return nil
+	}
+
 	_, err := Bun().NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
@@ -80,4 +89,16 @@ func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, err
 		Scan(ctx)
 
 	return users, err
+}
+
+// TODO: actually finish this and test it (integration?)
+// expected: *errors.fundamental(not found)
+// actual  : *pgconn.PgError(&pgconn.PgError{Severity:"ERROR", Code:"23503", Message:"insert or update on table \"user_group_membership\" violates foreign key constraint \"user_group_membership_user_id_fkey\"", Detail:"Key (user_id)=(125674576) is not present in table \"users\".", Hint:"", Position:0, InternalPosition:0, InternalQuery:"", Where:"", SchemaName:"public", TableName:"user_group_membership", ColumnName:"", DataTypeName:"", ConstraintName:"user_group_membership_user_id_fkey", File:"ri_triggers.c", Line:3266, Routine:"ri_ReportViolation"})
+func isNotFoundErr(err error) bool {
+	if e, ok := err.(*pgconn.PgError); ok {
+		if e.Code == "23503" {
+			return true
+		}
+	}
+	return false
 }

@@ -100,6 +100,24 @@ func TestHelloWorld(t *testing.T) {
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
 	})
+
+	t.Run("partial success on adding users to a group results in transaction rollback", func(t *testing.T) {
+		err := pgDB.AddUsersToGroup(ctx, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
+		// TODO: this being ErrNotFound in particular might be out of scope.
+		// actual  : *pgconn.PgError(&pgconn.PgError{Severity:"ERROR", Code:"23503", Message:"insert or update on table \"user_group_membership\" violates foreign key constraint \"user_group_membership_user_id_fkey\"", Detail:"Key (user_id)=(125674576) is not present in table \"users\".", Hint:"", Position:0, InternalPosition:0, InternalQuery:"", Where:"", SchemaName:"public", TableName:"user_group_membership", ColumnName:"", DataTypeName:"", ConstraintName:"user_group_membership_user_id_fkey", File:"ri_triggers.c", Line:3266, Routine:"ri_ReportViolation"})
+		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
+
+		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
+		require.NoError(t, err, "failed to search for users that belong to group")
+
+		index := usersContain(users, testUser.ID)
+		require.Equal(t, -1, index, "Expected users in group not to contain the one added in the erroring call")
+	})
+
+	t.Run("AddUsersToGroup fails with ErrNotFound when attempting to add users to a non-existent group", func(t *testing.T) {
+		err := pgDB.AddUsersToGroup(ctx, -500, testUser.ID)
+		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when trying to add users to a non-existent group")
+	})
 }
 
 // TODO: test creating several groups and make sure it only deletes the one in question
