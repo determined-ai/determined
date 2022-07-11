@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -132,6 +134,45 @@ func NewCreateFromCheckpoint(
 	create := NewCreate(rand, s, sequencerType)
 	create.Checkpoint = &Checkpoint{parentID}
 	return create
+}
+
+func hparamValFromProto(protoHparam *experimentv1.Hyperparameter) interface{} {
+	switch protoHparam.Union.(type) {
+	case *experimentv1.Hyperparameter_CategoricalHyperparam:
+		return protoHparam.GetCategoricalHyperparam().Val
+	case *experimentv1.Hyperparameter_DoubleHyperparam:
+		return protoHparam.GetDoubleHyperparam().Val
+	case *experimentv1.Hyperparameter_IntegerHyperparam:
+		return protoHparam.GetIntegerHyperparam().Val
+	case *experimentv1.Hyperparameter_NestedHyperparam:
+		p := make(map[string]interface{})
+		for key, val := range protoHparam.GetNestedHyperparam().MapHyperparam {
+			p[key] = hparamValFromProto(val)
+		}
+		return p
+	default:
+		panic(fmt.Sprintf("unexpected hyperparameter type %+v", protoHparam.Union))
+	}
+}
+
+// NewCreateFromProto initializes a new Create operation from
+// an experimentv1.SearcherOperation_CreateTrial.
+func NewCreateFromProto(
+	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
+	sequencerType model.WorkloadSequencerType,
+) Create {
+	requestID, _ := uuid.Parse(protoSearcherOp.CreateTrial.TrialId)
+	trialSeed := uint32(42)
+	hparams := make(HParamSample)
+	for name, protoHparam := range protoSearcherOp.CreateTrial.Hyperparams {
+		hparams[name] = hparamValFromProto(protoHparam)
+	}
+	return Create{
+		RequestID:             model.RequestID(requestID),
+		TrialSeed:             trialSeed,
+		Hparams:               hparams,
+		WorkloadSequencerType: sequencerType,
+	}
 }
 
 func (create Create) String() string {

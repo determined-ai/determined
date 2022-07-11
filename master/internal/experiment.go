@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -32,6 +34,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -94,6 +97,7 @@ type (
 		hpImportance        *actor.Ref
 		db                  *db.PgDB
 		searcher            *searcher.Searcher
+		queue               *searcher.SearcherEventQueue
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
@@ -123,11 +127,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	resources.SetResourcePool(poolName)
 	conf.SetResources(resources)
 
-	method := searcher.NewSearchMethod(conf.Searcher())
-	search := searcher.NewSearcher(
-		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
-	)
-
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
 		master.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
@@ -141,6 +140,12 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		}
 		telemetry.ReportExperimentCreated(master.system, expModel)
 	}
+
+	method := searcher.NewSearchMethod(conf.Searcher())
+	search := searcher.NewSearcher(
+		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
+	)
+	log.Infof("created experiment Id=%d, JobId=%s", expModel.ID, expModel.JobID)
 
 	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)
 	if err != nil {
@@ -395,25 +400,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("experiment shut down successfully")
 
-	case *apiv1.PostSearcherOperationsRequest:
-		queue := e.searcher.GetCustomSearcherEventQueue()
-		if queue == nil {
-			ctx.Log().Errorf("Custom Searcher Event Queue was not retrieved.")
-		}
-		// TODO:  Get the maximum event ID sent in TriggeredByEvent list.
-		// Then use RemoveUpTo and remove all events (including that max ID).
-		// Then, process operations.
-
-	case *apiv1.GetSearcherEventsRequest:
-		queue := e.searcher.GetCustomSearcherEventQueue()
-		if queue == nil {
-			ctx.Respond(status.Error(codes.Internal, "failed to get events from custom searcher"))
-		} else {
-			resp := &apiv1.GetSearcherEventsResponse{
-				SearcherEvents: queue.GetEvents(),
-			}
-			ctx.Respond(resp)
-		}
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,
@@ -474,6 +460,70 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			}
 		}
 
+	case *apiv1.GetSearcherEventsRequest:
+		queue := e.searcher.GetCustomSearcherEventQueue()
+		if queue == nil {
+			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Event Queue not found"))
+		} else {
+			resp := &apiv1.GetSearcherEventsResponse{
+				SearcherEvents: queue.GetEvents(),
+			}
+			ctx.Respond(resp)
+		}
+
+	case *apiv1.PostSearcherOperationsRequest:
+		queue := e.searcher.GetCustomSearcherEventQueue()
+		if queue == nil {
+			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Events Queue not found"))
+		} else {
+			ops := make([]searcher.Operation, 0)
+			log.Info("Actor is processing post operations")
+			for _, searcherOp := range msg.SearcherOperations {
+				switch concreteOperation := searcherOp.GetUnion().(type) {
+				case *experimentv1.SearcherOperation_CreateTrial:
+					op := searcher.NewCreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
+					ops = append(ops, op)
+				case *experimentv1.SearcherOperation_Shutdown:
+					ops = append(ops, searcher.NewShutdown())
+				case *experimentv1.SearcherOperation_ValidateAfter:
+					requestID, err := uuid.Parse(concreteOperation.ValidateAfter.TrialId)
+					if err != nil {
+						ctx.Respond(status.Errorf(
+							codes.InvalidArgument,
+							"Trial ID = %+v", concreteOperation.ValidateAfter.TrialId,
+						))
+					} else {
+						ops = append(ops, searcher.NewValidateAfter(
+							model.RequestID(requestID),
+							concreteOperation.ValidateAfter.Length,
+						))
+					}
+				case *experimentv1.SearcherOperation_CloseTrial:
+					requestID, err := uuid.Parse(concreteOperation.CloseTrial.TrialId)
+					if err != nil {
+						ctx.Respond(status.Errorf(
+							codes.InvalidArgument,
+							"Trial ID = %+v", concreteOperation.CloseTrial.TrialId,
+						))
+					} else {
+						ops = append(ops, searcher.NewClose(model.RequestID(requestID)))
+					}
+				default:
+					ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
+				}
+			}
+			ctx.Log().Warnf("Processing operations %+v", ops)
+
+			// remove from queue
+			if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
+				ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
+			} else {
+				e.searcher.Record(ops)
+				e.processOperations(ctx, ops, nil)
+				ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
+			}
+		}
+
 	default:
 		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
 	}
@@ -508,6 +558,7 @@ func (e *experiment) restoreTrials(ctx *actor.Context) {
 
 func (e *experiment) processOperations(
 	ctx *actor.Context, ops []searcher.Operation, err error) {
+	ctx.Log().Infof("processOperations(%v)", ops)
 	if _, ok := model.StoppingStates[e.State]; ok {
 		return
 	}

@@ -1127,6 +1127,20 @@ export interface V1CancelExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1CategoricalHyperparameter
+ */
+export interface V1CategoricalHyperparameter {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1CategoricalHyperparameter
+     */
+    val?: string;
+}
+
+/**
  * Checkpoint a collection of files saved by a task.
  * @export
  * @interface V1Checkpoint
@@ -1429,20 +1443,6 @@ export interface V1ComputeHPImportanceResponse {
 }
 
 /**
- * 
- * @export
- * @interface V1ConstantHyperparameter
- */
-export interface V1ConstantHyperparameter {
-    /**
-     * value of the constant hyperparameter.
-     * @type {number}
-     * @memberof V1ConstantHyperparameter
-     */
-    val?: number;
-}
-
-/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -1544,6 +1544,12 @@ export interface V1CreateExperimentResponse {
  * @interface V1CreateTrialOperation
  */
 export interface V1CreateTrialOperation {
+    /**
+     * trial_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1CreateTrialOperation
+     */
+    trialId?: string;
     /**
      * The key refers to which part of the model this hyperparameters are for.
      * @type {{ [key: string]: V1Hyperparameter; }}
@@ -1734,6 +1740,20 @@ export interface V1DisableSlotResponse {
      * @memberof V1DisableSlotResponse
      */
     slot?: V1Slot;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DoubleHyperparameter
+ */
+export interface V1DoubleHyperparameter {
+    /**
+     * value of the double-precision numeric hyperparameter.
+     * @type {number}
+     * @memberof V1DoubleHyperparameter
+     */
+    val?: number;
 }
 
 /**
@@ -1960,6 +1980,20 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     parentArchived?: boolean;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ExperimentInactive
+ */
+export interface V1ExperimentInactive {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ExperimentInactive
+     */
+    experimentState?: string;
 }
 
 /**
@@ -3186,11 +3220,23 @@ export interface V1GetWorkspacesResponse {
  */
 export interface V1Hyperparameter {
     /**
-     * Constant hyperparameter.
-     * @type {V1ConstantHyperparameter}
+     * Double hyperparameter.
+     * @type {V1DoubleHyperparameter}
      * @memberof V1Hyperparameter
      */
-    constantHyperparam?: V1ConstantHyperparameter;
+    doubleHyperparam?: V1DoubleHyperparameter;
+    /**
+     * Integer hyperparameter.
+     * @type {V1IntegerHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    integerHyperparam?: V1IntegerHyperparameter;
+    /**
+     * Categorical hyperparameter.
+     * @type {V1CategoricalHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    categoricalHyperparam?: V1CategoricalHyperparameter;
     /**
      * Nested hyperparameter.
      * @type {V1RawNestedHyperparameter}
@@ -3239,6 +3285,20 @@ export interface V1InitialOperations {
      * @memberof V1InitialOperations
      */
     holder?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1IntegerHyperparameter
+ */
+export interface V1IntegerHyperparameter {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1IntegerHyperparameter
+     */
+    val?: string;
 }
 
 /**
@@ -6054,6 +6114,12 @@ export interface V1SearcherEvent {
      * @memberof V1SearcherEvent
      */
     trialExitedEarly?: V1TrialExitedEarly;
+    /**
+     * 
+     * @type {V1ExperimentInactive}
+     * @memberof V1SearcherEvent
+     */
+    experimentInactive?: V1ExperimentInactive;
 }
 
 /**
@@ -7182,6 +7248,12 @@ export interface V1UserWebSetting {
  * @interface V1ValidateAfterOperation
  */
 export interface V1ValidateAfterOperation {
+    /**
+     * trial_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1ValidateAfterOperation
+     */
+    trialId?: string;
     /**
      * The length to train before reporting a validation.
      * @type {string}

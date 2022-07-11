@@ -36,6 +36,7 @@ export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentIt
 export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => {
   return (
     experiment?.config.searcher.name === ExperimentSearcherName.Single ||
+    experiment?.config.searcher.name === ExperimentSearcherName.Custom ||
     experiment?.config.searcher.max_trials === 1
   );
 };

@@ -56,6 +56,13 @@ message TrialExitedEarly {
   ExitedReason exited_reason = 2;
 }
 
+// ExperimentInactive is a searcher event triggered when an experiment
+// is no longer active
+message ExperimentInactive {
+  // experiment_state
+  string experiment_state = 1;
+}
+
 // SearcherEvent is a message from master to a client-driven
 // custom searcher informing it of relevant changes in the state
 // of an experiment
@@ -74,14 +81,18 @@ message SearcherEvent {
     TrialClosed trial_closed = 6;
     // trial exited early
     TrialExitedEarly trial_exited_early = 7;
+    // experiment is inactive
+    ExperimentInactive experiment_inactive = 8;
   }
 }
 
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.
 message ValidateAfterOperation {
+  // trial_id is the id of the trial to close.
+  string trial_id = 1;
   // The length to train before reporting a validation.
-  uint64 length = 1;
+  uint64 length = 2;
 }
 
 // Used to complete a ValidateAfterOperation.
@@ -93,10 +104,22 @@ message CompleteValidateAfterOperation {
   double searcher_metric = 2;
 }
 
-// Constant Hyperparameter
-message ConstantHyperparameter {
-  // value of the constant hyperparameter.
+// Double Hyperparameter
+message DoubleHyperparameter {
+  // value of the double-precision numeric hyperparameter.
   double val = 1;
+}
+
+// Integer Hyperparameter
+message IntegerHyperparameter {
+  // value of the integer hyperparameter
+  int64 val = 1;
+}
+
+// Categorical Hyperparameter
+message CategoricalHyperparameter {
+  // value of the categorical hyperparameter
+  string val = 1;
 }
 
 // Nested Hyperparamater
@@ -111,17 +134,23 @@ message Hyperparameter {
   // A user can provide one of the hyperparameter types for
   // the custom searcher.
   oneof union {
-    // Constant hyperparameter.
-    ConstantHyperparameter constant_hyperparam = 1;
+    // Double hyperparameter.
+    DoubleHyperparameter double_hyperparam = 1;
+    // Integer hyperparameter.
+    IntegerHyperparameter integer_hyperparam = 2;
+    // Categorical hyperparameter.
+    CategoricalHyperparameter categorical_hyperparam = 3;
     // Nested hyperparameter.
-    RawNestedHyperparameter nested_hyperparam = 2;
+    RawNestedHyperparameter nested_hyperparam = 4;
   }
 }
 
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
+  // trial_id is the id of the trial to close.
+  string trial_id = 1;
   // The key refers to which part of the model this hyperparameters are for.
-  map<string, Hyperparameter> hyperparams = 1;
+  map<string, Hyperparameter> hyperparams = 2;
 }
 
 // Close a trial with given id.
@@ -134,7 +163,7 @@ message CloseTrialOperation {
 message ShutdownOperation {
   // A message field can't be empty because bindings won't compile.
   // Making this a message to keep it consistent with other operations.
-  int32 empty_field = 2;
+  int32 empty_field = 1;
 }
 
 // SearcherOperation is an operation issued by the searcher.
