@@ -98,7 +98,8 @@ The following configuration settings are supported:
       agents. An agent's label can be configured via the ``label`` field in the :ref:`agent
       configuration <agent-config-reference>`.
 
-   -  ``shm_size``: The size in bytes of ``/dev/shm`` for task containers. Defaults to
+   -  ``shm_size``: The size of ``/dev/shm`` for task containers. The value can be a number in bytes
+      or a number with a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to
       ``4294967296`` (4GiB). If set, this value overrides the value specified in the :ref:`master
       configuration <master-config-reference>`.
 

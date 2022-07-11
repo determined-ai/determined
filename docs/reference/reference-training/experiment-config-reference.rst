@@ -633,8 +633,8 @@ points in the grid for this hyperparameter. Grid points are evenly spaced betwee
 
 The ``searcher`` section defines how the experiment's hyperparameter space will be explored. To run
 an experiment that trains a single trial with fixed hyperparameters, specify the ``single`` searcher
-and specify constant values for the model's hyperparameters. Otherwise, Determined supports six
-different hyperparameter search algorithms: ``adaptive_asha``, ``random``, ``grid``, and ``pbt``.
+and specify constant values for the model's hyperparameters. Otherwise, Determined supports three
+different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``.
 
 The name of the hyperparameter search algorithm to use is configured via the ``name`` field; the
 remaining fields configure the behavior of the searcher and depend on the searcher being used. For
@@ -931,9 +931,10 @@ The ``resources`` section defines the resources that an experiment is allowed to
    <weight>``. The default weight is ``1``.
 
 ``shm_size``
-   The size in bytes of ``/dev/shm`` for trial containers. Defaults to ``4294967296`` (4GiB). If
-   set, this value overrides the value specified in the :ref:`master configuration
-   <master-config-reference>`.
+   The size of ``/dev/shm`` for task containers. The value can be a number in bytes or a number with
+   a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to ``4294967296`` (4GiB).
+   If set, this value overrides the value specified in the :ref:`master configuration
+   <master-configuration>`.
 
 ``priority``
    The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.

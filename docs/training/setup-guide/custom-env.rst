@@ -207,11 +207,15 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
+<<<<<<< HEAD
 <<<<<<< HEAD:docs/prepare-environment/custom-env.txt
    FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4
 =======
    FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15
 >>>>>>> docs: restructure docs directory:docs/training/setup-guide/custom-env.rst
+=======
+   FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2
+>>>>>>> docs: rebase
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.6

@@ -239,14 +239,6 @@ The master supports the following configuration settings:
       detection is not finding the appropriate interface, the ``dtrain_network_interface`` option
       can be used to set it explicitly (e.g., ``eth11``).
 
-   -  ``nccl_port_range``: The range of ports that NCCL is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the NCCL port range.
-
-   -  ``gloo_port_range``: The range of ports that Gloo is permitted to use during distributed
-      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
-      placed on the Gloo port range.
-
    -  ``cpu_pod_spec``: Defines the default pod spec which will be applied to all CPU-only tasks
       when running on Kubernetes. See :ref:`custom-pod-specs` for details.
 
@@ -260,6 +252,7 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
+<<<<<<< HEAD
 <<<<<<< HEAD:docs/sysadmin-basics/cluster-config.txt
       -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
          NVIDIA GPUs.
@@ -279,6 +272,19 @@ The master supports the following configuration settings:
       -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for
          CPUs.
 >>>>>>> docs: restructure docs directory:docs/reference-config/config/master-config-reference.rst
+=======
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` for
+         NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
+
+   -  ``environment_variables``: A list of environment variables that will be set in every task
+      container. Each element of the list should be a string of the form ``NAME=VALUE``. See
+      :ref:`environment-variables` for more details. Environment variables specified in experiment
+      config will override default values specified here. Users can customize environment variables
+      for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks differently by specifying a dict with
+      ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm`` keys.
+>>>>>>> docs: rebase
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
@@ -368,6 +374,11 @@ The master supports the following configuration settings:
       -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
          is specified.
+
+      -  ``require_authentication``: Whether to require that agent connections be verified using
+         mutual TLS.
+
+      -  ``client_ca``: Certificate authority file to use for verifying agent certificates.
 
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
       cluster. The Determined master must be running within the Kubernetes cluster. When using the
@@ -711,6 +722,8 @@ The master supports the following configuration settings:
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
+      -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is
+         normalized, e.g., ``/pre/.//fix`` -> ``/pre/fix``
 
    -  ``type: hdfs``: Checkpoints are stored in HDFS using the `WebHDFS
       <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API
@@ -813,6 +826,11 @@ The master supports the following configuration settings:
    -  ``otel-enabled``: Whether OpenTelemetry is enabled. Defaults to ``false``.
 
    -  ``otel-endpoint``: OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.
+
+-  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
+   :ref:`Prometheus <prometheus>` for details.
+
+   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
 
 -  ``logging``: Specifies configuration settings for the logging backend for trial logs.
 

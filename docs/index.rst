@@ -64,13 +64,13 @@
    Prometheus and Grafana <integrations/prometheus/prometheus>
    attributions
 
-#############################
- Determined AI Documentation
-#############################
+##########################
+ Determined Documentation
+##########################
 
-*****************************
- *Welcome to Determined AI!*
-*****************************
+**************************
+ *Welcome to Determined!*
+**************************
 
 .. raw:: html
 
@@ -113,11 +113,11 @@ environment so you can spend your time building models instead of managing infra
               <h2 class="tile-title">Introducing Determined</h2>
               <p class="tile-description">Learn about core concepts and key features to get helpful context before diving into more detailed information.</p>
           </a>
-          <a class="tile" href="cluster-setup-guide/index.html">
+          <a class="tile" href="cluster-setup-guide/basic.html">
               <h2 class="tile-title">Administrator Guide</h2>
               <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
           </a>
-          <a class="tile" href="training/index.html">
+          <a class="tile" href="training/dtrain-introduction.html">
               <h2 class="tile-title">Model Developer Guide</h2>
               <p class="tile-description">Learn how to work with Training APIs, and how to configure your distributed training experiments.</p>
           </a>
@@ -125,7 +125,7 @@ environment so you can spend your time building models instead of managing infra
               <h2 class="tile-title">Tutorials</h2>
               <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
           </a>
-          <a class="tile" href="reference-api/index.html">
+          <a class="tile" href="reference/python-api.html">
               <h2 class="tile-title">Reference</h2>
               <p class="tile-description">The Determined reference documentation provides detailed information about configuration files, APIs, and the CLI.</p>
           </a>
