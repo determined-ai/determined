@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  CLI:
-      Add new flag ``--agent-config-path`` to ``det deploy local agent-up``` allowing custom agent
-      configs to be used.
