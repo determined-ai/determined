@@ -934,7 +934,7 @@ The ``resources`` section defines the resources that an experiment is allowed to
    The size of ``/dev/shm`` for task containers. The value can be a number in bytes or a number with
    a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to ``4294967296`` (4GiB).
    If set, this value overrides the value specified in the :ref:`master configuration
-   <master-configuration>`.
+   <master-config-reference>`.
 
 ``priority``
    The priority assigned to this experiment. Only applicable when using the ``priority`` scheduler.
