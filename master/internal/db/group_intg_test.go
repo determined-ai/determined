@@ -13,24 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var (
-	testGroup = model.Group{
-		ID:   9001,
-		Name: "kljhadsflkgjhjklsfhg",
-	}
-	testGroupStatic = model.Group{
-		ID:   10001,
-		Name: "dsjkfkljjkasdfasdky",
-	}
-	testUser = model.User{
-		ID:       1217651234,
-		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
-		Admin:    false,
-		Active:   false,
-	}
-)
-
-func TestHelloWorld(t *testing.T) {
+func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
 	pgDB := MustResolveTestPostgres(t)
 
@@ -165,6 +148,23 @@ func TestHelloWorld(t *testing.T) {
 		require.NotEqual(t, -1, index, "Expected users in static group to contain the test user")
 	})
 }
+
+var (
+	testGroup = model.Group{
+		ID:   9001,
+		Name: "kljhadsflkgjhjklsfhg",
+	}
+	testGroupStatic = model.Group{
+		ID:   10001,
+		Name: "dsjkfkljjkasdfasdky",
+	}
+	testUser = model.User{
+		ID:       1217651234,
+		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
+		Admin:    false,
+		Active:   false,
+	}
+)
 
 // groupsContains returns -1 if group id was not found, else returns the index
 func groupsContain(groups []model.Group, id int) int {

@@ -175,6 +175,8 @@ type DB interface {
 	// Groups
 	AddGroup(ctx context.Context, group model.Group) (model.Group, error)
 	GroupByID(ctx context.Context, gid int) (model.Group, error)
+	// SearchGroups searches the database for groups. userBelongsTo is "optional"
+	// in that if a value < 1 is passed in, the parameter is ignored.
 	SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error)
 	DeleteGroup(ctx context.Context, gid int) error
 	UpdateGroup(ctx context.Context, group model.Group) error

@@ -12,7 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddGroup(ctx context.Context, group model.Group) (model.Group, error) {
 	_, err := Bun().NewInsert().Model(&group).Exec(ctx)
 	return group, matchSentinelError(err)
@@ -25,6 +24,8 @@ func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 	return g, matchSentinelError(err)
 }
 
+// SearchGroups searches the database for groups. userBelongsTo is "optional"
+// in that if a value < 1 is passed in, the parameter is ignored.
 func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error) {
 	var groups []model.Group
 	query := Bun().NewSelect().Model(&groups).Distinct()
@@ -74,7 +75,6 @@ func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
 	return matchSentinelError(mustHaveAffectedRows(res, err))
 }
 
-// TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 	if len(uids) < 1 {
 		return nil
