@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Kubernetes: Task init containers no longer require root privileges.

@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Configuration: Experiment configuration`resources.shm_size`` now supports passing in a unit like
-   ``4.5 G`` or ``128MiB``.

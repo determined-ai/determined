@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  API: Fix a bug where ``/api/v1/tasks/{taskId}`` would often return incorrect allocation states.
