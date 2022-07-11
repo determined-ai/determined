@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import Avatar, { Props } from 'shared/components/Avatar';
+import Avatar, { Props as AvatarProps } from 'shared/components/Avatar';
 import { getDisplayName } from 'utils/user';
 
-const UserAvatar: React.FC<{
+export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
   userId?: number;
-} & Omit<Props, 'darkLight' | 'displayName'>> = ({ userId, ...rest }) => {
+}
+
+const UserAvatar: React.FC<Props> = ({ userId, ...rest }) => {
   const [ displayName, setDisplayName ] = useState('');
   const { ui, users } = useStore();
   const fetchUsers = useFetchUsers(new AbortController());
