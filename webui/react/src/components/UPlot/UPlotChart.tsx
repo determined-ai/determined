@@ -6,11 +6,13 @@ import { useStore } from 'contexts/Store';
 import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/Message';
+import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
 import { useSyncableBounds } from './SyncableBounds';
 import { FacetedData } from './types';
+import css from './UPlotChart.module.scss';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   key?: number;
@@ -88,11 +90,14 @@ const UPlotChart: React.FC<Props> = ({
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
+  const classes = [ css.base ];
 
   const { ui } = useStore();
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
+
+  if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
@@ -217,7 +222,7 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   return (
-    <div ref={chartDivRef} style={style}>
+    <div className={classes.join(' ')} ref={chartDivRef} style={style}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
