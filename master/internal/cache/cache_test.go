@@ -172,7 +172,7 @@ func TestGenPathWithValidation(t *testing.T) {
 		{
 			description: "#1 normal case",
 			path:        "a/b",
-			expected:    "/tmp/1/a/b",
+			expected:    "/tmp/determined-cache/1/a/b",
 			hasErr:      false,
 		}, {
 			description: "#2 invalid case",
