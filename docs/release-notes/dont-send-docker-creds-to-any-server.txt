@@ -1,0 +1,10 @@
+:orphan:
+
+**Improvements**
+
+-  Security: Setting ``registry_auth.serveraddress`` will now only send credentials to the server
+   configured. Not setting ``registry_auth`` is now deprecated and will be required soon.
+
+-  Agent: Users may now run ``docker login`` on agent host machines to authenticate with Docker
+   registries. Note if an agent is running inside a Docker container then ``~/.docker/config.json``
+   will need to be mounted to the same path inside the container.
