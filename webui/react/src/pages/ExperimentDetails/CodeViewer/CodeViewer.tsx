@@ -7,6 +7,8 @@ import React, { useEffect, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
+import { getExperimentFileTree } from 'services/api';
+import { FileNode } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { ExperimentBase } from 'types';
@@ -20,15 +22,6 @@ type Props = {
   experiment: ExperimentBase;
 }
 
-type FileNode = {
-  ContentLength: number;
-  ContentType?: string;
-  IsDir: boolean;
-  ModifiedTime: string;
-  Path: string;
-  files?: FileNode[];
-}
-
 /**
  * the following mocked const is assuming this data structure from the backend
  */
@@ -36,91 +29,103 @@ type FileNode = {
 const backendResponse: { files: FileNode[] } = {
   files: [
     {
-      ContentLength: 0,
+      content_length: 0,
       files: [
         {
-          ContentLength: 434,
-          ContentType: 'text/plain; charset=utf-8',
-          IsDir: false,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder1/file_a.yaml',
+          content_length: 434,
+          content_type: 'text/plain; charset=utf-8',
+          is_dir: false,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: 'file_a.yaml',
+          path: 'example_folder1/file_a.yaml',
         },
         {
-          ContentLength: 434,
-          ContentType: 'text/plain; charset=utf-8',
-          IsDir: false,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder1/file_b.yaml',
+          content_length: 434,
+          content_type: 'text/plain; charset=utf-8',
+          is_dir: false,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: 'file_b.yaml',
+          path: 'example_folder1/file_b.yaml',
         },
         {
-          ContentLength: 434,
-          ContentType: 'text/plain; charset=utf-8',
-          IsDir: false,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder1/file_c.yaml',
+          content_length: 434,
+          content_type: 'text/plain; charset=utf-8',
+          is_dir: false,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: 'file_c.yaml',
+          path: 'example_folder1/file_c.yaml',
         },
       ],
-      IsDir: true,
-      ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-      Path: 'example_folder1',
+      is_dir: true,
+      modified_time: '2022-01-03 18:58:09 -0600 CST',
+      name: 'example_folder1',
+      path: 'example_folder1',
     },
     {
-      ContentLength: 0,
+      content_length: 0,
       files: [
         {
-          ContentLength: 0,
+          content_length: 0,
           files: [
             {
-              ContentLength: 434,
-              ContentType: 'text/plain; charset=utf-8',
-              IsDir: false,
-              ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-              Path: 'example_folder2/example_folder3/file_d.yaml',
+              content_length: 434,
+              content_type: 'text/plain; charset=utf-8',
+              is_dir: false,
+              modified_time: '2022-01-03 18:58:09 -0600 CST',
+              name: 'file_d.yaml',
+              path: 'example_folder2/example_folder3/file_d.yaml',
             },
             {
-              ContentLength: 434,
-              ContentType: 'text/plain; charset=utf-8',
-              IsDir: false,
-              ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-              Path: 'example_folder2/example_folder3/file_e.yaml',
+              content_length: 434,
+              content_type: 'text/plain; charset=utf-8',
+              is_dir: false,
+              modified_time: '2022-01-03 18:58:09 -0600 CST',
+              name: 'file_e.yaml',
+              path: 'example_folder2/example_folder3/file_e.yaml',
             },
           ],
-          IsDir: true,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder2/example_folder3',
+          is_dir: true,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: '',
+          path: 'example_folder2/example_folder3',
         },
         {
-          ContentLength: 434,
-          ContentType: 'text/plain; charset=utf-8',
-          IsDir: false,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder2/file_f.yaml',
+          content_length: 434,
+          content_type: 'text/plain; charset=utf-8',
+          is_dir: false,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: 'file_f.yaml',
+          path: 'example_folder2/file_f.yaml',
         },
         {
-          ContentLength: 434,
-          ContentType: 'text/plain; charset=utf-8',
-          IsDir: false,
-          ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-          Path: 'example_folder2/file_g.yaml',
+          content_length: 434,
+          content_type: 'text/plain; charset=utf-8',
+          is_dir: false,
+          modified_time: '2022-01-03 18:58:09 -0600 CST',
+          name: 'file_g.yaml',
+          path: 'example_folder2/file_g.yaml',
         },
       ],
-      IsDir: true,
-      ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-      Path: 'example_folder2',
+      is_dir: true,
+      modified_time: '2022-01-03 18:58:09 -0600 CST',
+      name: 'example_folder2',
+      path: 'example_folder2',
     },
     {
-      ContentLength: 434,
-      ContentType: 'text/plain; charset=utf-8',
-      IsDir: false,
-      ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-      Path: 'file_h.yaml',
+      content_length: 434,
+      content_type: 'text/plain; charset=utf-8',
+      is_dir: false,
+      modified_time: '2022-01-03 18:58:09 -0600 CST',
+      name: 'file_h.yaml',
+      path: 'file_h.yaml',
     },
     {
-      ContentLength: 434,
-      ContentType: 'text/plain; charset=utf-8',
-      IsDir: false,
-      ModifiedTime: '2022-01-03 18:58:09 -0600 CST',
-      Path: 'file_i.yaml',
+      content_length: 434,
+      content_type: 'text/plain; charset=utf-8',
+      is_dir: false,
+      modified_time: '2022-01-03 18:58:09 -0600 CST',
+      name: 'file_i.yaml',
+      path: 'file_i.yaml',
     },
   ],
 };
@@ -213,7 +218,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
 
   useEffect(() => {
     const navigateTree = (node: FileNode, key: string) => {
-      treeMap.set(key, node.Path);
+      treeMap.set(key, node.path);
 
       if (node.files) {
         node.files.forEach((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
@@ -221,6 +226,11 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
     };
 
     backendResponse.files.forEach((node, idx) => navigateTree(node, `0-${idx}`));
+
+    (async () => {
+      const foo = await getExperimentFileTree({ experimentId: experiment.id });
+      console.log('file tree', foo);
+    })();
   }, [ treeMap ]);
 
   // eslint-disable-next-line @typescript-eslint/ban-types

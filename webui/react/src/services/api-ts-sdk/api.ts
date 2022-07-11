@@ -4170,6 +4170,65 @@ export interface V1MoveExperimentResponse {
 }
 
 /**
+ * Individual FileNode from the V1GetExperimentFileTreeResponse
+ * @export
+ * @interface FileNode
+ */
+export interface FileNode {
+  /**
+   * Number of bytes in file content.
+   * @type {number}
+   * @memberof FileNode
+   */
+  content_length: number;
+  /**
+   * MIME type of file.
+   * @type {string}
+   * @memberof FileNode
+   */
+  content_type?: string;
+  /**
+   * Is this a directory.
+   * @type {boolean}
+   * @memberof FileNode
+   */
+  is_dir: boolean;
+  /**
+   * Modification time of file.
+   * @type {boolean}
+   * @memberof FileNode
+   */
+  modified_time: string;
+  /**
+   * Path of file.
+   * @type {boolean}
+   * @memberof FileNode
+   */
+  path: string;
+  /**
+   * Subdirectory files.
+   * @type {boolean}
+   * @memberof FileNode
+   */
+  files?: FileNode[];
+  /**
+   * Subdirectory files.
+   * @type {string}
+   * @memberof FileNode
+   */
+  name: string;
+}
+
+/**
+ * Response to GetExperimentFileTree
+ * @export
+ * @interface V1GetExperimentFileTreeResponse
+ */
+export interface V1GetExperimentFileTreeResponse {
+  files: FileNode[];
+}
+
+/**
  * Request to move a project into a workspace.
  * @export
  * @interface V1MoveProjectRequest
@@ -10804,6 +10863,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 options: localVarRequestOptions,
             };
         },
+
+      /**
+       * 
+       * @summary Get the requested experiment file tree.
+       * @param {number} experimentId The id of the experiment.
+       * @throws {RequiredError}
+       */
+      getExperimentFileTree(experimentId: number, options: any = {}): FetchArgs {
+        // verify required parameter 'experimentId' is not null or undefined
+        if (experimentId === null || experimentId === undefined) {
+          throw new RequiredError('experimentId', 'Required parameter experimentId was null or undefined when calling getExperiment.');
+        }
+        const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
+          .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+        const localVarUrlObj = url.parse(localVarPath, true);
+        const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+        const localVarHeaderParameter = {} as any;
+        const localVarQueryParameter = {} as any;
+
+        // authentication BearerToken required
+        if (configuration && configuration.apiKey) {
+          const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+            ? configuration.apiKey("Authorization")
+            : configuration.apiKey;
+          localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+        }
+
+        localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+        // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+        delete localVarUrlObj.search;
+        localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+        return {
+          url: url.format(localVarUrlObj),
+          options: localVarRequestOptions,
+        };
+      },
     }
 };
 
@@ -11381,7 +11477,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
-    }
+        /**
+         * 
+         * @summary Get the requested experiment file tree.
+         * @param {number} experimentId The id of the experiment.
+         * @throws {RequiredError}
+         */
+        getExperimentFileTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentFileTreeResponse> {
+          const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentFileTree(experimentId, options);
+          return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+            return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+              if (response.status >= 200 && response.status < 300) {
+                return response.json();
+              } else {
+                throw response;
+              }
+            });
+          };
+        },
+    };
 };
 
 /**
@@ -12102,6 +12216,17 @@ export class ExperimentsApi extends BaseAPI {
      */
     public unarchiveExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).unarchiveExperiment(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the file tree based on the experiment id.
+     * @param {number} id The experiment id.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getExperimentFileTree(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentFileTree(id, options)(this.fetch, this.basePath);
     }
 
 }
