@@ -25,12 +25,14 @@ def cluster_slots() -> Dict[str, Any]:
     json = r.json()  # type: Dict[str, Any]
     return {agent["id"]: agent["slots"].values() for agent in json.values()}
 
+
 def get_master_port(loaded_config: dict) -> str:
-     for d in loaded_config['stages']:
-         for k in d.keys():
-              if k == 'master':
-                 return (d['master']['config_file']['port'])
-     return None
+    for d in loaded_config["stages"]:
+        for k in d.keys():
+            if k == "master":
+                return d["master"]["config_file"]["port"]
+    return None
+
 
 def num_slots() -> int:
     return sum(len(agent_slots) for agent_slots in cluster_slots().values())

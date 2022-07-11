@@ -5,13 +5,13 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Union, cast
+
 import pytest
 
 from tests import config as conf
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import get_master_port
-
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
@@ -191,6 +191,7 @@ def managed_cluster_priority_scheduler(
         f"pytest [{_now_ts()}] {nodeid} teardown\n"
     )
 
+
 @pytest.fixture
 def managed_cluster_restarts(
     managed_cluster_session: ManagedCluster, request: Any
@@ -200,5 +201,6 @@ def managed_cluster_restarts(
     yield managed_cluster_session
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} teardown\n")
 
-def set_master_port_conf(port : str) -> None: 
-    conf.MASTER_PORT = port 
+
+def set_master_port_conf(port: str) -> None:
+    conf.MASTER_PORT = port
