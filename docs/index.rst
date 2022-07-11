@@ -30,6 +30,7 @@
    Cluster Deployment <cluster-setup-guide/deploy-cluster/index>
    Security <cluster-setup-guide/security/overview>
    User Accounts <cluster-setup-guide/users>
+   Workspaces and Projects <cluster-setup-guide/workspaces>
    Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
    Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
    Upgrade <cluster-setup-guide/upgrade>

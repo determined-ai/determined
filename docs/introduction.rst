@@ -134,6 +134,83 @@ TensorBoard instances can be launched via the WebUI or the CLI. To launch Tensor
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
 ********
+Benefits
+********
+
+Determined is a deep learning training platform that simplifies infrastructure management
+for domain experts while enabling configuration-based deep learning functionality that engineering-oriented practitioners might find inconvenient to implement. The Determined cohesive, end-to-end training platform provides
+best-in-class functionality for deep learning model training, including the following benefits:
+
++------------------------------------------------+----------------------------------------------+
+| Implementation                                 | Benefit                                      |
++================================================+==============================================+
+| Automated model tuning                         | Optimize models by searching through         |
+|                                                | conventional hyperparameters or macro-       |
+|                                                | architectures, using a variety of search     |
+|                                                | algorithms. Hyperparameter searches are      |
+|                                                | automatically parallelized across the        |
+|                                                | accelerators in the cluster. See             |
+|                                                | :doc:`/training/hyperparameter/overview`.    |
++------------------------------------------------+----------------------------------------------+
+| Cluster-backed notebooks, commands, and shells | Leverage your shared cluster computing       |
+|                                                | devices in a more versatile environment.     |
+|                                                | See :doc:`/interfaces/notebooks` and         |
+|                                                | :doc:`/interfaces/commands-and-shells`.      |
++------------------------------------------------+----------------------------------------------+
+| Cluster management                             | Automatically manage ML accelerators, such   |
+|                                                | as GPUs, on-premise or in cloud VMs using    |
+|                                                | your own environment, automatically scaling  |
+|                                                | for your on-demand workloads. Determined     |
+|                                                | runs in either AWS or GCP, so you can switch |
+|                                                | easily according to your requirements. See   |
+|                                                | :ref:`Resource Pools <resource-pools>`,      |
+|                                                | :ref:`Scheduling <scheduling>`, and          |
+|                                                | :ref:`Elastic Infrastructure                 |
+|                                                | <elastic-infrastructure>`.                   |
++------------------------------------------------+----------------------------------------------+
+| Containerization                               | Develop and train models in customizable     |
+|                                                | containers that enable simple, consistent    |
+|                                                | dependency management throughout the model   |
+|                                                | development lifecycle. See                   |
+|                                                | :doc:`/training/setup-guide/custom-env`.     |
++------------------------------------------------+----------------------------------------------+
+| Distributed training                           | Easily distribute a single training job      |
+|                                                | across multiple accelerators to speed up     |
+|                                                | model training and reduce model development  |
+|                                                | iteration time. Determined uses synchronous, |
+|                                                | data-parallel distributed training, with key |
+|                                                | performance optimizations over other         |
+|                                                | available options. See                       |
+|                                                | :doc:`/training/dtrain-introduction`.        |
++------------------------------------------------+----------------------------------------------+
+| Experiment collaboration                       | Automatically track your experiment          |
+|                                                | configuration and environment to facilitate  |
+|                                                | reproducibility and collaboration among      |
+|                                                | teams. See                                   |
+|                                                | :doc:`/training/submit-experiment`.          |
++------------------------------------------------+----------------------------------------------+
+| Fault tolerance                                | Models are checkpointed throughout the       |
+|                                                | training process and can be restarted from   |
+|                                                | the latest checkpoint, automatically. This   |
+|                                                | enables training jobs to automatically       |
+|                                                | tolerate transient hardware or system issues |
+|                                                | in the cluster.                              |
++------------------------------------------------+----------------------------------------------+
+| Framework support                              | Broad framework support leverages these      |
+|                                                | capabilities using any of the leading        |
+|                                                | machine learning frameworks without needing  |
+|                                                | to manage a different cluster for each.      |
+|                                                | Different frameworks for different models    |
+|                                                | can be used without risking future lock-in.  |
+|                                                | See :doc:`/training/apis-howto/overview`.    |
++------------------------------------------------+----------------------------------------------+
+| Visualization                                  | Visualize your model and training procedure  |
+|                                                | by using The built-in WebUI and by launching |
+|                                                | managed :doc:`/interfaces/tensorboard`       |
+|                                                | instances.                                   |
++------------------------------------------------+----------------------------------------------+
+
+********
 Concepts
 ********
 
@@ -179,12 +256,7 @@ is a collection of one or more trials that are exploring a user-defined hyperpar
 example, during a learning rate hyperparameter search, an experiment might consist of three trials
 with learning rates of .001, .01, and .1.
 
-.. _concept-trial:
-
-A *trial* is a training task with a defined set of hyperparameters. A common degenerate case is an
-experiment with a single trial, which corresponds to training a single deep learning model.
-
-In order to run experiments, you need to write your model training code. A *model definition*
+To run experiments, you need to write your model training code. A *model definition*
 represents a specification of a deep learning model and its training procedure. It contains
 training code that implements :doc:`training APIs </training/apis-howto/overview>`.
 
@@ -195,7 +267,7 @@ hyperparameters will be set. More information can be found at :doc:`/training/hy
 .. _resource-pools:
 
 Resource Pools
-========================
+==============
 
 To run tasks such as experiments or notebooks, Determined needs to have resources (CPUs, GPUs) on
 which to run the tasks. However, different tasks have different resource requirements and, given the
@@ -367,7 +439,7 @@ slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use
 .. _scheduling:
 
 Scheduling
-========================
+==========
 
 This document covers the supported scheduling policies. The first section describes the native scheduling capabilities supported by Determined. The next section describes how Determined schedules tasks when running on Kubernetes.
 
@@ -590,6 +662,21 @@ Below is an example that illustrates how to set priorities, tolerations, and nod
 
 The Kubernetes priority scheduler can be used with the Determined job queue feature, which
 allows more insight into scheduling decisions.
+
+.. _concept-trial:
+
+Trial
+=====
+
+A *trial* is a training task with a defined set of hyperparameters. A common degenerate case is an
+experiment with a single trial, which corresponds to training a single deep learning model.
+
+Workspaces and Projects
+=======================
+
+**Workspaces** and **projects** provide a way to organize experiments. A project is a collection of
+experiments, and a workspace is a collection of projects. Learn more about workspaces and projects
+at :doc:`/cluster-setup-guide/workspaces`.
 
 .. _topic-guides_yaml:
 
