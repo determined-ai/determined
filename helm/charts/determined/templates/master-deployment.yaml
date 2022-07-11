@@ -23,15 +23,6 @@ spec:
     spec:
       priorityClassName: determined-system-priority
       serviceAccount: determined-master-{{ .Release.Name }}
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: topology.kubernetes.io/region
-                operator: In
-                values:
-                - ORD1
       containers:
       - name: determined-master-{{ .Release.Name }}
         {{ $image := "determined-master" }}
@@ -91,3 +82,12 @@ spec:
             secretName: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
           {{- end }}
         {{ end }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - ORD1

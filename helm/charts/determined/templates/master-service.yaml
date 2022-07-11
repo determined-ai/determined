@@ -12,5 +12,6 @@ spec:
     targetPort: {{- include "determined.masterPort" . | indent 1 }}
     protocol: TCP
   type: {{ if (.Values.useNodePortForMaster | default false) }}NodePort{{ else }}LoadBalancer{{ end }}
+  externalTrafficPolicy: "Local"
   selector:
     app: determined-master-{{ .Release.Name }}
