@@ -28,15 +28,15 @@ def test_priortity_scheduler_noop_command(
 ) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
     # without slots (and default priority)
-    command_id = run_command(slots=0, master_url = managed_cluster_priority_scheduler.master_url)
+    command_id = run_command(slots=0)
     wait_for_command_state(command_id, "TERMINATED", 40)
     assert command_succeeded(command_id)
     # with slots (and default priority)
-    command_id = run_command(slots=1, master_url = managed_cluster_priority_scheduler.master_url)
+    command_id = run_command(slots=1)
     wait_for_command_state(command_id, "TERMINATED", 40)
     assert command_succeeded(command_id)
     # explicity priority
-    command_id = run_command_set_priority(slots=0, priority=60, master_url = managed_cluster_priority_scheduler.master_url)
+    command_id = run_command_set_priority(slots=0, priority=60)
     wait_for_command_state(command_id, "TERMINATED", 60)
     assert command_succeeded(command_id)
 
@@ -44,9 +44,8 @@ def test_priortity_scheduler_noop_command(
 @pytest.mark.managed_devcluster
 def test_slots_list_command(managed_cluster_priority_scheduler: ManagedCluster) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
-    master_url = managed_cluster_priority_scheduler.master_url
-    command = ["det",  "-m",
-        master_url,"slot", "list"]
+
+    command = ["det", "slot", "list"]
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )

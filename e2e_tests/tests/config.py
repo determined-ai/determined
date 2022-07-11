@@ -85,8 +85,8 @@ def load_config(config_path: str) -> Any:
     return config
 
 
-def make_master_url(suffix: str = "", master_port: str =MASTER_PORT) -> str:
-    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, master_port, suffix)
+def make_master_url(suffix: str = "") -> str:
+    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
 
 
 def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:

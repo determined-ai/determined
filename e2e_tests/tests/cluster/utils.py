@@ -12,13 +12,6 @@ from determined.common.api import authentication, certs
 from tests import config as conf
 
 
-def get_master_port(loaded_config: dict) -> str:
-     for d in loaded_config['stages']:
-         for k in d.keys():
-              if k == 'master':
-                 return (d['master']['config_file']['port'])
-     return None
-
 def cluster_slots() -> Dict[str, Any]:
     """
     cluster_slots returns a dict of slots that each agent has.
@@ -45,13 +38,11 @@ def num_free_slots() -> int:
     )
 
 
-def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0, master_url: str = None) -> str:
-    if master_url is None: # default port = 8080
-        master_url = conf.make_master_url()
+def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0) -> str:
     command = [
         "det",
         "-m",
-        master_url,
+        conf.make_master_url(),
         "command",
         "run",
         "-d",
@@ -65,13 +56,11 @@ def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0,
     return subprocess.check_output(command).decode().strip()
 
 
-def run_command(sleep: int = 30, slots: int = 1, master_url: str = None) -> str:
-    if master_url is None: # default port = 8080
-        master_url = conf.make_master_url()
+def run_command(sleep: int = 30, slots: int = 1) -> str:
     command = [
         "det",
         "-m",
-        master_url,
+        conf.make_master_url(),
         "command",
         "run",
         "-d",
