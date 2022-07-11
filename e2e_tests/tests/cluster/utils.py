@@ -30,7 +30,9 @@ def get_master_port(loaded_config: dict) -> str:
     for d in loaded_config["stages"]:
         for k in d.keys():
             if k == "master":
-                return str(d["master"]["config_file"]["port"])
+                if "port" in d["master"]["config_file"]:
+                    return str(d["master"]["config_file"]["port"])
+                    
     return "8080"  # default value if not explicit in config file
 
 
