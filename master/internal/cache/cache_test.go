@@ -186,7 +186,7 @@ func TestGenPathWithValidation(t *testing.T) {
 			hasErr:      true,
 		},
 	}
-	f := NewFileCache("/tmp", 2*time.Hour)
+	f := NewFileCache("/tmp/determined-cache", 2*time.Hour)
 	for _, test := range tests {
 		p, err := f.genPathWithValidation(testExpID, test.path)
 		if test.hasErr {
