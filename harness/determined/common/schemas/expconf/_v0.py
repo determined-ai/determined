@@ -493,6 +493,17 @@ class SingleConfigV0(schemas.SchemaBase):
         pass
 
 
+@SearcherConfigV0.member("custom")
+class CustomConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
+
+    @schemas.auto_init
+    def __init__(
+        self,
+    ) -> None:
+        pass
+
+
 @SearcherConfigV0.member("random")
 class RandomConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-random.json"
@@ -711,6 +722,7 @@ SearcherConfigV0_Type = Union[
     SyncHalvingConfigV0,
     AdaptiveConfigV0,
     AdaptiveSimpleConfigV0,
+    CustomConfigV0,
 ]
 SearcherConfigV0.finalize(SearcherConfigV0_Type)
 
