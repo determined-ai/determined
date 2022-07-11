@@ -14,7 +14,7 @@ def test_priortity_scheduler_noop_experiment(
     managed_cluster_priority_scheduler: ManagedCluster,
 ) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
-    assert conf.MASTER_PORT == 8082
+    assert str(conf.MASTER_PORT) == str(8082)
     # uses the default priority set in cluster config
     exp.run_basic_test(conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1)
     # uses explicit priority
@@ -28,7 +28,7 @@ def test_priortity_scheduler_noop_command(
     managed_cluster_priority_scheduler: ManagedCluster,
 ) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
-    assert conf.MASTER_PORT == 8082
+    assert str(conf.MASTER_PORT) == "8082"
     # without slots (and default priority)
     command_id = run_command(slots=0)
     wait_for_command_state(command_id, "TERMINATED", 40)
@@ -46,7 +46,7 @@ def test_priortity_scheduler_noop_command(
 @pytest.mark.managed_devcluster
 def test_slots_list_command(managed_cluster_priority_scheduler: ManagedCluster) -> None:
     managed_cluster_priority_scheduler.ensure_agent_ok()
-    assert conf.MASTER_PORT == 8082
+    assert str(conf.MASTER_PORT) == "8082"
     command = ["det", "slot", "list"]
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE

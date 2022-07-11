@@ -30,8 +30,8 @@ def get_master_port(loaded_config: dict) -> str:
     for d in loaded_config["stages"]:
         for k in d.keys():
             if k == "master":
-                return d["master"]["config_file"]["port"]
-    return None
+                return str(d["master"]["config_file"]["port"])
+    return "8080"  # default value if not explicit in config file
 
 
 def num_slots() -> int:

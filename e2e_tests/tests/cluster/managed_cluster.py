@@ -36,9 +36,6 @@ class ManagedCluster:
         from devcluster import Devcluster
 
         self.dc = Devcluster(config=config)
-        lc = conf.load_config(config_path=config)
-        port = get_master_port(lc)
-        set_master_port_conf(port)
         self.master_url = conf.make_master_url()
         self.reattach = reattach
 
@@ -184,6 +181,11 @@ def _now_ts() -> str:
 def managed_cluster_priority_scheduler(
     managed_cluster_session_priority_scheduler: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
+    lc = conf.load_config(config_path=config)
+    port = get_master_port(lc)
+    set_master_port_conf(port)
+
     nodeid = request.node.nodeid
     managed_cluster_session_priority_scheduler.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session_priority_scheduler
@@ -196,6 +198,12 @@ def managed_cluster_priority_scheduler(
 def managed_cluster_restarts(
     managed_cluster_session: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
+    config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
+    # port number is same for both reattach on and off config files so you can use either.
+    lc = conf.load_config(config_path=config)
+    port = get_master_port(lc)
+    set_master_port_conf(port)
+
     nodeid = request.node.nodeid
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
