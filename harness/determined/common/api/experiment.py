@@ -217,11 +217,11 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 "max_length": {"batches": 1},
             },
             "hyperparameters": generate_random_hparam_values(config.get("hyperparameters", {})),
-            "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
             "max_restarts": 0,
         }
     )
-    config.setdefault(
+    config_test["resources"]["slots_per_trial"] = 1
+    config_test.setdefault(
         "data_layer", {"type": "shared_fs", "container_storage_path": "/tmp/determined"}
     )
 
