@@ -15,16 +15,14 @@ import (
 // TODO: return db.ErrDuplicateRecord when record exists
 func (db *PgDB) AddGroup(ctx context.Context, group model.Group) (model.Group, error) {
 	_, err := Bun().NewInsert().Model(&group).Exec(ctx)
-	return group, err
+	return group, matchSentinelError(err)
 }
 
 func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 	var g model.Group
 	err := Bun().NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
-		return g, ErrNotFound
-	}
-	return g, err
+
+	return g, matchSentinelError(err)
 }
 
 func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error) {
@@ -43,20 +41,37 @@ func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([
 }
 
 func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
-	res, err := Bun().NewDelete().Table("user_group_membership").Where("group_id = ?", gid).Exec(ctx)
+	tx, err := Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	if foundErr := checkIfFound(res, err); foundErr != nil {
-		return foundErr
+	_, err = tx.NewDelete().
+		Table("user_group_membership").
+		Where("group_id = ?", gid).
+		Exec(ctx)
+	if err != nil {
+		return err
 	}
 
-	res, err = Bun().NewDelete().Table("groups").Where("id = ?", gid).Exec(ctx)
-	return checkIfFound(res, err)
+	res, err := tx.NewDelete().Model(&model.Group{ID: gid}).WherePK().Exec(ctx)
+	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
+		return matchSentinelError(foundErr)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return matchSentinelError(err)
+	}
+
+	return nil
 }
 
 func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
 	res, err := Bun().NewUpdate().Model(&group).WherePK().Exec(ctx)
 
-	return checkIfFound(res, err)
+	return matchSentinelError(mustHaveAffectedRows(res, err))
 }
 
 // TODO: return db.ErrDuplicateRecord when record exists
@@ -73,19 +88,19 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 		})
 	}
 
-	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
+	tx, err := Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
 	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
-	if err != nil {
-		return err
+	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
+		return matchSentinelError(foundErr)
 	}
 
 	err = tx.Commit()
-	return checkIfFound(res, err)
+	return matchSentinelError(err)
 }
 
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
@@ -93,7 +108,7 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 		return nil
 	}
 
-	tx, err := Bun().BeginTx(ctx, &sql.TxOptions{})
+	tx, err := Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -103,12 +118,12 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
-	if err != nil {
-		return err
+	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
+		return matchSentinelError(foundErr)
 	}
 
 	err = tx.Commit()
-	return checkIfFound(res, err)
+	return matchSentinelError(err)
 }
 
 func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
@@ -121,28 +136,40 @@ func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, err
 	return users, err
 }
 
-// TODO: actually finish this and test it (integration?)
-// expected: *errors.fundamental(not found)
-// actual  : *pgconn.PgError(&pgconn.PgError{Severity:"ERROR", Code:"23503", Message:"insert or update on table \"user_group_membership\" violates foreign key constraint \"user_group_membership_user_id_fkey\"", Detail:"Key (user_id)=(125674576) is not present in table \"users\".", Hint:"", Position:0, InternalPosition:0, InternalQuery:"", Where:"", SchemaName:"public", TableName:"user_group_membership", ColumnName:"", DataTypeName:"", ConstraintName:"user_group_membership_user_id_fkey", File:"ri_triggers.c", Line:3266, Routine:"ri_ReportViolation"})
-func isNotFoundErr(err error) bool {
-	if e, ok := err.(*pgconn.PgError); ok {
-		if e.Code == "23503" {
-			return true
-		}
+func matchSentinelError(err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound
 	}
-	return false
+
+	switch pgErrCode(err) {
+	// Error code "foreign_key_violation"
+	case "23503":
+		return ErrNotFound
+	// Error code "unique_violation"
+	case "23505":
+		return ErrDuplicateRecord
+	}
+
+	return err
 }
 
-// checkIfFound checks if bun has affected rows in a table or not.
+// mustHaveAffectedRows checks if bun has affected rows in a table or not.
 // Returns ErrNotFound if no rows were affected and returns the provided error otherwise
-func checkIfFound(result sql.Result, err error) error {
+func mustHaveAffectedRows(result sql.Result, err error) error {
 	if err == nil {
 		rowsAffected, affectedErr := result.RowsAffected()
 		if affectedErr == nil && rowsAffected == 0 {
 			return ErrNotFound
 		}
-	} else if errors.Is(err, sql.ErrNoRows) {
-		return ErrNotFound
 	}
+
 	return err
+}
+
+func pgErrCode(err error) string {
+	if e, ok := err.(*pgconn.PgError); ok {
+		return e.Code
+	}
+
+	return ""
 }

@@ -18,6 +18,10 @@ var (
 		ID:   9001,
 		Name: "kljhadsflkgjhjklsfhg",
 	}
+	testGroupStatic = model.Group{
+		ID:   10001,
+		Name: "dsjkfkljjkasdfasdky",
+	}
 	testUser = model.User{
 		ID:       1217651234,
 		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
@@ -103,8 +107,6 @@ func TestHelloWorld(t *testing.T) {
 
 	t.Run("partial success on adding users to a group results in transaction rollback", func(t *testing.T) {
 		err := pgDB.AddUsersToGroup(ctx, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
-		// TODO: this being ErrNotFound in particular might be out of scope.
-		// actual  : *pgconn.PgError(&pgconn.PgError{Severity:"ERROR", Code:"23503", Message:"insert or update on table \"user_group_membership\" violates foreign key constraint \"user_group_membership_user_id_fkey\"", Detail:"Key (user_id)=(125674576) is not present in table \"users\".", Hint:"", Position:0, InternalPosition:0, InternalQuery:"", Where:"", SchemaName:"public", TableName:"user_group_membership", ColumnName:"", DataTypeName:"", ConstraintName:"user_group_membership_user_id_fkey", File:"ri_triggers.c", Line:3266, Routine:"ri_ReportViolation"})
 		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
 
 		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
@@ -118,9 +120,51 @@ func TestHelloWorld(t *testing.T) {
 		err := pgDB.AddUsersToGroup(ctx, -500, testUser.ID)
 		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when trying to add users to a non-existent group")
 	})
-}
 
-// TODO: test creating several groups and make sure it only deletes the one in question
+	t.Run("Deleting a group that doesn't exist results in ErrNotFound", func(t *testing.T) {
+		err := pgDB.DeleteGroup(ctx, -500)
+		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when trying to delete a non-existent group")
+	})
+
+	t.Run("Deleting a group that has users should work", func(t *testing.T) {
+		tmpGroup := testGroup
+		tmpGroup.ID++
+		tmpGroup.Name += tmpGroup.Name
+
+		_, err := pgDB.AddGroup(ctx, tmpGroup)
+		require.NoError(t, err, "failed to create group")
+
+		err = pgDB.AddUsersToGroup(ctx, tmpGroup.ID, testUser.ID)
+		require.NoError(t, err, "failed to add user to group")
+
+		err = pgDB.DeleteGroup(ctx, tmpGroup.ID)
+		require.NoError(t, err, "errored when deleting group")
+
+		_, err = pgDB.GroupByID(ctx, tmpGroup.ID)
+		require.Equal(t, ErrNotFound, err, "deleted group should not be found, and ErrNotFound returned")
+	})
+
+	t.Run("AddGroup returns ErrDuplicateRecord when creating a group that already exists", func(t *testing.T) {
+		_, err := pgDB.AddGroup(ctx, testGroupStatic)
+		require.Equal(t, ErrDuplicateRecord, err, "didn't return ErrDuplicateRecord")
+	})
+
+	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a group they're already in", func(t *testing.T) {
+		err := pgDB.AddUsersToGroup(ctx, testGroupStatic.ID, testUser.ID)
+		require.Equal(t, ErrDuplicateRecord, err, "should have returned ErrDuplicateRecord")
+	})
+
+	t.Run("Static test group should exist at the end and test user should be in it", func(t *testing.T) {
+		_, err := pgDB.GroupByID(ctx, testGroupStatic.ID)
+		require.NoError(t, err, "errored while getting static test group")
+
+		users, err := pgDB.GetUsersInGroup(ctx, testGroupStatic.ID)
+		require.NoError(t, err, "failed to search for users that belong to static group")
+
+		index := usersContain(users, testUser.ID)
+		require.NotEqual(t, -1, index, "Expected users in static group to contain the test user")
+	})
+}
 
 // groupsContains returns -1 if group id was not found, else returns the index
 func groupsContain(groups []model.Group, id int) int {
@@ -160,6 +204,12 @@ func deleteUser(ctx context.Context, id model.UserID) error {
 func setUp(ctx context.Context, t *testing.T, pgDB *PgDB) {
 	_, err := pgDB.AddUser(&testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
+
+	_, err = pgDB.AddGroup(ctx, testGroupStatic)
+	require.NoError(t, err, "failure creating static test group")
+
+	err = pgDB.AddUsersToGroup(ctx, testGroupStatic.ID, testUser.ID)
+	require.NoError(t, err, "failure adding user to static group")
 }
 
 func cleanUp(ctx context.Context, t *testing.T, pgDB *PgDB) {
@@ -171,6 +221,11 @@ func cleanUp(ctx context.Context, t *testing.T, pgDB *PgDB) {
 	err = pgDB.DeleteGroup(ctx, testGroup.ID)
 	if err != nil {
 		t.Logf("Error cleaning up group: %v", err)
+	}
+
+	err = pgDB.DeleteGroup(ctx, testGroupStatic.ID)
+	if err != nil {
+		t.Logf("Error cleaning up static group: %v", err)
 	}
 
 	err = deleteUser(ctx, testUser.ID)
