@@ -79,7 +79,7 @@ var staticWebDirectoryPaths = map[string]bool{
 	"/docs/rest-api": true,
 }
 
-// gzipSkipPaths are locations of paths to be skipped by GZIP compression
+// gzipSkipPaths are locations of paths to be skipped by GZIP compression.
 var gzipSkipPaths = map[string]bool{
 	"/proxy": true,
 }
