@@ -2486,7 +2486,6 @@ var (
         }
     }
 }
-
 `)
 	textGridConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2823,7 +2822,8 @@ var (
                 {
                     "unionKey": "const:name=custom",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
-                },                {
+                },
+                {
                     "unionKey": "const:name=adaptive_asha",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                 },
