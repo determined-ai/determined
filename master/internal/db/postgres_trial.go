@@ -455,7 +455,7 @@ func intArraytoString(ints []int32) string {
 
 func (db *PgDB) QueryTrials(
 	experimentIDs []int32, projectIDs []int32, workspaceIDs []int32, validation_metrics []*apiv1.NumberRangeFilter) (trials []int32, err error) {
-	qb, err := Bun().NewSelect().TableExpr("trials").Column("id").QueryBuilder()
+	qb := Bun().NewSelect().TableExpr("trials").Column("id").QueryBuilder()
 	var statement string = `SELECT trials.id FROM trials INNER JOIN experiments ON trials.experiment_id = experiments.id INNER JOIN validations ON trials.id = validations.trial_id INNER JOIN projects ON experiments.project_id = projects.id WHERE `
 	var where []string
 	if len(experimentIDs) > 0 {

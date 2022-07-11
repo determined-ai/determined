@@ -770,12 +770,14 @@ github.com/uber/jaeger-client-go v2.25.0+incompatible h1:IxcNZ7WRY1Y3G4poYlx24sz
 github.com/uber/jaeger-client-go v2.25.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.4.0+incompatible h1:fY7QsGQWiCt8pajv4r7JEvmATdCVaWxXbjwyYwsNaLQ=
 github.com/uber/jaeger-lib v2.4.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
-github.com/uptrace/bun v1.1.2 h1:TJp848il25+Xt5faRcrUcHnURcAGiqg+QHnmn+WRVM8=
-github.com/uptrace/bun v1.1.2/go.mod h1:SkbOr4hdcYqqFPw4rbc1QAnLLvDLgq+X0w8OSllj1MU=
+github.com/uptrace/bun v1.1.3 h1:v62tsUyKjVCR5q7J49uckM6CVVTqMO26aV73F3G6RFk=
+github.com/uptrace/bun v1.1.3/go.mod h1:aQbKvxs7/n9MMef/b8lYOh5Rwlo4Jd5A31E4HlYNqSc=
 github.com/uptrace/bun/dialect/pgdialect v1.1.2 h1:vCwAVdNic36oC2NIQnUL9HuM+FITOASWiUTSnT8te8o=
 github.com/uptrace/bun/dialect/pgdialect v1.1.2/go.mod h1:ncYVRrMTiEsccO6DpxfLJunYf2uOnBH0H0nKfJsbmkE=
-github.com/uptrace/bun/extra/bundebug v1.1.2 h1:Xztj6P3Y7MOWGGhkf4te5nxxlboJpD7dVMIodhWQ9Lg=
-github.com/uptrace/bun/extra/bundebug v1.1.2/go.mod h1:N6gMJ8ow8+KUmwxHnqdRDDVT13TOb1bOslQhW1D+Y/Y=
+github.com/uptrace/bun/dialect/pgdialect v1.1.3 h1:EMRCC98YKSpo/EXyujsr+5v0PKYkRE0rwxJKKEcrOuE=
+github.com/uptrace/bun/dialect/pgdialect v1.1.3/go.mod h1:2GJogfkVHmCKxt6N88vRbJNSUV5wfPym/rp6N25dShc=
+github.com/uptrace/bun/extra/bundebug v1.1.3 h1:c/YKsH3l377tmIKpPWRn+kjtCTofmaW7ez+yT4coAaw=
+github.com/uptrace/bun/extra/bundebug v1.1.3/go.mod h1:TBpazrrYLBGsUw/LzHaIZLcxxYXIpH4GOqD9c+3dmGI=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
@@ -1095,6 +1097,8 @@ golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20211103235746-7861aae1554b/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 h1:OH54vjqzRWmbJ62fjuhxy7AxFFgoHN0/DPc/UrL8cAs=
 golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886 h1:eJv7u3ksNXoLbGSKuv2s/SIO4tJVxc/A+MTpzxDgz/Q=
+golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b h1:9zKuko04nR4gjZ4+DNjHqRlAJqbJETHwiNKDqTfOjfE=
