@@ -382,7 +382,7 @@ func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest,
 
 	for {
 		var response apiv1.QueryTrialsResponse
-		trialIDs, err := a.m.db.QueryTrials(experimentIDs, req.Filters.ProjectIds, req.Filters.WorkspaceIds, req.Filters.TrainingMetrics)
+		trialIDs, err := a.m.db.QueryTrials(experimentIDs, req.Filters.ProjectIds, req.Filters.WorkspaceIds, req.Filters.ValidationMetrics)
 		fmt.Println("trialIds")
 		fmt.Println(trialIDs)
 		if err != nil {

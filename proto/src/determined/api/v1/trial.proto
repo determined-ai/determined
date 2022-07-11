@@ -51,12 +51,12 @@ message NumberRangeFilter {
 }
 
 message QueryFilters {
-  // experiment ids to include
   repeated int32 experiment_ids = 1;
   repeated int32 project_ids = 2;
   repeated int32 workspace_ids = 3;
   repeated NumberRangeFilter validation_metrics = 4;
   repeated NumberRangeFilter training_metrics = 5;
+  repeated NumberRangeFilter hparams = 6;
 }
 
 message QueryTrialsRequest {

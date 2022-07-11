@@ -467,10 +467,10 @@ func (db *PgDB) QueryTrials(
 	}
 	if len(validation_metrics) > 0 {
 		for _, vm := range validation_metrics{
-			where = append(where, fmt.Sprintf(`(validations.metrics->'validation_metrics'->>'%s')::float8 BETWEEN %d AND %d`, vm.Name, vm.Min, vm.Max))
+			where = append(where, fmt.Sprintf(`(validations.metrics->'validation_metrics'->>'%v')::float8 BETWEEN %v AND %v `, vm.Name, vm.Min, vm.Max))
 		}
 	}
-	var sq = statement + strings.Join(where, "AND ")
+	var sq = statement + strings.Join(where, "AND ") + "GROUP BY trials.id"
 	fmt.Println(sq)
 	err = db.sql.Select(&trials,sq)
 	return trials, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
