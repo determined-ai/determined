@@ -212,6 +212,29 @@ def agent_id_completer(_1: str, parsed_args: argparse.Namespace, _2: Any) -> Lis
     return list(r.json().keys())
 
 
+@authentication.required
+def agent_roles(args: argparse.Namespace) -> None:
+    response = api.get(args.master, "config")
+    cluster_id = response.json()["__internal"]["external_sessions"]["cluster_id"]
+    pools = response.json()["resource_pools"]
+    if len(pools) == 0:
+        print(f"No resource pools found for cluster {cluster_id}, no agent roles available")
+        sys.exit(1)
+
+    accounts = set()
+    for pool in pools:
+        provider = pool["provider"]
+        # TODO: will support more clouds in the future
+        if provider["type"] != "aws":
+            print(f"This command only supports AWS currently, you are using {provider['type']}")
+            sys.exit(1)
+        accounts.add(provider["iam_instance_profile_arn"].split(":")[4])
+
+    print(f"Found {len(accounts)} AWS IAM role(s) for cluster {cluster_id}:")
+    for acc in accounts:
+        print(f"arn:aws:iam::{acc}:role/{cluster_id.replace('-', '')}/agent/{cluster_id}-agent")
+
+
 # fmt: off
 
 args_description = [
@@ -241,6 +264,7 @@ args_description = [
                 Arg("--json", action="store_true", help="print as JSON"),
             ),
         ]),
+        Cmd("roles", agent_roles, "list agent roles of the cluster", []),
     ]),
     Cmd("s|lot", None, "manage slots", [
         Cmd("list", list_slots, "list slots in cluster", [
