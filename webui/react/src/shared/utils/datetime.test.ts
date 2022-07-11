@@ -4,7 +4,6 @@ import * as utils from './datetime';
 
 describe('Datetime Utilities', () => {
   describe('formatDatetime', () => {
-    const SYSTEM_UTC_OFFSET = dayjs().utcOffset();
     const DATE = [
       '2021-11-23T05:59:59.500Z',
       'December 31, 1980 23:59:59.999Z',
@@ -44,11 +43,11 @@ describe('Datetime Utilities', () => {
     [
       {
         input: { date: DATE[2], options: { format: FORMAT[0], outputUTC: false } },
-        output: dayjs.utc(DATE[2]).add(SYSTEM_UTC_OFFSET, 'minute').format(FORMAT[0]),
+        output: dayjs.utc(DATE[2]).local().format(FORMAT[0]),
       },
       {
         input: { date: DATE[3], options: { format: FORMAT[1], outputUTC: false } },
-        output: dayjs.utc(DATE[3]).add(SYSTEM_UTC_OFFSET, 'minute').format(FORMAT[1]),
+        output: dayjs.utc(DATE[3]).local().format(FORMAT[1]),
       },
     ].forEach(test => {
       const { date, options } = test.input;
@@ -68,7 +67,7 @@ describe('Datetime Utilities', () => {
         input: { date: DATE[3], options: { inputUTC: true, outputUTC: false } },
         output: dayjs
           .utc(utils.stripTimezone(DATE[3]))
-          .add(SYSTEM_UTC_OFFSET, 'minute')
+          .local()
           .format(utils.DEFAULT_DATETIME_FORMAT),
       },
     ].forEach(test => {
