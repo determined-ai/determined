@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Since 0.17.7, ``det experiment download-model-def $ID`` has been saving the downloaded tarballs
+   as just ``$ID``. This release corrects that behavior and names them
+   ``experiment_$ID_model_def.tgz`` instead.
