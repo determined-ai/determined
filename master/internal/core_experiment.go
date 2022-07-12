@@ -367,6 +367,27 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		projectID = *params.ProjectID
 	}
 
+	if !resources.ForceQueue() {
+		resourceManager := sproto.GetCurrentRM(m.system)
+		agReq := m.system.Ask(resourceManager, &apiv1.GetAgentsRequest{})
+		if agReq.Error() != nil {
+			return nil, false, nil, agReq.Error()
+		}
+		getAgentsResponse := agReq.Get().(*apiv1.GetAgentsResponse)
+		foundAgent := false
+		for _, agent := range getAgentsResponse.Agents {
+			if len(agent.Slots) >= resources.SlotsPerTrial() {
+				foundAgent = true
+				break
+			}
+		}
+		if !foundAgent {
+			return nil, false, nil, echo.NewHTTPError(http.StatusBadRequest,
+				fmt.Sprintf("no agent has enough slots (%d) to run experiment",
+					resources.SlotsPerTrial()))
+		}
+	}
+
 	dbExp, err := model.NewExperiment(
 		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate,

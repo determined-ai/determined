@@ -42,6 +42,7 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 		RawResourcePool:   ptrs.Ptr(r.ResourcePool),
 		RawPriority:       r.Priority,
 		RawDevices:        r.Devices.ToExpconf(),
+		RawForceQueue:     ptrs.Ptr(false),
 	}).(expconf.ResourcesConfig)
 }
 

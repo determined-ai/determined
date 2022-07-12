@@ -2025,6 +2025,13 @@ schemas = {
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/devices.json"
         },
+        "force_queue": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
         "max_slots": {
             "type": [
                 "integer",

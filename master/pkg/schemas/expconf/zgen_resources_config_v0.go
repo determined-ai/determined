@@ -95,6 +95,17 @@ func (r *ResourcesConfigV0) SetPriority(val *int) {
 	r.RawPriority = val
 }
 
+func (r ResourcesConfigV0) ForceQueue() bool {
+	if r.RawForceQueue == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .ForceQueue")
+	}
+	return *r.RawForceQueue
+}
+
+func (r *ResourcesConfigV0) SetForceQueue(val bool) {
+	r.RawForceQueue = &val
+}
+
 func (r ResourcesConfigV0) Devices() DevicesConfigV0 {
 	return r.RawDevices
 }

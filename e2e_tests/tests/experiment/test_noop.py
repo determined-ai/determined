@@ -96,6 +96,16 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     impossibly_large = 100
     config_obj["max_restarts"] = 0
     config_obj["resources"] = {"slots_per_trial": impossibly_large}
+
+    # test that normally this slots_per_trial config would be rejected
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config_obj, f)
+        with pytest.raises(AssertionError):
+            exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
+
+    # resume original test with an override
+    config_obj["resources"]["force_queue"] = True
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
