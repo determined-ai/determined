@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -455,28 +456,31 @@ func intArraytoString(ints []int32) string {
 
 func (db *PgDB) QueryTrials(
 	experimentIDs []int32, projectIDs []int32, workspaceIDs []int32, validation_metrics []*apiv1.NumberRangeFilter) (trials []int32, err error) {
-	qb := Bun().NewSelect().TableExpr("trials").Column("id").QueryBuilder()
-	var statement string = `SELECT trials.id FROM trials INNER JOIN experiments ON trials.experiment_id = experiments.id INNER JOIN validations ON trials.id = validations.trial_id INNER JOIN projects ON experiments.project_id = projects.id WHERE `
-	var where []string
+	var trialIds []int32
+	qb := Bun().NewSelect().TableExpr("trials").Column("trials.id").Group("trials.id")
 	if len(experimentIDs) > 0 {
-		where = append(where, fmt.Sprintf(`trials.experiment_id IN (%s) `, intArraytoString(experimentIDs)))
-		qb = qb.Where("? IN (?)", Bun().Ident("experiment_id"), experimentIDs)
-	}
-	if len(projectIDs) > 0 {
-		where = append(where, fmt.Sprintf(`experiments.project_id IN (%s) `, intArraytoString(projectIDs)))
-		qb = qb.Where("? IN (?)", Bun().Ident("experiments.project_id"), projectIDs)
+		qb = qb.Join("INNER JOIN experiments ON trials.experiment_id = experiments.id")
+		qb = qb.Where("experiment_id IN (?)", bun.In(experimentIDs))
 	}
 	if len(workspaceIDs) > 0 {
-		where = append(where, fmt.Sprintf(`projects.workspace_id IN (%s) `, intArraytoString(workspaceIDs)))
-		qb = qb.Where("? IN (?)", Bun().Ident("projects.workspace_id"), workspaceIDs)
+		qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
+		qb.Where("projects.workspace_id IN (?)", bun.In(workspaceIDs))
+	}
+	if len(projectIDs) > 0 {
+		if len(workspaceIDs) == 0 {
+			qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
+		}
+		qb = qb.Where("projects.id IN (?)", bun.In(projectIDs))
 	}
 	if len(validation_metrics) > 0 {
+		qb = qb.Join("INNER JOIN validations ON trials.id = validations.trial_id")
 		for _, vm := range validation_metrics{
-			where = append(where, fmt.Sprintf(`(validations.metrics->'validation_metrics'->>'%v')::float8 BETWEEN %v AND %v `, vm.Name, vm.Min, vm.Max))
+			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
 		}
 	}
-	var sq = statement + strings.Join(where, "AND ") + "GROUP BY trials.id"
-	fmt.Println(sq)
-	err = db.sql.Select(&trials,sq)
-	return trials, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
+
+	err = qb.Scan(context.TODO(), &trialIds)
+	fmt.Println("&trialIds")
+	fmt.Println(&trialIds)
+	return trialIds, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
 }
