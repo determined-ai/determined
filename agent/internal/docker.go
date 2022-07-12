@@ -221,10 +221,15 @@ func (d *dockerActor) getDockerAuths(
 			d.sendAuxLog(ctx, "warning setting registry_auth without registry_auth.serveraddress "+
 				"is deprecated and will soon be required")
 		}
-		if registry.ConvertToHostname(expconfReg.ServerAddress) == imageDomain ||
+
+		expconfDomain := registry.ConvertToHostname(expconfReg.ServerAddress)
+		if expconfDomain == imageDomain ||
 			didNotPassServerAddress { // TODO remove didNotPassServerAddress when it becomes required.
 			return *expconfReg, nil
 		}
+		d.sendAuxLog(ctx, fmt.Sprintf("warning not using expconfig registry_auth "+
+			"since expconf registry_auth.serverAddress %s did not match the image serverAddress %s",
+			expconfDomain, imageDomain))
 	}
 
 	// Try using credential stores specified in ~/.docker/config.json.
