@@ -32,7 +32,7 @@
     text-align: right;
   }
   .text {
-    color: black;
+    color: var(--theme-surface-on);
     margin: 0
   }
   .blueTrack,
@@ -80,20 +80,18 @@
   }
   .pointerArrow {
     align-self: center;
-    border-color: transparent white transparent transparent;
+    border-color: transparent var(--theme-float) transparent transparent;
     border-style: solid;
     border-width: 5px 8.7px 5px 0;
-    filter: drop-shadow(-2px 2px 5px gray);
     height: 0;
   }
   .pointerText {
-    background-color: white;
+    background-color: var(--theme-float);
     border-radius: 2px;
-    box-shadow: 3px 2px 5px lightgray;
     padding: 2px 8px;
 
     &::after {
-      background-color: white;
+      background-color: var(--theme-float);
       border-radius: 2px;
       content: '';
       height: 100%;
