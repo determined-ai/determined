@@ -2,15 +2,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
-import { Metadata } from 'types';
+import EditableMetadata, { Props } from './EditableMetadata';
 
-import EditableMetadata from './EditableMetadata';
-
-const initMetadata = { hello: 'world', testing: 'metadata' };
+const DEFAULT_METADATA = { hello: 'world', testing: 'metadata' };
 
 const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-const setup = (metadata: Metadata = {}, editing = false) => {
+const setup = ({
+  metadata = DEFAULT_METADATA,
+  editing = false,
+}: Partial<Props> = {}) => {
   const handleOnChange = jest.fn();
   const view = render(
     <EditableMetadata
@@ -24,9 +25,9 @@ const setup = (metadata: Metadata = {}, editing = false) => {
 
 describe('EditableMetadata', () => {
   it('displays list of metadata', () => {
-    setup(initMetadata);
+    setup();
 
-    Object.entries(initMetadata).forEach(([ key, value ]) => {
+    Object.entries(DEFAULT_METADATA).forEach(([ key, value ]) => {
       expect(screen.getByText(key)).toBeInTheDocument();
       expect(screen.getByText(value)).toBeInTheDocument();
     });
@@ -35,10 +36,10 @@ describe('EditableMetadata', () => {
   it('handles metadata addition', async () => {
     const [ additionKey, additionValue ] = [ 'animal', 'fox' ];
     const resultMetadata = {
-      ...initMetadata,
+      ...DEFAULT_METADATA,
       ...Object.fromEntries([ [ additionKey, additionValue ] ]),
     };
-    const { handleOnChange } = setup(initMetadata, true);
+    const { handleOnChange } = setup({ editing: true });
 
     const addRow = screen.getByText('+ Add Row');
     await user.click(addRow);
@@ -56,15 +57,19 @@ describe('EditableMetadata', () => {
   });
 
   it('handles metadata removal', async () => {
-    const metadataArray = Object.entries(initMetadata);
+    const metadataArray = Object.entries(DEFAULT_METADATA);
     const removalIndex = Math.floor(Math.random() * metadataArray.length);
     const removalMetadata = metadataArray[removalIndex];
     const resultMetadata = Object.fromEntries(metadataArray.filter(
       ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
     ));
-    const { handleOnChange } = setup(initMetadata, true);
+    const { handleOnChange } = setup({ editing: true });
 
-    await user.click((await screen.findAllByRole('button'))[removalIndex]);
+    // There is the "+ Add Row" button in addition to the overflow buttons.
+    const buttons = await screen.findAllByRole('button');
+    expect(buttons).toHaveLength(metadataArray.length + 1);
+
+    await user.click(buttons[removalIndex]);
     await user.click(await screen.findByText('Delete Row'));
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });

@@ -6,7 +6,8 @@ import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
 import EditableRow from './EditableRow';
-interface Props {
+
+export interface Props {
   editing?: boolean;
   metadata?: Metadata;
   updateMetadata?: (obj: Metadata) => void;
