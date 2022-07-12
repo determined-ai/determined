@@ -2647,13 +2647,30 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-custom.json",
     "title": "CustomConfig",
     "type": "object",
-    "additionalProperties": false,
+    "additionalProperties": true,
     "required": [
         "name"
+    ],
+    "eventuallyRequired": [
+        "metric"
     ],
     "properties": {
         "name": {
             "const": "custom"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
         }
     }
 }
@@ -3074,20 +3091,8 @@ schemas = {
             ],
             "default": true
         },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
+        "source_trial_id": true,
+        "source_checkpoint_uuid": true,
         "budget": true,
         "train_stragglers": true
     }

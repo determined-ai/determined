@@ -74,6 +74,8 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
 	case c.RawAdaptiveASHAConfig != nil:
 		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
+	case c.RawCustomConfig != nil:
+		panic("custom searcher not implemented")
 	default:
 		panic("no searcher type specified")
 	}
