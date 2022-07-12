@@ -263,7 +263,7 @@ The master supports the following configuration settings:
 
       -  ``username`` (required)
       -  ``password`` (required)
-      -  ``serveraddress`` (optional)
+      -  ``serveraddress`` (required)
       -  ``email`` (optional)
 
    -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.

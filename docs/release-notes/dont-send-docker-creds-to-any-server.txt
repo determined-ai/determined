@@ -8,4 +8,5 @@
 
 -  Agent: Users may now run ``docker login`` on agent host machines to authenticate with Docker
    registries. Note if an agent is running inside a Docker container then ``~/.docker/config.json``
-   will need to be mounted to the same path inside the container.
+   will need to be mounted inside the container to ``$HOME/.docker/config.json`` (by default
+   ``/root/.docker/config.json``).

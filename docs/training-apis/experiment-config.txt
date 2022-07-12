@@ -1055,7 +1055,7 @@ workloads for this experiment. For more information on customizing the trial env
 
    -  ``username`` (required)
    -  ``password`` (required)
-   -  ``serveraddress`` (optional)
+   -  ``serveraddress`` (required)
    -  ``email`` (optional)
 
 ``environment_variables``
