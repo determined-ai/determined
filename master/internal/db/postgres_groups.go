@@ -55,9 +55,9 @@ func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
 		return err
 	}
 	defer func() {
-		err := tx.Rollback()
-		if err != sql.ErrTxDone && err != nil {
-			log.WithError(err).
+		rbErr := tx.Rollback()
+		if rbErr != sql.ErrTxDone && rbErr != nil {
+			log.WithError(rbErr).
 				WithField("groupID", gid).
 				Error("error rolling back transaction in DeleteGroup")
 		}
@@ -113,9 +113,9 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 		return err
 	}
 	defer func() {
-		err := tx.Rollback()
-		if err != sql.ErrTxDone && err != nil {
-			log.WithError(err).
+		rbErr := tx.Rollback()
+		if rbErr != sql.ErrTxDone && rbErr != nil {
+			log.WithError(rbErr).
 				WithField("groupID", gid).
 				WithField("userIDs", uids).
 				Error("error rolling back transaction in AddUsersToGroup")
@@ -144,9 +144,9 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 		return err
 	}
 	defer func() {
-		err := tx.Rollback()
-		if err != sql.ErrTxDone && err != nil {
-			log.WithError(err).
+		rbErr := tx.Rollback()
+		if rbErr != sql.ErrTxDone && rbErr != nil {
+			log.WithError(rbErr).
 				WithField("groupID", gid).
 				WithField("userIDs", uids).
 				Error("error rolling back transaction in RemoveUsersFromGroup")

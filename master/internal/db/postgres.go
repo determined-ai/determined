@@ -82,8 +82,8 @@ const (
 	// violates a uniqueness constraint.  Obtained from:
 	// https://www.postgresql.org/docs/10/errcodes-appendix.html
 	uniqueViolation = "23505"
-	// foreignKeyViolation is the error code that Postgres uses to indicate that an attempted insert/update
-	// violates a foreign key constraint.  Obtained from:
+	// foreignKeyViolation is the error code that Postgres uses to indicate that an attempted
+	// insert/update violates a foreign key constraint.  Obtained from:
 	// https://www.postgresql.org/docs/10/errcodes-appendix.html
 	foreignKeyViolation = "23503"
 )
