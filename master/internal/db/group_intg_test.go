@@ -79,8 +79,11 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
-		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testGroup.UserID, -500)
-		require.Equal(t, ErrNotFound, err, "failed to return ErrNotFound when trying to remove users that don't exist")
+		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, -500)
+		require.Equal(t, ErrNotFound, err, "failed to return ErrNotFound when removing non-existent users from group")
+
+		err = pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testGroup.UserID, -500)
+		require.Equal(t, ErrNotFound, err, "failed to return ErrNotFound when trying to remove a mix of users in a group and not")
 
 		err = pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to remove users from group")
