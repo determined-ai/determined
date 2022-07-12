@@ -29,6 +29,10 @@ if [[ $1 == '-t' ]]; then
     TRACE=1
     shift
 fi
+if [[ $1 == '-p' ]]; then
+    PODMAN=1
+    shift
+fi
 
 if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
     echo "Usage: $0 [-h] [-n] [-x] [-t] {cluster}"
@@ -36,6 +40,7 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
     echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
     echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
     echo "  -t     Force debug level to trace regardless of cluster configuration value."
+    echo "  -p     Use podman as a container host (otherwise singlarity)"
     echo 
     echo "Documentation:"
     head -n 17 $0
@@ -146,7 +151,6 @@ export OPT_MASTERPORT=$(lookup "OPT_MASTERPORT_$CLUSTER")
 export OPT_TRESSUPPORTED=$(lookup "OPT_TRESSUPPORTED_$CLUSTER")
 export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
 
-
 SLURMCLUSTER=$(lookup "OPT_name_$CLUSTER")
 if [[ -z $SLURMCLUSTER ]]; then
     echo "$0: Cluster name $CLUSTER does not have a configuration. Specify one of: $(set -o posix; set | grep OPT_name | cut -f 2 -d =)."
@@ -159,6 +163,10 @@ fi
 
 if [[ -n $TRACE ]]; then
     export OPT_DEBUGLEVEL=trace
+fi
+
+if [[ -n $PODMAN ]]; then
+    export OPT_CONTAINER_RUN_TYPE='podman'
 fi
 
 

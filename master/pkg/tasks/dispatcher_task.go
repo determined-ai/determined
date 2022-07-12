@@ -31,6 +31,8 @@ const (
 	determinedLocalFs = "/determined_local_fs"
 	// Location of container-local temporary directory.
 	containerTmpDeterminedDir = "/determined/"
+	singularityCarrier        = "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm"
+	podmanCarrier             = "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm"
 )
 
 // The "launcher" is very sensitive when it comes to the payload name. There
@@ -60,7 +62,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 	numSlots int,
 	slotType device.Type,
 	slurmPartition string,
-	tresSupported bool) (*launcher.Manifest, string, string, error) {
+	tresSupported bool,
+	containerRunType string) (*launcher.Manifest, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
 	 * container as.  Eventually, the impersonated user will likely come from the
@@ -108,8 +111,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetVersion("latest")
 
 	payload.SetCarriers([]string{
-		"com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+		singularityCarrier,
 	})
+	if containerRunType == "podman" {
+		payload.GetCarriers()[0] = podmanCarrier
+	}
 
 	// Create payload launch parameters
 	launchParameters := launcher.NewLaunchParameters()

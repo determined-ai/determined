@@ -58,6 +58,7 @@ stages:
           host: $OPT_LAUNCHERHOST
           port: $OPT_LAUNCHERPORT
           protocol: $OPT_LAUNCHERPROTOCOL
+          container_run_type: $OPT_CONTAINER_RUN_TYPE
           security:
              tls:
                 skip_verify: true
