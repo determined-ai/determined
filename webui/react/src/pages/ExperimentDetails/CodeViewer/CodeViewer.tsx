@@ -81,7 +81,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
         const file = await getExperimentFileFromTree({ experimentId: experiment.id, filePath });
 
         setIsFetching(false);
-        setFileData(file);
+        setFileData(decodeURIComponent(escape(window.atob(file))));
         setFileDir(filePath);
         setFileName(info.node.title as string);
       } catch (error) {
