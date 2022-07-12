@@ -10,6 +10,7 @@ type BindMountsConfig = BindMountsConfigV0
 type CategoricalHyperparameter = CategoricalHyperparameterV0
 type CheckpointStorageConfig = CheckpointStorageConfigV0
 type ConstHyperparameter = ConstHyperparameterV0
+type CustomConfig = CustomConfigV0
 type DataLayerConfig = DataLayerConfigV0
 type DevicesConfig = DevicesConfigV0
 type Device = DeviceV0
