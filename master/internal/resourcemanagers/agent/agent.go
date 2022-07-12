@@ -449,6 +449,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
+			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
 			RunMessage:  msg.ContainerLog.RunMessage,

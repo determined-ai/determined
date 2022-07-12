@@ -215,6 +215,9 @@ func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
 	l := c.baseTaskLog
 	timestamp := time.Now().UTC()
 	l.Timestamp = &timestamp
+	if log.Level != nil {
+		l.Level = log.Level
+	}
 
 	var source string
 	var msg string
