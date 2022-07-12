@@ -2,9 +2,15 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+)
+
+const (
+	singularity = "singularity"
+	podman      = "podman"
 )
 
 // DispatcherResourceManagerConfig is the object that stores the values of
@@ -17,6 +23,7 @@ type DispatcherResourceManagerConfig struct {
 	LauncherProtocol           string       `json:"protocol"`
 	SlotType                   *device.Type `json:"slot_type"`
 	LauncherAuthFile           string       `json:"auth_file"`
+	LauncherContainerRunType   string       `json:"container_run_type"`
 	RendezvousNetworkInterface string       `json:"rendezvous_network_interface"`
 	ProxyNetworkInterface      string       `json:"proxy_network_interface"`
 	// Configuration parameters that are proxies for launcher.conf
@@ -39,12 +46,17 @@ type DispatcherSecurityConfig struct {
 }
 
 // Validate performs validation.
-func (c DispatcherResourceManagerConfig) Validate() error {
+func (c DispatcherResourceManagerConfig) Validate() []error {
+	// Allowed values for the container run type are either 'singularity' or 'podman'
+	if !(c.LauncherContainerRunType == singularity || c.LauncherContainerRunType == podman) {
+		return []error{fmt.Errorf("invalid launch container run type: '%s'", c.LauncherContainerRunType)}
+	}
 	return nil
 }
 
 var defaultDispatcherResourceManagerConfig = DispatcherResourceManagerConfig{
-	TresSupported: true,
+	TresSupported:            true,
+	LauncherContainerRunType: singularity,
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
