@@ -12,6 +12,7 @@ import ModelVersionDetails from 'pages/ModelVersionDetails';
 import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
+import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
@@ -40,6 +41,7 @@ const routeComponentMap: Record<string, FC> = {
   projectDetails: ProjectDetails,
   reload: Reload,
   resourcepool: ResourcepoolDetail,
+  settings: Settings,
   signIn: SignIn,
   signOut: SignOut,
   taskList: TaskList,
