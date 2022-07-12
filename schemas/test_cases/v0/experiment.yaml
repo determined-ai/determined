@@ -209,6 +209,7 @@
       max_slots: null
       priority: null
       resource_pool: ''
+      force_queue: false
     scheduling_unit: 100
     searcher:
       max_length:
