@@ -454,33 +454,36 @@ func intArraytoString(ints []int32) string {
 	return intStringList 
 }
 
-func (db *PgDB) QueryTrials(
-	experimentIDs []int32, projectIDs []int32, workspaceIDs []int32, validation_metrics []*apiv1.NumberRangeFilter) (trials []int32, err error) {
+func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err error) {
 	var trialIds []int32
 	qb := Bun().NewSelect().TableExpr("trials").Column("trials.id").Group("trials.id")
-	if len(experimentIDs) > 0 {
+	if len(filters.ExperimentIds) > 0 {
 		qb = qb.Join("INNER JOIN experiments ON trials.experiment_id = experiments.id")
-		qb = qb.Where("experiment_id IN (?)", bun.In(experimentIDs))
+		qb = qb.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
-	if len(workspaceIDs) > 0 {
+	if len(filters.WorkspaceIds) > 0 {
 		qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
-		qb.Where("projects.workspace_id IN (?)", bun.In(workspaceIDs))
+		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
-	if len(projectIDs) > 0 {
-		if len(workspaceIDs) == 0 {
+	if len(filters.ProjectIds) > 0 {
+		if len(filters.WorkspaceIds) == 0 {
 			qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
 		}
-		qb = qb.Where("projects.id IN (?)", bun.In(projectIDs))
+		qb = qb.Where("projects.id IN (?)", bun.In(filters.ProjectIds))
 	}
-	if len(validation_metrics) > 0 {
+	if len(filters.ValidationMetrics) > 0 {
 		qb = qb.Join("INNER JOIN validations ON trials.id = validations.trial_id")
-		for _, vm := range validation_metrics{
+		for _, vm := range filters.ValidationMetrics{
 			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
+		}
+	}
+	if len(filters.TrainingMetrics) > 0 {
+		qb = qb.Join("INNER JOIN steps on steps.trial_id = trials.id")
+		for _, vm := range filters.TrainingMetrics{
+			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
 		}
 	}
 
 	err = qb.Scan(context.TODO(), &trialIds)
-	fmt.Println("&trialIds")
-	fmt.Println(&trialIds)
-	return trialIds, errors.Wrapf(err, "error querying for trials in experiments %v", experimentIDs)
+	return trialIds, errors.Wrapf(err, "error querying for filtered trials",)
 }
