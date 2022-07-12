@@ -14,10 +14,12 @@ hyperparameters:
   overwrite_deepspeed_args:
       zero_optimization.stage: 2
 environment:
-    #environment_variables:
+    environment_variables:                                                                          
+        - NCCL_DEBUG=INFO                                                                           
+        # You may need to modify this to match your network configuration.                          
+        - NCCL_SOCKET_IFNAME=ens,eth,ib
     #    - CUDA_LAUNCH_BLOCKING=1
     #    - NCCL_BLOCKING_WAIT=1
-    #    - NCCL_DEBUG=INFO
     #    - NCCL_IB_DISABLE=1
     image:
       gpu: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-deepspeed-0.5.10-gpu-3e933ea
