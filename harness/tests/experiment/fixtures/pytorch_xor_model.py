@@ -101,7 +101,7 @@ class BaseXORTrial(pytorch.PyTorchTrial):
     """
     Models a lightweight neural network model with one hidden layer to
     learn a binary XOR function. See Deep Learning Book, chapter 6.1 for
-    the solution with a hidden size of 2, and a MSE loss function.
+    the solution with a hidden size of 2, and an MSE loss function.
 
     This model has only one output node "loss".
     """
