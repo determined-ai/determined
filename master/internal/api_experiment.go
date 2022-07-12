@@ -1492,6 +1492,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByTrainingLength
 	case expconf.SyncHalvingConfig:
 		ranking = ByTrainingLength
+	case expconf.CustomConfig:
+		return nil, errors.New("experiments with custom searcher are not supported for trial sampling")
 	default:
 		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
 	}
