@@ -12,11 +12,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// AddGroup adds a group to the database. Returns ErrDuplicateRow if a
+// group already exists with the same name or ID.
 func (db *PgDB) AddGroup(ctx context.Context, group model.Group) (model.Group, error) {
 	_, err := Bun().NewInsert().Model(&group).Exec(ctx)
 	return group, matchSentinelError(err)
 }
 
+// GroupByID looks for a group by id. Returns ErrNotFound if the group isn't found.
 func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 	var g model.Group
 	err := Bun().NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
@@ -25,8 +28,11 @@ func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 }
 
 // SearchGroups searches the database for groups. userBelongsTo is "optional"
-// in that if a value < 1 is passed in, the parameter is ignored.
-func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error) {
+// in that if a value < 1 is passed in, the parameter is ignored. SearchGroups
+// does not return an error if no groups are found, as that is considered a
+// successful search.
+func (db *PgDB) SearchGroups(ctx context.Context,
+	userBelongsTo model.UserID) ([]model.Group, error) {
 	var groups []model.Group
 	query := Bun().NewSelect().Model(&groups).Distinct()
 
@@ -41,12 +47,14 @@ func (db *PgDB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([
 	return groups, err
 }
 
+// DeleteGroup deletes a group from the database. Returns ErrNotFound if the
+// group doesn't exist.
 func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
 	tx, err := Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	_, err = tx.NewDelete().
 		Table("user_group_membership").
@@ -69,12 +77,17 @@ func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
 	return nil
 }
 
+// UpdateGroup updates a group in the database. Returns ErrNotFound if the
+// group isn't found.
 func (db *PgDB) UpdateGroup(ctx context.Context, group model.Group) error {
 	res, err := Bun().NewUpdate().Model(&group).WherePK().Exec(ctx)
 
 	return matchSentinelError(mustHaveAffectedRows(res, err))
 }
 
+// AddUsersToGroup adds users to a group by creating GroupMembership rows.
+// Returns ErrNotFound if the group isn't found or ErrDuplicateRow if one
+// of the users is already in the group.
 func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 	if len(uids) < 1 {
 		return nil
@@ -92,7 +105,7 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
@@ -103,6 +116,9 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 	return matchSentinelError(err)
 }
 
+// RemoveUsersFromGroup removes users from a group. Removes nothing and
+// returns ErrNotFound if the group or one of the users' membership rows
+// aren't found.
 func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 	if len(uids) < 1 {
 		return nil
@@ -112,7 +128,7 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	res, err := tx.NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
@@ -126,6 +142,9 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 	return matchSentinelError(err)
 }
 
+// GetUsersInGroup searches for users that belong to a group and returns them.
+// Does not return ErrNotFound if none are found, as that is considered a
+// successful search.
 func (db *PgDB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
 	var users []model.User
 	err := Bun().NewSelect().Table("users").Model(&users).
@@ -154,7 +173,7 @@ func matchSentinelError(err error) error {
 }
 
 // mustHaveAffectedRows checks if bun has affected rows in a table or not.
-// Returns ErrNotFound if no rows were affected and returns the provided error otherwise
+// Returns ErrNotFound if no rows were affected and returns the provided error otherwise.
 func mustHaveAffectedRows(result sql.Result, err error) error {
 	if err == nil {
 		rowsAffected, affectedErr := result.RowsAffected()

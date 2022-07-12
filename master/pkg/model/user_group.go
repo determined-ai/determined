@@ -4,6 +4,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// Group represents a user group as it's stored in the database.
 type Group struct {
 	bun.BaseModel `bun:"table:groups,alias:groups"`
 
@@ -12,6 +13,7 @@ type Group struct {
 	UserID UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
 }
 
+// GroupMembership represents a user's membership to a group as it's stored in the database.
 type GroupMembership struct {
 	bun.BaseModel `bun:"table:user_group_membership"`
 
