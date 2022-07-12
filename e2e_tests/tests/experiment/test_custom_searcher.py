@@ -48,14 +48,10 @@ def test_post_searcher_ops() -> None:
 def test_run_custom_searcher_experiment() -> None:
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    # searcher:
-    #   metric: validation_error
-    #   smaller_is_better: true
-    #   name: single
-    #   max_length:
-    #     batches: 3000
     config["searcher"] = {
         "name": "custom",
+        "metric": "validation_error",
+        "smaller_is_better": True,
     }
     experiment: ExperimentReference = client.create_experiment(config, conf.fixtures_path("no_op"))
 
