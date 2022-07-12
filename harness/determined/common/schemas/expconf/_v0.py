@@ -25,6 +25,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"
     agent_label: Optional[str] = None
     devices: Optional[List[DeviceV0]] = None
+    force_queue: Optional[bool] = None
     max_slots: Optional[int] = None
     native_parallel: Optional[bool] = None
     priority: Optional[int] = None
@@ -38,6 +39,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
         self,
         agent_label: Optional[str] = None,
         devices: Optional[List[DeviceV0]] = None,
+        force_queue: Optional[bool] = None,
         max_slots: Optional[int] = None,
         native_parallel: Optional[bool] = None,
         priority: Optional[int] = None,
