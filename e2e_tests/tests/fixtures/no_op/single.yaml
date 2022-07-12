@@ -22,4 +22,7 @@ min_validation_period:
 min_checkpoint_period:
   batches: 100
 max_restarts: 0
+resources:
+  slots_per_trial: 1
+  force_queue: true
 entrypoint: model_def:NoOpTrial
