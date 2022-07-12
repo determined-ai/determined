@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/pkg/errors"
-
 	"github.com/jackc/pgconn"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -34,7 +34,7 @@ func (db *PgDB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
 func (db *PgDB) SearchGroups(ctx context.Context,
 	userBelongsTo model.UserID) ([]model.Group, error) {
 	var groups []model.Group
-	query := Bun().NewSelect().Model(&groups).Distinct()
+	query := Bun().NewSelect().Model(&groups)
 
 	if userBelongsTo > 0 {
 		query = query.
@@ -54,7 +54,14 @@ func (db *PgDB) DeleteGroup(ctx context.Context, gid int) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() {
+		err := tx.Rollback()
+		if err != sql.ErrTxDone && err != nil {
+			log.WithError(err).
+				WithField("groupID", gid).
+				Error("error rolling back transaction in DeleteGroup")
+		}
+	}()
 
 	_, err = tx.NewDelete().
 		Table("user_group_membership").
@@ -105,7 +112,15 @@ func (db *PgDB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.User
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() {
+		err := tx.Rollback()
+		if err != sql.ErrTxDone && err != nil {
+			log.WithError(err).
+				WithField("groupID", gid).
+				WithField("userIDs", uids).
+				Error("error rolling back transaction in AddUsersToGroup")
+		}
+	}()
 
 	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
@@ -128,7 +143,15 @@ func (db *PgDB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() {
+		err := tx.Rollback()
+		if err != sql.ErrTxDone && err != nil {
+			log.WithError(err).
+				WithField("groupID", gid).
+				WithField("userIDs", uids).
+				Error("error rolling back transaction in RemoveUsersFromGroup")
+		}
+	}()
 
 	res, err := tx.NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
@@ -161,11 +184,9 @@ func matchSentinelError(err error) error {
 	}
 
 	switch pgErrCode(err) {
-	// Error code "foreign_key_violation"
-	case "23503":
+	case foreignKeyViolation:
 		return ErrNotFound
-	// Error code "unique_violation"
-	case "23505":
+	case uniqueViolation:
 		return ErrDuplicateRecord
 	}
 
@@ -177,7 +198,10 @@ func matchSentinelError(err error) error {
 func mustHaveAffectedRows(result sql.Result, err error) error {
 	if err == nil {
 		rowsAffected, affectedErr := result.RowsAffected()
-		if affectedErr == nil && rowsAffected == 0 {
+		if affectedErr != nil {
+			return affectedErr
+		}
+		if rowsAffected == 0 {
 			return ErrNotFound
 		}
 	}

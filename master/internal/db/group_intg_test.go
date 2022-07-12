@@ -45,7 +45,8 @@ func TestUserGroups(t *testing.T) {
 		// Put it back the way it was when we're done
 		defer func(name string) {
 			testGroup.Name = name
-			pgDB.UpdateGroup(ctx, testGroup)
+			err := pgDB.UpdateGroup(ctx, testGroup)
+			require.NoError(t, err, "failed to put things back how they were after testing UpdateGroup")
 		}(testGroup.Name)
 
 		newName := "kljhadsflkgjhjklsfhgasdhj"
@@ -78,7 +79,10 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
-		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
+		err := pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testGroup.UserID, -500)
+		require.Equal(t, ErrNotFound, err, "failed to return ErrNotFound when trying to remove users that don't exist")
+
+		err = pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to remove users from group")
 
 		users, err := pgDB.GetUsersInGroup(ctx, testGroup.ID)
@@ -86,9 +90,12 @@ func TestUserGroups(t *testing.T) {
 
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
+
+		err = pgDB.RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
+		require.Equal(t, ErrNotFound, err, "failed to return ErrNotFound when trying to remove users from group they're not in")
 	})
 
-	t.Run("partial success on adding users to a group results in transaction rollback", func(t *testing.T) {
+	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound", func(t *testing.T) {
 		err := pgDB.AddUsersToGroup(ctx, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
 		require.Equal(t, ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
 
