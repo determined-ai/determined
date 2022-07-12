@@ -1,6 +1,7 @@
 package agentrm
 
 import (
+	"encoding/json"
 	"net/http"
 	"reflect"
 	"sort"
@@ -12,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -34,8 +36,10 @@ type (
 		slots            *actor.Ref
 		resourcePoolName string
 		// started tracks if we have received the AgentStarted message.
-		started bool
-		version string
+		started     bool
+		version     string
+		isReconnect bool
+		devices     []device.Device
 
 		// TODO(ilia): Maybe maxZeroSlotContainers should be an attribute of a resource pool,
 		// and not be copied to agents.
@@ -136,62 +140,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
 
-		var masterSetAgentOptions aproto.AgentMessage
-		// Do container revalidation:
-		// - when reattach is on or off, on all valid reconnects.
-		// - when reattach is on, also do it on initial connect.
-		//   Note: restored agents have their `awaitingReconnect == true`.
-		// Flush them otherwise.
-		reconnect, _ := msg.IsReconnect()
-		if a.awaitingReconnect && (a.agentReattachEnabled || reconnect) {
-			optsCopy := *a.opts
-			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
-			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
-		} else {
-			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
-		}
-
-		wsm := ws.WriteMessage{Message: masterSetAgentOptions}
-		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			ctx.Log().WithError(err).Error("failed to write master set agent options")
-		}
-
-		if a.awaitingReconnect {
-			ctx.Log().Info("agent reconnected")
-			a.awaitingReconnect = false
-
-			// Cancel reconnect timers.
-			for _, timerActor := range a.reconnectTimers {
-				timerActor.Stop()
-			}
-			a.reconnectTimers = nil
-
-			// Re-propagate our old state back on successful recovery.
-			if a.preDisconnectEnabled {
-				a.agentState.enable(ctx)
-			} else {
-				a.agentState.disable(ctx, a.preDisconnectDraining)
-			}
-			a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
-				enabled: &a.agentState.enabled,
-				drain:   &a.agentState.draining,
-			})
-
-			if len(a.reconnectBacklog) > 0 {
-				for i, msg := range a.reconnectBacklog {
-					ctx.Log().Debugf("will replay reconnectBacklog %d %s", i, reflect.TypeOf(msg))
-				}
-			}
-
-			for _, msg := range a.reconnectBacklog {
-				if err := a.receive(ctx, msg); err != nil {
-					ctx.Log().WithError(err).WithField("msg", msg).Errorf("replaying backlog")
-					return errors.Wrapf(err, "replaying backlog")
-				}
-			}
-			a.reconnectBacklog = nil
-			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
-		}
+		a.isReconnect, _ = msg.IsReconnect()
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
@@ -242,7 +191,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			log.WithError(err).Error("failed to update agent state")
 		}
 	case aproto.MasterMessage:
-		a.handleIncomingWSMessage(ctx, msg)
+		return a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
 		ctx.Respond(&proto.GetAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.GetSlotsRequest:
@@ -416,39 +365,145 @@ func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
-func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMessage) {
+func resourcePoolConfigMatch(old *config.ResourcePoolConfig, new *config.ResourcePoolConfig) error {
+	switch old, new := old.Provider, new.Provider; {
+	case old != nil && new != nil:
+		switch old, new := old.GCP, new.GCP; {
+		case old != nil && new != nil:
+			if old.InstanceType != new.InstanceType {
+				return errors.New("instance types do not match")
+			}
+		case (old != nil) != (new != nil):
+			return errors.New("presence of GCP config changed")
+		}
+
+		switch old, new := old.AWS, new.AWS; {
+		case old != nil && new != nil:
+			if old.InstanceType != new.InstanceType {
+				return errors.New("instance types do not match")
+			}
+		case (old != nil) != (new != nil):
+			return errors.New("presence of AWS config changed")
+		}
+
+	case (old != nil) != (new != nil):
+		return errors.New("presence of provider config changed")
+	}
+
+	return nil
+}
+
+func (a *agent) disconnect(ctx *actor.Context) {
+	log := ctx.Log().WithField("agent-id", ctx.Self().Address().Local())
+	wsm := ws.WriteMessage{
+		Message: aproto.AgentMessage{
+			AgentShutdown: &aproto.AgentShutdown{
+				ErrMsg: aproto.ErrAgentMustReconnect.Error(),
+			},
+		},
+	}
+	if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+		log.WithError(err).Error("failed to tell agent to disconnect")
+		panic(err)
+	}
+	ctx.Self().Stop()
+}
+
+func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMessage) error {
 	log := ctx.Log().WithField("agent-id", ctx.Self().Address().Local())
 	switch {
 	case msg.AgentStarted != nil:
-		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
-			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
+		var oldConfig *config.ResourcePoolConfig
+		if err := json.Unmarshal(msg.AgentStarted.ResourcePoolConfig, &oldConfig); err != nil {
+			log.WithError(err).Error("failure in parsing old resource pool config")
+		} else {
+			currConfig := config.GetMasterConfig().ResourceConfig.GetPoolConfig(a.resourcePoolName)
+			if oldConfig != nil && currConfig != nil {
+				if err := resourcePoolConfigMatch(oldConfig, currConfig); err != nil {
+					log.WithError(err).Error("incompatible agent resource pool configuration was detected")
+					a.disconnect(ctx)
+					return nil
+				}
+			}
+		}
 
 		if a.started {
-			err := a.agentState.checkAgentStartedDevicesMatch(ctx, msg.AgentStarted)
+			err := a.agentState.checkAgentStartedDevicesMatch(ctx, msg.AgentStarted.Devices)
 			if err != nil {
-				log.WithError(err).
-					Error("change in agent devices was detected")
-				wsm := ws.WriteMessage{
-					Message: aproto.AgentMessage{
-						AgentShutdown: &aproto.AgentShutdown{
-							ErrMsg: aproto.ErrAgentMustReconnect.Error(),
-						},
-					},
-				}
-				if err = ctx.Ask(a.socket, wsm).Error(); err != nil {
-					log.WithError(err).Error("failed to tell agent to reconnect")
-					panic(err)
-				}
-				ctx.Self().Stop()
-				return
+				log.WithError(err).Error("change in agent devices was detected")
+				a.disconnect(ctx)
+				return nil
 			}
-		} else {
+		}
+
+		a.devices = msg.AgentStarted.Devices
+
+		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
+			a.address, a.resourcePoolName, len(a.devices))
+
+		if !a.started {
 			a.agentStarted(ctx, msg.AgentStarted)
 		}
 
 		a.started = true
 
-		if err := a.handleContainersReattached(ctx, msg.AgentStarted); err != nil {
+		var masterSetAgentOptions *aproto.MasterSetAgentOptions
+		// Do container revalidation:
+		// - when reattach is on or off, on all valid reconnects.
+		// - when reattach is on, also do it on initial connect.
+		//   Note: restored agents have their `awaitingReconnect == true`.
+		// Flush them otherwise.
+		if a.awaitingReconnect && (a.agentReattachEnabled || a.isReconnect) {
+			optsCopy := *a.opts
+			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
+			masterSetAgentOptions = &optsCopy
+		} else {
+			masterSetAgentOptions = a.opts
+		}
+
+		wsm := ws.WriteMessage{Message: aproto.AgentMessage{MasterSetAgentOptions: masterSetAgentOptions}}
+		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+			ctx.Log().WithError(err).Error("failed to write master set agent options")
+		}
+
+		if a.awaitingReconnect {
+			ctx.Log().Info("agent reconnected")
+			a.awaitingReconnect = false
+
+			// Cancel reconnect timers.
+			for _, timerActor := range a.reconnectTimers {
+				timerActor.Stop()
+			}
+			a.reconnectTimers = nil
+
+			// Re-propagate our old state back on successful recovery.
+			if a.preDisconnectEnabled {
+				a.agentState.enable(ctx)
+			} else {
+				a.agentState.disable(ctx, a.preDisconnectDraining)
+			}
+			a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+				enabled: &a.agentState.enabled,
+				drain:   &a.agentState.draining,
+			})
+
+			if len(a.reconnectBacklog) > 0 {
+				for i, msg := range a.reconnectBacklog {
+					ctx.Log().Debugf("will replay reconnectBacklog %d %s", i, reflect.TypeOf(msg))
+				}
+			}
+
+			for _, msg := range a.reconnectBacklog {
+				if err := a.receive(ctx, msg); err != nil {
+					ctx.Log().WithError(err).WithField("msg", msg).Errorf("replaying backlog")
+					return errors.Wrapf(err, "replaying backlog")
+				}
+			}
+			a.reconnectBacklog = nil
+			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+		}
+	case msg.ContainersReattached != nil:
+		if err := a.handleContainersReattached(ctx, msg.ContainersReattached); err != nil {
 			log.WithError(err).
 				Error("failure in handleContainersReattached")
 		}
@@ -461,7 +516,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			log.WithField("container-id", containerID).Warnf(
 				"received ContainerLog from container not allocated to agent: "+
 					"container %s, message: %v", containerID, msg.ContainerLog)
-			return
+			return nil
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
@@ -487,6 +542,8 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}
+
+	return nil
 }
 
 func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
@@ -498,7 +555,7 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
-	a.agentState.agentStarted(ctx, agentStarted)
+	a.agentState.agentStarted(ctx, a.devices)
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
 		Label: agentStarted.Label,
@@ -506,14 +563,14 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 	})
 
 	// TODO(ilia): Deprecate together with the old slots API.
-	ctx.Tell(a.slots, *agentStarted)
+	ctx.Tell(a.slots, agentStarted.Devices)
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
 	taskActor, ok := a.agentState.containerAllocation[sc.Container.ID]
 
 	if !ok {
-		// We may receieve late terminations when reconnected agent is cleaning up
+		// We may receive late terminations when reconnected agent is cleaning up
 		// terminated containers.
 		if sc.Container.State != cproto.Terminated {
 			containerID := sc.Container.ID
@@ -581,7 +638,7 @@ func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.Containe
 }
 
 func (a *agent) handleContainersReattached(
-	ctx *actor.Context, agentStarted *aproto.AgentStarted,
+	ctx *actor.Context, agentStarted *aproto.ContainersReattached,
 ) error {
 	ctx.Log().Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))

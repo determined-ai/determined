@@ -9,8 +9,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -18,8 +18,8 @@ type slots struct{}
 
 func (s *slots) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case aproto.AgentStarted:
-		for _, d := range msg.Devices {
+	case []device.Device:
+		for _, d := range msg {
 			_, ok := ctx.ActorOf(d.ID, &slotProxy{device: d})
 			check.Panic(check.True(ok, "error registering slot, slot %s already created", d.ID))
 		}

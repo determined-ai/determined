@@ -2,6 +2,7 @@ package agentrm
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -174,6 +175,14 @@ func (a *agents) createAgentActor(
 	resourcePoolRef, err := a.rm.GetResourcePoolRef(ctx, resourcePool)
 	if err != nil {
 		return nil, fmt.Errorf("getting resource pool for agent: %w", err)
+	}
+	if poolConfig := config.GetMasterConfig().GetPoolConfig(resourcePool); poolConfig != nil {
+		poolConfig, err := json.Marshal(poolConfig)
+		if err != nil {
+			return nil, err
+		}
+		opts = &(*opts)
+		opts.ResourcePoolConfig = poolConfig
 	}
 
 	rpConfig := ctx.Ask(resourcePoolRef, aproto.GetRPConfig{}).Get().(aproto.GetRPResponse)

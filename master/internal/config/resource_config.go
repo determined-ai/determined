@@ -46,3 +46,13 @@ func (r ResourceConfig) Validate() []error {
 	}
 	return errs
 }
+
+// GetPoolConfig returns the config corresponding to the pool with a particular name.
+func (r *ResourceConfig) GetPoolConfig(name string) *ResourcePoolConfig {
+	for _, p := range r.ResourcePools {
+		if p.PoolName == name {
+			return &p
+		}
+	}
+	return nil
+}

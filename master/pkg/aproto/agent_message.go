@@ -1,6 +1,7 @@
 package aproto
 
 import (
+	"encoding/json"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -31,6 +32,7 @@ type MasterSetAgentOptions struct {
 	MasterInfo           MasterInfo
 	LoggingOptions       model.LoggingConfig
 	ContainersToReattach []ContainerReattach
+	ResourcePoolConfig   json.RawMessage
 }
 
 // StartContainer notifies the agent to start a container with the provided spec.

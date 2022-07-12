@@ -67,6 +67,27 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
+
+		if err := a.detect(); err != nil {
+			return err
+		}
+		ctx.Log().Info("detected compute devices:")
+		for _, d := range a.Devices {
+			ctx.Log().Infof("\t%s", d.String())
+		}
+
+		if v, err := getNvidiaVersion(); err != nil {
+			return err
+		} else if v != "" {
+			ctx.Log().Infof("Nvidia driver version: %s", v)
+		}
+
+		if v, err := getRocmVersion(); err != nil {
+			return err
+		} else if v != "" {
+			ctx.Log().Infof("Rocm driver version: %s", v)
+		}
+
 		err := a.connect(ctx)
 		if err != nil {
 			a.onConnectionLost(ctx)
@@ -352,7 +373,7 @@ func (a *agent) makeMasterClient() error {
 	return nil
 }
 
-func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
+func (a *agent) makeMasterWebSocket(ctx *actor.Context) error {
 	tlsConfig, err := a.tlsConfig()
 	if err != nil {
 		return errors.Wrap(err, "failed to construct TLS config")
@@ -393,6 +414,18 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 	}
 
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, aproto.AgentMessage{}, true))
+	var rpConfig json.RawMessage
+	if a.MasterSetAgentOptions != nil {
+		rpConfig = a.MasterSetAgentOptions.ResourcePoolConfig
+	}
+	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
+		AgentStarted: &aproto.AgentStarted{
+			Version:            a.Version,
+			Devices:            a.Devices,
+			Label:              a.Label,
+			ResourcePoolConfig: rpConfig,
+		},
+	}}).Get()
 	return nil
 }
 
@@ -445,28 +478,6 @@ func (a *agent) setup(ctx *actor.Context) error {
 	}
 	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
 
-	if err = a.detect(); err != nil {
-		return err
-	}
-	ctx.Log().Info("detected compute devices:")
-	for _, d := range a.Devices {
-		ctx.Log().Infof("\t%s", d.String())
-	}
-
-	v, err := getNvidiaVersion()
-	if err != nil {
-		return err
-	} else if v != "" {
-		ctx.Log().Infof("Nvidia driver version: %s", v)
-	}
-
-	v, err = getRocmVersion()
-	if err != nil {
-		return err
-	} else if v != "" {
-		ctx.Log().Infof("Rocm driver version: %s", v)
-	}
-
 	if a.MasterPort == 0 {
 		if a.Options.Security.TLS.Enabled {
 			a.MasterPort = 443
@@ -485,10 +496,7 @@ func (a *agent) setup(ctx *actor.Context) error {
 	}).Get().(responseReattachContainers)
 
 	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
-		AgentStarted: &aproto.AgentStarted{
-			Version:              a.Version,
-			Devices:              a.Devices,
-			Label:                a.Label,
+		ContainersReattached: &aproto.ContainersReattached{
 			ContainersReattached: res.ContainersReattached,
 		},
 	}})
@@ -504,10 +512,7 @@ func (a *agent) setupAfterMasterRestart(ctx *actor.Context) error {
 	}).Get().(responseReattachContainers)
 
 	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
-		AgentStarted: &aproto.AgentStarted{
-			Version:              a.Version,
-			Devices:              a.Devices,
-			Label:                a.Label,
+		ContainersReattached: &aproto.ContainersReattached{
 			ContainersReattached: res.ContainersReattached,
 		},
 	}})
@@ -521,7 +526,7 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	if err := a.makeMasterClient(); err != nil {
 		return errors.Wrap(err, "error creating master client")
 	}
-	if err := a.makeMasterWebsocket(ctx); err != nil {
+	if err := a.makeMasterWebSocket(ctx); err != nil {
 		return errors.Wrap(err, "error connecting to master")
 	}
 	return nil

@@ -1,6 +1,7 @@
 package aproto
 
 import (
+	"encoding/json"
 	"net"
 	"strconv"
 	"time"
@@ -36,6 +37,7 @@ type MasterInfo struct {
 // MasterMessage is a union type for all messages sent from agents.
 type MasterMessage struct {
 	AgentStarted          *AgentStarted
+	ContainersReattached  *ContainersReattached
 	ContainerStateChanged *ContainerStateChanged
 	ContainerLog          *ContainerLog
 	ContainerStatsRecord  *ContainerStatsRecord
@@ -55,11 +57,17 @@ type ContainerReattachAck struct {
 // ID is an identifier for an agent.
 type ID string
 
-// AgentStarted notifies the master that the agent has started up.
+// AgentStarted notifies the master that the agent has started up. The agent sends it immediately
+// after making a WebSocket connection.
 type AgentStarted struct {
-	Version              string
-	Label                string
-	Devices              []device.Device
+	Version            string
+	Label              string
+	ResourcePoolConfig json.RawMessage
+	Devices            []device.Device
+}
+
+// ContainersReattached notifies the master that the agent has reattached the requested containers.
+type ContainersReattached struct {
 	ContainersReattached []ContainerReattachAck
 }
 

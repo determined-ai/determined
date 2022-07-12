@@ -58,7 +58,7 @@ type agentState struct {
 	containerState      map[cproto.ID]*cproto.Container
 }
 
-// newAgentState returns a new agent empty agent state backed by the handler.
+// newAgentState returns a new empty agent state backed by the handler.
 func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		Handler:               msg.Agent,
@@ -239,9 +239,8 @@ func (a *agentState) removeDevice(ctx *actor.Context, device device.Device) {
 }
 
 // agentStarted initializes slots from AgentStarted.Devices.
-func (a *agentState) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
-	msg := agentStarted
-	for _, d := range msg.Devices {
+func (a *agentState) agentStarted(ctx *actor.Context, devices []device.Device) {
+	for _, d := range devices {
 		enabled := slotEnabled{
 			agentEnabled: true,
 			userEnabled:  true,
@@ -256,7 +255,7 @@ func (a *agentState) agentStarted(ctx *actor.Context, agentStarted *aproto.Agent
 }
 
 func (a *agentState) checkAgentStartedDevicesMatch(
-	ctx *actor.Context, agentStarted *aproto.AgentStarted,
+	ctx *actor.Context, devices []device.Device,
 ) error {
 	ourDevices := map[device.ID]device.Device{}
 	for did, slot := range a.slotStates {
@@ -264,7 +263,7 @@ func (a *agentState) checkAgentStartedDevicesMatch(
 	}
 
 	theirDevices := map[device.ID]device.Device{}
-	for _, d := range agentStarted.Devices {
+	for _, d := range devices {
 		theirDevices[d.ID] = d
 	}
 
