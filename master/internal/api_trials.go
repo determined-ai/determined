@@ -372,17 +372,17 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest, 
 	resp apiv1.Determined_QueryTrialsServer) error {
 	period := 30 * time.Second
-	experimentIDs := req.Filters.ExperimentIds
-	if len(experimentIDs) == 0 {
+	var filtersLength = len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams)
+	if  filtersLength == 0 {
 		return status.Errorf(
 			codes.InvalidArgument,
-			"at least one filter",
+			"at least one filter required",
 		)
 	}
 
 	for {
 		var response apiv1.QueryTrialsResponse
-		trialIDs, err := a.m.db.QueryTrials(experimentIDs, req.Filters.ProjectIds, req.Filters.WorkspaceIds, req.Filters.ValidationMetrics)
+		trialIDs, err := a.m.db.QueryTrials(req.Filters)
 		fmt.Println("trialIds")
 		fmt.Println(trialIDs)
 		if err != nil {
