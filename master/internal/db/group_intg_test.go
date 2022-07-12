@@ -16,6 +16,7 @@ import (
 func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
 	pgDB := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, pgDB, migrationsFromDB)
 
 	t.Cleanup(func() { cleanUp(ctx, t, pgDB) })
 	setUp(ctx, t, pgDB)
