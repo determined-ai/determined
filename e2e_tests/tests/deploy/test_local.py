@@ -152,7 +152,7 @@ def test_agent_config_path() -> None:
     with open(etc_path) as f:
         assert f.read() == out.decode("utf-8")
 
-    for _ in range(10):
+    for _ in range(30):
         try:
             client.containers.get("test-fluent")
             break
