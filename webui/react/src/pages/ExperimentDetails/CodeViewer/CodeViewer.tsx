@@ -49,6 +49,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
       treeMap.set(key, node.path);
 
       const newNode: DataNode = {
+        className: 'treeNode',
         isLeaf: true,
         key,
         title: node.name,
@@ -65,7 +66,6 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
     setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
   }, [ treeMap, files ]);
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
   const onSelectFile = async (
     keys: React.Key[],
     info: { [key:string]: unknown, node: DataNode },
@@ -90,6 +90,24 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
         throw new Error(error as string);
       }
     }
+  };
+
+  const setEditorLanguageSyntax = () => {
+    const fileExt = fileDir.split('.')[1];
+
+    if (fileExt === 'js') {
+      return 'javascript';
+    }
+
+    if (fileExt === 'py') {
+      return 'python';
+    }
+
+    if (fileExt === 'ts') {
+      return 'typescript';
+    }
+
+    return fileExt;
   };
 
   return (
@@ -132,7 +150,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
               : (
                 <MonacoEditor
                   height="100%"
-                  language="yaml"
+                  language={setEditorLanguageSyntax()}
                   options={{
                     minimap: {
                       enabled: !!fileData?.length,

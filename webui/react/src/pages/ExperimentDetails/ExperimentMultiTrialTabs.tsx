@@ -11,6 +11,8 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
 
+const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+
 const { TabPane } = Tabs;
 
 enum TabType {
@@ -95,6 +97,11 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
           <ExperimentConfiguration experiment={experiment} />
+        </React.Suspense>
+      </TabPane>
+      <TabPane key="code" tab="Code">
+        <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+          <CodeViewer experiment={experiment} />
         </React.Suspense>
       </TabPane>
       <TabPane key="notes" tab="Notes">

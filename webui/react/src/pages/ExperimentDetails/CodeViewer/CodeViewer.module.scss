@@ -1,7 +1,7 @@
 .base {
   height: 100%;
   display: grid;
-  grid-template-columns: 15% auto;
+  grid-template-columns: minmax(300px, 15%) auto;
   grid-template-rows: 5em auto;
 
   .fileTree {

@@ -9,6 +9,17 @@
   border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
 }
 
+.ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-normal {
+  display: flex;
+}
+
+.treeNode .ant-tree-title {
+  text-overflow: ellipsis;
+  max-width: 75%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 #editor {
   grid-column: 2 / auto;
   grid-row: 2 / 3;
