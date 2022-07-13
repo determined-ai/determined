@@ -25,7 +25,7 @@ export const DEFAULT_COLUMNS: TaskColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TaskColumnName, number> = {
   action: 46,
-  id: 57,
+  id: 100,
   name: 150,
   resourcePool: 128,
   startTime: 117,
