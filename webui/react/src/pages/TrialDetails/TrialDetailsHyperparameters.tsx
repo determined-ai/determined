@@ -76,7 +76,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
                 updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
               />
             )
-            : <SkeletonTable columns={2} />
+            : <SkeletonTable columns={columns.length} />
         }
       </Spinner>
     </div>

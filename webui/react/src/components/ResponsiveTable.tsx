@@ -19,14 +19,8 @@ interface Settings {
   tableLimit: number;
   tableOffset: number;
 }
-
-type TableWithSkeleton = {
-  skeletonColumns?: number;
-  skeletonRows?: number;
-}
-
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-type ResponsiveTable = <T extends object>(props: TableProps<T> & TableWithSkeleton) => JSX.Element;
+type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
 
 export const handleTableChange = (
   columns: {key?: Comparable}[],
@@ -55,8 +49,6 @@ export const handleTableChange = (
 const ResponsiveTable: ResponsiveTable = ({
   loading,
   scroll,
-  skeletonColumns = 2,
-  skeletonRows = 2,
   ...props
 }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
@@ -98,7 +90,7 @@ const ResponsiveTable: ResponsiveTable = ({
       <Spinner spinning={spinning}>
         {
           spinning
-            ? <SkeletonTable columns={skeletonColumns} rows={skeletonRows} />
+            ? <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
             : (
               <Table
                 bordered
