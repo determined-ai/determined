@@ -81,13 +81,13 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				ctx.Log().Debugf("received MasterSetAgentOptions more than once: %v",
 					*msg.MasterSetAgentOptions)
 				a.MasterSetAgentOptions = msg.MasterSetAgentOptions
-				if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled { // configure where you set the values for this.
-					opentelemetry.ConfigureOtel(a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
-				}
 				return a.setupAfterMasterRestart(ctx)
 			}
 
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
+			if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled { // configure where you set the values for this.
+				opentelemetry.ConfigureOtel(a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
+			}
 			return a.setup(ctx)
 		case msg.StartContainer != nil:
 			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)

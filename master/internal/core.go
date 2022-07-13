@@ -144,11 +144,14 @@ func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDe
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
-	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
+	if m.config.Telemetry.SegmentWebUIKey != "" {
+		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
+	}
+
+	if m.config.Telemetry.Enabled {
 		// Only advertise a Segment WebUI key if a key has been configured and
 		// telemetry is enabled.
 		telemetryInfo.Enabled = true
-		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 
 		if m.config.Telemetry.OtelEnabled && m.config.Telemetry.OtelExportedOtlpEndpoint != "" {
 			telemetryInfo.OtelEnabled = true
