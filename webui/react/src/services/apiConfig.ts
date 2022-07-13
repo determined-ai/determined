@@ -24,6 +24,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
     Auth: new Api.AuthenticationApi(config),
+    CheckPoint: Api.CheckpointsApiFetchParamCreator(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
