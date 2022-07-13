@@ -1,0 +1,18 @@
+.base {
+  padding: 16px;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+
+    .body {
+      color: var(--theme-colors-monochrome-8);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .header {
+      margin-bottom: 8px;
+    }
+  }
+}

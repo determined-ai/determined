@@ -3,9 +3,8 @@ import React, { useCallback, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
+import SettingsAccount from 'pages/Settings/SettingsAccount';
 import { paths } from 'routes/utils';
-
-import css from './Settings.module.scss';
 
 const { TabPane } = Tabs;
 
@@ -39,7 +38,7 @@ const Settings: React.FC = () => {
       title="Settings">
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="account" tab="Account">
-          Account
+          <SettingsAccount />
         </TabPane>
         <TabPane key="userManagement" tab="User Management">
           User Management
