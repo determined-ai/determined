@@ -57,6 +57,7 @@ message QueryFilters {
   repeated NumberRangeFilter validation_metrics = 4;
   repeated NumberRangeFilter training_metrics = 5;
   repeated NumberRangeFilter hparams = 6;
+  string searcher = 7;
 }
 
 message QueryTrialsRequest {

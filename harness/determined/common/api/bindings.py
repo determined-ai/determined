@@ -4294,6 +4294,7 @@ class v1QueryFilters:
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         hparams: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         projectIds: "typing.Optional[typing.Sequence[int]]" = None,
+        searcher: "typing.Optional[str]" = None,
         trainingMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -4304,6 +4305,7 @@ class v1QueryFilters:
         self.validationMetrics = validationMetrics
         self.trainingMetrics = trainingMetrics
         self.hparams = hparams
+        self.searcher = searcher
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryFilters":
@@ -4314,6 +4316,7 @@ class v1QueryFilters:
             validationMetrics=[v1NumberRangeFilter.from_json(x) for x in obj["validationMetrics"]] if obj.get("validationMetrics", None) is not None else None,
             trainingMetrics=[v1NumberRangeFilter.from_json(x) for x in obj["trainingMetrics"]] if obj.get("trainingMetrics", None) is not None else None,
             hparams=[v1NumberRangeFilter.from_json(x) for x in obj["hparams"]] if obj.get("hparams", None) is not None else None,
+            searcher=obj.get("searcher", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -4324,6 +4327,7 @@ class v1QueryFilters:
             "validationMetrics": [x.to_json() for x in self.validationMetrics] if self.validationMetrics is not None else None,
             "trainingMetrics": [x.to_json() for x in self.trainingMetrics] if self.trainingMetrics is not None else None,
             "hparams": [x.to_json() for x in self.hparams] if self.hparams is not None else None,
+            "searcher": self.searcher if self.searcher is not None else None,
         }
 
 class v1QueryTrialsRequest:

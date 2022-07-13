@@ -457,16 +457,21 @@ func intArraytoString(ints []int32) string {
 func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err error) {
 	var trialIds []int32
 	qb := Bun().NewSelect().TableExpr("trials").Column("trials.id").Group("trials.id")
+	var hasExperimentJoin = false
+	var hasProjectJoin = false
+	var hasStepsJoin = false
 	if len(filters.ExperimentIds) > 0 {
+		hasExperimentJoin = true
 		qb = qb.Join("INNER JOIN experiments ON trials.experiment_id = experiments.id")
 		qb = qb.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
 	if len(filters.WorkspaceIds) > 0 {
+		hasProjectJoin = true
 		qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
 		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 	if len(filters.ProjectIds) > 0 {
-		if len(filters.WorkspaceIds) == 0 {
+		if !hasProjectJoin {
 			qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
 		}
 		qb = qb.Where("projects.id IN (?)", bun.In(filters.ProjectIds))
@@ -478,19 +483,27 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 		}
 	}
 	if len(filters.TrainingMetrics) > 0 {
+		hasStepsJoin = true
 		qb = qb.Join("INNER JOIN steps on steps.trial_id = trials.id")
 		for _, vm := range filters.TrainingMetrics{
 			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
 		}
 	}
 	if len(filters.Hparams) > 0 {
-		if len(filters.TrainingMetrics) == 0 {
+		if !hasStepsJoin {
 			qb = qb.Join("INNER JOIN steps on steps.trial_id = trials.id")
 		}
 		for _, vm := range filters.Hparams{
 			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
 		}
 	}
+	if filters.Searcher != "" {
+		if ! hasExperimentJoin{
+			qb = qb.Join("INNER JOIN experiments ON trials.experiment_id = experiments.id")
+		}
+		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
+	}
+	
 
 	err = qb.Scan(context.TODO(), &trialIds)
 	return trialIds, errors.Wrapf(err, "error querying for filtered trials",)
