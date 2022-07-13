@@ -150,10 +150,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case sproto.GetDefaultComputeResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{PoolName: ""})
+		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{PoolName: "kubernetes"})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: ""})
+		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: "kubernetes"})
 
 	case sproto.ValidateCommandResourcesRequest:
 		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
