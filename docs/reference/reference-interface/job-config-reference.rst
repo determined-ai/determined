@@ -46,14 +46,8 @@ The following configuration settings are supported:
 
       -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
          NVIDIA GPUs.
-<<<<<<< HEAD:docs/features/command-notebook-config.txt
       -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
       -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4`` for CPUs.
-=======
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for
-         CPUs.
->>>>>>> docs: restructure docs directory:docs/reference-config/config/job-config-reference.rst
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.

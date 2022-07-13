@@ -98,7 +98,6 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-<<<<<<< HEAD:docs/prepare-environment/custom-env.txt
 +-------------+---------------------------------------------------------------------------------------+
 | Environment | File Name                                                                             |
 +=============+=======================================================================================+
@@ -108,17 +107,6 @@ Default Images
 +-------------+---------------------------------------------------------------------------------------+
 | AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4``                 |
 +-------------+---------------------------------------------------------------------------------------+
-=======
-+-------------+--------------------------------------------------------------------------------------+
-| Environment | File Name                                                                            |
-+=============+======================================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2``    |
-+-------------+--------------------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` |
-+-------------+--------------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2``                |
-+-------------+--------------------------------------------------------------------------------------+
->>>>>>> docs: restructure docs directory:docs/training/setup-guide/custom-env.rst
 
 .. _custom-docker-images:
 
@@ -207,15 +195,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-<<<<<<< HEAD
-<<<<<<< HEAD:docs/prepare-environment/custom-env.txt
    FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4
-=======
-   FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15
->>>>>>> docs: restructure docs directory:docs/training/setup-guide/custom-env.rst
-=======
-   FROM determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2
->>>>>>> docs: rebase
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.6

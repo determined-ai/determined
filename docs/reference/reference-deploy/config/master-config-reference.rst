@@ -252,8 +252,6 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-<<<<<<< HEAD
-<<<<<<< HEAD:docs/sysadmin-basics/cluster-config.txt
       -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
          NVIDIA GPUs.
       -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
@@ -265,26 +263,6 @@ The master supports the following configuration settings:
       config will override default values specified here. Users can customize environment variables
       for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks differently by specifying a dict with
       ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm`` keys.
-=======
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.17.15`` for
-         NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.15`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.17.15`` for
-         CPUs.
->>>>>>> docs: restructure docs directory:docs/reference-config/config/master-config-reference.rst
-=======
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` for
-         NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
-
-   -  ``environment_variables``: A list of environment variables that will be set in every task
-      container. Each element of the list should be a string of the form ``NAME=VALUE``. See
-      :ref:`environment-variables` for more details. Environment variables specified in experiment
-      config will override default values specified here. Users can customize environment variables
-      for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks differently by specifying a dict with
-      ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm`` keys.
->>>>>>> docs: rebase
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
