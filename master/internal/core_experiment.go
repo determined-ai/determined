@@ -443,8 +443,8 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
+	exp := actor.Addr("experiments", e.ID)
 	if params.Activate {
-		exp := actor.Addr("experiments", e.ID)
 		resp := m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
 		if resp.Source() == nil {
 			return nil, echo.NewHTTPError(http.StatusNotFound,
@@ -452,6 +452,14 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
 			return nil, errors.Errorf("attempt to activate experiment timed out")
+		}
+	} else {
+		// -race detected in cases that in the experiment actor's PreStart we
+		// modify the experiment config in (e.setWeight) and return that experiment
+		// config without any synchronization when we don't activate the experiment.
+		resp := m.system.AskAt(exp, actor.Ping{})
+		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
+			return nil, errors.Errorf("attempt to create experiment timed out")
 		}
 	}
 
