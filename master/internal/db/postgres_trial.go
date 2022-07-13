@@ -483,6 +483,14 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
 		}
 	}
+	if len(filters.Hparams) > 0 {
+		if len(filters.TrainingMetrics) == 0 {
+			qb = qb.Join("INNER JOIN steps on steps.trial_id = trials.id")
+		}
+		for _, vm := range filters.Hparams{
+			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
+		}
+	}
 
 	err = qb.Scan(context.TODO(), &trialIds)
 	return trialIds, errors.Wrapf(err, "error querying for filtered trials",)
