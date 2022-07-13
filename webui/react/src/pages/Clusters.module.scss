@@ -2,9 +2,9 @@
   padding: 0 16px;
 }
 :global {
-  .ant-tabs.no-padding {
+  html .ant-tabs.no-padding {
     & > .ant-tabs-nav {
-      padding-top: 0 !important;
+      padding-top: 0;
     }
   }
 }
