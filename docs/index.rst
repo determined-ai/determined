@@ -14,7 +14,7 @@
 
    Introduction to Distributed Training <training/dtrain-introduction>
    Prepare Container Environment <training/setup-guide/overview>
-   Load Model Data <training/load-model-data>
+   Prepare Data <training/load-model-data>
    Training API Guides <training/apis-howto/overview>
    Hyperparameter Tuning <training/hyperparameter/overview>
    Submit Experiment <training/submit-experiment>

@@ -117,4 +117,5 @@ autodoc_mock_imports = [
 sitemap_url_scheme = "latest/{link}"
 
 redirects = {
+    "tutorials/quick-start": "../getting-started.html",
 }
