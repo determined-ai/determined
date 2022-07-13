@@ -290,12 +290,26 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 				&agent, devicev1.Type_TYPE_CPU, node, node.CPUCount, node.Allocated) // One CPU slot/device
 		} else {
 			for i := 0; i < node.GpuCount; i++ {
+				slotType := computeSlotType(node, m)
 				addSlotToAgent(
-					&agent, devicev1.Type_TYPE_CUDA, node, i, i < node.GpuInUseCount) // [1:N] CUDA slots
+					&agent, slotType, node, i, i < node.GpuInUseCount) // [1:N] CUDA slots
 			}
 		}
 	}
 	return &response
+}
+
+// computeSlotType computes an agent GPU slot type from the configuration data available.
+// For nodes that are members of multiple partitions, take the first configured slot type found,
+// falling back to CUDA if nothing found.
+func computeSlotType(node hpcNodeDetails, m *dispatcherResourceManager) devicev1.Type {
+	for _, partition := range node.Partitions {
+		slotType := m.config.ResolveSlotType(partition)
+		if slotType != nil {
+			return slotType.Proto()
+		}
+	}
+	return devicev1.Type_TYPE_CUDA
 }
 
 // addSlotToAgent adds to the specifies agent a slot populated with a device of the specified type.
