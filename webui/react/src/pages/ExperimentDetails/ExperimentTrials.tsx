@@ -171,7 +171,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
-      } else if (column.key === V1GetExperimentTrialsRequestSortBy.AUTORESTARTS) {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
         column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;

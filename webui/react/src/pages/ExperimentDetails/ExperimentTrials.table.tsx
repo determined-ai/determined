@@ -66,7 +66,7 @@ export const columns: ColumnDef<TrialItem>[] = [
   {
     dataIndex: 'autoRestarts',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['autoRestarts'],
-    key: V1GetExperimentTrialsRequestSortBy.AUTORESTARTS,
+    key: V1GetExperimentTrialsRequestSortBy.RESTARTS,
     sorter: true,
     title: 'Auto Restarts',
   },
