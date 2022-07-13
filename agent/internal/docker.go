@@ -231,7 +231,7 @@ func (d *dockerActor) getDockerAuths(
 			return *expconfReg, nil
 		}
 		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning),
-			fmt.Sprintf("warning not using expconfig registry_auth since expconf "+
+			fmt.Sprintf("not using expconfig registry_auth since expconf "+
 				"registry_auth.serverAddress %s did not match the image serverAddress %s",
 				expconfDomain, imageDomain))
 	}
