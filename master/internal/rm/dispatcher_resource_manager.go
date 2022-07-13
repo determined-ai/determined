@@ -445,15 +445,12 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 						fmt.Sprintf(
 							"Not removing dispatch environment for dispatchID '%s' because job is being monitored",
 							dispatchID))
-				} else if ctx.Log().Logger.Level != logrus.TraceLevel {
+				} else {
 					// If we are here, then we are likely being called from
 					// startup, as opposed to a user explicitly canceling
 					// a job. It's OK to remove the environment in this case
 					// because we aren't actively monitoring any jobs.
-					//
-					// Note: We do not remove the environment when trace is
-					// enabled to allow us access the dispatcher environment
-					// logs, if needed.
+
 					m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
 				}
 			}
@@ -542,12 +539,14 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			dispatchID := dispatch.DispatchID
 			impersonatedUser := dispatch.ImpersonatedUser
 
-			ctx.Log().Info(fmt.Sprintf(
-				"Deleting dispatcher environment for job with DispatchID %s initiated by %s",
-				dispatchID, impersonatedUser))
+			if ctx.Log().Logger.Level < logrus.DebugLevel {
+				ctx.Log().Info(fmt.Sprintf(
+					"Deleting dispatcher environment for job with DispatchID %s initiated by %s",
+					dispatchID, impersonatedUser))
 
-			// Cleanup the dispatcher environment
-			m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
+				// Cleanup the dispatcher environment
+				m.removeDispatchEnvironment(ctx, impersonatedUser, dispatchID)
+			}
 		}
 
 		// Remove the dispatch from mapping tables and DB.
