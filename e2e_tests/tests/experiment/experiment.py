@@ -556,7 +556,16 @@ def run_basic_test(
 
 
 def set_priority(experiment_id: int, priority: int) -> None:
-    command = ["det", "experiment", "set", "priority", str(experiment_id), str(priority)]
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "experiment",
+        "set",
+        "priority",
+        str(experiment_id),
+        str(priority),
+    ]
 
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
