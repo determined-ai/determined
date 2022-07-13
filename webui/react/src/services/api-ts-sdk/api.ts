@@ -5178,6 +5178,12 @@ export interface V1QueryFilters {
      * @memberof V1QueryFilters
      */
     hparams?: Array<V1NumberRangeFilter>;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1QueryFilters
+     */
+    searcher?: string;
 }
 
 /**
