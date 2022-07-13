@@ -374,16 +374,13 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 			return nil, false, nil, agReq.Error()
 		}
 		getAgentsResponse := agReq.Get().(*apiv1.GetAgentsResponse)
-		foundAgent := false
+		maxSlots := 0
 		for _, agent := range getAgentsResponse.Agents {
-			if len(agent.Slots) >= resources.SlotsPerTrial() {
-				foundAgent = true
-				break
-			}
+			maxSlots += len(agent.Slots)
 		}
-		if !foundAgent {
+		if maxSlots < resources.SlotsPerTrial() {
 			return nil, false, nil, echo.NewHTTPError(http.StatusBadRequest,
-				fmt.Sprintf("no agent has enough slots (%d) to run experiment",
+				fmt.Sprintf("instance does not have enough slots (%d) to run experiment",
 					resources.SlotsPerTrial()))
 		}
 	}
