@@ -30,47 +30,42 @@ func getDockerConfigPath() (string, error) {
 	return path.Join(homeDir, ".docker", "config.json"), nil
 }
 
-// getAllCredentialStores returns the credential helpers configured in the default docker
-// config or an error.
-func getAllCredentialStores() (map[string]*credentialStore, error) {
-	type ConfigFile struct {
-		CredentialHelpers map[string]string `json:"credHelpers,omitempty"`
-	}
+// processDockerConfig reads a users ~/.docker/config.json and returns
+// credential helpers configured and the "auths" section of the config.
+func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthConfig, error) {
+	credStores := make(map[string]*credentialStore) // Always return non nil maps.
+	authConfig := make(map[string]types.AuthConfig)
 
-	credentialsStores := map[string]*credentialStore{}
 	dockerConfigFile, err := getDockerConfigPath()
 	if err != nil {
-		return credentialsStores, err
+		return credStores, authConfig, err
 	}
-
 	configFile, err := os.Open(dockerConfigFile) // #nosec: G304
 	if err != nil {
-		return credentialsStores, errors.Wrap(err, "can't open docker config")
+		return credStores, authConfig, errors.Wrap(err, "can't open docker config")
 	}
-
 	b, err := ioutil.ReadAll(configFile)
 	if err != nil {
-		return credentialsStores, errors.Wrap(err, "can't read docker config")
+		return credStores, authConfig, errors.Wrap(err, "can't read docker config")
 	}
 
-	var config ConfigFile
-	err = json.Unmarshal(b, &config)
-	if err != nil {
-		return credentialsStores, errors.Wrap(err, "can't parse docker config")
+	var config struct {
+		CredentialHelpers map[string]string           `json:"credHelpers"`
+		Auths             map[string]types.AuthConfig `json:"auths"`
 	}
-
-	if config.CredentialHelpers == nil {
-		return credentialsStores, nil
+	if err := json.Unmarshal(b, &config); err != nil {
+		return credStores, authConfig, errors.Wrap(err, "can't parse docker config")
 	}
-
 	for hostname, helper := range config.CredentialHelpers {
-		credentialsStores[hostname] = &credentialStore{
+		credStores[hostname] = &credentialStore{
 			registry: hostname,
 			store:    hclient.NewShellProgramFunc(credentialsHelperPrefix + helper),
 		}
 	}
-
-	return credentialsStores, nil
+	if config.Auths != nil {
+		authConfig = config.Auths
+	}
+	return credStores, authConfig, nil
 }
 
 // get executes the command to get the credentials from the native store.
