@@ -13,7 +13,7 @@ export type TrialColumnName =
   | 'latestValidationMetric'
   | 'startTime'
   | 'duration'
-  | 'restarts'
+  | 'autoRestarts'
   | 'checkpoint';
 
 export const DEFAULT_COLUMNS: TrialColumnName[] = [
@@ -24,18 +24,18 @@ export const DEFAULT_COLUMNS: TrialColumnName[] = [
   'latestValidationMetric',
   'startTime',
   'duration',
-  'restarts',
+  'autoRestarts',
   'checkpoint',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   action: 46,
+  autoRestarts: 117,
   bestValidationMetric: 150,
   checkpoint: 150,
   duration: 117,
   id: 85,
   latestValidationMetric: 150,
-  restarts: 117,
   startTime: 117,
   state: 117,
   totalBatchesProcessed: 74,
