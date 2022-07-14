@@ -87,12 +87,12 @@ const useModalCheckpoint = ({
 
   const handleDelete = useCallback(() => {
     if(!checkpoint.uuid) return;
-    readStream(detApi.CheckPoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
+    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
   }, [ checkpoint ]);
 
   const deleteCPModalProps: ModalFuncProps = useMemo(() => {
     const content =
-      `Are you sure you want to request checkpoint deletetion for batches
+      `Are you sure you want to request checkpoint deletion for batches
 ${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
 
     return {
