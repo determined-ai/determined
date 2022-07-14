@@ -28,7 +28,7 @@ Version 0.18.4
    as just ``$ID``. This release corrects that behavior and names them
    ``experiment_$ID_model_def.tgz`` instead.
 
--  Kubernetes: fix a bug where following the link to live tensorboards would redirect to the
+-  Kubernetes: Fix a bug where following the link to live TensorBoards would redirect to the
    ``Uncategorized`` page.
 
 **Improvements**
