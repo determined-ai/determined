@@ -19,8 +19,8 @@ Version 0.18.4
    config. Users can now specify a list of environment variables that will be set in all task
    containers.
 
--  Web: Most user settings and preferences, like filters, are now persisted to the database. Users will
-   now be able to retain their settings across devices.
+-  Web: Most user settings and preferences, like filters, are now persisted to the database. Users
+   will now be able to retain their settings across devices.
 
 **Bug Fixes**
 
@@ -33,8 +33,8 @@ Version 0.18.4
 
 **Improvements**
 
--  Add the resource pool field when listing experiments or commands in Kubernetes, where it was previously
-   left blank.
+-  Add the resource pool field when listing experiments or commands in Kubernetes, where it was
+   previously left blank.
 
 Version 0.18.3
 ==============
