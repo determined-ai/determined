@@ -33,7 +33,7 @@ Version 0.18.4
 
 **Improvements**
 
--  Adds the resource pool field when listing experiments or commands in k8s, where it was previously
+-  Add the resource pool field when listing experiments or commands in Kubernetes, where it was previously
    left blank.
 
 Version 0.18.3
