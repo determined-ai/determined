@@ -84,27 +84,6 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	return r0
 }
 
-// AddGroup provides a mock function with given fields: ctx, group
-func (_m *DB) AddGroup(ctx context.Context, group model.Group) (model.Group, error) {
-	ret := _m.Called(ctx, group)
-
-	var r0 model.Group
-	if rf, ok := ret.Get(0).(func(context.Context, model.Group) model.Group); ok {
-		r0 = rf(ctx, group)
-	} else {
-		r0 = ret.Get(0).(model.Group)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, model.Group) error); ok {
-		r1 = rf(ctx, group)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AddTask provides a mock function with given fields: t
 func (_m *DB) AddTask(t *model.Task) error {
 	ret := _m.Called(t)
@@ -166,27 +145,6 @@ func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserID,
 	}
 
 	return r0, r1
-}
-
-// AddUsersToGroup provides a mock function with given fields: ctx, gid, uids
-func (_m *DB) AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
-	_va := make([]interface{}, len(uids))
-	for _i := range uids {
-		_va[_i] = uids[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, gid)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, ...model.UserID) error); ok {
-		r0 = rf(ctx, gid, uids...)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // AddValidationMetrics provides a mock function with given fields: ctx, m
@@ -432,20 +390,6 @@ func (_m *DB) DeleteExperiment(id int) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(int) error); ok {
 		r0 = rf(id)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteGroup provides a mock function with given fields: ctx, gid
-func (_m *DB) DeleteGroup(ctx context.Context, gid int) error {
-	ret := _m.Called(ctx, gid)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, gid)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1134,50 +1078,6 @@ func (_m *DB) GetTrialProfilerMetricsBatches(labelsJSON []byte, offset int, limi
 	return r0, r1
 }
 
-// GetUsersInGroup provides a mock function with given fields: ctx, gid
-func (_m *DB) GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
-	ret := _m.Called(ctx, gid)
-
-	var r0 []model.User
-	if rf, ok := ret.Get(0).(func(context.Context, int) []model.User); ok {
-		r0 = rf(ctx, gid)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.User)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, gid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GroupByID provides a mock function with given fields: ctx, gid
-func (_m *DB) GroupByID(ctx context.Context, gid int) (model.Group, error) {
-	ret := _m.Called(ctx, gid)
-
-	var r0 model.Group
-	if rf, ok := ret.Get(0).(func(context.Context, int) model.Group); ok {
-		r0 = rf(ctx, gid)
-	} else {
-		r0 = ret.Get(0).(model.Group)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, gid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // InsertTrialProfilerMetricsBatch provides a mock function with given fields: values, batches, timestamps, labels
 func (_m *DB) InsertTrialProfilerMetricsBatch(values []float32, batches []int32, timestamps []time.Time, labels []byte) error {
 	ret := _m.Called(values, batches, timestamps, labels)
@@ -1513,27 +1413,6 @@ func (_m *DB) RecordTaskStats(stats *model.TaskStats) error {
 	return r0
 }
 
-// RemoveUsersFromGroup provides a mock function with given fields: ctx, gid, uids
-func (_m *DB) RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
-	_va := make([]interface{}, len(uids))
-	for _i := range uids {
-		_va[_i] = uids[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, gid)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, ...model.UserID) error); ok {
-		r0 = rf(ctx, gid, uids...)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // SaveExperimentArchiveStatus provides a mock function with given fields: experiment
 func (_m *DB) SaveExperimentArchiveStatus(experiment *model.Experiment) error {
 	ret := _m.Called(experiment)
@@ -1602,29 +1481,6 @@ func (_m *DB) SaveSnapshot(experimentID int, version int, experimentSnapshot []b
 	}
 
 	return r0
-}
-
-// SearchGroups provides a mock function with given fields: ctx, userBelongsTo
-func (_m *DB) SearchGroups(ctx context.Context, userBelongsTo model.UserID) ([]model.Group, error) {
-	ret := _m.Called(ctx, userBelongsTo)
-
-	var r0 []model.Group
-	if rf, ok := ret.Get(0).(func(context.Context, model.UserID) []model.Group); ok {
-		r0 = rf(ctx, userBelongsTo)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.Group)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, model.UserID) error); ok {
-		r1 = rf(ctx, userBelongsTo)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // SetHPImportance provides a mock function with given fields: experimentID, value
@@ -2129,20 +1985,6 @@ func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
 		r0 = rf(allocation)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateGroup provides a mock function with given fields: ctx, group
-func (_m *DB) UpdateGroup(ctx context.Context, group model.Group) error {
-	ret := _m.Called(ctx, group)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, model.Group) error); ok {
-		r0 = rf(ctx, group)
 	} else {
 		r0 = ret.Error(0)
 	}
