@@ -152,7 +152,7 @@ func (m *Master) Info() aproto.MasterInfo {
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
 	}
-	return sso.AddSSOProviderInfo(m.config, masterInfo)
+	return sso.AddProviderInfo(m.config, masterInfo)
 }
 
 func (m *Master) getInfo(echo.Context) (interface{}, error) {
@@ -1049,5 +1049,8 @@ func (m *Master) Run(ctx context.Context) error {
 		m.config.Telemetry,
 	)
 
+	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
+		return err
+	}
 	return m.startServers(ctx, cert)
 }
