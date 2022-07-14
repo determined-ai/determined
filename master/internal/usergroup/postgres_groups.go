@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -51,35 +50,9 @@ func SearchGroups(ctx context.Context,
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the
 // group doesn't exist.
 func DeleteGroup(ctx context.Context, gid int) error {
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		rbErr := tx.Rollback()
-		if rbErr != sql.ErrTxDone && rbErr != nil {
-			log.WithError(rbErr).
-				WithField("groupID", gid).
-				Error("error rolling back transaction in DeleteGroup")
-		}
-	}()
-
-	_, err = tx.NewDelete().
-		Table("user_group_membership").
-		Where("group_id = ?", gid).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	res, err := tx.NewDelete().Model(&Group{ID: gid}).WherePK().Exec(ctx)
+	res, err := db.Bun().NewDelete().Model(&Group{ID: gid}).WherePK().Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
 		return matchSentinelError(foundErr)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return matchSentinelError(err)
 	}
 
 	return nil
@@ -109,27 +82,12 @@ func AddUsersToGroup(ctx context.Context, gid int, uids ...model.UserID) error {
 		})
 	}
 
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		rbErr := tx.Rollback()
-		if rbErr != sql.ErrTxDone && rbErr != nil {
-			log.WithError(rbErr).
-				WithField("groupID", gid).
-				WithField("userIDs", uids).
-				Error("error rolling back transaction in AddUsersToGroup")
-		}
-	}()
-
-	res, err := tx.NewInsert().Model(&groupMem).Exec(ctx)
+	res, err := db.Bun().NewInsert().Model(&groupMem).Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
 		return matchSentinelError(foundErr)
 	}
 
-	err = tx.Commit()
-	return matchSentinelError(err)
+	return nil
 }
 
 // RemoveUsersFromGroup removes users from a group. Removes nothing and
@@ -140,21 +98,7 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 		return nil
 	}
 
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		rbErr := tx.Rollback()
-		if rbErr != sql.ErrTxDone && rbErr != nil {
-			log.WithError(rbErr).
-				WithField("groupID", gid).
-				WithField("userIDs", uids).
-				Error("error rolling back transaction in RemoveUsersFromGroup")
-		}
-	}()
-
-	res, err := tx.NewDelete().Table("user_group_membership").
+	res, err := db.Bun().NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
@@ -162,8 +106,7 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 		return matchSentinelError(foundErr)
 	}
 
-	err = tx.Commit()
-	return matchSentinelError(err)
+	return nil
 }
 
 // GetUsersInGroup searches for users that belong to a group and returns them.
