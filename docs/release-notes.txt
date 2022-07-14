@@ -8,6 +8,34 @@
  Version 0.18
 **************
 
+Version 0.18.4
+==============
+
+**Release Date:** July 14, 2022
+
+**New Features**
+
+-  Configuration: Add support for ``task_container_defaults.environment_variables`` in master
+   config. Users can now specify a list of environment variables that will be set in all task
+   containers.
+
+-  Web: Most user settings and preferences, like filters, are now persisted to the db. Users will
+   now be able to retain their settings across devices.
+
+**Bug Fixes**
+
+-  Since 0.17.7, ``det experiment download-model-def $ID`` has been saving the downloaded tarballs
+   as just ``$ID``. This release corrects that behavior and names them
+   ``experiment_$ID_model_def.tgz`` instead.
+
+-  Kubernetes: fix a bug where following the link to live tensorboards would redirect to the
+   ``Uncategorized`` page.
+
+**Improvements**
+
+-  Adds the resource pool field when listing experiments or commands in k8s, where it was previously
+   left blank.
+
 Version 0.18.3
 ==============
 
