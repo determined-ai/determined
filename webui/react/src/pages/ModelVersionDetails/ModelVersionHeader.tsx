@@ -73,7 +73,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       content: (
         <InlineEditor
           disabled={modelVersion.model.archived}
-          placeholder="Add description..."
+          placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
           value={modelVersion.comment ?? ''}
           onSave={onSaveDescription}
         />
