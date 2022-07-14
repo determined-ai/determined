@@ -145,6 +145,12 @@ def submit_experiment(args: Namespace) -> None:
             additional_body_fields["git_commit_date"],
         ) = read_git_metadata(args.model_def)
 
+    if args.project_id:
+        sess = setup_session(args)
+        p = bindings.get_GetProject(sess, id=args.project_id).project
+        experiment_config["project"] = p.name
+        experiment_config["workspace"] = p.workspaceName
+
     if args.test_mode:
         api.experiment.create_test_experiment_and_follow_logs(
             args.master,
@@ -919,6 +925,7 @@ main_cmd = Cmd(
                     type=str,
                     help="name of template to apply to the experiment configuration",
                 ),
+                Arg("--project_id", type=int, help="place this experiment inside this project"),
                 Arg("--config", action="append", default=[], help=CONFIG_DESC),
                 Group(
                     Arg(
