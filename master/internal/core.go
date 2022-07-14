@@ -137,7 +137,6 @@ func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDe
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
-
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
 		// Only advertise a Segment WebUI key if a key has been configured and
 		// telemetry is enabled.
@@ -145,13 +144,14 @@ func (m *Master) Info() aproto.MasterInfo {
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
-	return aproto.MasterInfo{
+	masterInfo := aproto.MasterInfo{
 		ClusterID:   m.ClusterID,
 		MasterID:    m.MasterID,
 		Version:     version.Version,
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
 	}
+	return sso.AddSSOProviderInfo(m.config, masterInfo)
 }
 
 func (m *Master) getInfo(echo.Context) (interface{}, error) {
