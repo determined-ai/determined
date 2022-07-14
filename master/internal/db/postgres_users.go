@@ -199,7 +199,7 @@ RETURNING id`)
 
 	if err := stmt.QueryRowx(user).Scan(&user.ID); err != nil {
 		if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
-			if pgerr.Code == uniqueViolation {
+			if pgerr.Code == CodeUniqueViolation {
 				return 0, ErrDuplicateRecord
 			}
 		}
