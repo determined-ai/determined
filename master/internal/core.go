@@ -152,7 +152,8 @@ func (m *Master) Info() aproto.MasterInfo {
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
 	}
-	return sso.AddProviderInfo(m.config, masterInfo)
+	sso.AddProviderInfoToMasterInfo(m.config, &masterInfo)
+	return masterInfo
 }
 
 func (m *Master) getInfo(echo.Context) (interface{}, error) {
