@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
+import StoreProvider from 'contexts/Store';
 import { MetricName } from 'types';
 
 import MetricBadgeTag from './MetricBadgeTag';
@@ -30,7 +31,9 @@ jest.mock('antd', () => {
 const setup = (metric: MetricName) => {
   const handleOnChange = jest.fn();
   const view = render(
-    <MetricBadgeTag metric={metric} />,
+    <StoreProvider>
+      <MetricBadgeTag metric={metric} />,
+    </StoreProvider>,
   );
   return { handleOnChange, view };
 };

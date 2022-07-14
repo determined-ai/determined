@@ -1,11 +1,12 @@
 import { Button, Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback } from 'react';
 
-import useModalCheckpoint from 'hooks/useModal/useModalCheckpoint';
+import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
+import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
+import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
+import { ModalCloseReason } from 'hooks/useModal/useModal';
 import Icon from 'shared/components/Icon/Icon';
-import {
-  CheckpointWorkloadExtended, ExperimentBase,
-} from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended;
@@ -14,31 +15,62 @@ interface Props {
   title: string;
 }
 
-const CheckpointModalTrigger: React.FC<Props> = (
-  {
+const CheckpointModalTrigger: React.FC<Props> = ({
+  checkpoint,
+  experiment,
+  title,
+  children,
+}: PropsWithChildren<Props>) => {
+  const {
+    contextHolder: modalModelCreateContextHolder,
+    modalOpen: openModalCreateModel,
+  } = useModalModelCreate();
+
+  const handleOnCloseCheckpointRegister = useCallback((
+    reason?: ModalCloseReason,
+    checkpointUuid?: string,
+  ) => {
+    if (checkpointUuid) openModalCreateModel({ checkpointUuid });
+  }, [ openModalCreateModel ]);
+
+  const {
+    contextHolder: modalCheckpointRegisterContextHolder,
+    modalOpen: openModalCheckpointRegister,
+  } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });
+
+  const handleOnCloseCheckpoint = useCallback((reason?: ModalCloseReason) => {
+    if (reason === ModalCloseReason.Ok && checkpoint.uuid) {
+      openModalCheckpointRegister({ checkpointUuid: checkpoint.uuid });
+    }
+  }, [ checkpoint, openModalCheckpointRegister ]);
+
+  const {
+    contextHolder: modalCheckpointContextHolder,
+    modalOpen: openModalCheckpoint,
+  } = useModalCheckpoint({
     checkpoint,
-    experiment,
+    config: experiment.config,
+    onClose: handleOnCloseCheckpoint,
     title,
-    children,
-  }: PropsWithChildren<Props>,
-) => {
-  const { modalOpen: openModalDelete } =
-  useModalCheckpoint({ checkpoint: checkpoint, config: experiment.config, title: title });
-  const handleModalCheckpointClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+  });
+
+  const handleModalCheckpointClick = useCallback(() => {
+    openModalCheckpoint();
+  }, [ openModalCheckpoint ]);
 
   return (
-    <span onClick={() => handleModalCheckpointClick()}>
-      {children !== undefined ? children :
-        (
+    <>
+      <span onClick={handleModalCheckpointClick}>
+        {children !== undefined ? children : (
           <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-            />
+            <Button aria-label="View Checkpoint" icon={<Icon name="checkpoint" />} />
           </Tooltip>
-        )
-      }
-    </span>
+        )}
+      </span>
+      {modalCheckpointContextHolder}
+      {modalCheckpointRegisterContextHolder}
+      {modalModelCreateContextHolder}
+    </>
   );
 };
 

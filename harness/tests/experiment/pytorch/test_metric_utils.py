@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_process_combined_metrics_and_batches() -> None:
-    # Test empty metrics. This case can arise when custom reducers are used so it's okay for
+    # Test empty metrics. This case can arise when custom reducers are used, so it's okay for
     # evaluate_batch to return an empty dict.
     combined_metrics_and_batches = [
         ({}, 2),  # this is from a rank actually computing metrics but returning an empty dict

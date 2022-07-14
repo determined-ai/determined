@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
@@ -25,47 +25,43 @@ const currentUser: DetailedUser = {
 
 const users: Array<DetailedUser> = [ currentUser ];
 
-const TestApp: React.FC = () => {
-  const [ modal, contextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(modal);
+const Container: React.FC = () => {
+  const { contextHolder, modalOpen: openUserSettingsModal } = useModalUserSettings();
   const storeDispatch = useStoreDispatch();
 
   const loadUsers = useCallback(() => {
-    storeDispatch({
-      type: StoreAction.SetUsers,
-      value: users,
-    });
-    storeDispatch({
-      type: StoreAction.SetCurrentUser,
-      value: currentUser,
-    });
+    storeDispatch({ type: StoreAction.SetUsers, value: users });
+    storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
   }, [ storeDispatch ]);
 
-  useEffect(() => {
-    loadUsers();
-  });
+  useEffect(() => loadUsers(), [ loadUsers ]);
 
   return (
-    <div>
-      {contextHolder}
+    <>
       <Button onClick={() => openUserSettingsModal()}>
         {OPEN_MODAL_TEXT}
       </Button>
-    </div>
+      {contextHolder}
+    </>
   );
 };
 
 const setup = async () => {
+  const user = userEvent.setup();
+
   render(
     <StoreProvider>
-      <TestApp />
+      <Container />
     </StoreProvider>,
   );
-  userEvent.click(await screen.findByText(OPEN_MODAL_TEXT));
+
+  await user.click(screen.getByText(OPEN_MODAL_TEXT));
+
+  return user;
 };
 
 describe('useModalUserSettings', () => {
-  it('opens modal with correct values', async () => {
+  it('should open modal with correct values', async () => {
     await setup();
 
     await screen.findByRole('heading', { name: USER_SETTINGS_HEADER });
@@ -75,11 +71,11 @@ describe('useModalUserSettings', () => {
     expect(screen.getByText(CHANGE_PASSWORD_TEXT)).toBeInTheDocument();
   });
 
-  it('closes the modal', async () => {
-    await setup();
+  it('should close the modal', async () => {
+    const user = await setup();
 
-    await waitFor(() => {
-      userEvent.click(screen.getByRole('button', { name: /close/i }));
+    await waitFor(async () => {
+      await user.click(screen.getByRole('button', { name: /close/i }));
     });
 
     await waitFor(() => {

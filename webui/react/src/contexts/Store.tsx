@@ -1,8 +1,10 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
+import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
+import themes from 'themes';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
@@ -18,10 +20,13 @@ interface OmnibarState {
 
 interface UI {
   chromeCollapsed: boolean;
+  darkLight: DarkLight;
   isPageHidden: boolean;
+  mode: Mode;
   omnibar: OmnibarState;
   showChrome: boolean;
   showSpinner: boolean;
+  theme: Theme;
 }
 
 export interface State {
@@ -55,7 +60,9 @@ export enum StoreAction {
   // UI
   HideUIChrome,
   HideUISpinner,
+  SetMode,
   SetPageVisibility,
+  SetTheme,
   ShowUIChrome,
   ShowUISpinner,
 
@@ -85,7 +92,9 @@ export type Action =
 | { type: StoreAction.SetInfoCheck }
 | { type: StoreAction.HideUIChrome }
 | { type: StoreAction.HideUISpinner }
+| { type: StoreAction.SetMode; value: Mode }
 | { type: StoreAction.SetPageVisibility; value: boolean }
+| { type: StoreAction.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
@@ -120,10 +129,13 @@ const initInfo = {
 };
 const initUI = {
   chromeCollapsed: false,
+  darkLight: DarkLight.Light,
   isPageHidden: false,
+  mode: Mode.System,
   omnibar: { isShowing: false },
   showChrome: true,
   showSpinner: false,
+  theme: themes[BrandingType.Determined][DarkLight.Light],
 };
 const initState: State = {
   agents: [],
@@ -173,16 +185,17 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   const overview: PoolOverview = {};
   agents.forEach(agent => {
-    const pname = agent.resourcePool;
-    overview[pname] = clone(initResourceTally);
-    agent.resources
-      .filter(resource => resource.enabled)
-      .forEach(resource => {
-        const isResourceFree = resource.container == null;
-        const availableResource = isResourceFree ? 1 : 0;
-        overview[pname].available = availableResource;
-        overview[pname].total += 1;
-      });
+    agent.resourcePools.forEach(pname => {
+      overview[pname] = clone(initResourceTally);
+      agent.resources
+        .filter(resource => resource.enabled)
+        .forEach(resource => {
+          const isResourceFree = resource.container == null;
+          const availableResource = isResourceFree ? 1 : 0;
+          overview[pname].available += availableResource;
+          overview[pname].total += 1;
+        });
+    });
   });
 
   for (const key in overview) {
@@ -229,8 +242,19 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.HideUISpinner:
       if (!state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: false } };
+    case StoreAction.SetMode:
+      return { ...state, ui: { ...state.ui, mode: action.value } };
     case StoreAction.SetPageVisibility:
       return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
+    case StoreAction.SetTheme:
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          darkLight: action.value.darkLight,
+          theme: action.value.theme,
+        },
+      };
     case StoreAction.ShowUIChrome:
       if (state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: true } };

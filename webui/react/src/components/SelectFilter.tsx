@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Space } from 'antd';
 import { RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
 import React, {
   forwardRef,
@@ -104,7 +104,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
   }, []);
 
   return (
-    <div className={classes.join(' ')}>
+    <Space className={classes.join(' ')}>
       {props.label && <Label type={LabelTypes.TextOnly}>{props.label}</Label>}
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
@@ -118,7 +118,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
         {...props}>
         {props.children}
       </Select>
-    </div>
+    </Space>
   );
 });
 

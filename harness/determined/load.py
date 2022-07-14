@@ -54,8 +54,8 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
         for attr in qualname.split("."):
             obj = getattr(obj, attr)
 
-    assert isinstance(obj, type), "entrypoint ({entrypoint_spec}) is not a class"
-    assert issubclass(obj, det.Trial), "entrypoint ({entrypoint_spec}) is not a det.Trial subclass"
+    assert isinstance(obj, type), f"entrypoint ({entrypoint_spec}) is not a class"
+    assert issubclass(obj, det.Trial), f"entrypoint ({entrypoint_spec}) is not a det.Trial subclass"
     return cast(Type[det.Trial], obj)
 
 

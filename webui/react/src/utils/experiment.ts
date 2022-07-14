@@ -17,6 +17,7 @@ import {
   Project,
   ProjectExperiment,
   RunState,
+  TrialDetails,
   TrialHyperparameters,
 } from 'types';
 
@@ -24,7 +25,8 @@ import { RawJson } from '../shared/types';
 import { clone, deletePathList, getPathList, isNumber, setPathList,
   unflattenObject } from '../shared/utils/data';
 
-type ExperimentChecker = (experiment: ProjectExperiment, user?: DetailedUser) => boolean
+type ExperimentChecker = (
+  experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails) => boolean
 
 // Differentiate Experiment from Task.
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
@@ -108,6 +110,14 @@ export const alwaysTrueExperimentChecker = (
   user?: DetailedUser,
 ): boolean => true;
 
+// Single trial experiment or trial of multi trial experiment can be continued.
+export const canExperimentContinueTrial = (
+  experiment: ProjectExperiment,
+  user?: DetailedUser,
+  trial?: TrialDetails,
+): boolean => !experiment.archived && !experiment.parentArchived
+  && (!!trial || experiment?.numTrials === 1);
+
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
    * for internal use: the typing ensures that checkers
@@ -124,7 +134,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.CompareTrials]: alwaysTrueExperimentChecker,
 
-  [ExperimentAction.ContinueTrial]: isExperimentModifiable,
+  [ExperimentAction.ContinueTrial]: canExperimentContinueTrial,
 
   [ExperimentAction.Delete]: (experiment, user) =>
     !!user && (user.isAdmin || user.id === experiment.userId)
@@ -152,13 +162,16 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
     terminalRunStates.has(experiment.state) && experiment.archived,
 
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
+
+  [ExperimentAction.CompareExperiments]: alwaysTrueExperimentChecker,
 };
 
 export const canUserActionExperiment = (
   user: DetailedUser | undefined,
   action: ExperimentAction,
   experiment: ProjectExperiment,
-): boolean => !!experiment && experimentCheckers[action](experiment, user);
+  trial?: TrialDetails,
+): boolean => !!experiment && experimentCheckers[action](experiment, user, trial);
 
 export const getActionsForExperiment = (
   experiment: ProjectExperiment,

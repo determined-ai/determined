@@ -89,8 +89,8 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.allocationIds}
             value={values.allocationIds}
             onChange={handleChange('allocationIds', String)}>
-            {selectOptions?.allocationIds?.map(id => (
-              <Option key={id} value={id}>{id || 'No Allocation ID'}</Option>
+            {selectOptions?.allocationIds?.map((id, index) => (
+              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Allocation ID'}</Option>
             ))}
           </MultiSelect>
         )}
@@ -99,8 +99,8 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.agentIds}
             value={values.agentIds}
             onChange={handleChange('agentIds', String)}>
-            {selectOptions?.agentIds?.map(id => (
-              <Option key={id} value={id}>{id || 'No Agent ID'}</Option>
+            {selectOptions?.agentIds?.map((id, index) => (
+              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Agent ID'}</Option>
             ))}
           </MultiSelect>
         )}
@@ -110,8 +110,8 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             style={{ width: 150 }}
             value={values.containerIds}
             onChange={handleChange('containerIds', String)}>
-            {selectOptions?.containerIds?.map(id => (
-              <Option key={id} value={id}>{id || 'No Container ID'}</Option>
+            {selectOptions?.containerIds?.map((id, index) => (
+              <Option key={id || `no-id-${index}`} value={id}>{id || 'No Container ID'}</Option>
             ))}
           </MultiSelect>
         )}
@@ -120,8 +120,8 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             itemName={LABELS.rankIds}
             value={values.rankIds}
             onChange={handleChange('rankIds', Number)}>
-            {selectOptions?.rankIds?.map(id => (
-              <Option key={id} value={id}>{id ?? 'No Rank'}</Option>
+            {selectOptions?.rankIds?.map((id, index) => (
+              <Option key={id ?? `no-id-${index}`} value={id}>{id ?? 'No Rank'}</Option>
             ))}
           </MultiSelect>
         )}

@@ -57,9 +57,6 @@ class PyTorchCallback:
     def on_validation_end(self, metrics: Dict[str, Any]) -> None:
         """
         Run after every validation ends.
-
-        .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
         """
         pass
 
@@ -73,9 +70,6 @@ class PyTorchCallback:
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
         """
         Run after every validation step ends.
-
-        .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
         """
         # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass

@@ -1,6 +1,6 @@
 import { SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
@@ -11,11 +11,12 @@ import { defaultRowClassName, getFullPaginationConfig,
   modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
-import { useStore } from 'contexts/Store';
+import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
+import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import {
-  archiveModel, deleteModel, getModelDetails, isNotFound, patchModel,
+  archiveModel, getModelDetails, isNotFound, patchModel,
   patchModelVersion, unarchiveModel,
 } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -41,13 +42,11 @@ interface Params {
 }
 
 const ModelDetails: React.FC = () => {
-  const { auth: { user } } = useStore();
   const [ model, setModel ] = useState<ModelVersions>();
   const modelName = decodeURIComponent(useParams<Params>().modelName);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
-  const history = useHistory();
   const pageRef = useRef<HTMLElement>(null);
 
   const {
@@ -74,12 +73,30 @@ const ModelDetails: React.FC = () => {
     setIsLoading(false);
   }, [ modelName, pageError, settings ]);
 
+  const {
+    contextHolder: modalModelDownloadContextHolder,
+    modalOpen: openModelDownload,
+  } = useModalModelDownload();
+
+  const {
+    contextHolder: modalModelVersionDeleteContextHolder,
+    modalOpen: openModelVersionDelete,
+  } = useModalModelVersionDelete();
+
   usePolling(fetchModel, { rerunOnNewFn: true });
 
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
   }, [ fetchModel ]);
+
+  const downloadModel = useCallback((version: ModelVersion) => {
+    openModelDownload(version);
+  }, [ openModelDownload ]);
+
+  const deleteModelVersion = useCallback((version: ModelVersion) => {
+    openModelVersionDelete(version);
+  }, [ openModelVersionDelete ]);
 
   const saveModelVersionTags = useCallback(async (modelName, versionId, tags) => {
     try {
@@ -96,22 +113,24 @@ const ModelDetails: React.FC = () => {
     }
   }, [ fetchModel ]);
 
-  const saveVersionDescription =
-    useCallback(async (editedDescription: string, versionId: number) => {
-      try {
-        await patchModelVersion({
-          body: { comment: editedDescription, modelName },
-          modelName,
-          versionId,
-        });
-      } catch (e) {
-        handleError(e, {
-          publicSubject: 'Unable to save version description.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    }, [ modelName ]);
+  const saveVersionDescription = useCallback(async (
+    editedDescription: string,
+    versionId: number,
+  ) => {
+    try {
+      await patchModelVersion({
+        body: { comment: editedDescription, modelName },
+        modelName,
+        versionId,
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to save version description.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ modelName ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
@@ -123,16 +142,12 @@ const ModelDetails: React.FC = () => {
       />
     );
 
-    const actionRenderer = (_:string, record: ModelVersion) => {
-      return (
-        <ModelVersionActionDropdown
-          curUser={user}
-          model={model?.model}
-          modelVersion={record}
-          onComplete={fetchModel}
-        />
-      );
-    };
+    const actionRenderer = (_:string, record: ModelVersion) => (
+      <ModelVersionActionDropdown
+        onDelete={() => deleteModelVersion(record)}
+        onDownload={() => downloadModel(record)}
+      />
+    );
 
     const descriptionRenderer = (value:string, record: ModelVersion) => (
       <InlineEditor
@@ -191,7 +206,12 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [ saveModelVersionTags, user, model?.model, fetchModel, saveVersionDescription ]);
+  }, [
+    deleteModelVersion,
+    downloadModel,
+    saveModelVersionTags,
+    saveVersionDescription,
+  ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -299,25 +319,15 @@ const ModelDetails: React.FC = () => {
     }
   }, [ model?.model.archived, modelName ]);
 
-  const deleteCurrentModel = useCallback(() => {
-    deleteModel({ modelName });
-    history.push('/det/models');
-  }, [ history, modelName ]);
-
-  const actionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
-      <ModelVersionActionDropdown
-        curUser={user}
-        model={model?.model}
-        modelVersion={record}
-        trigger={[ 'contextMenu' ]}
-        onComplete={fetchModel}
-        onVisibleChange={onVisibleChange}>
-        {children}
-      </ModelVersionActionDropdown>
-    ),
-    [ fetchModel, model?.model, user ],
-  );
+  const actionDropdown = useCallback(({ record, onVisibleChange, children }) => (
+    <ModelVersionActionDropdown
+      trigger={[ 'contextMenu' ]}
+      onDelete={() => deleteModelVersion(record)}
+      onDownload={() => downloadModel(record)}
+      onVisibleChange={onVisibleChange}>
+      {children}
+    </ModelVersionActionDropdown>
+  ), [ deleteModelVersion, downloadModel ]);
 
   if (!modelName) {
     return <Message title="Model name is empty" />;
@@ -337,7 +347,6 @@ const ModelDetails: React.FC = () => {
       headerComponent={(
         <ModelHeader
           model={model.model}
-          onDelete={deleteCurrentModel}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onSwitchArchive={switchArchive}
@@ -384,6 +393,8 @@ const ModelDetails: React.FC = () => {
           onSave={saveMetadata}
         />
       </div>
+      {modalModelDownloadContextHolder}
+      {modalModelVersionDeleteContextHolder}
     </Page>
   );
 };

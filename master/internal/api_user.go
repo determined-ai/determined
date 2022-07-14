@@ -201,3 +201,39 @@ func (a *apiServer) PatchUser(
 	fullUser, err := getUser(a.m.db, uid)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
+
+func (a *apiServer) GetUserSetting(
+	ctx context.Context, req *apiv1.GetUserSettingRequest) (*apiv1.GetUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	settings, err := db.GetUserSetting(user.ID)
+	return &apiv1.GetUserSettingResponse{Settings: settings}, err
+}
+
+func (a *apiServer) PostUserSetting(
+	ctx context.Context, req *apiv1.PostUserSettingRequest) (*apiv1.PostUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	settingModel := model.UserWebSetting{
+		UserID:      user.ID,
+		Key:         req.Setting.Key,
+		Value:       req.Setting.Value,
+		StoragePath: req.StoragePath,
+	}
+	err = db.UpdateUserSetting(&settingModel)
+	return &apiv1.PostUserSettingResponse{}, err
+}
+
+func (a *apiServer) ResetUserSetting(
+	ctx context.Context, req *apiv1.ResetUserSettingRequest) (*apiv1.ResetUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	err = db.ResetUserSetting(user.ID)
+	return &apiv1.ResetUserSettingResponse{}, err
+}

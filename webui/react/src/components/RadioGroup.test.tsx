@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { RadioGroupOption } from 'types';
+import RadioGroup, { RadioGroupOption } from './RadioGroup';
 
-import RadioGroup from './RadioGroup';
+const user = userEvent.setup();
 
 const setup = (options: RadioGroupOption[], iconOnly = false) => {
   const handleOnChange = jest.fn();
@@ -21,7 +21,6 @@ const setup = (options: RadioGroupOption[], iconOnly = false) => {
 describe('RadioGroup', () => {
   const firstOption = 'First Option';
   const secondOption = 'Second Option';
-
   const radioOptions: RadioGroupOption[] = [
     { icon: 'learning', id: '1st', label: firstOption },
     { icon: 'heat', id: '2nd', label: secondOption },
@@ -41,17 +40,17 @@ describe('RadioGroup', () => {
 
   it('updates state when radio button labels are clicked', async () => {
     const { handleOnChange, view } = setup(radioOptions);
-    userEvent.click(await view.findByText(firstOption));
+    await user.click(await view.findByText(firstOption));
     expect(handleOnChange).toHaveBeenCalledWith('1st');
-    userEvent.click(await view.findByText(secondOption));
+    await user.click(await view.findByText(secondOption));
     expect(handleOnChange).toHaveBeenCalledWith('2nd');
   });
 
-  it('updates state when icon-only radio buttons are clicked', () => {
+  it('updates state when icon-only radio buttons are clicked', async () => {
     const { handleOnChange } = setup(radioOptions, true);
-    userEvent.click(document.querySelectorAll('.ant-radio-button')[0]);
+    await user.click(document.querySelectorAll('.ant-radio-button')[0]);
     expect(handleOnChange).toHaveBeenCalledWith('1st');
-    userEvent.click(document.querySelectorAll('.ant-radio-button')[1]);
+    await user.click(document.querySelectorAll('.ant-radio-button')[1]);
     expect(handleOnChange).toHaveBeenCalledWith('2nd');
   });
 });

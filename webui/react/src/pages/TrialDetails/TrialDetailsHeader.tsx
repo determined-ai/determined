@@ -1,4 +1,3 @@
-import { Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -6,7 +5,7 @@ import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
-} from 'hooks/useModal/useModalExperimentCreate';
+} from 'hooks/useModal/Experiment/useModalExperimentCreate';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -35,16 +34,10 @@ const TrialDetailsHeader: React.FC<Props> = ({
   trial,
 }: Props) => {
   const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
-  const [ experimentCreateModal, experimentCreateModalContextHolder ] = Modal.useModal();
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
-  const { modalOpen } = useCreateExperimentModal(
-    {
-      modal: experimentCreateModal,
-      onClose: handleModalClose,
-    },
-  );
+  const { contextHolder, modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
 
   const handleContinueTrial = useCallback(() => {
     modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
@@ -69,7 +62,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
     }
 
-    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment)) {
+    if (canUserActionExperiment(undefined, ExperimentAction.ContinueTrial, experiment, trial)) {
       if (trial.bestAvailableCheckpoint !== undefined) {
         options.push({
           icon: <Icon name="fork" size="small" />,
@@ -103,7 +96,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}
       />
-      {experimentCreateModalContextHolder}
+      {contextHolder}
     </>
   );
 };

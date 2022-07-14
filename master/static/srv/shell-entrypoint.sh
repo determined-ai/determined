@@ -44,12 +44,39 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # After openssh 8+ is the only version of openssh supported (that is, after we
 # only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
 # skip this awkwardness.
-blacklist="^(_|HOME|TERM|LANG|LC_.*)"
-vars="$(env | sed -E -e "s/=.*//; /$blacklist/d")"
+#
+# For HPC systems, bash module support uses variables that store functions 
+# of the form below (with embedded parenthesis or %% in the name).
+#   BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
+#   BASH_FUNC_module%%=() {  eval `/opt/lib/modulecmd bash $*`
+# so we also filter variables with parens or % in the name.
+
+# extglob enables +() notation in patterns of ${parameter/pattern/string} notation
+shopt -s extglob
+
+# convert NUL-delimited environment key-value pairs in an array
+# -d '' means "use NUL byte as delimiter"
+# -t means "strip the delimiter"
+mapfile -d '' -t kvps < <(env -0)
+
+# iterate through each key-value pair in the array
 options="$(
-    for var in $vars ; do
-        # Note that the syntax ${!var} is for a double dereference.
-        val="${!var}"
+    for kvp in "${kvps[@]}" ; do
+        # Variable name is what comes before the first '='
+        var="${kvp/=*/}"
+        # Variable content starts after the first '='
+        val="${kvp/#+([^=])=/}"
+
+        # Filter names we shouldn't forward
+        if [[ "$var" =~ ^(_|HOME|TERM|LANG|LC_.*)$ ]] ; then
+            continue
+        fi
+
+        # For slurm: filter variables with %% or () in the name
+        if [[ "$var" =~ (%%|\(\)) ]] ; then
+            continue
+        fi
+
         # Backslash-escape quotes so that sshd works.
         val="${val//\"/\\\"}"
         # Backslash-escape backslashes so that sed doesn't interpret them.

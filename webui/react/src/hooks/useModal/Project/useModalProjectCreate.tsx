@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
@@ -20,11 +21,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   const [ name, setName ] = useState('');
   const [ description, setDescription ] = useState('');
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -39,7 +36,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       <div className={css.base}>
         <div>
           <label className={css.label} htmlFor="name">Name</label>
-          <Input id="name" value={name} onChange={handleNameInput} />
+          <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
@@ -64,12 +61,12 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
     }
   }, [ name, workspaceId, description ]);
 
-  const getModalProps = useCallback((name: string): ModalFuncProps => {
+  const getModalProps = useCallback((name = ''): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
@@ -79,18 +76,18 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setName('');
     setDescription('');
-    openOrUpdate({ ...getModalProps(''), ...initialModalProps });
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalProjectCreate;

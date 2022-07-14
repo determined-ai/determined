@@ -28,6 +28,7 @@ type TaskContainerDefaultsConfig struct {
 	Image                  *RuntimeItem          `json:"image,omitempty"`
 	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
 	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
+	EnvironmentVariables   *RuntimeItems         `json:"environment_variables,omitempty"`
 
 	AddCapabilities  []string      `json:"add_capabilities"`
 	DropCapabilities []string      `json:"drop_capabilities"`
@@ -99,6 +100,11 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		image = &i
 	}
 
+	var envVars *expconf.EnvironmentVariablesMapV0
+	if c.EnvironmentVariables != nil {
+		envVars = ptrs.Ptr(c.EnvironmentVariables.ToExpconf())
+	}
+
 	// We just update config.RawResources so we know it can't be nil.
 	defaultedResources := schemas.WithDefaults(*config.RawResources).(expconf.ResourcesConfig)
 	podSpec := c.CPUPodSpec
@@ -106,14 +112,15 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		podSpec = c.GPUPodSpec
 	}
 
-	//nolint:exhaustivestruct // RawEnvironmentVariables, RawPorts are not in TaskContainerDefaults.
+	//nolint:exhaustivestruct // RawPorts is not in TaskContainerDefaults.
 	env := expconf.EnvironmentConfig{
-		RawAddCapabilities:  c.AddCapabilities,
-		RawDropCapabilities: c.DropCapabilities,
-		RawForcePullImage:   ptrs.Ptr(c.ForcePullImage),
-		RawImage:            image,
-		RawPodSpec:          (*expconf.PodSpec)(podSpec),
-		RawRegistryAuth:     c.RegistryAuth,
+		RawAddCapabilities:      c.AddCapabilities,
+		RawDropCapabilities:     c.DropCapabilities,
+		RawForcePullImage:       ptrs.Ptr(c.ForcePullImage),
+		RawImage:                image,
+		RawPodSpec:              (*expconf.PodSpec)(podSpec),
+		RawRegistryAuth:         c.RegistryAuth,
+		RawEnvironmentVariables: envVars,
 	}
 	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env).(*expconf.EnvironmentConfig)
 

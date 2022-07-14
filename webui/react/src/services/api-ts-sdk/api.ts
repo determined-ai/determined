@@ -182,6 +182,38 @@ export enum Determinedtaskv1State {
 }
 
 /**
+ * Series of data points for an experiment trial.
+ * @export
+ * @interface ExpCompareTrialsSampleResponseExpTrial
+ */
+export interface ExpCompareTrialsSampleResponseExpTrial {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    trialId: number;
+    /**
+     * Hyperparamters values for this specific trial.
+     * @type {any}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    hparams: any;
+    /**
+     * Data related to a trial.
+     * @type {Array<V1DataPoint>}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    data: Array<V1DataPoint>;
+    /**
+     * 
+     * @type {number}
+     * @memberof ExpCompareTrialsSampleResponseExpTrial
+     */
+    experimentId: number;
+}
+
+/**
  * Hyperparameter importance as computed with respect for one specific metric.
  * @export
  * @interface GetHPImportanceResponseMetricHPImportance
@@ -316,6 +348,46 @@ export interface RuntimeStreamError {
      * @memberof RuntimeStreamError
      */
     details?: Array<ProtobufAny>;
+}
+
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1ExpCompareMetricNamesResponse
+ */
+export interface StreamResultOfV1ExpCompareMetricNamesResponse {
+    /**
+     * 
+     * @type {V1ExpCompareMetricNamesResponse}
+     * @memberof StreamResultOfV1ExpCompareMetricNamesResponse
+     */
+    result?: V1ExpCompareMetricNamesResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExpCompareMetricNamesResponse
+     */
+    error?: RuntimeStreamError;
+}
+
+/**
+ * 
+ * @export
+ * @interface StreamResultOfV1ExpCompareTrialsSampleResponse
+ */
+export interface StreamResultOfV1ExpCompareTrialsSampleResponse {
+    /**
+     * 
+     * @type {V1ExpCompareTrialsSampleResponse}
+     * @memberof StreamResultOfV1ExpCompareTrialsSampleResponse
+     */
+    result?: V1ExpCompareTrialsSampleResponse;
+    /**
+     * 
+     * @type {RuntimeStreamError}
+     * @memberof StreamResultOfV1ExpCompareTrialsSampleResponse
+     */
+    error?: RuntimeStreamError;
 }
 
 /**
@@ -559,18 +631,6 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
- * @export
- * @enum {string}
- */
-export enum TrialEarlyExitExitedReason {
-    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
-    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
-    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
-}
-
-/**
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  * @enum {string}
@@ -773,12 +833,6 @@ export interface V1Agent {
      */
     label?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof V1Agent
-     */
-    resourcePool?: string;
-    /**
      * The addresses of the agent.
      * @type {Array<string>}
      * @memberof V1Agent
@@ -802,6 +856,12 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     version?: string;
+    /**
+     * The name of the resource pools the agent is in. Only slurm can contain multiples.
+     * @type {Array<string>}
+     * @memberof V1Agent
+     */
+    resourcePools?: Array<string>;
 }
 
 /**
@@ -1211,6 +1271,20 @@ export interface V1CheckpointWorkload {
 }
 
 /**
+ * Close a trial with given id.
+ * @export
+ * @interface V1CloseTrialOperation
+ */
+export interface V1CloseTrialOperation {
+    /**
+     * trial_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1CloseTrialOperation
+     */
+    trialId?: string;
+}
+
+/**
  * Command is a single container running the configured command.
  * @export
  * @interface V1Command
@@ -1355,6 +1429,20 @@ export interface V1ComputeHPImportanceResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1ConstantHyperparameter
+ */
+export interface V1ConstantHyperparameter {
+    /**
+     * value of the constant hyperparameter.
+     * @type {number}
+     * @memberof V1ConstantHyperparameter
+     */
+    val?: number;
+}
+
+/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -1448,6 +1536,20 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+}
+
+/**
+ * Create a trial with given hyperparameters.
+ * @export
+ * @interface V1CreateTrialOperation
+ */
+export interface V1CreateTrialOperation {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1CreateTrialOperation
+     */
+    hyperparams?: { [key: string]: V1Hyperparameter; };
 }
 
 /**
@@ -1660,6 +1762,52 @@ export interface V1EnableSlotResponse {
      * @memberof V1EnableSlotResponse
      */
     slot?: V1Slot;
+}
+
+/**
+ * Response to MetricNamesRequest.
+ * @export
+ * @interface V1ExpCompareMetricNamesResponse
+ */
+export interface V1ExpCompareMetricNamesResponse {
+    /**
+     * List of training metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpCompareMetricNamesResponse
+     */
+    trainingMetrics?: Array<string>;
+    /**
+     * List of validation metric names.
+     * @type {Array<string>}
+     * @memberof V1ExpCompareMetricNamesResponse
+     */
+    validationMetrics?: Array<string>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ExpCompareTrialsSampleResponse
+ */
+export interface V1ExpCompareTrialsSampleResponse {
+    /**
+     * A historical or incremental series of data points for the trials.
+     * @type {Array<ExpCompareTrialsSampleResponseExpTrial>}
+     * @memberof V1ExpCompareTrialsSampleResponse
+     */
+    trials: Array<ExpCompareTrialsSampleResponseExpTrial>;
+    /**
+     * IDs of trials that are newly included in the data.
+     * @type {Array<number>}
+     * @memberof V1ExpCompareTrialsSampleResponse
+     */
+    promotedTrials: Array<number>;
+    /**
+     * IDs of trials that are no loger included in the top N trials.
+     * @type {Array<number>}
+     * @memberof V1ExpCompareTrialsSampleResponse
+     */
+    demotedTrials: Array<number>;
 }
 
 /**
@@ -1891,7 +2039,7 @@ export interface V1File {
 }
 
 /**
- * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.
+ * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
  * @export
  * @enum {string}
  */
@@ -1899,7 +2047,8 @@ export enum V1FittingPolicy {
     UNSPECIFIED = <any> 'FITTING_POLICY_UNSPECIFIED',
     BEST = <any> 'FITTING_POLICY_BEST',
     WORST = <any> 'FITTING_POLICY_WORST',
-    KUBERNETES = <any> 'FITTING_POLICY_KUBERNETES'
+    KUBERNETES = <any> 'FITTING_POLICY_KUBERNETES',
+    SLURM = <any> 'FITTING_POLICY_SLURM'
 }
 
 /**
@@ -2579,6 +2728,26 @@ export interface V1GetResourcePoolsResponse {
 }
 
 /**
+ * Response to GetSearcherEventsRequest.
+ * @export
+ * @interface V1GetSearcherEventsResponse
+ */
+export interface V1GetSearcherEventsResponse {
+    /**
+     * The requested list of searcher events. str value can be: InitialOperations, TrialCreated, ValidationCreated, TrialExitedEarly, TrialClosed appended with a counter id to represent order.
+     * @type {Array<V1SearcherEvent>}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    searcherEvent?: Array<V1SearcherEvent>;
+    /**
+     * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
+     * @type {V1SearcherEvent}
+     * @memberof V1GetSearcherEventsResponse
+     */
+    lastTriggeringEvent?: V1SearcherEvent;
+}
+
+/**
  * Response to GetShellRequest.
  * @export
  * @interface V1GetShellResponse
@@ -2904,6 +3073,20 @@ export interface V1GetUserResponse {
 }
 
 /**
+ * Response to GetUserSettingRequest.
+ * @export
+ * @interface V1GetUserSettingResponse
+ */
+export interface V1GetUserSettingResponse {
+    /**
+     * List of user settings.
+     * @type {Array<V1UserWebSetting>}
+     * @memberof V1GetUserSettingResponse
+     */
+    settings: Array<V1UserWebSetting>;
+}
+
+/**
  * Response to GetUsersRequest.
  * @export
  * @interface V1GetUsersResponse
@@ -2997,6 +3180,26 @@ export interface V1GetWorkspacesResponse {
 }
 
 /**
+ * Hyperparameter.
+ * @export
+ * @interface V1Hyperparameter
+ */
+export interface V1Hyperparameter {
+    /**
+     * Constant hyperparameter.
+     * @type {V1ConstantHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    constantHyperparam?: V1ConstantHyperparameter;
+    /**
+     * Nested hyperparameter.
+     * @type {V1RawNestedHyperparameter}
+     * @memberof V1Hyperparameter
+     */
+    nestedHyperparam?: V1RawNestedHyperparameter;
+}
+
+/**
  * Kill the requested notebook if idle.
  * @export
  * @interface V1IdleNotebookRequest
@@ -3022,6 +3225,20 @@ export interface V1IdleNotebookRequest {
  * @interface V1IdleNotebookResponse
  */
 export interface V1IdleNotebookResponse {
+}
+
+/**
+ * InitialOperations is a searcher event signaling the creation of an experiment.
+ * @export
+ * @interface V1InitialOperations
+ */
+export interface V1InitialOperations {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1InitialOperations
+     */
+    id?: number;
 }
 
 /**
@@ -4572,6 +4789,40 @@ export interface V1PostProjectResponse {
 }
 
 /**
+ * Request for sending operations from a custom user search method.
+ * @export
+ * @interface V1PostSearcherOperationsRequest
+ */
+export interface V1PostSearcherOperationsRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    experimentId?: number;
+    /**
+     * list of operations in the method.
+     * @type {Array<V1SearcherOperation>}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    searcherOperations?: Array<V1SearcherOperation>;
+    /**
+     * The event that triggered client to send the above operations to master.
+     * @type {V1SearcherEvent}
+     * @memberof V1PostSearcherOperationsRequest
+     */
+    triggeredByEvent?: V1SearcherEvent;
+}
+
+/**
+ * Response to PostSearcherOperationsResponse.
+ * @export
+ * @interface V1PostSearcherOperationsResponse
+ */
+export interface V1PostSearcherOperationsResponse {
+}
+
+/**
  * Create a batch of trial profiler metrics.
  * @export
  * @interface V1PostTrialProfilerMetricsBatchRequest
@@ -4633,6 +4884,34 @@ export interface V1PostUserResponse {
      * @memberof V1PostUserResponse
      */
     user?: V1User;
+}
+
+/**
+ * Update user settings.
+ * @export
+ * @interface V1PostUserSettingRequest
+ */
+export interface V1PostUserSettingRequest {
+    /**
+     * Storage path for setting.
+     * @type {string}
+     * @memberof V1PostUserSettingRequest
+     */
+    storagePath: string;
+    /**
+     * Setting key value pair.
+     * @type {V1UserWebSetting}
+     * @memberof V1PostUserSettingRequest
+     */
+    setting: V1UserWebSetting;
+}
+
+/**
+ * Response to PostUserSettingRequest.
+ * @export
+ * @interface V1PostUserSettingResponse
+ */
+export interface V1PostUserSettingResponse {
 }
 
 /**
@@ -4922,6 +5201,20 @@ export interface V1RPQueueStat {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1RawNestedHyperparameter
+ */
+export interface V1RawNestedHyperparameter {
+    /**
+     * 
+     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @memberof V1RawNestedHyperparameter
+     */
+    mapHyperparam?: { [key: string]: V1Hyperparameter; };
+}
+
+/**
  * The rendezvous info for the trial to rendezvous with sibling containers.
  * @export
  * @interface V1RendezvousInfo
@@ -4979,6 +5272,14 @@ export interface V1ReportTrialTrainingMetricsResponse {
  * @interface V1ReportTrialValidationMetricsResponse
  */
 export interface V1ReportTrialValidationMetricsResponse {
+}
+
+/**
+ * Response to ResetUserSettingRequest.
+ * @export
+ * @interface V1ResetUserSettingResponse
+ */
+export interface V1ResetUserSettingResponse {
 }
 
 /**
@@ -5698,7 +5999,7 @@ export enum V1Scale {
 }
 
 /**
- * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.
+ * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.
  * @export
  * @enum {string}
  */
@@ -5707,7 +6008,46 @@ export enum V1SchedulerType {
     PRIORITY = <any> 'SCHEDULER_TYPE_PRIORITY',
     FAIRSHARE = <any> 'SCHEDULER_TYPE_FAIR_SHARE',
     ROUNDROBIN = <any> 'SCHEDULER_TYPE_ROUND_ROBIN',
-    KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES'
+    KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
+    SLURM = <any> 'SCHEDULER_TYPE_SLURM'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1SearcherEvent
+ */
+export interface V1SearcherEvent {
+    /**
+     * 
+     * @type {V1InitialOperations}
+     * @memberof V1SearcherEvent
+     */
+    initialOperations?: V1InitialOperations;
+    /**
+     * 
+     * @type {V1TrialCreated}
+     * @memberof V1SearcherEvent
+     */
+    trialCreated?: V1TrialCreated;
+    /**
+     * 
+     * @type {V1ValidationCompleted}
+     * @memberof V1SearcherEvent
+     */
+    validationCompleted?: V1ValidationCompleted;
+    /**
+     * 
+     * @type {V1TrialClosed}
+     * @memberof V1SearcherEvent
+     */
+    trialClosed?: V1TrialClosed;
+    /**
+     * 
+     * @type {V1TrialExitedEarly}
+     * @memberof V1SearcherEvent
+     */
+    trialExitedEarly?: V1TrialExitedEarly;
 }
 
 /**
@@ -5722,6 +6062,24 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     validateAfter?: V1ValidateAfterOperation;
+    /**
+     * CreateTrial is issued to create trial.
+     * @type {V1CreateTrialOperation}
+     * @memberof V1SearcherOperation
+     */
+    createTrial?: V1CreateTrialOperation;
+    /**
+     * CloseTrial is issued to close trial.
+     * @type {V1CloseTrialOperation}
+     * @memberof V1SearcherOperation
+     */
+    closeTrial?: V1CloseTrialOperation;
+    /**
+     * ShutdownOperation is issued to shutdown the custom searcher method.
+     * @type {V1ShutdownOperation}
+     * @memberof V1SearcherOperation
+     */
+    shutdown?: V1ShutdownOperation;
 }
 
 /**
@@ -5970,6 +6328,20 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     jobId: string;
+}
+
+/**
+ * Shutdown custom searcher method.
+ * @export
+ * @interface V1ShutdownOperation
+ */
+export interface V1ShutdownOperation {
+    /**
+     * A message field can't be empty because bindings won't compile. Making this a message to keep it consistent with other operations.
+     * @type {number}
+     * @memberof V1ShutdownOperation
+     */
+    emptyField?: number;
 }
 
 /**
@@ -6265,6 +6637,46 @@ export interface V1Tensorboard {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1TrialClosed
+ */
+export interface V1TrialClosed {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialClosed
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialClosed
+     */
+    requestId?: string;
+}
+
+/**
+ * TrialCreated is a searcher event singaling the creation of a trial.
+ * @export
+ * @interface V1TrialCreated
+ */
+export interface V1TrialCreated {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialCreated
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialCreated
+     */
+    requestId?: string;
+}
+
+/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -6272,10 +6684,60 @@ export interface V1Tensorboard {
 export interface V1TrialEarlyExit {
     /**
      * The reason for the exit.
-     * @type {TrialEarlyExitExitedReason}
+     * @type {V1TrialEarlyExitExitedReason}
      * @memberof V1TrialEarlyExit
      */
-    reason: TrialEarlyExitExitedReason;
+    reason: V1TrialEarlyExitExitedReason;
+}
+
+/**
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
+ * @export
+ * @enum {string}
+ */
+export enum V1TrialEarlyExitExitedReason {
+    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialExitedEarly
+ */
+export interface V1TrialExitedEarly {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1TrialExitedEarly
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialExitedEarly
+     */
+    requestId?: string;
+    /**
+     * The reason for the exit.
+     * @type {V1TrialExitedEarlyExitedReason}
+     * @memberof V1TrialExitedEarly
+     */
+    exitedReason?: V1TrialExitedEarlyExitedReason;
+}
+
+/**
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
+ * @export
+ * @enum {string}
+ */
+export enum V1TrialExitedEarlyExitedReason {
+    UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    INITINVALIDHP = <any> 'EXITED_REASON_INIT_INVALID_HP'
 }
 
 /**
@@ -6701,6 +7163,32 @@ export interface V1User {
 }
 
 /**
+ * UserWebSetting represents user web setting.
+ * @export
+ * @interface V1UserWebSetting
+ */
+export interface V1UserWebSetting {
+    /**
+     * The key of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    key: string;
+    /**
+     * The storage path of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    storagePath?: string;
+    /**
+     * The value of setting.
+     * @type {string}
+     * @memberof V1UserWebSetting
+     */
+    value?: string;
+}
+
+/**
  * ValidateAfterOperation means the trial should train and validate after training the given length.
  * @export
  * @interface V1ValidateAfterOperation
@@ -6712,6 +7200,32 @@ export interface V1ValidateAfterOperation {
      * @memberof V1ValidateAfterOperation
      */
     length?: string;
+}
+
+/**
+ * ValidationCompleted is a searcher event triggered when a validation has been completed.
+ * @export
+ * @interface V1ValidationCompleted
+ */
+export interface V1ValidationCompleted {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ValidationCompleted
+     */
+    id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ValidationCompleted
+     */
+    requestId?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ValidationCompleted
+     */
+    metric?: number;
 }
 
 /**
@@ -9749,6 +10263,43 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10043,6 +10594,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling postSearcherOperations.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostSearcherOperationsRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -10592,6 +11189,25 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -10720,6 +11336,26 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          */
         pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11000,6 +11636,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get list of SearcherEvents.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSearcherEvents(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a single trial.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
@@ -11074,6 +11720,17 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         pauseExperiment(id: number, options?: any) {
             return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Post list of SearcherOperations.
+         * @param {number} experimentId The experiment id
+         * @param {V1PostSearcherOperationsRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).postSearcherOperations(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11325,6 +11982,18 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get list of SearcherEvents.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getSearcherEvents(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a single trial.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
@@ -11412,6 +12081,19 @@ export class ExperimentsApi extends BaseAPI {
      */
     public pauseExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).pauseExperiment(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Post list of SearcherOperations.
+     * @param {number} experimentId The experiment id
+     * @param {V1PostSearcherOperationsRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).postSearcherOperations(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11886,6 +12568,134 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"V1CreateExperimentRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling expCompareMetricNames.');
+            }
+            const localVarPath = `/api/v1/trials/metrics-stream/metric-names`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (trialId) {
+                localVarQueryParameter['trialId'] = trialId;
+            }
+
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentIds' is not null or undefined
+            if (experimentIds === null || experimentIds === undefined) {
+                throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling expCompareTrialsSample.');
+            }
+            // verify required parameter 'metricName' is not null or undefined
+            if (metricName === null || metricName === undefined) {
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling expCompareTrialsSample.');
+            }
+            // verify required parameter 'metricType' is not null or undefined
+            if (metricType === null || metricType === undefined) {
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling expCompareTrialsSample.');
+            }
+            const localVarPath = `/api/v1/experiments-compare`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (experimentIds) {
+                localVarQueryParameter['experimentIds'] = experimentIds;
+            }
+
+            if (metricName !== undefined) {
+                localVarQueryParameter['metricName'] = metricName;
+            }
+
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType;
+            }
+
+            if (maxTrials !== undefined) {
+                localVarQueryParameter['maxTrials'] = maxTrials;
+            }
+
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints;
+            }
+
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches;
+            }
+
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches;
+            }
+
+            if (periodSeconds !== undefined) {
+                localVarQueryParameter['periodSeconds'] = periodSeconds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
             return {
                 url: url.format(localVarUrlObj),
@@ -13150,6 +13960,52 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareMetricNames(trialId, periodSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -13725,6 +14581,34 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the set of metric names recorded for a trial.
+         * @param {Array<number>} trialId The id of the experiment.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expCompareMetricNames(trialId, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a sample of the metrics over time for a sample of the trials.
+         * @param {Array<number>} experimentIds The id of the experiment.
+         * @param {string} metricName A metric name.
+         * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+         * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+         * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+         * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+         * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the best searcher validation for an experiment by the given metric.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -14108,6 +14992,38 @@ export class InternalApi extends BaseAPI {
      */
     public createExperiment(body: V1CreateExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).createExperiment(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the set of metric names recorded for a trial.
+     * @param {Array<number>} trialId The id of the experiment.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expCompareMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a sample of the metrics over time for a sample of the trials.
+     * @param {Array<number>} experimentIds The id of the experiment.
+     * @param {string} metricName A metric name.
+     * @param {'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION'} metricType The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {number} [maxTrials] Maximum number of trials to fetch data for.
+     * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
+     * @param {number} [startBatches] Beginning of window (inclusive) to fetch data for.
+     * @param {number} [endBatches] Ending of window (inclusive) to fetch data for.
+     * @param {number} [periodSeconds] Seconds to wait when polling for updates.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20303,6 +21219,37 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/setting`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20420,6 +21367,77 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserSetting.');
+            }
+            const localVarPath = `/api/v1/users/setting`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostUserSettingRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/users/setting/reset`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -20494,6 +21512,24 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20551,6 +21587,43 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Set the requested user's password.
          * @param {number} userId The id of the user.
          * @param {string} body The password of the user.
@@ -20590,6 +21663,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserSetting(options?: any) {
+            return UsersApiFp(configuration).getUserSetting(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -20617,6 +21699,25 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         postUser(body: V1PostUserRequest, options?: any) {
             return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch a user's settings for website
+         * @param {V1PostUserSettingRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+            return UsersApiFp(configuration).postUserSetting(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Reset a user's settings for website
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetUserSetting(options?: any) {
+            return UsersApiFp(configuration).resetUserSetting(options)(fetch, basePath);
         },
         /**
          * 
@@ -20653,6 +21754,17 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get a user's settings for website
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).getUserSetting(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get a list of users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -20685,6 +21797,29 @@ export class UsersApi extends BaseAPI {
      */
     public postUser(body: V1PostUserRequest, options?: any) {
         return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's settings for website
+     * @param {V1PostUserSettingRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserSetting(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Reset a user's settings for website
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public resetUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).resetUserSetting(options)(this.fetch, this.basePath);
     }
 
     /**

@@ -8,14 +8,13 @@ import React from 'react';
 
 import InlineEditor from './InlineEditor';
 
-const setup = (
-  { disabled, onSaveReturnsError, value } = {
-    disabled: false,
-    onSaveReturnsError: false,
-    value: 'before',
-  },
-) => {
-  // const onSave=jest.fn(async () => {})
+const user = userEvent.setup();
+
+const setup = ({ disabled, onSaveReturnsError, value } = {
+  disabled: false,
+  onSaveReturnsError: false,
+  value: 'before',
+}) => {
   const onSave = onSaveReturnsError
     ? jest.fn(() => Promise.resolve(new Error()))
     : jest.fn(() => Promise.resolve());
@@ -29,11 +28,12 @@ const setup = (
     />,
   );
 
-  const waitForSpinnerToDisappear = async () =>
-    await waitForElementToBeRemoved(
-      () => container.getElementsByClassName('ant-spin-spinning')[0],
-    );
-  return { onCancel, onSave, waitForSpinnerToDisappear };
+  const waitForSpinnerToDisappear = async () => {
+    if (container.querySelector('.ant-spin-spinning') == null) return;
+    await waitForElementToBeRemoved(container.querySelector('.ant-spin-spinning'));
+  };
+
+  return { onCancel, onSave, user, waitForSpinnerToDisappear };
 };
 
 describe('InlineEditor', () => {
@@ -44,9 +44,10 @@ describe('InlineEditor', () => {
 
   it('preserves input when focus leaves', async () => {
     const { waitForSpinnerToDisappear } = setup();
-    userEvent.clear(screen.getByRole('textbox'));
-    userEvent.type(screen.getByRole('textbox'), 'after');
-    userEvent.click(document.body);
+    await user.click(screen.getByRole('textbox'));
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'after');
+    await user.click(document.body);
     expect(screen.getByRole('textbox')).not.toHaveFocus();
     await waitForSpinnerToDisappear();
     expect(screen.getByDisplayValue('after')).toBeInTheDocument();
@@ -54,9 +55,10 @@ describe('InlineEditor', () => {
 
   it('calls save with input on blur', async () => {
     const { onSave, waitForSpinnerToDisappear } = setup();
-    userEvent.clear(screen.getByRole('textbox'));
-    userEvent.type(screen.getByRole('textbox'), 'after');
-    userEvent.click(document.body);
+    await user.click(screen.getByRole('textbox'));
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'after');
+    await user.click(document.body);
     expect(screen.getByRole('textbox')).not.toHaveFocus();
     await waitForSpinnerToDisappear();
     expect(onSave).toHaveBeenCalledWith('after');
@@ -68,27 +70,28 @@ describe('InlineEditor', () => {
       onSaveReturnsError: true,
       value: 'before',
     });
-    userEvent.clear(screen.getByRole('textbox'));
-    userEvent.type(screen.getByRole('textbox'), 'after');
-    userEvent.keyboard('{enter}');
+    await user.click(screen.getByRole('textbox'));
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'after');
+    await user.keyboard('{enter}');
     await waitForSpinnerToDisappear();
     expect(onSave).toHaveBeenCalledWith('after');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
   });
 
-  it('calls cancel and restores previous value when esc is pressed', () => {
+  it('calls cancel and restores previous value when esc is pressed', async () => {
     const { onCancel } = setup();
-    userEvent.clear(screen.getByRole('textbox'));
-    userEvent.type(screen.getByRole('textbox'), 'after');
-    userEvent.keyboard('{escape}');
+    await user.click(screen.getByRole('textbox'));
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'after');
+    await user.keyboard('{escape}');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it('doesnt allow user input when disabled', () => {
+  it('doesnt allow user input when disabled', async () => {
     setup({ disabled: true, onSaveReturnsError: true, value: 'before' });
-    userEvent.clear(screen.getByRole('textbox'));
-    userEvent.type(screen.getByRole('textbox'), 'after');
+    await user.type(screen.getByRole('textbox'), 'after');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
   });
 });

@@ -1,7 +1,10 @@
 import { Tooltip } from 'antd';
-import React, { CSSProperties, PropsWithChildren } from 'react';
+import React, { CSSProperties, PropsWithChildren, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';
+import { useStore } from 'contexts/Store';
+import { DarkLight, getCssVar } from 'shared/themes';
+import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
 
@@ -26,26 +29,39 @@ const Badge: React.FC<BadgeProps> = ({
   type = BadgeType.Default,
   ...props
 }: PropsWithChildren<BadgeProps>) => {
-  const classes = [ css.base ];
-  const style: CSSProperties = {};
+  const { ui } = useStore();
 
-  if (type === BadgeType.State) {
-    classes.push(css.state);
-    style.backgroundColor = getStateColorCssVar(state);
-    style.color = getStateColorCssVar(state, { isOn: true });
-    if (state === SlotState.Free
-      || state === ResourceState.Warm
-      || state === ResourceState.Potential) {
-      style.color = '#234b65';
+  const { classes, style } = useMemo(() => {
+    const isDark = ui.darkLight === DarkLight.Dark;
+    const classes = [ css.base ];
+    const style: CSSProperties = {};
+
+    if (type === BadgeType.State) {
+      const backgroundColor = str2hsl(getCssVar(getStateColorCssVar(state)));
+      style.backgroundColor = hsl2str({
+        ...backgroundColor,
+        l: isDark ? 35 : 45,
+        s: backgroundColor.s > 0 ? (isDark ? 70 : 50) : 0,
+      });
+      style.color = getStateColorCssVar(state, { isOn: true });
+      classes.push(css.state);
+
+      if (state === SlotState.Free
+        || state === ResourceState.Warm
+        || state === ResourceState.Potential) {
+        classes.push(css.neutral);
+
+        if (state === ResourceState.Potential) classes.push(css.dashed);
+      }
+      if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+    } else if (type === BadgeType.Id) {
+      classes.push(css.id);
+    } else if (type === BadgeType.Header) {
+      classes.push(css.header);
     }
-    if(state === ResourceState.Potential) {
-      style.border = '1px dashed #cccccc';
-    }
-  } else if (type === BadgeType.Id) {
-    classes.push(css.id);
-  } else if (type === BadgeType.Header) {
-    classes.push(css.header);
-  }
+
+    return { classes, style };
+  }, [ state, type, ui.darkLight ]);
 
   const badge = (
     <span className={classes.join(' ')} style={style}>

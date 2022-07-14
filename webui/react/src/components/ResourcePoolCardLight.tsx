@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
-import useTheme from 'hooks/useTheme';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
@@ -59,11 +58,12 @@ type SafeRawJson = Record<string, unknown>;
 
 /** Resource pool logo based on resource pool type */
 export const PoolLogo: React.FC<{type: V1ResourcePoolType}> = ({ type }) => {
-  const { themeMode } = useTheme();
+  const { ui } = useStore();
+
   let iconSrc = '';
   switch (type) {
     case V1ResourcePoolType.AWS:
-      iconSrc = themeMode === DarkLight.Light ? awsLogo : awsLogoOnDark;
+      iconSrc = ui.darkLight === DarkLight.Light ? awsLogo : awsLogoOnDark;
       break;
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;

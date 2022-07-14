@@ -68,7 +68,7 @@ class TrainAndValidate:
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
                 if validation.get("stop_requested"):
-                    assert step_id == self.request_stop_step_id
+                    assert step_id == self.request_stop_step_id, (step_id, self)
                     stop_requested = True
 
             if stop_requested:
@@ -177,7 +177,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
     """
     assert set(metrics_A.keys()) == set(metrics_B.keys())
     for key in metrics_A.keys():
-        if isinstance(metrics_A[key], (float, np.float)):
+        if isinstance(metrics_A[key], (float, np.float64)):
             assert metrics_A[key] == pytest.approx(metrics_B[key])
         elif isinstance(metrics_A[key], np.ndarray):
             assert np.array_equal(metrics_A[key], metrics_B[key])
@@ -185,7 +185,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
             assert metrics_A[key] == metrics_B[key]
 
 
-def xor_data(dtype: np.dtype = np.int64) -> Tuple[np.ndarray, np.ndarray]:
+def xor_data(dtype: Type[Any] = np.int64) -> Tuple[np.ndarray, np.ndarray]:
     training_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=dtype)
     training_labels = np.array([0, 1, 1, 0], dtype=dtype)
     return training_data, training_labels
@@ -194,7 +194,7 @@ def xor_data(dtype: np.dtype = np.int64) -> Tuple[np.ndarray, np.ndarray]:
 def make_xor_data_sequences(
     shuffle: bool = False,
     seed: Optional[int] = None,
-    dtype: np.dtype = np.int64,
+    dtype: Type[Any] = np.int64,
     multi_input_output: bool = False,
     batch_size: int = 1,
 ) -> Tuple[keras_utils.Sequence, keras_utils.Sequence]:

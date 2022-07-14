@@ -42,7 +42,7 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		Slots:          slots,
 		Containers:     containers,
 		Label:          a.Label,
-		ResourcePool:   a.ResourcePool,
+		ResourcePools:  []string{a.ResourcePool},
 		Addresses:      a.Addresses,
 		Enabled:        a.Enabled,
 		Draining:       a.Draining,

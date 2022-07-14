@@ -1,8 +1,7 @@
-import { Switch } from 'antd';
+import { Space, Switch } from 'antd';
 import React, { useCallback } from 'react';
 
 import Label from './Label';
-import css from './Toggle.module.scss';
 
 interface Props {
   checked?: boolean;
@@ -17,11 +16,11 @@ const Toggle: React.FC<Props> = ({ checked = false, onChange, ...props }: Props)
   }, [ checked, onChange ]);
 
   return (
-    <div className={css.base} onClick={handleClick}>
+    <Space onClick={handleClick}>
       {props.prefixLabel && <Label>{props.prefixLabel}</Label>}
-      <Switch checked={checked} />
+      <Switch checked={checked} size="small" />
       {props.suffixLabel && <Label>{props.suffixLabel}</Label>}
-    </div>
+    </Space>
   );
 };
 

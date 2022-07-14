@@ -2,16 +2,16 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Avatar from 'components/Avatar';
 import CopyButton from 'components/CopyButton';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import showModalItemCannotDelete from 'components/ModalItemDelete';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
-import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
+import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
+import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
@@ -29,36 +29,28 @@ interface Props {
   onUpdateTags: (newTags: string[]) => Promise<void>;
 }
 
-const ModelVersionHeader: React.FC<Props> = (
-  {
-    modelVersion, onDeregisterVersion,
-    onSaveDescription, onUpdateTags, onSaveName,
-  }: Props,
-) => {
-  const { auth: { user }, users } = useStore();
+const ModelVersionHeader: React.FC<Props> = ({
+  modelVersion,
+  onSaveDescription,
+  onUpdateTags,
+  onSaveName,
+}: Props) => {
+  const { users } = useStore();
   const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
-  const { modalOpen: openModelDownload } = useModalDownloadModel({ modelVersion });
 
-  const isDeletable = user?.isAdmin
-        || user?.id === modelVersion.userId;
+  const {
+    contextHolder: modalModelDownloadContextHolder,
+    modalOpen: openModelDownload,
+  } = useModalModelDownload();
 
-  const showConfirmDelete = useCallback(() => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${modelVersion.version}"
-            from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: onDeregisterVersion,
-      title: 'Confirm Delete',
-    });
-  }, [ onDeregisterVersion, modelVersion.version ]);
+  const {
+    contextHolder: modalModelVersionDeleteContextHolder,
+    modalOpen: openModalVersionDelete,
+  } = useModalModelVersionDelete();
 
   const handleDownloadModel = useCallback(() => {
-    openModelDownload({});
-  }, [ openModelDownload ]);
+    openModelDownload(modelVersion);
+  }, [ modelVersion, openModelDownload ]);
 
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -101,32 +93,33 @@ const ModelVersionHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription, onUpdateTags, users ]);
 
-  const actions = useMemo(() => {
-    return [
-      {
-        danger: false,
-        disabled: false,
-        key: 'download-model',
-        onClick: handleDownloadModel,
-        text: 'Download',
-      },
-      {
-        danger: false,
-        disabled: false,
-        key: 'use-in-notebook',
-        onClick: () => setShowUseInNotebook(true),
-        text: 'Use in Notebook',
-      },
-      {
-        danger: true,
-        disabled: false,
-        key: 'deregister-version',
-        onClick: () => isDeletable ?
-          showConfirmDelete() : showModalItemCannotDelete(),
-        text: 'Deregister Version',
-      },
-    ];
-  }, [ handleDownloadModel, isDeletable, showConfirmDelete ]);
+  const handleDelete = useCallback(() => {
+    openModalVersionDelete(modelVersion);
+  }, [ openModalVersionDelete, modelVersion ]);
+
+  const actions = useMemo(() => ([
+    {
+      danger: false,
+      disabled: false,
+      key: 'download-model',
+      onClick: handleDownloadModel,
+      text: 'Download',
+    },
+    {
+      danger: false,
+      disabled: false,
+      key: 'use-in-notebook',
+      onClick: () => setShowUseInNotebook(true),
+      text: 'Use in Notebook',
+    },
+    {
+      danger: true,
+      disabled: false,
+      key: 'deregister-version',
+      onClick: handleDelete,
+      text: 'Deregister Version',
+    },
+  ]), [ handleDelete, handleDownloadModel ]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -229,6 +222,8 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
         </div>
         <InfoBox rows={infoRows} separator={false} />
       </div>
+      {modalModelDownloadContextHolder}
+      {modalModelVersionDeleteContextHolder}
       <Modal
         className={css.useNotebookModal}
         footer={null}

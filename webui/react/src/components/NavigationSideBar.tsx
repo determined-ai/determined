@@ -1,15 +1,15 @@
-import { Button, Menu, Modal, Tooltip, Typography } from 'antd';
+import { Button, Menu, Tooltip, Typography } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef,
   useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import AvatarCard from 'components/AvatarCard';
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
+import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
@@ -92,13 +92,20 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, action, ...props }:
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
-  const { modalOpen: openWorkspaceCreateModal } = useModalWorkspaceCreate({});
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
+  const {
+    contextHolder: modalUserSettingsContextHolder,
+    modalOpen: openUserSettingsModal,
+  } = useModalUserSettings();
+  const {
+    contextHolder: modalWorkspaceCreateContextHolder,
+    modalOpen: openWorkspaceCreateModal,
+  } = useModalWorkspaceCreate();
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
@@ -175,7 +182,7 @@ const NavigationSideBar: React.FC = () => {
             )}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <AvatarCard className={css.user} user={auth.user} />
+            <AvatarCard className={css.user} darkLight={ui.darkLight} user={auth.user} />
           </Dropdown>
         </header>
         <main>
@@ -197,7 +204,7 @@ const NavigationSideBar: React.FC = () => {
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ?
-                  clusterStatusText(overview, resourcePools) : undefined}
+                  clusterStatusText(overview, resourcePools, agents) : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />
@@ -275,8 +282,9 @@ const NavigationSideBar: React.FC = () => {
             )}
           </div>
         </footer>
-        {userSettingsModalContextHolder}
-        {jupyterLabModalContextHolder}
+        {modalJupyterLabContextHolder}
+        {modalUserSettingsContextHolder}
+        {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>
   );

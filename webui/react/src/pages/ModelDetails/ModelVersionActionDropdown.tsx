@@ -1,86 +1,39 @@
-import { Dropdown, Menu, Modal } from 'antd';
+import { Dropdown, Menu } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
-import showModalItemCannotDelete from 'components/ModalItemDelete';
-import useModalDownloadModel from 'hooks/useModal/useModalDownloadModel';
-import { deleteModelVersion } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
-import { ErrorType } from 'shared/utils/error';
-import { DetailedUser, ModelItem, ModelVersion } from 'types';
-import handleError from 'utils/error';
 
 interface Props {
   className?: string;
-  curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
-  model?: ModelItem;
-  modelVersion: ModelVersion;
-  onComplete?: () => void;
+  onDelete?: () => void;
+  onDownload?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const ModelVersionActionDropdown: React.FC<Props> = (
-  {
-    model, modelVersion, children, curUser, onVisibleChange,
-    className, direction = 'vertical', onComplete, trigger,
-  }
-  : PropsWithChildren<Props>,
-) => {
-  const { modalOpen: openModelDownload } = useModalDownloadModel({
-    modelVersion,
-    onClose: onComplete,
-  });
+const ModelVersionActionDropdown: React.FC<Props> = ({
+  children,
+  className,
+  direction = 'vertical',
+  onDelete,
+  onDownload,
+  onVisibleChange,
+  trigger,
+}: PropsWithChildren<Props>) => {
+  const handleDownloadClick = useCallback(() => onDownload?.(), [ onDownload ]);
 
-  const isDeletable = useMemo(() => {
-    return curUser?.isAdmin
-    || curUser?.id === model?.userId
-    || curUser?.id === modelVersion.userId;
-  }, [ curUser?.id, curUser?.isAdmin, model?.userId, modelVersion.userId ]);
-
-  const deleteVersion = useCallback(async (version: ModelVersion) => {
-    try {
-      await deleteModelVersion({ modelName: version.model.name, versionId: version.id });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: `Unable to delete model version ${version.id}.`,
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, []);
-
-  const showConfirmDelete = useCallback((version: ModelVersion) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this version "Version ${version.version}"
-      from this model?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Version',
-      okType: 'danger',
-      onOk: () => deleteVersion(version),
-      title: 'Confirm Delete',
-    });
-  }, [ deleteVersion ]);
-
-  const handleDownloadModel = useCallback(() => {
-    openModelDownload({});
-  }, [ openModelDownload ]);
-
-  const handleDeleteClick = useCallback(() => {
-    isDeletable ? showConfirmDelete(modelVersion) : showModalItemCannotDelete();
-  }, [ isDeletable, modelVersion, showConfirmDelete ]);
+  const handleDeleteClick = useCallback(() => onDelete?.(), [ onDelete ]);
 
   const ModelVersionActionMenu = useMemo(() => {
     return (
       <Menu>
         <Menu.Item
           key="download"
-          onClick={handleDownloadModel}>
+          onClick={handleDownloadClick}>
           Download
         </Menu.Item>
         <Menu.Item
@@ -91,7 +44,7 @@ const ModelVersionActionDropdown: React.FC<Props> = (
         </Menu.Item>
       </Menu>
     );
-  }, [ handleDownloadModel, handleDeleteClick ]);
+  }, [ handleDeleteClick, handleDownloadClick ]);
 
   return children ? (
     <Dropdown

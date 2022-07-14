@@ -125,6 +125,6 @@ class TrialController(metaclass=abc.ABCMeta):
 
     def upload_tb_files(self) -> None:
         self.context._core.train.upload_tensorboard_files(
-            lambda _: True if self.is_chief else lambda p: not p.match("*tfevents*"),
+            (lambda _: True) if self.is_chief else (lambda p: not p.match("*tfevents*")),
             get_rank_aware_path,
         )

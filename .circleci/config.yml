@@ -1243,7 +1243,7 @@ jobs:
       - image: cimg/node:16.14.2
         environment:
           CI: "true"
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1677,6 +1677,9 @@ jobs:
             - store_artifacts:
                 path: /tmp/devcluster/
                 destination: devcluster-logs
+            - store_artifacts:
+                path: /tmp/priority_scheduler
+                destination: devcluster-priority_scheduler-logs
 
   deploy:
     parameters:
@@ -2014,7 +2017,7 @@ jobs:
           fail_only: True
           only_for_branches: master
           failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
-          channel: "devops-ag"
+          channel: "infra-eng-team"
 
 workflows:
   lint:

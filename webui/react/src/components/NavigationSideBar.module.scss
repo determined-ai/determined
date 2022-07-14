@@ -140,7 +140,7 @@
         overflow: hidden;
         padding-right: 16px;
         white-space: nowrap;
-        width: auto
+        width: 100%;
       }
     }
     .navItem.active,
@@ -186,7 +186,7 @@
     background-color: var(--theme-stage-weak);
   }
   .user:hover {
-    background-color: var(--theme-stage-on-weak);
+    background-color: var(--theme-stage-strong);
   }
 }
 .collapsedAppear {

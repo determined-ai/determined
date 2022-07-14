@@ -111,7 +111,7 @@ export interface Resource {
 export interface Agent {
   id: string;
   registeredTime: number;
-  resourcePool: string;
+  resourcePools: string[];
   resources: Resource[];
 }
 
@@ -291,6 +291,7 @@ export enum ExperimentAction {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
+  CompareExperiments = 'Compare',
   CompareTrials = 'Compare Trials',
   ContinueTrial = 'Continue Trial',
   Delete = 'Delete',
