@@ -931,7 +931,7 @@ const ProjectDetails: React.FC = () => {
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      docTitle="Project Details"
+      docTitle="Uncategorized Experiments"
       id="projectDetails">
       <ProjectDetailsTabs
         curUser={user}
