@@ -93,7 +93,7 @@ const useModalCheckpoint = ({
   const deleteCPModalProps: ModalFuncProps = useMemo(() => {
     const content =
       `Are you sure you want to request checkpoint deletetion for batches
-${checkpoint.totalBatches}.This action may complete or fail without further notification.`;
+${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
 
     return {
       content,
