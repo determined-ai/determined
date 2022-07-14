@@ -34,6 +34,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain dependencies for agent Golang
   - package-ecosystem: gomod
@@ -42,6 +43,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain prod dependencies for WebUI
   - package-ecosystem: npm
@@ -55,6 +57,7 @@ updates:
       #   - dependency-name: "react*"
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain dev verion dependencies for WebUI monthly
   - package-ecosystem: npm
@@ -70,6 +73,7 @@ updates:
       - web development env
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for main product
   - package-ecosystem: pip
@@ -78,6 +82,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for examples
   - package-ecosystem: pip
@@ -86,6 +91,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for Model Hub
   - package-ecosystem: pip
@@ -94,6 +100,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for docs
   - package-ecosystem: pip
@@ -102,6 +109,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for end-to-end tests
   - package-ecosystem: pip
@@ -110,6 +118,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for harness tests
   - package-ecosystem: pip
@@ -118,6 +127,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
 
   # Maintain python dependencies for harness tests
   - package-ecosystem: pip
@@ -126,3 +136,4 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
+    open-pull-requests-limit: 0
