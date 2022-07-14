@@ -96,8 +96,9 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 }
 
 // UserByExternalToken returns a user session derived from an external authentication token.
-func (db *PgDB) UserByExternalToken(tokenText string,
-	ext *model.ExternalSessions) (*model.User, *model.UserSession, error) {
+func (db *PgDB) UserByExternalToken(
+	tokenText string, ext *model.ExternalSessions,
+) (*model.User, *model.UserSession, error) {
 	type externalToken struct {
 		*jwt.StandardClaims
 		Email string
