@@ -554,6 +554,8 @@ def list_experiments(args: Namespace) -> None:
             render.format_time(e.endTime),
             e.resourcePool,
         ]
+        if args.show_project:
+            result = [e.workspaceName, e.projectName] + result
         if args.all:
             result.append(e.archived)
         return result
@@ -569,6 +571,8 @@ def list_experiments(args: Namespace) -> None:
         "End Time",
         "Resource Pool",
     ]
+    if args.show_project:
+        headers = ["Workspace", "Project"] + headers
     if args.all:
         headers.append("Archived")
 
@@ -831,6 +835,11 @@ main_cmd = Cmd(
                     "-a",
                     action="store_true",
                     help="show all experiments (including archived and other users')",
+                ),
+                Arg(
+                    "--show_project",
+                    action="store_true",
+                    help="include columns for workspace name and project name",
                 ),
                 *pagination_args,
                 Arg("--csv", action="store_true", help="print as CSV"),
