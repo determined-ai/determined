@@ -1,11 +1,7 @@
 package sso
 
 import (
-	"net/url"
-
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/oidc"
-	"github.com/determined-ai/determined/master/internal/saml"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 )
 
