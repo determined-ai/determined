@@ -19,7 +19,7 @@ Version 0.18.4
    config. Users can now specify a list of environment variables that will be set in all task
    containers.
 
--  Web: Most user settings and preferences, like filters, are now persisted to the db. Users will
+-  Web: Most user settings and preferences, like filters, are now persisted to the database. Users will
    now be able to retain their settings across devices.
 
 **Bug Fixes**
