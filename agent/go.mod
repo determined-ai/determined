@@ -26,11 +26,7 @@ require (
 
 require (
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
-<<<<<<< HEAD
-	github.com/stretchr/testify v1.7.1
-=======
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
->>>>>>> f98e284ca (fix lint)
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
