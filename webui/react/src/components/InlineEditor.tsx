@@ -145,7 +145,7 @@ const InlineEditor: React.FC<Props> = ({
         <textarea
           cols={1}
           maxLength={maxLength}
-          placeholder={disabled ? '' : placeholder}
+          placeholder={disabled ? 'No description' : placeholder}
           readOnly={!isEditable}
           ref={textareaRef}
           rows={1}
