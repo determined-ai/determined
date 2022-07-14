@@ -7,7 +7,14 @@ import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { PatchUserParams } from 'services/types';
 import { DetailedUser } from 'types';
 
-import useModalUserSettings from './useModalUserSettings';
+import useModalNameChange, {
+  API_SUCCESS_MESSAGE,
+  CANCEL_BUTTON_LABEL,
+  DISPLAY_NAME_LABEL,
+  MODAL_HEADER_LABEL,
+  NAME_TOO_LONG_MESSAGE,
+  OK_BUTTON_LABEL,
+} from './useModalNameChange';
 
 const mockPatchUser = jest.fn();
 
@@ -21,11 +28,9 @@ const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
 const USER_ID = 1;
 const DISPLAY_NAME = 'Test Name';
-const NAME_CHANGE_TEXT = 'Change name';
-const USER_SETTINGS_HEADER = 'Account';
-const UPDATED_DISPLAY_NAME = 'New Displayname';
+const NEW_DISPLAY_NAME = 'New Display Name';
 
-const currentUser: DetailedUser = {
+const CURRENT_USER: DetailedUser = {
   displayName: DISPLAY_NAME,
   id: USER_ID,
   isActive: true,
@@ -33,33 +38,25 @@ const currentUser: DetailedUser = {
   username: USERNAME,
 };
 
-const users: Array<DetailedUser> = [ currentUser ];
+const USERS: Array<DetailedUser> = [ CURRENT_USER ];
 
-const TestApp: React.FC = () => {
-  const { contextHolder, modalOpen: openUserSettingsModal } = useModalUserSettings();
+const user = userEvent.setup();
+
+const Container: React.FC = () => {
+  const { contextHolder, modalOpen } = useModalNameChange();
   const storeDispatch = useStoreDispatch();
 
   const loadUsers = useCallback(() => {
-    storeDispatch({
-      type: StoreAction.SetUsers,
-      value: users,
-    });
-    storeDispatch({
-      type: StoreAction.SetCurrentUser,
-      value: currentUser,
-    });
+    storeDispatch({ type: StoreAction.SetUsers, value: USERS });
+    storeDispatch({ type: StoreAction.SetCurrentUser, value: CURRENT_USER });
   }, [ storeDispatch ]);
 
-  useEffect(() => {
-    loadUsers();
-  });
+  useEffect(() => loadUsers(), [ loadUsers ]);
 
   return (
     <div>
+      <Button onClick={() => modalOpen()}>{OPEN_MODAL_TEXT}</Button>
       {contextHolder}
-      <Button onClick={() => openUserSettingsModal()}>
-        {OPEN_MODAL_TEXT}
-      </Button>
     </div>
   );
 };
@@ -67,80 +64,84 @@ const TestApp: React.FC = () => {
 const setup = async () => {
   const view = render(
     <StoreProvider>
-      <TestApp />
+      <Container />
     </StoreProvider>,
   );
-  const user = userEvent.setup();
-  await user.click(await screen.findByText(OPEN_MODAL_TEXT));
-  await user.click(await screen.findByText(NAME_CHANGE_TEXT));
 
-  return { user, view };
+  await user.click(await view.findByText(OPEN_MODAL_TEXT));
+  await view.findByRole('heading', { name: MODAL_HEADER_LABEL });
+
+  return view;
 };
 
 describe('useModalNameChange', () => {
-  it('opens modal with correct values', async () => {
+  it('should open modal with correct values', async () => {
     await setup();
 
-    await screen.findByRole('heading', { name: NAME_CHANGE_TEXT });
-    expect(screen.getByRole('textbox', { name: 'Display name' })).toHaveValue(DISPLAY_NAME);
+    expect(screen.getByRole('textbox', { name: DISPLAY_NAME_LABEL })).toHaveValue(DISPLAY_NAME);
   });
 
-  it('validates the display name update request', async () => {
-    const { user } = await setup();
+  it('should close the modal via upper right close button', async () => {
+    await setup();
 
-    const input = await screen.findByRole('textbox', { name: 'Display name' });
-    await user.type(input, 'a'.repeat(81));
-    await user.click(screen.getAllByRole('button', { name: NAME_CHANGE_TEXT })[1]);
+    await user.click(await screen.findByLabelText('Close'));
 
+    // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
     });
   });
 
-  it('submits a valid display name update request', async () => {
-    const { user } = await setup();
+  it('should close the modal via cancel button', async () => {
+    await setup();
 
-    await screen.findByRole('heading', { name: NAME_CHANGE_TEXT });
-    await user.clear(screen.getByRole('textbox', { name: 'Display name' }));
-    await user.click(screen.getByRole('textbox', { name: 'Display name' }));
-    await user.keyboard(UPDATED_DISPLAY_NAME);
+    await user.click(await screen.findByText(CANCEL_BUTTON_LABEL));
+
+    // Check for the modal to be dismissed.
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+    });
+  });
+
+  it('should validate the display name update request', async () => {
+    await setup();
+
+    const input = await screen.findByRole('textbox', { name: DISPLAY_NAME_LABEL });
+    await user.type(input, 'a'.repeat(81));
+    await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
+
+    // Check for error alert message.
+    expect(await screen.findByText(NAME_TOO_LONG_MESSAGE)).toBeInTheDocument();
+  });
+
+  it('should submit a valid display name update request', async () => {
+    await setup();
+
+    await user.clear(screen.getByRole('textbox', { name: DISPLAY_NAME_LABEL }));
+    await user.click(screen.getByRole('textbox', { name: DISPLAY_NAME_LABEL }));
+    await user.keyboard(NEW_DISPLAY_NAME);
 
     mockPatchUser.mockResolvedValue({
-      ...currentUser,
-      displayName: UPDATED_DISPLAY_NAME,
+      ...CURRENT_USER,
+      displayName: NEW_DISPLAY_NAME,
     });
 
-    await user.click(screen.getAllByRole('button', { name: NAME_CHANGE_TEXT })[1]);
+    await user.click(await screen.findByRole('button', { name: OK_BUTTON_LABEL }));
 
-    // TODO: test for toast message appearance?
-
-    // modal closes:
+    // Check for successful toast message.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: NAME_CHANGE_TEXT })).not.toBeInTheDocument();
+      expect(screen.getByText(API_SUCCESS_MESSAGE)).toBeInTheDocument();
     });
-    expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
 
-    // api method was called:
+    // Check for the modal to be dismissed.
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+    });
+
+    // Check that the API method was called with the correct parameters.
     expect(mockPatchUser).toHaveBeenCalledWith({
       userId: USER_ID,
-      userParams: { displayName: UPDATED_DISPLAY_NAME },
+      userParams: { displayName: NEW_DISPLAY_NAME },
     });
-
-    // store was updated:
-    expect(screen.queryByText(DISPLAY_NAME)).not.toBeInTheDocument();
-    expect(screen.getByText(UPDATED_DISPLAY_NAME)).toBeInTheDocument();
-  });
-
-  it('closes the modal and returns to User Settings modal', async () => {
-    const { user } = await setup();
-
-    await waitFor(async () => {
-      await user.click(screen.getAllByRole('button', { name: /close/i })[1]);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: NAME_CHANGE_TEXT })).not.toBeInTheDocument();
-    });
-    expect(screen.getByRole('heading', { name: USER_SETTINGS_HEADER })).toBeInTheDocument();
   });
 });
