@@ -227,10 +227,10 @@ export const generateTestExperimentData = ():
   };
 
   const trial: TrialDetails = {
+    autoRestarts: 1,
     experimentId: 1,
     hyperparameters: { 1: 1 },
     id: 1,
-    restarts: 1,
     runnerState: 'Active',
     startTime: '1',
     state: RunState.Active,

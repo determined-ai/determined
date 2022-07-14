@@ -424,13 +424,13 @@ type HpValue = Primitive | RawJson
 export type TrialHyperparameters = Record<string, HpValue>
 
 export interface TrialItem extends StartEndTimes {
+  autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }

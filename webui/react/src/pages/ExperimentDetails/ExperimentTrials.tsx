@@ -106,11 +106,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       </Link>
     );
 
-    const restartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
+    const autoRestartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const maxRestarts = experiment.config.maxRestarts ?? 0;
-      const className = record.restarts ? css.hasRestarts : undefined;
+      const className = record.autoRestarts ? css.hasRestarts : undefined;
       return (
-        <span className={className}>{record.restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+        <span className={className}>
+          {record.autoRestarts}{maxRestarts ? `/${maxRestarts}` : ''}
+        </span>
       );
     };
 
@@ -170,7 +172,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             value,
           }));
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
-        column.render = restartsRenderer;
+        column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }

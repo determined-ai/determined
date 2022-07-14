@@ -503,6 +503,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
 
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
+    autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
     endTime: data.endTime && data.endTime as unknown as string,
@@ -510,7 +511,6 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     hyperparameters: flattenObject(data.hparams),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
-    restarts: data.restarts,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,
