@@ -1,8 +1,27 @@
-import 'shared/styles/index.scss';
-import 'shared/styles/storybook.scss';
-import 'shared/prototypes';
+import "shared/styles/index.scss";
+import "shared/styles/storybook.scss";
+import "shared/prototypes";
 
-import ThemeDecorator from "storybook/ThemeDecorator"
+import StoreProvider from "contexts/Store";
+import useTheme from "hooks/useTheme";
+import { BrowserRouter } from "react-router-dom";
 
-export const decorators = [ ThemeDecorator ];
-export const parameters = { layout: 'centered' };
+// ChildView is for calling useTheme in the top level of component
+const ChildView = (props) => {
+  useTheme();
+
+  return <>{props.children}</>;
+};
+
+export const decorators = [
+  (story) => {
+    return (
+      <StoreProvider>
+        <BrowserRouter>
+          <ChildView>{story()}</ChildView>
+        </BrowserRouter>
+      </StoreProvider>
+    );
+  },
+];
+export const parameters = { layout: "centered" };
