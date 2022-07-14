@@ -28,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type dockerActor struct {
@@ -137,17 +138,19 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	switch {
 	case msg.ForcePull:
 		if err == nil {
-			d.sendAuxLog(ctx, fmt.Sprintf(
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
 				"image present, but force_pull_image is set; checking for updates: %s",
 				ref.String(),
 			))
 		}
 	case err == nil:
-		d.sendAuxLog(ctx, fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
 		ctx.Tell(ctx.Sender(), imagePulled{})
 		return
 	case client.IsErrNotFound(err):
-		d.sendAuxLog(ctx, fmt.Sprintf("image not found, pulling image: %s", ref.String()))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("image not found, pulling image: %s", ref.String()))
 	default:
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
@@ -218,8 +221,8 @@ func (d *dockerActor) getDockerAuths(
 	if expconfReg != nil {
 		didNotPassServerAddress := expconfReg.ServerAddress == ""
 		if didNotPassServerAddress {
-			d.sendAuxLog(ctx, "warning setting registry_auth without registry_auth.serveraddress "+
-				"is deprecated and will soon be required")
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning), "setting registry_auth "+
+				"without registry_auth.serveraddress is deprecated and will soon be required")
 		}
 
 		expconfDomain := registry.ConvertToHostname(expconfReg.ServerAddress)
@@ -227,16 +230,17 @@ func (d *dockerActor) getDockerAuths(
 			didNotPassServerAddress { // TODO remove didNotPassServerAddress when it becomes required.
 			return *expconfReg, nil
 		}
-		d.sendAuxLog(ctx, fmt.Sprintf("warning not using expconfig registry_auth "+
-			"since expconf registry_auth.serverAddress %s did not match the image serverAddress %s",
-			expconfDomain, imageDomain))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning),
+			fmt.Sprintf("not using expconfig registry_auth since expconf "+
+				"registry_auth.serverAddress %s did not match the image serverAddress %s",
+				expconfDomain, imageDomain))
 	}
 
 	// Try using credential stores specified in ~/.docker/config.json.
 	if store, ok := d.credentialStores[imageDomain]; ok {
 		creds, err := store.get()
 		if err == nil {
-			d.sendAuxLog(ctx, fmt.Sprintf(
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
 				"domain '%s' found in 'credHelpers' config. Using credentials helper.", imageDomain))
 		}
 		return creds, errors.Wrap(err, "unable to get credentials from helper")
@@ -249,7 +253,7 @@ func (d *dockerActor) getDockerAuths(
 	}
 	reg := registry.ResolveAuthConfig(d.authConfigs, index)
 	if reg != (types.AuthConfig{}) {
-		d.sendAuxLog(ctx, fmt.Sprintf(
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
 			"domain '%s' found in 'auths' ~/.docker/config.json", imageDomain))
 	}
 	return reg, nil
@@ -264,11 +268,13 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	}
 	containerID := response.ID
 	for _, w := range response.Warnings {
-		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning),
+			fmt.Sprintf("warning when creating container: %s", w))
 	}
 
 	for _, copyArx := range msg.Archives {
-		d.sendAuxLog(ctx, fmt.Sprintf("copying files to container: %s", copyArx.Path))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("copying files to container: %s", copyArx.Path))
 		files, aerr := archive.ToIOReader(copyArx.Archive)
 		if aerr != nil {
 			sendErr(ctx, errors.Wrap(aerr, "error converting RunSpec Archive files to io.Reader"))
@@ -374,9 +380,10 @@ func sendErr(ctx *actor.Context, err error) {
 	ctx.Tell(ctx.Sender(), dockerErr{Error: err})
 }
 
-func (d *dockerActor) sendAuxLog(ctx *actor.Context, msg string) {
+func (d *dockerActor) sendAuxLog(ctx *actor.Context, level *string, msg string) {
 	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
 		Timestamp:  time.Now().UTC(),
+		Level:      level,
 		AuxMessage: &msg,
 	})
 }
