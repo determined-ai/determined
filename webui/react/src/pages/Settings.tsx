@@ -1,54 +1,59 @@
-// import { Tabs } from 'antd';
-import React from 'react';
-// import React, { useCallback, useState } from 'react';
-// import { useHistory, useParams } from 'react-router';
+import { Tabs } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
-// import { paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 
-// import css from './Settings.module.scss';
+const { TabPane } = Tabs;
 
-// const { TabPane } = Tabs;
-//
-// enum TabType {
-//   Account = 'account',
-//   UserManagement = 'user-management',
-// }
+enum TabType {
+  Account = 'account',
+  UserManagement = 'user-management',
+}
 
-// interface Params {
-//   tab?: TabType;
-// }
+interface ContentProps {
+  enableRBAC?: boolean;
+}
 
-// const DEFAULT_TAB_KEY = TabType.Account;
+interface Params {
+  tab?: TabType;
+}
 
-const Settings: React.FC = () => {
-  // const { tab } = useParams<Params>();
-  // const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  // const basePath = paths.settings();
-  // const history = useHistory();
+const DEFAULT_TAB_KEY = TabType.Account;
 
-  // const handleTabChange = useCallback(key => {
-  //   setTabKey(key);
-  //   history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  // }, [ basePath, history ]);
+const SettingsContent: React.FC<ContentProps> = ({ enableRBAC = false }) => {
+  const { tab } = useParams<Params>();
+  const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
+  const basePath = paths.settings();
+  const history = useHistory();
 
-  return (
-    <Page
-      bodyNoPadding
-      id="cluster"
-      stickyHeader
-      title="Settings">
-      {/*<Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>*/}
-      {/*  <TabPane key="account" tab="Account">*/}
-      <SettingsAccount />
-      {/*  </TabPane>*/}
-      {/*  <TabPane key="userManagement" tab="User Management">*/}
-      {/*    User Management*/}
-      {/*  </TabPane>*/}
-      {/*</Tabs>*/}
-    </Page>
-  );
+  const handleTabChange = useCallback(key => {
+    setTabKey(key);
+    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+  }, [ basePath, history ]);
+
+  return enableRBAC ? (
+    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+      <TabPane key="account" tab="Account">
+        <SettingsAccount />
+      </TabPane>
+      <TabPane key="userManagement" tab="User Management">
+        User Management
+      </TabPane>
+    </Tabs>
+  ) : <SettingsAccount />;
 };
+
+const Settings: React.FC = () => (
+  <Page
+    bodyNoPadding
+    id="cluster"
+    stickyHeader
+    title="Settings">
+    <SettingsContent />
+  </Page>
+);
 
 export default Settings;
