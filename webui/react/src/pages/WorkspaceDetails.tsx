@@ -172,7 +172,7 @@ const WorkspaceDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: Project) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
       />
