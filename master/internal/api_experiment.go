@@ -1598,3 +1598,25 @@ func (a *apiServer) MoveExperiment(
 	return &apiv1.MoveExperimentResponse{},
 		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
 }
+
+func (a *apiServer) GetModelDefTree(
+	_ context.Context, req *apiv1.GetModelDefTreeRequest,
+) (*apiv1.GetModelDefTreeResponse, error) {
+	modelDefCache := GetModelDefCache()
+	fileTree, err := modelDefCache.FileTreeNested(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetModelDefTreeResponse{Files: fileTree}, nil
+}
+
+func (a *apiServer) GetModelDefFile(
+	_ context.Context, req *apiv1.GetModelDefFileRequest,
+) (*apiv1.GetModelDefFileResponse, error) {
+	modelDefCache := GetModelDefCache()
+	file, err := modelDefCache.FileContent(int(req.ExperimentId), req.Path)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetModelDefFileResponse{File: file}, nil
+}

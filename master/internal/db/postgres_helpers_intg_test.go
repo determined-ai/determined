@@ -15,74 +15,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 func pprintedExpect(expected, got interface{}) string {
 	return fmt.Sprintf("expected \n\t%s\ngot\n\t%s", spew.Sdump(expected), spew.Sdump(got))
-}
-
-func requireMockUser(t *testing.T, db *PgDB) model.User {
-	user := model.User{
-		Username:     uuid.NewString(),
-		PasswordHash: null.NewString("", false),
-		Active:       true,
-	}
-	_, err := db.AddUser(&user, nil)
-	require.NoError(t, err, "failed to add user")
-	return user
-}
-
-const defaultSearcherMetric = "okness"
-
-func requireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Experiment {
-	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
-		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
-			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.Ptr("/home/ckpts"),
-			},
-		},
-		RawEntrypoint: &expconf.EntrypointV0{
-			RawEntrypoint: ptrs.Ptr("model.Classifier"),
-		},
-		RawHyperparameters: map[string]expconf.HyperparameterV0{
-			"global_batch_size": {
-				RawConstHyperparameter: &expconf.ConstHyperparameterV0{
-					RawVal: ptrs.Ptr(1),
-				},
-			},
-		},
-		RawSearcher: &expconf.SearcherConfigV0{
-			RawSingleConfig: &expconf.SingleConfigV0{
-				RawMaxLength: &expconf.LengthV0{
-					Unit:  expconf.Batches,
-					Units: 1,
-				},
-			},
-			RawMetric: ptrs.Ptr(defaultSearcherMetric),
-		},
-	}).(expconf.ExperimentConfigV0)
-
-	exp := model.Experiment{
-		JobID:                model.NewJobID(),
-		State:                model.ActiveState,
-		Config:               cfg,
-		ModelDefinitionBytes: []byte{1, 0, 1, 0, 1, 0},
-		StartTime:            time.Now().Add(-time.Hour),
-		OwnerID:              &user.ID,
-		Username:             user.Username,
-		ProjectID:            1,
-	}
-	err := db.AddExperiment(&exp)
-	require.NoError(t, err, "failed to add experiment")
-	return &exp
 }
 
 func requireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {

@@ -13,6 +13,7 @@ StartLimitInterval=20
 RestartSec=1
 Restart=always
 TimeoutStartSec=0
+CacheDirectory=determined
 ExecStart=/usr/local/bin/determined-master
 
 [Install]

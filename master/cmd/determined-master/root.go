@@ -55,6 +55,12 @@ func runRoot() error {
 	}
 	log.Infof("master configuration: %s", printableConfig)
 
+	err = os.MkdirAll(config.Cache.CacheDir, 0700)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to make cache directory (%s)", config.Cache.CacheDir)
+		return err
+	}
+
 	m := internal.New(logStore, config)
 	return m.Run(context.TODO())
 }

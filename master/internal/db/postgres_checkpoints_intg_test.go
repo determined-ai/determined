@@ -18,10 +18,10 @@ import (
 )
 
 func TestDeleteCheckpoints(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
-	user := requireMockUser(t, db)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
 	task := RequireMockTask(t, db, &user.ID)
 	allocation := requireMockAllocation(t, db, task.TaskID)
 

@@ -15,16 +15,16 @@ import (
 )
 
 func TestClusterAPI(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	_, err := db.GetOrCreateClusterID()
 	require.NoError(t, err, "failed to get or create cluster id")
 
 	// Add a mock user
-	user := requireMockUser(t, db)
+	user := RequireMockUser(t, db)
 
 	// Add a job
 	jID := model.NewJobID()
