@@ -15,9 +15,9 @@ Version 0.18.4
 
 **New Features**
 
--  Configuration: Add support for ``task_container_defaults.environment_variables`` in master
-   config. Users can now specify a list of environment variables that will be set in all task
-   containers.
+-  Configuration: Add support for ``task_container_defaults.environment_variables`` in the master
+   config, which allows users to specify a list of environment variables that will be set in the
+   default task container environment.
 
 -  Web: Most user settings and preferences, like filters, are now persisted to the database. Users
    will now be able to retain their settings across devices.
@@ -30,6 +30,10 @@ Version 0.18.4
 
 -  Kubernetes: Fix a bug where following the link to live TensorBoards would redirect to the
    ``Uncategorized`` page.
+
+-  Ensure an allocation's recorded end time is always valid, even on restoration failures. Invalid
+   end times could cause historical reporting rollups to fail. Previous failures, if any, will be
+   fixed by database migrations this update.
 
 **Improvements**
 
