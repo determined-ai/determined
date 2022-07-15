@@ -125,6 +125,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 				"error while executing rocm-smi to detect GPUs")
 			return nil, nil
 		}
+		log.Warn("rocm-smi detected a card without a product name, firmware issue possible")
 	}
 
 	discoveredRocmDevices, err = parseRocmSmi(out)
