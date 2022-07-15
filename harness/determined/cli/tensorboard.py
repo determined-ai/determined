@@ -52,13 +52,16 @@ def start_tensorboard(args: Namespace) -> None:
                 if args.no_browser:
                     url = api.make_url(args.master, resp["serviceAddress"])
                 else:
-                    url = api.browser_open(args.master, request.make_interactive_task_url(
-                        task_id=resp["id"],
-                        service_address=resp["serviceAddress"],
-                        resource_pool=resp["resourcePool"],
-                        description=resp["description"],
-                        task_type="tensorboard"
-                    ))
+                    url = api.browser_open(
+                        args.master,
+                        request.make_interactive_task_url(
+                            task_id=resp["id"],
+                            service_address=resp["serviceAddress"],
+                            resource_pool=resp["resourcePool"],
+                            description=resp["description"],
+                            task_type="tensorboard",
+                        ),
+                    )
 
                 print(colored("TensorBoard is running at: {}".format(url), "green"))
                 render_event_stream(msg)
@@ -73,13 +76,16 @@ def open_tensorboard(args: Namespace) -> None:
         "tensorboard"
     ]
     check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
-    api.browser_open(args.master, make_interactive_task_url(
-                        task_id=resp["id"],
-                        service_address=resp["serviceAddress"],
-                        resource_pool=resp["resourcePool"],
-                        description=resp["description"],
-                        task_type="tensorboard"
-                    ))
+    api.browser_open(
+        args.master,
+        make_interactive_task_url(
+            task_id=resp["id"],
+            service_address=resp["serviceAddress"],
+            resource_pool=resp["resourcePool"],
+            description=resp["description"],
+            task_type="tensorboard",
+        ),
+    )
 
 
 # fmt: off

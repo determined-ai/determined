@@ -41,15 +41,19 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
     else:
         return master_address
 
-def make_interactive_task_url(task_id: str, 
-        service_address: str, 
-        description:str, 
-        resource_pool: str,
-        task_type: str) -> str:
+
+def make_interactive_task_url(
+    task_id: str, service_address: str, description: str, resource_pool: str, task_type: str
+) -> str:
     wait_path_url = service_address + "/notebooks/{}/events".format(task_id)
-    wait_page_url = "/det/wait/{}/{}?eventUrl={}&serviceAddr={}".format(task_type, task_id,wait_path_url,service_address)
-    notebook_web_url = "/det/interactive/{}/{}/{}/{}/{}".format(task_id,task_type,description,resource_pool,parse.quote_plus(wait_page_url))
+    wait_page_url = "/det/wait/{}/{}?eventUrl={}&serviceAddr={}".format(
+        task_type, task_id, wait_path_url, service_address
+    )
+    notebook_web_url = "/det/interactive/{}/{}/{}/{}/{}".format(
+        task_id, task_type, description, resource_pool, parse.quote_plus(wait_page_url)
+    )
     return notebook_web_url
+
 
 def add_token_to_headers(
     headers: Dict[str, str],

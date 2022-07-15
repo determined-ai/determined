@@ -52,13 +52,16 @@ def start_notebook(args: Namespace) -> None:
     with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
         for msg in ws:
             if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
-                url = api.browser_open(args.master, request.make_interactive_task_url(
-                    task_id= nb.id,
-                    service_address=nb.serviceAddress,
-                    description=nb.description,
-                    resource_pool=nb.resourcePool,
-                    task_type="notebook"
-                ))
+                url = api.browser_open(
+                    args.master,
+                    request.make_interactive_task_url(
+                        task_id=nb.id,
+                        service_address=nb.serviceAddress,
+                        description=nb.description,
+                        resource_pool=nb.resourcePool,
+                        task_type="notebook",
+                    ),
+                )
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
             render_event_stream(msg)
 
@@ -69,13 +72,16 @@ def open_notebook(args: Namespace) -> None:
     resp = api.get(args.master, "api/v1/notebooks/{}".format(notebook_id)).json()["notebook"]
     check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")
 
-    api.browser_open(args.master, request.make_interactive_task_url(
-                    task_id= resp['id'],
-                    service_address=resp['serviceAddress'],
-                    description=resp['description'],
-                    resource_pool=resp['resourcePool'],
-                    task_type="notebook"
-                ))
+    api.browser_open(
+        args.master,
+        request.make_interactive_task_url(
+            task_id=resp["id"],
+            service_address=resp["serviceAddress"],
+            description=resp["description"],
+            resource_pool=resp["resourcePool"],
+            task_type="notebook",
+        ),
+    )
 
 
 # fmt: off
