@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
@@ -33,7 +34,7 @@ func Test_authContext(t *testing.T) {
 
 func Test_generateGetAgentsResponse(t *testing.T) {
 	n1 := hpcNodeDetails{
-		Partitions:    []string{"Partition 1", "Partition 2"},
+		Partitions:    []string{"Partition 1"},
 		Addresses:     []string{"address 1", "address 2"},
 		Draining:      true,
 		Allocated:     true,
@@ -45,7 +46,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	n2 := hpcNodeDetails{
-		Partitions:    []string{"Partition 1", "Partition 3"},
+		Partitions:    []string{"Partition 1", "Partition 2"},
 		Addresses:     []string{"address 3", "address 4"},
 		Draining:      false,
 		Allocated:     true,
@@ -56,7 +57,19 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		CPUInUseCount: 0,
 	}
 
-	nodes := []hpcNodeDetails{n1, n2}
+	n3 := hpcNodeDetails{
+		Partitions:    []string{"Partition 1", "Partition 3"},
+		Addresses:     []string{"address 3", "address 4"},
+		Draining:      false,
+		Allocated:     true,
+		Name:          "Node 3",
+		GpuCount:      2,
+		GpuInUseCount: 1,
+		CPUCount:      8,
+		CPUInUseCount: 0,
+	}
+
+	nodes := []hpcNodeDetails{n1, n2, n3}
 
 	hpcResource := &hpcResources{
 		Nodes: nodes,
@@ -67,7 +80,17 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		sampleTime: time.Now(),
 	}
 
-	overrides := make(map[string]config.DispatcherPartitionOverrideConfigs)
+	var rocm = device.ROCM
+	var cuda = device.CUDA
+	overrides := map[string]config.DispatcherPartitionOverrideConfigs{
+		"Partition 2": {
+			SlotType: &rocm,
+		},
+		"Partition 3": {
+			SlotType: &cuda,
+		},
+	}
+
 	config := &config.DispatcherResourceManagerConfig{
 		PartitionOverrides: overrides,
 	}
@@ -77,7 +100,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		resourceDetails: *resourceDetails,
 	}
 
-	var want0 map[string]*agentv1.Slot = map[string]*agentv1.Slot{
+	want0 := map[string]*agentv1.Slot{
 		"/agents/Node 1/slots/8": {
 			Id:        "8",
 			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
@@ -85,20 +108,33 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
 	}
 
-	var want1 map[string]*agentv1.Slot = map[string]*agentv1.Slot{
+	want1 := map[string]*agentv1.Slot{
 		"/agents/Node 2/slots/0": {
 			Id:        "0",
-			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CUDA},
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_ROCM},
 			Enabled:   true,
 			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
 
 		"/agents/Node 2/slots/1": {
 			Id:      "1",
+			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_ROCM},
+			Enabled: true},
+	}
+
+	want2 := map[string]*agentv1.Slot{
+		"/agents/Node 3/slots/0": {
+			Id:        "0",
+			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CUDA},
+			Enabled:   true,
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
+
+		"/agents/Node 3/slots/1": {
+			Id:      "1",
 			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_CUDA},
 			Enabled: true},
 	}
 
-	wantSlots := []map[string]*agentv1.Slot{want0, want1}
+	wantSlots := []map[string]*agentv1.Slot{want0, want1, want2}
 
 	ctx := &actor.Context{}
 	resp := m.generateGetAgentsResponse(ctx)
