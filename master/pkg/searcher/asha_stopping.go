@@ -120,14 +120,16 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 }
 
 func (s *asyncHalvingStoppingSearch) trialCreated(
-	ctx context, requestID model.RequestID) ([]Operation, error) {
+	ctx context, requestID model.RequestID,
+) ([]Operation, error) {
 	s.Rungs[0].OutstandingTrials++
 	s.TrialRungs[requestID] = 0
 	return nil, nil
 }
 
 func (s *asyncHalvingStoppingSearch) trialClosed(
-	ctx context, requestID model.RequestID) ([]Operation, error) {
+	ctx context, requestID model.RequestID,
+) ([]Operation, error) {
 	s.TrialsCompleted++
 	s.ClosedTrials[requestID] = true
 	return nil, nil
@@ -206,7 +208,8 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 }
 
 func (s *asyncHalvingStoppingSearch) progress(
-	map[model.RequestID]PartialUnits, map[model.RequestID]bool) float64 {
+	map[model.RequestID]PartialUnits, map[model.RequestID]bool,
+) float64 {
 	allTrials := len(s.Rungs[0].Metrics)
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials()))

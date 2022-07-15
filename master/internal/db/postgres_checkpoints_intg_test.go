@@ -49,7 +49,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 	require.NoError(t, err)
 
-	//Register checkpoint_1 and checkpoint_2 in ModelRegistry
+	// Register checkpoint_1 and checkpoint_2 in ModelRegistry
 	var retCkpt1 checkpointv1.Checkpoint
 	err = db.QueryProto("get_checkpoint", &retCkpt1, checkpoint1.UUID)
 	var retCkpt2 checkpointv1.Checkpoint

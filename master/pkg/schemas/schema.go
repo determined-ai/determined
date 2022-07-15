@@ -55,9 +55,11 @@ func IsComplete(schema Schema) error {
 	return nil
 }
 
-var validatorCacheLock sync.RWMutex
-var sanityValidators = map[string]*jsonschema.Schema{}
-var completenessValidators = map[string]*jsonschema.Schema{}
+var (
+	validatorCacheLock     sync.RWMutex
+	sanityValidators       = map[string]*jsonschema.Schema{}
+	completenessValidators = map[string]*jsonschema.Schema{}
+)
 
 // Create a jsonschema.Compiler with all the schemas preloaded.
 func newCompiler() *jsonschema.Compiler {

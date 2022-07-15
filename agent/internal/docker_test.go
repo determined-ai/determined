@@ -64,8 +64,10 @@ func TestGetDockerAuths(t *testing.T) {
 		// Expconf takes precedence over docker config.
 		{"detai", &dockerhubAuthConfig, dockerAuthSection, dockerhubAuthConfig},
 		// We fallback to auths if docker hub has wrong server.
-		{"example.com/detai", &dockerhubAuthConfig, dockerAuthSection,
-			dockerAuthSection["example.com"]},
+		{
+			"example.com/detai", &dockerhubAuthConfig, dockerAuthSection,
+			dockerAuthSection["example.com"],
+		},
 		// We don't return a result if we don't have that serveraddress.
 		{"determined.ai/detai", nil, dockerAuthSection, types.AuthConfig{}},
 	}

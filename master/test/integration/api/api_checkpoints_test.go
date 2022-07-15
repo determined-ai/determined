@@ -262,7 +262,6 @@ func testGetExperimentCheckpoints(
 	for j := 2; j < 5; j += 1 {
 		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
 	}
-
 }
 
 func testGetTrialCheckpoints(
@@ -343,11 +342,11 @@ func testGetTrialCheckpoints(
 	for j := 2; j < 5; j += 1 {
 		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
 	}
-
 }
 
 func createPrereqs(t *testing.T, pgDB *db.PgDB) (
-	*model.Experiment, *model.Trial, *model.Allocation) {
+	*model.Experiment, *model.Trial, *model.Allocation,
+) {
 	experiment := model.ExperimentModel()
 	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")

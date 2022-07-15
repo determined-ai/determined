@@ -248,7 +248,8 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 }
 
 func (a *apiServer) GetExperiments(
-	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
+	_ context.Context, req *apiv1.GetExperimentsRequest,
+) (*apiv1.GetExperimentsResponse, error) {
 	// Construct the experiment filtering expression.
 	var allStates []string
 	for _, state := range req.States {
@@ -320,7 +321,8 @@ func (a *apiServer) GetExperiments(
 }
 
 func (a *apiServer) GetExperimentLabels(_ context.Context,
-	req *apiv1.GetExperimentLabelsRequest) (*apiv1.GetExperimentLabelsResponse, error) {
+	req *apiv1.GetExperimentLabelsRequest,
+) (*apiv1.GetExperimentLabelsResponse, error) {
 	resp := &apiv1.GetExperimentLabelsResponse{}
 
 	var err error
@@ -360,7 +362,8 @@ func (a *apiServer) GetExperimentValidationHistory(
 }
 
 func (a *apiServer) PreviewHPSearch(
-	_ context.Context, req *apiv1.PreviewHPSearchRequest) (*apiv1.PreviewHPSearchResponse, error) {
+	_ context.Context, req *apiv1.PreviewHPSearchRequest,
+) (*apiv1.PreviewHPSearchResponse, error) {
 	bytes, err := protojson.Marshal(req.Config)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
@@ -496,7 +499,8 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (
-	resp *apiv1.KillExperimentResponse, err error) {
+	resp *apiv1.KillExperimentResponse, err error,
+) {
 	if err = a.checkExperimentExists(int(req.Id)); err != nil {
 		return nil, err
 	}
@@ -769,7 +773,6 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
-
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
@@ -803,7 +806,8 @@ func (a *apiServer) CreateExperiment(
 var defaultMetricsStreamPeriod = 30 * time.Second
 
 func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
-	resp apiv1.Determined_MetricNamesServer) error {
+	resp apiv1.Determined_MetricNamesServer,
+) error {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
@@ -873,7 +877,8 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 }
 
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
-	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
+	resp apiv1.Determined_ExpCompareMetricNamesServer,
+) error {
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
@@ -927,7 +932,8 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 }
 
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
-	resp apiv1.Determined_MetricBatchesServer) error {
+	resp apiv1.Determined_MetricBatchesServer,
+) error {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
@@ -998,7 +1004,8 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 }
 
 func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
-	resp apiv1.Determined_TrialsSnapshotServer) error {
+	resp apiv1.Determined_TrialsSnapshotServer,
+) error {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
@@ -1079,7 +1086,8 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 }
 
 func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.SearcherConfig) (
-	trials []int32, err error) {
+	trials []int32, err error,
+) {
 	type Ranking int
 	const (
 		ByMetricOfInterest Ranking = 1
@@ -1120,7 +1128,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 
 func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
 	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
-	trialCursors map[int32]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
+	trialCursors map[int32]time.Time,
+) (*apiv1.TrialsSampleResponse_Trial, error) {
 	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
@@ -1175,7 +1184,8 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,
-	trialCursors map[int32]time.Time) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
+	trialCursors map[int32]time.Time,
+) (*apiv1.ExpCompareTrialsSampleResponse_ExpTrial, error) {
 	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
@@ -1229,7 +1239,8 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 }
 
 func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
-	resp apiv1.Determined_TrialsSampleServer) error {
+	resp apiv1.Determined_TrialsSampleServer,
+) error {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
@@ -1335,7 +1346,8 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 }
 
 func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
-	resp apiv1.Determined_ExpCompareTrialsSampleServer) error {
+	resp apiv1.Determined_ExpCompareTrialsSampleServer,
+) error {
 	experimentIDs := req.ExperimentIds
 	maxTrials := int(req.MaxTrials)
 	if maxTrials == 0 {
@@ -1381,7 +1393,6 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 			maxTrials,
 			metricName,
 			smallerIsBetter)
-
 		if err != nil {
 			return err
 		}
@@ -1432,7 +1443,8 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 }
 
 func (a *apiServer) ComputeHPImportance(ctx context.Context,
-	req *apiv1.ComputeHPImportanceRequest) (*apiv1.ComputeHPImportanceResponse, error) {
+	req *apiv1.ComputeHPImportanceRequest,
+) (*apiv1.ComputeHPImportanceResponse, error) {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return nil, err
@@ -1476,7 +1488,8 @@ func protoMetricHPI(metricHpi model.MetricHPImportance,
 }
 
 func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
-	resp apiv1.Determined_GetHPImportanceServer) error {
+	resp apiv1.Determined_GetHPImportanceServer,
+) error {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
@@ -1576,7 +1589,8 @@ func (a *apiServer) GetModelDef(
 }
 
 func (a *apiServer) MoveExperiment(
-	_ context.Context, req *apiv1.MoveExperimentRequest) (*apiv1.MoveExperimentResponse, error) {
+	_ context.Context, req *apiv1.MoveExperimentRequest,
+) (*apiv1.MoveExperimentResponse, error) {
 	p, err := a.GetProjectByID(req.DestinationProjectId)
 	if err != nil {
 		return nil, err

@@ -206,7 +206,7 @@ func startLoggingContainer(
 		fluentArchive = append(fluentArchive, archive.Item{
 			Path:     filepath.Join(fluentBaseDir, name),
 			Type:     tar.TypeReg,
-			FileMode: 0444,
+			FileMode: 0o444,
 			Content:  content,
 		})
 	}

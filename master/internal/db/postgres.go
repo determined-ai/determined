@@ -19,8 +19,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var bunMutex sync.Mutex
-var theOneBun *bun.DB
+var (
+	bunMutex  sync.Mutex
+	theOneBun *bun.DB
+)
 
 func initTheOneBun(db *sql.DB) {
 	bunMutex.Lock()
@@ -255,7 +257,8 @@ func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) er
 // QueryF returns the result of the formatted query. Any placeholder parameters are replaced
 // with supplied params.
 func (db *PgDB) QueryF(
-	queryName string, args []interface{}, v interface{}, params ...interface{}) error {
+	queryName string, args []interface{}, v interface{}, params ...interface{},
+) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
 	query := db.queries.getOrLoad(queryName)
 	if len(args) > 0 {

@@ -14,8 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type slots struct {
-}
+type slots struct{}
 
 func (s *slots) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {

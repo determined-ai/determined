@@ -86,6 +86,7 @@ check: check-gen
 .PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
+	gofumpt -l -w .
 
 .PHONY: test
 test:

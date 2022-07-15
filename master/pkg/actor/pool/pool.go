@@ -37,7 +37,8 @@ func NewActorPool(
 	workersLimit uint,
 	name string,
 	taskHandler func(actorId uint64, task interface{}, ctx *actor.Context) interface{},
-	callback func(result interface{})) ActorPool {
+	callback func(result interface{}),
+) ActorPool {
 	pool := ActorPool{
 		name: name,
 

@@ -23,8 +23,10 @@ var (
 	DefaultSegmentWebUIKey  = ""
 )
 
-var once sync.Once
-var masterConfig *Config
+var (
+	once         sync.Once
+	masterConfig *Config
+)
 
 // KubernetesDefaultPriority is the default K8 resource manager priority.
 const KubernetesDefaultPriority = 50

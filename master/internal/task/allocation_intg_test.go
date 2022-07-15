@@ -165,7 +165,7 @@ func TestAllocation(t *testing.T) {
 				}
 			}
 			require.Contains(t, trialImpl.Messages, tc.exit)
-			//require.True(t, db.AssertExpectations(t))
+			// require.True(t, db.AssertExpectations(t))
 		})
 	}
 }

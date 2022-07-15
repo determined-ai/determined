@@ -358,7 +358,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 			masterv1.ResourceAllocationAggregationPeriod_value[args.Period],
 		),
 	})
-
 	if err != nil {
 		return err
 	}

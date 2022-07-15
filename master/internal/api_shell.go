@@ -48,12 +48,14 @@ func (a *apiServer) GetShells(
 }
 
 func (a *apiServer) GetShell(
-	_ context.Context, req *apiv1.GetShellRequest) (resp *apiv1.GetShellResponse, err error) {
+	_ context.Context, req *apiv1.GetShellRequest,
+) (resp *apiv1.GetShellResponse, err error) {
 	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) KillShell(
-	_ context.Context, req *apiv1.KillShellRequest) (resp *apiv1.KillShellResponse, err error) {
+	_ context.Context, req *apiv1.KillShellRequest,
+) (resp *apiv1.KillShellResponse, err error) {
 	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
@@ -101,13 +103,13 @@ func (a *apiServer) LaunchShell(
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			shellEntrypointScript,
 			etc.MustStaticFile(etc.ShellEntrypointResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 	}

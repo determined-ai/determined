@@ -152,7 +152,8 @@ func (rp *ResourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 }
 
 func (rp *ResourcePool) restoreResources(
-	ctx *actor.Context, req *sproto.AllocateRequest) error {
+	ctx *actor.Context, req *sproto.AllocateRequest,
+) error {
 	rp.agentStatesCache = rp.fetchAgentStates(ctx)
 	defer func() {
 		rp.agentStatesCache = nil
@@ -723,7 +724,8 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) updateAgentStartStats(
-	poolName string, agentID string, slots int) error {
+	poolName string, agentID string, slots int,
+) error {
 	return rp.db.RecordAgentStats(&model.AgentStats{
 		ResourcePool: poolName,
 		AgentID:      agentID,
@@ -791,7 +793,8 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeDockerContainer,
 		AllocationID:  c.req.AllocationID,
 		AgentDevices: map[aproto.ID][]device.Device{
-			aproto.ID(c.agent.Handler.Address().Local()): c.devices},
+			aproto.ID(c.agent.Handler.Address().Local()): c.devices,
+		},
 
 		ContainerID: &c.containerID,
 		Started:     c.started,

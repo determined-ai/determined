@@ -9,8 +9,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var allocationMap map[model.AllocationID]*actor.Ref
-var allocationMapMutex sync.RWMutex
+var (
+	allocationMap      map[model.AllocationID]*actor.Ref
+	allocationMapMutex sync.RWMutex
+)
 
 // InitAllocationMap initializes the global allocation_id -> allocation actor map.
 func InitAllocationMap() {

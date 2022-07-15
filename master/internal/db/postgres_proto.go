@@ -24,7 +24,8 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 // QueryProtof returns the result of the formated query. Any placeholder parameters are replaced
 // with supplied params.
 func (db *PgDB) QueryProtof(
-	queryName string, args []interface{}, v interface{}, params ...interface{}) error {
+	queryName string, args []interface{}, v interface{}, params ...interface{},
+) error {
 	query := db.queries.getOrLoad(queryName)
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)

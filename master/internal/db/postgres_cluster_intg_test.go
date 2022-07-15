@@ -81,5 +81,4 @@ func TestClusterAPI(t *testing.T) {
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
 	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())
-
 }

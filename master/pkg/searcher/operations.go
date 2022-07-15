@@ -114,7 +114,8 @@ type Create struct {
 
 // NewCreate initializes a new Create operation with a new request ID and the given hyperparameters.
 func NewCreate(
-	rand *nprand.State, s HParamSample, sequencerType model.WorkloadSequencerType) Create {
+	rand *nprand.State, s HParamSample, sequencerType model.WorkloadSequencerType,
+) Create {
 	return Create{
 		RequestID:             model.NewRequestID(rand),
 		TrialSeed:             uint32(rand.Int64n(1 << 31)),

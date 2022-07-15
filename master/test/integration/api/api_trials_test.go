@@ -130,7 +130,6 @@ func trialDetailAPITests(
 	for idx, tc := range testCases {
 		runTestCase(t, tc, idx)
 	}
-
 }
 
 func trialProfilerMetricsTests(

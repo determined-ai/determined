@@ -102,6 +102,7 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 
 	return nil
 }
+
 func TestGetExperiments(t *testing.T) {
 	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
