@@ -1,10 +1,10 @@
-import "shared/styles/index.scss";
-import "shared/styles/storybook.scss";
-import "shared/prototypes";
+import 'shared/styles/index.scss';
+import 'shared/styles/storybook.scss';
+import 'shared/prototypes';
 
-import StoreProvider from "contexts/Store";
-import useTheme from "hooks/useTheme";
-import { BrowserRouter } from "react-router-dom";
+import StoreProvider from 'contexts/Store';
+import useTheme from 'hooks/useTheme';
+import { BrowserRouter } from 'react-router-dom';
 
 // ChildView is for calling useTheme in the top level of component
 const ChildView = (props) => {
@@ -24,4 +24,4 @@ export const decorators = [
     );
   },
 ];
-export const parameters = { layout: "centered" };
+export const parameters = { layout: 'centered' };
