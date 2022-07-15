@@ -202,7 +202,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 			"nodes": int32(numSlots),
 			"total": int32(numSlots)})
 	}
-	// Set the required number of GPUs if the device type is CUDA (Nvidia) or RCOM (AMD).
+	// Set the required number of GPUs if the device type is CUDA (Nvidia) or ROCM (AMD).
 	if slotType == device.CUDA || slotType == device.ROCM {
 		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
 	} else {
