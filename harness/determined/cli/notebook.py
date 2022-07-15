@@ -55,7 +55,8 @@ def start_notebook(args: Namespace) -> None:
                     task_id= nb.id,
                     service_address=nb.serviceAddress,
                     description=nb.description,
-                    resource_pool=nb.resourcePool
+                    resource_pool=nb.resourcePool,
+                    task_type="notebook"
                 ))
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
             render_event_stream(msg)
@@ -71,7 +72,8 @@ def open_notebook(args: Namespace) -> None:
                     task_id= resp['id'],
                     service_address=resp['serviceAddress'],
                     description=resp['description'],
-                    resource_pool=resp['resourcePool']
+                    resource_pool=resp['resourcePool'],
+                    task_type="notebook"
                 ))
 
 
