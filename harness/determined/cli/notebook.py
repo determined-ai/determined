@@ -16,6 +16,7 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, render_event_stream
 
+
 @authentication.required
 def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)

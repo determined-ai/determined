@@ -12,6 +12,7 @@ import determined as det
 import determined.common.requests
 from determined.common.api import authentication, certs, errors
 
+
 def parse_master_address(master_address: str) -> parse.ParseResult:
     if master_address.startswith("https://"):
         default_port = 443
