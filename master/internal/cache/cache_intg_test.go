@@ -4,13 +4,13 @@
 package cache
 
 import (
-	"github.com/stretchr/testify/require"
-
-	"github.com/determined-ai/determined/master/pkg/etc"
-
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/pkg/etc"
 
 	"github.com/determined-ai/determined/master/internal/db"
 )
