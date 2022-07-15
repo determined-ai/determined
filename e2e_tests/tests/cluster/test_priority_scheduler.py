@@ -35,7 +35,7 @@ def test_priortity_scheduler_noop_command(
     assert command_succeeded(command_id)
     # with slots (and default priority)
     command_id = run_command(slots=1)
-    wait_for_command_state(command_id, "TERMINATED", 40)
+    wait_for_command_state(command_id, "TERMINATED", 60)
     assert command_succeeded(command_id)
     # explicity priority
     command_id = run_command_set_priority(slots=0, priority=60)
