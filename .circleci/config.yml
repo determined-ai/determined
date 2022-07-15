@@ -27,7 +27,7 @@ parameters:
     default: 0.18.4-dev0
   docker-image:
     type: string
-    default: cimg/base:2021.11
+    default: determinedai/cimg-base:latest
   machine-image:
     type: string
     default: ubuntu-2004:202201-02
@@ -250,6 +250,7 @@ commands:
             make build
             pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
             pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+
   setup-python-venv:
     description: Set up and create Python venv.
     parameters:
@@ -259,6 +260,9 @@ commands:
       model-hub:
         type: boolean
         default: false
+      install-python:
+        type: boolean
+        default: true
       extras-requires:
         type: string
         default: ""
@@ -271,48 +275,51 @@ commands:
         type: string
         default: "3.7.11"
     steps:
-      - run:
-          name: prepare conda PATH
-          command: |
-            echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
+      - when:
+          condition: <<parameters.install-python>>
+          steps:
+            - run:
+                name: prepare conda PATH
+                command: |
+                  echo 'export PATH=/opt/conda/bin:${PATH}' >> $BASH_ENV
 
-      - run:
-          name: prepare conda install_python.sh
-          command: |
-            cat \<<'EOF' > /tmp/install_python.sh
-            #!/bin/bash
-            PYTHON_VERSION="${1}"
+            - run:
+                name: prepare conda install_python.sh
+                command: |
+                  cat \<<'EOF' > /tmp/install_python.sh
+                  #!/bin/bash
+                  PYTHON_VERSION="${1}"
 
-            CONDA_DIR="/opt/conda"
-            CONDA_INSTALLER="Miniconda3-py39_4.10.3-Linux-x86_64.sh"
-            CONDA_MD5="8c69f65a4ae27fb41df0fe552b4a8a3b"
-            CONDA_URL="https://repo.anaconda.com/miniconda"
+                  CONDA_DIR="/opt/conda"
+                  CONDA_INSTALLER="Miniconda3-py39_4.10.3-Linux-x86_64.sh"
+                  CONDA_MD5="8c69f65a4ae27fb41df0fe552b4a8a3b"
+                  CONDA_URL="https://repo.anaconda.com/miniconda"
 
-            mkdir -p /etc/determined/conda.d
-            mkdir -p "${CONDA_DIR}"
+                  mkdir -p /etc/determined/conda.d
+                  mkdir -p "${CONDA_DIR}"
 
-            cd /tmp
-            curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
-            echo "${CONDA_MD5}  ${CONDA_INSTALLER}" | md5sum -c -
-            bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
-            rm -f "./${CONDA_INSTALLER}"
+                  cd /tmp
+                  curl --retry 3 -fsSL -O "${CONDA_URL}/${CONDA_INSTALLER}"
+                  echo "${CONDA_MD5}  ${CONDA_INSTALLER}" | md5sum -c -
+                  bash "./${CONDA_INSTALLER}" -u -b -p "${CONDA_DIR}"
+                  rm -f "./${CONDA_INSTALLER}"
 
-            ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
-            ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
-            ${CONDA_DIR}/bin/conda clean --all -y
-            EOF
+                  ${CONDA_DIR}/bin/conda install python=${PYTHON_VERSION}
+                  ${CONDA_DIR}/bin/conda update --prefix ${CONDA_DIR} --all -y
+                  ${CONDA_DIR}/bin/conda clean --all -y
+                  EOF
 
-      - run:
-          name: run conda install_python.sh
-          command: |
-            sudo bash /tmp/install_python.sh <<parameters.python-version>>
+            - run:
+                name: run conda install_python.sh
+                command: |
+                  sudo bash /tmp/install_python.sh <<parameters.python-version>>
 
-      - run:
-          name: Setup venv
-          command: |
-            python3 -m venv /tmp/venv
-            echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
-            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
+            - run:
+                name: Setup venv
+                command: |
+                  python3 -m venv /tmp/venv
+                  echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
+                  /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       - run:
           name: Write cache key
@@ -965,6 +972,7 @@ jobs:
       - checkout
       - helm/install-helm-client
       - setup-python-venv:
+          install-python: false
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
@@ -1144,6 +1152,7 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
+          install-python: false
           extras-requires: "twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
@@ -1167,6 +1176,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
@@ -1179,6 +1189,7 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
+          install-python: false
           extras-requires: "awscli"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness upload-try-now-template
@@ -1396,6 +1407,7 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
+          install-python: false
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C docs check
@@ -1419,6 +1431,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           model-hub: true
           extras-requires: "torch==1.9.0"
@@ -1441,6 +1454,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
@@ -1480,6 +1494,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
@@ -1499,6 +1514,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
@@ -1518,6 +1534,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           model-hub: true
           extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1538,6 +1555,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: false
           model-hub: false
           extras-requires: "coverage"
@@ -1560,6 +1578,7 @@ jobs:
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
+          install-python: false
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1709,6 +1728,7 @@ jobs:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
+          install-python: false
           determined: true
           executor: <<pipeline.parameters.docker-image>>
       - deploy-aws-cluster:
@@ -1763,6 +1783,7 @@ jobs:
       - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
+          install-python: false
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1855,6 +1876,7 @@ jobs:
       - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
+          install-python: false
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1940,6 +1962,7 @@ jobs:
       - skip-if-docs-only
       - set-slack-user-id
       - setup-python-venv:
+          install-python: false
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
