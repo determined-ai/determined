@@ -395,6 +395,34 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("experiment shut down successfully")
 
+	case *apiv1.PostSearcherOperationsRequest:
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("Custom Searcher Event Queue was not retrieved.")
+		}
+		// Ensuring that the lastProcessedEvent is the same as what the
+		// (triggered) client processed and the sent the appropriate opertations.
+		// if queue.GetLastProcessedEventId() == -1 then the
+		// first event initial operations triggered the client.
+		if msg.TriggeredByEvent.Id == queue.GetLastProcessedEventID() ||
+			queue.GetLastProcessedEventID() == -1 {
+			//TODO: e.processOperations(ctx, msg.SearcherOperations, nil)
+			// Set LastProcessedEventID to currentID after ops are sent to be processed.
+
+		} else {
+			ctx.Respond(status.Error(codes.InvalidArgument,
+				"client sent operations for the wrong event. Order of events was not maintaned."))
+		}
+	case *apiv1.GetSearcherEventsRequest:
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Respond(status.Error(codes.Internal, "failed to get events from queue"))
+		} else {
+			resp := &apiv1.GetSearcherEventsResponse{
+				SearcherEvents: queue.GetEvents(),
+			}
+			ctx.Respond(resp)
+		}
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,

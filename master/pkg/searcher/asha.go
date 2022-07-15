@@ -27,6 +27,7 @@ type (
 	}
 
 	asyncHalvingSearch struct {
+		defaultSearchMethod
 		expconf.AsyncHalvingConfig
 		SmallerIsBetter bool
 		asyncHalvingSearchState
