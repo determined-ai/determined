@@ -252,12 +252,6 @@ const ModelRegistry: React.FC = () => {
     }
   }, []);
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
@@ -479,7 +473,6 @@ const ModelRegistry: React.FC = () => {
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
           <Button onClick={showCreateModelModal}>New Model</Button>

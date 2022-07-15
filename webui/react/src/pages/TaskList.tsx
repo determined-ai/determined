@@ -74,12 +74,6 @@ const TaskList: React.FC = () => {
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
   const fetchUsers = useFetchUsers(canceler);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [ tasks ]);
@@ -485,7 +479,6 @@ const TaskList: React.FC = () => {
       id="tasks"
       options={(
         <Space>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
         </Space>
