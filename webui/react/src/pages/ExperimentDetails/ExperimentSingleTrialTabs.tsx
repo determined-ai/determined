@@ -42,10 +42,6 @@ interface Params {
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
-const ExperimentConfiguration = React.lazy(() => {
-  return import('./ExperimentConfiguration');
-});
-
 export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
@@ -204,14 +200,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             trial={trialDetails as TrialDetails}
           />
         </TabPane>
-        <TabPane key="configuration" tab="Configuration">
-          <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <ExperimentConfiguration experiment={experiment} />
-          </React.Suspense>
-        </TabPane>
         <TabPane key="code" tab="Code">
           <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-            <CodeViewer experimentId={experiment.id} />
+            <CodeViewer configRaw={experiment.configRaw} experimentId={experiment.id} />
           </React.Suspense>
         </TabPane>
         <TabPane key="notes" tab="Notes">

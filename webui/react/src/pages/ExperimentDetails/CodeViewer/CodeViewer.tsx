@@ -11,6 +11,7 @@ import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { FileNode } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
+import { RawJson } from 'shared/types';
 
 const { DirectoryTree } = Tree;
 
@@ -18,10 +19,26 @@ import css from './CodeViewer.module.scss';
 import './index.scss';
 
 export type Props = {
+  configRaw?: RawJson;
   experimentId: number;
 }
 
-const CodeViewer: React.FC<Props> = ({ experimentId }) => {
+const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
+  const [ config ] = useState(() => {
+    /**
+   * strip registry_auth from config for display
+   * as well as workspace/project names
+   */
+    if (configRaw) {
+      const {
+        environment: { registry_auth, ...restEnvironment },
+        workspace,
+        project,
+        ...restConfig
+      } = configRaw;
+      return { environment: restEnvironment, ...restConfig };
+    }
+  });
   const [ fileData, setFileData ] = useState<string>();
   const [ files, setFiles ] = useState<FileNode[]>([]);
   const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
@@ -61,16 +78,32 @@ const CodeViewer: React.FC<Props> = ({ experimentId }) => {
 
       return newNode;
     };
-
-    setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
-  }, [ treeMap, files ]);
+    if (config) {
+      setFileTree([
+        {
+          className: 'treeNode',
+          isLeaf: true,
+          key: '0-0',
+          title: 'Configuration',
+        },
+        ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
+      ]);
+    } else {
+      setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
+    }
+  }, [ treeMap, files, config ]);
 
   const onSelectFile = async (
     keys: React.Key[],
     info: { [key:string]: unknown, node: DataNode },
   ) => {
-    // TODO: after backend integration, check data structure and create implementation
-    // to navigate it
+    if (info.node.title === 'Configuration') {
+      setFileName('Configuration');
+      setFileData(yaml.dump(config));
+
+      return;
+    }
+
     const filePath = treeMap.get(String(keys[0])) as string;
 
     if (filePath.includes('.')) { // check if the selected node is a file
@@ -161,7 +194,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId }) => {
                     occurrencesHighlight: false,
                     readOnly: true,
                   }}
-                  value={yaml.dump(fileData)}
+                  value={fileData}
                 />
               )
           }

@@ -30,9 +30,6 @@ interface Params {
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Visualization;
 
-const ExperimentConfiguration = React.lazy(() => {
-  return import('./ExperimentConfiguration');
-});
 const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentVisualization');
 });
@@ -94,14 +91,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       <TabPane key="trials" tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="configuration" tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-          <ExperimentConfiguration experiment={experiment} />
-        </React.Suspense>
-      </TabPane>
       <TabPane key="code" tab="Code">
         <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-          <CodeViewer experimentId={experiment.id} />
+          <CodeViewer configRaw={experiment.configRaw} experimentId={experiment.id} />
         </React.Suspense>
       </TabPane>
       <TabPane key="notes" tab="Notes">
