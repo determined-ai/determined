@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
+
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 
 import InteractiveTask from './InteractiveTask';
@@ -39,7 +40,7 @@ const InteractiveTaskContainer: React.FC = () => {
   return (
     <StoreProvider>
       <HelmetProvider>
-      <InteractiveTaskPageContainer />
+        <InteractiveTaskPageContainer />
       </HelmetProvider>
     </StoreProvider>
   );
