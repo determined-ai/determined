@@ -82,6 +82,7 @@ module.exports = {
         beforeColon: false,
       },
     } ],
+    'keyword-spacing': [ 'error' ],
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
     'no-empty': [ 'error', { allowEmptyCatch: false } ],
