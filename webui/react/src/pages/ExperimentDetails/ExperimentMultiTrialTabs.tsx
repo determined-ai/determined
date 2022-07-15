@@ -101,7 +101,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       </TabPane>
       <TabPane key="code" tab="Code">
         <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-          <CodeViewer experiment={experiment} />
+          <CodeViewer experimentId={experiment.id} />
         </React.Suspense>
       </TabPane>
       <TabPane key="notes" tab="Notes">

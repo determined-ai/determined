@@ -11,18 +11,17 @@ import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { FileNode } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
-import { ExperimentBase } from 'types';
 
 const { DirectoryTree } = Tree;
 
 import css from './CodeViewer.module.scss';
 import './index.scss';
 
-type Props = {
-  experiment: ExperimentBase;
+export type Props = {
+  experimentId: number;
 }
 
-const CodeViewer: React.FC<Props> = ({ experiment }) => {
+const CodeViewer: React.FC<Props> = ({ experimentId }) => {
   const [ fileData, setFileData ] = useState<string>();
   const [ files, setFiles ] = useState<FileNode[]>([]);
   const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
@@ -34,14 +33,14 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
   // get the file tree from backend
   useEffect(() => {
     (async () => {
-      const files = await getExperimentFileTree({ experimentId: experiment.id });
+      const files = await getExperimentFileTree({ experimentId });
 
       setFiles(files);
     })();
     return () => {
       setFiles([]);
     };
-  }, [ experiment.id ]);
+  }, [ experimentId ]);
 
   // map the file tree
   useEffect(() => {
@@ -78,7 +77,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
       setIsFetching(true);
 
       try {
-        const file = await getExperimentFileFromTree({ experimentId: experiment.id, filePath });
+        const file = await getExperimentFileFromTree({ experimentId, filePath });
 
         setIsFetching(false);
         setFileData(decodeURIComponent(escape(window.atob(file))));
@@ -115,6 +114,7 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
       <Section id="fileTree">
         <DirectoryTree
           className={css.fileTree}
+          data-testid="fileTree"
           defaultExpandAll
           treeData={fileTree}
           onSelect={onSelectFile}
@@ -130,11 +130,12 @@ const CodeViewer: React.FC<Props> = ({ experiment }) => {
                   <span className={css.filePath}>{fileName}</span>
                 </div>
                 <div className={css.buttonsContainer}>
-                  <Button className={css.noBorderButton}>Open in Notebook</Button>
+                  {/* <Button className={css.noBorderButton}>Open in Notebook</Button>
+                  TODO: this will be added in the future*/}
                   <Button
                     className={css.noBorderButton}
                     ghost
-                    icon={<Icon name="overflow-vertical" />}
+                    icon={<Icon name="download" size="big" />}
                   />
                 </div>
               </div>
