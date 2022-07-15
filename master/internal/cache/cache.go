@@ -108,7 +108,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	return value, nil
 }
 
-// prune is not locked because it's only meant to be triggered inside getOrCreateFolder
+// prune is not locked because it's only meant to be triggered inside getOrCreateFolder.
 func (f *FileCache) prune() {
 	for expID, folder := range f.caches {
 		if folder.cachedTime.Add(f.maxAge).Before(time.Now()) {
