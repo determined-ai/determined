@@ -1,13 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
-
+import { HelmetProvider } from 'react-helmet-async';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 
 import InteractiveTask from './InteractiveTask';
 
 const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
+const DEFAULT_TASK_PAGE_TITLE = 'Tasks - Determined';
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
@@ -37,7 +38,9 @@ const InteractiveTaskPageContainer: React.FC = () => {
 const InteractiveTaskContainer: React.FC = () => {
   return (
     <StoreProvider>
+      <HelmetProvider>
       <InteractiveTaskPageContainer />
+      </HelmetProvider>
     </StoreProvider>
   );
 };
@@ -56,6 +59,11 @@ describe('InteractiveTask', () => {
     userEvent.click(screen.getByTestId('task-action-dropdown-trigger'));
     expect(await screen.findByText('Kill')).toBeInTheDocument();
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
+  });
+
+  it('Page has default title', async () => {
+    await setup();
+    expect(document.title).toEqual(DEFAULT_TASK_PAGE_TITLE);
   });
 
 });
