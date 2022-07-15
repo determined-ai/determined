@@ -108,6 +108,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	return value, nil
 }
 
+// prune is not locked because it's only meant to be triggered inside getOrCreateFolder
 func (f *FileCache) prune() {
 	for expID, folder := range f.caches {
 		if folder.cachedTime.Add(f.maxAge).Before(time.Now()) {
@@ -176,7 +177,7 @@ func (f *FileCache) FileContent(expID int, path string) ([]byte, error) {
 					log.Errorf(`File system cache (%s) is likely out of sync. 
 File system cache is about to re-initialize.`,
 						f.rootDir)
-					return f.fileContentAfterReInitialization(expID, path)
+					return f.fileContentAfterReset(expID, path)
 				}
 				return []byte{}, err
 			}
@@ -186,9 +187,8 @@ File system cache is about to re-initialize.`,
 	return nil, fs.ErrNotExist
 }
 
-func (f *FileCache) fileContentAfterReInitialization(expID int, path string) ([]byte, error) {
-	delete(f.caches, expID)
-	err := os.RemoveAll(f.genPath(expID, ""))
+func (f *FileCache) fileContentAfterReset(expID int, path string) ([]byte, error) {
+	err := f.resetCache(expID)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -199,6 +199,13 @@ func (f *FileCache) fileContentAfterReInitialization(expID int, path string) ([]
 	folder.lock.Lock()
 	defer folder.lock.Unlock()
 	return os.ReadFile(f.genPath(expID, path))
+}
+
+func (f *FileCache) resetCache(expID int) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	delete(f.caches, expID)
+	return os.RemoveAll(f.genPath(expID, ""))
 }
 
 // This function assumes fileTree is a valid input generated from file system.

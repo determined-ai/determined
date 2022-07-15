@@ -2,6 +2,7 @@ package internal
 
 import (
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/cache"
@@ -9,6 +10,7 @@ import (
 )
 
 var modelDefCache *cache.FileCache
+var modelDefCacheMutex sync.Mutex
 
 const (
 	cacheDir    = "exp_model_def"
@@ -17,6 +19,8 @@ const (
 
 // GetModelDefCache returns FileCache object.
 func GetModelDefCache() *cache.FileCache {
+	modelDefCacheMutex.Lock()
+	defer modelDefCacheMutex.Unlock()
 	if modelDefCache == nil {
 		config := config.GetMasterConfig()
 		rootDir := filepath.Join(config.Cache.CacheDir, cacheDir)
