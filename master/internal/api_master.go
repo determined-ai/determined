@@ -11,7 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/sso"
+	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
