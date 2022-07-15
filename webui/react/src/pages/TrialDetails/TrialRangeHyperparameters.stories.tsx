@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import StoreDecorator from 'storybook/StoreDecorator';
 import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState, TrialDetails } from 'types';
@@ -11,7 +10,6 @@ import TrialRangeHyperparameters from './TrialRangeHyperparameters';
 
 export default {
   component: TrialRangeHyperparameters,
-  decorators: [ StoreDecorator ],
   title: 'TrialRangeHyperparameters',
 };
 

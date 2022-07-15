@@ -3,14 +3,13 @@ import React, { useRef } from 'react';
 
 import { jsonToClusterLog } from 'services/decoder';
 import HelmetDecorator from 'storybook/HelmetDecorator';
-import StoreDecorator from 'storybook/StoreDecorator';
 import { downloadText, simulateLogsDownload } from 'utils/browser';
 
 import LogViewer from './LogViewer';
 
 export default {
   component: LogViewer,
-  decorators: [ HelmetDecorator, StoreDecorator ],
+  decorators: [ HelmetDecorator ],
   parameters: { layout: 'fullscreen' },
   title: 'LogViewer',
 };
