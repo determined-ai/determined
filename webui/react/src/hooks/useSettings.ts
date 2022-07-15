@@ -253,7 +253,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           storage.set(config.storageKey, value);
           persistedSetting.value = JSON.stringify(value);
         }
-        if(user?.id) {
+        if (user?.id) {
           // Persist storage to backend
           updateUserSetting({
             setting: persistedSetting,
@@ -299,7 +299,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
   const fetchUserSetting = useCallback(async () => {
 
-    if(!user) return;
+    if (!user) return;
     const userSettingResponse = await getUserSetting({ userId: user.id });
     userSettingResponse.settings.forEach((setting) => {
       const { key, value, storagePath } = setting;

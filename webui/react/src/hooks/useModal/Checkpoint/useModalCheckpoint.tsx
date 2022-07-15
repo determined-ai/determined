@@ -86,7 +86,7 @@ const useModalCheckpoint = ({
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
 
   const handleDelete = useCallback(() => {
-    if(!checkpoint.uuid) return;
+    if (!checkpoint.uuid) return;
     readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
   }, [ checkpoint ]);
 

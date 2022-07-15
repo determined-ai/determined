@@ -100,7 +100,7 @@ interface TrackProps {
 }
 
 const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
-  switch(hp.type) {
+  switch (hp.type) {
     case HyperparameterType.Constant:
       return <div className={css.valuesTrack} />;
     case HyperparameterType.Categorical:
@@ -136,7 +136,7 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
 const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   let trackType;
   let content;
-  switch(hp.type) {
+  switch (hp.type) {
     case HyperparameterType.Categorical:
       trackType = css.grayTrack;
       content = hp.vals.map((option) => (

@@ -79,7 +79,7 @@ export const readStream = async <T = unknown>(
 
       // Process only newline delimited data buffer.
       const lines = buffer.split('\n');
-      for(let i = 0; i < lines.length - 1; ++i) {
+      for (let i = 0; i < lines.length - 1; ++i) {
         const line = lines[i].trim();
         if (line.length === 0) continue;
         handleStreamLine(line);

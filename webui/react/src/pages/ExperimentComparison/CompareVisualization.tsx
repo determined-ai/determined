@@ -70,11 +70,10 @@ const CompareVisualization: React.FC = () => {
 
   const experimentIds: number[] = useMemo(() => {
     const query = queryString.parse(location.search);
-    if(query.id && typeof query.id === 'string'){
+    if (query.id && typeof query.id === 'string'){
       return [ parseInt(query.id) ];
-
-    } else if(Array.isArray(query.id)){
-      return query.id.map((x) => parseInt(x));
+    } else if (Array.isArray(query.id)){
+      return query.id.map(x => parseInt(x));
     }
     return [];
 

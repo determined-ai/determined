@@ -16,7 +16,7 @@ const ExperimentComparison: React.FC = () => {
 
   const experimentIds: number[] = useMemo(() => {
     const query: Query = queryString.parse(location.search);
-    if(query.id && typeof query.id === 'string'){
+    if (query.id && typeof query.id === 'string'){
       return [ parseInt(query.id) ];
     } else if (Array.isArray(query.id)) {
 

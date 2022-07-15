@@ -34,7 +34,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
   }, [ onCancel ]);
 
   function renderActionItem(action: ActionItem) {
-    if(action.render) {
+    if (action.render) {
       return action.render();
     } else {
       return (
