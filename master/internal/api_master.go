@@ -20,7 +20,8 @@ import (
 var masterLogsBatchMissWaitTime = time.Second
 
 func (a *apiServer) GetMaster(
-	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
+	_ context.Context, _ *apiv1.GetMasterRequest,
+) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
 		Version:           version.Version,
 		MasterId:          a.m.MasterID,
@@ -34,7 +35,8 @@ func (a *apiServer) GetMaster(
 }
 
 func (a *apiServer) GetTelemetry(
-	_ context.Context, _ *apiv1.GetTelemetryRequest) (*apiv1.GetTelemetryResponse, error) {
+	_ context.Context, _ *apiv1.GetTelemetryRequest,
+) (*apiv1.GetTelemetryResponse, error) {
 	resp := apiv1.GetTelemetryResponse{}
 	if a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "" {
 		resp.Enabled = true
@@ -62,7 +64,8 @@ func (a *apiServer) GetMasterConfig(
 }
 
 func (a *apiServer) MasterLogs(
-	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer) error {
+	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer,
+) error {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),

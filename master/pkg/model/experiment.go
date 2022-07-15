@@ -82,7 +82,8 @@ func StateFromProto(state experimentv1.State) State {
 
 // reverseTransitions computes the reverse transition table.
 func reverseTransitions(
-	transitions map[State]map[State]bool) map[State]map[State]bool {
+	transitions map[State]map[State]bool,
+) map[State]map[State]bool {
 	ret := make(map[State]map[State]bool)
 	for state := range transitions {
 		ret[state] = make(map[State]bool)
@@ -711,7 +712,8 @@ type MetricHPImportance struct {
 
 // SetMetricHPImportance is a convenience function when modifying results for a specific metric.
 func (hpi *ExperimentHPImportance) SetMetricHPImportance(metricHpi MetricHPImportance,
-	metricName string, metricType MetricType) *ExperimentHPImportance {
+	metricName string, metricType MetricType,
+) *ExperimentHPImportance {
 	switch metricType {
 	case TrainingMetric:
 		hpi.TrainingMetrics[metricName] = metricHpi

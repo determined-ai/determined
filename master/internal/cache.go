@@ -9,8 +9,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 )
 
-var modelDefCache *cache.FileCache
-var modelDefCacheMutex sync.Mutex
+var (
+	modelDefCache      *cache.FileCache
+	modelDefCacheMutex sync.Mutex
+)
 
 const (
 	cacheDir    = "exp_model_def"

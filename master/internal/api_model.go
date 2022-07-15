@@ -43,7 +43,8 @@ func (a *apiServer) ModelFromIdentifier(identifier string) (*modelv1.Model, erro
 }
 
 func (a *apiServer) ModelVersionFromID(modelIdentifier string,
-	versionID int32) (*modelv1.ModelVersion, error) {
+	versionID int32,
+) (*modelv1.ModelVersion, error) {
 	mv := &modelv1.ModelVersion{}
 	parentModel, err := a.ModelFromIdentifier(modelIdentifier)
 	if err != nil {
@@ -62,7 +63,8 @@ func (a *apiServer) ModelVersionFromID(modelIdentifier string,
 }
 
 func (a *apiServer) GetModel(
-	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
+	_ context.Context, req *apiv1.GetModelRequest,
+) (*apiv1.GetModelResponse, error) {
 	m, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -71,7 +73,8 @@ func (a *apiServer) GetModel(
 }
 
 func (a *apiServer) GetModels(
-	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
+	_ context.Context, req *apiv1.GetModelsRequest,
+) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
 	idFilterExpr := req.Id
 	nameFilter := "%" + req.Name + "%"
@@ -132,7 +135,8 @@ func (a *apiServer) GetModels(
 }
 
 func (a *apiServer) GetModelLabels(
-	_ context.Context, req *apiv1.GetModelLabelsRequest) (*apiv1.GetModelLabelsResponse, error) {
+	_ context.Context, req *apiv1.GetModelLabelsRequest,
+) (*apiv1.GetModelLabelsResponse, error) {
 	resp := &apiv1.GetModelLabelsResponse{}
 	err := a.m.db.QueryProto("get_model_labels", resp)
 	if err != nil {
@@ -170,7 +174,8 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 }
 
 func (a *apiServer) PostModel(
-	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
+	ctx context.Context, req *apiv1.PostModelRequest,
+) (*apiv1.PostModelResponse, error) {
 	if err := a.clearModelName(ctx, req.Name); err != nil {
 		return nil, err
 	}
@@ -197,7 +202,8 @@ func (a *apiServer) PostModel(
 }
 
 func (a *apiServer) PatchModel(
-	ctx context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
+	ctx context.Context, req *apiv1.PatchModelRequest,
+) (*apiv1.PatchModelResponse, error) {
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -282,7 +288,8 @@ func (a *apiServer) PatchModel(
 }
 
 func (a *apiServer) ArchiveModel(
-	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
+	ctx context.Context, req *apiv1.ArchiveModelRequest,
+) (*apiv1.ArchiveModelResponse, error) {
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -301,7 +308,8 @@ func (a *apiServer) ArchiveModel(
 }
 
 func (a *apiServer) UnarchiveModel(
-	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
+	ctx context.Context, req *apiv1.UnarchiveModelRequest,
+) (*apiv1.UnarchiveModelResponse, error) {
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -321,7 +329,8 @@ func (a *apiServer) UnarchiveModel(
 
 func (a *apiServer) DeleteModel(
 	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -346,7 +355,8 @@ func (a *apiServer) DeleteModel(
 }
 
 func (a *apiServer) GetModelVersion(
-	ctx context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
+	ctx context.Context, req *apiv1.GetModelVersionRequest,
+) (*apiv1.GetModelVersionResponse, error) {
 	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
 	if err != nil {
 		return nil, err
@@ -357,7 +367,8 @@ func (a *apiServer) GetModelVersion(
 }
 
 func (a *apiServer) GetModelVersions(
-	ctx context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
+	ctx context.Context, req *apiv1.GetModelVersionsRequest,
+) (*apiv1.GetModelVersionsResponse, error) {
 	parentModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
@@ -374,7 +385,8 @@ func (a *apiServer) GetModelVersions(
 }
 
 func (a *apiServer) PostModelVersion(
-	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
+	ctx context.Context, req *apiv1.PostModelVersionRequest,
+) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
 	modelResp, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
@@ -438,7 +450,8 @@ func (a *apiServer) PostModelVersion(
 
 func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
-	error) {
+	error,
+) {
 	currModelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionId)
 	if err != nil {
 		return nil, err
@@ -518,7 +531,8 @@ func (a *apiServer) PatchModelVersion(
 
 func (a *apiServer) DeleteModelVersion(
 	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err

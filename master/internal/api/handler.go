@@ -9,9 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	upgrader = websocket.Upgrader{}
-)
+var upgrader = websocket.Upgrader{}
 
 // Route returns an echo compatible handler for JSON requests.
 func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {

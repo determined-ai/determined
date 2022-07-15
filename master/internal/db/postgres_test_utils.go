@@ -5,15 +5,14 @@ package db
 
 import (
 	"archive/tar"
-
-	"github.com/determined-ai/determined/master/pkg/archive"
-
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/archive"
 
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"

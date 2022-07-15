@@ -21,7 +21,8 @@ type Container struct {
 func (c Container) Transition(new State) Container {
 	check.Panic(c.State.checkTransition(new))
 	return Container{
-		Parent: c.Parent, ID: c.ID, State: new, Devices: c.Devices}
+		Parent: c.Parent, ID: c.ID, State: new, Devices: c.Devices,
+	}
 }
 
 // DeviceUUIDsByType returns the UUIDs of the devices with the given device type.

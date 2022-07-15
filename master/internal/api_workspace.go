@@ -17,7 +17,8 @@ import (
 )
 
 func (a *apiServer) GetWorkspaceByID(id int32, userID int32,
-	rejectImmutable bool) (*workspacev1.Workspace, error) {
+	rejectImmutable bool,
+) (*workspacev1.Workspace, error) {
 	w := &workspacev1.Workspace{}
 	switch err := a.m.db.QueryProto("get_workspace", w, id, userID); err {
 	case db.ErrNotFound:
@@ -36,7 +37,8 @@ func (a *apiServer) GetWorkspaceByID(id int32, userID int32,
 }
 
 func (a *apiServer) GetWorkspace(
-	ctx context.Context, req *apiv1.GetWorkspaceRequest) (*apiv1.GetWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.GetWorkspaceRequest,
+) (*apiv1.GetWorkspaceResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -48,7 +50,8 @@ func (a *apiServer) GetWorkspace(
 
 func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 	req *apiv1.GetWorkspaceProjectsRequest) (*apiv1.GetWorkspaceProjectsResponse,
-	error) {
+	error,
+) {
 	nameFilter := req.Name
 	archFilterExpr := ""
 	if req.Archived != nil {
@@ -101,7 +104,8 @@ func (a *apiServer) GetWorkspaceProjects(ctx context.Context,
 }
 
 func (a *apiServer) GetWorkspaces(
-	ctx context.Context, req *apiv1.GetWorkspacesRequest) (*apiv1.GetWorkspacesResponse, error) {
+	ctx context.Context, req *apiv1.GetWorkspacesRequest,
+) (*apiv1.GetWorkspacesResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -159,7 +163,8 @@ func (a *apiServer) GetWorkspaces(
 }
 
 func (a *apiServer) PostWorkspace(
-	ctx context.Context, req *apiv1.PostWorkspaceRequest) (*apiv1.PostWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.PostWorkspaceRequest,
+) (*apiv1.PostWorkspaceResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -178,7 +183,8 @@ func (a *apiServer) PostWorkspace(
 }
 
 func (a *apiServer) PatchWorkspace(
-	ctx context.Context, req *apiv1.PatchWorkspaceRequest) (*apiv1.PatchWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.PatchWorkspaceRequest,
+) (*apiv1.PatchWorkspaceResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -212,7 +218,8 @@ func (a *apiServer) PatchWorkspace(
 
 func (a *apiServer) DeleteWorkspace(
 	ctx context.Context, req *apiv1.DeleteWorkspaceRequest) (*apiv1.DeleteWorkspaceResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -233,7 +240,8 @@ func (a *apiServer) DeleteWorkspace(
 
 func (a *apiServer) ArchiveWorkspace(
 	ctx context.Context, req *apiv1.ArchiveWorkspaceRequest) (*apiv1.ArchiveWorkspaceResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -254,7 +262,8 @@ func (a *apiServer) ArchiveWorkspace(
 
 func (a *apiServer) UnarchiveWorkspace(
 	ctx context.Context, req *apiv1.UnarchiveWorkspaceRequest) (*apiv1.UnarchiveWorkspaceResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -274,7 +283,8 @@ func (a *apiServer) UnarchiveWorkspace(
 }
 
 func (a *apiServer) PinWorkspace(
-	ctx context.Context, req *apiv1.PinWorkspaceRequest) (*apiv1.PinWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.PinWorkspaceRequest,
+) (*apiv1.PinWorkspaceResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -288,7 +298,8 @@ func (a *apiServer) PinWorkspace(
 }
 
 func (a *apiServer) UnpinWorkspace(
-	ctx context.Context, req *apiv1.UnpinWorkspaceRequest) (*apiv1.UnpinWorkspaceResponse, error) {
+	ctx context.Context, req *apiv1.UnpinWorkspaceRequest,
+) (*apiv1.UnpinWorkspaceResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
