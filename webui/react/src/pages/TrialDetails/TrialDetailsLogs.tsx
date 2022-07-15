@@ -153,7 +153,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         true,
         { signal: canceler.signal },
       ),
-      event => setFilterOptions(event as Filters),
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();

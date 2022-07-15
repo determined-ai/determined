@@ -181,7 +181,7 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   task: T, users?: string[],
 ): boolean => {
   if (!Array.isArray(users) || users.length === 0 || users[0] === Type.ALL_VALUE) return true;
-  return users.findIndex(user => task.userId === parseInt(user)) !== -1;
+  return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
 };
 
 export const filterTasks = <
@@ -191,7 +191,7 @@ export const filterTasks = <
   tasks: A[], filters: Type.TaskFilters<T>, users: Type.User[], search = '',
 ): A[] => {
   return tasks
-    .filter(task => {
+    .filter((task) => {
       const isExperiment = isExperimentTask(task);
       const type = isExperiment ? Type.TaskType.Experiment : (task as Type.CommandTask).type;
       return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
@@ -200,7 +200,7 @@ export const filterTasks = <
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as Type.ExperimentTask).archived);
     })
-    .filter(task => matchesSearch<A>(task, search));
+    .filter((task) => matchesSearch<A>(task, search));
 };
 
 /* Conversions to Tasks */

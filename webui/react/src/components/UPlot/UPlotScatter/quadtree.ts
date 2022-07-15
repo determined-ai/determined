@@ -47,7 +47,7 @@ class QuadTree {
 
   add(o: QuadTree): void {
     if (this.q != null) {
-      this.quads(o.x, o.y, o.w, o.h, q => q.add(o));
+      this.quads(o.x, o.y, o.w, o.h, (q) => q.add(o));
     } else {
       const os = this.o;
 
@@ -58,7 +58,7 @@ class QuadTree {
 
         for (let i = 0; i < os.length; i++) {
           const oi = os[i];
-          this.quads(oi.x, oi.y, oi.w, oi.h, q => q.add(oi));
+          this.quads(oi.x, oi.y, oi.w, oi.h, (q) => q.add(oi));
         }
 
         this.o.length = 0;
@@ -77,7 +77,7 @@ class QuadTree {
     for (let i = 0; i < os.length; i++) cb(os[i]);
 
     if (this.q !== null) {
-      this.quads(x, y, w, h, q => q.get(x, y, w, h, cb));
+      this.quads(x, y, w, h, (q) => q.get(x, y, w, h, cb));
     }
   }
 

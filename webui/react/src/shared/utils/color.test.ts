@@ -50,19 +50,19 @@ describe('Color Utilities', () => {
 
   describe('isColor', () => {
     it('should match hex color', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.isColor(color.hex)).toEqual(true);
       });
     });
 
     it('should match hsl color', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.isColor(color.hslStr)).toEqual(true);
       });
     });
 
     it('should match rgba color', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.isColor(color.rgbStr)).toEqual(true);
       });
     });
@@ -95,7 +95,7 @@ describe('Color Utilities', () => {
 
   describe('hex2hsl', () => {
     it('should convert all hex colors to hsl', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.hex2hsl(color.hex)).toEqual(color.hsl);
       });
     });
@@ -103,7 +103,7 @@ describe('Color Utilities', () => {
 
   describe('hex2rgb', () => {
     it('should convert all hex colors to rgb', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.hex2rgb(color.hex)).toEqual(color.rgb);
       });
     });
@@ -111,7 +111,7 @@ describe('Color Utilities', () => {
 
   describe('hsl2str', () => {
     it('should convert all hsl colors to hsl string', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.hsl2str(color.hsl)).toEqual(color.hslStr);
       });
     });
@@ -119,7 +119,7 @@ describe('Color Utilities', () => {
 
   describe('rgba2hex', () => {
     it('should convert all rgb colors to hex string', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.rgba2hex(color.rgb)).toEqual(color.hex);
       });
     });
@@ -127,7 +127,7 @@ describe('Color Utilities', () => {
 
   describe('rgba2hsl', () => {
     it('should convert all rgb colors to hex string', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.rgba2hsl(color.rgb)).toEqual(color.hsl);
       });
     });
@@ -135,7 +135,7 @@ describe('Color Utilities', () => {
 
   describe('rgba2str', () => {
     it('should convert all rgb colors to rgb string', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.rgba2str(color.rgb)).toEqual(color.rgbStr);
       });
     });
@@ -187,7 +187,7 @@ describe('Color Utilities', () => {
 
   describe('str2hsl', () => {
     it('should convert all hex colors to hsl', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.str2hsl(color.hex)).toEqual(color.hsl);
       });
     });
@@ -203,7 +203,7 @@ describe('Color Utilities', () => {
 
   describe('str2rgba', () => {
     it('should convert all hex colors to rgba', () => {
-      colors.forEach(color => {
+      colors.forEach((color) => {
         expect(utils.str2rgba(color.hex)).toEqual(color.rgb);
       });
     });

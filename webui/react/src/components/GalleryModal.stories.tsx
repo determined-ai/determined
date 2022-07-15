@@ -54,13 +54,13 @@ export const Default = (): React.ReactNode => {
   const [ index, setIndex ] = useState<number>(0);
 
   const handleNext = useCallback(() => {
-    setIndex(prev => {
+    setIndex((prev) => {
       return prev === GALLERY_CONTENT.length - 1 ? 0 : prev + 1;
     });
   }, []);
 
   const handlePrevious = useCallback(() => {
-    setIndex(prev => {
+    setIndex((prev) => {
       return prev === 0 ? GALLERY_CONTENT.length - 1 : prev - 1;
     });
   }, []);

@@ -101,8 +101,8 @@ const ActionDropdown = <T extends string>(
   };
 
   const menuItems: React.ReactNode[] = actionOrder
-    .filter(act => !!onTrigger[act])
-    .map(action => <Menu.Item key={action}>{action}</Menu.Item>);
+    .filter((act) => !!onTrigger[act])
+    .map((action) => <Menu.Item key={action}>{action}</Menu.Item>);
 
   if (menuItems.length === 0) {
     return (

@@ -8,12 +8,12 @@ import { routeToReactUrl } from 'shared/utils/routes';
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeToReactUrl(url));
 export const noOp = (): void => undefined;
-export const parseIds = (input: string): number[] => input.split(',').map(i => parseInt(i));
+export const parseIds = (input: string): number[] => input.split(',').map((i) => parseInt(i));
 
 export const displayHelp = (): void => {
   const commands = dfsStaticRoutes([], [], root)
-    .map(path => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
-    .map(addr => addr.replace('root ', ''))
+    .map((path) => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
+    .map((addr) => addr.replace('root ', ''))
     .sort();
 
   const keymap = [

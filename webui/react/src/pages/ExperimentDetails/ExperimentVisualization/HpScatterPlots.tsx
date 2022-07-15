@@ -115,7 +115,7 @@ const ScatterPlots: React.FC<Props> = ({
   const handleGalleryClose = useCallback(() => setActiveHParam(undefined), []);
 
   const handleGalleryNext = useCallback(() => {
-    setActiveHParam(prev => {
+    setActiveHParam((prev) => {
       if (!prev) return prev;
       const index = selectedHParams.indexOf(prev);
       if (index === -1) return prev;
@@ -125,7 +125,7 @@ const ScatterPlots: React.FC<Props> = ({
   }, [ selectedHParams ]);
 
   const handleGalleryPrevious = useCallback(() => {
-    setActiveHParam(prev => {
+    setActiveHParam((prev) => {
       if (!prev) return prev;
       const index = selectedHParams.indexOf(prev);
       if (index === -1) return prev;
@@ -153,7 +153,7 @@ const ScatterPlots: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const hpMetricMap: Record<string, (number | null)[]> = {};
@@ -161,12 +161,12 @@ const ScatterPlots: React.FC<Props> = ({
         const hpLabelMap: Record<string, string[]> = {};
         const hpLogScaleMap: Record<string, boolean> = {};
 
-        event.trials.forEach(trial => {
+        event.trials.forEach((trial) => {
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
           const flatHParams = flattenObject(trial.hparams);
-          fullHParams.forEach(hParam => {
+          fullHParams.forEach((hParam) => {
             /**
              * TODO: filtering NaN, +/- Infinity for now, but handle it later with
              * dynamic min/max ranges via uPlot.Scales.
@@ -181,14 +181,14 @@ const ScatterPlots: React.FC<Props> = ({
           });
         });
 
-        fullHParams.forEach(hParam => {
+        fullHParams.forEach((hParam) => {
           const hp = experiment.hyperparameters?.[hParam];
           if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam] = true;
 
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
           hpLabelMap[hParam] = [];
-          trialIds.forEach(trialId => {
+          trialIds.forEach((trialId) => {
             const map = hpTrialMap[hParam]?.[trialId] || {};
             const hpValue = isBoolean(map.hp) ? map.hp.toString() : map.hp;
 
@@ -217,7 +217,7 @@ const ScatterPlots: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => {
+    ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
     });
@@ -264,7 +264,7 @@ const ScatterPlots: React.FC<Props> = ({
               border={true}
               minItemWidth={resize.width > 320 ? 350 : 270}
               mode={GridMode.AutoFill}>
-              {selectedHParams.map(hParam => (
+              {selectedHParams.map((hParam) => (
                 <div key={hParam} onClick={() => handleChartClick(hParam)}>
                   <UPlotScatter
                     data={chartProps[hParam].data}

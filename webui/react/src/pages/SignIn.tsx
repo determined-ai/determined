@@ -118,7 +118,7 @@ const SignIn: React.FC = () => {
         <div className={css.content}>
           <Logo branding={info.branding} orientation={Orientation.Vertical} />
           <DeterminedAuth canceler={canceler} />
-          {info.ssoProviders?.map(ssoProvider => {
+          {info.ssoProviders?.map((ssoProvider) => {
             const key = ssoProvider.name.toLowerCase();
             const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
             return (

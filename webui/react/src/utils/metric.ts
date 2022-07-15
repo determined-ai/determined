@@ -5,28 +5,28 @@ import { RecordKey } from '../shared/types';
 
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads
-    .filter(workload => workload.training?.metrics)
+    .filter((workload) => workload.training?.metrics)
     .reduce((acc, workload) => {
-      Object.keys(workload.training?.metrics as Record<string, number>).forEach(name => {
+      Object.keys(workload.training?.metrics as Record<string, number>).forEach((name) => {
         acc.add(name);
       });
       return acc;
     }, new Set<string>());
 
-  const trainingMetrics: MetricName[] = Array.from(trainingNames).map(name => {
+  const trainingMetrics: MetricName[] = Array.from(trainingNames).map((name) => {
     return { name, type: MetricType.Training };
   });
 
   const validationNames = workloads
-    .filter(workload => workload.validation?.metrics)
+    .filter((workload) => workload.validation?.metrics)
     .reduce((acc, workload) => {
-      Object.keys(workload.validation?.metrics as Record<string, number>).forEach(name => {
+      Object.keys(workload.validation?.metrics as Record<string, number>).forEach((name) => {
         acc.add(name);
       });
       return acc;
     }, new Set<string>()) as Set<string>;
 
-  const validationMetrics: MetricName[] = Array.from(validationNames).map(name => {
+  const validationMetrics: MetricName[] = Array.from(validationNames).map((name) => {
     return { name, type: MetricType.Validation };
   });
 

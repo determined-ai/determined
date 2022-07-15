@@ -175,7 +175,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             style={{ width: '100%' }}
             value={destSettings.workspaceId}
             onSelect={handleWorkspaceSelect}>
-            {workspaces.map(workspace => {
+            {workspaces.map((workspace) => {
               return (
                 <Option
                   disabled={workspace.archived}
@@ -234,7 +234,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       experimentIds.map((experimentId) =>
         moveExperimentWithHandler(experimentId, destSettings.projectId as number)),
     );
-    const numFailures = results.filter(res => res.status !== 'fulfilled' || res.value === 1).length;
+    const numFailures = results.filter((res) => (
+      res.status !== 'fulfilled' || res.value === 1
+    )).length;
 
     const experimentText = experimentIds.length === 1
       ? `Experiment ${experimentIds[0]}`

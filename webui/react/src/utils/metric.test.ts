@@ -96,7 +96,7 @@ describe('Metric Utilities', () => {
 
   describe('metricNameToStr', () => {
     it('should convert metric to string', () => {
-      metricNames.forEach(metricName => {
+      metricNames.forEach((metricName) => {
         expect(utils.metricNameToStr(metricName.metric)).toBe(metricName.str);
       });
     });
@@ -112,7 +112,7 @@ describe('Metric Utilities', () => {
 
   describe('metricNameToValue', () => {
     it('should convert metric to value', () => {
-      metricNames.forEach(metricName => {
+      metricNames.forEach((metricName) => {
         expect(utils.metricNameToValue(metricName.metric)).toBe(metricName.value);
       });
     });
@@ -120,7 +120,7 @@ describe('Metric Utilities', () => {
 
   describe('valueToMetricName', () => {
     it('should convert value to metric name', () => {
-      metricNames.forEach(metricName => {
+      metricNames.forEach((metricName) => {
         expect(utils.valueToMetricName(metricName.value)).toStrictEqual(metricName.metric);
       });
     });

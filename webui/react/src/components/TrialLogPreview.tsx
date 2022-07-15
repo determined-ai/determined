@@ -53,7 +53,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         'ORDER_BY_ASC',
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         const entry = mapV1LogsResponse(event);
         setLogEntry({
           formattedTime: formatDatetime(entry.time, { format: DATETIME_FORMAT }),
@@ -85,7 +85,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         'ORDER_BY_DESC',
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         const entry = mapV1LogsResponse(event);
 
         /*

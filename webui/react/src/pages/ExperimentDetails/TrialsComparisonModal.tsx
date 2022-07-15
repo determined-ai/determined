@@ -72,7 +72,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialsDetails(prev => ({ ...prev, [trialId]: response }));
+      setTrialsDetails((prev) => ({ ...prev, [trialId]: response }));
     } catch (e) {
       handleError(e);
     }
@@ -85,7 +85,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, [ canceler ]);
 
   useEffect(() => {
-    trials.forEach(trial => {
+    trials.forEach((trial) => {
       fetchTrialDetails(trial);
     });
   }, [ fetchTrialDetails, trials ]);
@@ -94,24 +94,24 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
     const totalBytes = trial.workloads
-      .filter(step => step.checkpoint
+      .filter((step) => step.checkpoint
       && step.checkpoint.state === CheckpointState.Completed)
-      .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
+      .map((step) => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);
   }, []);
 
   const totalCheckpointsSizes: Record<string, string> = useMemo(
     () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => [ trial.id, getCheckpointSize(trial) ]))
+      .map((trial) => [ trial.id, getCheckpointSize(trial) ]))
     , [ getCheckpointSize, trialsDetails ],
   );
 
   const metricNames = useMemo(() => {
     const nameSet: Record<string, MetricName> = {};
-    trials.forEach(trial => {
+    trials.forEach((trial) => {
       extractMetricNames(trialsDetails[trial]?.workloads || [])
-        .forEach(item => nameSet[item.name] = (item));
+        .forEach((item) => nameSet[item.name] = (item));
     });
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
@@ -147,7 +147,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
-      trial.workloads.forEach(workload => {
+      trial.workloads.forEach((workload) => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -181,7 +181,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, []);
 
   const isLoaded = useMemo(
-    () => trials.every(trialId => trialsDetails[trialId])
+    () => trials.every((trialId) => trialsDetails[trialId])
     , [ trials, trialsDetails ],
   );
 
@@ -191,7 +191,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         <>
           <div className={[ css.row, css.header, css.sticky ].join(' ')}>
             <div className={[ css.cell, css.blank, css.header, css.sticky ].join(' ')} />
-            {trials.map(trialId => (
+            {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>
                 <Tag
                   className={css.trialTag}
@@ -204,7 +204,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
           </div>
           <div className={css.row}>
             <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>State</div>
-            {trials.map(trial => (
+            {trials.map((trial) => (
               <div className={css.cell} key={trial}>
                 <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
               </div>
@@ -214,7 +214,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
               Batched Processed
             </div>
-            {trials.map(trialId => (
+            {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>
                 {trialsDetails[trialId].totalBatchesProcessed}
               </div>
@@ -224,7 +224,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
               Total Checkpoint Size
             </div>
-            {trials.map(trialId => (
+            {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId]}</div>
             ))}
           </div>
@@ -241,15 +241,15 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               />
             </div>
           </div>
-          {metricNames.filter(metric => selectedMetrics
-            .map(m => m.name)
+          {metricNames.filter((metric) => selectedMetrics
+            .map((m) => m.name)
             .includes(metric.name))
-            .map(metric => (
+            .map((metric) => (
               <div className={css.row} key={metric.name}>
                 <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
                   <MetricBadgeTag metric={metric} />
                 </div>
-                {trials.map(trialId => (
+                {trials.map((trialId) => (
                   <div className={css.cell} key={trialId}>
                     <HumanReadableNumber num={metrics[trialId][metric.name]} />
                   </div>
@@ -268,14 +268,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 showArrow
                 value={selectedHyperparameters}
                 onChange={onHyperparameterSelect}>
-                {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
+                {hyperparameterNames.map((hp) => <Option key={hp} value={hp}>{hp}</Option>)}
               </SelectFilter>
             </div>
           </div>
-          {selectedHyperparameters.map(hp => (
+          {selectedHyperparameters.map((hp) => (
             <div className={css.row} key={hp}>
               <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>{hp}</div>
-              {trials.map(trialId => {
+              {trials.map((trialId) => {
                 const value = trialsDetails[trialId].hyperparameters[hp];
                 const stringValue = JSON.stringify(value);
                 return (

@@ -92,7 +92,7 @@ const ResourcePoolCardLight: React.FC<Props> = ({ resourcePool: pool }: Props) =
 
   const processedPool = useMemo(() => {
     const newPool = clone(pool);
-    Object.keys(newPool).forEach(key => {
+    Object.keys(newPool).forEach((key) => {
       const value = pool[key as keyof ResourcePool];
       if (key === 'slotsPerAgent' && value === -1) newPool[key] = 'Unknown';
       if (key === 'schedulerType') newPool[key] = V1SchedulerTypeToLabel[value as V1SchedulerType];

@@ -58,7 +58,7 @@ export const useFetchProfilerMetrics = (
         { signal: canceler.signal },
       ),
       (event: ProfilerMetricsResponse) => {
-        setData(prev => {
+        setData((prev) => {
           const newData = event.batch;
           if (newData.values.length !== 0) {
             let names = prev.names;
@@ -140,7 +140,7 @@ export const useFetchProfilerMetrics = (
         });
       },
     ).finally(() => {
-      setData(prev => ({ ...prev, isLoading: false }));
+      setData((prev) => ({ ...prev, isLoading: false }));
     });
 
     return () => canceler.abort();

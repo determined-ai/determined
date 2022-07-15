@@ -87,7 +87,7 @@ export const validateSetting = (config: SettingsConfigProp, value: unknown): boo
   if (value === undefined) return true;
   if (config.type.isArray) {
     if (!Array.isArray(value)) return false;
-    return value.every(val => validateBaseType(config.type.baseType, val));
+    return value.every((val) => validateBaseType(config.type.baseType, val));
   }
   return validateBaseType(config.type.baseType, value);
 };
@@ -134,7 +134,7 @@ export const queryToSettings = <T>(config: SettingsConfig, query: string): T => 
        */
       const queryValue = Array.isArray(paramValue)
         ? paramValue
-          .map(value => queryParamToType(baseType, value))
+          .map((value) => queryParamToType(baseType, value))
           .filter((value): value is Primitive => value !== undefined)
         : queryParamToType(baseType, paramValue);
 
@@ -183,13 +183,13 @@ const getNewQueryPath = (
   const keyMap = getConfigKeyMap(config);
   const params = queryString.parse(currentQuery);
   const cleanParams = {} as Record<RecordKey, unknown>;
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     if (!keyMap[key] && params[key]) cleanParams[key] = params[key];
   });
 
   // Add new query to the clean query.
   const cleanQuery = queryString.stringify(cleanParams);
-  const queries = [ cleanQuery, newQuery ].filter(query => !!query).join('&');
+  const queries = [ cleanQuery, newQuery ].filter((query) => !!query).join('&');
   return `${basePath}?${queries}`;
 };
 
@@ -278,7 +278,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     });
 
     // Update internal settings state for when skipping url encoding of settings.
-    setSettings(prev => ({ ...clone(prev), ...internalSettings }));
+    setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
 
     // Mark to trigger side effect of updating path.
     setPathChange({
@@ -301,7 +301,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
     if(!user) return;
     const userSettingResponse = await getUserSetting({ userId: user.id });
-    userSettingResponse.settings.forEach(setting => {
+    userSettingResponse.settings.forEach((setting) => {
       const { key, value, storagePath } = setting;
       const jsonValue = JSON.parse(value || '');
       const config = configMap[key];
@@ -343,7 +343,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       history.replace(`${location.pathname}?${newQueries.join('&')}`);
     } else {
       // Otherwise read settings from the query string.
-      setSettings(prevSettings => {
+      setSettings((prevSettings) => {
         const defaultSettings = getDefaultSettings<T>(config, storage);
         const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
         return { ...prevSettings, ...defaultSettings, ...querySettings };

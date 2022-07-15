@@ -116,7 +116,7 @@ const UPlotChart: React.FC<Props> = ({
     if (ui.theme && extended.axes) {
       const borderColor = ui.theme.surfaceBorderWeak;
       const labelColor = ui.theme.surfaceOn;
-      extended.axes = extended.axes.map(axis => {
+      extended.axes = extended.axes.map((axis) => {
         return {
           ...axis,
           border: { stroke: borderColor },

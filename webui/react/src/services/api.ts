@@ -381,7 +381,7 @@ export const openOrCreateTensorBoard = async (
   params: Service.LaunchTensorBoardParams,
 ): Promise<Type.CommandTask> => {
   const tensorboards = await getTensorBoards({});
-  const match = tensorboards.find(tensorboard =>
+  const match = tensorboards.find((tensorboard) =>
     !terminalCommandStates.has(tensorboard.state)
     && tensorBoardMatchesSource(tensorboard, params));
   if (match) return match;

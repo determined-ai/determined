@@ -131,7 +131,7 @@ const Dropdown: React.FC<Props> = ({
     if (isAntPicker) {
       return;
     } else if (isTrigger) {
-      setIsVisible(prev => !prev);
+      setIsVisible((prev) => !prev);
     } else if (isDropdown) {
       if (!disableAutoDismiss) setIsVisible(false);
     } else {

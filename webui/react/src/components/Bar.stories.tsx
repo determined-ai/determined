@@ -7,7 +7,7 @@ export default {
   title: 'Bar',
 };
 
-const Wrapper: React.FC<Props> = props => (
+const Wrapper: React.FC<Props> = (props) => (
   <div style={{ width: 240 }}>
     <Bar {...props} />
   </div>

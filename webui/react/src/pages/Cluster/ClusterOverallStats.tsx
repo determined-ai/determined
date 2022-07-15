@@ -17,7 +17,7 @@ export const ClusterOverallStats: React.FC = () => {
       running: 0,
       total: 0,
     };
-    resourcePools.forEach(rp => {
+    resourcePools.forEach((rp) => {
       tally.total += rp.auxContainerCapacity;
       tally.running += rp.auxContainersRunning;
     });
@@ -34,7 +34,7 @@ export const ClusterOverallStats: React.FC = () => {
         <OverviewStats title="Connected Agents">
           {agents ? agents.length : '?'}
         </OverviewStats>
-        {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
+        {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map((resType) => (
           (maxTotalSlots[resType] > 0) ? (
             <OverviewStats
               key={resType}

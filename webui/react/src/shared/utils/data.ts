@@ -110,7 +110,7 @@ export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
   let value = obj || {};
-  return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
+  return path.split('.').every((key) => ((value = value[key]) !== undefined)) ?
     value as T : undefined;
 };
 
@@ -170,8 +170,8 @@ export const validateEnumList = (enumObject: unknown, values?: unknown[]): any =
   if (!Array.isArray(values)) return undefined;
 
   const enumValues = values
-    .map(value => validateEnum(enumObject, value))
-    .filter(value => !!value);
+    .map((value) => validateEnum(enumObject, value))
+    .filter((value) => !!value);
 
   return enumValues.length !== 0 ? enumValues : undefined;
 };
