@@ -372,7 +372,7 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest, 
 	resp apiv1.Determined_QueryTrialsServer) error {
 	period := 30 * time.Second
-	var filtersLength = len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams)
+	var filtersLength = len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
 	if  filtersLength == 0 && req.Filters.Searcher == "" {
 		return status.Errorf(
 			codes.InvalidArgument,

@@ -58,6 +58,7 @@ message QueryFilters {
   repeated NumberRangeFilter training_metrics = 5;
   repeated NumberRangeFilter hparams = 6;
   string searcher = 7;
+  repeated int32 user_ids = 8;
 }
 
 message QueryTrialsRequest {

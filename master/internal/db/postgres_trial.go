@@ -503,6 +503,12 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 		}
 		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
 	}
+	if len(filters.UserIds) > 0 {
+		if ! hasExperimentJoin{
+			qb = qb.Join("INNER JOIN experiments ON trials.experiment_id = experiments.id")
+		}
+		qb = qb.Where("experiments.owner_id IN (?)", bun.In(filters.UserIds))
+	}
 	
 
 	err = qb.Scan(context.TODO(), &trialIds)
