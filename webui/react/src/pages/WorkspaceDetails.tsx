@@ -314,6 +314,7 @@ const WorkspaceDetails: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
+            rowKey="id"
             settings={settings}
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
