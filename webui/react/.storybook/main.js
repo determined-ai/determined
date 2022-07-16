@@ -17,6 +17,7 @@ module.exports = {
     '@storybook/addon-links',
     '@storybook/addon-knobs',
     '@storybook/addon-postcss',
+    '@storybook/addon-toolbars',
     '@storybook/addon-viewport',
   ],
   staticDirs: [
