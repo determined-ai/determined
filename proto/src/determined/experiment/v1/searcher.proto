@@ -6,9 +6,9 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1"
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// InitialOpsEvent is a searcher event signaling the creation of an
+// InitialOperations is a searcher event signaling the creation of an
 // experiment.
-message InitialOpsEvent {
+message InitialOperations {
   // cannot have an empty class.
   string holder = 1;
 }
@@ -65,7 +65,7 @@ message SearcherEvent {
   // The concrete event
   oneof event {
     // an experiment has just been created
-    InitialOpsEvent initial_ops_event = 3;
+    InitialOperations initial_operations = 3;
     // a trial has been created
     TrialCreated trial_created = 4;
     // validation has completed

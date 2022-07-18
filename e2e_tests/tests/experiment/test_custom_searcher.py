@@ -28,8 +28,8 @@ def test_post_searcher_ops() -> None:
     hyperparams = {"optimizer": lr}
     create_trial_op = bindings.v1CreateTrialOperation(hyperparams=hyperparams)
     op1 = bindings.v1SearcherOperation(createTrial=create_trial_op)
-    init_op = bindings.v1InitialOpsEvent(holder="1")
-    init_event = bindings.v1SearcherEvent(initialOpsEvent=init_op)
+    init_op = bindings.v1InitialOperations(holder="1")
+    init_event = bindings.v1SearcherEvent(initialOperations=init_op)
     body = bindings.v1PostSearcherOperationsRequest(
         experimentId=exp_id, searcherOperations=[op1], triggeredByEvent=init_event
     )

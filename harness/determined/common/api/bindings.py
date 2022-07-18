@@ -2677,7 +2677,7 @@ class v1IdleNotebookRequest:
             "idle": self.idle if self.idle is not None else None,
         }
 
-class v1InitialOpsEvent:
+class v1InitialOperations:
     def __init__(
         self,
         holder: "typing.Optional[str]" = None,
@@ -2685,7 +2685,7 @@ class v1InitialOpsEvent:
         self.holder = holder
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1InitialOpsEvent":
+    def from_json(cls, obj: Json) -> "v1InitialOperations":
         return cls(
             holder=obj.get("holder", None),
         )
@@ -5140,14 +5140,14 @@ class v1SearcherEvent:
     def __init__(
         self,
         id: "typing.Optional[int]" = None,
-        initialOpsEvent: "typing.Optional[v1InitialOpsEvent]" = None,
+        initialOperations: "typing.Optional[v1InitialOperations]" = None,
         trialClosed: "typing.Optional[v1TrialClosed]" = None,
         trialCreated: "typing.Optional[v1TrialCreated]" = None,
         trialExitedEarly: "typing.Optional[v1TrialExitedEarly]" = None,
         validationCompleted: "typing.Optional[v1ValidationCompleted]" = None,
     ):
         self.id = id
-        self.initialOpsEvent = initialOpsEvent
+        self.initialOperations = initialOperations
         self.trialCreated = trialCreated
         self.validationCompleted = validationCompleted
         self.trialClosed = trialClosed
@@ -5157,7 +5157,7 @@ class v1SearcherEvent:
     def from_json(cls, obj: Json) -> "v1SearcherEvent":
         return cls(
             id=obj.get("id", None),
-            initialOpsEvent=v1InitialOpsEvent.from_json(obj["initialOpsEvent"]) if obj.get("initialOpsEvent", None) is not None else None,
+            initialOperations=v1InitialOperations.from_json(obj["initialOperations"]) if obj.get("initialOperations", None) is not None else None,
             trialCreated=v1TrialCreated.from_json(obj["trialCreated"]) if obj.get("trialCreated", None) is not None else None,
             validationCompleted=v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj.get("validationCompleted", None) is not None else None,
             trialClosed=v1TrialClosed.from_json(obj["trialClosed"]) if obj.get("trialClosed", None) is not None else None,
@@ -5167,7 +5167,7 @@ class v1SearcherEvent:
     def to_json(self) -> typing.Any:
         return {
             "id": self.id if self.id is not None else None,
-            "initialOpsEvent": self.initialOpsEvent.to_json() if self.initialOpsEvent is not None else None,
+            "initialOperations": self.initialOperations.to_json() if self.initialOperations is not None else None,
             "trialCreated": self.trialCreated.to_json() if self.trialCreated is not None else None,
             "validationCompleted": self.validationCompleted.to_json() if self.validationCompleted is not None else None,
             "trialClosed": self.trialClosed.to_json() if self.trialClosed is not None else None,

@@ -39,8 +39,8 @@ func createSearcherEventQueue() *SearcherEventQueue {
 }
 func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
 	s.eventCount++
-	event := experimentv1.SearcherEvent_InitialOpsEvent{
-		InitialOpsEvent: &experimentv1.InitialOpsEvent{},
+	event := experimentv1.SearcherEvent_InitialOperations{
+		InitialOperations: &experimentv1.InitialOperations{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
 		Id:    s.eventCount,

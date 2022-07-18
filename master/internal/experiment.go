@@ -404,7 +404,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		// (triggered) client processed and the sent the appropriate opertations.
 		// if queue.GetLastProcessedEventId() == -1 then the
 		// first event initial operations triggered the client.
-		if msg.TriggeredByEvent.Id == queue.GetLastProcessedEventID() ||
+		if msg.TriggeredByEvent.Id == queue.GetFirstUnprocessedEventID() ||
 			queue.GetLastProcessedEventID() == -1 {
 			//TODO: e.processOperations(ctx, msg.SearcherOperations, nil)
 			// Set LastProcessedEventID to currentID after ops are sent to be processed.

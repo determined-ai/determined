@@ -29,6 +29,19 @@ func (q *SearcherEventQueue) SetLastProcessedEventID(processedEvent *experimentv
 	q.lastProcessedEventID = processedEvent.Id
 }
 
+// GetFirstUnprocessedEventID returns the event after the last processed event.
+func (q *SearcherEventQueue) GetFirstUnprocessedEventID() int32 {
+	if q.lastProcessedEventID == -1 {
+		return -1
+	}
+	for i, v := range q.events {
+		if v.Id == q.lastProcessedEventID && i < (len(q.events)-1) {
+			return q.events[i+1].Id
+		}
+	}
+	return -1
+}
+
 // Enqueue an event.
 func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) error {
 	q.events = append(q.events, event)

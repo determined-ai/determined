@@ -3228,15 +3228,15 @@ export interface V1IdleNotebookResponse {
 }
 
 /**
- * InitialOpsEvent is a searcher event signaling the creation of an experiment.
+ * InitialOperations is a searcher event signaling the creation of an experiment.
  * @export
- * @interface V1InitialOpsEvent
+ * @interface V1InitialOperations
  */
-export interface V1InitialOpsEvent {
+export interface V1InitialOperations {
     /**
      * cannot have an empty class.
      * @type {string}
-     * @memberof V1InitialOpsEvent
+     * @memberof V1InitialOperations
      */
     holder?: string;
 }
@@ -6026,10 +6026,10 @@ export interface V1SearcherEvent {
     id?: number;
     /**
      * 
-     * @type {V1InitialOpsEvent}
+     * @type {V1InitialOperations}
      * @memberof V1SearcherEvent
      */
-    initialOpsEvent?: V1InitialOpsEvent;
+    initialOperations?: V1InitialOperations;
     /**
      * 
      * @type {V1TrialCreated}
