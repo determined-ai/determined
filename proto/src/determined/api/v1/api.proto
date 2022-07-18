@@ -11,6 +11,7 @@ import "determined/api/v1/auth.proto";
 import "determined/api/v1/checkpoint.proto";
 import "determined/api/v1/command.proto";
 import "determined/api/v1/experiment.proto";
+import "determined/api/v1/group.proto";
 import "determined/api/v1/job.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
@@ -1611,6 +1612,56 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
+    };
+  }
+
+  // Groups testing
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/groups/{group_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  rpc GetGroups(GroupSearchRequest) returns (GroupSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/groups"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  rpc CreateGroup(CreateGroupRequest) returns (GroupWriteResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/groups"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  rpc UpdateGroup(UpdateGroupRequest) returns (GroupWriteResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/groups"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/groups"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 }

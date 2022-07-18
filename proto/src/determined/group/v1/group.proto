@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package determined.group.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/groupv1";
+
+import "determined/user/v1/user.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// GroupDetails contains information about a specific Group
+message GroupDetails {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: [] }
+    };
+    // The id of the group being detailed
+    int32 group_id = 1;
+    // The name of the group
+    string name = 2;
+    // The members of the group
+    repeated determined.user.v1.User users = 3;
+    // repeated int32 AddRoles // for milestone 0
+    // repeated int32 RemoveRoles // for milestone 0
+}
