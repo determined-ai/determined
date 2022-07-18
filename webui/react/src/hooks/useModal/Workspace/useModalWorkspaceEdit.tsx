@@ -2,8 +2,8 @@ import { Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchWorkspace } from 'services/api';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateLength } from 'shared/utils/string';
 import { Workspace } from 'types';

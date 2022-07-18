@@ -2,12 +2,12 @@ import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { RawJson } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, isDetError, isError } from 'shared/utils/error';

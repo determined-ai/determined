@@ -7,7 +7,7 @@ import { login, setUserPassword } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import useModal, { ModalHooks } from '../useModal';
+import useModal, { ModalHooks } from '../../../shared/hooks/useModal/useModal';
 
 interface Props {
   form: FormInstance;

@@ -6,7 +6,7 @@ import React, { PropsWithChildren, useCallback } from 'react';
 import StoreProvider from 'contexts/Store';
 import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
-import { ModalCloseReason } from '../useModal';
+import { ModalCloseReason } from '../../../shared/hooks/useModal/useModal';
 
 import useModalCheckpoint, { Props } from './useModalCheckpoint';
 
