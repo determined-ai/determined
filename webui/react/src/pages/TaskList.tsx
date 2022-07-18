@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal, Space } from 'antd';
+import { Modal, Space } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -73,12 +73,6 @@ const TaskList: React.FC = () => {
     settings,
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
-
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -485,7 +479,6 @@ const TaskList: React.FC = () => {
       id="tasks"
       options={(
         <Space>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
         </Space>
