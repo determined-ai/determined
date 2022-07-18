@@ -50,6 +50,26 @@ message NumberRangeFilter {
   float max = 3;
 }
 
+
+message TrialTag {
+  string key = 1;
+  string value = 2;
+}
+
+
+
+
+message QueryTrialsSortBy {
+  enum Namespace {
+    VALIDATION_METRICS = 0;
+    TRAINING_METRICS = 1;
+  }
+  Namespace namespace = 1;
+  string field = 2;
+  OrderBy order_by = 3;
+}
+
+
 message QueryFilters {
   repeated int32 experiment_ids = 1;
   repeated int32 project_ids = 2;
@@ -59,10 +79,22 @@ message QueryFilters {
   repeated NumberRangeFilter hparams = 6;
   string searcher = 7;
   repeated int32 user_ids = 8;
+  repeated TrialTag tags = 9;
+  message ExpRank {
+    QueryTrialsSortBy sort_by = 1;
+    int32 rank = 2;
+  }
+  ExpRank exp_rank = 10;
+ 
 }
 
 message QueryTrialsRequest {
   QueryFilters filters = 1;
+    // Sort trials by the given field.
+    QueryTrialsSortBy sorter = 2;
+    int32 offset = 3;
+    // Limit the number of trials. A value of 0 denotes no limit.
+    int32 limit = 4;
 }
 
 message PatchTrialsRequest {
@@ -78,8 +110,43 @@ message TrialsMetricsNamesRequest {
 }
 
 message QueryTrialsResponse {
-  repeated int32 trial_id = 1;
+  repeated int32 trial_ids = 1;
 }
+
+
+message BulkAddTrialTagRequest {
+  // the filters
+  QueryFilters filters = 1;
+  // the tag key
+  TrialTag tag = 2;
+}
+
+message BulkRemoveTrialTagRequest {
+  // the filters
+  QueryFilters filters = 1;
+  // the tag key
+  string key = 2;
+}
+
+
+message BulkAddTrialTagResponse {}
+
+message BulkRemoveTrialTagResponse {}
+
+
+message AddTrialTagRequest {
+  repeated int32 trial_ids = 1;
+  TrialTag tag = 2;
+}
+
+message RemoveTrialTagRequest {
+  repeated int32 trial_ids = 1;
+  string key = 2;
+}
+
+message AddTrialTagResponse {}
+
+message RemoveTrialTagResponse {}
 
 // Stream trial logs.
 message TrialLogsRequest {
@@ -110,6 +177,8 @@ message TrialLogsRequest {
   google.protobuf.Timestamp timestamp_after = 13;
   // Order logs in either ascending or descending order by timestamp.
   OrderBy order_by = 14;
+  // named tags for the trial.
+  google.protobuf.Struct tags = 15;
 }
 
 // Response to TrialLogsRequest.

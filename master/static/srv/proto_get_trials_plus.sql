@@ -42,6 +42,8 @@ trial_validations AS (
     ) IS NOT NULL
 ),
 best_validation AS (
+  -- is the window function needed here?
+  -- can this not just be group by + min/max?
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
@@ -60,6 +62,8 @@ best_validation AS (
   WHERE v.rank = 1
 ),
 latest_validation AS (
+  -- is the window function needed here?
+  -- can this not just be group by + min/max?
   SELECT v.trial_id,
     v.total_batches,
     v.end_time,
@@ -130,6 +134,8 @@ best_checkpoint AS (
   ) c
 ),
 latest_training AS (
+  -- is the window function needed here?
+  -- can this not just be group by + min/max?
   SELECT s.trial_id,
     s.total_batches,
     s.end_time,

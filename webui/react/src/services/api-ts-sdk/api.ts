@@ -829,6 +829,34 @@ export interface V1AddProjectNoteResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1AddTrialTagRequest
+ */
+export interface V1AddTrialTagRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1AddTrialTagRequest
+     */
+    trialIds?: Array<number>;
+    /**
+     * 
+     * @type {V1TrialTag}
+     * @memberof V1AddTrialTagRequest
+     */
+    tag?: V1TrialTag;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1AddTrialTagResponse
+ */
+export interface V1AddTrialTagResponse {
+}
+
+/**
  * Agent is a pool of resources where containers are run.
  * @export
  * @interface V1Agent
@@ -1148,6 +1176,62 @@ export interface V1AwsCustomTag {
      * @memberof V1AwsCustomTag
      */
     value: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1BulkAddTrialTagRequest
+ */
+export interface V1BulkAddTrialTagRequest {
+    /**
+     * 
+     * @type {V1QueryFilters}
+     * @memberof V1BulkAddTrialTagRequest
+     */
+    filters?: V1QueryFilters;
+    /**
+     * 
+     * @type {V1TrialTag}
+     * @memberof V1BulkAddTrialTagRequest
+     */
+    tag?: V1TrialTag;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1BulkAddTrialTagResponse
+ */
+export interface V1BulkAddTrialTagResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1BulkRemoveTrialTagRequest
+ */
+export interface V1BulkRemoveTrialTagRequest {
+    /**
+     * 
+     * @type {V1QueryFilters}
+     * @memberof V1BulkRemoveTrialTagRequest
+     */
+    filters?: V1QueryFilters;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1BulkRemoveTrialTagRequest
+     */
+    key?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1BulkRemoveTrialTagResponse
+ */
+export interface V1BulkRemoveTrialTagResponse {
 }
 
 /**
@@ -2029,56 +2113,6 @@ export interface V1File {
 }
 
 /**
- * File node is one node of file in experiment model definition file tree.
- * @export
- * @interface V1FileNode
- */
-export interface V1FileNode {
-    /**
-     * Path of file.
-     * @type {string}
-     * @memberof V1FileNode
-     */
-    path?: string;
-    /**
-     * Name of file.
-     * @type {string}
-     * @memberof V1FileNode
-     */
-    name?: string;
-    /**
-     * Modification time of file.
-     * @type {Date}
-     * @memberof V1FileNode
-     */
-    modifiedTime?: Date;
-    /**
-     * Number of bytes in file content.
-     * @type {number}
-     * @memberof V1FileNode
-     */
-    contentLength?: number;
-    /**
-     * Is this a directory.
-     * @type {boolean}
-     * @memberof V1FileNode
-     */
-    isDir?: boolean;
-    /**
-     * MIME type of file.
-     * @type {string}
-     * @memberof V1FileNode
-     */
-    contentType?: string;
-    /**
-     * Subdirectory files.
-     * @type {Array<V1FileNode>}
-     * @memberof V1FileNode
-     */
-    files?: Array<V1FileNode>;
-}
-
-/**
  * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.
  * @export
  * @enum {string}
@@ -2535,40 +2569,6 @@ export interface V1GetMasterResponse {
 }
 
 /**
- * Request to get a file of model definition.
- * @export
- * @interface V1GetModelDefFileRequest
- */
-export interface V1GetModelDefFileRequest {
-    /**
-     * The id of the experiment.
-     * @type {number}
-     * @memberof V1GetModelDefFileRequest
-     */
-    experimentId?: number;
-    /**
-     * The path of file.
-     * @type {string}
-     * @memberof V1GetModelDefFileRequest
-     */
-    path?: string;
-}
-
-/**
- * Response to GetModelDefFileRequest.
- * @export
- * @interface V1GetModelDefFileResponse
- */
-export interface V1GetModelDefFileResponse {
-    /**
-     * Content of file.
-     * @type {string}
-     * @memberof V1GetModelDefFileResponse
-     */
-    file?: string;
-}
-
-/**
  * Response to GetModelDefRequest.
  * @export
  * @interface V1GetModelDefResponse
@@ -2580,20 +2580,6 @@ export interface V1GetModelDefResponse {
      * @memberof V1GetModelDefResponse
      */
     b64Tgz: string;
-}
-
-/**
- * Response to GetModelDefTreeRequest.
- * @export
- * @interface V1GetModelDefTreeResponse
- */
-export interface V1GetModelDefTreeResponse {
-    /**
-     * File tree of an experiment.
-     * @type {Array<V1FileNode>}
-     * @memberof V1GetModelDefTreeResponse
-     */
-    files?: Array<V1FileNode>;
 }
 
 /**
@@ -5190,6 +5176,12 @@ export interface V1QueryFilters {
      * @memberof V1QueryFilters
      */
     userIds?: Array<number>;
+    /**
+     * 
+     * @type {Array<V1TrialTag>}
+     * @memberof V1QueryFilters
+     */
+    tags?: Array<V1TrialTag>;
 }
 
 /**
@@ -5308,6 +5300,34 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1RemoveTrialTagRequest
+ */
+export interface V1RemoveTrialTagRequest {
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1RemoveTrialTagRequest
+     */
+    trialIds?: Array<number>;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1RemoveTrialTagRequest
+     */
+    key?: string;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1RemoveTrialTagResponse
+ */
+export interface V1RemoveTrialTagResponse {
 }
 
 /**
@@ -6886,6 +6906,26 @@ export interface V1TrialSimulation {
      * @memberof V1TrialSimulation
      */
     occurrences?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1TrialTag
+ */
+export interface V1TrialTag {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialTag
+     */
+    key?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialTag
+     */
+    value?: string;
 }
 
 /**
@@ -9595,6 +9635,350 @@ export class CommandsApi extends BaseAPI {
 }
 
 /**
+ * DeterminedApi - fetch parameter creator
+ * @export
+ */
+export const DeterminedApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {V1AddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addTrialTag(body: V1AddTrialTagRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling addTrialTag.');
+            }
+            const localVarPath = `/api/v1/trials/tags/add`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AddTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1BulkAddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkAddTrialTag.');
+            }
+            const localVarPath = `/api/v1/trials/tags/bulk-add`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1BulkAddTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1BulkRemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkRemoveTrialTag.');
+            }
+            const localVarPath = `/api/v1/trials/tags/bulk-remove`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1BulkRemoveTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {V1RemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeTrialTag(body: V1RemoveTrialTagRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling removeTrialTag.');
+            }
+            const localVarPath = `/api/v1/trials/tags/remove`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1RemoveTrialTagRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * DeterminedApi - functional programming interface
+ * @export
+ */
+export const DeterminedApiFp = function(configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @param {V1AddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addTrialTag(body: V1AddTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddTrialTagResponse> {
+            const localVarFetchArgs = DeterminedApiFetchParamCreator(configuration).addTrialTag(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1BulkAddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkAddTrialTagResponse> {
+            const localVarFetchArgs = DeterminedApiFetchParamCreator(configuration).bulkAddTrialTag(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1BulkRemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkRemoveTrialTagResponse> {
+            const localVarFetchArgs = DeterminedApiFetchParamCreator(configuration).bulkRemoveTrialTag(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {V1RemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeTrialTag(body: V1RemoveTrialTagRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveTrialTagResponse> {
+            const localVarFetchArgs = DeterminedApiFetchParamCreator(configuration).removeTrialTag(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * DeterminedApi - factory interface
+ * @export
+ */
+export const DeterminedApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @param {V1AddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addTrialTag(body: V1AddTrialTagRequest, options?: any) {
+            return DeterminedApiFp(configuration).addTrialTag(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1BulkAddTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any) {
+            return DeterminedApiFp(configuration).bulkAddTrialTag(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1BulkRemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any) {
+            return DeterminedApiFp(configuration).bulkRemoveTrialTag(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {V1RemoveTrialTagRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        removeTrialTag(body: V1RemoveTrialTagRequest, options?: any) {
+            return DeterminedApiFp(configuration).removeTrialTag(body, options)(fetch, basePath);
+        },
+    };
+};
+
+/**
+ * DeterminedApi - object-oriented interface
+ * @export
+ * @class DeterminedApi
+ * @extends {BaseAPI}
+ */
+export class DeterminedApi extends BaseAPI {
+    /**
+     * 
+     * @param {V1AddTrialTagRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeterminedApi
+     */
+    public addTrialTag(body: V1AddTrialTagRequest, options?: any) {
+        return DeterminedApiFp(this.configuration).addTrialTag(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1BulkAddTrialTagRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeterminedApi
+     */
+    public bulkAddTrialTag(body: V1BulkAddTrialTagRequest, options?: any) {
+        return DeterminedApiFp(this.configuration).bulkAddTrialTag(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1BulkRemoveTrialTagRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeterminedApi
+     */
+    public bulkRemoveTrialTag(body: V1BulkRemoveTrialTagRequest, options?: any) {
+        return DeterminedApiFp(this.configuration).bulkRemoveTrialTag(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {V1RemoveTrialTagRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DeterminedApi
+     */
+    public removeTrialTag(body: V1RemoveTrialTagRequest, options?: any) {
+        return DeterminedApiFp(this.configuration).removeTrialTag(body, options)(this.fetch, this.basePath);
+    }
+
+}
+
+/**
  * ExperimentsApi - fetch parameter creator
  * @export
  */
@@ -9951,55 +10335,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
-         * @param {string} path Path to the target file
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentModelFile(experimentId: string, path: string, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentModelFile.');
-            }
-            // verify required parameter 'path' is not null or undefined
-            if (path === null || path === undefined) {
-                throw new RequiredError('path','Required parameter path was null or undefined when calling getExperimentModelFile.');
-            }
-            const localVarPath = `/experiment_id/file/download`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (experimentId !== undefined) {
-                localVarQueryParameter['experiment_id'] = experimentId;
-            }
-
-            if (path !== undefined) {
-                localVarQueryParameter['path'] = path;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -10196,89 +10531,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDef.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/model_def`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get one file content of model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {V1GetModelDefFileRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefFile.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling getModelDefFile.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/file`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1GetModelDefFileRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11096,26 +11348,6 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
-         * @param {string} path Path to the target file
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentModelFile(experimentId: string, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile(experimentId, path, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response;
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -11195,45 +11427,6 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          */
         getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef(experimentId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get one file content of model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {V1GetModelDefFileRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(experimentId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11617,17 +11810,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
-         * @param {string} path Path to the target file
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentModelFile(experimentId: string, path: string, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentModelFile(experimentId, path, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -11680,27 +11862,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         getModelDef(experimentId: number, options?: any) {
             return ExperimentsApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get one file content of model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {V1GetModelDefFileRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDefFile(experimentId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11975,19 +12136,6 @@ export class ExperimentsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Get individual file from modal definitions for download.
-     * @param {string} experimentId Id of the experiment
-     * @param {string} path Path to the target file
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getExperimentModelFile(experimentId: string, path: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentModelFile(experimentId, path, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
@@ -12047,31 +12195,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public getModelDef(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get one file content of model definition of an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {V1GetModelDefFileRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDefFile(experimentId, body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get the model definition file tree of an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getModelDefTree(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**

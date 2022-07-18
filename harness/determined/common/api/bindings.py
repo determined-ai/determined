@@ -108,6 +108,32 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
+class QueryFiltersExpRank:
+    def __init__(
+        self,
+        rank: "typing.Optional[int]" = None,
+        sortBy: "typing.Optional[v1QueryTrialsSortBy]" = None,
+    ):
+        self.sortBy = sortBy
+        self.rank = rank
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "QueryFiltersExpRank":
+        return cls(
+            sortBy=v1QueryTrialsSortBy.from_json(obj["sortBy"]) if obj.get("sortBy", None) is not None else None,
+            rank=obj.get("rank", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "sortBy": self.sortBy.to_json() if self.sortBy is not None else None,
+            "rank": self.rank if self.rank is not None else None,
+        }
+
+class QueryTrialsSortByNamespace(enum.Enum):
+    VALIDATION_METRICS = "VALIDATION_METRICS"
+    TRAINING_METRICS = "TRAINING_METRICS"
+
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -388,6 +414,28 @@ class v1AddProjectNoteResponse:
             "notes": [x.to_json() for x in self.notes],
         }
 
+class v1AddTrialTagRequest:
+    def __init__(
+        self,
+        tag: "typing.Optional[v1TrialTag]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.trialIds = trialIds
+        self.tag = tag
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1AddTrialTagRequest":
+        return cls(
+            trialIds=obj.get("trialIds", None),
+            tag=v1TrialTag.from_json(obj["tag"]) if obj.get("tag", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialIds": self.trialIds if self.trialIds is not None else None,
+            "tag": self.tag.to_json() if self.tag is not None else None,
+        }
+
 class v1Agent:
     def __init__(
         self,
@@ -664,6 +712,50 @@ class v1AwsCustomTag:
         return {
             "key": self.key,
             "value": self.value,
+        }
+
+class v1BulkAddTrialTagRequest:
+    def __init__(
+        self,
+        filters: "typing.Optional[v1QueryFilters]" = None,
+        tag: "typing.Optional[v1TrialTag]" = None,
+    ):
+        self.filters = filters
+        self.tag = tag
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1BulkAddTrialTagRequest":
+        return cls(
+            filters=v1QueryFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            tag=v1TrialTag.from_json(obj["tag"]) if obj.get("tag", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "filters": self.filters.to_json() if self.filters is not None else None,
+            "tag": self.tag.to_json() if self.tag is not None else None,
+        }
+
+class v1BulkRemoveTrialTagRequest:
+    def __init__(
+        self,
+        filters: "typing.Optional[v1QueryFilters]" = None,
+        key: "typing.Optional[str]" = None,
+    ):
+        self.filters = filters
+        self.key = key
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1BulkRemoveTrialTagRequest":
+        return cls(
+            filters=v1QueryFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            key=obj.get("key", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "filters": self.filters.to_json() if self.filters is not None else None,
+            "key": self.key if self.key is not None else None,
         }
 
 class v1Checkpoint:
@@ -1406,48 +1498,6 @@ class v1File:
             "gid": self.gid,
         }
 
-class v1FileNode:
-    def __init__(
-        self,
-        contentLength: "typing.Optional[int]" = None,
-        contentType: "typing.Optional[str]" = None,
-        files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
-        isDir: "typing.Optional[bool]" = None,
-        modifiedTime: "typing.Optional[str]" = None,
-        name: "typing.Optional[str]" = None,
-        path: "typing.Optional[str]" = None,
-    ):
-        self.path = path
-        self.name = name
-        self.modifiedTime = modifiedTime
-        self.contentLength = contentLength
-        self.isDir = isDir
-        self.contentType = contentType
-        self.files = files
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1FileNode":
-        return cls(
-            path=obj.get("path", None),
-            name=obj.get("name", None),
-            modifiedTime=obj.get("modifiedTime", None),
-            contentLength=obj.get("contentLength", None),
-            isDir=obj.get("isDir", None),
-            contentType=obj.get("contentType", None),
-            files=[v1FileNode.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "path": self.path if self.path is not None else None,
-            "name": self.name if self.name is not None else None,
-            "modifiedTime": self.modifiedTime if self.modifiedTime is not None else None,
-            "contentLength": self.contentLength if self.contentLength is not None else None,
-            "isDir": self.isDir if self.isDir is not None else None,
-            "contentType": self.contentType if self.contentType is not None else None,
-            "files": [x.to_json() for x in self.files] if self.files is not None else None,
-        }
-
 class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     FITTING_POLICY_BEST = "FITTING_POLICY_BEST"
@@ -1902,46 +1952,6 @@ class v1GetMasterResponse:
             "branding": self.branding if self.branding is not None else None,
         }
 
-class v1GetModelDefFileRequest:
-    def __init__(
-        self,
-        experimentId: "typing.Optional[int]" = None,
-        path: "typing.Optional[str]" = None,
-    ):
-        self.experimentId = experimentId
-        self.path = path
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetModelDefFileRequest":
-        return cls(
-            experimentId=obj.get("experimentId", None),
-            path=obj.get("path", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "experimentId": self.experimentId if self.experimentId is not None else None,
-            "path": self.path if self.path is not None else None,
-        }
-
-class v1GetModelDefFileResponse:
-    def __init__(
-        self,
-        file: "typing.Optional[str]" = None,
-    ):
-        self.file = file
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetModelDefFileResponse":
-        return cls(
-            file=obj.get("file", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "file": self.file if self.file is not None else None,
-        }
-
 class v1GetModelDefResponse:
     def __init__(
         self,
@@ -1958,24 +1968,6 @@ class v1GetModelDefResponse:
     def to_json(self) -> typing.Any:
         return {
             "b64Tgz": self.b64Tgz,
-        }
-
-class v1GetModelDefTreeResponse:
-    def __init__(
-        self,
-        files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
-    ):
-        self.files = files
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetModelDefTreeResponse":
-        return cls(
-            files=[v1FileNode.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "files": [x.to_json() for x in self.files] if self.files is not None else None,
         }
 
 class v1GetModelLabelsResponse:
@@ -4431,10 +4423,12 @@ class v1PutTemplateResponse:
 class v1QueryFilters:
     def __init__(
         self,
+        expRank: "typing.Optional[QueryFiltersExpRank]" = None,
         experimentIds: "typing.Optional[typing.Sequence[int]]" = None,
         hparams: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         projectIds: "typing.Optional[typing.Sequence[int]]" = None,
         searcher: "typing.Optional[str]" = None,
+        tags: "typing.Optional[typing.Sequence[v1TrialTag]]" = None,
         trainingMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
         userIds: "typing.Optional[typing.Sequence[int]]" = None,
         validationMetrics: "typing.Optional[typing.Sequence[v1NumberRangeFilter]]" = None,
@@ -4448,6 +4442,8 @@ class v1QueryFilters:
         self.hparams = hparams
         self.searcher = searcher
         self.userIds = userIds
+        self.tags = tags
+        self.expRank = expRank
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryFilters":
@@ -4460,6 +4456,8 @@ class v1QueryFilters:
             hparams=[v1NumberRangeFilter.from_json(x) for x in obj["hparams"]] if obj.get("hparams", None) is not None else None,
             searcher=obj.get("searcher", None),
             userIds=obj.get("userIds", None),
+            tags=[v1TrialTag.from_json(x) for x in obj["tags"]] if obj.get("tags", None) is not None else None,
+            expRank=QueryFiltersExpRank.from_json(obj["expRank"]) if obj.get("expRank", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -4472,42 +4470,82 @@ class v1QueryFilters:
             "hparams": [x.to_json() for x in self.hparams] if self.hparams is not None else None,
             "searcher": self.searcher if self.searcher is not None else None,
             "userIds": self.userIds if self.userIds is not None else None,
+            "tags": [x.to_json() for x in self.tags] if self.tags is not None else None,
+            "expRank": self.expRank.to_json() if self.expRank is not None else None,
         }
 
 class v1QueryTrialsRequest:
     def __init__(
         self,
         filters: "typing.Optional[v1QueryFilters]" = None,
+        limit: "typing.Optional[int]" = None,
+        offset: "typing.Optional[int]" = None,
+        sorter: "typing.Optional[v1QueryTrialsSortBy]" = None,
     ):
         self.filters = filters
+        self.sorter = sorter
+        self.offset = offset
+        self.limit = limit
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsRequest":
         return cls(
             filters=v1QueryFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+            sorter=v1QueryTrialsSortBy.from_json(obj["sorter"]) if obj.get("sorter", None) is not None else None,
+            offset=obj.get("offset", None),
+            limit=obj.get("limit", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "filters": self.filters.to_json() if self.filters is not None else None,
+            "sorter": self.sorter.to_json() if self.sorter is not None else None,
+            "offset": self.offset if self.offset is not None else None,
+            "limit": self.limit if self.limit is not None else None,
         }
 
 class v1QueryTrialsResponse:
     def __init__(
         self,
-        trialId: "typing.Optional[typing.Sequence[int]]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
     ):
-        self.trialId = trialId
+        self.trialIds = trialIds
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1QueryTrialsResponse":
         return cls(
-            trialId=obj.get("trialId", None),
+            trialIds=obj.get("trialIds", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "trialId": self.trialId if self.trialId is not None else None,
+            "trialIds": self.trialIds if self.trialIds is not None else None,
+        }
+
+class v1QueryTrialsSortBy:
+    def __init__(
+        self,
+        field: "typing.Optional[str]" = None,
+        namespace: "typing.Optional[QueryTrialsSortByNamespace]" = None,
+        orderBy: "typing.Optional[v1OrderBy]" = None,
+    ):
+        self.namespace = namespace
+        self.field = field
+        self.orderBy = orderBy
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1QueryTrialsSortBy":
+        return cls(
+            namespace=QueryTrialsSortByNamespace(obj["namespace"]) if obj.get("namespace", None) is not None else None,
+            field=obj.get("field", None),
+            orderBy=v1OrderBy(obj["orderBy"]) if obj.get("orderBy", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "namespace": self.namespace.value if self.namespace is not None else None,
+            "field": self.field if self.field is not None else None,
+            "orderBy": self.orderBy.value if self.orderBy is not None else None,
         }
 
 class v1QueueControl:
@@ -4594,6 +4632,28 @@ class v1RPQueueStat:
             "stats": self.stats.to_json(),
             "resourcePool": self.resourcePool,
             "aggregates": [x.to_json() for x in self.aggregates] if self.aggregates is not None else None,
+        }
+
+class v1RemoveTrialTagRequest:
+    def __init__(
+        self,
+        key: "typing.Optional[str]" = None,
+        trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.trialIds = trialIds
+        self.key = key
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RemoveTrialTagRequest":
+        return cls(
+            trialIds=obj.get("trialIds", None),
+            key=obj.get("key", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "trialIds": self.trialIds if self.trialIds is not None else None,
+            "key": self.key if self.key is not None else None,
         }
 
 class v1RendezvousInfo:
@@ -5944,6 +6004,28 @@ class v1TrialSimulation:
             "occurrences": self.occurrences if self.occurrences is not None else None,
         }
 
+class v1TrialTag:
+    def __init__(
+        self,
+        key: "typing.Optional[str]" = None,
+        value: "typing.Optional[str]" = None,
+    ):
+        self.key = key
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialTag":
+        return cls(
+            key=obj.get("key", None),
+            value=obj.get("value", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "key": self.key if self.key is not None else None,
+            "value": self.value if self.value is not None else None,
+        }
+
 class v1TrialsSampleResponse:
     def __init__(
         self,
@@ -6309,6 +6391,25 @@ def post_AddProjectNote(
         return v1AddProjectNoteResponse.from_json(_resp.json())
     raise APIHttpError("post_AddProjectNote", _resp)
 
+def post_AddTrialTag(
+    session: "client.Session",
+    *,
+    body: "v1AddTrialTagRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/tags/add",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_AddTrialTag", _resp)
+
 def post_AllocationAllGather(
     session: "client.Session",
     *,
@@ -6486,6 +6587,44 @@ def post_ArchiveWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveWorkspace", _resp)
+
+def post_BulkAddTrialTag(
+    session: "client.Session",
+    *,
+    body: "v1BulkAddTrialTagRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/tags/bulk-add",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_BulkAddTrialTag", _resp)
+
+def post_BulkRemoveTrialTag(
+    session: "client.Session",
+    *,
+    body: "v1BulkRemoveTrialTagRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/tags/bulk-remove",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_BulkRemoveTrialTag", _resp)
 
 def post_CancelExperiment(
     session: "client.Session",
@@ -7261,45 +7400,6 @@ def get_GetModelDef(
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDef", _resp)
-
-def post_GetModelDefFile(
-    session: "client.Session",
-    *,
-    body: "v1GetModelDefFileRequest",
-    experimentId: int,
-) -> "v1GetModelDefFileResponse":
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/experiments/{experimentId}/file",
-        params=_params,
-        json=body.to_json(),
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1GetModelDefFileResponse.from_json(_resp.json())
-    raise APIHttpError("post_GetModelDefFile", _resp)
-
-def get_GetModelDefTree(
-    session: "client.Session",
-    *,
-    experimentId: int,
-) -> "v1GetModelDefTreeResponse":
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/experiments/{experimentId}/file_tree",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1GetModelDefTreeResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetModelDefTree", _resp)
 
 def get_GetModelLabels(
     session: "client.Session",
@@ -8699,6 +8799,44 @@ def put_PutTemplate(
     if _resp.status_code == 200:
         return v1PutTemplateResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTemplate", _resp)
+
+def post_QueryTrials(
+    session: "client.Session",
+    *,
+    body: "v1QueryTrialsRequest",
+) -> "v1QueryTrialsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/query",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1QueryTrialsResponse.from_json(_resp.json())
+    raise APIHttpError("post_QueryTrials", _resp)
+
+def post_RemoveTrialTag(
+    session: "client.Session",
+    *,
+    body: "v1RemoveTrialTagRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/tags/remove",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_RemoveTrialTag", _resp)
 
 def post_ReportCheckpoint(
     session: "client.Session",

@@ -1,0 +1,4 @@
+-- ALTER table trials ADD COLUMN IF NOT EXISTS tags jsonb;
+-- CREATE INDEX trials_tags_index ON trials USING GIN (tags);
+-- update trials set tags = '{}';
+-- UPDATE trials SET tags = jsonb_set(tags, '{experiment-name}', '"mnist-pytorch"');

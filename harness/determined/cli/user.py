@@ -88,12 +88,14 @@ def log_out_user(parsed_args: Namespace) -> None:
         return
 
     try:
-        api.post(
-            parsed_args.master,
-            "logout",
-            headers={"Authorization": "Bearer {}".format(auth.get_session_token())},
-            authenticated=False,
-        )
+        headers={"Authorization": "Bearer {}".format(auth.get_session_token())},
+        print(headers)
+        # api.post(
+        #     parsed_args.master,
+        #     "logout",
+        #     headers={"Authorization": "Bearer {}".format(auth.get_session_token())},
+        #     authenticated=False,
+        # )
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e

@@ -38,7 +38,7 @@ func initTheOneBun(db *sql.DB) {
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 
 	// This will print only the failed queries.
-	theOneBun.AddQueryHook(bundebug.NewQueryHook())
+	theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 }
 
 // Bun returns the singleton database connection through the bun library. bun is the database

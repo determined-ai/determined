@@ -876,6 +876,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+// DEPRECATED -- do not use
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -899,7 +900,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil
+			return err
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1181,6 +1182,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+// DEPRECATED -- do not use
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,
@@ -1611,26 +1613,4 @@ func (a *apiServer) MoveExperiment(
 
 	return &apiv1.MoveExperimentResponse{},
 		errors.Wrapf(err, "error moving experiment (%d)", req.ExperimentId)
-}
-
-func (a *apiServer) GetModelDefTree(
-	_ context.Context, req *apiv1.GetModelDefTreeRequest,
-) (*apiv1.GetModelDefTreeResponse, error) {
-	modelDefCache := GetModelDefCache()
-	fileTree, err := modelDefCache.FileTreeNested(int(req.ExperimentId))
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.GetModelDefTreeResponse{Files: fileTree}, nil
-}
-
-func (a *apiServer) GetModelDefFile(
-	_ context.Context, req *apiv1.GetModelDefFileRequest,
-) (*apiv1.GetModelDefFileResponse, error) {
-	modelDefCache := GetModelDefCache()
-	file, err := modelDefCache.FileContent(int(req.ExperimentId), req.Path)
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.GetModelDefFileResponse{File: file}, nil
 }

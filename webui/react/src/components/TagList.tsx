@@ -69,7 +69,7 @@ const EditableTagList: React.FC<Props> = (
       }
       onChange?.(updatedTags);
     }
-    setState(state => ({ ...state, editInputIndex: -1, inputVisible: false }));
+    setState(state => ({ ...state, editInputIndex: state.editInputIndex + 1, inputVisible: true }));
   }, [ onChange, tags ]);
 
   const { editInputIndex, inputVisible, inputWidth } = state;

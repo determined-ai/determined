@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -367,48 +368,90 @@ func (a *apiServer) GetTrialCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
-// func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
-// 	resp apiv1.Determined_ExpCompareMetricNamesServer) error {
-func (a *apiServer) QueryTrials(req *apiv1.QueryTrialsRequest, 
-	resp apiv1.Determined_QueryTrialsServer) error {
-	period := 30 * time.Second
-	var filtersLength = len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
-	if  filtersLength == 0 && req.Filters.Searcher == "" {
-		return status.Errorf(
+func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsRequest) (*apiv1.QueryTrialsResponse, error) {
+	filtersLength := len(req.Filters.WorkspaceIds) + len(req.Filters.ExperimentIds) + len(req.Filters.ProjectIds) + len(req.Filters.ValidationMetrics) + len(req.Filters.TrainingMetrics) + len(req.Filters.Hparams) + len(req.Filters.UserIds)
+	if filtersLength == 0 && req.Filters.Searcher == "" {
+		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"at least one filter required",
 		)
 	}
 
-	for {
-		var response apiv1.QueryTrialsResponse
-		trialIDs, err := a.m.db.QueryTrials(req.Filters)
-		fmt.Println("trialIds")
-		fmt.Println(trialIDs)
-		if err != nil {
-			return errors.Wrapf(err,
-				"error fetching trials")
-		}
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-		response.TrialId = trialIDs
-
-		if err = resp.Send(&response); err != nil {
-			return err
-		}
-
-		if err != nil {
-			return errors.Wrap(err, "error looking up experiment state")
-		}
-
-		if grpcutil.ConnectionIsClosed(resp) {
-			return nil
-		}
-
-		time.Sleep(period)
+	response := &apiv1.QueryTrialsResponse{}
+	trialIDs, err := a.m.db.QueryTrials(req.Filters)
+	if err != nil {
+		return nil, err
 	}
+	response.TrialIds = trialIDs
+	return response, nil
+}
+
+func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagRequest) (*apiv1.AddTrialTagResponse, error) {
+	trialIDs := req.TrialIds
+	tag := req.Tag
+	db.Bun().
+		NewUpdate().
+		Table("trials").
+		Set(fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, tag.Key, tag.Value)). // need to make safe
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(context.TODO())
+	resp := &apiv1.AddTrialTagResponse{}
+	return resp, nil
+}
+
+func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
+	resp := &apiv1.BulkAddTrialTagResponse{}
+	tag := req.Tag
+	trialIDs, err := a.m.db.QueryTrials(req.Filters)
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching trials")
+	}
+
+	if len(trialIDs) == 0 {
+		return resp, nil
+	}
+	fmt.Println(trialIDs)
+
+	db.Bun().NewUpdate().
+		Table("trials").
+		Set(fmt.Sprintf(`tags = jsonb_set(tags, '{%s}', '"%s"')`, tag.Key, tag.Value)). // need to make safe
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(context.TODO())
+
+	return resp, nil
+}
+
+func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTagRequest) (*apiv1.RemoveTrialTagResponse, error) {
+	trialIDs := req.TrialIds
+	key := req.Key
+
+	db.Bun().
+		NewUpdate().
+		Table("trials").
+		Set(`tags = tags::jsonb - ?`, key).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(context.TODO())
+	resp := &apiv1.RemoveTrialTagResponse{}
+	return resp, nil
+}
+
+func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
+	trialIDs, err := a.m.db.QueryTrials(req.Filters)
+	key := req.Key
+
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching trials")
+	}
+	db.Bun().
+		NewUpdate().
+		Table("trials").
+		Set(`tags = tags::jsonb - ?`, key).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(context.TODO())
+	resp := &apiv1.BulkRemoveTrialTagResponse{}
+	return resp, nil
 }
 
 func (a *apiServer) KillTrial(

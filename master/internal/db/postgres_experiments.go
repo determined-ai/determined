@@ -148,6 +148,7 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 }
 
 // ExpCompareMetricNames returns the set of training and validation metric names
+// DEPRECATED -- do not use
 // that have been recorded for a list of trials.
 func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
 	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
@@ -396,6 +397,7 @@ SELECT t.id FROM (
 }
 
 // ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
+// DEPRECATED -- do not use
 // that recorded the best values for the specified metric at any point during the trial.
 func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
 	smallerIsBetter bool,

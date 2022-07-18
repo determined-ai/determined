@@ -334,27 +334,6 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Get the model definition file tree of an experiment.
-  rpc GetModelDefTree(GetModelDefTreeRequest)
-      returns (GetModelDefTreeResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/experiments/{experiment_id}/file_tree"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
-    };
-  }
-  // Get one file content of model definition of an experiment.
-  rpc GetModelDefFile(GetModelDefFileRequest)
-      returns (GetModelDefFileResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/experiments/{experiment_id}/file"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
-    };
-  }
   // Get a list of unique experiment labels (sorted by popularity).
   rpc GetExperimentLabels(GetExperimentLabelsRequest)
       returns (GetExperimentLabelsResponse) {
@@ -519,17 +498,57 @@ service Determined {
     };
   }
 
-  rpc QueryTrials(QueryTrialsRequest) returns (stream QueryTrialsResponse) {
-
+  rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/query"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials", "Experiments" ]
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc BulkAddTrialTag(BulkAddTrialTagRequest) returns (BulkAddTrialTagResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/tags/bulk-add"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
     };
   }
   
+  rpc BulkRemoveTrialTag(BulkRemoveTrialTagRequest) returns (BulkRemoveTrialTagResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/tags/bulk-remove"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc AddTrialTag(AddTrialTagRequest) returns (AddTrialTagResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/tags/add"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc RemoveTrialTag(RemoveTrialTagRequest) returns (RemoveTrialTagResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/tags/remove"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
       returns (GetTrialWorkloadsResponse) {
