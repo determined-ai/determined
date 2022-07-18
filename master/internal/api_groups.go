@@ -83,9 +83,13 @@ func (a *apiServer) UpdateGroup(_ context.Context, req *apiv1.UpdateGroupRequest
 	return
 }
 
-func (a *apiServer) DeleteGroup(_ context.Context, req *apiv1.DeleteGroupRequest,
+func (a *apiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
-	return
+	err = usergroup.DeleteGroup(ctx, int(req.GroupId))
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func intsToUserIDs(ints []int32) []model.UserID {
