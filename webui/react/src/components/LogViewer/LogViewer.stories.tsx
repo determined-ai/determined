@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import React, { useRef } from 'react';
 
-import { jsonToClusterLog } from 'services/decoder';
+import { mapV1LogsResponse } from 'services/decoder';
 import HelmetDecorator from 'storybook/HelmetDecorator';
 import { downloadText, simulateLogsDownload } from 'utils/browser';
 
@@ -22,7 +22,7 @@ const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,3
 export const Default = (): React.ReactNode => (
   <div style={{ height: '100vh' }}>
     <LogViewer
-      decoder={jsonToClusterLog}
+      decoder={mapV1LogsResponse}
       initialLogs={[
         { id: '0', message: 'Simple one liner.', time: '2020-06-02T21:48:07.456381-06:00' },
         { id: '1', message: 'Another line', time: '2020-06-02T21:48:08.456381-06:00' },
@@ -86,7 +86,7 @@ Intense colors:
 export const Ansi = (): React.ReactNode => (
   <div style={{ height: '100vh' }}>
     <LogViewer
-      decoder={jsonToClusterLog}
+      decoder={mapV1LogsResponse}
       initialLogs={[
         { id: '0', message: 'example of logs with ANSI color codes', time: '2020-06-02T21:48:07.456381-06:00' },
         { id: '1', message: ansiText, time: '2020-06-02T21:48:08.456381-06:00' },
