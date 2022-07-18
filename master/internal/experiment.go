@@ -279,11 +279,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
 
-	// Deep copys the experiment's config.
-	case expconf.ExperimentConfig:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(schemas.Copy(e.Config).(expconf.ExperimentConfig))
-		}
 	// Patch experiment messages.
 	case model.StateWithReason:
 		e.updateState(ctx, msg)
