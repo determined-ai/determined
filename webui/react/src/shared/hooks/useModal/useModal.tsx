@@ -20,6 +20,12 @@ export interface ModalHooks {
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
 }
 
+export type ModalOpen<T> = (modalProps?: ModalFuncProps & { openProps?: T }) => void;
+
+export interface ModalHooksWithCustomProps<T> extends Omit<ModalHooks, 'modalOpen'> {
+  modalOpen: ModalOpen<T>;
+}
+
 /**
  * By default we add modal close calls to the tail end of both `Ok` and
  * `Cancel` callbacks. `rawCancel` and `rawOk` allow us to override and
