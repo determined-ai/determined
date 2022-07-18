@@ -453,21 +453,24 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
 			return nil, errors.Errorf("attempt to activate experiment timed out")
 		}
-	} else {
-		// -race detected in cases that in the experiment actor's PreStart we
-		// modify the experiment config in (e.setWeight) and return that experiment
-		// config without any synchronization when we don't activate the experiment.
-		resp := m.system.AskAt(exp, actor.Ping{})
-		if _, notTimedOut := resp.GetOrTimeout(defaultAskTimeout); !notTimedOut {
-			return nil, errors.Errorf("attempt to create experiment timed out")
-		}
+	}
+
+	// -race detected that we return e.Config which can be modified by the experiment actor.
+	// Instead we synchronize with the actor to ask for a deep copy of it to return.
+	resp, ok := m.system.AskAt(exp, expconf.ExperimentConfig{}).GetOrTimeout(defaultAskTimeout)
+	if !ok {
+		return nil, errors.Errorf("attempt to get experiment config timed out")
+	}
+	config, ok := resp.(expconf.ExperimentConfig)
+	if !ok {
+		return nil, errors.Errorf("could not get experiment config")
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
 	response := model.ExperimentDescriptor{
 		ID:       e.ID,
 		Archived: false,
-		Config:   e.Config,
+		Config:   config,
 		Labels:   make([]string, 0),
 	}
 	return response, nil
