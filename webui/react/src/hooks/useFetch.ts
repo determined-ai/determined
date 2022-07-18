@@ -100,12 +100,11 @@ export const useFetchTasks = (canceler: AbortController): () => Promise<void> =>
 
   return useCallback(async (): Promise<void> => {
     try {
-      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
-        getCommands({ signal: canceler.signal }),
-        getJupyterLabs({ signal: canceler.signal }),
-        getShells({ signal: canceler.signal }),
-        getTensorBoards({ signal: canceler.signal }),
-      ]);
+      const commands = await getCommands({ signal: canceler.signal }),
+        notebooks = await getJupyterLabs({ signal: canceler.signal }),
+        shells = await getShells({ signal: canceler.signal }),
+        tensorboards = await getTensorBoards({ signal: canceler.signal });
+
       const combined = {
         [CommandType.Command]: countActiveCommand(commands),
         [CommandType.JupyterLab]: countActiveCommand(notebooks),

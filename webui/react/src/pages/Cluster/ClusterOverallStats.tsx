@@ -1,11 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import { useFetchActiveExperiments, useFetchTasks } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
 import { ShirtSize } from 'themes';
 import { CommandType, ResourceType } from 'types';
 
@@ -35,16 +33,6 @@ export const ClusterOverallStats: React.FC = () => {
   const maxTotalSlots = useMemo(() => {
     return maxClusterSlotCapacity(resourcePools, agents);
   }, [ resourcePools, agents ]);
-
-  const [ canceler ] = useState(new AbortController());
-  const fetchActiveExperiments = useFetchActiveExperiments(canceler);
-  const fetchTasks = useFetchTasks(canceler);
-
-  const fetchActiveRunning = useCallback(() => {
-    fetchActiveExperiments();
-    fetchTasks();
-  }, [ fetchActiveExperiments, fetchTasks ]);
-  usePolling(fetchActiveRunning);
 
   return (
     <Section hideTitle title="Overview Stats">
