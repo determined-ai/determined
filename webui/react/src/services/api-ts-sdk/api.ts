@@ -1523,6 +1523,26 @@ export interface V1CreateExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1CreateGroupRequest
+ */
+export interface V1CreateGroupRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1CreateGroupRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1CreateGroupRequest
+     */
+    addUsers?: Array<number>;
+}
+
+/**
  * Response to CurrentUserRequest.
  * @export
  * @interface V1CurrentUserResponse
@@ -1584,6 +1604,28 @@ export interface V1DeleteCheckpointsResponse {
  * @interface V1DeleteExperimentResponse
  */
 export interface V1DeleteExperimentResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteGroupRequest
+ */
+export interface V1DeleteGroupRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1DeleteGroupRequest
+     */
+    groupId?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteGroupResponse
+ */
+export interface V1DeleteGroupResponse {
 }
 
 /**
@@ -2382,6 +2424,20 @@ export interface V1GetExperimentsResponse {
      * @memberof V1GetExperimentsResponse
      */
     pagination: V1Pagination;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GetGroupResponse
+ */
+export interface V1GetGroupResponse {
+    /**
+     * 
+     * @type {V1GroupDetails}
+     * @memberof V1GetGroupResponse
+     */
+    group?: V1GroupDetails;
 }
 
 /**
@@ -3225,6 +3281,74 @@ export interface V1GetWorkspacesResponse {
      * @memberof V1GetWorkspacesResponse
      */
     pagination: V1Pagination;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GroupDetails
+ */
+export interface V1GroupDetails {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupDetails
+     */
+    groupId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1GroupDetails
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<V1User>}
+     * @memberof V1GroupDetails
+     */
+    users?: Array<V1User>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GroupSearchRequest
+ */
+export interface V1GroupSearchRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1GroupSearchRequest
+     */
+    userId?: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GroupSearchResponse
+ */
+export interface V1GroupSearchResponse {
+    /**
+     * 
+     * @type {Array<V1GroupDetails>}
+     * @memberof V1GroupSearchResponse
+     */
+    groups?: Array<V1GroupDetails>;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1GroupWriteResponse
+ */
+export interface V1GroupWriteResponse {
+    /**
+     * 
+     * @type {V1GroupDetails}
+     * @memberof V1GroupWriteResponse
+     */
+    group?: V1GroupDetails;
 }
 
 /**
@@ -6894,6 +7018,38 @@ export interface V1UnarchiveWorkspaceResponse {
  * @interface V1UnpinWorkspaceResponse
  */
 export interface V1UnpinWorkspaceResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1UpdateGroupRequest
+ */
+export interface V1UpdateGroupRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1UpdateGroupRequest
+     */
+    groupId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1UpdateGroupRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1UpdateGroupRequest
+     */
+    addUsers?: Array<number>;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof V1UpdateGroupRequest
+     */
+    removeUsers?: Array<number>;
 }
 
 /**
@@ -12449,6 +12605,45 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @param {V1DeleteGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(body: V1DeleteGroupRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteGroup.');
+            }
+            const localVarPath = `/api/v1/groups`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1DeleteGroupRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -12626,6 +12821,43 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Groups testing
+         * @param {number} groupId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'groupId' is not null or undefined
+            if (groupId === null || groupId === undefined) {
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getGroup.');
+            }
+            const localVarPath = `/api/v1/groups/{groupId}`
+                .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -13833,6 +14065,24 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {V1DeleteGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(body: V1DeleteGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -13905,6 +14155,25 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Groups testing
+         * @param {number} groupId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup(groupId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14454,6 +14723,15 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @param {V1DeleteGroupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGroup(body: V1DeleteGroupRequest, options?: any) {
+            return InternalApiFp(configuration).deleteGroup(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a trial.
          * @param {Array<number>} trialId The id of the experiment.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -14499,6 +14777,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any) {
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Groups testing
+         * @param {number} groupId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGroup(groupId: number, options?: any) {
+            return InternalApiFp(configuration).getGroup(groupId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14869,6 +15157,17 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @param {V1DeleteGroupRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteGroup(body: V1DeleteGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteGroup(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the set of metric names recorded for a trial.
      * @param {Array<number>} trialId The id of the experiment.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -14921,6 +15220,18 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Groups testing
+     * @param {number} groupId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getGroup(groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).getGroup(groupId, options)(this.fetch, this.basePath);
     }
 
     /**
