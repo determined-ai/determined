@@ -18,9 +18,9 @@ import (
 )
 
 func TestProtoGetTrial(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp := model.ExperimentModel()
 	err := db.AddExperiment(exp)

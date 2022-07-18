@@ -30,6 +30,12 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   userId: 85,
 };
 
+export enum WhoseProjects {
+  All = 'ALL_PROJECTS',
+  Mine = 'MY_PROJECTS',
+  Others = 'OTHERS_PROJECTS'
+}
+
 export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   archived?: boolean;
   columns: ProjectColumnName[];
@@ -37,6 +43,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   sortKey: V1GetWorkspaceProjectsRequestSortBy;
   user?: string[];
   view: GridListView;
+  whose: WhoseProjects;
 }
 
 const config: SettingsConfig = {
@@ -106,6 +113,13 @@ const config: SettingsConfig = {
       key: 'view',
       skipUrlEncoding: true,
       storageKey: 'view',
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: WhoseProjects.All,
+      key: 'whose',
+      skipUrlEncoding: true,
+      storageKey: 'whose',
       type: { baseType: BaseType.String },
     },
   ],

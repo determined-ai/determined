@@ -3,9 +3,8 @@ $line-height: 22px;
 
 .base {
   background-color: var(--theme-surface);
-  border: 1px solid var(--theme-stroke-width) var(--theme-surface-border);
-  border-radius: var(--theme-border-radius);
-  box-shadow: var(--theme-elevation);
+  border: solid var(--theme-stroke-width) var(--theme-surface-border);
+  border-radius: var(--theme-border-radius-strong);
   color: var(--theme-surface-on);
   display: flex;
   flex-direction: column;
@@ -17,7 +16,7 @@ $line-height: 22px;
   text-overflow: ellipsis;
 
   &:hover {
-    background-color: var(--theme-colors-monochrome-16);
+    background-color: var(--theme-surface-weak);
   }
   .body {
     display: flex;

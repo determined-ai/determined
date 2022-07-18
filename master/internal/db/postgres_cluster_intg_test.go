@@ -15,16 +15,16 @@ import (
 )
 
 func TestClusterAPI(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	_, err := db.GetOrCreateClusterID()
 	require.NoError(t, err, "failed to get or create cluster id")
 
 	// Add a mock user
-	user := requireMockUser(t, db)
+	user := RequireMockUser(t, db)
 
 	// Add a job
 	jID := model.NewJobID()
@@ -81,5 +81,4 @@ func TestClusterAPI(t *testing.T) {
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
 	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())
-
 }

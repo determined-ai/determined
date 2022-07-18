@@ -15,6 +15,7 @@ export default {
 const sampleExperiment: ExperimentOld = generateOldExperiment(3);
 
 const sampleTrialItem: TrialItem = {
+  autoRestarts: 0,
   bestAvailableCheckpoint: {
     resources: { noOpCheckpoint: 1542 },
     state: CheckpointState.Completed,
@@ -29,7 +30,6 @@ const sampleTrialItem: TrialItem = {
     stringVal: 'loss',
   },
   id: 1,
-  restarts: 0,
   startTime: Date.now.toString(),
   state: RunState.Completed,
   totalBatchesProcessed: 10000,

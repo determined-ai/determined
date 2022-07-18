@@ -23,9 +23,9 @@ import (
 var emptyMetadata = []byte(`{}`)
 
 func TestModels(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	tests := []struct {
 		name          string
@@ -43,8 +43,8 @@ func TestModels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user := requireMockUser(t, db)
-			exp := requireMockExperiment(t, db, user)
+			user := RequireMockUser(t, db)
+			exp := RequireMockExperiment(t, db, user)
 			tr := requireMockTrial(t, db, exp)
 			a := requireMockAllocation(t, db, tr.TaskID)
 

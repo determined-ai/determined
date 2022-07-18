@@ -1406,6 +1406,48 @@ class v1File:
             "gid": self.gid,
         }
 
+class v1FileNode:
+    def __init__(
+        self,
+        contentLength: "typing.Optional[int]" = None,
+        contentType: "typing.Optional[str]" = None,
+        files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
+        isDir: "typing.Optional[bool]" = None,
+        modifiedTime: "typing.Optional[str]" = None,
+        name: "typing.Optional[str]" = None,
+        path: "typing.Optional[str]" = None,
+    ):
+        self.path = path
+        self.name = name
+        self.modifiedTime = modifiedTime
+        self.contentLength = contentLength
+        self.isDir = isDir
+        self.contentType = contentType
+        self.files = files
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1FileNode":
+        return cls(
+            path=obj.get("path", None),
+            name=obj.get("name", None),
+            modifiedTime=obj.get("modifiedTime", None),
+            contentLength=obj.get("contentLength", None),
+            isDir=obj.get("isDir", None),
+            contentType=obj.get("contentType", None),
+            files=[v1FileNode.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "path": self.path if self.path is not None else None,
+            "name": self.name if self.name is not None else None,
+            "modifiedTime": self.modifiedTime if self.modifiedTime is not None else None,
+            "contentLength": self.contentLength if self.contentLength is not None else None,
+            "isDir": self.isDir if self.isDir is not None else None,
+            "contentType": self.contentType if self.contentType is not None else None,
+            "files": [x.to_json() for x in self.files] if self.files is not None else None,
+        }
+
 class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_UNSPECIFIED = "FITTING_POLICY_UNSPECIFIED"
     FITTING_POLICY_BEST = "FITTING_POLICY_BEST"
@@ -1860,6 +1902,46 @@ class v1GetMasterResponse:
             "branding": self.branding if self.branding is not None else None,
         }
 
+class v1GetModelDefFileRequest:
+    def __init__(
+        self,
+        experimentId: "typing.Optional[int]" = None,
+        path: "typing.Optional[str]" = None,
+    ):
+        self.experimentId = experimentId
+        self.path = path
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelDefFileRequest":
+        return cls(
+            experimentId=obj.get("experimentId", None),
+            path=obj.get("path", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentId": self.experimentId if self.experimentId is not None else None,
+            "path": self.path if self.path is not None else None,
+        }
+
+class v1GetModelDefFileResponse:
+    def __init__(
+        self,
+        file: "typing.Optional[str]" = None,
+    ):
+        self.file = file
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelDefFileResponse":
+        return cls(
+            file=obj.get("file", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "file": self.file if self.file is not None else None,
+        }
+
 class v1GetModelDefResponse:
     def __init__(
         self,
@@ -1876,6 +1958,24 @@ class v1GetModelDefResponse:
     def to_json(self) -> typing.Any:
         return {
             "b64Tgz": self.b64Tgz,
+        }
+
+class v1GetModelDefTreeResponse:
+    def __init__(
+        self,
+        files: "typing.Optional[typing.Sequence[v1FileNode]]" = None,
+    ):
+        self.files = files
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetModelDefTreeResponse":
+        return cls(
+            files=[v1FileNode.from_json(x) for x in obj["files"]] if obj.get("files", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "files": [x.to_json() for x in self.files] if self.files is not None else None,
         }
 
 class v1GetModelLabelsResponse:
@@ -7053,6 +7153,45 @@ def get_GetModelDef(
     if _resp.status_code == 200:
         return v1GetModelDefResponse.from_json(_resp.json())
     raise APIHttpError("get_GetModelDef", _resp)
+
+def post_GetModelDefFile(
+    session: "client.Session",
+    *,
+    body: "v1GetModelDefFileRequest",
+    experimentId: int,
+) -> "v1GetModelDefFileResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/experiments/{experimentId}/file",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetModelDefFileResponse.from_json(_resp.json())
+    raise APIHttpError("post_GetModelDefFile", _resp)
+
+def get_GetModelDefTree(
+    session: "client.Session",
+    *,
+    experimentId: int,
+) -> "v1GetModelDefTreeResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/file_tree",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetModelDefTreeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetModelDefTree", _resp)
 
 def get_GetModelLabels(
     session: "client.Session",

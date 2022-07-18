@@ -82,7 +82,8 @@ func findFits(
 }
 
 func isViable(
-	req *sproto.AllocateRequest, agent *agent.AgentState, constraints ...HardConstraint) bool {
+	req *sproto.AllocateRequest, agent *agent.AgentState, constraints ...HardConstraint,
+) bool {
 	for _, constraint := range constraints {
 		if !constraint(req, agent) {
 			return false

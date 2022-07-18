@@ -380,7 +380,8 @@ func (a *AgentState) updateSlotDeviceView(ctx *actor.Context, deviceID device.ID
 }
 
 func (a *AgentState) patchSlotStateInner(
-	ctx *actor.Context, msg PatchSlotState, slotState *slot) model.SlotSummary {
+	ctx *actor.Context, msg PatchSlotState, slotState *slot,
+) model.SlotSummary {
 	if msg.Enabled != nil {
 		slotState.enabled.userEnabled = *msg.Enabled
 	}
@@ -393,7 +394,8 @@ func (a *AgentState) patchSlotStateInner(
 }
 
 func (a *AgentState) patchAllSlotsState(
-	ctx *actor.Context, msg PatchAllSlotsState) model.SlotsSummary {
+	ctx *actor.Context, msg PatchAllSlotsState,
+) model.SlotsSummary {
 	result := model.SlotsSummary{}
 	for _, slotState := range a.slotStates {
 		summary := a.patchSlotStateInner(
@@ -409,7 +411,8 @@ func (a *AgentState) patchAllSlotsState(
 }
 
 func (a *AgentState) patchSlotState(
-	ctx *actor.Context, msg PatchSlotState) (model.SlotSummary, error) {
+	ctx *actor.Context, msg PatchSlotState,
+) (model.SlotSummary, error) {
 	s, ok := a.slotStates[msg.ID]
 	if !ok {
 		return model.SlotSummary{}, errors.New(
@@ -477,7 +480,8 @@ func (a *AgentState) delete() error {
 }
 
 func (a *AgentState) clearUnlessRecovered(
-	recovered map[cproto.ID]aproto.ContainerReattachAck) error {
+	recovered map[cproto.ID]aproto.ContainerReattachAck,
+) error {
 	updated := false
 	for d := range a.Devices {
 		if cID := a.Devices[d]; cID != nil {
@@ -665,7 +669,8 @@ func updateContainerState(c *cproto.Container) error {
 }
 
 func loadContainersToAllocationIds(
-	containerIDs []cproto.ID) (map[cproto.ID]model.AllocationID, error) {
+	containerIDs []cproto.ID,
+) (map[cproto.ID]model.AllocationID, error) {
 	cs := []ContainerSnapshot{}
 	result := []map[string]interface{}{}
 	rr := map[cproto.ID]model.AllocationID{}

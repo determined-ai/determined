@@ -21,6 +21,7 @@ type TestInstanceType struct {
 func (t TestInstanceType) Name() string {
 	return t.NameString
 }
+
 func (t TestInstanceType) Slots() int {
 	return t.NumSlots
 }

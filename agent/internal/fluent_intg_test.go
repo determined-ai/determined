@@ -236,7 +236,7 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, taskID model.TaskID, fl
 		{
 			Path:     "/fakelogs",
 			Type:     tar.TypeReg,
-			FileMode: 0444,
+			FileMode: 0o444,
 			Content:  []byte(fakeLogs),
 		},
 	}

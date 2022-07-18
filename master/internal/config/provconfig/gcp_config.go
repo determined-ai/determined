@@ -310,7 +310,7 @@ func (t gceInstanceType) Slots() int {
 }
 
 func (t gceInstanceType) Validate() []error {
-	var checkMachineType = errors.Errorf("gce VM machine type must be within: %v",
+	checkMachineType := errors.Errorf("gce VM machine type must be within: %v",
 		strings.Join(gceMachineTypes, ", "))
 	if items := strings.Split(t.MachineType, "-"); len(items) == 3 {
 		for _, mType := range gceMachineTypes {

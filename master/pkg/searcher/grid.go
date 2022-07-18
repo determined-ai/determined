@@ -64,7 +64,8 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 
 func (s *gridSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
-	trialsClosed map[model.RequestID]bool) float64 {
+	trialsClosed map[model.RequestID]bool,
+) float64 {
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}

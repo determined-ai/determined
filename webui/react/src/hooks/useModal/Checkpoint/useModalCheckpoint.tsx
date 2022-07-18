@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { ModalFuncProps } from 'antd';
+import { Button, ModalFuncProps } from 'antd';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -7,6 +7,8 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
+import { detApi } from 'services/apiConfig';
+import { readStream } from 'services/utils';
 import { formatDatetime } from 'shared/utils/datetime';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
@@ -83,6 +85,32 @@ const useModalCheckpoint = ({
 
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
 
+  const handleDelete = useCallback(() => {
+    if(!checkpoint.uuid) return;
+    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
+  }, [ checkpoint ]);
+
+  const deleteCPModalProps: ModalFuncProps = useMemo(() => {
+    const content =
+      `Are you sure you want to request checkpoint deletion for batches
+${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
+
+    return {
+      content,
+      icon: <ExclamationCircleOutlined />,
+      okButtonProps: { danger: true },
+      okText: 'Request Delete',
+      onCancel: handleCancel,
+      onOk: handleDelete,
+      title: 'Confirm Checkpoint Deletion',
+      width: 450,
+    };
+  }, [ checkpoint, handleCancel, handleDelete ]);
+
+  const onClickDelete = useCallback(() => {
+    openOrUpdate(deleteCPModalProps);
+  }, [ openOrUpdate, deleteCPModalProps ]);
+
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
 
@@ -123,7 +151,16 @@ const useModalCheckpoint = ({
           </>,
         )}
         {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
-        {renderRow('Total Size', totalSize)}
+        {renderRow(
+          'Total Size',
+          <div className={css.size}><span>{totalSize}</span>{
+            checkpoint.uuid && (
+              <Button danger type="text" onClick={onClickDelete}>{
+                'Request Checkpoint Deletion'}
+              </Button>
+            )}
+          </div>,
+        )}
         {resources.length !== 0 && renderRow(
           'Resources', (
             <div className={css.resources}>
@@ -133,7 +170,7 @@ const useModalCheckpoint = ({
         )}
       </div>
     );
-  }, [ checkpoint, config, props.searcherValidation ]);
+  }, [ checkpoint, config, props.searcherValidation, onClickDelete ]);
 
   const modalProps: ModalFuncProps = useMemo(() => ({
     content,

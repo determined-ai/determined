@@ -338,7 +338,7 @@ const ProjectDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
@@ -931,7 +931,8 @@ const ProjectDetails: React.FC = () => {
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      docTitle="Project Details"
+      // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
+      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
       <ProjectDetailsTabs
         curUser={user}

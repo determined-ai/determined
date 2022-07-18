@@ -152,7 +152,7 @@ const ModelDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: ModelVersion) => (
       <InlineEditor
         disabled={record.model.archived}
-        placeholder="Add description..."
+        placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
         onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
       />

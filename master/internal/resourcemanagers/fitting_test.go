@@ -442,7 +442,8 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 }
 
 func byHandler(
-	handlers ...*agent.AgentState) (map[*actor.Ref]*agent.AgentState, []*agent.AgentState) {
+	handlers ...*agent.AgentState,
+) (map[*actor.Ref]*agent.AgentState, []*agent.AgentState) {
 	agents := make(map[*actor.Ref]*agent.AgentState)
 	index := make([]*agent.AgentState, 0, len(handlers))
 	for _, agent := range handlers {

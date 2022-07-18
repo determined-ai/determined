@@ -55,7 +55,7 @@ describe('EditableMetadata', () => {
     expect(handleOnChange).toHaveBeenLastCalledWith(resultMetadata);
   });
 
-  it('handles metadata removal', async () => {
+  it.skip('handles metadata removal', async () => {
     const metadataArray = Object.entries(initMetadata);
     const removalIndex = Math.floor(Math.random() * metadataArray.length);
     const removalMetadata = metadataArray[removalIndex];

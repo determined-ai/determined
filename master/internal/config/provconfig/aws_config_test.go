@@ -33,7 +33,8 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 		json        string
 		Unmarshaled AWSClusterConfig
 	}
-	tc := testcase{`
+	tc := testcase{
+		`
 {
 	"region": "test.region",
 	"image_id": "test.image",

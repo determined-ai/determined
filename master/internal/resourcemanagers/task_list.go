@@ -114,6 +114,7 @@ type taskIterator struct{ it treeset.Iterator }
 func (i *taskIterator) next() bool {
 	return i.it.Next()
 }
+
 func (i *taskIterator) value() *sproto.AllocateRequest {
 	return i.it.Value().(*sproto.AllocateRequest)
 }

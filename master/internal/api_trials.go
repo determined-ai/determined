@@ -244,7 +244,8 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 }
 
 func (a *apiServer) TrialLogsFields(
-	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
+	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer,
+) error {
 	trial, err := a.m.db.TrialByID(int(req.TrialId))
 	if err != nil {
 		return errors.Wrap(err, "retreiving trial")
@@ -521,7 +522,8 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 }
 
 func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.SummarizedMetric,
-	metricSeries []lttb.Point) []*apiv1.SummarizedMetric {
+	metricSeries []lttb.Point,
+) []*apiv1.SummarizedMetric {
 	for _, in := range metricSeries {
 		out := apiv1.DataPoint{
 			Batches: int32(in.X),
@@ -537,7 +539,8 @@ func (a *apiServer) appendToMetrics(metrics []*apiv1.SummarizedMetric, m *apiv1.
 
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
-	endBatches int, logScale bool) ([]*apiv1.SummarizedMetric, error) {
+	endBatches int, logScale bool,
+) ([]*apiv1.SummarizedMetric, error) {
 	var metricSeries []lttb.Point
 	var startTime time.Time
 	var err error
@@ -576,7 +579,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 }
 
 func (a *apiServer) SummarizeTrial(_ context.Context,
-	req *apiv1.SummarizeTrialRequest) (*apiv1.SummarizeTrialResponse, error) {
+	req *apiv1.SummarizeTrialRequest,
+) (*apiv1.SummarizeTrialResponse, error) {
 	resp := &apiv1.SummarizeTrialResponse{Trial: &trialv1.Trial{}}
 	switch err := a.m.db.QueryProto("get_trial_basic", resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
@@ -597,7 +601,8 @@ func (a *apiServer) SummarizeTrial(_ context.Context,
 }
 
 func (a *apiServer) CompareTrials(_ context.Context,
-	req *apiv1.CompareTrialsRequest) (*apiv1.CompareTrialsResponse, error) {
+	req *apiv1.CompareTrialsRequest,
+) (*apiv1.CompareTrialsResponse, error) {
 	trials := make([]*apiv1.ComparableTrial, 0)
 	for _, trialID := range req.TrialIds {
 		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}

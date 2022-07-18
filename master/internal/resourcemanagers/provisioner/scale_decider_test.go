@@ -45,7 +45,7 @@ func TestCalculateInstanceStates(t *testing.T) {
 		stopped          map[string]bool
 		recentlyLaunched map[string]bool
 	}
-	var tcs = []testcase{
+	tcs := []testcase{
 		{
 			name: "overall",
 			scaleDecider: scaleDecider{
@@ -183,7 +183,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		scaleDecider scaleDecider
 		toTerminate  []string
 	}
-	var tcs = []testcase{
+	tcs := []testcase{
 		{
 			name: "terminate stopped",
 			scaleDecider: scaleDecider{
@@ -308,7 +308,7 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 		scaleDecider scaleDecider
 		numToLaunch  int
 	}
-	var tcs = []testcase{
+	tcs := []testcase{
 		{
 			name: "keep above min instance num",
 			scaleDecider: scaleDecider{

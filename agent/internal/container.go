@@ -47,13 +47,16 @@ type (
 
 func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
 	return &containerActor{
-		Container: msg.Container, spec: &msg.Spec, client: client}
+		Container: msg.Container, spec: &msg.Spec, client: client,
+	}
 }
 
 func reattachContainerActor(
-	container cproto.Container, client *client.Client) actor.Actor {
+	container cproto.Container, client *client.Client,
+) actor.Actor {
 	return &containerActor{
-		Container: container, client: client, reattached: true}
+		Container: container, client: client, reattached: true,
+	}
 }
 
 // getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent
@@ -215,6 +218,9 @@ func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
 	l := c.baseTaskLog
 	timestamp := time.Now().UTC()
 	l.Timestamp = &timestamp
+	if log.Level != nil {
+		l.Level = log.Level
+	}
 
 	var source string
 	var msg string
@@ -257,7 +263,8 @@ func (c *containerActor) containerStarted(ctx *actor.Context, started aproto.Con
 	ctx.Log().Infof("transitioning state from %s to %s", c.State, newState)
 	c.Container = c.Transition(newState)
 	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
-		Container: c.Container, ContainerStarted: &started})
+		Container: c.Container, ContainerStarted: &started,
+	})
 }
 
 // containerStopped transitions the container and sets the reason for stop. If called multiple

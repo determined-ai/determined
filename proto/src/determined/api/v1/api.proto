@@ -334,6 +334,27 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the model definition file tree of an experiment.
+  rpc GetModelDefTree(GetModelDefTreeRequest)
+      returns (GetModelDefTreeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/file_tree"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+  // Get one file content of model definition of an experiment.
+  rpc GetModelDefFile(GetModelDefFileRequest)
+      returns (GetModelDefFileResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/file"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Get a list of unique experiment labels (sorted by popularity).
   rpc GetExperimentLabels(GetExperimentLabelsRequest)
       returns (GetExperimentLabelsResponse) {

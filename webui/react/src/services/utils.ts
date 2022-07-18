@@ -26,7 +26,7 @@ export const isLoginFailure = (e: any): boolean => {
 
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
-  onEvent: (event: T) => void,
+  onEvent?: (event: T) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
@@ -60,7 +60,7 @@ export const readStream = async <T = unknown>(
       if (isCancelled) return;
       try {
         const ndjson = JSON.parse(line);
-        onEvent(ndjson.result);
+        onEvent?.(ndjson.result);
       } catch {
         // JSON parsing error occurred, no-op.
       }

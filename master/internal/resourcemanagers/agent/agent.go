@@ -449,6 +449,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
+			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
 			RunMessage:  msg.ContainerLog.RunMessage,
@@ -485,7 +486,8 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
 		Label: agentStarted.Label,
-		Slots: a.agentState.NumSlots()})
+		Slots: a.agentState.NumSlots(),
+	})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)
@@ -563,7 +565,8 @@ func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.Containe
 }
 
 func (a *agent) handleContainersReattached(
-	ctx *actor.Context, agentStarted *aproto.AgentStarted) error {
+	ctx *actor.Context, agentStarted *aproto.AgentStarted,
+) error {
 	ctx.Log().Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
 
