@@ -50,7 +50,11 @@ module.exports = {
     ],
     '@typescript-eslint/prefer-optional-chain': [ 'error' ],
     'array-bracket-spacing': [ 'error', 'always' ],
-    'array-element-newline': [ 'error', 'consistent' ],
+    'array-element-newline': [ 'error', {
+      ArrayExpression: 'consistent',
+      ArrayPattern: { multiline: true },
+    } ],
+    'arrow-parens': [ 'error', 'always' ],
     'arrow-spacing': [ 'error', { after: true, before: true } ],
     'block-spacing': [ 'error', 'always' ],
     'brace-style': [ 'error', '1tbs', { allowSingleLine: true } ],

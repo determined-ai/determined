@@ -319,7 +319,8 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		}
 		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
 			Stats:        jobStats(k.reqList),
-			ResourcePool: KubernetesDummyResourcePool},
+			ResourcePool: KubernetesDummyResourcePool,
+		},
 		)
 		ctx.Respond(resp)
 

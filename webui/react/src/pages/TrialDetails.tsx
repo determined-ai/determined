@@ -92,15 +92,15 @@ const TrialDetailsComp: React.FC = () => {
   const fetchTrialDetails = useCallback(async () => {
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
+      setTrialDetails((prev) => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
-        setTrialDetails(prev => ({ ...prev, error: e as Error }));
+        setTrialDetails((prev) => ({ ...prev, error: e as Error }));
       }
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);

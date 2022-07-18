@@ -336,10 +336,17 @@ class DeepSpeedTrialController(det.TrialController):
                             # Broadcast checkpoint path to all ranks.
                             self.context.distributed.broadcast((storage_id, path))
                             self._save(path)
-                            # Gather resources across nodes.
-                            all_resources = self.context.distributed.gather(
-                                storage.StorageManager._list_directory(path)
-                            )
+                            # If the storage manager is a sharedfs, then the checkpoint directory
+                            # will already contain all the files.  Otherwise, checkpoint files are
+                            # saved to a local directory before being uploaded to cloud storage so
+                            # we'll need to gather all the files across nodes before reporting the
+                            # checkpoint.
+                            resources = storage.StorageManager._list_directory(path)
+                            if isinstance(storage_manager, storage.SharedFSStorageManager):
+                                all_resources = [resources]
+                            else:
+                                # Gather resources across nodes.
+                                all_resources = self.context.distributed.gather(resources)
                         resources = {k: v for d in all_resources for k, v in d.items()}
 
                         self.context._core.checkpoint._report_checkpoint(
@@ -349,10 +356,13 @@ class DeepSpeedTrialController(det.TrialController):
                     else:
                         storage_id, path = self.context.distributed.broadcast(None)
                         self._save(path)
-                        # Gather resources across nodes.
-                        _ = self.context.distributed.gather(
-                            storage.StorageManager._list_directory(path)
-                        )
+                        if not isinstance(storage_manager, storage.SharedFSStorageManager):
+                            # Gather resources across nodes.
+                            if self.context.distributed.local_rank == 0:
+                                resources = storage.StorageManager._list_directory(path)
+                            else:
+                                resources = {}
+                            _ = self.context.distributed.gather(resources)
                         if self.context.distributed.local_rank == 0:
                             storage_manager.post_store_path(str(path), storage_id)
                         response = {}

@@ -25,7 +25,7 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
         const newAvailableSeries: AvailableSeries = {};
 
-        event.labels.forEach(label => {
+        event.labels.forEach((label) => {
           const agentId: string = label.agentId as unknown as string;
           // The reported gpuuuid can be empty since the slot might not be backed by gpu.
           const gpuUuid: string = label.gpuUuid as unknown as string;

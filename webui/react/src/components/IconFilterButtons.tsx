@@ -23,7 +23,7 @@ const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
 
   return (
     <Space className={css.base}>
-      {buttons.map(button => (
+      {buttons.map((button) => (
         <IconButton
           className={button.active ? css.active : css.inactive}
           icon={button.icon}

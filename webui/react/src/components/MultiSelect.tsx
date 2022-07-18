@@ -39,7 +39,7 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ itemName, onChange, value, .
     if (!onChange) return;
 
     const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-    const newValue = (clone(values) as SelectValue[]).filter(item => item !== selectedValue);
+    const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
 
     onChange(newValue as SelectValue, option);
   }, [ onChange, values ]);

@@ -44,7 +44,7 @@ const TableFilterDropdown: React.FC<Props> = ({
 
   const filteredOptions = useMemo(() => {
     const searchString = search.toLocaleLowerCase();
-    return (filters || []).filter(filter => {
+    return (filters || []).filter((filter) => {
       return filter.value?.toString().toLocaleLowerCase().includes(searchString) ||
         filter.text?.toString().toLocaleLowerCase().includes(searchString);
     });
@@ -63,7 +63,7 @@ const TableFilterDropdown: React.FC<Props> = ({
     const value = (e.target as HTMLDivElement).getAttribute('data-value');
     if (!value) return;
 
-    setSelectedMap(prev => {
+    setSelectedMap((prev) => {
       if (multiple) {
         // Support for using CMD + Click to select every option EXCEPT the selected option.
         if (e.metaKey && filters) {

@@ -63,7 +63,7 @@ const getHpImportanceMap = (
 ): HpImportanceMetricMap => {
   const map: HpImportanceMetricMap = {};
 
-  Object.keys(hpImportanceMetrics).forEach(metricName => {
+  Object.keys(hpImportanceMetrics).forEach((metricName) => {
     map[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
   });
 
@@ -84,7 +84,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     type: MetricType.Validation,
   });
   const fullHParams = useRef<string[]>(
-    (Object.keys(experiment.hyperparameters || {}).filter(key => {
+    (Object.keys(experiment.hyperparameters || {}).filter((key) => {
       // Constant hyperparameters are not useful for visualizations.
       return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
     })),
@@ -170,20 +170,20 @@ const ExperimentVisualization: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
-          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetrics(newMetrics);
       },
@@ -197,7 +197,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
         setHpImportanceMap({
           [MetricType.Training]: getHpImportanceMap(event.trainingMetrics),
@@ -228,9 +228,9 @@ const ExperimentVisualization: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
-        (event.batches || []).forEach(batch => batchesMap[batch] = batch);
+        (event.batches || []).forEach((batch) => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphaNumericSorter);
         setBatches(newBatches);
       },
@@ -244,7 +244,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Set the default filter batch.
   useEffect(() => {
     if (!batches || batches.length === 0) return;
-    setFilters(prev => {
+    setFilters((prev) => {
       if (prev.batch !== DEFAULT_BATCH) return prev;
       return { ...prev, batch: batches.first() };
     });
@@ -252,7 +252,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Validate active metric against metrics.
   useEffect(() => {
-    setActiveMetric(prev => {
+    setActiveMetric((prev) => {
       const activeMetricFound = (metrics || []).reduce((acc, metric) => {
         return acc || (metric.type === prev.type && metric.name === prev.name);
       }, false);
@@ -264,7 +264,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   useEffect(() => {
     if (!isSupported) return;
 
-    setFilters(prev => {
+    setFilters((prev) => {
       if (prev.hParams.length !== 0) return prev;
       const map = hpImportanceMap?.[prev.metric.type]?.[prev.metric.name] || {};
       let hParams = fullHParams.current;

@@ -132,5 +132,4 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.NilError(t, err, "error fetch average queued time for gpu-pool")
 	_, err = agentRM.fetchAvgQueuedTime("non-existed-pool")
 	assert.NilError(t, err, "error fetch average queued time for non-existed-pool")
-
 }

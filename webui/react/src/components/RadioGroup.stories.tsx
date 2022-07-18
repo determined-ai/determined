@@ -14,8 +14,8 @@ const DEFAULT_OPTIONS = [
   { icon: 'scatter-plot', id: 'scatter-plots', label: 'Scatter Plots' },
   { icon: 'heat', id: 'heatmap', label: 'Heat Map' },
 ];
-const ICON_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, label: undefined }));
-const LABELS_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, icon: undefined }));
+const ICON_ONLY_OPTIONS = DEFAULT_OPTIONS.map((option) => ({ ...option, label: undefined }));
+const LABELS_ONLY_OPTIONS = DEFAULT_OPTIONS.map((option) => ({ ...option, icon: undefined }));
 
 export const Default = (): React.ReactNode => {
   const [ value, setValue ] = useState(DEFAULT_OPTIONS[0].id);

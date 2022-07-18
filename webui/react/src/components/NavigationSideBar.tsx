@@ -200,7 +200,7 @@ const NavigationSideBar: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            {menuConfig.top.map(config => (
+            {menuConfig.top.map((config) => (
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ?
@@ -226,7 +226,7 @@ const NavigationSideBar: React.FC = () => {
             {pinnedWorkspaces.length === 0 ?
               <p className={css.noWorkspaces}>No pinned workspaces</p> : (
                 <ul className={css.pinnedWorkspaces} role="list">
-                  {pinnedWorkspaces.map(workspace => (
+                  {pinnedWorkspaces.map((workspace) => (
                     <WorkspaceActionDropdown
                       curUser={auth.user}
                       key={workspace.id}
@@ -256,7 +256,7 @@ const NavigationSideBar: React.FC = () => {
               )}
           </section>
           <section className={css.bottom}>
-            {menuConfig.bottom.map(config => (
+            {menuConfig.bottom.map((config) => (
               <NavigationItem
                 key={config.icon}
                 tooltip={settings.navbarCollapsed}

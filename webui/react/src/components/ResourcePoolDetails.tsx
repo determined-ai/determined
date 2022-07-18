@@ -45,7 +45,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       onCancel={props.finally}
       onOk={props.finally}>
       <Json json={mainSection} translateLabel={camelCaseToSentence} />
-      {Object.keys(details).map(key => (
+      {Object.keys(details).map((key) => (
         <Fragment key={key}>
           <Divider />
           <div className={css.subTitle}>{camelCaseToSentence(key)}</div>

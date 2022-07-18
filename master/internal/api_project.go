@@ -45,14 +45,16 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(pid int32) error {
 }
 
 func (a *apiServer) GetProject(
-	_ context.Context, req *apiv1.GetProjectRequest) (*apiv1.GetProjectResponse, error) {
+	_ context.Context, req *apiv1.GetProjectRequest,
+) (*apiv1.GetProjectResponse, error) {
 	p, err := a.GetProjectByID(req.Id)
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
 func (a *apiServer) GetProjectExperiments(_ context.Context,
 	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
-	error) {
+	error,
+) {
 	// Verify that project exists.
 	if _, err := a.GetProjectByID(req.Id); err != nil {
 		return nil, err
@@ -128,7 +130,8 @@ func (a *apiServer) GetProjectExperiments(_ context.Context,
 }
 
 func (a *apiServer) PostProject(
-	ctx context.Context, req *apiv1.PostProjectRequest) (*apiv1.PostProjectResponse, error) {
+	ctx context.Context, req *apiv1.PostProjectRequest,
+) (*apiv1.PostProjectResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -148,7 +151,8 @@ func (a *apiServer) PostProject(
 }
 
 func (a *apiServer) AddProjectNote(
-	_ context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
+	_ context.Context, req *apiv1.AddProjectNoteRequest,
+) (*apiv1.AddProjectNoteResponse, error) {
 	p, err := a.GetProjectByID(req.ProjectId)
 	if err != nil {
 		return nil, err
@@ -167,7 +171,8 @@ func (a *apiServer) AddProjectNote(
 }
 
 func (a *apiServer) PutProjectNotes(
-	_ context.Context, req *apiv1.PutProjectNotesRequest) (*apiv1.PutProjectNotesResponse, error) {
+	_ context.Context, req *apiv1.PutProjectNotesRequest,
+) (*apiv1.PutProjectNotesResponse, error) {
 	newp := &projectv1.Project{}
 	err := a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, req.Notes)
 	return &apiv1.PutProjectNotesResponse{Notes: newp.Notes},
@@ -175,7 +180,8 @@ func (a *apiServer) PutProjectNotes(
 }
 
 func (a *apiServer) PatchProject(
-	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
+	_ context.Context, req *apiv1.PatchProjectRequest,
+) (*apiv1.PatchProjectResponse, error) {
 	// Verify current project exists and can be edited.
 	currProject, err := a.GetProjectByID(req.Id)
 	if err != nil {
@@ -219,7 +225,8 @@ func (a *apiServer) PatchProject(
 
 func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -240,7 +247,8 @@ func (a *apiServer) DeleteProject(
 
 func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
-	error) {
+	error,
+) {
 	_, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, 0, true)
 	if err != nil {
 		return nil, err
@@ -266,7 +274,8 @@ func (a *apiServer) MoveProject(
 
 func (a *apiServer) ArchiveProject(
 	ctx context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -292,7 +301,8 @@ func (a *apiServer) ArchiveProject(
 
 func (a *apiServer) UnarchiveProject(
 	ctx context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err

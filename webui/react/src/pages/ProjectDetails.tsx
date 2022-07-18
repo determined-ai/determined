@@ -136,14 +136,14 @@ const ProjectDetails: React.FC = () => {
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
   const availableBatchActions = useMemo(() => {
-    const experiments = settings.row?.map(id => experimentMap[id]) ?? [];
+    const experiments = settings.row?.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, batchActions, user);
   }, [ experimentMap, settings.row, user ]);
 
   const fetchProject = useCallback(async () => {
     try {
       const response = await getProject({ id }, { signal: canceler.signal });
-      setProject(prev => {
+      setProject((prev) => {
         if (isEqual(prev, response)) return prev;
         return response;
       });
@@ -156,7 +156,9 @@ const ProjectDetails: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
+      const states = (settings.state || []).map((state) => (
+        encodeExperimentState(state as RunState)
+      ));
       const response = await getProjectExperiments(
         {
           archived: settings.archived ? undefined : false,
@@ -173,7 +175,7 @@ const ProjectDetails: React.FC = () => {
         { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
-      setExperiments(prev => {
+      setExperiments((prev) => {
         if (isEqual(prev, response.experiments)) return prev;
         return response.experiments;
       });
@@ -338,7 +340,7 @@ const ProjectDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
       />
@@ -383,7 +385,7 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
-        filters: labels.map(label => ({ text: label, value: label })),
+        filters: labels.map((label) => ({ text: label, value: label })),
         isFiltered: (settings: ProjectDetailsSettings) => !!settings.label,
         key: 'labels',
         onCell: onRightClickableCell,
@@ -430,7 +432,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
         filters: Object.values(RunState)
-          .filter(value => [
+          .filter((value) => [
             RunState.Active,
             RunState.Paused,
             RunState.Canceled,
@@ -481,7 +483,7 @@ const ProjectDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.username })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.username })),
         isFiltered: (settings: ProjectDetailsSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
@@ -526,14 +528,14 @@ const ProjectDetails: React.FC = () => {
         columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
       });
     } else {
-      const columnNames = columns.map(column => column.dataIndex as ExperimentColumnName);
-      const actualColumns = settings.columns.filter(name => columnNames.includes(name));
+      const columnNames = columns.map((column) => column.dataIndex as ExperimentColumnName);
+      const actualColumns = settings.columns.filter((name) => columnNames.includes(name));
       const newSettings: Partial<ProjectDetailsSettings> = {};
       if (actualColumns.length < settings.columns.length) {
         newSettings.columns = actualColumns;
       }
       if (settings.columnWidths.length !== actualColumns.length) {
-        newSettings.columnWidths = actualColumns.map(name => DEFAULT_COLUMN_WIDTHS[name]);
+        newSettings.columnWidths = actualColumns.map((name) => DEFAULT_COLUMN_WIDTHS[name]);
       }
       if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
     }
@@ -567,10 +569,10 @@ const ProjectDetails: React.FC = () => {
     }
     if (action === Action.CompareExperiments) {
       if (settings.row?.length)
-        return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
+        return routeToReactUrl(paths.experimentComparison(settings.row.map((id) => id.toString())));
     }
 
-    return Promise.all((settings.row || []).map(experimentId => {
+    return Promise.all((settings.row || []).map((experimentId) => {
       switch (action) {
         case Action.Activate:
           return activateExperiment({ experimentId });
@@ -642,7 +644,7 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ submitBatchAction, showConfirmation ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => {
+  const handleTableRowSelect = useCallback((rowKeys) => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
@@ -931,7 +933,8 @@ const ProjectDetails: React.FC = () => {
     <Page
       bodyNoPadding
       containerRef={pageRef}
-      docTitle="Project Details"
+      // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
+      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
       <ProjectDetailsTabs
         curUser={user}

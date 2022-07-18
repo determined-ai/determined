@@ -88,6 +88,39 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
 
+// @Summary Get individual file from modal definitions for download.
+// @Tags Experiments
+// @ID get-experiment-model-file
+// @Accept  json
+// @Produce  text/plain; charset=utf-8
+// @Param   experiment_id query string true "Id of the experiment"
+// @Param   path query string true "Path to the target file"
+// @Success 200 {} string ""
+//nolint:godot
+// @Router /experiment_id/file/download [get]
+func (m *Master) getExperimentModelFile(c echo.Context) error {
+	args := struct {
+		ExperimentID int    `path:"experiment_id"`
+		Path         string `query:"path"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	modelDefCache := GetModelDefCache()
+	file, err := modelDefCache.FileContent(args.ExperimentID, args.Path)
+	if err != nil {
+		return err
+	}
+	c.Response().Header().Set(
+		"Content-Disposition",
+		fmt.Sprintf(
+			`attachment; filename="exp%d/%s"`,
+			args.ExperimentID,
+			args.Path))
+	return c.Blob(http.StatusOK, http.DetectContentType(file), file)
+}
+
 func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	args := struct {
 		ExperimentID int `path:"experiment_id"`

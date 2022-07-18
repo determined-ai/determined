@@ -36,7 +36,8 @@ type agentResourceManager struct {
 }
 
 func newAgentResourceManager(db *db.PgDB, config *config.ResourceConfig,
-	cert *tls.Certificate) *agentResourceManager {
+	cert *tls.Certificate,
+) *agentResourceManager {
 	return &agentResourceManager{
 		config:      config.ResourceManager.AgentRM,
 		poolsConfig: config.ResourcePools,
@@ -317,7 +318,8 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 }
 
 func (a *agentResourceManager) getResourcePoolConfig(poolName string) (
-	config.ResourcePoolConfig, error) {
+	config.ResourcePoolConfig, error,
+) {
 	for i := range a.poolsConfig {
 		if a.poolsConfig[i].PoolName == poolName {
 			return a.poolsConfig[i], nil

@@ -32,7 +32,7 @@ const countOptions = (children: React.ReactNode): number => {
 
   let count = 0;
   if (Array.isArray(children)) {
-    count += children.map(child => countOptions(child)).reduce((acc, count) => acc + count, 0);
+    count += children.map((child) => countOptions(child)).reduce((acc, count) => acc + count, 0);
   }
 
   const childType = (children as React.ReactElement).type;

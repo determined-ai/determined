@@ -664,7 +664,6 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		Where("start_time IS NOT NULL").
 		Where("end_time IS NULL").
 		Scan(context.TODO())
-
 	if err != nil {
 		return nil, err
 	}

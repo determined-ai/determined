@@ -289,14 +289,14 @@ func (a *apiServer) LaunchTensorboard(
 	spec.AdditionalFiles = archive.Archive{
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
-			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
+			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0o700, tar.TypeReg),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 	}

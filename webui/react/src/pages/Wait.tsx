@@ -68,6 +68,7 @@ const Wait: React.FC = () => {
           return;
         }
         const lastRun = response.allocations[0];
+        window.parent.postMessage({ commandState: lastRun.state });
         if (!lastRun) {
           return;
         }

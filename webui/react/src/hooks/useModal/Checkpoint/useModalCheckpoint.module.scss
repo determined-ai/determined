@@ -7,6 +7,17 @@
 
   .row {
     display: flex;
+
+    .size {
+      align-items: center;
+      display: flex;
+
+      :global {
+        .ant-btn {
+          margin-left: 8px;
+        }
+      }
+    }
   }
   .row:not(:first-child) {
     margin-top: 4px;

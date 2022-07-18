@@ -10,9 +10,7 @@ type options struct {
 	noColor  bool
 }
 
-var (
-	version = "dev"
-)
+var version = "dev"
 
 func newRootCmd() *cobra.Command {
 	opts := options{}

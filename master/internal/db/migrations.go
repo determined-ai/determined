@@ -18,7 +18,6 @@ func makeGoPgOpts(dbURL string) (*pg.Options, error) {
 	re := regexp.MustCompile(`&sslrootcert=([^&]*)`)
 	url := re.ReplaceAllString(dbURL, "")
 	opts, err := pg.ParseURL(url)
-
 	if err != nil {
 		return nil, err
 	}

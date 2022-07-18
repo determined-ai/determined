@@ -22,13 +22,13 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
     if(!poolStats || !poolStats.aggregates) return;
     const { aggregates } = poolStats;
     const agg = aggregates.filter(
-      item => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
+      (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
     );
     // If aggregates only has one record of today, then do not display.
     const aggd = agg.length > 1 ? agg : [];
     return ({
-      hoursAverage: { average: aggd.map(item => (item.seconds / 60)) },
-      time: aggd.map(item => item.periodStart),
+      hoursAverage: { average: aggd.map((item) => (item.seconds / 60)) },
+      time: aggd.map((item) => item.periodStart),
     });
   }, [ poolStats, viewDays ]);
 
@@ -39,7 +39,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
         <Radio.Group
           className={css.filter}
           value={viewDays}
-          onChange={e => setViewDays(e.target.value)}>
+          onChange={(e) => setViewDays(e.target.value)}>
           <Radio.Button value={7}>7 days</Radio.Button>
           <Radio.Button value={30}>30 days</Radio.Button>
         </Radio.Group>

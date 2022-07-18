@@ -93,7 +93,7 @@ const SlotAllocationBar: React.FC<Props> = ({
       [ResourceState.Unspecified]: 0,
       [ResourceState.Potential]: 0,
     };
-    resourceStates.forEach(state => {
+    resourceStates.forEach((state) => {
       tally[state] += 1;
     });
     tally[ResourceState.Warm] = totalSlots - tally[ResourceState.Running];
@@ -169,7 +169,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   }, [ showLegends, stateTallies ]);
 
   const hasLegend = useMemo(() => {
-    return (states.map(s => stateTallies[s]).reduce((res, i) => (res + i), 0) > 0);
+    return (states.map((s) => stateTallies[s]).reduce((res, i) => (res + i), 0) > 0);
   }, [ stateTallies, states ]);
 
   const classes = [ css.base ];

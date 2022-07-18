@@ -42,7 +42,7 @@ const ModelHeader: React.FC<Props> = ({
       content: (
         <Space>
           <Avatar userId={model.userId} />
-          {`${getDisplayName(users.find(user => user.id === model.userId))} on 
+          {`${getDisplayName(users.find((user) => user.id === model.userId))} on
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),
@@ -53,7 +53,7 @@ const ModelHeader: React.FC<Props> = ({
       content: (
         <InlineEditor
           disabled={model.archived}
-          placeholder="Add description..."
+          placeholder={model.archived ? 'Archived' : 'Add description...'}
           value={model.description ?? ''}
           onSave={onSaveDescription}
         />

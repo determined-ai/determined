@@ -53,7 +53,7 @@ const routeComponentMap: Record<string, FC> = {
 
 const defaultRouteId = 'uncategorized';
 
-const appRoutes: RouteConfig[] = Routes.map(route => {
+const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);
   return {
     ...route,
@@ -62,7 +62,7 @@ const appRoutes: RouteConfig[] = Routes.map(route => {
 });
 
 export const defaultRoute = appRoutes
-  .find(route => route.id === defaultRouteId) as RouteConfig;
+  .find((route) => route.id === defaultRouteId) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

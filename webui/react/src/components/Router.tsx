@@ -34,7 +34,7 @@ const Router: React.FC<Props> = (props: Props) => {
 
   return (
     <Switch>
-      {props.routes.map(config => {
+      {props.routes.map((config) => {
         const { component, ...route } = config;
 
         if (route.needAuth && !auth.isAuthenticated) {

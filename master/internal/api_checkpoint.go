@@ -23,7 +23,8 @@ import (
 )
 
 func (a *apiServer) GetCheckpoint(
-	_ context.Context, req *apiv1.GetCheckpointRequest) (*apiv1.GetCheckpointResponse, error) {
+	_ context.Context, req *apiv1.GetCheckpointRequest,
+) (*apiv1.GetCheckpointResponse, error) {
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
 	switch err := a.m.db.QueryProto("get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err {
@@ -38,7 +39,8 @@ func (a *apiServer) GetCheckpoint(
 
 func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
-	req *apiv1.DeleteCheckpointsRequest) (*apiv1.DeleteCheckpointsResponse, error) {
+	req *apiv1.DeleteCheckpointsRequest,
+) (*apiv1.DeleteCheckpointsResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err

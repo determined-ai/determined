@@ -124,13 +124,15 @@ func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 			root = append(root, cproto.RunArchive{
 				Path:        a.Path,
 				CopyOptions: a.CopyOptions,
-				Archive:     rItems})
+				Archive:     rItems,
+			})
 		}
 		if len(uItems) > 0 {
 			user = append(user, cproto.RunArchive{
 				Path:        a.Path,
 				CopyOptions: a.CopyOptions,
-				Archive:     uItems})
+				Archive:     uItems,
+			})
 		}
 	}
 	return user, root
@@ -265,12 +267,12 @@ func workDirArchive(
 	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
 ) cproto.RunArchive {
 	a := archive.Archive{
-		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
-		aug.OwnedArchiveItem(infoDir, nil, 0755, tar.TypeDir),
-		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(runDir, nil, 0o700, tar.TypeDir),
+		aug.OwnedArchiveItem(infoDir, nil, 0o755, tar.TypeDir),
+		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0o700, tar.TypeDir),
 	}
 	if createWorkDir {
-		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0700, tar.TypeDir))
+		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0o700, tar.TypeDir))
 	}
 	return wrapArchive(a, rootDir)
 }
@@ -320,9 +322,9 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 
 	return wrapArchive(
 		archive.Archive{
-			archive.RootItem(passwdPath, passwdBytes, 0644, tar.TypeReg),
-			archive.RootItem(shadowPath, shadowBytes, 0600, tar.TypeReg),
-			archive.RootItem(groupPath, groupBytes, 0644, tar.TypeReg),
+			archive.RootItem(passwdPath, passwdBytes, 0o644, tar.TypeReg),
+			archive.RootItem(shadowPath, shadowBytes, 0o600, tar.TypeReg),
+			archive.RootItem(groupPath, groupBytes, 0o644, tar.TypeReg),
 		},
 		rootDir,
 	)

@@ -131,7 +131,7 @@ const mockOnFetch = (mockOptions: {
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();
-  return logs.findIndex(log => log.message.includes(timestamp));
+  return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
 jest.mock('hooks/useResize', () => ({ __esModule: true, default: () => DEFAULT_SIZE }));
@@ -175,7 +175,7 @@ jest.mock('services/utils', () => ({
       const filteredLogs: TestLog[] = existingLogs.slice(range[0], range[1]);
       if (desc) filteredLogs.reverse();
       if (options.logsReference) options.logsReference.push(...filteredLogs);
-      filteredLogs.forEach(log => onEvent(log));
+      filteredLogs.forEach((log) => onEvent(log));
     } else if (options.follow && !skipStreaming) {
       let startIndex = existingLogs.length;
       let rounds = 0;
@@ -183,7 +183,7 @@ jest.mock('services/utils', () => ({
         const count = Math.floor(Math.random() * 4) + 1;
         const logs = generateLogs(count, startIndex, existingLogs.length - 1);
         if (options.logsReference) options.logsReference.push(...logs);
-        logs.forEach(log => onEvent(log));
+        logs.forEach((log) => onEvent(log));
         startIndex += count;
         rounds++;
       }

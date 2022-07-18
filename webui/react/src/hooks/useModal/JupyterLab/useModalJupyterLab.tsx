@@ -103,7 +103,7 @@ const useModalJupyterLab = (): ModalHooks => {
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) setButtonDisabled(false);
-    setShowFullConfig(show => !show);
+    setShowFullConfig((show) => !show);
   }, [ showFullConfig ]);
 
   const handleCreateEnvironment = useCallback(() => {
@@ -264,7 +264,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find(pool => pool.name === fields.pool);
+    const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -322,8 +322,8 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="No template (optional)"
               value={fields.template}
-              onChange={value => updateFields?.({ template: value?.toString() })}>
-              {templates.map(temp => (
+              onChange={(value) => updateFields?.({ template: value?.toString() })}>
+              {templates.map((temp) => (
                 <Option key={temp.name} value={temp.name}>{temp.name}</Option>
               ))}
             </Select>
@@ -346,8 +346,8 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="Pick the best option"
               value={fields.pool}
-              onChange={value => updateFields?.({ pool: value })}>
-              {resourcePools.map(pool => (
+              onChange={(value) => updateFields?.({ pool: value })}>
+              {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>{pool.name}</Option>
               ))}
             </Select>
@@ -367,7 +367,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           ),
           label: 'Slots',
         },
-      ].map(row => {
+      ].map((row) => {
         if (row.condition === false) return null;
         return <div className={css.line} key={row.label}><p>{row.label}</p>{row.content}</div>;
       })}

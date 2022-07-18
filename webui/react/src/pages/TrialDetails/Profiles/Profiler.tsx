@@ -49,7 +49,7 @@ export const timeAxis: uPlot.Axis = {
     return Math.max(60, msPerSec * 10 * 1000);
   },
   values: (self, splits) => {
-    return splits.map(i => dayjs.utc(i).format('HH:mm:ss'));
+    return splits.map((i) => dayjs.utc(i).format('HH:mm:ss'));
   },
 };
 
@@ -58,7 +58,7 @@ const getAxisForMetricName = (metricName = '') => ({
   scale: 'y',
   size: (self: uPlot, values: string[]) => {
     if (!values) return 50;
-    const maxChars = Math.max(...values.map(el => el.toString().length));
+    const maxChars = Math.max(...values.map((el) => el.toString().length));
     return 25 + Math.max(25, maxChars * 8);
   },
 });

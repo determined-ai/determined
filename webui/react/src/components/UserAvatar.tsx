@@ -17,7 +17,7 @@ const UserAvatar: React.FC<Props> = ({ userId, ...rest }) => {
   useEffect(() => {
     if (!userId) return;
     if (!users.length) fetchUsers();
-    const user = users.find(user => user.id === userId);
+    const user = users.find((user) => user.id === userId);
     setDisplayName(getDisplayName(user));
   }, [ fetchUsers, userId, users ]);
 

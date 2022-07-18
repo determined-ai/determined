@@ -381,15 +381,16 @@ func getTestPodSpec() *PodSpec {
 			Labels: map[string]string{"customLabel": "test-label"},
 		},
 		Spec: k8sV1.PodSpec{
-			Volumes: []k8sV1.Volume{{
-				Name: "test-volume",
-				VolumeSource: k8sV1.VolumeSource{
-					HostPath: &k8sV1.HostPathVolumeSource{
-						Path: "/data",
-						Type: nil,
+			Volumes: []k8sV1.Volume{
+				{
+					Name: "test-volume",
+					VolumeSource: k8sV1.VolumeSource{
+						HostPath: &k8sV1.HostPathVolumeSource{
+							Path: "/data",
+							Type: nil,
+						},
 					},
 				},
-			},
 			},
 			Containers: []k8sV1.Container{{
 				Name:      "determined-container",

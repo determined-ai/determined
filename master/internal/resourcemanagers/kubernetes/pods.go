@@ -273,8 +273,8 @@ func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
 
 	for _, systemPod := range systemPods.Items {
 		for _, container := range systemPod.Spec.Containers {
-			p.nodeToSystemResourceRequests[systemPod.Spec.NodeName] +=
-				container.Resources.Requests.Cpu().MilliValue()
+			//nolint:lll // There isn't a great way to break this line that makes it more readable.
+			p.nodeToSystemResourceRequests[systemPod.Spec.NodeName] += container.Resources.Requests.Cpu().MilliValue()
 		}
 	}
 	return nil
@@ -293,7 +293,8 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 		}
 
 		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), configMapName: configMap.Name})
+			handler: ctx.Self(), configMapName: configMap.Name,
+		})
 	}
 
 	pods, err := p.podInterface.List(context.TODO(), listOptions)
@@ -306,7 +307,8 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 		}
 
 		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), podName: pod.Name})
+			handler: ctx.Self(), podName: pod.Name,
+		})
 	}
 
 	return nil

@@ -16,7 +16,7 @@ describe('md5 Utility', () => {
     { input: 'world', output: '7d793037a0760186574b0282f2f435e7' },
     { input: LOREM_IPSUM, output: 'db89bb5ceab87f9c0fcc2ab36c189c2c' },
   ];
-  tests.forEach(test => {
+  tests.forEach((test) => {
     it(`should hash "${test.input}" to "${test.output}"`, () => {
       expect(md5(test.input)).toBe(test.output);
     });

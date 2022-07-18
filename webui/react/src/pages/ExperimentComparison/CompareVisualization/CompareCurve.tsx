@@ -96,7 +96,7 @@ const CompareCurve: React.FC<Props> = ({
     }
   }, [ sendBatchActions ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+  const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   if (hasLoaded && !hasTrials) {
     return (
@@ -131,7 +131,7 @@ const CompareCurve: React.FC<Props> = ({
               { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
             ]}
             selectedRowCount={selectedRowKeys.length}
-            onAction={action => submitBatchAction(action as Action)}
+            onAction={(action) => submitBatchAction(action as Action)}
             onClear={clearSelected}
           />
           <HpTrialTable

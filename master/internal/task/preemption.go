@@ -78,7 +78,8 @@ func (p *Preemption) ReceiveMsg(ctx *actor.Context) error {
 	case PreemptionTimeout:
 		if err := p.CheckTimeout(msg.allocationID); err != nil {
 			return ErrTimeoutExceeded{
-				Message: fmt.Sprintf("preemption did not complete in %s", preemptionTimeoutDuration)}
+				Message: fmt.Sprintf("preemption did not complete in %s", preemptionTimeoutDuration),
+			}
 		}
 	case AckPreemption:
 		if err := p.Acknowledge(msg.AllocationID); err != nil {
@@ -94,7 +95,8 @@ func (p *Preemption) ReceiveMsg(ctx *actor.Context) error {
 
 // Watch sets a watcher up to listen for preemption signals and returns it.
 func (p *Preemption) Watch(
-	allocationID model.AllocationID, id uuid.UUID) (PreemptionWatcher, error) {
+	allocationID model.AllocationID, id uuid.UUID,
+) (PreemptionWatcher, error) {
 	if p.allocationID != allocationID {
 		return PreemptionWatcher{}, ErrStaleAllocation{Received: allocationID, Actual: p.allocationID}
 	}

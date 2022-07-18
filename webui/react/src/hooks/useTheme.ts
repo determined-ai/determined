@@ -73,13 +73,13 @@ export const useTheme = (): void => {
 
   useEffect(() => {
     // Set global CSS variables shared across themes.
-    Object.keys(globalCssVars).forEach(key => {
+    Object.keys(globalCssVars).forEach((key) => {
       const value = (globalCssVars as Record<RecordKey, string>)[key];
       document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
     });
 
     // Set each theme property as top level CSS variable.
-    Object.keys(ui.theme).forEach(key => {
+    Object.keys(ui.theme).forEach((key) => {
       const value = (ui.theme as Record<RecordKey, string>)[key];
       document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
     });

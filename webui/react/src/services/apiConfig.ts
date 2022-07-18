@@ -24,6 +24,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
     Auth: new Api.AuthenticationApi(config),
+    Checkpoint: Api.CheckpointsApiFetchParamCreator(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
@@ -69,8 +70,8 @@ export const commandToEndpoint: Record<Type.CommandType, string> = {
 
 export const getUserIds = (users: string[] = []): number[] | undefined => {
   const userIds = users
-    .map(user => parseInt(user))
-    .filter(user => !isNaN(user));
+    .map((user) => parseInt(user))
+    .filter((user) => !isNaN(user));
   return userIds.length !== 0 ? userIds : undefined;
 };
 
@@ -384,7 +385,7 @@ export const getExpValidationHistory: DetApi<
   name: 'getExperimentValidationHistory',
   postProcess: (response) => {
     if (!response.validationHistory) return [];
-    return response.validationHistory?.map(vh => ({
+    return response.validationHistory?.map((vh) => ({
       endTime: vh.endTime as unknown as string,
       trialId: vh.trialId,
       validationError: vh.searcherMetric,
@@ -402,7 +403,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => ({
+      trials: response.trials.map((trial) => ({
         workloads: [],
         ...decoder.decodeV1TrialToTrialItem(trial),
       })),
@@ -463,7 +464,7 @@ export const compareTrials: DetApi<
   request: (params: Service.CompareTrialsParams) => detApi.Experiments.compareTrials(
     params.trialIds,
     params.maxDatapoints,
-    params.metricNames.map(m => m.name),
+    params.metricNames.map((m) => m.name),
     params.startBatches,
     params.endBatches,
     params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
@@ -493,7 +494,7 @@ export const getModels: DetApi<
   name: 'getModels',
   postProcess: (response) => {
     return {
-      models: (response.models).map(model => decoder.mapV1Model(model)),
+      models: (response.models).map((model) => decoder.mapV1Model(model)),
       pagination: response.pagination,
     };
   },
@@ -948,7 +949,7 @@ export const getCommands: DetApi<
 > = {
   name: 'getCommands',
   postProcess: (response) => (response.commands || [])
-    .map(command => decoder.mapV1Command(command)),
+    .map((command) => decoder.mapV1Command(command)),
   request: (params: Service.GetCommandsParams) => detApi.Commands.getCommands(
     params.sortBy,
     params.orderBy,
@@ -964,7 +965,7 @@ export const getJupyterLabs: DetApi<
 > = {
   name: 'getJupyterLabs',
   postProcess: (response) => (response.notebooks || [])
-    .map(jupyterLab => decoder.mapV1Notebook(jupyterLab)),
+    .map((jupyterLab) => decoder.mapV1Notebook(jupyterLab)),
   request: (params: Service.GetJupyterLabsParams) => detApi.Notebooks.getNotebooks(
     params.sortBy,
     params.orderBy,
@@ -980,7 +981,7 @@ export const getShells: DetApi<
 > = {
   name: 'getShells',
   postProcess: (response) => (response.shells || [])
-    .map(shell => decoder.mapV1Shell(shell)),
+    .map((shell) => decoder.mapV1Shell(shell)),
   request: (params: Service.GetShellsParams) => detApi.Shells.getShells(
     params.sortBy,
     params.orderBy,
@@ -996,7 +997,7 @@ export const getTensorBoards: DetApi<
 > = {
   name: 'getTensorBoards',
   postProcess: (response) => (response.tensorboards || [])
-    .map(tensorboard => decoder.mapV1TensorBoard(tensorboard)),
+    .map((tensorboard) => decoder.mapV1TensorBoard(tensorboard)),
   request: (params: Service.GetTensorBoardsParams) => detApi.TensorBoards.getTensorboards(
     params.sortBy,
     params.orderBy,
@@ -1048,7 +1049,7 @@ export const getTemplates: DetApi<
 > = {
   name: 'getTemplates',
   postProcess: (response) => (response.templates || [])
-    .map(template => decoder.mapV1Template(template)),
+    .map((template) => decoder.mapV1Template(template)),
   request: (params: Service.GetTemplatesParams) => detApi.Templates.getTemplates(
     params.sortBy,
     params.orderBy,
@@ -1092,7 +1093,7 @@ export const getJobQueue: DetApi<
 > = {
   name: 'getJobQ',
   postProcess: (response) => {
-    response.jobs = response.jobs.filter(job => !!job.summary);
+    response.jobs = response.jobs.filter((job) => !!job.summary);
     // we don't work with jobs without a summary in the ui yet
     return response as Service.GetJobsResponse;
   },
