@@ -443,8 +443,8 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
+	exp := actor.Addr("experiments", e.ID)
 	if params.Activate {
-		exp := actor.Addr("experiments", e.ID)
 		resp := m.system.AskAt(exp, &apiv1.ActivateExperimentRequest{Id: int32(e.ID)})
 		if resp.Source() == nil {
 			return nil, echo.NewHTTPError(http.StatusNotFound,
@@ -455,11 +455,23 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 
+	// -race detected that we return e.Config which can be modified by the experiment actor.
+	// Instead we synchronize with the actor to ask for a deep copy of it to return.
+	var msg expconf.ExperimentConfig
+	resp, ok := m.system.AskAt(exp, msg).GetOrTimeout(defaultAskTimeout)
+	if !ok {
+		return nil, errors.Errorf("attempt to get experiment config timed out")
+	}
+	config, ok := resp.(expconf.ExperimentConfig)
+	if !ok {
+		return nil, errors.Errorf("could not get experiment config")
+	}
+
 	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
 	response := model.ExperimentDescriptor{
 		ID:       e.ID,
 		Archived: false,
-		Config:   e.Config,
+		Config:   config,
 		Labels:   make([]string, 0),
 	}
 	return response, nil
