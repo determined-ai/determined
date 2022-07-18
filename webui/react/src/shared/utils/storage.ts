@@ -86,8 +86,8 @@ export class Storage {
   keys(): string[] {
     const prefix = this.pathKeys.length !== 0 ? [ ...this.pathKeys, '' ].join(this.delimiter) : '';
     return this.store.keys()
-      .filter(key => key.startsWith(prefix))
-      .map(key => key.replace(prefix, ''));
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => key.replace(prefix, ''));
   }
 
   toString(): string {
@@ -112,7 +112,7 @@ export class Storage {
   }
 
   reset(): void {
-    this.keys().forEach(key => this.remove(key));
+    this.keys().forEach((key) => this.remove(key));
   }
 
   getStoragePath(): string {
@@ -124,6 +124,6 @@ export class Storage {
   }
 
   private parsePath (path: string, delimiter: string): string[] {
-    return path.split(delimiter).filter(key => key !== '');
+    return path.split(delimiter).filter((key) => key !== '');
   }
 }

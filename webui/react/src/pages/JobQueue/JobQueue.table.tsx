@@ -35,7 +35,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
       throw new Error(`Unsupported job type: ${jobType}`);
   }
 
-  const task = cmds.find(t => t.id === taskId);
+  const task = cmds.find((t) => t.id === taskId);
   if (task) {
     openCommand(task);
   } else {

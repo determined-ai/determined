@@ -45,7 +45,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
           <Form.List name="metadata">
             {(fields, { add, remove }) => (
               <>
-                {fields.map(field => (
+                {fields.map((field) => (
                   <EditableRow
                     key={field.key}
                     name={field.name}

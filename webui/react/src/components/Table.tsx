@@ -87,7 +87,7 @@ export const stateRenderer: Renderer<{ state: StateOfUnion}> =
   </div>
 );
 
-export const tooltipRenderer: Renderer = text => (
+export const tooltipRenderer: Renderer = (text) => (
   <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
 );
 
@@ -102,7 +102,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={children => (
+        wrapper={(children) => (
           <Link path={paths.interactive(record)}>
             {children}
           </Link>
@@ -125,7 +125,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
-      wrapper={ch => (
+      wrapper={(ch) => (
         <Link path={paths.interactive(record)}>
           {ch}
         </Link>

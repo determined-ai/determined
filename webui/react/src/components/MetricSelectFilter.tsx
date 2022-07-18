@@ -48,17 +48,17 @@ const MetricSelectFilter: React.FC<Props> = ({
   const selectRef = useRef<RefSelectProps>(null);
 
   const metricValues = useMemo(() => {
-    if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));
+    if (multiple && Array.isArray(value)) return value.map((metric) => metricNameToValue(metric));
     if (!multiple && !Array.isArray(value) && value) return metricNameToValue(value);
     return undefined;
   }, [ multiple, value ]);
 
   const trainingMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Training);
+    return metricNames.filter((metric) => metric.type === MetricType.Training);
   }, [ metricNames ]);
 
   const validationMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Validation);
+    return metricNames.filter((metric) => metric.type === MetricType.Validation);
   }, [ metricNames ]);
 
   const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
@@ -104,7 +104,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     if (!Array.isArray(value) || value.length <= 1) return;
 
     const newMetric = Array.isArray(value) ? [ ...value ] : [];
-    const index = newMetric.findIndex(metric => metricNameToValue(metric) === newValue);
+    const index = newMetric.findIndex((metric) => metricNameToValue(metric) === newValue);
     if (index !== -1) newMetric.splice(index, 1);
     (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
@@ -186,7 +186,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       {multiple && visibleMetrics.length > 1 && allOption}
       {validationMetricNames.length > 0 && (
         <OptGroup label="Validation Metrics">
-          {validationMetricNames.map(key => {
+          {validationMetricNames.map((key) => {
             const value = metricNameToValue(key);
             return (
               <Option key={value} value={value}>
@@ -198,7 +198,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       )}
       {trainingMetricNames.length > 0 && (
         <OptGroup label="Training Metrics">
-          {trainingMetricNames.map(key => {
+          {trainingMetricNames.map((key) => {
             const value = metricNameToValue(key);
             return (
               <Option key={value} value={value}>

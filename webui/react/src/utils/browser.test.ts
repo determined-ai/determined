@@ -19,7 +19,7 @@ describe('Browser Utilities', () => {
       });
     });
 
-    cookieKeyValues.forEach(test => {
+    cookieKeyValues.forEach((test) => {
       it(`should extract cookie key "${test.key}" value as "${test.value}"`, () => {
         expect(utils.getCookie(test.key)).toBe(test.value || null);
       });

@@ -47,7 +47,7 @@ export const maxClusterSlotCapacity = (
 
   if (allPoolsStatic) {
     return agents.reduce((acc, agent) => {
-      agent.resources.forEach(resource => {
+      agent.resources.forEach((resource) => {
         if (!(resource.type in acc)) acc[resource.type] = 0;
         acc[resource.type] += 1;
         acc[ResourceType.ALL] += 1;

@@ -66,11 +66,11 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   );
 
   const selectedModelNumVersions = useMemo(() => {
-    return models.find(model => model.name === modalState.selectedModelName)?.numVersions ?? 0;
+    return models.find((model) => model.name === modalState.selectedModelName)?.numVersions ?? 0;
   }, [ models, modalState.selectedModelName ]);
 
   const modelOptions = useMemo(() => {
-    return models.map(model => ({ id: model.id, name: model.name }));
+    return models.map((model) => ({ id: model.id, name: model.name }));
   }, [ models ]);
 
   const registerModelVersion = useCallback(async (state: ModalState) => {
@@ -121,27 +121,27 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, [ registerModelVersion ]);
 
   const updateModel = useCallback((value) => {
-    setModalState(prev => ({ ...prev, selectedModelName: value }));
+    setModalState((prev) => ({ ...prev, selectedModelName: value }));
   }, []);
 
   const updateVersionName = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionName: e.target.value }));
+    setModalState((prev) => ({ ...prev, versionName: e.target.value }));
   }, []);
 
   const updateVersionDescription = useCallback((e) => {
-    setModalState(prev => ({ ...prev, versionDescription: e.target.value }));
+    setModalState((prev) => ({ ...prev, versionDescription: e.target.value }));
   }, []);
 
   const openDetails = useCallback(() => {
-    setModalState(prev => ({ ...prev, expandDetails: true }));
+    setModalState((prev) => ({ ...prev, expandDetails: true }));
   }, []);
 
   const updateMetadata = useCallback((value) => {
-    setModalState(prev => ({ ...prev, metadata: value }));
+    setModalState((prev) => ({ ...prev, metadata: value }));
   }, []);
 
   const updateTags = useCallback((value) => {
-    setModalState(prev => ({ ...prev, tags: value }));
+    setModalState((prev) => ({ ...prev, tags: value }));
   }, []);
 
   const launchNewModelModal = useCallback((state: ModalState) => {
@@ -159,7 +159,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           V1GetModelsRequestSortBy.LASTUPDATEDTIME,
         ),
       }, { signal: canceler.signal });
-      setModels(prev => {
+      setModels((prev) => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
@@ -201,7 +201,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           </div>
           <Select
             optionFilterProp="label"
-            options={modelOptions.map(option => (
+            options={modelOptions.map((option) => (
               { label: option.name, value: option.name }))}
             placeholder="Select a model..."
             showSearch

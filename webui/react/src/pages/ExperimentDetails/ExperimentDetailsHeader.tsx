@@ -310,7 +310,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
     const availableActions = getActionsForExperiment(experiment, headerActions, curUser);
 
-    return availableActions.map(action => options[action]) as Option[];
+    return availableActions.map((action) => options[action]) as Option[];
   }, [
     curUser,
     isRunningDelete,

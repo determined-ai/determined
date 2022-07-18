@@ -44,7 +44,7 @@ const PageHeaderFoldable: React.FC<Props> = (
     if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
     dropdownOptions = (
       <Menu>
-        {options.map(opt => (
+        {options.map((opt) => (
           <Menu.Item
             className={css.optionsDropdownItem}
             disabled={opt.disabled || !opt.onClick}
@@ -69,7 +69,7 @@ const PageHeaderFoldable: React.FC<Props> = (
             iconSize="tiny"
             label="Toggle"
             type="text"
-            onClick={() => setIsExpanded(prev => !prev)}
+            onClick={() => setIsExpanded((prev) => !prev)}
           />
         )}
         <Space className={css.options}>

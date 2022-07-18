@@ -117,7 +117,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         true,
         { signal: canceler.signal },
       ),
-      event => setFilterOptions(event as Filters),
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();

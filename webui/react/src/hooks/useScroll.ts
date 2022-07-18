@@ -45,12 +45,12 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
     viewWidth: element?.clientWidth || 0,
   });
 
-  const handleResize = useCallback(entries => {
+  const handleResize = useCallback((entries) => {
     // Check to make sure the scroll element is being observed for resize.
     const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
     if (!element || elements.indexOf(element) === -1) return;
 
-    setScrollInfo(prevScrollInfo => ({
+    setScrollInfo((prevScrollInfo) => ({
       ...prevScrollInfo,
       dx: element.scrollLeft - prevScrollInfo.scrollLeft,
       dy: element.scrollTop - prevScrollInfo.scrollTop,
@@ -64,7 +64,7 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
   const handleScroll = useCallback(() => {
     if (!element) return;
 
-    setScrollInfo(prevScrollInfo => ({
+    setScrollInfo((prevScrollInfo) => ({
       ...prevScrollInfo,
       dx: element.scrollLeft - prevScrollInfo.scrollLeft,
       dy: element.scrollTop - prevScrollInfo.scrollTop,

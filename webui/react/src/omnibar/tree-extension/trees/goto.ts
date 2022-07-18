@@ -64,8 +64,8 @@ const locations: TreeNode[] = [
     options: async (): Promise<Children> => {
       const tsbs = await getTensorBoards({});
       return tsbs
-        .filter(tsb => !terminalCommandStates.has(tsb.state))
-        .map(tsb => ({
+        .filter((tsb) => !terminalCommandStates.has(tsb.state))
+        .map((tsb) => ({
           onAction: () => openCommand(tsb),
           title: `${JSON.stringify(tsb.misc)}`,
         }));
@@ -76,8 +76,8 @@ const locations: TreeNode[] = [
     options: async (): Promise<Children> => {
       const nbs = await getJupyterLabs({});
       return nbs
-        .filter(nb => !terminalCommandStates.has(nb.state))
-        .map(nb => ({
+        .filter((nb) => !terminalCommandStates.has(nb.state))
+        .map((nb) => ({
           onAction: () => openCommand(nb),
           title: nb.name,
         }));

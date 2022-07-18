@@ -36,7 +36,7 @@ describe('LogViewerFilter', () => {
     setup(DEFAULT_FILTER_OPTIONS, {});
 
     await waitFor(() => {
-      Object.values(LABELS).forEach(label => {
+      Object.values(LABELS).forEach((label) => {
         const regex = new RegExp(`All ${label}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
       });
@@ -54,7 +54,7 @@ describe('LogViewerFilter', () => {
     setup(DEFAULT_FILTER_OPTIONS, values);
 
     await waitFor(() => {
-      Object.keys(LABELS).forEach(labelKey => {
+      Object.keys(LABELS).forEach((labelKey) => {
         const key = labelKey as keyof Filters;
         if (values[key]?.length ?? 0 === 0) return;
 

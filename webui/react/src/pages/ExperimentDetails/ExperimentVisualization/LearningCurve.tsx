@@ -114,7 +114,7 @@ const LearningCurve: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         /*
@@ -123,12 +123,12 @@ const LearningCurve: React.FC<Props> = ({
          * chart and the table.
          */
 
-        (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
-        (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
+        (event.promotedTrials || []).forEach((trialId) => trialIdsMap[trialId] = trialId);
+        (event.demotedTrials || []).forEach((trialId) => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
         setTrialIds(newTrialIds);
 
-        (event.trials || []).forEach(trial => {
+        (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
           const flatHParams = flattenObject(trial.hparams || {});
           const hasHParams = Object.keys(flatHParams).length !== 0;
@@ -140,20 +140,20 @@ const LearningCurve: React.FC<Props> = ({
           trialDataMap[id] = trialDataMap[id] || [];
           metricsMap[id] = metricsMap[id] || {};
 
-          trial.data.forEach(datapoint => {
+          trial.data.forEach((datapoint) => {
             batchesMap[datapoint.batches] = datapoint.batches;
             metricsMap[id][datapoint.batches] = datapoint.value;
             trialHpMap[id].metric = datapoint.value;
           });
         });
 
-        const newTrialHps = newTrialIds.map(id => trialHpMap[id]);
+        const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
         const newBatches = Object.values(batchesMap);
         setBatches(newBatches);
 
-        const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
+        const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
           /**
            * TODO: filtering NaN, +/- Infinity for now, but handle it later with
            * dynamic min/max ranges via uPlot.Scales.
@@ -166,7 +166,7 @@ const LearningCurve: React.FC<Props> = ({
         // One successful event as come through.
         setHasLoaded(true);
       },
-    ).catch(e => {
+    ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
     });
@@ -202,10 +202,10 @@ const LearningCurve: React.FC<Props> = ({
     }
   }, [ sendBatchActions ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+  const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   const handleTrialUnselect = useCallback((trialId: number) =>
-    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+    setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId)), []);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -246,7 +246,7 @@ const LearningCurve: React.FC<Props> = ({
               { label: Action.CompareTrials, value: Action.CompareTrials },
             ]}
             selectedRowCount={selectedRowKeys.length}
-            onAction={action => submitBatchAction(action as Action)}
+            onAction={(action) => submitBatchAction(action as Action)}
             onClear={clearSelected}
           />
           <HpTrialTable

@@ -60,12 +60,12 @@ const HpTrialTable: React.FC<Props> = ({
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap) return trialHps;
-    return trialHps.filter(trial => filteredTrialIdMap[trial.id]);
+    return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
   }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex(trialId => trialId === record.id);
+      const index = trialIds.findIndex((trialId) => trialId === record.id);
       let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
       if (record.metric != null && colorScale) {
         const scaleRange = colorScale[1].scale - colorScale[0].scale;
@@ -143,8 +143,8 @@ const HpTrialTable: React.FC<Props> = ({
 
     const hpColumns = Object
       .keys(hyperparameters || {})
-      .filter(hpParam => hpVals[hpParam]?.size > 1)
-      .map(key => {
+      .filter((hpParam) => hpVals[hpParam]?.size > 1)
+      .map((key) => {
         return {
           key,
           render: hpRenderer(key),

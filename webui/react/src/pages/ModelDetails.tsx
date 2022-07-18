@@ -66,7 +66,7 @@ const ModelDetails: React.FC = () => {
         },
       );
       setTotal(modelData?.pagination.total || 0);
-      setModel(prev => !isEqual(modelData, prev) ? modelData : prev);
+      setModel((prev) => !isEqual(modelData, prev) ? modelData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
@@ -217,7 +217,7 @@ const ModelDetails: React.FC = () => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',

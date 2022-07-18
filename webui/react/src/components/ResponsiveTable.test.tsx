@@ -115,7 +115,7 @@ const setup = (options?: { pagination?: Pagination }) => {
   const onIdReset = jest.fn();
 
   const data = generateTableData(DATA_ENTRY_COUNT);
-  const idList = data.map(row => row.id);
+  const idList = data.map((row) => row.id);
   const paginationConfig = options?.pagination
     ? getFullPaginationConfig(options?.pagination, data.length)
     : undefined;
@@ -132,10 +132,10 @@ const setup = (options?: { pagination?: Pagination }) => {
   );
 
   // Apply id column filter config.
-  const newColumns = columns.map(column => {
+  const newColumns = columns.map((column) => {
     if (column.key === 'id') {
       column.filterDropdown = idFilterDropdown;
-      column.filters = idList.map(id => ({ text: id, value: id }));
+      column.filters = idList.map((id) => ({ text: id, value: id }));
     }
     return column;
   });

@@ -83,7 +83,7 @@ const WorkspaceDetails: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setProjects(prev => {
+      setProjects((prev) => {
         if (isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
@@ -136,7 +136,7 @@ const WorkspaceDetails: React.FC = () => {
         updateSettings({ user: user ? [ user.username ] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
   }, [ settings.whose, updateSettings, user, users ]);
@@ -291,7 +291,7 @@ const WorkspaceDetails: React.FC = () => {
             gap={ShirtSize.medium}
             minItemWidth={250}
             mode={GridMode.AutoFill}>
-            {projects.map(project => (
+            {projects.map((project) => (
               <ProjectCard
                 curUser={user}
                 fetchProjects={fetchProjects}

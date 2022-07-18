@@ -214,8 +214,8 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
   // Check to see if the path matches any of the defined app routes.
   const pathname = url.replace(process.env.PUBLIC_URL, '');
   return routes
-    .filter(route => route.path !== '*')
-    .find(route => {
+    .filter((route) => route.path !== '*')
+    .find((route) => {
       const routeRegex = pathToRegexp(route.path);
       return routeRegex.test(pathname);
     });

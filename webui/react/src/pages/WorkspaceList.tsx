@@ -65,8 +65,8 @@ const WorkspaceList: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setWorkspaces(prev => {
-        const withoutDefault = response.workspaces.filter(w => !w.immutable);
+      setWorkspaces((prev) => {
+        const withoutDefault = response.workspaces.filter((w) => !w.immutable);
         if (isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
       });
@@ -112,7 +112,7 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: user ? [ user.username ] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
   }, [ updateSettings, user, users, settings.whose ]);
@@ -226,7 +226,7 @@ const WorkspaceList: React.FC = () => {
             gap={ShirtSize.medium}
             minItemWidth={300}
             mode={GridMode.AutoFill}>
-            {workspaces.map(workspace => (
+            {workspaces.map((workspace) => (
               <WorkspaceCard
                 curUser={user}
                 fetchWorkspaces={fetchWorkspaces}

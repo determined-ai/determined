@@ -77,7 +77,7 @@ describe('Number Utilities', () => {
       { input: NaN, output: 1.0 },
     ];
     it('should convert a string percent to a floating point value', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         const result = Math.abs(utils.percentToFloat(test.input) - test.output);
         expect(result).toBeLessThan(Number.EPSILON);
       });

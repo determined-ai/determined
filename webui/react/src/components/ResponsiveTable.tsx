@@ -32,7 +32,7 @@ export const handleTableChange = (
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<unknown>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',

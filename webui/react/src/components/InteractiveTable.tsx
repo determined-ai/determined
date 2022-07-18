@@ -484,7 +484,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const renderColumns = useMemo(
     () => {
-      const columns = settings.columns.filter(columnName => columnDefs[columnName])
+      const columns = settings.columns.filter((columnName) => columnDefs[columnName])
         .map((columnName, index) => {
           const column = columnDefs[columnName];
           const columnWidth = widthData.widths[index];

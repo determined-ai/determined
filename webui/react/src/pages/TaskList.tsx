@@ -100,7 +100,7 @@ const TaskList: React.FC = () => {
   }, [ loadedTasks ]);
 
   const selectedTasks = useMemo(() => {
-    return (settings.row || []).map(id => taskMap[id]).filter(task => !!task);
+    return (settings.row || []).map((id) => taskMap[id]).filter((task) => !!task);
   }, [ settings.row, taskMap ]);
 
   const hasKillable = useMemo(() => {
@@ -125,7 +125,7 @@ const TaskList: React.FC = () => {
         getTensorBoards({ signal: canceler.signal }),
       ]);
       const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
-      setTasks(prev => {
+      setTasks((prev) => {
         if (isEqual(prev, newTasks)) return prev;
         return newTasks;
       });
@@ -242,14 +242,14 @@ const TaskList: React.FC = () => {
         plural: '',
         sources: [] as TensorBoardSource[],
       };
-      record.misc.experimentIds.forEach(id => {
+      record.misc.experimentIds.forEach((id) => {
         info.sources.push({
           id,
           path: paths.experimentDetails(id),
           type: TensorBoardSourceType.Experiment,
         });
       });
-      record.misc.trialIds.forEach(id => {
+      record.misc.trialIds.forEach((id) => {
         info.sources.push({
           id,
           path: paths.trialDetails(id),
@@ -289,7 +289,7 @@ const TaskList: React.FC = () => {
         dataIndex: 'type',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
         filterDropdown: typeFilterDropdown,
-        filters: Object.values(CommandType).map(value => ({
+        filters: Object.values(CommandType).map((value) => ({
           text: (
             <div className={css.typeFilter}>
               <Icon name={value.toLocaleLowerCase()} />
@@ -354,14 +354,14 @@ const TaskList: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
         render: userRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
-            getDisplayName(users.find(u => u.id === a.userId)),
-            getDisplayName(users.find(u => u.id === b.userId)),
+            getDisplayName(users.find((u) => u.id === a.userId)),
+            getDisplayName(users.find((u) => u.id === b.userId)),
           );
         },
         title: 'User',
@@ -389,8 +389,8 @@ const TaskList: React.FC = () => {
   const handleBatchKill = useCallback(async () => {
     try {
       const promises = selectedTasks
-        .filter(task => isTaskKillable(task))
-        .map(task => killTask(task));
+        .filter((task) => isTaskKillable(task))
+        .map((task) => killTask(task));
       await Promise.all(promises);
 
       /*
@@ -433,7 +433,7 @@ const TaskList: React.FC = () => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',
@@ -446,7 +446,7 @@ const TaskList: React.FC = () => {
     updateSettings(newSettings, shouldPush);
   }, [ columns, settings, updateSettings ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => {
+  const handleTableRowSelect = useCallback((rowKeys) => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
@@ -526,7 +526,7 @@ const TaskList: React.FC = () => {
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.medium} minItemWidth={120}>
-            {sourcesModal?.sources.map(source => (
+            {sourcesModal?.sources.map((source) => (
               <Link
                 key={source.id}
                 path={source.path}>{source.type} {source.id}

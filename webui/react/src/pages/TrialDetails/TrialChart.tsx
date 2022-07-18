@@ -45,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
     const yValues: Record<string, Record<string, number | null>> = {};
     metrics.forEach((metric, index) => yValues[index] = {});
 
-    (workloads || []).forEach(wlWrapper => {
+    (workloads || []).forEach((wlWrapper) => {
       metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
@@ -65,8 +65,8 @@ const TrialChart: React.FC<Props> = ({
 
     xValues.sort((a, b) => a - b);
 
-    const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
-      return xValues.map(xValue => yValue[xValue] != null ? yValue[xValue] : null);
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
+      return xValues.map((xValue) => yValue[xValue] != null ? yValue[xValue] : null);
     });
 
     return [ xValues, ...yValuesArray ];

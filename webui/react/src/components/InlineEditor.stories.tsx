@@ -15,7 +15,7 @@ export const Default = (): React.ReactNode => {
   const [ value, setValue ] = useState('Edit Me!');
 
   const save = useCallback((newValue: string): Promise<void> => {
-    return new Promise<void>(resolve => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
         setValue(newValue);
         resolve();

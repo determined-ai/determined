@@ -40,7 +40,7 @@ describe('String Utilities', () => {
         { input: '^@hello', output: '^@hello' },
       ];
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.capitalize(test.input)).toBe(test.output);
       });
     });
@@ -54,7 +54,7 @@ describe('String Utilities', () => {
         { input: '^@hello', output: '^@hello' },
       ];
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.capitalizeWord(test.input)).toBe(test.output);
       });
     });
