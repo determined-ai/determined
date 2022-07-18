@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -22,7 +23,7 @@ var masterLogsBatchMissWaitTime = time.Second
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
-	return &apiv1.GetMasterResponse{
+	masterResp := &apiv1.GetMasterResponse{
 		Version:           version.Version,
 		MasterId:          a.m.MasterID,
 		ClusterId:         a.m.ClusterID,
@@ -31,7 +32,10 @@ func (a *apiServer) GetMaster(
 		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:          "determined",
-	}, nil
+	}
+	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
+
+	return masterResp, nil
 }
 
 func (a *apiServer) GetTelemetry(
