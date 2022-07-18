@@ -19,7 +19,6 @@ spec:
         app: determined-db-{{ .Release.Name }}
         determined-system: db
     spec:
-      priorityClassName: determined-system-priority
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -28,7 +27,7 @@ spec:
               - key: topology.kubernetes.io/region
                 operator: In
                 values:
-                - ORD1
+                - {{ .Values.region | upper }}
       containers:
       - name: determined-db-{{ .Release.Name }}
         image: postgres:10.14

@@ -1,0 +1,35 @@
+default:
+  tags:
+    - ord1-tenant
+
+Helm lint:
+  stage: test
+  image:
+    name: alpine/helm:3.3.1
+    entrypoint: [""]
+  script:
+    - cd helm/charts/determined
+    - helm dep update
+    - helm lint .
+  needs: []
+
+Helm push:
+  stage: deploy
+  only:
+    refs:
+      - coreweave
+    changes:
+      - .gitlab-ci.yml
+      - helm/charts/determined/*
+  image:
+    name: alpine/helm:3.3.1
+    entrypoint: [""]
+  script:
+    - apk add git
+    - helm plugin install https://github.com/chartmuseum/helm-push.git
+    - cd helm/charts/determined
+    - helm repo add helm_repo $HELM_REPO_URL --username $HELM_REPO_USER --password $HELM_REPO_PASS
+    - helm dep update
+    - helm cm-push . helm_repo
+  needs:
+    - Helm lint

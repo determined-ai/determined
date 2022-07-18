@@ -1,0 +1,122 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "properties": {
+      "region": {
+        "type": "string",
+        "enum": [
+          "ORD1",
+          "LAS1",
+          "LGA1"
+        ],
+        "form": true,
+        "title": "Region",
+        "customComponent": {
+          "id": "region_selector",
+          "component": "RegionSelector"
+        }
+      },
+      "resources": {
+        "type": "object",
+        "title": "Default Resources",
+        "description": "Experiments will launch with these default resource assignments by default. GPU type, CPU and Memory request can be overridden in the experiment configuration.",
+        "form": true,
+        "properties": {
+          "cpu": {
+            "type": "string",
+            "form":"true",
+            "title": "vCPU Request",
+            "render":"slider",
+            "sliderMin": 1,
+            "sliderMax": 128,
+            "sliderUnit": "vCPUs"
+          },
+          "memory": {
+              "type": "string",
+              "form":"true",
+              "title": "Memory Request",
+              "render":"slider",
+              "sliderMin": 4,
+              "sliderMax": 1000,
+              "sliderUnit": "Gi"
+          },
+          "gpuType": {
+            "type": "string",
+            "enum": [
+              "RTX_A4000",
+              "RTX_A5000",
+              "RTX_A6000",
+              "A100_NVLINK",
+              "A100_NVLINK_80GB",
+              "A100_PCIE_40GB",
+              "A100_PCIE_80GB",
+              "A40",
+              "Tesla_V100_NVLINK",
+              "Quadro_RTX_5000",
+              "Quadro_RTX_4000"
+            ],
+            "form": true,
+            "title": "GPU Type"
+          }
+        }
+      },
+      "s3": {
+        "type": "object",
+        "form": "true",
+        "title": "Object Storage Configuration",
+        "required": [
+          "bucket",
+          "accessKey",
+          "secretKey",
+          "region"
+        ],
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "form": "true", 
+            "title": "Bucket Name",
+            "description": "Object Storage bucket used for storage of model checkpoints and optionally for training data"
+          },
+          "accessKey": {
+            "type": "string",
+            "form": "true", 
+            "title": "Access Key",
+            "description": "Access Key for Object Storage"
+          },
+          "secretKey": {
+            "type": "string",
+            "form": "true", 
+            "title": "Secret Key",
+            "description": "Secret Key for Object Storage"
+          },
+          "region": {
+            "type": "string",
+            "form": "true",
+            "title": "Region",
+            "enum": [
+              "ORD1",
+              "LAS1",
+              "LGA1"
+            ],
+            "description": "CoreWeave Region where Object Storage bucket is located"
+          }
+        }
+      },
+      "mounts": {
+        "type": "array",
+        "title": "Experiment Mounts",
+        "form": true,
+        "customComponent": {
+          "id": "mount_selector",
+          "component": "MountSelector",
+          "description": "Attach existing shared filesystem volumes to experiments by default. Volumes can be created in the Cloud Dashboard.",
+          "title": "Default Filesystem Volumes",
+          "mountPathPrefix": "/mnt/",
+          "allowedVolumeModes": [
+            "Filesystem"
+          ]
+        }
+      }
+    },
+    "title": "Values",
+    "type": "object"
+  }

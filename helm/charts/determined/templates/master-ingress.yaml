@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+  labels:
+    app.kubernetes.io/name: determined-master-{{ .Release.Name }}
+  name: determined-master-{{ .Release.Name }}
+spec:
+  rules:
+  - host: {{ .Release.Name }}.{{ .Release.Namespace }}.{{ .Values.region | lower }}.ingress.coreweave.cloud
+    http: 
+      paths:
+      - backend:
+          serviceName: determined-master-service-{{ .Release.Name }}
+          servicePort: {{ .Values.masterPort }}
+        path: /
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - {{ .Release.Name }}.{{ .Release.Namespace }}.{{ .Values.region | lower }}.ingress.coreweave.cloud
+    secretName: determined-master-{{ .Release.Name }}

@@ -16,10 +16,10 @@ data:
       bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "s3" }}
-      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
-      access_key: {{ .Values.checkpointStorage.accessKey | quote }}
-      secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
-      endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
+      bucket: {{ .Values.s3.bucket }}
+      access_key: {{ .Values.s3.accessKey }}
+      secret_key: {{ .Values.s3.secretKey }}
+      endpoint_url: https://s3.{{ .Values.s3.region | lower }}.coreweave.com
       prefix: {{ .Values.checkpointStorage.prefix | quote }}
       {{- else if eq .Values.checkpointStorage.type "azure" }}
       {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url }}
@@ -86,42 +86,12 @@ data:
 
     {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea")._1 -}}
-    {{ if .Values.taskContainerDefaults -}}
-    task_container_defaults:
-      {{- if .Values.taskContainerDefaults.networkMode }}
-      network_mode: {{ .Values.taskContainerDefaults.networkMode }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.dtrainNetworkInterface }}
-      dtrain_network_interface: {{ .Values.taskContainerDefaults.dtrainNetworkInterface }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.cpuPodSpec }}
-      cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec | toJson }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.gpuPodSpec }}
-      gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
-      {{- end }}
-      {{- if and .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
-      image:
-         cpu: {{ .Values.taskContainerDefaults.cpuImage | quote }}
-         gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
-      {{- else if .Values.imageRegistry }}
-      image:
-         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
-         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
-      {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
-      {{- end }}
-      {{- end }}
-      {{- if .Values.taskContainerDefaults.forcePullImage }}
-      force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
-      {{- end }}
-    {{ else if .Values.imageRegistry }}
     task_container_defaults:
       image:
          cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
          gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
-    {{ end }}
+      cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
+      gpu_pod_spec: {{ include "determined.gpuPodSpec" . | fromYaml | toJson }}
 
     {{- if .Values.telemetry }}
     telemetry:

@@ -21,7 +21,6 @@ spec:
         # changes the master-config.yaml.
         checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}
     spec:
-      priorityClassName: determined-system-priority
       serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: determined-master-{{ .Release.Name }}
@@ -90,4 +89,4 @@ spec:
               - key: topology.kubernetes.io/region
                 operator: In
                 values:
-                - ORD1
+                - {{ .Values.region | upper }}

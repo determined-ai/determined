@@ -1,6 +1,15 @@
 # The image registry to use. Defaults to the determinedai repository in DockerHub.
 imageRegistry: determinedai
 
+# Default region for CoreWeave
+region: ORD1
+
+# Default resources to use for CPU/GPU pods.
+resources:
+  cpu: "8"
+  memory: 32Gi
+  gpuType: RTX_A5000
+
 # Install Determined enterprise edition.
 enterpriseEdition: false
 
@@ -10,14 +19,6 @@ imagePullSecretName:
 
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
-
-# When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
-# the Determined master reachable from outside the cluster. When useNodePortForMaster is set to
-# true, the master will instead be exposed behind a NodePort service. When using a NodePort service
-# users will typically have to configure an Ingress to make the Determined master reachable from
-# outside the cluster. NodePort service is recommended when configuring TLS termination in a
-# load-balancer.
-useNodePortForMaster: false
 
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
@@ -38,27 +39,21 @@ db:
   # hostAddress:
 
   # Required parameters, whether you are using your own DB or a Determined DB.
-  name: determined
-  user: postgres
-  password: postgres
+  name: coreweave_determined_db
+  user: coreweave_postgres
+  password: coreweave_postgres
   port: 5432
 
   # Only used for Determined DB deployment. Configures the size of the PersistentVolumeClaim for the
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
-  storageSize: 30Gi
-  cpuRequest: 2
-  memRequest: 8Gi
+  storageSize: 100Gi
+  cpuRequest: 4
+  memRequest: 16Gi
 
   # useNodePortForDB configures whether ClusterIP or NodePort service type is used for the
   # Determined deployed DB. By default ClusterIP is used.
   useNodePortForDB: false
-
-  # storageClassName configures the StorageClass used by the PersistentVolumeClaim for the
-  # Determined deployed database. This can be left blank if a default storage class is specified in
-  # the cluster. If dynamic provisioning of PersistentVolumes is disabled, users must manually
-  # create a PersistentVolume that will match the PersistentVolumeClaim.
-  storageClassName: block-nvme-ord1
 
   # ssl_mode and ssl_root_cert configure the TLS connection to the database. Users must first
   # create a kubernetes secret or configMap containing their certificate and specify its name in
@@ -67,7 +62,6 @@ db:
   # sslRootCert: <cert_name>
   # resourceType: <secret/configMap>
   # certResourceName: <secret/configMap name>
-
 
 # checkpointStorage controls where checkpoints are stored. Supported types include `shared_fs`,
 # `gcs`, and `s3`.
@@ -91,12 +85,7 @@ checkpointStorage:
   
   # For storing in S3.
   type: s3
-  bucket: model-checkpoints
-  accessKey: TV8MB1K8OJZXY1K00GEG
-  secretKey: v6WpwwGqTZH5ap7Bq2cYcdDG3DkNQ5le3u3vzQDz
-  endpointUrl: http://s3.ord1.coreweave.com
-  prefix: determined-model-checkpoints
-
+  
   # For storing in Azure Blob Storage with a connection string.
   # Do NOT use if already using Azure Blob Storage with account URL
   # type: azure
@@ -128,8 +117,8 @@ maxSlotsPerPod: 8
   # cpu: 7
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 2
-masterMemRequest: 8Gi
+masterCpuRequest: 8
+masterMemRequest: 32Gi
 
 ## Configure the task container defaults. Tasks include trials, commands, TensorBoards, notebooks,
 ## and shells. For all task containers, shm_size_bytes and network_mode are configurable. For
@@ -143,9 +132,6 @@ taskContainerDefaults:
   # (CPU notebooks, TensorBoards, zero-slot commands). If a pod spec is defined for an individual
   # task, that pod spec will replace the default one that is defined here. See
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
-  # cpuPodSpec:
-  # gpuPodSpec:
-
 
   # Configure default Docker images for all GPU tasks (experiments, notebooks, commands) and
   # CPU tasks (CPU notebooks, TensorBoards, zero-slot commands). If a Docker image is defined
@@ -158,6 +144,10 @@ taskContainerDefaults:
 telemetry:
   enabled: true
 
+s3:
+  region: ORD1
+
+mounts: []
 ## Configure Prometheus endpoints for monitoring.
 # observability:
 #   enable_prometheus: true
@@ -166,7 +156,7 @@ telemetry:
 # clusterName: Dev
 
 # defaultPassword sets the password for the admin and determined user accounts.
-# defaultPassword:
+# defaultPassword: determined-coreweave
 
 ## Configure how trial logs are stored.
 # logging:
