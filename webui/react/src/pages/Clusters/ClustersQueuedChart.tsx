@@ -19,7 +19,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
   const [ viewDays, setViewDays ] = useState(7);
 
   const queuedStats = useMemo(() => {
-    if(!poolStats || !poolStats.aggregates) return;
+    if (!poolStats || !poolStats.aggregates) return;
     const { aggregates } = poolStats;
     const agg = aggregates.filter(
       (item) => Date.parse(item.periodStart) >= Date.now() - viewDays * DURATION_DAY,
@@ -32,7 +32,7 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
     });
   }, [ poolStats, viewDays ]);
 
-  if(!queuedStats) return <div />;
+  if (!queuedStats) return <div />;
   return (
     <Page title="Avg Queue Time">
       <Section bodyBorder>

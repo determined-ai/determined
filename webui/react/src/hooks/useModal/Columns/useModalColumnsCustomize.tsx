@@ -104,7 +104,7 @@ const useModalColumnsCustomize = ({
   }, [ renderColumnName ]);
 
   const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
-    if(column !== newNeighborColumn){
+    if (column !== newNeighborColumn){
       const updatedVisibleColumns = [ ...visibleColumns ];
       const columnIndex =
       updatedVisibleColumns.findIndex((columnName) => columnName === column);

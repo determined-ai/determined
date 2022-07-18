@@ -92,7 +92,7 @@ const ModelRegistry: React.FC = () => {
         return response.models;
       });
       setIsLoading(false);
-    } catch(e) {
+    } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,

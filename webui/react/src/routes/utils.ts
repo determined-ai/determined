@@ -137,7 +137,7 @@ export const paths = {
     return '/tasks';
   },
   taskLogs: (task: CommandTask): string => {
-    return`/${task.type}/${task.id}/logs?id=${task.name}`;
+    return `/${task.type}/${task.id}/logs?id=${task.name}`;
   },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {
     if (!experimentId) {

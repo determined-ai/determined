@@ -155,7 +155,7 @@ const ManageJob: React.FC<Props> = (
 
   const onOk = useCallback(
     async () => {
-      try{
+      try {
         const update = formRef.current &&
           formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
         if (update) await updateJobQueue({ updates: [ update ] });

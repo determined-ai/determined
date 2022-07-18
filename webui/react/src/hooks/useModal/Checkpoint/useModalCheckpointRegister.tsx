@@ -163,7 +163,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
-    } catch(e) {
+    } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,

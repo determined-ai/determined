@@ -9,7 +9,7 @@ const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailR
   samples.forEach((sample) => {
     try {
       fn(sample);
-    } catch(e) {
+    } catch (e) {
       fails.push({ error: e, sample });
     }
   });

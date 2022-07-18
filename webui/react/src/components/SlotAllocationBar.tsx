@@ -160,9 +160,9 @@ const SlotAllocationBar: React.FC<Props> = ({
       ResourceState.Starting,
       ResourceState.Running,
     ];
-    if(showLegends){
+    if (showLegends){
       states = states.slice(2);
-    } else if(stateTallies[ResourceState.Potential] <= 0) {
+    } else if (stateTallies[ResourceState.Potential] <= 0) {
       states = states.slice(1);
     }
     return states;
@@ -206,7 +206,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   };
 
   const renderFooterJobs = () => {
-    if(footer?.queued || footer?.scheduled) {
+    if (footer?.queued || footer?.scheduled) {
       return (
         footer.queued ? (
           <div onClick={onClickQueued}>

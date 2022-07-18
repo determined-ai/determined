@@ -53,7 +53,7 @@ const ResourcepoolDetail: React.FC = () => {
   }, [ poolname, resourcePools ]);
 
   const usage = useMemo(() => {
-    if(!pool) return 0;
+    if (!pool) return 0;
     const totalSlots = pool.slotsAvailable;
     const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
     const runningState = resourceStates.filter((s) => s === ResourceState.Running).length;
@@ -98,14 +98,14 @@ const ResourcepoolDetail: React.FC = () => {
   }, [ canceler, fetchStats ]);
 
   const handleTabChange = useCallback((key) => {
-    if(!pool) return;
+    if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ history, pool ]);
 
   const renderPoolConfig = useCallback(() => {
-    if(!pool) return;
+    if (!pool) return;
     const details = clone(pool.details);
     for (const key in details) {
       if (details[key] === null) {
@@ -130,7 +130,7 @@ const ResourcepoolDetail: React.FC = () => {
     );
   }, [ pool ]);
 
-  if(!pool) return <div />;
+  if (!pool) return <div />;
   return (
     <Page className={css.poolDetailPage}>
       <Section>

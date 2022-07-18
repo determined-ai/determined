@@ -751,7 +751,7 @@ const ProjectDetails: React.FC = () => {
   }, [ openNoteDelete, project?.id ]);
 
   useEffect(() => {
-    if(settings.tableOffset > total){
+    if (settings.tableOffset > total){
       const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
       updateSettings({ tableOffset: offset });
     }
