@@ -574,7 +574,8 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			ctx.Log().Info("all containers are connected successfully (task container state changed)")
+			ctx.Log().
+				Info("all containers are connected successfully (task container state changed)")
 		}
 		if a.req.ProxyPort != nil && msg.ResourcesStarted.Addresses != nil {
 			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
@@ -665,7 +666,14 @@ func (a *Allocation) RestoreResourceFailure(
 	}
 
 	if a.req.Restore {
-		a.model.EndTime = cluster.TheLastBootClusterHeartbeat()
+		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
+		case a.model.StartTime == nil:
+			break
+		case heartbeat.Before(*a.model.StartTime):
+			a.model.EndTime = a.model.StartTime
+		default:
+			a.model.EndTime = heartbeat
+		}
 	} else {
 		a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	}

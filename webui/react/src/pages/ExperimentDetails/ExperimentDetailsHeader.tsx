@@ -351,7 +351,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 disabled={disabled}
                 isOnDark
                 maxLength={500}
-                placeholder="Add description..."
+                placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate}
