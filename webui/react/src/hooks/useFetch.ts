@@ -1,10 +1,46 @@
 import { useCallback } from 'react';
 
+import { activeCommandStates, activeRunStates } from 'constants/states';
 import { agentsToOverview, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
-import { getAgents, getInfo, getResourcePools, getUsers, getWorkspaces } from 'services/api';
-import { ResourceType } from 'types';
+import {
+  getAgents,
+  getCommands,
+  getExperiments,
+  getInfo,
+  getJupyterLabs,
+  getResourcePools,
+  getShells,
+  getTensorBoards,
+  getUsers,
+  getWorkspaces,
+} from 'services/api';
+import { ErrorType } from 'shared/utils/error';
+import { CommandTask, CommandType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
+
+export const useFetchActiveExperiments = (canceler: AbortController): () => Promise<void> => {
+  const storeDispatch = useStoreDispatch();
+
+  return useCallback(async (): Promise<void> => {
+    try {
+      const response = await getExperiments(
+        { limit: -2, states: activeRunStates },
+        { signal: canceler.signal },
+      );
+      storeDispatch({
+        type: StoreAction.SetActiveExperiments,
+        value: response.pagination.total || 0,
+      });
+    } catch (e) {
+      handleError({
+        message: 'Unable to fetch active experiments.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ canceler, storeDispatch ]);
+};
 
 export const useFetchAgents = (canceler: AbortController): () => Promise<void> => {
   const { info } = useStore();
@@ -52,6 +88,34 @@ export const useFetchResourcePools = (canceler: AbortController): () => Promise<
       const resourcePools = await getResourcePools({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
     } catch (e) { handleError(e); }
+  }, [ canceler, storeDispatch ]);
+};
+
+export const useFetchTasks = (canceler: AbortController): () => Promise<void> => {
+  const storeDispatch = useStoreDispatch();
+
+  const countActiveCommand = (commands: CommandTask[]): number => {
+    return commands.filter(command => activeCommandStates.includes(command.state)).length;
+  };
+
+  return useCallback(async (): Promise<void> => {
+    try {
+      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
+        getCommands({ signal: canceler.signal }),
+        getJupyterLabs({ signal: canceler.signal }),
+        getShells({ signal: canceler.signal }),
+        getTensorBoards({ signal: canceler.signal }),
+      ]);
+      const combined = {
+        [CommandType.Command]: countActiveCommand(commands),
+        [CommandType.JupyterLab]: countActiveCommand(notebooks),
+        [CommandType.Shell]: countActiveCommand(shells),
+        [CommandType.TensorBoard]: countActiveCommand(tensorboards),
+      };
+      storeDispatch({ type: StoreAction.SetTasks, value: combined });
+    } catch (e) {
+      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+    }
   }, [ canceler, storeDispatch ]);
 };
 

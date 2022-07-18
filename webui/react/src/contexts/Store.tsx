@@ -6,7 +6,7 @@ import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
 import themes from 'themes';
 import {
-  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
+  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource, CommandType,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 
@@ -30,6 +30,13 @@ interface UI {
 }
 
 export interface State {
+  activeExperiments: number;
+  activeTasks: {
+    [CommandType.Command]: number;
+    [CommandType.JupyterLab]: number;
+    [CommandType.Shell]: number;
+    [CommandType.TensorBoard]: number;
+  },
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
@@ -79,6 +86,12 @@ export enum StoreAction {
 
   // PinnedWorkspaces
   SetPinnedWorkspaces,
+
+  // Tasks
+  SetTasks,
+
+  // Active Experiments
+  SetActiveExperiments,
 }
 
 export type Action =
@@ -103,6 +116,13 @@ export type Action =
 | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
+| { type: StoreAction.SetTasks, value: {
+  [CommandType.Command]: number;
+  [CommandType.JupyterLab]: number;
+  [CommandType.Shell]: number;
+  [CommandType.TensorBoard]: number;
+}}
+| { type: StoreAction.SetActiveExperiments, value: number }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -138,6 +158,13 @@ const initUI = {
   theme: themes[BrandingType.Determined][DarkLight.Light],
 };
 const initState: State = {
+  activeExperiments: 0,
+  activeTasks: {
+    [CommandType.Command]: 0,
+    [CommandType.JupyterLab]: 0,
+    [CommandType.Shell]: 0,
+    [CommandType.TensorBoard]: 0,
+  },
   agents: [],
   auth: initAuth,
   cluster: initClusterOverview,
@@ -282,6 +309,12 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
+    case StoreAction.SetActiveExperiments:
+      if (isEqual(state.activeExperiments, action.value)) return state;
+      return { ...state, activeExperiments: action.value };
+    case StoreAction.SetTasks:
+      if (isEqual(state.activeTasks, action.value)) return state;
+      return { ...state, activeTasks: action.value };
     default:
       return state;
   }
