@@ -98,7 +98,7 @@ const ResourcepoolDetail: React.FC = () => {
   }, [ canceler, fetchStats ]);
 
   const handleTabChange = useCallback((key) => {
-    if(!pool) return;
+    if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);

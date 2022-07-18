@@ -38,7 +38,7 @@ const getTitleState = (commandState?: CommandState): string => {
     [CommandState.Starting]: 'Starting',
   };
   const title = commandStateTitleMap[commandState];
-  if(commandState !== CommandState.Terminated && commandState !== CommandState.Running){
+  if (commandState !== CommandState.Terminated && commandState !== CommandState.Running){
     return title + '...';
   }
   return title;
