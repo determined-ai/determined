@@ -83,10 +83,6 @@ export const ClusterOverallStats: React.FC = () => {
               {auxContainers.running} <small>/ {auxContainers.total}</small>
             </OverviewStats>
           ) : null}
-        </Grid>
-      </Section>
-      <Section hideTitle title="Active Running">
-        <Grid gap={ShirtSize.large} minItemWidth={120} mode={GridMode.AutoFill}>
           {activeExperiments ? (
             <OverviewStats title="Active Experiments">
               {activeExperiments}
