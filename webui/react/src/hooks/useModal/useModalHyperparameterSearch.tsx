@@ -385,6 +385,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           rules={[ { required: true } ]}>
           <Input maxLength={80} />
         </Form.Item>
+        <h2 className={css.sectionTitle}>Select Resources</h2>
         <div className={css.poolRow}>
           <Form.Item
             initialValue={resourcePools?.[0]?.name}
@@ -421,6 +422,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           </p>
         )}
         <p>Total slots: {maxSlots}</p>
+        <h2 className={css.sectionTitle}>Set Trial Limits</h2>
         <div className={css.lengthRow}>
           <Form.Item
             initialValue={experiment.config.searcher.metric}
