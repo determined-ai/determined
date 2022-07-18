@@ -6,14 +6,15 @@ import { useStore } from 'contexts/Store';
 import { getUserSetting, updateUserSetting } from 'services/api';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
-import { Primitive, RecordKey } from 'shared/types';
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
   isString } from 'shared/utils/data';
-import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import usePrevious from './usePrevious';
+import usePrevious from '../shared/hooks/usePrevious';
+import { Primitive, RecordKey } from '../shared/types';
+import { ErrorType } from '../shared/utils/error';
+
 import useStorage from './useStorage';
 
 export enum BaseType {

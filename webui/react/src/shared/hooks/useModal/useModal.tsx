@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isAsyncFunction } from 'shared/utils/data';
 
-import usePrevious from '../../../hooks/usePrevious';
+import usePrevious from '../usePrevious';
 
 export enum ModalCloseReason {
   Cancel = 'Cancel',
