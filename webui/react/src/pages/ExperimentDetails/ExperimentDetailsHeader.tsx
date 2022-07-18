@@ -122,7 +122,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     modalOpen: openModalCreate,
   } = useModalExperimentCreate();
 
-  const { modalOpen: openModalHyperparameterSearch } = useModalHyperparameterSearch({ experiment });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment });
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),
@@ -454,6 +457,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </>
   );
 };

@@ -40,10 +40,10 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   const { contextHolder, modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
 
-  const { modalOpen: openModalHyperparameterSearch } = useModalHyperparameterSearch({
-    experiment,
-    trial,
-  });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment, trial });
 
   const handleContinueTrial = useCallback(() => {
     modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
@@ -119,6 +119,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
         options={headerOptions}
       />
       {contextHolder}
+      {modalHyperparameterSearchContextHolder}
     </>
   );
 };

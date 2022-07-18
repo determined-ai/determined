@@ -58,7 +58,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
-  const { modalOpen: openModalHyperparameterSearch } = useModalHyperparameterSearch({ experiment });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment });
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -389,6 +392,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onUnselect={handleTrialUnselect}
         />
       )}
+      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };

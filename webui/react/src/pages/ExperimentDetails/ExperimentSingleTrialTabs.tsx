@@ -61,7 +61,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
-  const { modalOpen: openHyperparameterSearchModal } = useModalHyperparameterSearch({ experiment });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openHyperparameterSearchModal,
+  } = useModalHyperparameterSearch({ experiment });
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -217,6 +220,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
       </Tabs>
+      {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );
 };
