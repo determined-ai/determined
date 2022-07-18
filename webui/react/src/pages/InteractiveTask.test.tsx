@@ -49,20 +49,20 @@ const InteractiveTaskContainer: React.FC = () => {
 const setup = () => render(<InteractiveTaskContainer />);
 
 describe('InteractiveTask', () => {
-  it('task name and resource pool are shown', async () => {
+  it('should render page with task name and resource pool', async () => {
     await setup();
     expect(await screen.findByText(TASK_NAME)).toBeInTheDocument();
     expect(await screen.findByText(TASK_RESOURCE_POOL)).toBeInTheDocument();
   });
 
-  it('Context menu is shown', async () => {
+  it('should render page with context menu', async () => {
     await setup();
     userEvent.click(screen.getByTestId('task-action-dropdown-trigger'));
     expect(await screen.findByText('Kill')).toBeInTheDocument();
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
   });
 
-  it('Page has default title', async () => {
+  it('should render page with default title', async () => {
     await setup();
     expect(document.title).toEqual(DEFAULT_TASK_PAGE_TITLE);
   });

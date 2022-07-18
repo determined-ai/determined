@@ -24,7 +24,7 @@ enum PageView {
 
 const DEFAULT_PAGE_TITLE = 'Tasks - Determined';
 
-const getTitleState = (commandState: CommandState | undefined): string => {
+const getTitleState = (commandState?: CommandState): string => {
   if (!commandState){
     return DEFAULT_PAGE_TITLE;
   }
@@ -55,7 +55,7 @@ export const InteractiveTask: React.FC = () => {
 
   const handleMessage = (event: MessageEvent) => {
     const messageFromSameOrigin = window.location.origin === event.origin;
-    if(event?.data?.commandState && messageFromSameOrigin){
+    if (event?.data?.commandState && messageFromSameOrigin) {
       const commandState = event.data.commandState as CommandState;
       setTaskState(commandState);
     }
@@ -106,8 +106,7 @@ export const InteractiveTask: React.FC = () => {
               taskType={taskType}
               onCloseLogs={() => setPageView(PageView.IFRAME)}
             />
-          )
-          }
+          )}
         </div>
       </div>
     </>
