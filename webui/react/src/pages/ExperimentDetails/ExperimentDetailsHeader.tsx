@@ -20,6 +20,7 @@ import useModalExperimentCreate, {
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
+import useModalHyperparameterSearch from 'hooks/useModal/useModalHyperparameterSearch';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {

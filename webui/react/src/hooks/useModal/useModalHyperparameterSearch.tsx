@@ -83,7 +83,7 @@ interface HyperparameterRowValues {
 }
 
 const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal();
+  const { modalClose, modalOpen: openOrUpdate, modalRef, contextHolder } = useModal();
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
@@ -555,7 +555,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { contextHolder, modalClose, modalOpen, modalRef };
 };
 
 interface RowProps {
