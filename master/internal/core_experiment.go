@@ -457,7 +457,8 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	// -race detected that we return e.Config which can be modified by the experiment actor.
 	// Instead we synchronize with the actor to ask for a deep copy of it to return.
-	resp, ok := m.system.AskAt(exp, expconf.ExperimentConfig{}).GetOrTimeout(defaultAskTimeout)
+	var msg expconf.ExperimentConfig
+	resp, ok := m.system.AskAt(exp, msg).GetOrTimeout(defaultAskTimeout)
 	if !ok {
 		return nil, errors.Errorf("attempt to get experiment config timed out")
 	}
