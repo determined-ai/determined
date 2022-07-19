@@ -115,8 +115,8 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 // successful search.
 func GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
 	var users []model.User
-	err := db.Bun().NewSelect().Table("users").Model(&users).
-		Join("INNER JOIN user_group_membership AS ugm ON users.id=ugm.user_id").
+	err := db.Bun().NewSelect().Model(&users).
+		Join(`INNER JOIN user_group_membership AS ugm ON "user"."id"=ugm.user_id`).
 		Where("ugm.group_id = ?", gid).
 		Scan(ctx)
 

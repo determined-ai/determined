@@ -1615,7 +1615,7 @@ service Determined {
     };
   }
 
-  // Groups testing
+  // Get a group by id
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/groups/{group_id}"
@@ -1625,6 +1625,7 @@ service Determined {
     };
   }
 
+  // Search for groups with optional filters
   rpc GetGroups(GroupSearchRequest) returns (GroupSearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/search"
@@ -1635,6 +1636,7 @@ service Determined {
     };
   }
 
+  // Find users that belong to a group
   rpc GetUsersInGroup(GetUsersInGroupRequest) returns (GetUsersInGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/groups/{group_id}/users"
@@ -1644,6 +1646,7 @@ service Determined {
     };
   }
 
+  // Create a group with optional members on creation
   rpc CreateGroup(CreateGroupRequest) returns (GroupWriteResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"
@@ -1654,6 +1657,7 @@ service Determined {
     };
   }
 
+  // Update group info
   rpc UpdateGroup(UpdateGroupRequest) returns (GroupWriteResponse) {
     option (google.api.http) = {
       put: "/api/v1/groups/{group_id}"
@@ -1664,6 +1668,7 @@ service Determined {
     };
   }
 
+  // Remove a group
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/{group_id}"

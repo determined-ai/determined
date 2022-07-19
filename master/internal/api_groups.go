@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/uptrace/bun"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -13,7 +16,12 @@ import (
 
 // FIXME: look at how errors are handled in the rest of the API and follow that pattern
 func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
-) (*apiv1.GroupWriteResponse, error) {
+) (resp *apiv1.GroupWriteResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	group := usergroup.Group{
 		Name: req.Name,
 	}
@@ -44,7 +52,12 @@ func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 }
 
 func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest,
-) (*apiv1.GroupSearchResponse, error) {
+) (resp *apiv1.GroupSearchResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	groups, err := usergroup.SearchGroups(ctx, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
@@ -56,7 +69,12 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 }
 
 func (a *apiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
-) (*apiv1.GetGroupResponse, error) {
+) (resp *apiv1.GetGroupResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	gid := int(req.GroupId)
 	g, err := usergroup.GroupByID(ctx, gid)
 	if err != nil {
@@ -82,6 +100,11 @@ func (a *apiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 
 func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
 ) (resp *apiv1.GroupWriteResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	oldGroup, err := usergroup.GroupByID(ctx, int(req.GetGroupId()))
 	if err != nil {
 		return nil, err
@@ -139,6 +162,11 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 
 func (a *apiServer) GetUsersInGroup(ctx context.Context, req *apiv1.GetUsersInGroupRequest,
 ) (resp *apiv1.GetUsersInGroupResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	users, err := usergroup.GetUsersInGroup(ctx, int(req.GetGroupId()))
 	if err != nil {
 		return nil, err
@@ -153,6 +181,11 @@ func (a *apiServer) GetUsersInGroup(ctx context.Context, req *apiv1.GetUsersInGr
 
 func (a *apiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
+	// Detect whether we're returning special errors and convert to gRPC error
+	defer func() {
+		err = mapAndFilterErrors(err)
+	}()
+
 	err = usergroup.DeleteGroup(ctx, int(req.GetGroupId()))
 	if err != nil {
 		return nil, err
@@ -168,4 +201,17 @@ func intsToUserIDs(ints []int32) []model.UserID {
 	}
 
 	return ids
+}
+
+func mapAndFilterErrors(err error) error {
+	switch err {
+	case nil:
+		return nil
+	case db.ErrNotFound:
+		return status.Error(codes.NotFound, err.Error())
+	case db.ErrDuplicateRecord:
+		return status.Error(codes.AlreadyExists, err.Error())
+	}
+
+	return status.Error(codes.Internal, "Internal server error")
 }

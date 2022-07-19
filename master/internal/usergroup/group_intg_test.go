@@ -67,6 +67,7 @@ func TestUserGroups(t *testing.T) {
 
 		users, err := GetUsersInGroup(ctx, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
+		require.Len(t, users, 1, "failed to return only the set of users in the group")
 
 		index := usersContain(users, testUser.ID)
 		require.NotEqual(t, -1, index, "Expected users in group to contain the newly added one")
