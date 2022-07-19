@@ -12,6 +12,7 @@ interface Props {
   bodyDynamic?: boolean;
   bodyNoPadding?: boolean;
   bodyScroll?: boolean;
+  className?: string;
   divider?: boolean;
   filters?: React.ReactNode;
   hideTitle?: boolean;
@@ -24,11 +25,12 @@ interface Props {
 
 const defaultProps = { divider: false };
 
-const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+const Section: React.FC<Props> = ({ className = '', ...props }: PropsWithChildren<Props>) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
   const classes = classnames(
     css.base,
+    className,
     {
       [css.bodyBorder]: props.bodyBorder,
       [css.bodyDynamic]: props.bodyDynamic,
