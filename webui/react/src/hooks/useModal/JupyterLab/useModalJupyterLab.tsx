@@ -277,7 +277,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
     if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && !fields.slots) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
+    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
