@@ -34,6 +34,11 @@ type SearchMethod interface {
 	trialExitedEarly(
 		ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 	) ([]Operation, error)
+	// this is only meaningful in the custom searcher method.
+	// All the other methods will not implement this which is okay
+	// if defaultSearchMethod is a part of that method's struct.
+	getSearcherEventQueue() *SearcherEventQueue
+
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
 	expconf.InUnits
@@ -56,6 +61,8 @@ const (
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
+	// CustomSearch is the custom search method type for a custom searcher.
+	CustomSearch SearchMethodType = "custom_search"
 )
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -75,7 +82,7 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 	case c.RawAdaptiveASHAConfig != nil:
 		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
 	case c.RawCustomConfig != nil:
-		panic("custom searcher not implemented")
+		return newCustomSearch(*c.RawCustomConfig)
 	default:
 		panic("no searcher type specified")
 	}
@@ -101,4 +108,8 @@ func (defaultSearchMethod) trialExitedEarly(
 	context, model.RequestID, model.ExitedReason,
 ) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
+}
+
+func (defaultSearchMethod) getSearcherEventQueue() *SearcherEventQueue {
+	return nil
 }
