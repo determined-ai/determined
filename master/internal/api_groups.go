@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 
 	"github.com/uptrace/bun"
@@ -152,10 +153,12 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		return nil, err
 	}
 
-	resp.Group.GroupId = int32(oldGroup.ID)
-	resp.Group.Name = newName
-	for _, user := range users {
-		resp.Group.Users = append(resp.Group.Users, user.Proto())
+	resp = &apiv1.GroupWriteResponse{
+		Group: &groupv1.GroupDetails{
+			GroupId: int32(oldGroup.ID),
+			Name:    newName,
+			Users:   model.Users(users).Proto(),
+		},
 	}
 
 	return resp, nil
