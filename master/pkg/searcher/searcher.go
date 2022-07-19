@@ -159,6 +159,14 @@ func (s *Searcher) Progress() float64 {
 	return progress
 }
 
+// GetCustomSearcherEventQueue returns the SearcherEventQueue of the custom searcher method.
+// It returns an error if the queue is nil because it means the searcher
+// method is not of type CustomSearcher.
+func (s *Searcher) GetCustomSearcherEventQueue() *SearcherEventQueue {
+	queue := s.method.getSearcherEventQueue()
+	return queue
+}
+
 // Record records operations that were requested by the searcher for a specific trial.
 func (s *Searcher) Record(ops []Operation) {
 	for _, op := range ops {

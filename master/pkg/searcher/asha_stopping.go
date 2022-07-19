@@ -19,6 +19,7 @@ import (
 // The searcher state and config match that of AsyncHalvingSearch but we will only run
 // the stopping based version if StopOnce is true.
 type asyncHalvingStoppingSearch struct {
+	defaultSearchMethod
 	expconf.AsyncHalvingConfig
 	SmallerIsBetter bool
 	asyncHalvingSearchState
