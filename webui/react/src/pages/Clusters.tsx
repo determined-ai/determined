@@ -46,7 +46,6 @@ const Clusters: React.FC = () => {
     <Page
       bodyNoPadding
       id="cluster"
-      stickyHeader
       title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
