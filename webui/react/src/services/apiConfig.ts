@@ -486,6 +486,14 @@ export const getTask: DetApi<
   ),
 };
 
+export const getActiveTasks: DetApi<
+  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+> = {
+  name: 'getTasksCount',
+  postProcess: (response) => response,
+  request: () => detApi.Tasks.getTasksCount(),
+};
+
 /* Models */
 
 export const getModels: DetApi<

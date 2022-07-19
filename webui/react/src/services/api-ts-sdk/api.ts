@@ -2870,6 +2870,38 @@ export interface V1GetTaskResponse {
 }
 
 /**
+ * Response to GetTasksCountRequest.
+ * @export
+ * @interface V1GetTasksCountResponse
+ */
+export interface V1GetTasksCountResponse {
+    /**
+     * The count of commands.
+     * @type {number}
+     * @memberof V1GetTasksCountResponse
+     */
+    commands: number;
+    /**
+     * The count of notebooks.
+     * @type {number}
+     * @memberof V1GetTasksCountResponse
+     */
+    notebooks: number;
+    /**
+     * The count of shells.
+     * @type {number}
+     * @memberof V1GetTasksCountResponse
+     */
+    shells: number;
+    /**
+     * The count of TensorBoards.
+     * @type {number}
+     * @memberof V1GetTasksCountResponse
+     */
+    tensorboards: number;
+}
+
+/**
  * Response to GetTelemetryRequest.
  * @export
  * @interface V1GetTelemetryResponse
@@ -18790,6 +18822,37 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get a count of active tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasksCount(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tasks`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -18962,6 +19025,24 @@ export const TasksApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a count of active tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTasksCountResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTasksCount(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -19033,6 +19114,15 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get a count of active tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTasksCount(options?: any) {
+            return TasksApiFp(configuration).getTasksCount(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream task logs.
          * @param {string} taskId The id of the task.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -19085,6 +19175,17 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a count of active tasks.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getTasksCount(options?: any) {
+        return TasksApiFp(this.configuration).getTasksCount(options)(this.fetch, this.basePath);
     }
 
     /**

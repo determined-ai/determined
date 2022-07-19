@@ -1118,6 +1118,16 @@ service Determined {
     };
   }
 
+  // Get a count of active tasks.
+  rpc GetTasksCount(GetTasksCountRequest) returns (GetTasksCountResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
+    };
+  }
+
   // Get the requested model.
   rpc GetModel(GetModelRequest) returns (GetModelResponse) {
     option (google.api.http) = {

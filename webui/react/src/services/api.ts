@@ -186,6 +186,10 @@ export const getTask = generateDetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
 >(Config.getTask);
 
+export const getActiveTasks = generateDetApi<
+  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+>(Config.getActiveTasks);
+
 /* Models */
 
 export const getModels = generateDetApi<

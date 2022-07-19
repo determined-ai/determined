@@ -6,7 +6,7 @@ import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
 import themes from 'themes';
 import {
-  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource, CommandType,
+  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 
@@ -32,10 +32,10 @@ interface UI {
 export interface State {
   activeExperiments: number;
   activeTasks: {
-    [CommandType.Command]: number;
-    [CommandType.JupyterLab]: number;
-    [CommandType.Shell]: number;
-    [CommandType.TensorBoard]: number;
+    commands: number;
+    notebooks: number;
+    shells: number;
+    tensorboards: number;
   },
   agents: Agent[];
   auth: Auth & { checked: boolean };
@@ -88,7 +88,7 @@ export enum StoreAction {
   SetPinnedWorkspaces,
 
   // Tasks
-  SetTasks,
+  SetActiveTasks,
 
   // Active Experiments
   SetActiveExperiments,
@@ -116,11 +116,11 @@ export type Action =
 | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
-| { type: StoreAction.SetTasks, value: {
-  [CommandType.Command]: number;
-  [CommandType.JupyterLab]: number;
-  [CommandType.Shell]: number;
-  [CommandType.TensorBoard]: number;
+| { type: StoreAction.SetActiveTasks, value: {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
 }}
 | { type: StoreAction.SetActiveExperiments, value: number }
 
@@ -160,10 +160,10 @@ const initUI = {
 const initState: State = {
   activeExperiments: 0,
   activeTasks: {
-    [CommandType.Command]: 0,
-    [CommandType.JupyterLab]: 0,
-    [CommandType.Shell]: 0,
-    [CommandType.TensorBoard]: 0,
+    commands: 0,
+    notebooks: 0,
+    shells: 0,
+    tensorboards: 0,
   },
   agents: [],
   auth: initAuth,
@@ -312,7 +312,7 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetActiveExperiments:
       if (isEqual(state.activeExperiments, action.value)) return state;
       return { ...state, activeExperiments: action.value };
-    case StoreAction.SetTasks:
+    case StoreAction.SetActiveTasks:
       if (isEqual(state.activeTasks, action.value)) return state;
       return { ...state, activeTasks: action.value };
     default:

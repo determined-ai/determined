@@ -1,21 +1,18 @@
 import { useCallback } from 'react';
 
-import { activeCommandStates, activeRunStates } from 'constants/states';
+import { activeRunStates } from 'constants/states';
 import { agentsToOverview, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import {
+  getActiveTasks,
   getAgents,
-  getCommands,
   getExperiments,
   getInfo,
-  getJupyterLabs,
   getResourcePools,
-  getShells,
-  getTensorBoards,
   getUsers,
   getWorkspaces,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
-import { CommandTask, CommandType, ResourceType } from 'types';
+import { ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
 
@@ -91,29 +88,15 @@ export const useFetchResourcePools = (canceler: AbortController): () => Promise<
   }, [ canceler, storeDispatch ]);
 };
 
-export const useFetchTasks = (canceler: AbortController): () => Promise<void> => {
+export const useFetchActiveTasks = (canceler: AbortController): () => Promise<void> => {
   const storeDispatch = useStoreDispatch();
-
-  const countActiveCommand = (commands: CommandTask[]): number => {
-    return commands.filter(command => activeCommandStates.includes(command.state)).length;
-  };
 
   return useCallback(async (): Promise<void> => {
     try {
-      const commands = await getCommands({ signal: canceler.signal }),
-        notebooks = await getJupyterLabs({ signal: canceler.signal }),
-        shells = await getShells({ signal: canceler.signal }),
-        tensorboards = await getTensorBoards({ signal: canceler.signal });
-
-      const combined = {
-        [CommandType.Command]: countActiveCommand(commands),
-        [CommandType.JupyterLab]: countActiveCommand(notebooks),
-        [CommandType.Shell]: countActiveCommand(shells),
-        [CommandType.TensorBoard]: countActiveCommand(tensorboards),
-      };
-      storeDispatch({ type: StoreAction.SetTasks, value: combined });
+      const counts = await getActiveTasks({}, { signal: canceler.signal });
+      storeDispatch({ type: StoreAction.SetActiveTasks, value: counts });
     } catch (e) {
-      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+      handleError({ message: 'Unable to fetch task counts.', silent: true, type: ErrorType.Api });
     }
   }, [ canceler, storeDispatch ]);
 };

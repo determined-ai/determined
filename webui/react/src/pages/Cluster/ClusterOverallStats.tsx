@@ -5,7 +5,7 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import { ShirtSize } from 'themes';
-import { CommandType, ResourceType } from 'types';
+import { ResourceType } from 'types';
 
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
@@ -76,24 +76,24 @@ export const ClusterOverallStats: React.FC = () => {
               {activeExperiments}
             </OverviewStats>
           ) : null}
-          {activeTasks[CommandType.JupyterLab] ? (
+          {activeTasks.notebooks ? (
             <OverviewStats title="Active JupyterLabs">
-              {activeTasks[CommandType.JupyterLab]}
+              {activeTasks.notebooks}
             </OverviewStats>
           ) : null}
-          {activeTasks[CommandType.TensorBoard] ? (
+          {activeTasks.tensorboards ? (
             <OverviewStats title="Active TensorBoards">
-              {activeTasks[CommandType.TensorBoard]}
+              {activeTasks.tensorboards}
             </OverviewStats>
           ) : null}
-          {activeTasks[CommandType.Shell] ? (
+          {activeTasks.shells ? (
             <OverviewStats title="Active Shells">
-              {activeTasks[CommandType.Shell]}
+              {activeTasks.shells}
             </OverviewStats>
           ) : null}
-          {activeTasks[CommandType.Command] ? (
+          {activeTasks.commands ? (
             <OverviewStats title="Active Commands">
-              {activeTasks[CommandType.Command]}
+              {activeTasks.commands}
             </OverviewStats>
           ) : null}
         </Grid>
