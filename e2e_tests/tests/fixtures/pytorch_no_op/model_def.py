@@ -6,6 +6,7 @@ import torch
 from torch import nn
 
 from determined import pytorch
+from determined.pytorch import PyTorchCallback
 
 
 class OnesDataset(torch.utils.data.Dataset):
@@ -80,11 +81,11 @@ class NoopPyTorchTrialWithCallbacks(NoopPyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext):
         super().__init__(context)
 
-    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         return {"test_callbacks": TestCallbacks()}
 
 
-class TestCallbacks(pytorch.PyTorchCallback):
+class TestCallbacks(PyTorchCallback):
     def __init__(self) -> None:
         pass
 

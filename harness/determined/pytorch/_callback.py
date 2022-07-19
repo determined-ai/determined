@@ -135,7 +135,9 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_workload_end(self, metrics: Dict[str, Any]) -> None:
+    def on_training_workload_end(
+        self, avg_metrics: Dict[str, Any], batch_metrics: Dict[str, Any]
+    ) -> None:
         """
         Run on end of a training workload. Each workload contains a maximum of ``scheduling_unit``
         batches, as defined in the experiment config.
