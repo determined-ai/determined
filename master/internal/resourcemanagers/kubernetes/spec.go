@@ -98,7 +98,7 @@ func (p *pod) configureEnvVars(
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
 
-	// Without this zero slot trials will have access to all GPUs.
+	// Without this zero slot tasks will have access to all GPUs.
 	// https://github.com/NVIDIA/k8s-device-plugin/issues/61
 	if deviceType == device.CPU || deviceType == device.ZeroSlot {
 		envVarsMap["NVIDIA_VISIBLE_DEVICES"] = "void"
