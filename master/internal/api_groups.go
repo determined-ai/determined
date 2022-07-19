@@ -9,9 +9,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
+// FIXME: look at how errors are handled in the rest of the API and follow that pattern
 func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
-) (resp *apiv1.GroupWriteResponse, err error) {
-
+) (*apiv1.GroupWriteResponse, error) {
 	group := usergroup.Group{
 		Name: req.Name,
 	}
@@ -41,9 +41,16 @@ func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 	}, nil
 }
 
-func (a *apiServer) GetGroups(_ context.Context, req *apiv1.GroupSearchRequest,
-) (resp *apiv1.GroupSearchResponse, err error) {
-	return
+func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest,
+) (*apiv1.GroupSearchResponse, error) {
+	groups, err := usergroup.SearchGroups(ctx, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GroupSearchResponse{
+		Groups: usergroup.Groups(groups).Proto(),
+	}, nil
 }
 
 func (a *apiServer) GetGroup(_ context.Context, req *apiv1.GetGroupRequest,
