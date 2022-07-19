@@ -360,7 +360,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <InputNumber
               defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
-              min={resourceInfo.hasAux ? 0 : 1}
+              min={0}
               value={fields.slots}
               onChange={(value) => updateFields?.({ slots: value })}
             />
