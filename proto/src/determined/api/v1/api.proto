@@ -1627,7 +1627,7 @@ service Determined {
 
   rpc GetGroups(GroupSearchRequest) returns (GroupSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/groups"
+      post: "/api/v1/groups/search"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1656,7 +1656,7 @@ service Determined {
 
   rpc UpdateGroup(UpdateGroupRequest) returns (GroupWriteResponse) {
     option (google.api.http) = {
-      post: "/api/v1/groups"
+      put: "/api/v1/groups/{group_id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1666,7 +1666,7 @@ service Determined {
 
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
-      post: "/api/v1/groups"
+      post: "/api/v1/groups/{group_id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
