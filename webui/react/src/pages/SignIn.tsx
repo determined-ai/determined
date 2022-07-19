@@ -20,7 +20,7 @@ import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 
-import { routeAll } from '../routes/utils';
+import { routeAll } from 'routes/utils';
 
 import css from './SignIn.module.scss';
 

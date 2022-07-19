@@ -23,7 +23,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-import { paths, serverAddress } from './routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
