@@ -84,7 +84,7 @@ func TestUserGroups(t *testing.T) {
 		err := RemoveUsersFromGroup(ctx, testGroup.ID, -500)
 		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when removing non-existent users from group")
 
-		err = RemoveUsersFromGroup(ctx, testGroup.ID, testGroup.UserID, -500)
+		err = RemoveUsersFromGroup(ctx, testGroup.ID, testGroup.OwnerID, -500)
 		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when trying to remove a mix of users in a group and not")
 
 		err = RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
