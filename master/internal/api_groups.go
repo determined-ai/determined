@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 
 	"github.com/uptrace/bun"
 
@@ -144,6 +145,7 @@ func (a *apiServer) GetUsersInGroup(ctx context.Context, req *apiv1.GetUsersInGr
 		return nil, err
 	}
 
+	resp = &apiv1.GetUsersInGroupResponse{Users: []*userv1.User{}}
 	for _, user := range users {
 		resp.Users = append(resp.Users, user.Proto())
 	}
