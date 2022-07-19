@@ -98,6 +98,12 @@ func (p *pod) configureEnvVars(
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
 
+	// Without this zero slot trials will have access to all GPUs.
+	// https://github.com/NVIDIA/k8s-device-plugin/issues/61
+	if p.slots == 0 {
+		envVarsMap["NVIDIA_VISIBLE_DEVICES"] = "void"
+	}
+
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
