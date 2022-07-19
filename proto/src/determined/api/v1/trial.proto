@@ -61,8 +61,9 @@ message TrialTag {
 
 message QueryTrialsSortBy {
   enum Namespace {
-    VALIDATION_METRICS = 0;
-    TRAINING_METRICS = 1;
+    TRIAL_ITSELF = 0;
+    VALIDATION_METRIC = 1;
+    TRAINING_METRIC = 2;
   }
   Namespace namespace = 1;
   string field = 2;
@@ -150,8 +151,9 @@ message RemoveTrialTagResponse {}
 
 message TrialsCollection {
   int32 id = 1;
-  string name = 2;
-  QueryFilters filters = 3;
+  int32 user_id = 2;
+  string name = 3;
+  QueryFilters filters = 4;
 }
 
 message GetTrialsCollectionsRequest {}
@@ -163,7 +165,9 @@ message GetTrialsCollectionsResponse {
 message SaveTrialsCollectionRequest {
   TrialsCollection collection = 1;
 }
-message SaveTrialsCollectionResponse {} 
+message SaveTrialsCollectionResponse {
+  TrialsCollection collection = 1;
+} 
 
 message CreateTrialsCollectionRequest {
   string name = 1;

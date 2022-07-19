@@ -376,7 +376,6 @@ func (a *apiServer) QueryTrials(ctx context.Context, req *apiv1.QueryTrialsReque
 			"at least one filter required",
 		)
 	}
-
 	response := &apiv1.QueryTrialsResponse{}
 	trialIDs, err := a.m.db.QueryTrials(req.Filters)
 	if err != nil {
@@ -400,6 +399,9 @@ func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagReque
 }
 
 func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
+
+	// TODO: apply the filters to Bun().NewUpdate() via helper function
+	// DONT query for ids and pass them back again
 	resp := &apiv1.BulkAddTrialTagResponse{}
 	tag := req.Tag
 	trialIDs, err := a.m.db.QueryTrials(req.Filters)
@@ -437,6 +439,9 @@ func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTa
 }
 
 func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
+
+	// TODO: apply the filters to Bun().NewUpdate() via helper function
+	// DONT query for ids and pass them back again
 	trialIDs, err := a.m.db.QueryTrials(req.Filters)
 	key := req.Key
 
@@ -451,6 +456,71 @@ func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemov
 		Where("id IN (?)", bun.In(trialIDs)).
 		Exec(context.TODO())
 	resp := &apiv1.BulkRemoveTrialTagResponse{}
+	return resp, nil
+}
+
+func (a *apiServer) GetTrialsCollections(
+	ctx context.Context, req *apiv1.GetTrialsCollectionsRequest,
+) (*apiv1.GetTrialsCollectionsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	collections := []*apiv1.TrialsCollection{}
+	err = db.Bun().
+		NewSelect().
+		Table("trials_collections").
+		Model(&collections).
+		Where("user_id = ?", curUser.ID).
+		Scan(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	resp := &apiv1.GetTrialsCollectionsResponse{Collections: collections}
+	return resp, nil
+}
+
+func (a *apiServer) CreateTrialsCollection(
+	ctx context.Context, req *apiv1.CreateTrialsCollectionRequest,
+) (*apiv1.CreateTrialsCollectionResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
+	collection := apiv1.TrialsCollection{
+		UserId:  int32(curUser.ID),
+		Name:    req.Name,
+		Filters: req.Filters,
+	}
+	db.Bun().NewInsert().
+		Model(&collection).
+		Table("trials_collections").
+		Returning("*").
+		Exec(context.TODO())
+
+	resp := &apiv1.CreateTrialsCollectionResponse{Collection: &collection}
+	return resp, nil
+}
+
+func (a *apiServer) SaveTrialsCollection(
+	ctx context.Context, req *apiv1.SaveTrialsCollectionRequest,
+) (*apiv1.SaveTrialsCollectionResponse, error) {
+
+	collection := apiv1.TrialsCollection{
+		Id:      req.Collection.Id,
+		Name:    req.Collection.Name,
+		Filters: req.Collection.Filters,
+	}
+	_, err := db.Bun().NewUpdate().
+		Model(&collection).
+		Table("trials_collections").
+		Returning("*").
+		Exec(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	resp := &apiv1.SaveTrialsCollectionResponse{Collection: &collection}
 	return resp, nil
 }
 
@@ -474,27 +544,6 @@ func (a *apiServer) KillTrial(
 		return nil, err
 	}
 	return &apiv1.KillTrialResponse{}, nil
-}
-
-func (a *apiServer) GetTrialsCollections(
-	_ context.Context, req *apiv1.GetTrialsCollectionsRequest,
-) (*apiv1.GetTrialsCollectionsResponse, error) {
-	resp := &apiv1.GetTrialsCollectionsResponse{}
-	return resp, nil
-}
-
-func (a *apiServer) CreateTrialsCollection(
-	_ context.Context, req *apiv1.CreateTrialsCollectionRequest,
-) (*apiv1.CreateTrialsCollectionResponse, error) {
-	resp := &apiv1.CreateTrialsCollectionResponse{}
-	return resp, nil
-}
-
-func (a *apiServer) SaveTrialsCollection(
-	_ context.Context, req *apiv1.SaveTrialsCollectionRequest,
-) (*apiv1.SaveTrialsCollectionResponse, error) {
-	resp := &apiv1.SaveTrialsCollectionResponse{}
-	return resp, nil
 }
 
 func (a *apiServer) GetExperimentTrials(

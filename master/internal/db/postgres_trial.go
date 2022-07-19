@@ -452,42 +452,35 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 	qb := Bun().NewSelect().TableExpr("trials").
 		Column("trials.id").Join("INNER JOIN experiments ON trials.experiment_id = experiments.id").
 		Join("INNER JOIN projects ON projects.id = experiments.project_id").
-		Join("INNER JOIN validations ON trials.id = validations.trial_id").
-		Join("INNER JOIN steps on steps.trial_id = trials.id")
+		Join("INNER JOIN validations ON trials.id = validations.trial_id AND validations.id = trial.best_validation_id").
+		Join("INNER JOIN steps on steps.trial_id = trials.id AND steps.total_batches = validations.total_batches")
+		// is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
+		// does avg_metrics correspond to the actual state at that batch?
+		// or an average over previous batches?
 
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
-	orderBest := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "MIN",
-		apiv1.OrderBy_ORDER_BY_ASC:         "MIN",
-		apiv1.OrderBy_ORDER_BY_DESC:        "MAX",
-	}
-
-	// go ahead and attach best validation beforehand
 
 	if filters.ExpRank.Rank != 0 {
 		rankSorter := filters.ExpRank.SortBy
-		rank := filters.ExpRank.Rank
-		if rankSorter.Namespace == 0 {
-			// VALIDATION
-			qb = qb.ColumnExpr("?(validations.metrics->'validation_metrics'->>?) AS rank_sorter", orderBest[rankSorter.OrderBy], rankSorter.Field)
-			qb = qb.Where(`ROW_NUMBER() OVER(
-				PARTITION BY e.trial_id
-				ORDER BY rank_sorter  ?
-			)  <= ?`, rankSorter.Field, orderHow[rankSorter.OrderBy], rank)
-
+		switch rankSorter.Namespace {
+		case apiv1.QueryTrialsSortBy_TRIAL_ITSELF:
+			qb = qb.ColumnExpr("trials.? AS rank_sorter", rankSorter.Field)
+		case apiv1.QueryTrialsSortBy_VALIDATION_METRIC:
+			qb = qb.ColumnExpr("(validations.metrics->'validation_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
+		case apiv1.QueryTrialsSortBy_TRAINING_METRIC:
+			qb = qb.ColumnExpr("(steps.metrics->'avg_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
+		default:
+			return nil, errors.New("no")
 		}
-		if rankSorter.Namespace == 1 {
-			// TRAINING
-			qb = qb.ColumnExpr("?(steps.metrics->'avg_metrics'->>?) AS rank_sorter", orderBest[rankSorter.OrderBy], rankSorter.Field)
-			qb = qb.Where(`ROW_NUMBER() OVER(
-				PARTITION BY e.trial_id
-				ORDER BY rank_sorter  ?
-			)  <= ?`, rankSorter.Field, orderHow[rankSorter.OrderBy], rank)
-		}
+		qb = qb.ColumnExpr(`ROW_NUMBER() OVER(
+			PARTITION BY t.experiment_id
+			ORDER BY rank_sorter  ?
+		) as rank`, orderHow[rankSorter.OrderBy])
+		qb = qb.Where(`rank <= ?`, filters.ExpRank.Rank)
 	}
 
 	if len(filters.Tags) > 0 {
@@ -507,21 +500,20 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 	}
 
 	if len(filters.WorkspaceIds) > 0 {
-		qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
 		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 
 	if len(filters.ValidationMetrics) > 0 {
 		// TODO trial has best validation? probably join that instead
-		for _, vm := range filters.ValidationMetrics {
-			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
+		for _, f := range filters.ValidationMetrics {
+			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 
 	if len(filters.TrainingMetrics) > 0 {
-		for _, vm := range filters.TrainingMetrics {
+		for _, f := range filters.TrainingMetrics {
 			// TODO: avg metrics correct?
-			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
+			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 	if len(filters.Hparams) > 0 {
