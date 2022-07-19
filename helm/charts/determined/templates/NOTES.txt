@@ -1,7 +1,7 @@
 To submit experiments please install the Determined CLI locally: `pip install determined`.
 
 The client is configured to communicate with the master via an environment variable:
-export DET_MASTER=https://{{ .Release.Name }}.{{ .Release.Namespace }}.{{ .Values.region | lower }}.ingress.coreweave.cloud
+export DET_MASTER={{ .Release.Name }}.{{ .Release.Namespace }}.{{ .Values.region | lower }}.ingress.coreweave.cloud:80
 
 To access the WebUI, please visit: https://{{ .Release.Name }}.{{ .Release.Namespace }}.{{ .Values.region | lower }}.ingress.coreweave.cloud
 
