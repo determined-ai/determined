@@ -411,6 +411,25 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("experiment shut down successfully")
 
+	case *apiv1.PostSearcherOperationsRequest:
+		queue := e.searcher.GetCustomSearcherEventQueue()
+		if queue == nil {
+			ctx.Log().Errorf("Custom Searcher Event Queue was not retrieved.")
+		}
+		// TODO:  Get the maximum event ID sent in TriggeredByEvent list.
+		// Then use RemoveUpTo and remove all events (including that max ID).
+		// Then, process operations.
+
+	case *apiv1.GetSearcherEventsRequest:
+		queue := e.searcher.GetCustomSearcherEventQueue()
+		if queue == nil {
+			ctx.Respond(status.Error(codes.Internal, "failed to get events from custom searcher"))
+		} else {
+			resp := &apiv1.GetSearcherEventsResponse{
+				SearcherEvents: queue.GetEvents(),
+			}
+			ctx.Respond(resp)
+		}
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,
