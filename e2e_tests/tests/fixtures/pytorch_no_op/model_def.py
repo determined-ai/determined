@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from determined.pytorch import PyTorchCallback
 from determined import pytorch
+from determined.pytorch import PyTorchCallback
 
 
 class OnesDataset(torch.utils.data.Dataset):
