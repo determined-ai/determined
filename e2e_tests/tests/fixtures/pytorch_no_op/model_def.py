@@ -1,5 +1,5 @@
 import random
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -89,9 +89,12 @@ class TestCallbacks(PyTorchCallback):
     def __init__(self) -> None:
         pass
 
-    def on_training_workload_end(self, metrics: Dict[str, Any]) -> None:
+    def on_training_workload_end(
+        self, avg_metrics: Dict[str, Any], batch_metrics: List[Dict[str, Any]]
+    ) -> None:
         print("Calling on_training_workload_end")
-        print(metrics)
+        print("avg_metrics:", avg_metrics)
+        print("batch_metrics:", batch_metrics)
 
     def on_checkpoint_upload_end(self, uuid: str) -> None:
         print(f"Calling on_checkpoint_upload_end. uuid={uuid}")
