@@ -74,7 +74,7 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{
 			res.AgentUserGroup.OwnedArchiveItem(sshDir, nil, sshDirMode, tar.TypeDir),
 			res.AgentUserGroup.OwnedArchiveItem(
-				shellAuthorizedKeysFile, keys.PublicKey, 0644, tar.TypeReg,
+				shellAuthorizedKeysFile, keys.PublicKey, 0o644, tar.TypeReg,
 			),
 			res.AgentUserGroup.OwnedArchiveItem(
 				privKeyFile, keys.PrivateKey, privKeyMode, tar.TypeReg,
@@ -85,7 +85,7 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec 
 			res.AgentUserGroup.OwnedArchiveItem(
 				sshdConfigFile,
 				etc.MustStaticFile(etc.SSHDConfigResource),
-				0644,
+				0o644,
 				tar.TypeReg,
 			),
 		}...)

@@ -123,8 +123,8 @@ type gcpBatchOperationTracker struct {
 func (t *gcpBatchOperationTracker) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		batchOperationTimeoutPeriod :=
-			time.Duration(len(t.ops)) * time.Duration(t.config.OperationTimeoutPeriod)
+		//nolint:lll // There isn't a great way to break this line that makes it more readable.
+		batchOperationTimeoutPeriod := time.Duration(len(t.ops)) * time.Duration(t.config.OperationTimeoutPeriod)
 		actors.NotifyAfter(ctx, batchOperationTimeoutPeriod, trackerTimeout{})
 		t.doneOps = make([]trackOperationDone, 0, len(t.ops))
 		for _, op := range t.ops {

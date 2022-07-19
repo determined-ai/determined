@@ -155,7 +155,8 @@ func TestTrialSimultaneousCancelAndAllocation(t *testing.T) {
 	// Send the trial a termination, but don't setup our mock allocation to handle it, as if it
 	// is busy handling receiving resources.
 	require.NoError(t, system.Ask(self, model.StateWithReason{
-		State: model.StoppingCanceledState}).Error())
+		State: model.StoppingCanceledState,
+	}).Error())
 
 	// Now the allocation checks in to get what to launch while we're canceled.
 	require.Error(t, system.Ask(tr.allocation, actors.ForwardThroughMock{

@@ -102,7 +102,7 @@ export const range = (
 
   // When there is only one distinct value in the dataset.
   if (min === max) {
-    const axisIndex = u.axes.findIndex(axis => axis.scale === scaleKey);
+    const axisIndex = u.axes.findIndex((axis) => axis.scale === scaleKey);
     const axis = u.axes[axisIndex] as uPlot.Axis | undefined;
     const getSplits = axis?.splits as UPlotAxisSplits | undefined;
 

@@ -19,8 +19,11 @@ func TestTrue(t *testing.T) {
 	tests := []testCase{
 		{"true", args{condition: true}, ""},
 		{"false", args{condition: false}, "expected true, got false"},
-		{"customMsg", args{condition: false, msgAndArgs: []interface{}{"failure"}},
-			"failure: expected true, got false"},
+		{
+			"customMsg",
+			args{condition: false, msgAndArgs: []interface{}{"failure"}},
+			"failure: expected true, got false",
+		},
 	}
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -81,10 +84,16 @@ func TestEqual(t *testing.T) {
 	}
 	tests := []testCase{
 		{"equal", args{actual: 3, expected: 3}, ""},
-		{"notEqual", args{actual: "a", expected: "b"},
-			"a does not equal b"},
-		{"notEqualTypes", args{actual: 3, expected: 3.0},
-			"3 does not equal 3"},
+		{
+			"notEqual",
+			args{actual: "a", expected: "b"},
+			"a does not equal b",
+		},
+		{
+			"notEqualTypes",
+			args{actual: 3, expected: 3.0},
+			"3 does not equal 3",
+		},
 	}
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {

@@ -65,11 +65,10 @@ func newExporter(ctx context.Context, endpoint string) (*otlptrace.Exporter, err
 
 func newTraceProvider(exp *otlptrace.Exporter) *sdktrace.TracerProvider {
 	// The service.name attribute is required.
-	resource :=
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(defaultServiceName),
-		)
+	resource := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String(defaultServiceName),
+	)
 
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exp),

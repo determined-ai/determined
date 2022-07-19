@@ -46,6 +46,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
@@ -142,7 +143,6 @@ func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDe
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
-
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
 		// Only advertise a Segment WebUI key if a key has been configured and
 		// telemetry is enabled.
@@ -150,13 +150,15 @@ func (m *Master) Info() aproto.MasterInfo {
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
-	return aproto.MasterInfo{
+	masterInfo := aproto.MasterInfo{
 		ClusterID:   m.ClusterID,
 		MasterID:    m.MasterID,
 		Version:     version.Version,
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
 	}
+	sso.AddProviderInfoToMasterInfo(m.config, &masterInfo)
+	return masterInfo
 }
 
 func (m *Master) getInfo(echo.Context) (interface{}, error) {
@@ -358,7 +360,6 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 			masterv1.ResourceAllocationAggregationPeriod_value[args.Period],
 		),
 	})
-
 	if err != nil {
 		return err
 	}
@@ -990,6 +991,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
+	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
@@ -1053,5 +1055,8 @@ func (m *Master) Run(ctx context.Context) error {
 		m.config.Telemetry,
 	)
 
+	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
+		return err
+	}
 	return m.startServers(ctx, cert)
 }

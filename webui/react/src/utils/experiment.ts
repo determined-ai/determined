@@ -179,7 +179,7 @@ export const getActionsForExperiment = (
   user?: DetailedUser,
 ): ExperimentAction[] => {
   if (!experiment) return []; // redundant, for clarity
-  return targets.filter(action => canUserActionExperiment(user, action, experiment));
+  return targets.filter((action) => canUserActionExperiment(user, action, experiment));
 };
 
 export const getActionsForExperimentsUnion = (
@@ -188,9 +188,9 @@ export const getActionsForExperimentsUnion = (
   user?: DetailedUser,
 ): ExperimentAction[] => {
   if (!experiments.length) return []; // redundant, for clarity
-  const actionsForExperiments = experiments.map(e => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
   return targets.filter((action) =>
-    actionsForExperiments.some(experimentActions => experimentActions.includes(action)));
+    actionsForExperiments.some((experimentActions) => experimentActions.includes(action)));
 };
 
 export const getActionsForExperimentsIntersection = (
@@ -199,9 +199,9 @@ export const getActionsForExperimentsIntersection = (
   user?: DetailedUser,
 ): ExperimentAction[] => {
   if (!experiments.length) [];
-  const actionsForExperiments = experiments.map(e => getActionsForExperiment(e, targets, user));
+  const actionsForExperiments = experiments.map((e) => getActionsForExperiment(e, targets, user));
   return targets.filter((action) =>
-    actionsForExperiments.every(experimentActions => experimentActions.includes(action)));
+    actionsForExperiments.every((experimentActions) => experimentActions.includes(action)));
 };
 
 export const getProjectExperimentForExperimentItem = (

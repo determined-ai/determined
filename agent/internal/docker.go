@@ -164,7 +164,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			AllocationID: msg.AllocationID,
 			EventType:    "IMAGEPULL",
 			StartTime:    &now,
-		}})
+		},
+	})
 
 	defer func() {
 		now := time.Now().UTC()
@@ -175,7 +176,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 				AllocationID: msg.AllocationID,
 				EventType:    "IMAGEPULL",
 				EndTime:      &now,
-			}})
+			},
+		})
 	}()
 
 	auth, err := d.getDockerAuths(ctx, msg.Registry, ref)

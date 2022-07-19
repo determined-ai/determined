@@ -145,6 +145,12 @@ def submit_experiment(args: Namespace) -> None:
             additional_body_fields["git_commit_date"],
         ) = read_git_metadata(args.model_def)
 
+    if args.project_id:
+        sess = setup_session(args)
+        p = bindings.get_GetProject(sess, id=args.project_id).project
+        experiment_config["project"] = p.name
+        experiment_config["workspace"] = p.workspaceName
+
     if args.test_mode:
         api.experiment.create_test_experiment_and_follow_logs(
             args.master,
@@ -548,6 +554,8 @@ def list_experiments(args: Namespace) -> None:
             render.format_time(e.endTime),
             e.resourcePool,
         ]
+        if args.show_project:
+            result = [e.workspaceName, e.projectName] + result
         if args.all:
             result.append(e.archived)
         return result
@@ -563,6 +571,8 @@ def list_experiments(args: Namespace) -> None:
         "End Time",
         "Resource Pool",
     ]
+    if args.show_project:
+        headers = ["Workspace", "Project"] + headers
     if args.all:
         headers.append("Archived")
 
@@ -826,6 +836,11 @@ main_cmd = Cmd(
                     action="store_true",
                     help="show all experiments (including archived and other users')",
                 ),
+                Arg(
+                    "--show_project",
+                    action="store_true",
+                    help="include columns for workspace name and project name",
+                ),
                 *pagination_args,
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
@@ -919,6 +934,7 @@ main_cmd = Cmd(
                     type=str,
                     help="name of template to apply to the experiment configuration",
                 ),
+                Arg("--project_id", type=int, help="place this experiment inside this project"),
                 Arg("--config", action="append", default=[], help=CONFIG_DESC),
                 Group(
                     Arg(

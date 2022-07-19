@@ -51,28 +51,28 @@ const useModalColumnsCustomize = ({
 
   const filteredHiddenColumns = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return hiddenColumns.filter(column => regex.test(camelCaseToSentence(column)));
+    return hiddenColumns.filter((column) => regex.test(camelCaseToSentence(column)));
   }, [ hiddenColumns, searchTerm ]);
 
   const filteredVisibleColumns = useMemo(() => {
     const regex = RegExp(searchTerm, 'i');
-    return visibleColumns.filter(column => regex.test(camelCaseToSentence(column)));
+    return visibleColumns.filter((column) => regex.test(camelCaseToSentence(column)));
   }, [ visibleColumns, searchTerm ]);
 
   const makeHidden = useCallback((transfer: string | string[]) => {
     if (Array.isArray(transfer)) {
       const transferSet = new Set(transfer);
-      setVisibleColumns(prev => prev.filter(column => !transferSet.has(column)));
+      setVisibleColumns((prev) => prev.filter((column) => !transferSet.has(column)));
     } else {
-      setVisibleColumns(prev => prev.filter(column => transfer !== column));
+      setVisibleColumns((prev) => prev.filter((column) => transfer !== column));
     }
   }, []);
 
   const makeVisible = useCallback((transfer: string | string[]) => {
     if (Array.isArray(transfer)) {
-      setVisibleColumns(prev => [ ...prev, ...transfer ]);
+      setVisibleColumns((prev) => [ ...prev, ...transfer ]);
     } else {
-      setVisibleColumns(prev => [ ...prev, transfer ]);
+      setVisibleColumns((prev) => [ ...prev, transfer ]);
     }
   }, []);
 
@@ -104,12 +104,12 @@ const useModalColumnsCustomize = ({
   }, [ renderColumnName ]);
 
   const switchRowOrder = useCallback((column:string, newNeighborColumn:string) => {
-    if(column !== newNeighborColumn){
+    if (column !== newNeighborColumn){
       const updatedVisibleColumns = [ ...visibleColumns ];
       const columnIndex =
-      updatedVisibleColumns.findIndex(columnName => columnName === column);
+      updatedVisibleColumns.findIndex((columnName) => columnName === column);
       const newNeighborColumnIndex =
-      updatedVisibleColumns.findIndex(columnName => columnName === newNeighborColumn);
+      updatedVisibleColumns.findIndex((columnName) => columnName === newNeighborColumn);
       updatedVisibleColumns.splice(columnIndex, 1);
       updatedVisibleColumns.splice(newNeighborColumnIndex, 0, column);
       setVisibleColumns(updatedVisibleColumns);

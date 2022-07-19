@@ -7,7 +7,6 @@ import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
@@ -44,10 +43,6 @@ const NavigationTabbar: React.FC = () => {
   const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
   const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
-  const {
-    contextHolder: modalUserSettingsContextHolder,
-    modalOpen: openUserSettingsModal,
-  } = useModalUserSettings();
   const {
     contextHolder: modalJupyterLabContextHolder,
     modalOpen: openJupyterLabModal,
@@ -129,7 +124,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'settings',
             label: 'Settings',
-            onClick: () => openUserSettingsModal(),
+            onClick: (e) => handlePathUpdate(e, paths.settings()),
           },
           {
             icon: 'user',
@@ -171,7 +166,6 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {modalUserSettingsContextHolder}
       {modalJupyterLabContextHolder}
     </nav>
   );

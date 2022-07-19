@@ -110,7 +110,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     { rerunOnNewFn: true },
   );
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(`${basePath}/${key}`);
   }, [ basePath, history ]);

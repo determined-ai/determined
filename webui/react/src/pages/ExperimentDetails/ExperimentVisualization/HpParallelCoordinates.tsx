@@ -129,7 +129,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       axes: { label: { placement: 'after' } },
       data: {
         colorScale: {
-          colors: colorScale.map(scale => scale.color),
+          colors: colorScale.map((scale) => scale.color),
           dimensionKey: metricNameToStr(selectedMetric),
         },
       },
@@ -139,7 +139,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }), [ colorScale, handleFilterChange, selectedMetric ]);
 
   const dimensions = useMemo(() => {
-    const newDimensions: Hermes.Dimension[] = selectedHParams.map(key => {
+    const newDimensions: Hermes.Dimension[] = selectedHParams.map((key) => {
       const hp = hyperparameters[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
@@ -191,19 +191,19 @@ const HpParallelCoordinates: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const data: Record<string, Primitive[]> = {};
         let trialMetricRange: Range<number> = defaultNumericRange(true);
 
-        event.trials.forEach(trial => {
+        event.trials.forEach((trial) => {
           const id = trial.trialId;
           trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
           const flatHParams = flattenObject(trial.hparams || {});
-          Object.keys(flatHParams).forEach(hpKey => {
+          Object.keys(flatHParams).forEach((hpKey) => {
             const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
             trialHpMap[hpKey][id] = hpValue;
@@ -217,23 +217,23 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         const trialIds = Object.keys(trialMetricsMap)
-          .map(id => parseInt(id))
+          .map((id) => parseInt(id))
           .sort(numericSorter);
 
-        Object.keys(trialHpMap).forEach(hpKey => {
-          data[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
+        Object.keys(trialHpMap).forEach((hpKey) => {
+          data[hpKey] = trialIds.map((trialId) => trialHpMap[hpKey][trialId]);
         });
 
         // Add metric of interest.
         const metricKey = metricNameToStr(selectedMetric);
-        const metricValues = trialIds.map(id => trialMetricsMap[id]);
+        const metricValues = trialIds.map((id) => trialMetricsMap[id]);
         data[metricKey] = metricValues;
 
         // Normalize metrics values for parallel coordinates colors.
         const metricRange = getNumericRange(metricValues);
 
         // Gather hparams for trial table.
-        const newTrialHps = trialIds.map(id => trialHpTableMap[id]);
+        const newTrialHps = trialIds.map((id) => trialHpTableMap[id]);
         setTrialHps(newTrialHps);
 
         setChartData({
@@ -244,7 +244,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => {
+    ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
     });
@@ -287,10 +287,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
   }, [ sendBatchActions ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+  const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
   const handleTrialUnselect = useCallback((trialId: number) => {
-    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId));
+    setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId));
   }, []);
 
   // Reset filtered trial ids when HP Viz filters changes.
@@ -332,7 +332,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
                 { label: Action.CompareTrials, value: Action.CompareTrials },
               ]}
               selectedRowCount={selectedRowKeys.length}
-              onAction={action => submitBatchAction(action as Action)}
+              onAction={(action) => submitBatchAction(action as Action)}
               onClear={clearSelected}
             />
             <HpTrialTable

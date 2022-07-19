@@ -23,8 +23,10 @@ var (
 	DefaultSegmentWebUIKey  = ""
 )
 
-var once sync.Once
-var masterConfig *Config
+var (
+	once         sync.Once
+	masterConfig *Config
+)
 
 // KubernetesDefaultPriority is the default K8 resource manager priority.
 const KubernetesDefaultPriority = 50
@@ -43,6 +45,11 @@ func DefaultDBConfig() *DBConfig {
 		Migrations: "file://static/migrations",
 		SSLMode:    sslModeDisable,
 	}
+}
+
+// CacheConfig is the configuration for file cache.
+type CacheConfig struct {
+	CacheDir string `json:"cache_dir"`
 }
 
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
@@ -99,6 +106,10 @@ func DefaultConfig() *Config {
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
+		// For developers this should be a writable directory for caching files.
+		Cache: CacheConfig{
+			CacheDir: "/var/cache/determined",
+		},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -130,6 +141,7 @@ type Config struct {
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
+	Cache                 CacheConfig                       `json:"cache"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.

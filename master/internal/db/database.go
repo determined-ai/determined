@@ -19,8 +19,9 @@ import (
 type DB interface {
 	StartUserSession(user *model.User) (string, error)
 	UserByToken(token string, ext *model.ExternalSessions) (*model.User, *model.UserSession, error)
-	UserByExternalToken(token string, ext *model.ExternalSessions) (*model.User,
-		*model.UserSession, error)
+	UserByExternalToken(
+		token string, ext *model.ExternalSessions,
+	) (*model.User, *model.UserSession, error)
 	DeleteUserSessionByID(sessionID model.SessionID) error
 	DeleteUserSessionByToken(userSessionToken string) error
 	UserByUsername(username string) (*model.User, error)

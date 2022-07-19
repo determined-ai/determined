@@ -27,12 +27,12 @@ import (
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	// Add a mock user.
-	user := requireMockUser(t, db)
+	user := RequireMockUser(t, db)
 
 	// Add a job.
 	jID := model.NewJobID()
@@ -106,9 +106,9 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	// Add an allocation of every possible state.
 	states := []model.AllocationState{
@@ -168,9 +168,9 @@ const (
 )
 
 func TestExhaustiveEnums(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	type check struct {
 		goType          string

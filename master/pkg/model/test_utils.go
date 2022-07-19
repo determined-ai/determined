@@ -11,9 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-var (
-	defaultDeterminedUID UserID = 2
-)
+var defaultDeterminedUID UserID = 2
 
 // ExperimentModelOption is an option that can be applied to update an experiment.
 type ExperimentModelOption interface {

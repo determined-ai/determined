@@ -107,12 +107,7 @@ const CompareFilters: React.FC<Props> = ({
   const [ localFilters, dispatch ] = useReducer(reducer, filters);
 
   const [
-    showMaxTrials,
-    showBatches,
-    showMetrics,
-    showHParams,
-    showViews,
-    showScales,
+    showMaxTrials, showBatches, showMetrics, showHParams, showViews, showScales,
   ] = useMemo(() => {
     return [
       [ ExperimentVisualizationType.LearningCurve ].includes(type),
@@ -200,7 +195,7 @@ const CompareFilters: React.FC<Props> = ({
           style={{ width: 70 }}
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
-          {TOP_TRIALS_OPTIONS.map(option => (
+          {TOP_TRIALS_OPTIONS.map((option) => (
             <Option key={option} value={option}>{option}</Option>
           ))}
         </SelectFilter>
@@ -213,7 +208,7 @@ const CompareFilters: React.FC<Props> = ({
             showSearch={false}
             value={localFilters.batch}
             onChange={handleBatchChange}>
-            {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
+            {batches.map((batch) => <Option key={batch} value={batch}>{batch}</Option>)}
           </SelectFilter>
           <SelectFilter
             enableSearchFilter={false}
@@ -221,7 +216,7 @@ const CompareFilters: React.FC<Props> = ({
             showSearch={false}
             value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
-            {BATCH_MARGIN_OPTIONS.map(option => (
+            {BATCH_MARGIN_OPTIONS.map((option) => (
               <Option key={option} value={option}>{option}</Option>
             ))}
           </SelectFilter>

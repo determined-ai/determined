@@ -93,7 +93,7 @@ const SlotAllocationBar: React.FC<Props> = ({
       [ResourceState.Unspecified]: 0,
       [ResourceState.Potential]: 0,
     };
-    resourceStates.forEach(state => {
+    resourceStates.forEach((state) => {
       tally[state] += 1;
     });
     tally[ResourceState.Warm] = totalSlots - tally[ResourceState.Running];
@@ -160,16 +160,16 @@ const SlotAllocationBar: React.FC<Props> = ({
       ResourceState.Starting,
       ResourceState.Running,
     ];
-    if(showLegends){
+    if (showLegends){
       states = states.slice(2);
-    } else if(stateTallies[ResourceState.Potential] <= 0) {
+    } else if (stateTallies[ResourceState.Potential] <= 0) {
       states = states.slice(1);
     }
     return states;
   }, [ showLegends, stateTallies ]);
 
   const hasLegend = useMemo(() => {
-    return (states.map(s => stateTallies[s]).reduce((res, i) => (res + i), 0) > 0);
+    return (states.map((s) => stateTallies[s]).reduce((res, i) => (res + i), 0) > 0);
   }, [ stateTallies, states ]);
 
   const classes = [ css.base ];
@@ -206,7 +206,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   };
 
   const renderFooterJobs = () => {
-    if(footer?.queued || footer?.scheduled) {
+    if (footer?.queued || footer?.scheduled) {
       return (
         footer.queued ? (
           <div onClick={onClickQueued}>

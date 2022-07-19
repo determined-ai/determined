@@ -16,8 +16,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-const spotRequestIDPrefix = "sir-"
-const launchTimeOffsetGrowth = time.Second * 10
+const (
+	spotRequestIDPrefix    = "sir-"
+	launchTimeOffsetGrowth = time.Second * 10
+)
 
 type spotRequest struct {
 	SpotRequestID string

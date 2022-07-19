@@ -11,7 +11,8 @@ import (
 )
 
 func getBracketMaxTrials(
-	maxTrials int, divisor float64, brackets []int) []int {
+	maxTrials int, divisor float64, brackets []int,
+) []int {
 	// This allocation will result in roughly equal total step budget
 	// allocated to each rung.
 	// Each bracket roughly requires numRungs * targetTrialSteps budget to evaluate
@@ -38,7 +39,8 @@ func getBracketMaxTrials(
 }
 
 func getBracketMaxConcurrentTrials(
-	maxConcurrentTrials int, divisor float64, maxTrials []int) []int {
+	maxConcurrentTrials int, divisor float64, maxTrials []int,
+) []int {
 	// If maxConcurrentTrials is provided, we will split that evenly across brackets
 	// and fill remainder from most aggressive early stopping bracket to least.
 	// Otherwise, we will default to minimum of the maxTrials across brackets

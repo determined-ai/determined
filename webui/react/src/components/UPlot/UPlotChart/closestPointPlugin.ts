@@ -161,11 +161,11 @@ export const closestPointPlugin = ({
         if (typeof onPointClick === 'function') {
           let mousedownX: number;
           let mousedownY: number;
-          over.addEventListener('mousedown', e => {
+          over.addEventListener('mousedown', (e) => {
             mousedownX = (e as MouseEvent).clientX;
             mousedownY = (e as MouseEvent).clientY;
           });
-          over.addEventListener('mouseup', e => {
+          over.addEventListener('mouseup', (e) => {
             if (
               (e as MouseEvent).clientX !== mousedownX
               || (e as MouseEvent).clientY !== mousedownY

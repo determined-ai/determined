@@ -36,9 +36,9 @@ export const traverseTree = async (
   let curNode: TreeNode = startNode;
   const path: TreePath = [ curNode ];
   let i = 0;
-  while(isNLNode(curNode) && i < address.length) {
+  while (isNLNode(curNode) && i < address.length) {
     const children: Children = await getNodeChildren(curNode);
-    const rv = children.find(n => n.title === address[i]);
+    const rv = children.find((n) => n.title === address[i]);
     if (rv === undefined) break;
     curNode = rv;
     i++;
@@ -60,7 +60,7 @@ export const dfsStaticRoutes = (
   if (isLeafNode(node)) {
     allRoutes.push(curPath);
   } else if (Array.isArray(node.options)) { // only follow statically defined children.
-    node.options.forEach(child => dfsStaticRoutes(allRoutes, [ ...curPath ], child));
+    node.options.forEach((child) => dfsStaticRoutes(allRoutes, [ ...curPath ], child));
   } else {
     allRoutes.push(curPath);
   }

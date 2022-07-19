@@ -661,3 +661,29 @@ message MoveExperimentRequest {
 
 // Response to MoveExperimentRequest.
 message MoveExperimentResponse {}
+
+// Request to get model definition file tree of an experiment.
+message GetModelDefTreeRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+}
+
+// Response to GetModelDefTreeRequest.
+message GetModelDefTreeResponse {
+  // File tree of an experiment.
+  repeated determined.experiment.v1.FileNode files = 1;
+}
+
+// Request to get a file of model definition.
+message GetModelDefFileRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // The path of file.
+  string path = 2;
+}
+
+// Response to GetModelDefFileRequest.
+message GetModelDefFileResponse {
+  // Content of file.
+  bytes file = 1;
+}

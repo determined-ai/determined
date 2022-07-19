@@ -28,7 +28,7 @@ export const SyncProvider: React.FC = ({ children }) => {
   const [ zoomed, setZoomed ] = useState(false);
 
   useEffect(() => {
-    if(!zoomed) {
+    if (!zoomed) {
       syncRef.current.plots.forEach((chart: uPlot) => {
         chart.setData(chart.data, true);
       });

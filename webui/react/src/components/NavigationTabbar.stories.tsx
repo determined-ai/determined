@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import RouterDecorator from 'storybook/RouterDecorator';
-import StoreDecorator from 'storybook/StoreDecorator';
 
 import NavigationTabbar from './NavigationTabbar';
 
 export default {
   component: NavigationTabbar,
-  decorators: [ StoreDecorator, RouterDecorator ],
   parameters: { layout: 'fullscreen' },
   title: 'NavigationTabbar',
 };

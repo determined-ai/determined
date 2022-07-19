@@ -68,7 +68,7 @@ const RadioGroup: React.FC<Props> = ({
     if (!hasIconsAndLabels || !baseRef.current) return;
     if (sizes.baseWidth === 0 || sizes.parentWidth === 0) return;
 
-    setShowLabels(prev => {
+    setShowLabels((prev) => {
       if (!originalWidth.current) return prev;
       if (prev && sizes.baseHeight > HEIGHT_LIMIT) return false;
       if (!prev && originalWidth.current < sizes.parentWidth) return true;
@@ -108,11 +108,11 @@ const RadioGroup: React.FC<Props> = ({
       ref={baseRef}
       value={value}
       onChange={handleChange}>
-      {options.map(option => (
+      {options.map((option) => (
         <ConditionalWrapper
           condition={!showLabels || iconOnly}
           key={option.id}
-          wrapper={children => (
+          wrapper={(children) => (
             <Tooltip placement="top" title={option.label}>{children}</Tooltip>
           )}>
           <Radio.Button className={css.option} value={option.id}>

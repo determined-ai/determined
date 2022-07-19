@@ -18,7 +18,7 @@ export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
     .map(getWorkload)
-    .filter(workload => isMetricsWorkload(workload) && !!workload.metrics);
+    .filter((workload) => isMetricsWorkload(workload) && !!workload.metrics);
   return isTerminal && workloadsWithSomeMetric.length === 0;
 };
 

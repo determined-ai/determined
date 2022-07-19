@@ -36,12 +36,12 @@ const EditableTagList: React.FC<Props> = (
   const inputRef = useRef<Input>(null);
   const editInputRef = useRef<Input>(null);
 
-  const handleClose = useCallback(removedTag => {
-    onChange?.(tags.filter(tag => tag !== removedTag));
+  const handleClose = useCallback((removedTag) => {
+    onChange?.(tags.filter((tag) => tag !== removedTag));
   }, [ onChange, tags ]);
 
   const handleTagPlus = useCallback(() => {
-    setState(state => ({ ...state, inputVisible: true }));
+    setState((state) => ({ ...state, inputVisible: true }));
   }, []);
 
   useEffect(() => {
@@ -62,14 +62,14 @@ const EditableTagList: React.FC<Props> = (
   ) => {
     const newTag = (e.target as HTMLInputElement).value.trim();
     const oldTag = previousValue?.trim();
-    const updatedTags = tags.filter(tag => tag !== oldTag);
+    const updatedTags = tags.filter((tag) => tag !== oldTag);
     if (newTag) {
       if (!updatedTags.includes(newTag)) {
         updatedTags.push(newTag);
       }
       onChange?.(updatedTags);
     }
-    setState(state => ({ ...state, editInputIndex: -1, inputVisible: false }));
+    setState((state) => ({ ...state, editInputIndex: -1, inputVisible: false }));
   }, [ onChange, tags ]);
 
   const { editInputIndex, inputVisible, inputWidth } = state;
@@ -118,12 +118,12 @@ const EditableTagList: React.FC<Props> = (
               key={tag}
               onClose={() => handleClose(tag)}>
               <span
-                onClick={e => {
+                onClick={(e) => {
                   e.preventDefault();
                   if (disabled) return;
                   const element = document.getElementById(htmlId);
                   const rect = element?.getBoundingClientRect();
-                  setState(state => ({
+                  setState((state) => ({
                     ...state,
                     editInputIndex: index,
                     inputWidth: rect?.width ?? state.inputWidth,

@@ -116,7 +116,7 @@ const UPlotChart: React.FC<Props> = ({
     if (ui.theme && extended.axes) {
       const borderColor = ui.theme.surfaceBorderWeak;
       const labelColor = ui.theme.surfaceOn;
-      extended.axes = extended.axes.map(axis => {
+      extended.axes = extended.axes.map((axis) => {
         return {
           ...axis,
           border: { stroke: borderColor },
@@ -148,7 +148,7 @@ const UPlotChart: React.FC<Props> = ({
         if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
         }
-      } catch(e) {
+      } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
         handleError(e, {
@@ -164,7 +164,7 @@ const UPlotChart: React.FC<Props> = ({
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, !zoomed);
         }
-      } catch(e) {
+      } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
         handleError(e, {

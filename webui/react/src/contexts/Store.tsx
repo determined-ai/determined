@@ -160,10 +160,10 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
   const overview: ClusterOverview = clone(initClusterOverview);
 
-  agents.forEach(agent => {
+  agents.forEach((agent) => {
     agent.resources
-      .filter(resource => resource.enabled)
-      .forEach(resource => {
+      .filter((resource) => resource.enabled)
+      .forEach((resource) => {
         const isResourceFree = resource.container == null;
         const availableResource = isResourceFree ? 1 : 0;
         overview[resource.type].available += availableResource;
@@ -184,12 +184,12 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 
 export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   const overview: PoolOverview = {};
-  agents.forEach(agent => {
-    agent.resourcePools.forEach(pname => {
+  agents.forEach((agent) => {
+    agent.resourcePools.forEach((pname) => {
       overview[pname] = clone(initResourceTally);
       agent.resources
-        .filter(resource => resource.enabled)
-        .forEach(resource => {
+        .filter((resource) => resource.enabled)
+        .forEach((resource) => {
           const isResourceFree = resource.container == null;
           const availableResource = isResourceFree ? 1 : 0;
           overview[pname].available += availableResource;
@@ -266,7 +266,7 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
       const users = [ ...state.users ];
-      const userIdx = users.findIndex(user => user.id === action.value.id);
+      const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }

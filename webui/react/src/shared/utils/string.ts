@@ -9,7 +9,7 @@ export const DEFAULT_ALPHA_NUMERIC_LENGTH = 8;
 
 export const snakeCaseToTitleCase = (text: string): string => {
   const words = text.split('_');
-  const capitalizedWords = words.map(word => capitalize(word));
+  const capitalizedWords = words.map((word) => capitalize(word));
   return capitalizedWords.join(' ');
 };
 
@@ -39,7 +39,7 @@ export const sentenceToCamelCase = (text: string): string => {
 
 /** titlecase a sentence */
 export const capitalize = (str: string): string => {
-  return str.split(/\s+/).map(part => capitalizeWord(part)).join(' ');
+  return str.split(/\s+/).map((part) => capitalizeWord(part)).join(' ');
 };
 
 export const capitalizeWord = (str: string): string => {
@@ -83,7 +83,7 @@ export const humanReadableBytes = (bytes: number): string => {
 };
 
 export const listToStr = (list: (string | undefined)[], glue = ' '): string => {
-  return list.filter(item => !!item).join(glue);
+  return list.filter((item) => !!item).join(glue);
 };
 
 export const toHtmlId = (str: string): string => {

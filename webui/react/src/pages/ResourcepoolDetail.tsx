@@ -49,14 +49,14 @@ const ResourcepoolDetail: React.FC = () => {
   const { agents, resourcePools } = useStore();
 
   const pool = useMemo(() => {
-    return resourcePools.find(pool => pool.name === poolname);
+    return resourcePools.find((pool) => pool.name === poolname);
   }, [ poolname, resourcePools ]);
 
   const usage = useMemo(() => {
-    if(!pool) return 0;
+    if (!pool) return 0;
     const totalSlots = pool.slotsAvailable;
     const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
-    const runningState = resourceStates.filter(s => s === ResourceState.Running).length;
+    const runningState = resourceStates.filter((s) => s === ResourceState.Running).length;
     const slotsPotential = maxPoolSlotCapacity(pool);
     const slotsAvaiablePer = slotsPotential && slotsPotential > totalSlots
       ? (totalSlots / slotsPotential) : 1;
@@ -77,7 +77,7 @@ const ResourcepoolDetail: React.FC = () => {
         getJobQStats({}, { signal: canceler.signal }),
       ] as [ Promise<V1GetJobQueueStatsResponse> ];
       const [ stats ] = await Promise.all(promises);
-      const pool = stats.results.find(p => p.resourcePool === poolname);
+      const pool = stats.results.find((p) => p.resourcePool === poolname);
       setPoolStats(pool);
 
     } catch (e) {
@@ -97,15 +97,15 @@ const ResourcepoolDetail: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler, fetchStats ]);
 
-  const handleTabChange = useCallback(key => {
-    if(!pool) return;
+  const handleTabChange = useCallback((key) => {
+    if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ history, pool ]);
 
   const renderPoolConfig = useCallback(() => {
-    if(!pool) return;
+    if (!pool) return;
     const details = clone(pool.details);
     for (const key in details) {
       if (details[key] === null) {
@@ -119,7 +119,7 @@ const ResourcepoolDetail: React.FC = () => {
     return (
       <Page>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
-        {Object.keys(details).map(key => (
+        {Object.keys(details).map((key) => (
           <Fragment key={key}>
             <Divider />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
@@ -130,7 +130,7 @@ const ResourcepoolDetail: React.FC = () => {
     );
   }, [ pool ]);
 
-  if(!pool) return <div />;
+  if (!pool) return <div />;
   return (
     <Page className={css.poolDetailPage}>
       <Section>

@@ -86,7 +86,7 @@ const useModalCheckpoint = ({
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [ onClose ]);
 
   const handleDelete = useCallback(() => {
-    if(!checkpoint.uuid) return;
+    if (!checkpoint.uuid) return;
     readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [ checkpoint.uuid ] }));
   }, [ checkpoint ]);
 
@@ -121,7 +121,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
     const checkpointResources = checkpoint.resources;
     const resources = Object.keys(checkpoint.resources)
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
-      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
+      .map((key) => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
 
     return (
       <div className={css.base}>
@@ -164,7 +164,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
         {resources.length !== 0 && renderRow(
           'Resources', (
             <div className={css.resources}>
-              {resources.map(resource => renderResource(resource.name, resource.size))}
+              {resources.map((resource) => renderResource(resource.name, resource.size))}
             </div>
           ),
         )}

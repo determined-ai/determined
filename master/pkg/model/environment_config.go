@@ -215,7 +215,7 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 // If any are not messages are returned in an array of errors.
 func ValidateSlurm(slurm []string) []error {
 	slurmErrors := []error{}
-	var forbiddenArgs = []string{
+	forbiddenArgs := []string{
 		"--ntasks-per-node=",
 		"--gpus=", "-G",
 		"--gres=",

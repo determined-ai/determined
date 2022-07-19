@@ -33,7 +33,7 @@ describe('Array.prototype utility', () => {
     return 0;
   };
 
-  Object.keys(arrays).forEach(key => {
+  Object.keys(arrays).forEach((key) => {
     const arr = arrays[key].original;
     const sortedArr = arrays[key].sorted;
 

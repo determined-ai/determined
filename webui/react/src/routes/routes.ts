@@ -167,6 +167,12 @@ const routes: RouteConfig[] = [
     redirect: '/clusters',
     title: 'Job Queue',
   },
+  {
+    id: 'settings',
+    needAuth: true,
+    path: '/settings',
+    title: 'Settings',
+  },
 ];
 
 export default routes;

@@ -44,7 +44,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
       allocationIds: allocationIds ? allocationIds.sortAll(alphaNumericSorter) : undefined,
       containerIds: containerIds ? containerIds.sortAll(alphaNumericSorter) : undefined,
       levels: Object.entries(LogLevelFromApi)
-        .filter(entry => entry[1] !== LogLevelFromApi.Unspecified)
+        .filter((entry) => entry[1] !== LogLevelFromApi.Unspecified)
         .map(([ key, value ]) => ({ label: key, value })),
       rankIds: rankIds ? rankIds.sortAll(alphaNumericSorter) : undefined,
     };
@@ -76,7 +76,7 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
     key: keyof Filters,
     caster: NumberConstructor | StringConstructor,
   ) => (value: SelectValue) => {
-    onChange?.({ ...values, [key]: (value as Array<string>).map(item => caster(item)) });
+    onChange?.({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
   }, [ onChange, values ]);
 
   const handleReset = useCallback(() => onReset?.(), [ onReset ]);

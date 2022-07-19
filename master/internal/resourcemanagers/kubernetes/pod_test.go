@@ -185,7 +185,7 @@ func setupEntrypoint(t *testing.T) {
 
 	for _, file := range taskContainerFiles {
 		//nolint:gosec
-		f, _ := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		f, _ := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 		err = f.Close()
 		if err != nil {
 			t.Logf("failed to close %s", file)

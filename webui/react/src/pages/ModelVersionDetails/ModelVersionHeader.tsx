@@ -57,7 +57,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       content: (
         <Space>
           <Avatar userId={modelVersion.userId} />
-          {getDisplayName(users.find(user => user.id === modelVersion.userId))}
+          {getDisplayName(users.find((user) => user.id === modelVersion.userId))}
           on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
         </Space>
       ),
@@ -188,7 +188,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
             </h1>
           </div>
           <div className={css.buttons}>
-            {actions.slice(0, 2).map(action => (
+            {actions.slice(0, 2).map((action) => (
               <Button
                 className={css.buttonAction}
                 danger={action.danger}
@@ -201,7 +201,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
             <Dropdown
               overlay={(
                 <Menu className={css.overflow}>
-                  {actions.map(action => (
+                  {actions.map((action) => (
                     <Menu.Item
                       className={css.overflowAction}
                       danger={action.danger}

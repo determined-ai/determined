@@ -63,8 +63,8 @@ export const moveJobToPositionUpdate = (
       { ...errOpts, type: ErrorType.Input },
     );
   }
-  const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
-  const job = jobs.find(job => job.jobId === jobId);
+  const anchorJob = jobs.find((job) => job.summary.jobsAhead === position - 1);
+  const job = jobs.find((job) => job.jobId === jobId);
 
   if (!anchorJob || !job) {
     // job view is out of sync.

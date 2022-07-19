@@ -1,94 +1,83 @@
-import { Button, Form, Input, message } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Form, Input, message } from 'antd';
+import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import React, { useCallback } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { patchUser } from 'services/api';
+import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
 import useModal, { ModalHooks } from '../useModal';
 
-import css from './useModalNameChange.module.scss';
-
 interface Props {
-  onComplete: () => void;
+  displayName?: string;
+  form: FormInstance;
 }
 
-const NameChange: React.FC<Props> = ({ onComplete }) => {
-  const { auth } = useStore();
-  const userId = auth.user?.id ?? 0;
-  const existingDisplayName = auth.user?.displayName;
+export const MODAL_HEADER_LABEL = 'Change Display Name';
+export const DISPLAY_NAME_LABEL = 'Display Name';
+export const DISPLAY_NAME_NAME = 'displayName';
+export const CANCEL_BUTTON_LABEL = 'Cancel';
+export const OK_BUTTON_LABEL = 'Update Display Name';
+export const NAME_TOO_LONG_MESSAGE = 'Name can\'t be longer than 80 characters.';
+export const API_SUCCESS_MESSAGE = 'Display name updated.';
+export const API_ERROR_MESSAGE = 'Could not update display name.';
+
+const ModalForm: React.FC<Props> = ({ displayName = '', form }) => (
+  <Form form={form} layout="vertical">
+    <Form.Item
+      initialValue={displayName}
+      label={DISPLAY_NAME_LABEL}
+      name={DISPLAY_NAME_NAME}
+      rules={[ { max: 80, message: NAME_TOO_LONG_MESSAGE } ]}
+      validateTrigger={[ 'onBlur' ]}>
+      <Input />
+    </Form.Item>
+  </Form>
+);
+
+const useModalNameChange = (): ModalHooks => {
   const [ form ] = Form.useForm();
-  const [ isUpdating, setIsUpdating ] = useState(false);
+  const { auth } = useStore();
   const storeDispatch = useStoreDispatch();
+  const userId = auth.user?.id ?? 0;
 
-  const handleFormCancel = useCallback(() => {
-    form.resetFields();
-    onComplete();
-  }, [ form, onComplete ]);
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
-  const handleFormSubmit = useCallback(async () => {
-    setIsUpdating(true);
+  const handleCancel = useCallback(() => form.resetFields(), [ form ]);
+
+  const handleOkay = useCallback(async () => {
+    await form.validateFields();
+
     try {
       const user = await patchUser({
         userId,
-        userParams: { displayName: form.getFieldValue('displayName') },
+        userParams: { displayName: form.getFieldValue(DISPLAY_NAME_NAME) },
       });
       storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
-      message.success('Display name updated');
-      onComplete();
+      message.success(API_SUCCESS_MESSAGE);
     } catch (e) {
-      message.error('Could not update display name');
-      handleError(e);
+      message.error(API_ERROR_MESSAGE);
+      handleError(e, { silent: true, type: ErrorType.Input });
+
+      // Re-throw error to prevent modal from getting dismissed.
+      throw e;
     }
-    setIsUpdating(false);
-  }, [ form, onComplete, userId, storeDispatch ]);
-
-  return (
-    <div className={css.base}>
-      <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-        <Form.Item
-          initialValue={existingDisplayName}
-          label="Display name"
-          name="displayName"
-          required
-          rules={[
-            {
-              max: 80,
-              message: 'Name can\'t be longer than 80 characters',
-            },
-          ]}
-          validateTrigger={[ 'onBlur' ]}>
-          <Input />
-        </Form.Item>
-        <Form.Item>
-          {/* override modal buttons with form buttons
-          to ensure form validation works as intended */}
-          <div className={css.buttons}>
-            <Button onClick={handleFormCancel}>Cancel</Button>
-            <Button htmlType="submit" loading={isUpdating} type="primary">
-              Change name
-            </Button>
-          </div>
-        </Form.Item>
-      </Form>
-    </div>
-  );
-};
-
-const useModalNameChange = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal();
+  }, [ form, storeDispatch, userId ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
-      className: css.noFooter,
       closable: true,
-      content: <NameChange onComplete={modalClose} />,
+      content: <ModalForm displayName={auth.user?.displayName} form={form} />,
       icon: null,
-      title: <h5>Change name</h5>,
+      okText: OK_BUTTON_LABEL,
+      onCancel: handleCancel,
+      onOk: handleOkay,
+      title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [ modalClose, openOrUpdate ]);
+  }, [ auth.user?.displayName, form, handleCancel, handleOkay, openOrUpdate ]);
 
-  return { modalClose, modalOpen, ...modalHook };
+  return { modalOpen, ...modalHook };
 };
 
 export default useModalNameChange;

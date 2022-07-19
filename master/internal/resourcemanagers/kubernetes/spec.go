@@ -193,8 +193,8 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, shmVolumeMount)
 	volumes = append(volumes, shmVolume)
 
-	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes :=
-		configureAdditionalFilesVolumes(p.configMapName, runArchives)
+	// //nolint:lll // There isn't a great way to break this line that makes it more readable.
+	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes := configureAdditionalFilesVolumes(p.configMapName, runArchives)
 
 	volumeMounts = append(volumeMounts, mainContainerRunArchiveVolumeMounts...)
 	volumes = append(volumes, runArchiveVolumes...)
@@ -545,7 +545,8 @@ func configureInitContainer(
 		Name:    "determined-init-container",
 		Command: []string{path.Join(initContainerWorkDir, etc.K8InitContainerEntryScriptResource)},
 		Args: []string{
-			fmt.Sprintf("%d", numArchives), initContainerTarSrcPath, initContainerTarDstPath},
+			fmt.Sprintf("%d", numArchives), initContainerTarSrcPath, initContainerTarDstPath,
+		},
 		Image:           image,
 		ImagePullPolicy: imagePullPolicy,
 		VolumeMounts:    volumeMounts,

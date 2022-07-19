@@ -59,7 +59,7 @@ describe('Experiment Utilities', () => {
       },
     ];
     it('should detect single trial experiment from config', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         const result = utils.isSingleTrialExperiment(test.input as Type.ExperimentBase);
         expect(result).toStrictEqual(test.output);
       });
@@ -94,7 +94,7 @@ describe('Experiment Utilities', () => {
       },
     ];
     it('should convert trial hyperparameters to experiment config hyperparameters', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         const result = utils.trialHParamsToExperimentHParams(test.input);
         expect(result).toStrictEqual(test.output);
       });
@@ -129,7 +129,7 @@ describe('Experiment Utilities', () => {
           output: { searcher: { max_length: { batches: 1000 } } },
         },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.upgradeConfig(test.input)).toStrictEqual(test.output);
       });
     });

@@ -3,9 +3,11 @@
 # explicit default to no owner (this should be the first line)
 *
 
-# Notify eng-infra team of .github changes
+# team-specific repo segments
 /.github  @determined-ai/infrastructure
+/docs     @determined-ai/docs
 
+### individuals
 # Ilia cares about agent RM.
 /master/internal/resourcemanagers/ @ioga
 /master/internal/sproto/ @ioga

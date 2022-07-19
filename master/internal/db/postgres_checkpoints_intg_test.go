@@ -18,10 +18,10 @@ import (
 )
 
 func TestDeleteCheckpoints(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
-	user := requireMockUser(t, db)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
 	task := RequireMockTask(t, db, &user.ID)
 	allocation := requireMockAllocation(t, db, task.TaskID)
 
@@ -49,7 +49,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 
 	require.NoError(t, err)
 
-	//Register checkpoint_1 and checkpoint_2 in ModelRegistry
+	// Register checkpoint_1 and checkpoint_2 in ModelRegistry
 	var retCkpt1 checkpointv1.Checkpoint
 	err = db.QueryProto("get_checkpoint", &retCkpt1, checkpoint1.UUID)
 	var retCkpt2 checkpointv1.Checkpoint

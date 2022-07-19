@@ -96,7 +96,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
 
         return { key: label, value: humanReadableNumber(value) };
       })
-      .filter(keyValue => keyValue != null) as KeyValue[];
+      .filter((keyValue) => keyValue != null) as KeyValue[];
     createTooltipContent(tooltipRef.current, keyValues);
 
     /**

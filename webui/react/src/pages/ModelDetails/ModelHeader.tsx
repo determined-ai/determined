@@ -42,7 +42,7 @@ const ModelHeader: React.FC<Props> = ({
       content: (
         <Space>
           <Avatar userId={model.userId} />
-          {`${getDisplayName(users.find(user => user.id === model.userId))} on
+          {`${getDisplayName(users.find((user) => user.id === model.userId))} on
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
         </Space>
       ),

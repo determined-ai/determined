@@ -51,17 +51,20 @@ func (a *apiServer) GetNotebooks(
 }
 
 func (a *apiServer) GetNotebook(
-	_ context.Context, req *apiv1.GetNotebookRequest) (resp *apiv1.GetNotebookResponse, err error) {
+	_ context.Context, req *apiv1.GetNotebookRequest,
+) (resp *apiv1.GetNotebookResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) IdleNotebook(
-	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
+	_ context.Context, req *apiv1.IdleNotebookRequest,
+) (resp *apiv1.IdleNotebookResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
-	_ context.Context, req *apiv1.KillNotebookRequest) (resp *apiv1.KillNotebookResponse, err error) {
+	_ context.Context, req *apiv1.KillNotebookRequest,
+) (resp *apiv1.KillNotebookResponse, err error) {
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
@@ -122,32 +125,32 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0o700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0o700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0o700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0o700, tar.TypeDir),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterEntrypoint,
 			etc.MustStaticFile(etc.NotebookEntrypointResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterIdleCheck,
 			etc.MustStaticFile(etc.NotebookIdleCheckResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
-			0644,
+			0o644,
 			tar.TypeReg,
 		),
 	}

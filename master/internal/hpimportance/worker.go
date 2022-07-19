@@ -66,7 +66,8 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 	}
 
 	sendWorkCompleted := func(system *actor.System, work startWork, progress float64,
-		results map[string]float64) {
+		results map[string]float64,
+	) {
 		system.Tell(getManager(), workCompleted{
 			experimentID: work.experimentID,
 			metricType:   work.metricType,
@@ -119,7 +120,7 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 			return nil
 		}
 		taskDir := path.Join(workingDir, fmt.Sprint(actorId))
-		err = os.Mkdir(taskDir, 0700)
+		err = os.Mkdir(taskDir, 0o700)
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}
