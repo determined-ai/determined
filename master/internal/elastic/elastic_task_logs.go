@@ -92,6 +92,7 @@ func (e *Elastic) TaskLogs(
 	taskID model.TaskID, limit int, fs []api.Filter, order apiv1.OrderBy,
 	searchAfter interface{},
 ) ([]*model.TaskLog, interface{}, error) {
+	fmt.Println("elastic logs")
 	if limit > elasticMaxQuerySize {
 		limit = elasticMaxQuerySize
 	}
