@@ -30,7 +30,7 @@ const SettingsContent: React.FC = () => {
 
   const { rbac } = queryString.parse(location.search);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);
