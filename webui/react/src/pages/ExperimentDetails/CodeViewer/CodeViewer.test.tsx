@@ -74,6 +74,7 @@ import React from 'react';
 // const setup = (props: Props = { experimentId: experimentIdMock }) => {
 const setup = () => {
   const view = render(<div />);
+  // const view = render(<CodeViewer experimentId={props.experimentId} />);
 
   return view;
 };

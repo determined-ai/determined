@@ -1,6 +1,5 @@
 import { FileOutlined } from '@ant-design/icons';
-import { Tree } from 'antd';
-import Button from 'antd/es/button';
+import { Button, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
 import React, { useEffect, useState } from 'react';
