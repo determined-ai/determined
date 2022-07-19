@@ -42,7 +42,7 @@ const useModalNameChange = (): ModalHooks => {
   const storeDispatch = useStoreDispatch();
   const userId = auth.user?.id ?? 0;
 
-  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal();
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
   const handleCancel = useCallback(() => form.resetFields(), [ form ]);
 
@@ -75,9 +75,9 @@ const useModalNameChange = (): ModalHooks => {
       onOk: handleOkay,
       title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [ auth.user?.displayName, form, handleCancel, handleOkay, modalClose, openOrUpdate ]);
+  }, [ auth.user?.displayName, form, handleCancel, handleOkay, openOrUpdate ]);
 
-  return { modalClose, modalOpen, ...modalHook };
+  return { modalOpen, ...modalHook };
 };
 
 export default useModalNameChange;
