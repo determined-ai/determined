@@ -225,13 +225,15 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		_, _ = m.fetchHpcResourceDetailsCached(ctx)
 		// Don't bother to check for errors, a response is required (may have no name)
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: m.defaultComputePoolPartition})
+			PoolName: m.defaultComputePoolPartition,
+		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
 		_, _ = m.fetchHpcResourceDetailsCached(ctx)
 		// Don't bother to check for errors, a response is required (may have no name)
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{
-			PoolName: m.defaultAuxPoolPartition})
+			PoolName: m.defaultAuxPoolPartition,
+		})
 
 	case sproto.HasResourcePoolRequest:
 		// This is a query to see if the specified resource pool exists
@@ -269,7 +271,8 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 
 // generateGetAgentsResponse returns a suitable response to the GetAgentsRequest request.
 func (m *dispatcherResourceManager) generateGetAgentsResponse(
-	ctx *actor.Context) *apiv1.GetAgentsResponse {
+	ctx *actor.Context,
+) *apiv1.GetAgentsResponse {
 	response := apiv1.GetAgentsResponse{
 		Agents: []*agentv1.Agent{},
 	}
@@ -318,7 +321,8 @@ func addSlotToAgent(
 	deviceType devicev1.Type,
 	node hpcNodeDetails,
 	slotID int,
-	slotInUse bool) {
+	slotInUse bool,
+) {
 	device := devicev1.Device{
 		Id:    0,
 		Brand: "",
@@ -593,7 +597,8 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 func sendResourceStateChangedErrorResponse(
 	ctx *actor.Context, err error,
 	msg StartDispatcherResources,
-	errMessageStr string) {
+	errMessageStr string,
+) {
 	ctx.Log().WithError(err).Error(errMessageStr)
 	stopped := sproto.ResourcesStopped{}
 	stopped.Failure = sproto.NewResourcesFailure(
@@ -680,7 +685,8 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 // selectDefaultPools identifies partitions suitable as default compute and default
 // aux partitions (if possible).
 func (m *dispatcherResourceManager) selectDefaultPools(
-	ctx *actor.Context, hpcResourceDetails []hpcPartitionDetails) (string, string) {
+	ctx *actor.Context, hpcResourceDetails []hpcPartitionDetails,
+) (string, string) {
 	// The default compute pool is the default partition if it has any GPUS,
 	// otherwise select any partion with GPUs.
 	// The AUX partition, use the default partition if available, otherwise any partition.
@@ -722,7 +728,8 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 }
 
 func (m *dispatcherResourceManager) summarizeResourcePool(
-	ctx *actor.Context) ([]*resourcepoolv1.ResourcePool, error) {
+	ctx *actor.Context,
+) ([]*resourcepoolv1.ResourcePool, error) {
 	hpcResourceDetails, err := m.fetchHpcResourceDetailsCached(ctx)
 	if err != nil {
 		return nil, err
@@ -774,7 +781,8 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 // If the cached info is too old, a cache reload will occur, and the candidates for the
 // default compute & aux resource pools will be reevaluated.
 func (m *dispatcherResourceManager) fetchHpcResourceDetailsCached(ctx *actor.Context) (
-	hpcResources, error) {
+	hpcResources, error,
+) {
 	// If anyone is viewing the 'Cluster' section of the DAI GUI then there is activity here
 	// about every 10s per user. To mitigate concerns of overloading slurmd with polling
 	// activity, we will return a cached result, updating the cache only every so often.
@@ -785,8 +793,8 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetailsCached(ctx *actor.Con
 		}
 		m.resourceDetails.lastSample = newSample
 		m.resourceDetails.sampleTime = time.Now()
-		m.defaultComputePoolPartition, m.defaultAuxPoolPartition =
-			m.selectDefaultPools(ctx, m.resourceDetails.lastSample.Partitions)
+		m.defaultComputePoolPartition, m.defaultAuxPoolPartition = m.selectDefaultPools(
+			ctx, m.resourceDetails.lastSample.Partitions)
 		ctx.Log().Infof("default resource pools are '%s', '%s'",
 			m.defaultComputePoolPartition, m.defaultAuxPoolPartition)
 	}
@@ -826,7 +834,8 @@ func (m *dispatcherResourceManager) resolveSlotType(
 // 	4. Terminate the manifest.
 // Returns struct with HPC resource details - HpcResourceDetails.
 func (m *dispatcherResourceManager) fetchHpcResourceDetails(
-	ctx *actor.Context) (hpcResources, error) {
+	ctx *actor.Context,
+) (hpcResources, error) {
 	impersonatedUser := ""
 
 	// Launch the HPC Resources manifest. Launch() method will ensure
@@ -890,7 +899,8 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(
 
 // hpcResourcesToDebugLog puts a summary of the available HPC resources to the debug log.
 func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
-	ctx *actor.Context, resources hpcResources) {
+	ctx *actor.Context, resources hpcResources,
+) {
 	if ctx.Log().Logger.Level != logrus.DebugLevel {
 		return
 	}
@@ -934,14 +944,16 @@ func (m *dispatcherResourceManager) hpcResourcesToDebugLog(
 // by the launcher, we skip any attempt to delete the Dispatch from the DB.
 // The Dispatch is left in the DB, for a future cleanup attempt on startup.
 func (m *dispatcherResourceManager) resourceQueryPostActions(ctx *actor.Context,
-	dispatchID string, owner string) {
+	dispatchID string, owner string,
+) {
 	m.terminateDispatcherJob(ctx, dispatchID, owner)
 }
 
 // terminateDispatcherJob terminates the dispatcher job with the given ID.
 // Return true to indicate if the DB dispatch should additionally be deleted.
 func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
-	dispatchID string, owner string) bool {
+	dispatchID string, owner string,
+) bool {
 	if dispatchID == "" {
 		ctx.Log().Warn("Missing dispatchID, so no environment clean-up")
 		return false
@@ -971,7 +983,8 @@ func (m *dispatcherResourceManager) terminateDispatcherJob(ctx *actor.Context,
 // When querying Slurm resource information, the DispatchID is not registered
 // with the DB, so we do not log an error if we fail to remove it.
 func (m *dispatcherResourceManager) removeDispatchEnvironment(
-	ctx *actor.Context, owner string, dispatchID string) {
+	ctx *actor.Context, owner string, dispatchID string,
+) {
 	if response, err := m.apiClient.MonitoringApi.DeleteEnvironment(m.authContext(ctx),
 		owner, dispatchID).Execute(); err != nil {
 		if response == nil || response.StatusCode != 404 {
@@ -995,7 +1008,8 @@ func (m *dispatcherResourceManager) removeDispatchEnvironment(
 func (m *dispatcherResourceManager) sendManifestToDispatcher(
 	ctx *actor.Context,
 	manifest *launcher.Manifest,
-	impersonatedUser string) (string, error) {
+	impersonatedUser string,
+) (string, error) {
 	/*
 	 * "LaunchAsync()" does not wait for the "launcher" to move the job to the "RUNNING"
 	 * state and returns right away while the job is still in the "PENDING" state. If it
@@ -1108,7 +1122,8 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 // Used on startup, to queue terminate and delete all dispatches in the DB
 // such that we do not get duplicate tasks queued on the system.
 func (m *dispatcherResourceManager) killAllActiveDispatches(
-	ctx *actor.Context, handler *actor.Ref) {
+	ctx *actor.Context, handler *actor.Ref,
+) {
 	ctx.Log().Infof("Releasing all resources due to master restart")
 
 	// Find the Dispatch IDs associated with the allocation ID. We'll need the
@@ -1124,7 +1139,8 @@ func (m *dispatcherResourceManager) killAllActiveDispatches(
 			dispatch.AllocationID, dispatch.DispatchID))
 		ctx.Tell(handler, KillDispatcherResources{
 			ResourcesID:  dispatch.ResourceID,
-			AllocationID: dispatch.AllocationID})
+			AllocationID: dispatch.AllocationID,
+		})
 	}
 }
 

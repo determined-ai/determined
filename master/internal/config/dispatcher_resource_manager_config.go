@@ -84,7 +84,8 @@ func (c DispatcherResourceManagerConfig) ResolveSlotType(partition string) *devi
 // ResolveRendezvousNetworkInterface resolves the rendezvous network interface by first looking for
 // a partition-specific setting and then falling back to the master config.
 func (c DispatcherResourceManagerConfig) ResolveRendezvousNetworkInterface(
-	partition string) string {
+	partition string,
+) string {
 	for name, overrides := range c.PartitionOverrides {
 		if name != partition {
 			continue

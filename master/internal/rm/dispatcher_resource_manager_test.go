@@ -80,8 +80,8 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		sampleTime: time.Now(),
 	}
 
-	var rocm = device.ROCM
-	var cuda = device.CUDA
+	rocm := device.ROCM
+	cuda := device.CUDA
 	overrides := map[string]config.DispatcherPartitionOverrideConfigs{
 		"Partition 2": {
 			SlotType: &rocm,
@@ -105,7 +105,8 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			Id:        "8",
 			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CPU},
 			Enabled:   true,
-			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
 	}
 
 	want1 := map[string]*agentv1.Slot{
@@ -113,12 +114,14 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			Id:        "0",
 			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_ROCM},
 			Enabled:   true,
-			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
 
 		"/agents/Node 2/slots/1": {
 			Id:      "1",
 			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_ROCM},
-			Enabled: true},
+			Enabled: true,
+		},
 	}
 
 	want2 := map[string]*agentv1.Slot{
@@ -126,12 +129,14 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			Id:        "0",
 			Device:    &devicev1.Device{Type: devicev1.Type_TYPE_CUDA},
 			Enabled:   true,
-			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING}},
+			Container: &containerv1.Container{State: containerv1.State_STATE_RUNNING},
+		},
 
 		"/agents/Node 3/slots/1": {
 			Id:      "1",
 			Device:  &devicev1.Device{Type: devicev1.Type_TYPE_CUDA},
-			Enabled: true},
+			Enabled: true,
+		},
 	}
 
 	wantSlots := []map[string]*agentv1.Slot{want0, want1, want2}
@@ -208,11 +213,13 @@ func Test_summarizeResourcePool(t *testing.T) {
 			partitions: []hpcPartitionDetails{p1},
 			args:       args{},
 			want: []resourcepoolv1.ResourcePool{
-				{Name: "partition 1",
+				{
+					Name:           "partition 1",
 					SlotType:       devicev1.Type_TYPE_CUDA,
 					SlotsAvailable: 5,
 					SlotsUsed:      3,
-					NumAgents:      10},
+					NumAgents:      10,
+				},
 			},
 		},
 		{
@@ -220,17 +227,21 @@ func Test_summarizeResourcePool(t *testing.T) {
 			partitions: []hpcPartitionDetails{p1, p2},
 			args:       args{},
 			want: []resourcepoolv1.ResourcePool{
-				{Name: "partition 1",
+				{
+					Name:           "partition 1",
 					SlotType:       devicev1.Type_TYPE_CUDA,
 					SlotsAvailable: 5,
 					SlotsUsed:      3,
-					NumAgents:      10},
+					NumAgents:      10,
+				},
 
-				{Name: "partition 2",
+				{
+					Name:           "partition 2",
 					SlotType:       devicev1.Type_TYPE_CPU,
 					SlotsAvailable: 20,
 					SlotsUsed:      12,
-					NumAgents:      12},
+					NumAgents:      12,
+				},
 			},
 		},
 		{
@@ -238,21 +249,27 @@ func Test_summarizeResourcePool(t *testing.T) {
 			partitions: []hpcPartitionDetails{p1, p2, p3},
 			args:       args{},
 			want: []resourcepoolv1.ResourcePool{
-				{Name: "partition 1",
+				{
+					Name:           "partition 1",
 					SlotType:       devicev1.Type_TYPE_CUDA,
 					SlotsAvailable: 5,
 					SlotsUsed:      3,
-					NumAgents:      10},
-				{Name: "partition 2",
+					NumAgents:      10,
+				},
+				{
+					Name:           "partition 2",
 					SlotType:       devicev1.Type_TYPE_CPU,
 					SlotsAvailable: 20,
 					SlotsUsed:      12,
-					NumAgents:      12},
-				{Name: "partition 3",
+					NumAgents:      12,
+				},
+				{
+					Name:           "partition 3",
 					SlotType:       devicev1.Type_TYPE_CUDA,
 					SlotsAvailable: 7,
 					SlotsUsed:      7,
-					NumAgents:      15},
+					NumAgents:      15,
+				},
 			},
 		},
 	}

@@ -241,7 +241,6 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		GetEnvironmentStatus(m.authContext(ctx), owner, dispatchID).
 		Refresh(true).
 		Execute()
-
 	if err != nil {
 		if r != nil && r.StatusCode == 404 {
 			ctx.Log().Infof("DispatchID %s is either COMPLETE or TERMINATED", dispatchID)
