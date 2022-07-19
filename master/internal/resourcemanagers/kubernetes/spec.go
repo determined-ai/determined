@@ -41,8 +41,8 @@ const (
 	rootUserName = "root"
 )
 
-func (p *pod) configureResourcesRequirements(deviceType device.Type) k8sV1.ResourceRequirements {
-	switch deviceType {
+func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
+	switch p.slotType {
 	case device.CPU:
 		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
 		return k8sV1.ResourceRequirements{
