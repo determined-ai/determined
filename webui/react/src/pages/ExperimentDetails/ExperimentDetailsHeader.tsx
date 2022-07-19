@@ -46,7 +46,6 @@ import { canUserActionExperiment, getActionsForExperiment } from 'utils/experime
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
-import useModalHyperparameterSearch from 'hooks/useModal/useModalHyperparameterSearch';
 
 interface Props {
   curUser?: DetailedUser;
