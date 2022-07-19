@@ -1,3 +1,5 @@
+import os 
+
 import json as _json
 import webbrowser
 from types import TracebackType
@@ -47,11 +49,12 @@ def make_interactive_task_url(
 ) -> str:
     wait_path = "/notebooks/{}/events".format(task_id) if task_type == "notebook" else "/tensorboard/{}/events?tail=1".format(task_id)
     wait_path_url = service_address + wait_path
-    wait_page_url = "/det/wait/{}/{}?eventUrl={}&serviceAddr={}".format(
+    public_url = os.environ.get("PUBLIC_URL","/det")
+    wait_page_url = "{}/wait/{}/{}?eventUrl={}&serviceAddr={}".format(public_url,
         task_type, task_id, wait_path_url, service_address
     )
-    task_web_url = "/det/interactive/{}/{}/{}/{}/{}".format(
-        task_id, task_type, description, resource_pool, parse.quote_plus(wait_page_url)
+    task_web_url = "{}/interactive/{}/{}/{}/{}/{}".format(
+        public_url,task_id, task_type, description, resource_pool, parse.quote_plus(wait_page_url)
     )
     return task_web_url
 
