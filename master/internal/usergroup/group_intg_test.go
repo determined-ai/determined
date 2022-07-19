@@ -32,8 +32,8 @@ func TestUserGroups(t *testing.T) {
 		require.NoError(t, err, "failed to search for groups")
 
 		index := groupsContain(groups, testGroup.ID)
-		foundGroup := groups[index]
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
+		foundGroup := groups[index]
 		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 	})
 
