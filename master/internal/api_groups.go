@@ -173,7 +173,7 @@ func (a *apiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupReque
 	if err != nil {
 		return nil, err
 	}
-	return resp, nil
+	return &apiv1.DeleteGroupResponse{}, nil
 }
 
 func intsToUserIDs(ints []int32) []model.UserID {
