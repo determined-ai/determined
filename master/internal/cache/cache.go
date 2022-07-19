@@ -71,7 +71,7 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = os.MkdirAll(f.genPath(expID, ""), 0o700)
+	err = os.MkdirAll(f.genPath(expID, ""), 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +81,9 @@ func (f *FileCache) getOrCreateFolder(expID int) (*modelDefFolder, error) {
 			return nil, err
 		}
 		if ar.IsDir() {
-			err = os.MkdirAll(path, 0o700)
+			err = os.MkdirAll(path, 0700)
 		} else {
-			err = os.WriteFile(path, ar.Content, 0o600)
+			err = os.WriteFile(path, ar.Content, 0600)
 		}
 		if err != nil {
 			return nil, err
