@@ -20,11 +20,10 @@ func newSearcherEventQueue() *SearcherEventQueue {
 }
 
 // Enqueue an event.
-func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) error {
+func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
 	q.eventCount++
 	event.Id = q.eventCount
 	q.events = append(q.events, event)
-	return nil
 }
 
 // GetEvents returns all the events.

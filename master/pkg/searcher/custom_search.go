@@ -41,13 +41,12 @@ func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
 		InitialOperations: &experimentv1.InitialOperations{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    -1,
 		Event: &event,
 	}
 	// For this method and all the other methods in custom_search
 	// the Id will be set in the Enqueue method of SearcherEvent queue.
-	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
-	return nil, err
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	return nil, nil
 }
 
 func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
@@ -59,12 +58,11 @@ func (s *customSearch) trialCreated(context, model.RequestID) ([]Operation, erro
 		TrialCreated: &experimentv1.TrialCreated{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    -1,
 		Event: &event,
 	}
 
-	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
-	return nil, err
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	return nil, nil
 }
 
 func (s *customSearch) progress(
@@ -81,12 +79,11 @@ func (s *customSearch) validationCompleted(
 		ValidationCompleted: &experimentv1.ValidationCompleted{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    -1,
 		Event: &event,
 	}
 
-	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
-	return nil, err
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	return nil, nil
 }
 
 func (s *customSearch) trialExitedEarly(context, model.RequestID,
@@ -95,12 +92,11 @@ func (s *customSearch) trialExitedEarly(context, model.RequestID,
 		TrialExitedEarly: &experimentv1.TrialExitedEarly{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    -1,
 		Event: &event,
 	}
 
-	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
-	return nil, err
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	return nil, nil
 }
 
 func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
@@ -108,12 +104,11 @@ func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 		TrialClosed: &experimentv1.TrialClosed{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    -1,
 		Event: &event,
 	}
 
-	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
-	return nil, err
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+	return nil, nil
 }
 
 func (s *customSearch) Snapshot() (json.RawMessage, error) {
