@@ -14,8 +14,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 
-	"github.com/determined-ai/determined/master/pkg/archive"
-
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 

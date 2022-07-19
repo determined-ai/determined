@@ -9,12 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -442,109 +440,4 @@ SET best_validation_id = (SELECT bv.id FROM best_validation bv)
 WHERE t.id = $1;
 `, id)
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
-}
-
-func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err error) {
-	var trialIds []int32
-	// certain (outer) joins dont get materialized if they're not needed?
-	// or that only applies to views?
-	// any case we can do a CTE
-	qb := Bun().NewSelect().TableExpr("trials").
-		Column("trials.id").Join("INNER JOIN experiments ON trials.experiment_id = experiments.id").
-		Join("INNER JOIN projects ON projects.id = experiments.project_id").
-		Join("INNER JOIN validations ON trials.id = validations.trial_id").
-		Join("INNER JOIN steps on steps.trial_id = trials.id")
-
-	orderHow := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-	}
-	orderBest := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "MIN",
-		apiv1.OrderBy_ORDER_BY_ASC:         "MIN",
-		apiv1.OrderBy_ORDER_BY_DESC:        "MAX",
-	}
-
-	// go ahead and attach best validation beforehand
-
-	if filters.ExpRank.Rank != 0 {
-		rankSorter := filters.ExpRank.SortBy
-		rank := filters.ExpRank.Rank
-		if rankSorter.Namespace == 0 {
-			// VALIDATION
-			qb = qb.ColumnExpr("?(validations.metrics->'validation_metrics'->>?) AS rank_sorter", orderBest[rankSorter.OrderBy], rankSorter.Field)
-			qb = qb.Where(`ROW_NUMBER() OVER(
-				PARTITION BY e.trial_id
-				ORDER BY rank_sorter  ?
-			)  <= ?`, rankSorter.Field, orderHow[rankSorter.OrderBy], rank)
-
-		}
-		if rankSorter.Namespace == 1 {
-			// TRAINING
-			qb = qb.ColumnExpr("?(steps.metrics->'avg_metrics'->>?) AS rank_sorter", orderBest[rankSorter.OrderBy], rankSorter.Field)
-			qb = qb.Where(`ROW_NUMBER() OVER(
-				PARTITION BY e.trial_id
-				ORDER BY rank_sorter  ?
-			)  <= ?`, rankSorter.Field, orderHow[rankSorter.OrderBy], rank)
-		}
-	}
-
-	if len(filters.Tags) > 0 {
-		tagExprKeyVals := ""
-		for _, tag := range filters.Tags {
-			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
-		}
-		qb = qb.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
-	}
-
-	if len(filters.ExperimentIds) > 0 {
-		qb = qb.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
-	}
-
-	if len(filters.ProjectIds) > 0 {
-		qb = qb.Where("experiments.project_id IN (?)", bun.In(filters.ProjectIds))
-	}
-
-	if len(filters.WorkspaceIds) > 0 {
-		qb = qb.Join("INNER JOIN projects ON experiments.project_id = projects.id")
-		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
-	}
-
-	if len(filters.ValidationMetrics) > 0 {
-		// TODO trial has best validation? probably join that instead
-		for _, vm := range filters.ValidationMetrics {
-			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
-		}
-	}
-
-	if len(filters.TrainingMetrics) > 0 {
-		for _, vm := range filters.TrainingMetrics {
-			// TODO: avg metrics correct?
-			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", vm.Name, vm.Min, vm.Max)
-		}
-	}
-	if len(filters.Hparams) > 0 {
-		// what if it's a string?
-		// given the protos, we would probably need a different type
-		// what about nested?
-		// in that case, we probably want to send outer.inner in the api
-		// then construct trials.hparams->'outer'->'inner' expression in query
-		for _, f := range filters.TrainingMetrics {
-			qb = qb.Where("(trials.hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
-		}
-	}
-	if filters.Searcher != "" {
-		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
-	}
-
-	if len(filters.UserIds) > 0 {
-		qb = qb.Where("experiments.owner_id IN (?)", bun.In(filters.UserIds))
-	}
-
-	err = qb.Group("trials.id").Scan(context.TODO(), &trialIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error querying for filtered trials")
-	}
-	return trialIds, nil
 }
