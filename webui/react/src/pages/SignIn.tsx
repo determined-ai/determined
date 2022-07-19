@@ -15,12 +15,12 @@ import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
 import LogoGoogle from 'shared/assets/images/logo-sso-google-white.svg';
 import LogoOkta from 'shared/assets/images/logo-sso-okta-white.svg';
+import { RecordKey } from 'shared/types';
 import { getPath } from 'shared/utils/data';
+import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 
 import { routeAll } from '../routes/utils';
-import { RecordKey } from 'shared/types';
-import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 
 import css from './SignIn.module.scss';
 

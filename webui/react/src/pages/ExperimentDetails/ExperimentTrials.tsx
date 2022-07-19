@@ -22,6 +22,9 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
@@ -29,10 +32,6 @@ import {
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
-
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';

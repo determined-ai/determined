@@ -5,10 +5,9 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
-import * as Type from 'types';
-
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
+import * as Type from 'types';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,

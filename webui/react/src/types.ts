@@ -1,5 +1,4 @@
 import * as Api from 'services/api-ts-sdk';
-
 import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {

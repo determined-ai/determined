@@ -26,13 +26,12 @@ import { archiveModel, getModelLabels,
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
-
-import { ErrorType } from 'shared/utils/error';
-import { validateDetApiEnum } from 'shared/utils/service';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {

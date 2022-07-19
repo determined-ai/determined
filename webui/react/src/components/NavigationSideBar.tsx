@@ -16,7 +16,6 @@ import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-
 import Icon from 'shared/components/Icon/Icon';
 
 import css from './NavigationSideBar.module.scss';

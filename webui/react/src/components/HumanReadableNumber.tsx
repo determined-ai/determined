@@ -1,9 +1,8 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
-import { humanReadableNumber } from 'shared/utils/number';
-
 import { CommonProps } from 'shared/types';
+import { humanReadableNumber } from 'shared/utils/number';
 
 interface Props extends CommonProps {
   num?: number | null;

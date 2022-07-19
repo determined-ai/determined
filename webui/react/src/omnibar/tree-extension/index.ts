@@ -8,10 +8,9 @@ import {
 import {
   getNodeChildren, isLeafNode, isNLNode, traverseTree,
 } from 'omnibar/tree-extension/utils';
-import handleError from 'utils/error';
-
 import { ErrorType } from 'shared/utils/error';
 import { noOp } from 'shared/utils/service';
+import handleError from 'utils/error';
 
 const SEPARATOR = ' ';
 

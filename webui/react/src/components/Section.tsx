@@ -1,9 +1,8 @@
 import React, { PropsWithChildren } from 'react';
 
+import Spinner from 'shared/components/Spinner/Spinner';
 import { isString } from 'shared/utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'shared/utils/string';
-
-import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Section.module.scss';
 

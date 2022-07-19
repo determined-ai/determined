@@ -6,6 +6,7 @@ import Section from 'components/Section';
 import TableBatch from 'components/TableBatch';
 import { openOrCreateTensorBoard } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Scale } from 'types';
 import {
   ExperimentAction as Action, CommandTask, Hyperparameter,
@@ -14,7 +15,6 @@ import {
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareCurve.module.scss';

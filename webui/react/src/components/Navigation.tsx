@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import { useFetchAgents, useFetchPinnedWorkspaces, useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-
 import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Navigation.module.scss';

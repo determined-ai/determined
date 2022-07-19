@@ -17,13 +17,12 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { ExperimentBase, TrialDetails } from 'types';
-import handleError from 'utils/error';
-import { isSingleTrialExperiment } from 'utils/experiment';
-
 import { ApiState } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted } from 'shared/utils/service';
+import { ExperimentBase, TrialDetails } from 'types';
+import handleError from 'utils/error';
+import { isSingleTrialExperiment } from 'utils/experiment';
 
 const { TabPane } = Tabs;
 

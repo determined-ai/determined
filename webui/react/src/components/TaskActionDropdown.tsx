@@ -7,16 +7,15 @@ import { paths } from 'routes/utils';
 import {
   killTask,
 } from 'services/api';
+import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser,
 } from 'types';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
-
-import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import Link from './Link';
 
