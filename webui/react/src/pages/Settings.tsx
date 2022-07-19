@@ -15,21 +15,13 @@ enum TabType {
   UserManagement = 'user-management',
 }
 
-interface ContentProps {
-  enableRBAC?: boolean;
-}
-
 interface Params {
   tab?: TabType;
 }
 
-interface Queries {
-  rbac?: boolean;
-}
-
 const DEFAULT_TAB_KEY = TabType.Account;
 
-const SettingsContent: React.FC<ContentProps> = ({ enableRBAC = false }) => {
+const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const location = useLocation();
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
