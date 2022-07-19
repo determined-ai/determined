@@ -148,6 +148,34 @@ message AddTrialTagResponse {}
 
 message RemoveTrialTagResponse {}
 
+message TrialsCollection {
+  int32 id = 1;
+  string name = 2;
+  QueryFilters filters = 3;
+}
+
+message GetTrialsCollectionsRequest {}
+message GetTrialsCollectionsResponse {
+  repeated TrialsCollection collections = 1;
+}
+
+
+message SaveTrialsCollectionRequest {
+  TrialsCollection collection = 1;
+}
+message SaveTrialsCollectionResponse {} 
+
+message CreateTrialsCollectionRequest {
+  string name = 1;
+  QueryFilters filters = 2;
+}
+message CreateTrialsCollectionResponse {
+  TrialsCollection collection = 1;
+}
+
+
+
+
 // Stream trial logs.
 message TrialLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

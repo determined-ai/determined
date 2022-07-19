@@ -549,6 +549,26 @@ service Determined {
   }
 
 
+  rpc SaveTrialsCollection(SaveTrialsCollectionRequest) returns (SaveTrialsCollectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/collections/save"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+  rpc GetTrialsCollections(GetTrialsCollectionsRequest) returns (GetTrialsCollectionsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/collections"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trials" ]
+    };
+  }
+
+
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
       returns (GetTrialWorkloadsResponse) {

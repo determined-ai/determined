@@ -451,6 +451,7 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 	// any case we can do a CTE
 	qb := Bun().NewSelect().TableExpr("trials").
 		Column("trials.id").Join("INNER JOIN experiments ON trials.experiment_id = experiments.id").
+		Join("INNER JOIN projects ON projects.id = experiments.project_id").
 		Join("INNER JOIN validations ON trials.id = validations.trial_id").
 		Join("INNER JOIN steps on steps.trial_id = trials.id")
 
@@ -524,13 +525,14 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 		}
 	}
 	if len(filters.Hparams) > 0 {
-		// what if it's a string? 
+		// what if it's a string?
 		// given the protos, we would probably need a different type
-		// what about nested? 
-		// in that case, we probably want to send outer.inner in the api 
+		// what about nested?
+		// in that case, we probably want to send outer.inner in the api
 		// then construct trials.hparams->'outer'->'inner' expression in query
 		for _, f := range filters.TrainingMetrics {
-		qb = qb.Where("(trials.hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+			qb = qb.Where("(trials.hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+		}
 	}
 	if filters.Searcher != "" {
 		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
