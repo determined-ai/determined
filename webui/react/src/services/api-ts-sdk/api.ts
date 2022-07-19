@@ -1881,7 +1881,7 @@ export interface V1CreateGroupResponse {
  */
 export interface V1CreateTrialOperation {
     /**
-     * 
+     * The key refers to which part of the model this hyperparameters are for.
      * @type {{ [key: string]: V1Hyperparameter; }}
      * @memberof V1CreateTrialOperation
      */
@@ -3477,7 +3477,7 @@ export interface V1GetSearcherEventsResponse {
      * @type {Array<V1SearcherEvent>}
      * @memberof V1GetSearcherEventsResponse
      */
-    searcherEvent?: Array<V1SearcherEvent>;
+    searcherEvents?: Array<V1SearcherEvent>;
     /**
      * The last event that triggered client which sent the appropriate events to master which sent them successfully to the experiment actor.
      * @type {V1SearcherEvent}
@@ -4087,11 +4087,11 @@ export interface V1IdleNotebookResponse {
  */
 export interface V1InitialOperations {
     /**
-     * 
-     * @type {number}
+     * cannot have an empty class.
+     * @type {string}
      * @memberof V1InitialOperations
      */
-    id?: number;
+    holder?: string;
 }
 
 /**
@@ -7298,6 +7298,12 @@ export interface V1SearchRolesAssignableToScopeResponse {
 export interface V1SearcherEvent {
     /**
      * 
+     * @type {number}
+     * @memberof V1SearcherEvent
+     */
+    id?: number;
+    /**
+     * 
      * @type {V1InitialOperations}
      * @memberof V1SearcherEvent
      */
@@ -7960,12 +7966,6 @@ export interface V1TimestampFieldFilter {
 export interface V1TrialClosed {
     /**
      * 
-     * @type {number}
-     * @memberof V1TrialClosed
-     */
-    id?: number;
-    /**
-     * 
      * @type {string}
      * @memberof V1TrialClosed
      */
@@ -7978,12 +7978,6 @@ export interface V1TrialClosed {
  * @interface V1TrialCreated
  */
 export interface V1TrialCreated {
-    /**
-     * 
-     * @type {number}
-     * @memberof V1TrialCreated
-     */
-    id?: number;
     /**
      * 
      * @type {string}
@@ -8023,12 +8017,6 @@ export enum V1TrialEarlyExitExitedReason {
  * @interface V1TrialExitedEarly
  */
 export interface V1TrialExitedEarly {
-    /**
-     * 
-     * @type {number}
-     * @memberof V1TrialExitedEarly
-     */
-    id?: number;
     /**
      * 
      * @type {string}
@@ -8831,12 +8819,6 @@ export interface V1ValidateAfterOperation {
  * @interface V1ValidationCompleted
  */
 export interface V1ValidationCompleted {
-    /**
-     * 
-     * @type {number}
-     * @memberof V1ValidationCompleted
-     */
-    id?: number;
     /**
      * 
      * @type {string}
