@@ -8,45 +8,37 @@ import "google/protobuf/struct.proto";
 // InitialOperations is a searcher event signaling the creation of an
 // experiment.
 message InitialOperations {
-  // incremental id of the event
-  int32 id = 1;
+  // cannot have an empty class.
+  string holder = 1;
 }
 
 // TrialCreated is a searcher event singaling the creation of a trial.
 message TrialCreated {
-  // incremental id of the event
-  int32 id = 1;
   // uuid identifying the trial to the searcher
-  string request_id = 2;
+  string request_id = 1;
 }
 
 // ValidationCompleted is a searcher event triggered when a validation has been
 // completed.
 message ValidationCompleted {
-  // incremental id of the event
-  int32 id = 1;
   // uuid identifying the trial to the searcher
-  string request_id = 2;
+  string request_id = 1;
   // value of the validation metric used to direct the search
-  double metric = 3;
+  double metric = 2;
 }
 
 // TrialClosed is a searcher event triggered when a trial has successfully
 // finished
 message TrialClosed {
-  // incremental id of the event
-  int32 id = 1;
   // uuid identifying the trial to the searcher
-  string request_id = 2;
+  string request_id = 1;
 }
 
 // TrialExitedEarly is a searcher event triggered when a trial exited
 // prematurely
 message TrialExitedEarly {
-  // incremental id of the event
-  int32 id = 1;
   // uuid indentifying the trial to the searcher
-  string request_id = 2;
+  string request_id = 1;
   // The reason for an early exit.
   enum ExitedReason {
     // Zero-value (not allowed).
@@ -60,25 +52,27 @@ message TrialExitedEarly {
     EXITED_REASON_INIT_INVALID_HP = 3;
   }
   // The reason for the exit.
-  ExitedReason exited_reason = 3;
+  ExitedReason exited_reason = 2;
 }
 
 // SearcherEvent is a message from master to a client-driven
 // custom searcher informing it of relevant changes in the state
 // of an experiment
 message SearcherEvent {
+  // incremental id of the event
+  int32 id = 1;
   // The concrete event
   oneof event {
     // an experiment has just been created
-    InitialOperations initial_operations = 1;
+    InitialOperations initial_operations = 3;
     // a trial has been created
-    TrialCreated trial_created = 2;
+    TrialCreated trial_created = 4;
     // validation has completed
-    ValidationCompleted validation_completed = 3;
+    ValidationCompleted validation_completed = 5;
     // trial has finished
-    TrialClosed trial_closed = 4;
+    TrialClosed trial_closed = 6;
     // trial exited early
-    TrialExitedEarly trial_exited_early = 5;
+    TrialExitedEarly trial_exited_early = 7;
   }
 }
 
@@ -126,8 +120,6 @@ message Hyperparameter {
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
   // The key refers to which part of the model this hyperparameters are for.
-  // TODO: add support for nested hyperparameter would be: {"optimizer":
-  // {"learning_rate": 0.01}}
   map<string, Hyperparameter> hyperparams = 1;
 }
 
