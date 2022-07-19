@@ -146,6 +146,9 @@ telemetry:
 
 s3:
   region: ORD1
+  bucket: ''
+  accessKey: ''
+  secretKey: ''
 
 mounts: []
 ## Configure Prometheus endpoints for monitoring.
