@@ -698,6 +698,7 @@ export enum JobAction {
   Kill = 'Kill',
   ManageJob = 'Manage Job',
   MoveToTop = 'Move To Top',
+  ViewLog = 'View Task Logs',
 }
 
 /* End of Jobs */

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Page from 'components/Page';
@@ -11,15 +12,16 @@ import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
-import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
-  killJupyterLab, killShell, killTensorBoard } from 'services/api';
+import { paths } from 'routes/utils';
+import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
+import { Determinedjobv1Type } from 'services/api-ts-sdk';
 import { GetJobsResponse } from 'services/types';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
-import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { CommandType, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
@@ -39,6 +41,7 @@ interface Props {
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { resourcePools } = useStore();
+  const history = useHistory();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
     resourcePools.map((rp) => ({
@@ -98,27 +101,33 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
+  const getCommandType = (jobType: Determinedjobv1Type): CommandType | null => {
+    switch (jobType) {
+      case Determinedjobv1Type.COMMAND:
+        return CommandType.Command;
+      case Determinedjobv1Type.NOTEBOOK:
+        return CommandType.JupyterLab;
+      case Determinedjobv1Type.SHELL:
+        return CommandType.Shell;
+      case Determinedjobv1Type.TENSORBOARD:
+        return CommandType.TensorBoard;
+      default:
+        return null;
+    }
+  };
+
   const dropDownOnTrigger = useCallback((job: Job) => {
+    const commandType = getCommandType(job.type);
+
     const triggers: Triggers<JobAction> = {
-      [JobAction.Cancel]: async () => {
-        switch (job.type) {
-          case JobType.EXPERIMENT:
-            await cancelExperiment({ experimentId: parseInt(job.entityId, 10) });
-            break;
-          case JobType.COMMAND:
-            await killCommand({ commandId: job.entityId });
-            break;
-          case JobType.TENSORBOARD:
-            await killTensorBoard({ commandId: job.entityId });
-            break;
-          case JobType.SHELL:
-            await killShell({ commandId: job.entityId });
-            break;
-          case JobType.NOTEBOOK:
-            await killJupyterLab({ commandId: job.entityId });
-            break;
-          default:
-            return Promise.resolve();
+      [JobAction.Kill]: () => {
+        if (commandType) {
+          killTask({ id: job.entityId, type: commandType });
+        }
+      },
+      [JobAction.ViewLog]: () => {
+        if (commandType) {
+          history.push(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
         }
       },
     };
@@ -130,6 +139,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
     // if job is an experiment type add action to kill it
     if (job.type === JobType.EXPERIMENT) {
+      triggers[JobAction.Cancel] = async () => {
+        await cancelExperiment({ experimentId: parseInt(job.entityId, 10) });
+      };
       triggers[JobAction.Kill] = async () => {
         await killExperiment({ experimentId: parseInt(job.entityId, 10) });
       };
@@ -149,7 +161,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     });
     return triggers;
-  }, [ isJobOrderAvailable, jobs, selectedRp, fetchAll ]);
+  }, [ selectedRp, isJobOrderAvailable, jobs, history, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
@@ -167,6 +179,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                   actionOrder={[
                     JobAction.ManageJob,
                     JobAction.MoveToTop,
+                    JobAction.ViewLog,
                     JobAction.Cancel,
                     JobAction.Kill,
                   ]}

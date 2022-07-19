@@ -388,7 +388,7 @@ export const openOrCreateTensorBoard = async (
   return launchTensorBoard(params);
 };
 
-export const killTask = async (task: Type.CommandTask): Promise<void> => {
+export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Promise<void> => {
   switch (task.type) {
     case Type.CommandType.Command:
       return await killCommand({ commandId: task.id });
