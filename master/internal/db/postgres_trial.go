@@ -479,8 +479,8 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 		qb = qb.ColumnExpr(`ROW_NUMBER() OVER(
 			PARTITION BY t.experiment_id
 			ORDER BY rank_sorter  ?
-		) as rank`, orderHow[rankSorter.OrderBy])
-		qb = qb.Where(`rank <= ?`, filters.ExpRank.Rank)
+		) as exp_rank`, orderHow[rankSorter.OrderBy])
+		qb = qb.Where(`exp_rank <= ?`, filters.ExpRank.Rank)
 	}
 
 	if len(filters.Tags) > 0 {

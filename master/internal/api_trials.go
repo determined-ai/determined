@@ -399,7 +399,6 @@ func (a *apiServer) AddTrialTag(ctx context.Context, req *apiv1.AddTrialTagReque
 }
 
 func (a *apiServer) BulkAddTrialTag(ctx context.Context, req *apiv1.BulkAddTrialTagRequest) (*apiv1.BulkAddTrialTagResponse, error) {
-
 	// TODO: apply the filters to Bun().NewUpdate() via helper function
 	// DONT query for ids and pass them back again
 	resp := &apiv1.BulkAddTrialTagResponse{}
@@ -439,7 +438,6 @@ func (a *apiServer) RemoveTrialTag(ctx context.Context, req *apiv1.RemoveTrialTa
 }
 
 func (a *apiServer) BulkRemoveTrialTag(ctx context.Context, req *apiv1.BulkRemoveTrialTagRequest) (*apiv1.BulkRemoveTrialTagResponse, error) {
-
 	// TODO: apply the filters to Bun().NewUpdate() via helper function
 	// DONT query for ids and pass them back again
 	trialIDs, err := a.m.db.QueryTrials(req.Filters)
@@ -506,7 +504,6 @@ func (a *apiServer) CreateTrialsCollection(
 func (a *apiServer) SaveTrialsCollection(
 	ctx context.Context, req *apiv1.SaveTrialsCollectionRequest,
 ) (*apiv1.SaveTrialsCollectionResponse, error) {
-
 	collection := apiv1.TrialsCollection{
 		Id:      req.Collection.Id,
 		Name:    req.Collection.Name,
