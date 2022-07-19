@@ -41,8 +41,8 @@ const (
 	rootUserName = "root"
 )
 
-func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
-	switch p.slotType {
+func (p *pod) configureResourcesRequirements(deviceType device.Type) k8sV1.ResourceRequirements {
+	switch deviceType {
 	case device.CPU:
 		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
 		return k8sV1.ResourceRequirements{
@@ -100,7 +100,7 @@ func (p *pod) configureEnvVars(
 
 	// Without this zero slot trials will have access to all GPUs.
 	// https://github.com/NVIDIA/k8s-device-plugin/issues/61
-	if p.slots == 0 {
+	if deviceType == device.CPU || deviceType == device.ZeroSlot {
 		envVarsMap["NVIDIA_VISIBLE_DEVICES"] = "void"
 	}
 
@@ -251,7 +251,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	resources := p.taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.slotType == device.CUDA {
+	if p.slotType == device.CUDA && p.slots > 0 {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
@@ -358,7 +358,9 @@ func (p *pod) configurePodSpec(
 
 func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	deviceType := p.slotType
-	if deviceType == device.ZeroSlot {
+	// Device type is currently configured globally on KubernetesResourceManagerConfig.
+	// So we special case certain functionality to use device.CPU.
+	if deviceType == device.ZeroSlot || p.slots == 0 {
 		deviceType = device.CPU
 	}
 
