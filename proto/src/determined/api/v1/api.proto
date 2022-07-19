@@ -1635,6 +1635,15 @@ service Determined {
     };
   }
 
+  rpc GetUsersInGroup(GetUsersInGroupRequest) returns (GetUsersInGroupResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/groups/{group_id}/users"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   rpc CreateGroup(CreateGroupRequest) returns (GroupWriteResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"

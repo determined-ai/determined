@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/group/v1/group.proto";
+import "determined/user/v1/user.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 message GetGroupRequest {
@@ -28,12 +29,23 @@ message GroupSearchResponse {
     repeated determined.group.v1.Group groups = 1;
 }
 
-message UpdateGroupRequest {
+message GetUsersInGroupRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [] }
+        json_schema: { required: ["group_id"] }
     };
     int32 group_id = 1;
-    string name = 2; //do we need name here for some reason?
+}
+
+message GetUsersInGroupResponse {
+    repeated determined.user.v1.User users = 1;
+}
+
+message UpdateGroupRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["group_id"] }
+    };
+    int32 group_id = 1;
+    string name = 2;
     // The user ids of users to add to the group
     repeated int32 add_users = 3;
     // The user ids of users to delete from the group
