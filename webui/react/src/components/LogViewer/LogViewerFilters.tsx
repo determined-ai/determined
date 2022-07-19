@@ -1,4 +1,4 @@
-import { Button, Select, Space } from 'antd';
+import { Button, Input, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
@@ -12,6 +12,7 @@ interface Props {
   onChange?: (filters: Filters) => void;
   onReset?: () => void;
   options: Filters;
+  showSearch: boolean;
   values: Filters;
 }
 
@@ -21,6 +22,7 @@ export interface Filters {
   containerIds?: string[],
   levels?: LogLevelFromApi[],
   rankIds?: number[],
+  searchText?: string,
   // sources?: string[],
   // stdtypes?: string[],
 }
@@ -33,9 +35,16 @@ export const LABELS: Record<keyof Filters, string> = {
   containerIds: 'Container',
   levels: 'Level',
   rankIds: 'Rank',
+  searchText: 'Search',
 };
 
-const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values }: Props) => {
+const LogViewerFilters: React.FC<Props> = ({
+  onChange,
+  onReset,
+  options,
+  showSearch,
+  values,
+}: Props) => {
   const selectOptions = useMemo(() => {
     const { agentIds, allocationIds, containerIds, rankIds } = options;
     return {
@@ -78,6 +87,11 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
   ) => (value: SelectValue) => {
     onChange?.({ ...values, [key]: (value as Array<string>).map((item) => caster(item)) });
   }, [ onChange, values ]);
+
+  const handleSearch = useCallback(
+    (e) => onChange?.({ ...values, searchText: e.target.value })
+    , [ onChange, values ],
+  );
 
   const handleReset = useCallback(() => onReset?.(), [ onReset ]);
 
@@ -133,6 +147,13 @@ const LogViewerFilters: React.FC<Props> = ({ onChange, onReset, options, values 
             <Option key={level.value} value={level.value}>{level.label}</Option>
           ))}
         </MultiSelect>
+        {showSearch && (
+          <Input
+            placeholder="Search Logs..."
+            value={values.searchText}
+            onChange={handleSearch}
+          />
+        )}
         {isResetShown && <Button onClick={handleReset}>{ARIA_LABEL_RESET}</Button>}
       </Space>
     </>

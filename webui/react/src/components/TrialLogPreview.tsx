@@ -51,6 +51,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         undefined,
         dayjs(time).toDate(),
         'ORDER_BY_ASC',
+        undefined,
         { signal: canceler.signal },
       ),
       (event) => {
@@ -83,6 +84,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         undefined,
         undefined,
         'ORDER_BY_DESC',
+        undefined,
         { signal: canceler.signal },
       ),
       (event) => {
