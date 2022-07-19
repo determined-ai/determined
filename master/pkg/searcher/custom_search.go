@@ -20,7 +20,6 @@ type (
 		defaultSearchMethod
 		expconf.CustomConfig
 		customSearchState
-		eventCount int32
 	}
 )
 
@@ -38,30 +37,29 @@ func createSearcherEventQueue() *SearcherEventQueue {
 	return newSearcherEventQueue()
 }
 func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
-	s.eventCount++
 	event := experimentv1.SearcherEvent_InitialOperations{
 		InitialOperations: &experimentv1.InitialOperations{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    s.eventCount,
+		Id:    -1,
 		Event: &event,
 	}
-
+	// For this method and all the other methods in custom_search
+	// the Id will be set in the Enqueue method of SearcherEvent queue.
 	err := s.SearcherEventQueue.Enqueue(&searcherEvent)
 	return nil, err
 }
 
-func (s *customSearch) GetSearcherEventQueue(context) *SearcherEventQueue {
+func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
 	return s.SearcherEventQueue
 }
 
 func (s *customSearch) trialCreated(context, model.RequestID) ([]Operation, error) {
-	s.eventCount++
 	event := experimentv1.SearcherEvent_TrialCreated{
 		TrialCreated: &experimentv1.TrialCreated{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    s.eventCount,
+		Id:    -1,
 		Event: &event,
 	}
 
@@ -79,12 +77,11 @@ func (s *customSearch) progress(
 func (s *customSearch) validationCompleted(
 	context, model.RequestID, float64,
 ) ([]Operation, error) {
-	s.eventCount++
 	event := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    s.eventCount,
+		Id:    -1,
 		Event: &event,
 	}
 
@@ -94,12 +91,11 @@ func (s *customSearch) validationCompleted(
 
 func (s *customSearch) trialExitedEarly(context, model.RequestID,
 	model.ExitedReason) ([]Operation, error) {
-	s.eventCount++
 	event := experimentv1.SearcherEvent_TrialExitedEarly{
 		TrialExitedEarly: &experimentv1.TrialExitedEarly{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    s.eventCount,
+		Id:    -1,
 		Event: &event,
 	}
 
@@ -108,12 +104,11 @@ func (s *customSearch) trialExitedEarly(context, model.RequestID,
 }
 
 func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
-	s.eventCount++
 	event := experimentv1.SearcherEvent_TrialClosed{
 		TrialClosed: &experimentv1.TrialClosed{},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
-		Id:    s.eventCount,
+		Id:    -1,
 		Event: &event,
 	}
 

@@ -37,7 +37,7 @@ type SearchMethod interface {
 	// this is only meaningful in the custom searcher method.
 	// All the other methods will not implement this which is okay
 	// if defaultSearchMethod is a part of that method's struct.
-	getSearcherEventQueue(ctx context) *SearcherEventQueue
+	getSearcherEventQueue() *SearcherEventQueue
 
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
@@ -109,6 +109,6 @@ func (defaultSearchMethod) trialExitedEarly(
 	return []Operation{Shutdown{Failure: true}}, nil
 }
 
-func (defaultSearchMethod) getSearcherEventQueue(context) *SearcherEventQueue {
+func (defaultSearchMethod) getSearcherEventQueue() *SearcherEventQueue {
 	return nil
 }
