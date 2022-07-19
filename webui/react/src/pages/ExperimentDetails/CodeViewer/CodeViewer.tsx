@@ -1,8 +1,8 @@
-import { FileOutlined } from '@ant-design/icons';
+import { FileOutlined, LeftOutlined } from '@ant-design/icons';
 import { Button, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import yaml from 'js-yaml';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -45,6 +45,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileDir, setFileDir ] = useState('');
   const [ fileName, setFileName ] = useState('');
+  const [ viewMode, setViewMode ] = useState<'tree' | 'editor'>('tree');
+
+  const isMobile = useRef(matchMedia?.('(max-width: 1024px)').matches);
 
   // get the file tree from backend
   useEffect(() => {
@@ -87,6 +90,14 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         },
         ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
       ]);
+
+      setFileName('Configuration');
+      setFileDir('Configuration');
+      setFileData(yaml.dump(config));
+
+      if (isMobile.current) {
+        setViewMode('editor');
+      }
     } else {
       setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
     }
@@ -98,6 +109,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   ) => {
     if (info.node.title === 'Configuration') {
       setFileName('Configuration');
+      setFileDir('Configuration');
       setFileData(yaml.dump(config));
 
       return;
@@ -115,6 +127,10 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         setFileData(decodeURIComponent(escape(window.atob(file))));
         setFileDir(filePath);
         setFileName(info.node.title as string);
+
+        if (isMobile.current) {
+          setViewMode('editor');
+        }
       } catch (error) {
         setIsFetching(false);
 
@@ -143,62 +159,89 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
 
   return (
     <section className={css.base}>
-      <Section id="fileTree">
-        <DirectoryTree
-          className={css.fileTree}
-          data-testid="fileTree"
-          defaultExpandAll
-          treeData={fileTree}
-          onSelect={onSelectFile}
-        />
-      </Section>
       {
-        !!fileDir && (
-          <Spinner spinning={isFetching}>
-            <section className={css.fileDir}>
-              <div className={css.fileInfo}>
-                <div>
-                  <FileOutlined />
-                  <span className={css.filePath}>{fileName}</span>
-                </div>
-                <div className={css.buttonsContainer}>
-                  {/* <Button className={css.noBorderButton}>Open in Notebook</Button>
-                  TODO: this will be added in the future*/}
-                  <Button
-                    className={css.noBorderButton}
-                    ghost
-                    icon={<Icon name="download" size="big" />}
-                  />
-                </div>
-              </div>
-            </section>
-          </Spinner>
+        (viewMode === 'tree' || !isMobile.current) && (
+          <Section id="fileTree">
+            <DirectoryTree
+              className={css.fileTree}
+              data-testid="fileTree"
+              defaultExpandAll
+              defaultSelectedKeys={(config && !isMobile.current) ? [ '0-0' ] : undefined}
+              treeData={fileTree}
+              onSelect={onSelectFile}
+            />
+          </Section>
         )
       }
-      <Section bodyNoPadding bodyScroll id="editor" maxHeight>
-        <Spinner spinning={isFetching}>
-          {
-            !isFetching && !fileData
-              ? <h5>Please, choose a file to preview.</h5>
-              : (
-                <MonacoEditor
-                  height="100%"
-                  language={setEditorLanguageSyntax()}
-                  options={{
-                    minimap: {
-                      enabled: !!fileData?.length,
-                      showSlider: 'mouseover',
-                      size: 'fit',
-                    },
-                    occurrencesHighlight: false,
-                    readOnly: true,
-                  }}
-                  value={fileData}
-                />
+      {
+        (viewMode === 'editor' || !isMobile.current) && (
+          <>
+            {
+              !!fileDir && (
+                <Spinner spinning={isFetching}>
+                  <section className={css.fileDir}>
+                    <div className={css.fileInfo}>
+                      <div className={css.buttonContainer}>
+                        {
+                          isMobile.current && (
+                            <LeftOutlined
+                              className={css.leftChevron}
+                              onClick={() => setViewMode('tree')}
+                            />
+                          )
+                        }
+                        <FileOutlined />
+                        <span className={css.filePath}>{fileName}</span>
+                      </div>
+                      <div className={css.buttonsContainer}>
+                        {/* <Button className={css.noBorderButton}>Open in Notebook</Button>
+                  TODO: this will be added in the future*/}
+                        {
+                          !fileDir.includes('Configuration') && (
+                            <Button
+                              className={css.noBorderButton}
+                              ghost
+                              icon={<Icon name="download" size="big" />}
+                            />
+                          )
+                        }
+                      </div>
+                    </div>
+                  </section>
+                </Spinner>
               )
-          }
-        </Spinner>
-      </Section>
+            }
+            <Section
+              bodyNoPadding
+              bodyScroll
+              id="editor"
+              maxHeight>
+              <Spinner spinning={isFetching}>
+                {
+                  !isFetching && !fileData
+                    ? <h5>Please, choose a file to preview.</h5>
+                    : (
+                      <MonacoEditor
+                        height="100%"
+                        language={setEditorLanguageSyntax()}
+                        options={{
+                          minimap: {
+                            enabled: !!fileData?.length,
+                            showSlider: 'mouseover',
+                            size: 'fit',
+                          },
+                          occurrencesHighlight: false,
+                          readOnly: true,
+                        }}
+                        value={fileData}
+                      />
+                    )
+                }
+              </Spinner>
+            </Section>
+          </>
+        )
+      }
     </section>
   );
 };

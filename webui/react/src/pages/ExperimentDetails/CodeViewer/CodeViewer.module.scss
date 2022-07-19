@@ -4,6 +4,10 @@
   grid-template-columns: minmax(300px, 15%) auto;
   grid-template-rows: 5em auto;
 
+  @media screen and (max-width: 1024px) {
+    grid-template-columns: auto;
+  }
+
   .fileTree {
     height: 100%;
     background-color: transparent;
@@ -20,6 +24,10 @@
     grid-column: 2 / 3;
     grid-row: 1 / 2;
     padding: 1em 0;
+
+    @media screen and (max-width: 1024px) {
+      grid-column: 1 / 2;
+    }
     
     .fileInfo {
       padding: 0.5em 1em;
@@ -30,7 +38,17 @@
       background-color: var(--theme-stage);
       border-top: solid var(--theme-stroke-width) var(--theme-stage-border);
       border-bottom: solid var(--theme-stroke-width) var(--theme-stage-border);
-      
+
+      .buttonContainer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        .leftChevron {
+          margin-right: 15px;
+        }
+      }
+
       .filePath {
         margin-left: 10px;
       }
