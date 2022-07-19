@@ -438,8 +438,8 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 				}
 				if err = ctx.Ask(a.socket, wsm).Error(); err != nil {
 					log.WithError(err).Error("failed to tell agent to reconnect")
+					panic(err)
 				}
-				check.Panic(err)
 				ctx.Self().Stop()
 				return
 			}

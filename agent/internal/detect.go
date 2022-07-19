@@ -28,17 +28,29 @@ const (
 	osDarwin = "darwin"
 )
 
+// randFromString returns a random-number generated seeded from an input string.
+func randFromString(seed string) (*rand.Rand, error) {
+	h := sha256.New()
+	h.Write([]byte(seed))
+	rndSource, bytesRead := binary.Varint(h.Sum(nil)[:8])
+	if bytesRead <= 0 {
+		return nil, fmt.Errorf(
+			"failed to init random source for artificial slots ids. bytes read: %d", bytesRead)
+	}
+	rnd := rand.New(rand.NewSource(rndSource)) // nolint:gosec
+	return rnd, nil
+}
+
 func (a *agent) detect() error {
 	switch {
 	case a.ArtificialSlots > 0:
-		h := sha256.New()
-		h.Write([]byte(a.AgentID))
-		rndSource, bytesRead := binary.Varint(h.Sum(nil)[:8])
-		if bytesRead <= 0 {
-			return fmt.Errorf(
-				"failed to init random source for artificial slots ids. bytes read: %d", bytesRead)
+		// Generate random UUIDs consistent across agent restarts as long as
+		// agentID is the same.
+		rnd, err := randFromString(a.AgentID)
+		if err != nil {
+			return err
 		}
-		rnd := rand.New(rand.NewSource(rndSource)) // nolint:gosec
+
 		for i := 0; i < a.ArtificialSlots; i++ {
 			u, err := uuid.NewRandomFromReader(rnd)
 			if err != nil {
