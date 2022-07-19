@@ -25,7 +25,7 @@ const (
 	// dispatcherEntrypointScriptResource is the script to handle container initialization
 	// before transferring to the defined entrypoint script.
 	dispatcherEntrypointScriptResource = "dispatcher-wrapper.sh"
-	dispatcherEntrypointScriptMode     = 0700
+	dispatcherEntrypointScriptMode     = 0o700
 
 	// Content managed by dispatcher-wrapper.sh script for container-local volumes.
 	determinedLocalFs = "/determined_local_fs"
@@ -63,7 +63,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 	slotType device.Type,
 	slurmPartition string,
 	tresSupported bool,
-	containerRunType string) (*launcher.Manifest, string, string, error) {
+	containerRunType string,
+) (*launcher.Manifest, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
 	 * container as.  Eventually, the impersonated user will likely come from the
@@ -200,7 +201,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 		// the total GPUs which will cause launcher to map SetGpus below into --gres:gpus.
 		resources.SetInstances(map[string]int32{
 			"nodes": int32(numSlots),
-			"total": int32(numSlots)})
+			"total": int32(numSlots),
+		})
 	}
 	// Set the required number of GPUs if the device type is CUDA (Nvidia) or ROCM (AMD).
 	if slotType == device.CUDA || slotType == device.ROCM {
@@ -234,7 +236,8 @@ func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
 // computeLaunchConfig computes the launch configuration for the Slurm job manifest.
 func (t *TaskSpec) computeLaunchConfig(
 	slotType device.Type, workDir string,
-	slurmPartition string) *map[string]string {
+	slurmPartition string,
+) *map[string]string {
 	launchConfig := map[string]string{
 		"workingDir":          workDir,
 		"enableWritableTmpFs": trueValue,
@@ -291,7 +294,8 @@ func makeLocalVolume(archiveItem cproto.RunArchive) bool {
 // Encoding the files to Base64 string arguments.
 func encodeArchiveParameters(
 	dispatcherArchive cproto.RunArchive,
-	archives []cproto.RunArchive) (map[string][]string, error) {
+	archives []cproto.RunArchive,
+) (map[string][]string, error) {
 	// Insert the dispatcherArchive into the list for processing (first in list)
 	archives = append([]cproto.RunArchive{dispatcherArchive}, archives...)
 	archiveStrings := make([]string, len(archives))
@@ -462,7 +466,7 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 	userWantsDirMountedOnTmp := false
 
 	for i, mount := range mounts {
-		var volume = *launcher.NewData()
+		volume := *launcher.NewData()
 		volume.SetName("ds" + strconv.Itoa(i))
 		volume.SetSource(mount.Source)
 		volume.SetTarget(mount.Target)
@@ -480,13 +484,14 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 // '/run/determined' directory to the local container temp version.
 func getRunSubdirLink(aug *model.AgentUserGroup, name string) archive.Item {
 	return aug.OwnedArchiveItem(RunDir+"/"+name,
-		[]byte(containerTmpDeterminedDir+name), 0700, tar.TypeSymlink)
+		[]byte(containerTmpDeterminedDir+name), 0o700, tar.TypeSymlink)
 }
 
 // Return any paths that need to be created within /run/determined
 // for unshared directories and files.
 func generateRunDeterminedLinkNames(
-	archives []cproto.RunArchive) []string {
+	archives []cproto.RunArchive,
+) []string {
 	// Use a map as a set to avoid duplicates
 	linksSet := make(map[string]bool)
 
@@ -528,7 +533,7 @@ func dispatcherArchive(aug *model.AgentUserGroup, linksNeeded []string) cproto.R
 			dispatcherEntrypointScriptMode,
 			tar.TypeReg,
 		),
-		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(RunDir, nil, 0o700, tar.TypeDir),
 	}
 
 	// Create and add each link
