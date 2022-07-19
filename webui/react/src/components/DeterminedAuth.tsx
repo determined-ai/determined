@@ -10,7 +10,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../shared/utils/error';
+import { ErrorType } from 'shared/utils/error';
 
 import css from './DeterminedAuth.module.scss';
 

@@ -5,7 +5,7 @@ import {
   CheckpointStorageType, ExperimentSearcherName, HyperparameterType, LogLevel, RunState,
 } from 'types';
 
-import { DetError, ErrorLevel, ErrorType } from './shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {

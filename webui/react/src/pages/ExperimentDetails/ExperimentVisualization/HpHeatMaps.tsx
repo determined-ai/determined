@@ -25,7 +25,7 @@ import {
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';
 
-import { Primitive, Range } from '../../../shared/types';
+import { Primitive, Range } from 'shared/types';
 
 import css from './HpHeatMaps.module.scss';
 

@@ -5,7 +5,7 @@ import { getTelemetry } from 'services/api';
 import { Auth, DeterminedInfo } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 /*
  * Telemetry is written as a modular class instance instead of

@@ -26,8 +26,8 @@ import { isEqual } from 'shared/utils/data';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../shared/utils/error';
-import { isAborted, validateDetApiEnum } from '../shared/utils/service';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted, validateDetApiEnum } from 'shared/utils/service';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {

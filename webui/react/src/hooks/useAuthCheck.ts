@@ -10,8 +10,8 @@ import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
 
 import { routeAll } from '../routes/utils';
-import { ErrorType } from '../shared/utils/error';
-import { isAborted } from '../shared/utils/service';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted } from 'shared/utils/service';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
   const { info } = useStore();

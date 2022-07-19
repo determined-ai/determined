@@ -43,7 +43,7 @@ import handleError from 'utils/error';
 import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './ExperimentDetailsHeader.module.scss';
 

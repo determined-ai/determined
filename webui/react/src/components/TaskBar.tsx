@@ -10,7 +10,7 @@ import {
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 
-import Icon from '../shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './TaskBar.module.scss';
 interface Props{

@@ -8,9 +8,9 @@ import { LoggerInterface } from 'shared/utils/Logger';
 import { listToStr } from 'shared/utils/string';
 
 import { DetError, DetErrorOptions, ERROR_NAMESPACE, ErrorLevel, ErrorType,
-  isDetError } from '../shared/utils/error';
-import { filterOutLoginLocation } from '../shared/utils/routes';
-import { isAborted } from '../shared/utils/service';
+  isDetError } from 'shared/utils/error';
+import { filterOutLoginLocation } from 'shared/utils/routes';
+import { isAborted } from 'shared/utils/service';
 
 const errorLevelMap = {
   [ErrorLevel.Error]: 'error',

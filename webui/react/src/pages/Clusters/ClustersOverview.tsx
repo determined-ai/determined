@@ -13,7 +13,7 @@ import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 
-import { percent } from '../../shared/utils/number';
+import { percent } from 'shared/utils/number';
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 

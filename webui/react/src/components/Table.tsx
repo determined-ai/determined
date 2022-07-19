@@ -17,7 +17,7 @@ import {
 } from 'types';
 import { canBeOpened } from 'utils/task';
 
-import { Pagination } from '../shared/types';
+import { Pagination } from 'shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';

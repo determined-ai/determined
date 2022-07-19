@@ -21,9 +21,9 @@ import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-import { ApiState } from '../shared/types';
-import { ErrorType } from '../shared/utils/error';
-import { isAborted } from '../shared/utils/service';
+import { ApiState } from 'shared/types';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted } from 'shared/utils/service';
 
 const { TabPane } = Tabs;
 

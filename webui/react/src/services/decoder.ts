@@ -6,7 +6,7 @@ import { flattenObject, isNullOrUndefined, isNumber, isObject,
 import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
 
-import { Pagination, RawJson } from '../shared/types';
+import { Pagination, RawJson } from 'shared/types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 

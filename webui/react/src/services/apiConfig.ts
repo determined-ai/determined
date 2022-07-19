@@ -7,8 +7,8 @@ import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import * as Type from 'types';
 
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { identity, noOp } from '../shared/utils/service';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { identity, noOp } from 'shared/utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,

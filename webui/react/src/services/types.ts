@@ -2,7 +2,7 @@ import { Dayjs } from 'dayjs';
 
 import { DetailedUser, Job, Metadata, MetricName, MetricType, Note, Scale } from 'types';
 
-import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
+import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
 
 import * as Api from './api-ts-sdk/api';
 

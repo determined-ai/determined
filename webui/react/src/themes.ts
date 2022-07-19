@@ -9,7 +9,7 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from './shared/themes';
+} from 'shared/themes';
 
 /*
  * Where did we get our sizes from?

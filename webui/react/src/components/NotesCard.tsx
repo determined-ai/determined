@@ -5,8 +5,8 @@ import { Prompt, useLocation } from 'react-router-dom';
 
 import handleError from 'utils/error';
 
-import Spinner from '../shared/components/Spinner/Spinner';
-import { ErrorType } from '../shared/utils/error';
+import Spinner from 'shared/components/Spinner/Spinner';
+import { ErrorType } from 'shared/utils/error';
 
 import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';

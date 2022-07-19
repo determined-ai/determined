@@ -14,7 +14,7 @@ import {
 } from 'types';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
-import { Primitive, RecordKey } from '../../../shared/types';
+import { Primitive, RecordKey } from 'shared/types';
 
 import css from './HpTrialTable.module.scss';
 

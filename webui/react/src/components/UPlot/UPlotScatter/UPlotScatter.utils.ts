@@ -2,7 +2,7 @@ import uPlot from 'uplot';
 
 import { rgba2str, rgbaFromGradient, str2rgba } from 'shared/utils/color';
 
-import { Range } from '../../../shared/types';
+import { Range } from 'shared/types';
 import { Scale } from '../../../types';
 import { UPlotAxisSplits, UPlotData } from '../types';
 

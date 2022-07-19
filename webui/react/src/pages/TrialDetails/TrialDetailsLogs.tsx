@@ -16,7 +16,7 @@ import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../../shared/utils/error';
+import { ErrorType } from 'shared/utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 

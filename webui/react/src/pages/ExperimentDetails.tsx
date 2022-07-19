@@ -15,7 +15,7 @@ import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-import { isAborted } from '../shared/utils/service';
+import { isAborted } from 'shared/utils/service';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';

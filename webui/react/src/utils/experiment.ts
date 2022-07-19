@@ -21,9 +21,9 @@ import {
   TrialHyperparameters,
 } from 'types';
 
-import { RawJson } from '../shared/types';
+import { RawJson } from 'shared/types';
 import { clone, deletePathList, getPathList, isNumber, setPathList,
-  unflattenObject } from '../shared/utils/data';
+  unflattenObject } from 'shared/utils/data';
 
 type ExperimentChecker = (
   experiment: ProjectExperiment, user?: DetailedUser, trial?: TrialDetails) => boolean

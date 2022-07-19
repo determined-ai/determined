@@ -36,7 +36,7 @@ import {
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
-import { ErrorLevel, ErrorType } from '../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';

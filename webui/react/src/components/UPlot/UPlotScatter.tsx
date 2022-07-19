@@ -4,7 +4,7 @@ import uPlot from 'uplot';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import QuadTree, { pointWithin } from 'components/UPlot/UPlotScatter/quadtree';
 
-import { Range } from '../../shared/types';
+import { Range } from 'shared/types';
 import { Scale } from '../../types';
 
 import { FacetedData, UPlotData } from './types';

@@ -19,8 +19,8 @@ import { getPath } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 
 import { routeAll } from '../routes/utils';
-import { RecordKey } from '../shared/types';
-import { locationToPath, routeToReactUrl } from '../shared/utils/routes';
+import { RecordKey } from 'shared/types';
+import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 
 import css from './SignIn.module.scss';
 

@@ -30,9 +30,9 @@ import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
-import { routeToReactUrl } from '../../shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from '../../shared/utils/service';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';

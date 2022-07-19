@@ -7,7 +7,7 @@ import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
 import { MemoryStore, Storage } from 'shared/utils/storage';
 
-import { RecordKey } from '../shared/types';
+import { RecordKey } from 'shared/types';
 
 import useSettings, * as hook from './useSettings';
 

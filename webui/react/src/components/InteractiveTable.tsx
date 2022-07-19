@@ -21,7 +21,7 @@ import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import { Primitive, UnknownRecord } from 'shared/types';
 
-import Spinner from '../shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './InteractiveTable.module.scss';
 import SkeletonTable from './Skeleton/SkeletonTable';

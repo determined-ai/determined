@@ -13,7 +13,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';

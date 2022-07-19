@@ -5,8 +5,8 @@ import * as Service from 'services/types';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-import { EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { generateDetApi } from '../shared/utils/service';
+import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { generateDetApi } from 'shared/utils/service';
 
 export { isLoginFailure } from './utils';
 
@@ -400,5 +400,5 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from '../shared/utils/service';
-export { isAuthFailure } from '../shared/utils/service';
+export { isNotFound } from 'shared/utils/service';
+export { isAuthFailure } from 'shared/utils/service';

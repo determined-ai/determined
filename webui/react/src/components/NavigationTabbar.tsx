@@ -12,7 +12,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 
-import Icon from '../shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './NavigationTabbar.module.scss';
 

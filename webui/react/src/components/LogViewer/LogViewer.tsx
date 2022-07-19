@@ -22,7 +22,7 @@ import { copyToClipboard } from 'shared/utils/dom';
 import { Log, LogLevel } from 'types';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
 
-import { RecordKey } from '../../shared/types';
+import { RecordKey } from 'shared/types';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';

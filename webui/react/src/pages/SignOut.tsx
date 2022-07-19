@@ -7,7 +7,7 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import handleError from 'utils/error';
 
-import { DetError, ErrorLevel, ErrorType } from '../shared/utils/error';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 
 const SignOut: React.FC = () => {
   const history = useHistory();

@@ -1,6 +1,6 @@
 import * as Type from 'types';
 
-import { RecordKey } from '../shared/types';
+import { RecordKey } from 'shared/types';
 
 // Checkpoint size in bytes.
 export const checkpointSize = (

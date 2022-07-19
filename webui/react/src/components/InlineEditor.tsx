@@ -2,7 +2,7 @@ import React, {
   ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
 } from 'react';
 
-import Spinner from '../shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './InlineEditor.module.scss';
 

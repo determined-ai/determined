@@ -11,7 +11,7 @@ import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 
-import { ErrorType } from '../../shared/utils/error';
+import { ErrorType } from 'shared/utils/error';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;

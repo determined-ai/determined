@@ -14,7 +14,7 @@ import {
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareCurve.module.scss';

@@ -10,8 +10,8 @@ import {
 } from 'omnibar/tree-extension/utils';
 import handleError from 'utils/error';
 
-import { ErrorType } from '../../shared/utils/error';
-import { noOp } from '../../shared/utils/service';
+import { ErrorType } from 'shared/utils/error';
+import { noOp } from 'shared/utils/service';
 
 const SEPARATOR = ' ';
 

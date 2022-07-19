@@ -25,7 +25,7 @@ import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

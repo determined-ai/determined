@@ -14,7 +14,7 @@ import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'wait';
 
-import { ErrorType } from '../shared/utils/error';
+import { ErrorType } from 'shared/utils/error';
 
 import css from './Wait.module.scss';
 

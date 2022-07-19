@@ -20,7 +20,7 @@ import {
 } from 'types';
 import { metricNameToStr } from 'utils/metric';
 
-import { Primitive } from '../../../shared/types';
+import { Primitive } from 'shared/types';
 
 import css from './HpScatterPlots.module.scss';
 

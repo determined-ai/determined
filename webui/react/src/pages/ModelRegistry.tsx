@@ -31,8 +31,8 @@ import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
 
-import { ErrorType } from '../shared/utils/error';
-import { validateDetApiEnum } from '../shared/utils/service';
+import { ErrorType } from 'shared/utils/error';
+import { validateDetApiEnum } from 'shared/utils/service';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {
