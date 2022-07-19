@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch import nn
 
+from determined.pytorch import PyTorchCallback
 from determined import pytorch
 
 
@@ -74,3 +75,23 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         return pytorch.DataLoader(
             OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
         )
+
+
+class NoopPyTorchTrialWithCallbacks(NoopPyTorchTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext):
+        super().__init__(context)
+
+    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
+        return {"test_callbacks": TestCallbacks()}
+
+
+class TestCallbacks(PyTorchCallback):
+    def __init__(self) -> None:
+        pass
+
+    def on_training_workload_end(self, metrics: Dict[str, Any]) -> None:
+        print("Calling on_training_workload_end")
+        print(metrics)
+
+    def on_checkpoint_upload_end(self, uuid: str) -> None:
+        print(f"Calling on_checkpoint_upload_end. uuid={uuid}")
