@@ -53,9 +53,29 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 	}, nil
 }
 
-func (a *apiServer) GetGroup(_ context.Context, req *apiv1.GetGroupRequest,
-) (resp *apiv1.GetGroupResponse, err error) {
-	return
+func (a *apiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
+) (*apiv1.GetGroupResponse, error) {
+	gid := int(req.GroupId)
+	g, err := usergroup.GroupByID(ctx, gid)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := usergroup.GetUsersInGroup(ctx, gid)
+	if err != nil {
+		return nil, err
+	}
+
+	gProto := g.Proto()
+	gDetail := groupv1.GroupDetails{
+		GroupId: gProto.GroupId,
+		Name:    gProto.Name,
+		Users:   model.Users(users).Proto(),
+	}
+
+	return &apiv1.GetGroupResponse{
+		Group: &gDetail,
+	}, nil
 }
 
 func (a *apiServer) UpdateGroup(_ context.Context, req *apiv1.UpdateGroupRequest,
