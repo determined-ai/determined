@@ -13,13 +13,13 @@ export const globalTypes = {
   theme: {
     name: 'Theme',
     description: 'Global theme for components',
-    defaultValue: ThemeOptions.light.displayName,
+    defaultValue: ThemeOptions.system.displayName,
     toolbar: {
       icon: 'circlehollow',
       items: [
+        ThemeOptions.system.displayName,
         ThemeOptions.light.displayName,
         ThemeOptions.dark.displayName,
-        ThemeOptions.system.displayName,
       ],
       showName: true,
       dynamicTitle: true,
@@ -33,20 +33,20 @@ const ChildView = ({ context, children }) => {
   useTheme();
 
   useEffect(() => {
-    let currentTheme = ThemeOptions.light.className;
+    let currentTheme = ThemeOptions.system.className;
 
     switch (context.globals.theme) {
+      case ThemeOptions.system.displayName:
+        currentTheme = ThemeOptions.system.className;
+        break;
       case ThemeOptions.light.displayName:
         currentTheme = ThemeOptions.light.className;
         break;
       case ThemeOptions.dark.displayName:
         currentTheme = ThemeOptions.dark.className;
         break;
-      case ThemeOptions.system.displayName:
-        currentTheme = ThemeOptions.system.className;
-        break;
       default:
-        currentTheme = ThemeOptions.light.className;
+        currentTheme = ThemeOptions.system.className;
     }
     storeDispatch({ type: StoreAction.SetMode, value: currentTheme });
   }, [context.globals.theme]);
