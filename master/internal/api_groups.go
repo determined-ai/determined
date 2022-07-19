@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
-	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // FIXME: look at how errors are handled in the rest of the API and follow that pattern
@@ -103,7 +102,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 	}
 
 	if len(req.GetAddUsers()) > 0 {
-		users := []model.UserID{}
+		var users []model.UserID
 		for _, id := range req.GetAddUsers() {
 			users = append(users, model.UserID(id))
 		}
@@ -114,7 +113,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 	}
 
 	if len(req.GetRemoveUsers()) > 0 {
-		users := []model.UserID{}
+		var users []model.UserID
 		for _, id := range req.GetRemoveUsers() {
 			users = append(users, model.UserID(id))
 		}
@@ -129,21 +128,27 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		return nil, err
 	}
 
-	var protoUsers []*userv1.User
-	for _, user := range users {
-		protoUsers = append(protoUsers, user.Proto())
-	}
-
 	resp.Group.GroupId = int32(oldGroup.ID)
 	resp.Group.Name = newName
-	resp.Group.Users = protoUsers
+	for _, user := range users {
+		resp.Group.Users = append(resp.Group.Users, user.Proto())
+	}
 
 	return resp, nil
 }
 
 func (a *apiServer) GetUsersInGroup(ctx context.Context, req *apiv1.GetUsersInGroupRequest,
 ) (resp *apiv1.GetUsersInGroupResponse, err error) {
-	return
+	users, err := usergroup.GetUsersInGroup(ctx, int(req.GetGroupId()))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+		resp.Users = append(resp.Users, user.Proto())
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
