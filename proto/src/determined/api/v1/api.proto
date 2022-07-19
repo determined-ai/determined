@@ -1108,20 +1108,20 @@ service Determined {
     };
   }
 
-  // Check the status of a requested task.
-  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
+  // Get a count of active tasks.
+  rpc GetTasksCount(GetTasksCountRequest) returns (GetTasksCountResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks/{task_id}"
+      get: "/api/v1/tasks/count"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Tasks"
     };
   }
 
-  // Get a count of active tasks.
-  rpc GetTasksCount(GetTasksCountRequest) returns (GetTasksCountResponse) {
+  // Check the status of a requested task.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks"
+      get: "/api/v1/tasks/{task_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Tasks"

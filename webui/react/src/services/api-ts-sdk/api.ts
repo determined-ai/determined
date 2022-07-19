@@ -18827,7 +18827,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         getTasksCount(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/tasks`;
+            const localVarPath = `/api/v1/tasks/count`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;

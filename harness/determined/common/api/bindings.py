@@ -7527,7 +7527,7 @@ def get_GetTasksCount(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/tasks",
+        path="/api/v1/tasks/count",
         params=_params,
         json=None,
         data=None,
