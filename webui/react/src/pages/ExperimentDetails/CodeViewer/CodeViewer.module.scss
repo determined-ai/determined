@@ -58,11 +58,15 @@
 
         .noBorderButton {
           border: 0;
+          width: 20px;
+          cursor: pointer;
+          margin-right: 30px;
         }
       }
     }
   }
 }
+
 .hideElement {
   display: none;
 }

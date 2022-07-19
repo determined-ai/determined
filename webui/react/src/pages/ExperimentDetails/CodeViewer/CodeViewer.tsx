@@ -1,5 +1,5 @@
-import { FileOutlined, LeftOutlined } from '@ant-design/icons';
-import { Button, Tree } from 'antd';
+import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
+import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import classNames from 'classnames';
 import yaml from 'js-yaml';
@@ -10,7 +10,6 @@ import Section from 'components/Section';
 import useRecize from 'hooks/useResize';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { FileNode } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import { RawJson } from 'shared/types';
 
@@ -204,11 +203,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                   TODO: this will be added in the future*/}
                   {
                     !fileDir.includes('Configuration') && (
-                      <Button
-                        className={css.noBorderButton}
-                        ghost
-                        icon={<Icon name="download" size="big" />}
-                      />
+                      <Tooltip title="Download File">
+                        <DownloadOutlined className={css.noBorderButton} />
+                      </Tooltip>
                     )
                   }
                 </div>
