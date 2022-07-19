@@ -147,7 +147,7 @@ func (a *apiServer) GetTasksCount(
 
 	req1 := &apiv1.GetNotebooksRequest{}
 	resp1 := &apiv1.GetNotebooksResponse{}
-	if err := a.ask(notebooksAddr, req1, &resp1); err != nil {
+	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
 		return nil, err
 	}
 	finalResp.Notebooks = int32(len(resp1.Notebooks))
