@@ -2570,22 +2570,34 @@ class v1GetUserSettingResponse:
             "settings": [x.to_json() for x in self.settings],
         }
 
+class v1GetUsersRequestSortBy(enum.Enum):
+    SORT_BY_UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    SORT_BY_DISPLAY_NAME = "SORT_BY_DISPLAY_NAME"
+    SORT_BY_USER_NAME = "SORT_BY_USER_NAME"
+    SORT_BY_ADMIN = "SORT_BY_ADMIN"
+    SORT_BY_ACTIVE = "SORT_BY_ACTIVE"
+    SORT_BY_MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
+
 class v1GetUsersResponse:
     def __init__(
         self,
+        pagination: "typing.Optional[v1Pagination]" = None,
         users: "typing.Optional[typing.Sequence[v1User]]" = None,
     ):
         self.users = users
+        self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUsersResponse":
         return cls(
             users=[v1User.from_json(x) for x in obj["users"]] if obj.get("users", None) is not None else None,
+            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "users": [x.to_json() for x in self.users] if self.users is not None else None,
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
 class v1GetWorkspaceProjectsRequestSortBy(enum.Enum):
@@ -7769,8 +7781,18 @@ def get_GetUserSetting(
 
 def get_GetUsers(
     session: "client.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetUsersRequestSortBy]" = None,
 ) -> "v1GetUsersResponse":
-    _params = None
+    _params = {
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/users",
