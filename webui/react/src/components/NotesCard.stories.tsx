@@ -1,12 +1,9 @@
 import React from 'react';
 
-import RouterDecorator from 'storybook/RouterDecorator';
-
 import NotesCard from './NotesCard';
 
 export default {
   component: NotesCard,
-  decorators: [ RouterDecorator ],
   title: 'NotesCard',
 };
 

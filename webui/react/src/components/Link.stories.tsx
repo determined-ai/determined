@@ -1,12 +1,9 @@
 import React from 'react';
 
-import RouterDecorator from 'storybook/RouterDecorator';
-
 import Link from './Link';
 
 export default {
   component: Link,
-  decorators: [ RouterDecorator ],
   title: 'Link',
 };
 

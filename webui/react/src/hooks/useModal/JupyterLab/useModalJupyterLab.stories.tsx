@@ -3,11 +3,9 @@ import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import StoreDecorator from 'storybook/StoreDecorator';
 
 export default {
   component: useModalJupyterLab,
-  decorators: [ StoreDecorator ],
   title: 'useModalJupyterLab',
 };
 

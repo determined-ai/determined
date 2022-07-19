@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import StoreDecorator from 'storybook/StoreDecorator';
 
 import UserSelectFilter from './UserSelectFilter';
 
 export default {
   component: UserSelectFilter,
-  decorators: [ StoreDecorator ],
   title: 'UserSelectFilter',
 };
 
