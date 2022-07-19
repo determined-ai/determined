@@ -52,6 +52,8 @@ stages:
           host_path: $OPT_CHECKPOINTPATH
         log:
           level: $OPT_DEBUGLEVEL
+        cache:
+          cache_dir: /tmp
         resource_manager:
           master_host: $OPT_MASTERHOST
           master_port: $OPT_MASTERPORT
