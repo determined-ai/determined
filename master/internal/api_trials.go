@@ -476,6 +476,27 @@ func (a *apiServer) KillTrial(
 	return &apiv1.KillTrialResponse{}, nil
 }
 
+func (a *apiServer) GetTrialsCollections(
+	_ context.Context, req *apiv1.GetTrialsCollectionsRequest,
+) (*apiv1.GetTrialsCollectionsResponse, error) {
+	resp := &apiv1.GetTrialsCollectionsResponse{}
+	return resp, nil
+}
+
+func (a *apiServer) CreateTrialsCollection(
+	_ context.Context, req *apiv1.CreateTrialsCollectionRequest,
+) (*apiv1.CreateTrialsCollectionResponse, error) {
+	resp := &apiv1.CreateTrialsCollectionResponse{}
+	return resp, nil
+}
+
+func (a *apiServer) SaveTrialsCollection(
+	_ context.Context, req *apiv1.SaveTrialsCollectionRequest,
+) (*apiv1.SaveTrialsCollectionResponse, error) {
+	resp := &apiv1.SaveTrialsCollectionResponse{}
+	return resp, nil
+}
+
 func (a *apiServer) GetExperimentTrials(
 	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (*apiv1.GetExperimentTrialsResponse, error) {
