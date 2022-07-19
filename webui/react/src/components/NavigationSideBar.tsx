@@ -10,7 +10,6 @@ import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
@@ -99,10 +98,6 @@ const NavigationSideBar: React.FC = () => {
     modalOpen: openJupyterLabModal,
   } = useModalJupyterLab();
   const {
-    contextHolder: modalUserSettingsContextHolder,
-    modalOpen: openUserSettingsModal,
-  } = useModalUserSettings();
-  const {
     contextHolder: modalWorkspaceCreateContextHolder,
     modalOpen: openWorkspaceCreateModal,
   } = useModalWorkspaceCreate();
@@ -172,8 +167,8 @@ const NavigationSideBar: React.FC = () => {
                 <Menu.Item key="theme-toggle">
                   <ThemeToggle />
                 </Menu.Item>
-                <Menu.Item key="settings" onClick={() => openUserSettingsModal()}>
-                  Settings
+                <Menu.Item key="settings">
+                  <Link path={paths.settings()}>Settings</Link>
                 </Menu.Item>
                 <Menu.Item key="sign-out">
                   <Link path={paths.logout()}>Sign Out</Link>
@@ -283,7 +278,6 @@ const NavigationSideBar: React.FC = () => {
           </div>
         </footer>
         {modalJupyterLabContextHolder}
-        {modalUserSettingsContextHolder}
         {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>

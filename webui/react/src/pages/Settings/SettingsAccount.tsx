@@ -6,11 +6,9 @@ import { useStore } from 'contexts/Store';
 import useModalNameChange from 'hooks/useModal/UserSettings/useModalNameChange';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 
-import useModal, { ModalHooks } from '../useModal';
+import css from './SettingsAccount.module.scss';
 
-import css from './useModalUserSettings.module.scss';
-
-const UserSettings: React.FC = () => {
+const SettingsAccount: React.FC = () => {
   const { auth } = useStore();
   const {
     contextHolder: modalNameChangeContextHolder,
@@ -67,20 +65,4 @@ const UserSettings: React.FC = () => {
   );
 };
 
-const useModalUserSettings = (): ModalHooks => {
-  const { modalOpen: openOrUpdate, ...modalHooks } = useModal();
-
-  const modalOpen = useCallback(() => {
-    openOrUpdate({
-      className: css.noFooter,
-      closable: true,
-      content: <UserSettings />,
-      icon: null,
-      title: <h5>Account</h5>,
-    });
-  }, [ openOrUpdate ]);
-
-  return { modalOpen, ...modalHooks };
-};
-
-export default useModalUserSettings;
+export default SettingsAccount;
