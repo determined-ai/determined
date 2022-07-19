@@ -21,8 +21,9 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
-import { canManageJob, moveJobToPosition, orderedSchedulers,
-  unsupportedQPosSchedulers } from 'utils/job';
+import {
+  canManageJob, moveJobToPosition, orderedSchedulers, unsupportedQPosSchedulers,
+} from 'utils/job';
 import { numericSorter } from 'utils/sort';
 
 import css from './JobQueue.module.scss';

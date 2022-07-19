@@ -282,7 +282,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     if (updates.length !== 0) {
       try {
         // Persist storage to backend.
-        await Promise.allSettled(updates.map(update => updateUserSetting(update)));
+        await Promise.allSettled(updates.map((update) => updateUserSetting(update)));
       } catch (e) {
         handleError(e, {
           isUserTriggered: false,
@@ -318,7 +318,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     if (!user) return;
     try {
       const userSettingResponse = await getUserSetting({ userId: user.id });
-      userSettingResponse.settings.forEach(setting => {
+      userSettingResponse.settings.forEach((setting) => {
         const {
           key,
           value,
