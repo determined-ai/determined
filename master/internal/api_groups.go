@@ -58,7 +58,7 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, err := usergroup.SearchGroups(ctx, model.UserID(req.UserId))
+	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId))
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +186,28 @@ func intsToUserIDs(ints []int32) []model.UserID {
 	return ids
 }
 
+var (
+	errBadRequest      = status.Error(codes.InvalidArgument, "Bad request")
+	errNotFound        = status.Error(codes.NotFound, "Not found")
+	errDuplicateRecord = status.Error(codes.AlreadyExists, "Duplicate record")
+	errorWhitelist     = map[error]bool{
+		nil:                true,
+		errBadRequest:      true,
+		errNotFound:        true,
+		errDuplicateRecord: true,
+	}
+)
+
 func mapAndFilterErrors(err error) error {
+	if whitelisted := errorWhitelist[err]; whitelisted {
+		return err
+	}
+
 	switch err {
-	case nil:
-		return nil
 	case db.ErrNotFound:
-		return status.Error(codes.NotFound, err.Error())
+		return errNotFound
 	case db.ErrDuplicateRecord:
-		return status.Error(codes.AlreadyExists, err.Error())
+		return errDuplicateRecord
 	}
 
 	return status.Error(codes.Internal, "Internal server error")

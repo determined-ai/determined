@@ -28,13 +28,19 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups", func(t *testing.T) {
-		groups, err := SearchGroups(ctx, 0)
+		groups, err := SearchGroups(ctx, "", 0)
 		require.NoError(t, err, "failed to search for groups")
 
 		index := groupsContain(groups, testGroup.ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup := groups[index]
 		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+
+		groups, err = SearchGroups(ctx, testGroup.Name, 0)
+		require.NoError(t, err, "failed to search for groups")
+		require.NotEmpty(t, groups, "failed to find group by name")
+		require.Len(t, groups, 1, "failed to narrow search to just matching name")
+		require.Equal(t, testGroup.Name, groups[0].Name, "failed to find the correct group")
 	})
 
 	t.Run("find group by id", func(t *testing.T) {
@@ -74,7 +80,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, err := SearchGroups(ctx, testUser.ID)
+		groups, err := SearchGroups(ctx, "", testUser.ID)
 		require.NoError(t, err, "failed to search for groups that user blongs to")
 
 		index := groupsContain(groups, testGroup.ID)
