@@ -24,10 +24,17 @@ message GroupSearchRequest {
     };
     int32 user_id = 1;
     string name = 2;
+    // Skip the number of groups before returning results. Negative values
+    // denote number of groups to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of groups. A value of 0 denotes no limit.
+    int32 limit = 4;
 }
 
 message GroupSearchResponse {
     repeated determined.group.v1.Group groups = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
 }
 
 message UpdateGroupRequest {
