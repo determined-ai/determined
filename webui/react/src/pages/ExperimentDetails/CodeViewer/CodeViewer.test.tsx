@@ -61,30 +61,30 @@ jest.mock('services/api', () => {
   };
 });
 
-// import { getAllByText, screen } from '@testing-library/dom';
+import { getAllByText, screen } from '@testing-library/dom';
 import { render } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-// import CodeViewer, { Props } from './CodeViewer';
+import CodeViewer, { Props } from './CodeViewer';
 
-// const experimentIdMock = 123;
-// const user = userEvent.setup();
+const experimentIdMock = 123;
+const user = userEvent.setup();
 
-// const setup = (props: Props = { experimentId: experimentIdMock }) => {
-const setup = () => {
-  const view = render(<div />);
-  // const view = render(<CodeViewer experimentId={props.experimentId} />);
+const setup = (props: Props = { experimentId: experimentIdMock }) => {
+// const setup = () => {
+  // const view = render(<div />);
+  const view = render(<CodeViewer experimentId={props.experimentId} />);
 
   return view;
 };
 
 describe('CodeViewer', () => {
-  it('should render the file tree and the text editor properly', () => {
+  it('should render the file tree and the text editor properly', async () => {
     setup();
-    // const tree = await screen.findByTestId('fileTree');
-    // const treeNodes = getAllByText(tree, /[a-zA-Z\-_]{1,}\./g);
-    // expect(treeNodes).toHaveLength(4);
+    const tree = await screen.findByTestId('fileTree');
+    const treeNodes = getAllByText(tree, /[a-zA-Z\-_]{1,}\./g);
+    expect(treeNodes).toHaveLength(4);
     expect([ 1, 2, 3, 4 ]).toHaveLength(4);
   });
 });

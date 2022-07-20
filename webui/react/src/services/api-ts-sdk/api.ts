@@ -4176,7 +4176,7 @@ export interface V1MoveExperimentResponse {
  */
 export interface FileNode {
   /**
-   * Number of bytes in file content.
+   * Number of bytes in the file content.
    * @type {number}
    * @memberof FileNode
    */
