@@ -12,7 +12,7 @@ import handleError from 'utils/error';
 
 import useModal, {
   CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
-} from '../../../shared/hooks/useModal/useModal';
+} from 'shared/hooks/useModal/useModal';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason) => void;

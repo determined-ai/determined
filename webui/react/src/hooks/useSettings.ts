@@ -11,9 +11,9 @@ import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import usePrevious from '../shared/hooks/usePrevious';
-import { Primitive, RecordKey } from '../shared/types';
-import { ErrorType } from '../shared/utils/error';
+import usePrevious from 'shared/hooks/usePrevious';
+import { Primitive, RecordKey } from 'shared/types';
+import { ErrorType } from 'shared/utils/error';
 
 import useStorage from './useStorage';
 
