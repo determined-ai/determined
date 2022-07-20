@@ -266,7 +266,6 @@ type taskLogsFollowState struct {
 func (db *PgDB) TaskLogs(
 	taskID model.TaskID, limit int, fs []api.Filter, order apiv1.OrderBy, followState interface{},
 ) ([]*model.TaskLog, interface{}, error) {
-	fmt.Println("pg logs")
 	if followState != nil {
 		fs = append(fs, api.Filter{
 			Field:     "id",

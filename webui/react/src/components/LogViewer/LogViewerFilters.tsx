@@ -98,6 +98,12 @@ const LogViewerFilters: React.FC<Props> = ({
   return (
     <>
       <Space>
+       {showSearch && (
+          <Input 
+          placeholder="Search Logs..." 
+          value={values.searchText} 
+          onChange={handleSearch} />
+        )}
         {moreThanOne.allocationIds && (
           <MultiSelect
             itemName={LABELS.allocationIds}
