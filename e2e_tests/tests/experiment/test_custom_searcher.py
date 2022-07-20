@@ -1,16 +1,27 @@
 import logging
 import uuid
-import random
-from typing import Tuple, List, Optional
+from typing import List
 
 import pytest
 
 from determined.common.api import bindings
-from determined.common.experimental import ExperimentReference
-from determined.experimental import client
-from determined.searcher.hyperparameters import HparamSample, IntHparamValue, DoubleHparamValue, CategoricalHparamValue
-from determined.searcher.search_method import SearchMethod, SearchState, Operation, Create, Shutdown, ValidateAfter, \
-    Close, ExitedReason
+from determined.searcher.hyperparameters import (
+    CategoricalHparamValue,
+    DoubleHparamValue,
+    HparamSample,
+    HparamValue,
+    IntHparamValue,
+)
+from determined.searcher.search_method import (
+    Close,
+    Create,
+    ExitedReason,
+    Operation,
+    SearchMethod,
+    SearchState,
+    Shutdown,
+    ValidateAfter,
+)
 from determined.searcher.search_runner import SearchRunner
 from tests import config as conf
 from tests import experiment as exp
@@ -32,8 +43,8 @@ def test_post_searcher_ops() -> None:
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
     sess = exp.determined_test_session()
-    const_hp = bindings.v1ConstantHyperparameter(val=0.2)
-    lr = bindings.v1Hyperparameter(constantHyperparam=const_hp)
+    const_hp = bindings.v1DoubleHyperparameter(val=0.2)
+    lr = bindings.v1Hyperparameter(doubleHyperparam=const_hp)
     # need to add more variations above according to what's in the HyperParameterVO struct,
     # will do that after i figure out some of the types.
     hyperparams = {"optimizer": lr}
@@ -68,25 +79,27 @@ class SingleSearchMethod(SearchMethod):
         super().__init__(SearchState(None))
         self.hyperparameters = experiment_config["hyperparameters"]
 
-    def on_trial_created(self, trial_id: int) -> List[Operation]:
+    def on_trial_created(self, trial_id: uuid.UUID) -> List[Operation]:
         return []
 
     def on_validation_completed(self, metric: float) -> List[Operation]:
         return []
 
-    def on_trial_closed(self, trial_id: int) -> List[Operation]:
+    def on_trial_closed(self, trial_id: uuid.UUID) -> List[Operation]:
         return []
 
     def progress(self) -> float:
         return 0.99  # TODO change signature
 
-    def on_trial_exited_early(self, trial_id: int, exit_reason: ExitedReason) -> List[Operation]:
+    def on_trial_exited_early(
+        self, trial_id: uuid.UUID, exit_reason: ExitedReason
+    ) -> List[Operation]:
         logging.warning(f"Trial {trial_id} exited early: {exit_reason}")
         return [Shutdown()]
 
     def initial_operations(self) -> List[Operation]:
         logging.info("initial_operations")
-        values = []
+        values: List[HparamValue] = []
         for name, value in self.hyperparameters.items():
             if isinstance(value, int):
                 values.append(IntHparamValue(name, value))
