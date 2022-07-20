@@ -33,7 +33,7 @@
         flex-grow: 1;
       }
     }
-    .lengthRow {
+    .inputRow {
       display: flex;
       gap: 8px;
     
@@ -51,8 +51,21 @@
       justify-content: space-between;
       width: 100%;
     }
-    .searcherDescription {
-      color: var(--theme-stage-on-weak);
+    .searcherGroup {
+      display: flex;
+      gap: 8px;
+
+      :global(.ant-radio-button-wrapper) {
+        height: 100%;
+        padding: 16px;
+        padding-bottom: 12px;
+
+        .searcherButton {
+          align-items: center;
+          display: flex;
+          flex-direction: column;
+        }
+      }
     }
     .hyperparameterContainer {
       display: grid;
@@ -77,6 +90,15 @@
     p { margin: 0; }
     label {
       width: 100%;
+    }
+    .labelWithTooltip {
+      align-items: center;
+      display: flex;
+      gap: 4px;
+
+      span {
+        height: min-content;
+      }
     }
   }
   .footer {

@@ -1,5 +1,6 @@
-import { Alert, Button, Checkbox, Form, Input, InputNumber,
-  ModalFuncProps, Select, Space, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Alert, Button, Checkbox, Form, Input, InputNumber, ModalFuncProps,
+  Radio, RadioChangeEvent, Select, Space, Tooltip, Typography } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
@@ -14,6 +15,7 @@ import { createExperiment } from 'services/api';
 import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import Icon from 'shared/components/Icon';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
@@ -42,34 +44,25 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 interface SearchMethod {
-  description: string;
   displayName: string;
+  icon: React.ReactNode;
   name: `${ExperimentSearcherName}`;
 }
 
 const SearchMethods: Record<string, SearchMethod> = {
   ASHA: {
-    description: `Automated HP search multi-trial experiment that will stop poor 
-  performing trials early as it searches the HP space.`,
-    displayName: 'Adaptive ASHA',
+    displayName: 'Adaptive',
+    icon: <Icon name="searcher-adaptive" />,
     name: 'adaptive_asha',
   },
-  AsyncHalving: {
-    description: `Automated HP search multi-trial experiment that will stop poor
-  performing trials early as it searches the HP space.`,
-    displayName: 'Async Halving',
-    name: 'async_halving',
-  },
   Grid: {
-    description: `Brute force evaluates all possible hyperparameter configurations 
-  and returns the best.`,
     displayName: 'Grid',
+    icon: <Icon name="searcher-grid" />,
     name: 'grid',
   },
   Random: {
-    description: `Evaluates a set of hyperparameter configurations chosen at 
-  random and returns the best.`,
     displayName: 'Random',
+    icon: <Icon name="searcher-random" />,
     name: 'random',
   },
 } as const;
@@ -256,12 +249,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   const validateForm = useCallback(() => {
     if (!formValues) return;
     if (currentPage === 1) {
-      const {
-        searcher,
-        ...hyperparameters
-      } = formValues as Record<string, HyperparameterRowValues> & {
-        searcher: `${ExperimentSearcherName}`
-      };
+      const hyperparameters = formValues as Record<string, HyperparameterRowValues>;
       setValidationError(!Object.values(hyperparameters).every(hp => {
         switch (hp.type) {
           case HyperparameterType.Constant:
@@ -269,18 +257,20 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             return hp.value != null;
           default:
             return hp.min != null && hp.max != null && hp.max >= hp.min &&
-              (searcher !== SearchMethods.Grid.name || (hp.count != null && hp.count > 0));
+              (searcher !== SearchMethods.Grid || (hp.count != null && hp.count > 0));
         }
       }));
     } else if (currentPage === 0) {
       const {
-        name, pool, slots, max_trials, max_length,
-        length_units, metric, smaller_is_better,
+        searcher, name, pool, slots_per_trial, max_trials, max_length,
+        length_units, mode, stop_once, max_concurrent_trials,
       } = formValues;
-      setValidationError(!(validateLength(name ?? '') && slots != null && slots > 0 &&
-        slots <= maxSlots && max_trials != null && max_trials > 0 &&
-        (searcher === SearchMethods.Grid || (max_length != null && max_length > 0)) &&
-        pool != null && length_units != null && metric != null && isBoolean(smaller_is_better)
+      setValidationError(!(validateLength(name ?? '') && slots_per_trial != null &&
+        slots_per_trial >= 0 && slots_per_trial <= maxSlots && max_length != null &&
+        max_length > 0 && max_concurrent_trials != null && max_concurrent_trials >= 0 &&
+        (searcher === SearchMethods.Grid.name || (max_trials != null && max_trials > 0)) &&
+        pool != null && length_units != null &&
+        (searcher !== SearchMethods.ASHA.name || (mode != null && isBoolean(stop_once)))
       ));
     }
   }, [ currentPage, formValues, maxSlots, searcher ]);
@@ -289,7 +279,8 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     validateForm();
   }, [ validateForm ]);
 
-  const handleSelectSearcher = useCallback((value: SelectValue) => {
+  const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
+    const value = e.target.value;
     setSearcher(
       Object.values(SearchMethods).find(searcher => searcher.name === value) ?? SearchMethods.ASHA,
     );
@@ -354,10 +345,10 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
       <div className={css.base}>
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
         <Form.Item
-          initialValue={SearchMethods.ASHA.name}
+          initialValue={searcher.name}
           label={(
             <div className={css.searchTitle}>
-              <p>Search method</p>
+              <p>Select search method</p>
               <Link
                 external
                 path={paths.
@@ -367,100 +358,47 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             </div>
           )}
           name="searcher">
-          <SelectFilter
-            showSearch={false}
+          <Radio.Group
+            className={css.searcherGroup}
+            optionType="button"
             onChange={handleSelectSearcher}>
             {Object.values(SearchMethods).map(searcher => (
-              <Select.Option key={searcher.name} value={searcher.name}>
-                {searcher.displayName}
-              </Select.Option>
+              <Radio.Button
+                key={searcher.name}
+                value={searcher.name}>
+                <div className={css.searcherButton}>
+                  {searcher.icon}
+                  <p>{searcher.displayName}</p>
+                </div>
+              </Radio.Button>
             ))}
-          </SelectFilter>
+          </Radio.Group>
         </Form.Item>
-        <p className={css.searcherDescription}>{searcher.description}</p>
         <Form.Item
           initialValue={experiment.name}
-          label="Experiment Name"
+          label="New Experiment Name"
           name="name"
           rules={[ { required: true } ]}>
           <Input maxLength={80} />
         </Form.Item>
-        <h2 className={css.sectionTitle}>Select Resources</h2>
-        <div className={css.poolRow}>
-          <Form.Item
-            initialValue={resourcePools?.[0]?.name}
-            label="Resource Pool"
-            name="pool"
-            rules={[ { required: true } ]}>
-            <SelectFilter
-              showSearch={false}
-              onChange={handleSelectPool}>
-              {resourcePools.map(pool => (
-                <Select.Option key={pool.name} value={pool.name}>
-                  {pool.name}
-                </Select.Option>
-              ))}
-            </SelectFilter>
-          </Form.Item>
-          <Form.Item
-            initialValue={1}
-            label="Max Slots"
-            name="slots"
-            rules={[ {
-              max: maxSlots,
-              min: 1,
-              required: true,
-              type: 'number',
-            } ]}
-            validateStatus={slotsError ? 'error' : 'success'}>
-            <InputNumber precision={0} onChange={validateSlots} />
-          </Form.Item>
-        </div>
-        {slotsError && (
-          <p className={css.error}>
-            Slots must be an integer between 1 and {maxSlots} (total slots).
-          </p>
-        )}
-        <p>Total slots: {maxSlots}</p>
-        <h2 className={css.sectionTitle}>Set Trial Limits</h2>
-        <div className={css.lengthRow}>
-          <Form.Item
-            initialValue={experiment.config.searcher.metric}
-            label="Metric"
-            name="metric"
-            rules={[ { required: true } ]}>
-            <SelectFilter showSearch={false}>
-              {metrics.map(metric => (
-                <Select.Option key={metric} value={metric}>
-                  {metric}
-                </Select.Option>
-              ))}
-            </SelectFilter>
-          </Form.Item>
-          <Form.Item
-            initialValue={experiment.config.searcher.smallerIsBetter}
-            label="Scoring"
-            name="smaller_is_better"
-            rules={[ { required: true } ]}>
-            <SelectFilter showSearch={false}>
-              <Select.Option value={true}>
-                Smaller is better
-              </Select.Option>
-              <Select.Option value={false}>
-                Larger is better
-              </Select.Option>
-            </SelectFilter>
-          </Form.Item>
-        </div>
         <Form.Item
-          hidden={searcher === SearchMethods.Grid}
-          initialValue={1}
-          label="Max Trials"
-          name="max_trials"
-          rules={[ { min: 1, required: true, type: 'number' } ]}>
-          <InputNumber precision={0} />
+          initialValue={resourcePools?.[0]?.name}
+          label="Resource Pool"
+          name="pool"
+          rules={[ { required: true } ]}>
+          <SelectFilter
+            showSearch={false}
+            onChange={handleSelectPool}>
+            {resourcePools.map(pool => (
+              <Select.Option key={pool.name} value={pool.name}>
+                {pool.name}
+              </Select.Option>
+            ))}
+          </SelectFilter>
         </Form.Item>
-        <div className={css.lengthRow}>
+        <p>{maxSlots} max slots</p>
+        <h2 className={css.sectionTitle}>Configure Trials</h2>
+        <div className={css.inputRow}>
           <Form.Item
             initialValue={maxLength}
             label="Max Length"
@@ -488,7 +426,80 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
               )}
             </SelectFilter>
           </Form.Item>
+          <Form.Item
+            initialValue={experiment.configRaw?.resources?.slots_per_trial ??
+              maxSlots === 0 ? 0 : 1}
+            label="Slots per trial"
+            name="slots_per_trial"
+            rules={[ { max: maxSlots, min: 0, required: true, type: 'number' } ]}>
+            <InputNumber precision={0} />
+          </Form.Item>
         </div>
+        {searcher.name === 'adaptive_asha' && (
+          <Form.Item
+            initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
+            label={(
+              <div className={css.labelWithTooltip}>
+                Early Stopping Mode
+                <Tooltip
+                  title="How aggressively to perform early stopping of underperforming trials">
+                  <InfoCircleOutlined />
+                </Tooltip>
+              </div>
+            )}
+            name="mode"
+            rules={[ { required: true } ]}>
+            <SelectFilter showSearch={false}>
+              <Select.Option value="aggressive">
+                Aggressive
+              </Select.Option>
+              <Select.Option value="standard">
+                Standard
+              </Select.Option>
+              <Select.Option value="conservative">
+                Conservative
+              </Select.Option>
+            </SelectFilter>
+          </Form.Item>
+        )}
+        {searcher.name === 'adaptive_asha' && (
+          <Form.Item
+            initialValue={experiment.configRaw.searcher?.stop_once ?? true}
+            name="stop_once"
+            rules={[ { required: true } ]}
+            valuePropName="checked">
+            <Checkbox>
+              Stop once - Only stop trials one time when there is enough evidence to
+              terminate training (recommended for faster search)
+            </Checkbox>
+          </Form.Item>
+        )}
+        <h2 className={css.sectionTitle}>Set Training Limits</h2>
+        <div className={css.inputRow}>
+          <Form.Item
+            hidden={searcher === SearchMethods.Grid}
+            initialValue={1}
+            label="Max trials"
+            name="max_trials"
+            rules={[ { min: 1, required: true, type: 'number' } ]}>
+            <InputNumber precision={0} />
+          </Form.Item>
+          <Form.Item
+            initialValue={0}
+            label={(
+              <div className={css.labelWithTooltip}>
+                Max concurrent trials
+                <Tooltip title="Use 0 for max possible parallelism">
+                  <InfoCircleOutlined style={{ color: 'var(--theme-colors-monochrome-8)' }} />
+                </Tooltip>
+              </div>
+            )}
+            name="max_concurrent_trials"
+            rules={[ { min: 0, required: true, type: 'number' } ]}>
+            <InputNumber precision={0} />
+          </Form.Item>
+        </div>
+
       </div>
     );
   }, [ experiment.config.searcher.metric,
