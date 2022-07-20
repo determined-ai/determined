@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -797,6 +798,36 @@ const ProjectDetails: React.FC = () => {
   );
 
   const ExperimentTabOptions = useMemo(() => {
+    const getMenuProps = ():{items: MenuProps['items'], onClick: MenuProps['onClick']} => {
+      const SWITCH_ARCHIVED = 'switchArchive';
+      const COLUMNS = 'columns';
+      const RESULT_FILTER = 'resetFilters';
+
+      const onItemClick: MenuProps['onClick'] = (e) => {
+        switch(e.key) {
+          case SWITCH_ARCHIVED:
+            switchShowArchived(!settings.archived);
+            break;
+          case COLUMNS:
+            handleCustomizeColumnsClick();
+            break;
+          case RESULT_FILTER:
+            resetFilters();
+            break;
+          default:
+            return;
+        }
+      };
+      const menuItems = [
+        { key: SWITCH_ARCHIVED, label: settings.archived ? 'Hide Archived' : 'Show Archived' },
+        { key: COLUMNS, label: 'Columns' },
+      ];
+      if (filterCount > 0) {
+        menuItems.push({ key: RESULT_FILTER, label: `Clear Filters (${filterCount})` });
+      }
+      return { items: menuItems, onClick: onItemClick };
+    };
+
     return (
       <div className={css.tabOptions}>
         <Space className={css.actionList}>
@@ -810,21 +841,7 @@ const ProjectDetails: React.FC = () => {
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown
-            overlay={(
-              <Menu>
-                <Menu.Item
-                  key="switchArchive"
-                  onClick={() => switchShowArchived(!settings.archived)}>
-                  {settings.archived ? 'Hide Archived' : 'Show Archived'}
-                </Menu.Item>
-                <Menu.Item key="columns" onClick={handleCustomizeColumnsClick}>Columns</Menu.Item>
-                {filterCount > 0 && (
-                  <Menu.Item key="resetFilters" onClick={resetFilters}>
-                    Clear Filters ({filterCount})
-                  </Menu.Item>
-                )}
-              </Menu>
-            )}
+            overlay={(<Menu {...getMenuProps()} />)}
             placement="bottomRight"
             trigger={[ 'click' ]}>
             <div>

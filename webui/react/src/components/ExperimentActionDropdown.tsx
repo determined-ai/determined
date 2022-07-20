@@ -143,9 +143,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   };
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, curUser).map((action) => (
-    <Menu.Item danger={action === Action.Delete} key={action}>
-      {action}
-    </Menu.Item>
+    { danger: action === Action.Delete, key: action, label: action }
   ));
 
   if (menuItems.length === 0) {
@@ -158,7 +156,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     );
   }
 
-  const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
+  const menu = <Menu items={menuItems} onClick={handleMenuClick} />;
 
   return children ? (
     <>

@@ -1,4 +1,5 @@
 import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
@@ -42,18 +43,20 @@ const PageHeaderFoldable: React.FC<Props> = (
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
     if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      const opt = options.find((opt) => opt.key === e.key) as Option;
+      isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent);
+    };
+
+    const menuItems = options.map((opt: Option) => ({
+      className: css.optionsDropdownItem,
+      disabled: opt.disabled || !opt.onClick,
+      key: opt.key,
+      label: renderOptionLabel(opt),
+    }));
     dropdownOptions = (
-      <Menu>
-        {options.map((opt) => (
-          <Menu.Item
-            className={css.optionsDropdownItem}
-            disabled={opt.disabled || !opt.onClick}
-            key={opt.key}
-            onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}>
-            {renderOptionLabel(opt)}
-          </Menu.Item>
-        ))}
-      </Menu>
+      <Menu items={menuItems} onClick={onItemClick} />
     );
   }
 

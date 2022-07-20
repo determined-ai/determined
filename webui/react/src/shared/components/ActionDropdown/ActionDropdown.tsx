@@ -1,4 +1,5 @@
 import { Dropdown, Menu, Modal, ModalFuncProps } from 'antd';
+import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
@@ -100,9 +101,9 @@ const ActionDropdown = <T extends string>(
     }
   };
 
-  const menuItems: React.ReactNode[] = actionOrder
+  const menuItems: MenuProps['items'] = actionOrder
     .filter((act) => !!onTrigger[act])
-    .map((action) => <Menu.Item key={action}>{action}</Menu.Item>);
+    .map((action) => ({ key: action, label: action }));
 
   if (menuItems.length === 0) {
     return (
@@ -114,11 +115,12 @@ const ActionDropdown = <T extends string>(
     );
   }
 
-  const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
-
   return (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
+      <Dropdown
+        overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
+        placement="bottomRight"
+        trigger={[ 'click' ]}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

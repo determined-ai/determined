@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -307,21 +308,31 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [ settings.row, updateSettings ]);
 
   const TrialActionDropdown = useCallback(({ record, onVisibleChange, children }) => {
+    const OPEN_TENSORBOARD = 'open-tensorboard';
+    const VIEW_LOGS = 'view-logs';
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      switch(e.key) {
+        case OPEN_TENSORBOARD:
+          handleOpenTensorBoard(record);
+          break;
+        case VIEW_LOGS:
+          handleViewLogs(record);
+          break;
+        default:
+          return;
+      }
+    };
+
     return (
       <Dropdown
         overlay={(
-          <Menu>
-            <Menu.Item
-              key="open-tensorboard"
-              onClick={() => handleOpenTensorBoard(record)}>
-              {TrialAction.OpenTensorBoard}
-            </Menu.Item>
-            <Menu.Item
-              key="view-logs"
-              onClick={() => handleViewLogs(record)}>
-              {TrialAction.ViewLogs}
-            </Menu.Item>
-          </Menu>
+          <Menu
+            items={[
+              { key: OPEN_TENSORBOARD, label: TrialAction.OpenTensorBoard },
+              { key: VIEW_LOGS, label: TrialAction.ViewLogs },
+            ]}
+            onClick={onItemClick}
+          />
         )}
         trigger={[ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>

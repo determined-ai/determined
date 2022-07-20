@@ -1,4 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
+import type { InputRef } from 'antd';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -33,8 +34,8 @@ const EditableTagList: React.FC<Props> = (
   };
   const [ state, setState ] = useState(initialState);
   const [ showMore, setShowMore ] = useState(false);
-  const inputRef = useRef<Input>(null);
-  const editInputRef = useRef<Input>(null);
+  const inputRef = useRef<InputRef>(null);
+  const editInputRef = useRef<InputRef>(null);
 
   const handleClose = useCallback((removedTag) => {
     onChange?.(tags.filter((tag) => tag !== removedTag));

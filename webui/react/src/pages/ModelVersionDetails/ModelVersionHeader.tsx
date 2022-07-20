@@ -1,5 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CopyButton from 'components/CopyButton';
@@ -27,6 +28,14 @@ interface Props {
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+}
+
+type Action = {
+  danger: boolean;
+  disabled: boolean;
+  key: string;
+  onClick: () => void;
+  text: string;
 }
 
 const ModelVersionHeader: React.FC<Props> = ({
@@ -97,7 +106,7 @@ const ModelVersionHeader: React.FC<Props> = ({
     openModalVersionDelete(modelVersion);
   }, [ openModalVersionDelete, modelVersion ]);
 
-  const actions = useMemo(() => ([
+  const actions: Action[] = useMemo(() => ([
     {
       danger: false,
       disabled: false,
@@ -146,6 +155,28 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
   const handleCopy = useCallback(async () => {
     await copyToClipboard(referenceText);
   }, [ referenceText ]);
+
+  const menu = useMemo(() => {
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      const action = actions.find((ac) => ac.key === e.key) as Action;
+      action.onClick();
+    };
+
+    return (
+      <Menu
+        className={css.overflow}
+        items={actions.map((action) => ({
+          className: css.overflowAction,
+          danger: action.danger,
+          disabled: action.disabled,
+          key: action.key,
+          label: action.text,
+        }
+        ))}
+        onClick={onItemClick}
+      />
+    );
+  }, [ actions ]);
 
   return (
     <header className={css.base}>
@@ -199,20 +230,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
               </Button>
             ))}
             <Dropdown
-              overlay={(
-                <Menu className={css.overflow}>
-                  {actions.map((action) => (
-                    <Menu.Item
-                      className={css.overflowAction}
-                      danger={action.danger}
-                      disabled={action.disabled}
-                      key={action.key}
-                      onClick={action.onClick}>
-                      {action.text}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              )}
+              overlay={menu}
               trigger={[ 'click' ]}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />

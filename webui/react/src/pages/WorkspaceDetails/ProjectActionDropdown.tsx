@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
@@ -74,24 +75,43 @@ const ProjectActionDropdown: React.FC<Props> = (
     openProjectDelete();
   }, [ openProjectDelete ]);
 
-  const menuItems = useMemo(() => {
-    const items: React.ReactNode[] = [];
+  const menuProps: {items: MenuProps['items'], onClick: MenuProps['onClick']} = useMemo(() => {
+    const EDIT = 'edit';
+    const MOVE = 'move';
+    const SWITCH_ARCHIVED = 'switchArchive';
+    const DELETE = 'delete';
+    const items: MenuProps['items'] = [];
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      switch(e.key) {
+        case EDIT:
+          handleEditClick();
+          break;
+        case MOVE:
+          handleMoveClick();
+          break;
+        case SWITCH_ARCHIVED:
+          handleArchiveClick();
+          break;
+        case DELETE:
+          handleDeleteClick();
+          break;
+        default:
+          break;
+      }
+    };
+
     if (userHasPermissions && !project.archived) {
-      items.push(<Menu.Item key="edit" onClick={handleEditClick}>Edit...</Menu.Item>);
-    }
-    if (userHasPermissions && !project.archived) {
-      items.push(<Menu.Item key="move" onClick={handleMoveClick}>Move...</Menu.Item>);
+      items.push({ key: EDIT, label: 'Edit...' });
+      items.push({ key: MOVE, label: 'Move...' });
     }
     if (userHasPermissions && !workspaceArchived) {
-      items.push((
-        <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
-          {project.archived ? 'Unarchive' : 'Archive'}
-        </Menu.Item>));
+      items.push({ key: SWITCH_ARCHIVED, label: project.archived ? 'Unarchive' : 'Archive' });
     }
     if (userHasPermissions && !project.archived && project.numExperiments === 0) {
-      items.push(<Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>);
+      items.push({ danger: true, key: 'delete', label: 'Delete...' });
     }
-    return items;
+    return { items: items, onClick: onItemClick };
   }, [
     handleArchiveClick,
     handleDeleteClick,
@@ -115,19 +135,15 @@ const ProjectActionDropdown: React.FC<Props> = (
     modalProjectMoveContextHolder,
   ]);
 
-  if (menuItems.length === 0 && !showChildrenIfEmpty) {
+  if (menuProps.items?.length === 0 && !showChildrenIfEmpty) {
     return null;
   }
 
   return children ? (
     <>
       <Dropdown
-        disabled={menuItems.length === 0}
-        overlay={(
-          <Menu>
-            {menuItems}
-          </Menu>
-        )}
+        disabled={menuProps.items?.length === 0}
+        overlay={<Menu {...menuProps} />}
         placement="bottomLeft"
         trigger={trigger ?? [ 'contextMenu', 'click' ]}
         onVisibleChange={onVisibleChange}>
@@ -141,12 +157,8 @@ const ProjectActionDropdown: React.FC<Props> = (
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
-        disabled={menuItems.length === 0}
-        overlay={(
-          <Menu>
-            {menuItems}
-          </Menu>
-        )}
+        disabled={menuProps.items?.length === 0}
+        overlay={<Menu {...menuProps} />}
         placement="bottomRight"
         trigger={trigger ?? [ 'click' ]}>
         <button onClick={stopPropagation}>

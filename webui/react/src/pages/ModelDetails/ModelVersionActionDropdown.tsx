@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -29,20 +30,29 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   const handleDeleteClick = useCallback(() => onDelete?.(), [ onDelete ]);
 
   const ModelVersionActionMenu = useMemo(() => {
+    const DOWNLOAD = 'download';
+    const DELETE_VERSION = 'delete-version';
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      switch(e.key) {
+        case DOWNLOAD:
+          handleDownloadClick();
+          break;
+        case DELETE_VERSION:
+          handleDeleteClick();
+          break;
+        default:
+          return;
+      }
+    };
+
     return (
-      <Menu>
-        <Menu.Item
-          key="download"
-          onClick={handleDownloadClick}>
-          Download
-        </Menu.Item>
-        <Menu.Item
-          danger
-          key="delete-version"
-          onClick={handleDeleteClick}>
-          Deregister Version
-        </Menu.Item>
-      </Menu>
+      <Menu
+        items={[
+          { key: DOWNLOAD, label: 'Download' },
+          { danger: true, key: DELETE_VERSION, label: 'Deregister Version' },
+        ]}
+        onClick={onItemClick}
+      />
     );
   }, [ handleDeleteClick, handleDownloadClick ]);
 

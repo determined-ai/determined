@@ -1,4 +1,5 @@
 import { Button, Dropdown, Menu, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -256,21 +257,33 @@ const ModelRegistry: React.FC = () => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
-  const ModelActionMenu = useCallback((record: ModelItem) => (
-    <Menu>
-      <Menu.Item
-        key="switch-archived"
-        onClick={() => switchArchived(record)}>
-        {record.archived ? 'Unarchive' : 'Archive'}
-      </Menu.Item>
-      <Menu.Item
-        danger
-        key="delete-model"
-        onClick={() => showConfirmDelete(record)}>
-        Delete Model
-      </Menu.Item>
-    </Menu>
-  ), [ showConfirmDelete, switchArchived ]);
+  const ModelActionMenu = useCallback((record: ModelItem) => {
+    const SWITCH_ARCHIVED = 'switch-archived';
+    const DELETE_MODEL = 'delete-model';
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      switch(e.key) {
+        case SWITCH_ARCHIVED:
+          switchArchived(record);
+          break;
+        case DELETE_MODEL:
+          showConfirmDelete(record);
+          break;
+        default:
+          return;
+      }
+    };
+
+    return (
+      <Menu
+        items={[
+          { key: SWITCH_ARCHIVED, label: record.archived ? 'Unarchive' : 'Archive' },
+          { key: DELETE_MODEL, label: 'Delete Model' },
+        ]}
+        onClick={onItemClick}
+      />
+    );
+  }, [ showConfirmDelete, switchArchived ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (

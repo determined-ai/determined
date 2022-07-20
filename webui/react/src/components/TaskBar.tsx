@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
@@ -50,20 +51,30 @@ export const TaskBar: React.FC<Props> = ({
     });
   }, []);
 
-  const dropdownOverlay = useMemo(() => (
-    <Menu>
-      <Menu.Item
-        key="kill"
-        onClick={() => deleteTask(task)}>
-        Kill
-      </Menu.Item>
-      <Menu.Item
-        key="viewLogs"
-        onClick={handleViewLogsClick}>
-        View Logs
-      </Menu.Item>
-    </Menu>
-  ), [ task, deleteTask, handleViewLogsClick ]);
+  const dropdownOverlay = useMemo(() => {
+    const KILL = 'kill';
+    const VIEW_LOGS = 'viewLogs';
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      switch(e.key) {
+        case KILL:
+          deleteTask(task);
+          break;
+        case VIEW_LOGS:
+          handleViewLogsClick();
+          break;
+        default:
+          return;
+      }
+    };
+
+    return (
+      <Menu
+        items={[ { key: KILL, label: 'Kill' }, { key: VIEW_LOGS, label: 'View Logs' } ]}
+        onClick={onItemClick}
+      />
+    );
+  }, [ task, deleteTask, handleViewLogsClick ]);
 
   return (
     <div className={css.base}>

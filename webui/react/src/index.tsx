@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Router } from 'react-router-dom';
 
 import history from 'shared/routes/history';
@@ -13,13 +13,16 @@ import * as serviceWorker from './serviceWorker';
 import 'shared/prototypes';
 import 'dev';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <Router history={history}>
-      <App />
-    </Router>
-  </React.StrictMode>,
-  document.getElementById('root'),
+const container = document.getElementById('root');
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const root = createRoot(container!);
+
+root.render(
+  // <React.StrictMode>
+  <Router history={history}>
+    <App />
+  </Router>,
+  // </React.StrictMode>,
 );
 
 /*
