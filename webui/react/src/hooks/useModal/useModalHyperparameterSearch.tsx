@@ -372,8 +372,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             label="Units"
             name="length_units"
             rules={[ { required: true } ]}>
-            <SelectFilter
-              onChange={handleSelectPool}>
+            <SelectFilter>
               <Select.Option value="records">
                 records
               </Select.Option>
