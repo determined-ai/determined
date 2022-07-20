@@ -171,11 +171,14 @@ func TestUserGroups(t *testing.T) {
 		group1 := Group{ID: 1001, Name: "group1"}
 		group2 := Group{ID: 1002, Name: "group2"}
 		group3 := Group{ID: 1003, Name: "group3"}
+
+		t.Cleanup(func() {})
+
 		_, err := AddGroup(ctx, group1)
 		require.NoError(t, err, "failed to create group")
-		_, err := AddGroup(ctx, group2)
+		_, err = AddGroup(ctx, group2)
 		require.NoError(t, err, "failed to create group")
-		_, err := AddGroup(ctx, group3)
+		_, err = AddGroup(ctx, group3)
 		require.NoError(t, err, "failed to create group")
 
 		groups, err := SearchGroups(ctx, "", 0, 0, 1)
@@ -189,16 +192,16 @@ func TestUserGroups(t *testing.T) {
 		groups, err = SearchGroups(ctx, "", 0, 1, 1)
 		require.NoError(t, err, "failed to search for groups")
 		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
-		index := groupsContain(groups, group2.ID)
+		index = groupsContain(groups, group2.ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
-		foundGroup := groups[index]
+		foundGroup = groups[index]
 		require.Equal(t, group2.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 
-		_, err := DeleteGroup(ctx, 1001)
+		err = DeleteGroup(ctx, 1001)
 		require.NoError(t, err, "errored when deleting group")
-		_, err := DeleteGroup(ctx, 1002)
+		err = DeleteGroup(ctx, 1002)
 		require.NoError(t, err, "errored when deleting group")
-		_, err := DeleteGroup(ctx, 1003)
+		err = DeleteGroup(ctx, 1003)
 		require.NoError(t, err, "errored when deleting group")
 	})
 }
