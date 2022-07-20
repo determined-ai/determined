@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # This dev script is a wrapper on the devcluster tool, and provides
 # per-user and per cluster configuration of the devcluster-slurm.yaml
 # file to enable it to be used for our various clusters.  It dynamically
@@ -7,16 +7,29 @@
 # source need not be modified.   By default it also starts/stops SSH
 # tunnels inbound to launcher, and outbound to the desktop master.
 #
+# It supports authorized access to the launcher by automatically specifying
+# the auth_file if a ~/.{CLUSTER}.token file is present.   Use the -a option
+# (one time) to retrieve a remote token file from the cluster.
+#
 # Pre-requisites:
 #   1) Configure your USERPORT_${USER} port below using your login name on
 #      the desktop that you are using.
+#
 #   2)  Unless you specify both -n -x, you must have password-less ssh configured to the
 #   target cluster, to enable the ssh connection without prompts.
 #
 #      ssh-copy-id {cluster}
 #
+#   3) To utilize the -a option to retrieve the /opt/launcher/jetty/base/etc/.launcher.token
+#   you must have sudo access on the cluster, and authenticate the sudo that will be
+#   exectued to retrieve the .launcher.token.
+
+HELPEND=$(($LINENO - 1))
+
+
 INTUNNEL=1
 TUNNEL=1
+
 if [[ $1 == '-n' ]]; then
     INTUNNEL=
     shift
@@ -33,6 +46,10 @@ if [[ $1 == '-p' ]]; then
     PODMAN=1
     shift
 fi
+if [[ $1 == '-a' ]]; then
+    PULL_AUTH=1
+    shift
+fi
 
 if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
     echo "Usage: $0 [-h] [-n] [-x] [-t] {cluster}"
@@ -40,10 +57,11 @@ if [[ $1 == '-h' || $1 == '--help' || -z $1 ]] ; then
     echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
     echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
     echo "  -t     Force debug level to trace regardless of cluster configuration value."
-    echo "  -p     Use podman as a container host (otherwise singlarity)"
-    echo 
+    echo "  -p     Use podman as a container host (otherwise singlarity)."
+    echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+    echo
     echo "Documentation:"
-    head -n 17 $0
+    head -n $HELPEND $0 | tail -n $(($HELPEND  - 1))
     exit 1
 fi
 
@@ -67,6 +85,23 @@ function mkintunnel() {
     MASTER_PORT=$2
     SSH_HOST=$3
     ssh -NL ${MASTER_PORT}:${MASTER_HOST}:${MASTER_PORT} ${SSH_HOST}
+}
+
+# Attempt to retrieve the auth token from the remote host
+# This requires that your account have sudo access to root
+# and will likely be prompted for a password.
+# Args: {hostname} {cluster}
+function pull_auth_token() {
+    HOST=$1
+    CLUSTER=$2
+
+    echo  "Attempting to access /opt/launcher/jetty/base/etc/.launcher.token from $HOST"
+    rm -f ~/.token.log
+    ssh -t $HOST 'sudo cat /opt/launcher/jetty/base/etc/.launcher.token' | tee ~/.token.log
+    # Token is the last line of the output (no newline)
+    TOKEN=$(tail -n 1 ~/.token.log)
+    echo -n "${TOKEN}" > ~/.${CLUSTER}.token
+    cat ~/.${CLUSTER}.token
 }
 
 # Update your username/port pair
@@ -161,6 +196,11 @@ if [[ -z $INTUNNEL ]]; then
     OPT_LAUNCHERHOST=$SLURMCLUSTER
 fi
 
+if [[ -n $PULL_AUTH ]]; then
+    pull_auth_token $SLURMCLUSTER $CLUSTER
+fi
+
+
 if [[ -n $TRACE ]]; then
     export OPT_DEBUGLEVEL=trace
 fi
@@ -169,11 +209,14 @@ if [[ -n $PODMAN ]]; then
     export OPT_CONTAINER_RUN_TYPE='podman'
 fi
 
+if [[ -r ~/.${CLUSTER}.token ]]; then
+    export OPT_AUTHFILE=~/.${CLUSTER}.token
+fi
 
 echo
 echo "Configuration Used:"
 printenv |grep OPT_
-echo 
+echo
 
 # Terminate our tunnels on exit
 trap "kill 0" EXIT
