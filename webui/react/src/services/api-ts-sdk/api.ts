@@ -10617,7 +10617,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11299,7 +11299,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11659,7 +11659,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12041,7 +12041,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {string} [searchText] 
+     * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
@@ -15259,7 +15259,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15412,7 +15412,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15473,7 +15473,7 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -15517,7 +15517,7 @@ export class JobsApi extends BaseAPI {
      * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {string} [searchText] 
+     * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
@@ -18982,7 +18982,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -19154,7 +19154,7 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -19225,7 +19225,7 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -19281,7 +19281,7 @@ export class TasksApi extends BaseAPI {
      * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {string} [searchText] 
+     * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TasksApi
@@ -20518,7 +20518,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20800,7 +20800,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20940,7 +20940,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {string} [searchText] 
+         * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -21075,7 +21075,7 @@ export class TrialsApi extends BaseAPI {
      * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {string} [searchText] 
+     * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
