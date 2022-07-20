@@ -404,53 +404,33 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		queue := e.searcher.GetCustomSearcherEventQueue()
 		if queue == nil {
 			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Events Queue not found"))
-		} else {
-			ops := make([]searcher.Operation, 0)
-			log.Info("Actor is processing post operations")
-			for _, searcherOp := range msg.SearcherOperations {
-				switch concreteOperation := searcherOp.GetUnion().(type) {
-				case *experimentv1.SearcherOperation_CreateTrial:
-					op := searcher.NewCreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
-					ops = append(ops, op)
-				case *experimentv1.SearcherOperation_Shutdown:
-					ops = append(ops, searcher.NewShutdown())
-				case *experimentv1.SearcherOperation_ValidateAfter:
-					requestID, err := uuid.Parse(concreteOperation.ValidateAfter.TrialId)
-					if err != nil {
-						ctx.Respond(status.Errorf(
-							codes.InvalidArgument,
-							"Trial ID = %+v", concreteOperation.ValidateAfter.TrialId,
-						))
-					} else {
-						ops = append(ops, searcher.NewValidateAfter(
-							model.RequestID(requestID),
-							concreteOperation.ValidateAfter.Length,
-						))
-					}
-				case *experimentv1.SearcherOperation_CloseTrial:
-					requestID, err := uuid.Parse(concreteOperation.CloseTrial.TrialId)
-					if err != nil {
-						ctx.Respond(status.Errorf(
-							codes.InvalidArgument,
-							"Trial ID = %+v", concreteOperation.CloseTrial.TrialId,
-						))
-					} else {
-						ops = append(ops, searcher.NewClose(model.RequestID(requestID)))
-					}
-				default:
-					ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
-				}
+			return nil
+		}
+		ops := make([]searcher.Operation, 0)
+		log.Info("Actor is processing post operations")
+		for _, searcherOp := range msg.SearcherOperations {
+			switch concreteOperation := searcherOp.GetUnion().(type) {
+			case *experimentv1.SearcherOperation_CreateTrial:
+				ops = append(ops, searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType))
+			case *experimentv1.SearcherOperation_Shutdown:
+				ops = append(ops, searcher.NewShutdown())
+			case *experimentv1.SearcherOperation_ValidateAfter:
+				ops = append(ops, searcher.ValidateAfterFromProto(concreteOperation))
+			case *experimentv1.SearcherOperation_CloseTrial:
+				ops = append(ops, searcher.CloseFromProto(concreteOperation))
+			default:
+				ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
 			}
-			ctx.Log().Warnf("Processing operations %+v", ops)
+		}
+		ctx.Log().Warnf("Processing operations %+v", ops)
 
-			// remove from queue
-			if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
-				ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
-			} else {
-				e.searcher.Record(ops)
-				e.processOperations(ctx, ops, nil)
-				ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
-			}
+		// remove from queue
+		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
+			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
+		} else {
+			e.searcher.Record(ops)
+			e.processOperations(ctx, ops, nil)
+			ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
 		}
 
 	case *apiv1.GetSearcherEventsRequest:

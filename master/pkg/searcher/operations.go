@@ -155,13 +155,17 @@ func hparamValFromProto(protoHparam *experimentv1.Hyperparameter) interface{} {
 	}
 }
 
-// NewCreateFromProto initializes a new Create operation from
+// CreateFromProto initializes a new Create operation from
 // an experimentv1.SearcherOperation_CreateTrial.
-func NewCreateFromProto(
+func CreateFromProto(
 	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
-	requestID, _ := uuid.Parse(protoSearcherOp.CreateTrial.TrialId)
+	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.TrialId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", protoSearcherOp.CreateTrial.TrialId))
+	}
+	// TODO determine whether trial seed is set on client or on master
 	trialSeed := uint32(42)
 	hparams := make(HParamSample)
 	for name, protoHparam := range protoSearcherOp.CreateTrial.Hyperparams {
@@ -211,11 +215,15 @@ func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 
 // ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
 func ValidateAfterFromProto(
-	rID model.RequestID, op *experimentv1.ValidateAfterOperation,
+	op *experimentv1.SearcherOperation_ValidateAfter,
 ) ValidateAfter {
+	requestID, err := uuid.Parse(op.ValidateAfter.TrialId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", op.ValidateAfter.TrialId))
+	}
 	return ValidateAfter{
-		RequestID: rID,
-		Length:    op.Length,
+		RequestID: model.RequestID(requestID),
+		Length:    op.ValidateAfter.Length,
 	}
 }
 
@@ -240,6 +248,18 @@ type Close struct {
 func NewClose(requestID model.RequestID) Close {
 	return Close{
 		RequestID: requestID,
+	}
+}
+
+func CloseFromProto(
+	op *experimentv1.SearcherOperation_CloseTrial,
+) Close {
+	requestID, err := uuid.Parse(op.CloseTrial.TrialId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", op.CloseTrial.TrialId))
+	}
+	return Close{
+		RequestID: model.RequestID(requestID),
 	}
 }
 
