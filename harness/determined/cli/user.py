@@ -1,4 +1,5 @@
 import getpass
+import os
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
@@ -69,10 +70,14 @@ def log_in_user(parsed_args: Namespace) -> None:
     else:
         username = parsed_args.username
 
-    message = "Password for user '{}': ".format(username)
-
+    if "DET_PASS" in os.environ:
+        print("Using the enviornment variable DET_PASS for a user's password")
+        password = os.environ["DET_PASS"]
+    else:
+        message = "Password for user '{}': ".format(username)
+        password = getpass.getpass(message)
     # In order to not send clear-text passwords, we hash the password.
-    password = api.salt_and_hash(getpass.getpass(message))
+    password = api.salt_and_hash(password)
 
     token_store = authentication.TokenStore(parsed_args.master)
 
@@ -186,7 +191,8 @@ args_description = [
     Cmd("u|ser", None, "manage users", [
         Cmd("list", list_users, "list users", [], is_default=True),
         Cmd("login", log_in_user, "log in user", [
-            Arg("username", nargs="?", default=None, help="name of user to log in as")
+            Arg("username", nargs="?", default=None,
+                help="name of user to log in as ($DET_PASS can be set to skip password prompt)")
         ]),
         Cmd("rename", rename, "change username for user", [
             Arg("target_user", default=None, help="name of user whose username should be changed"),

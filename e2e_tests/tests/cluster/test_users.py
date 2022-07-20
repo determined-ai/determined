@@ -368,6 +368,25 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_login_det_pass_environment(clean_auth: None) -> None:
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+
+    try:
+        os.environ["DET_PASS"] = creds.password
+        child = det_spawn(["user", "login", creds.username])
+        child.read()
+        child.wait()
+    finally:
+        del os.environ["DET_PASS"]
+    assert child.exitstatus == 0
+
+    child = det_spawn(["user", "whoami"])
+    child.expect(creds.username)
+    child.wait()
+    assert child.exitstatus == 0
+
+
+@pytest.mark.e2e_cpu
 def test_auth_inside_shell() -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
