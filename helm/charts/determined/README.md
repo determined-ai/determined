@@ -2,11 +2,13 @@
 
 # Determined: Deep Learning Training Platform
 
-[Determined](https://www.determined.ai/) is an open-source deep learning training platform that makes building models fast and easy. Determined can be deployed directly on CoreWeave Cloud by deploying this App.
+[Determined](https://www.determined.ai/) is an open-source deep learning training platform that makes building models fast and easy. Determined can be deployed directly on CoreWeave Cloud by deploying this App. Once deployed, the platform consumes minimal resources and incurs minimal cost. No GPU resources are consumed unless experiments are running. This prevents resource waste and idle compute compared to running experiments in Virtual Machines. Determined on CoreWeave supports multi GPU and multi node distributed training out of the box. The platform comes with support for many popular frameworks, including [GPT-Neo-X](https://github.com/determined-ai/gpt-neox) to train/finetune the [EleutherAI 20B](https://blog.eleuther.ai/announcing-20b/) model.
 
-## Pre-Requisistes
+The CoreWeave app allows for selection of a default region and hardware type for running experiments. These default selections allow users to submit experiments without any additional configuration. Storage volumes can also be attached, this allows for loading of training data and storage of checkpoints directly to a shared filesystem that can be mounted into Pods, Virtual Servers and File Browser (can be deployed from Apps).
 
-- You will need object storage bucket on CoreWeave Object Storage for checkpoints. _Please contact CoreWeave support if you are having trouble._ 
+## Pre-Requisites
+
+- You will need object storage bucket on CoreWeave Object Storage for checkpoints. _Please contact CoreWeave support to request Object Storage access_ 
 - Install the determined CLI via: https://docs.determined.ai/latest/interact/cli.html
 
 ## Installation
