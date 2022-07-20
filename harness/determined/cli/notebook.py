@@ -36,7 +36,9 @@ def start_notebook(args: Namespace) -> None:
             )
             for e in context.entries
         ]
-    body = bindings.v1LaunchNotebookRequest(config, files=files, preview=False)
+    body = bindings.v1LaunchNotebookRequest(
+        config, files=files, preview=args.preview, templateName=args.template
+    )
     resp = bindings.post_LaunchNotebook(setup_session(args), body=body)
 
     if args.preview:
