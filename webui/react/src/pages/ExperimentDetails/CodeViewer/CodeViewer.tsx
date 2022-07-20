@@ -24,6 +24,12 @@ export type Props = {
   experimentId: number;
 }
 
+type FileInfo = {
+  name: string;
+  path: string;
+  data: string;
+};
+
 /**
  * A component responsible to enable the user to view the code for a experiment.
  * It renders a file tree and a selected file in the MonacoEditor
@@ -51,12 +57,10 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       return { environment: restEnvironment, ...restConfig };
     }
   });
-  const [ fileData, setFileData ] = useState<string>(); // Data to be renderer in the editor
   const [ fileTree, setFileTree ] = useState<DataNode[]>([]); // Data structure to be used by the Tree
   const [ treeMap ] = useState(() => new Map<string, string>()); // Map structure from the API
   const [ isFetching, setIsFetching ] = useState(false);
-  const [ fileDir, setFileDir ] = useState(''); // The directory of a file selected in the Tree component
-  const [ fileName, setFileName ] = useState(''); // The sliced file name from a file selected in the tree
+  const [ fileInfo, setFileInfo ] = useState<FileInfo>();
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | undefined>(
     () => documentWidth <= 1024 ? 'tree' : undefined,
   ); // To be used in the mobile view, switches the UI
@@ -105,9 +109,11 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
             ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
           ]);
 
-          setFileName('Configuration');
-          setFileDir('Configuration');
-          setFileData(yaml.dump(config));
+          setFileInfo({
+            name: 'Configuration',
+            path: 'Configuration',
+            data: yaml.dump(config)
+          });
 
           if (documentWidth <= 1024) { // if it's in mobile view and we have a config file available, render it as default
             setViewMode('editor');
@@ -126,9 +132,11 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     info: { [key:string]: unknown, node: DataNode },
   ) => {
     if (info.node.title === 'Configuration') {
-      setFileName('Configuration');
-      setFileDir('Configuration');
-      setFileData(yaml.dump(config));
+      setFileInfo({
+        name: 'Configuration',
+        path: 'Configuration',
+        data: yaml.dump(config)
+      });
 
       return;
     }
@@ -142,9 +150,11 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         const file = await getExperimentFileFromTree({ experimentId, filePath });
 
         setIsFetching(false);
-        setFileData(decodeURIComponent(escape(window.atob(file))));
-        setFileDir(filePath);
-        setFileName(info.node.title as string);
+        setFileInfo({
+          name: info.node.title as string,
+          path: filePath,
+          data: decodeURIComponent(escape(window.atob(file)))
+        });
 
         if (documentWidth <= 1024) {
           setViewMode('editor');
@@ -158,7 +168,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   };
 
   const setEditorLanguageSyntax = () => {
-    const fileExt = fileDir.split('.')[1];
+    const fileExt = (fileInfo?.path || '').split('.')[1];
 
     if (fileExt === 'md') {
       return 'markdown';
@@ -184,7 +194,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         />
       </Section>
       {
-        !!fileDir && (
+        !!fileInfo?.path && (
           <Spinner className={editorClasses} spinning={isFetching}>
             <section className={css.fileDir}>
               <div className={css.fileInfo}>
@@ -198,13 +208,13 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                     )
                   }
                   <FileOutlined />
-                  <span className={css.filePath}>{fileName}</span>
+                  <span className={css.filePath}>{fileInfo.name}</span>
                 </div>
                 <div className={css.buttonsContainer}>
                   {/* <Button className={css.noBorderButton}>Open in Notebook</Button>
                   TODO: this will be added in the future*/}
                   {
-                    !fileDir.includes('Configuration') && (
+                    !fileInfo.path.includes('Configuration') && (
                       <Tooltip title="Download File">
                         <DownloadOutlined className={css.noBorderButton} />
                       </Tooltip>
@@ -224,7 +234,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         maxHeight>
         <Spinner spinning={isFetching}>
           {
-            !isFetching && !fileData
+            !isFetching && !fileInfo?.data
               ? <h5>Please, choose a file to preview.</h5>
               : (
                 <MonacoEditor
@@ -232,14 +242,14 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                   language={setEditorLanguageSyntax()}
                   options={{
                     minimap: {
-                      enabled: !!fileData?.length,
+                      enabled: !!fileInfo?.data.length,
                       showSlider: 'mouseover',
                       size: 'fit',
                     },
                     occurrencesHighlight: false,
                     readOnly: true,
                   }}
-                  value={fileData}
+                  value={fileInfo?.data}
                 />
               )
           }
