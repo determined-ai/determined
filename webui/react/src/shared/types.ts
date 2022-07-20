@@ -47,9 +47,9 @@ export interface ApiState<T> {
    * indicates whether the state has been fetched at least once or not.
    * should always be initialized to false.
    */
-  hasBeenInitialized: boolean;
+  hasBeenInitialized?: boolean;
   /** is the state being updated? */
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 export interface SingleEntityParams {
