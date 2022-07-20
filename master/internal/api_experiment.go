@@ -81,14 +81,13 @@ func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherE
 		return nil, err
 	}
 	if exp.State == experimentv1.State_STATE_COMPLETED {
-		eventCount := 1000 // TODO get event count from experiment
 		event := experimentv1.SearcherEvent_ExperimentInactive{
 			ExperimentInactive: &experimentv1.ExperimentInactive{
 				ExperimentState: exp.State.Enum().String(),
 			},
 		}
 		searcherEvent := experimentv1.SearcherEvent{
-			Id:    int32(eventCount + 1),
+			Id:    int32(-1),
 			Event: &event,
 		}
 		events := []*experimentv1.SearcherEvent{&searcherEvent}
