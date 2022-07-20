@@ -34,9 +34,14 @@ func GroupByID(ctx context.Context, gid int) (Group, error) {
 func SearchGroups(ctx context.Context,
 	name string,
 	userBelongsTo model.UserID,
+	offset, limit int,
 ) ([]Group, error) {
 	var groups []Group
-	query := db.Bun().NewSelect().Model(&groups)
+	query := db.PaginateBun(db.Bun().NewSelect().Model(&groups), offset, limit)
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)

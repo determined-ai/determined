@@ -58,7 +58,7 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId))
+	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}

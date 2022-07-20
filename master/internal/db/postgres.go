@@ -52,6 +52,15 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+func PaginateBun(query *bun.SelectQuery, offset, limit int) *bun.SelectQuery {
+	query = query.Order("id ASC")
+	query = query.Offset(offset)
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	return query
+}
+
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair

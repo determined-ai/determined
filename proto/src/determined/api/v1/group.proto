@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "determined/api/v1/pagination.proto";
 import "determined/group/v1/group.proto";
 import "determined/user/v1/user.proto";
 import "protoc-gen-swagger/options/annotations.proto";
