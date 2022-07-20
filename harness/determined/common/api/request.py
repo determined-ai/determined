@@ -46,14 +46,18 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
 def make_interactive_task_url(
     task_id: str, service_address: str, description: str, resource_pool: str, task_type: str
 ) -> str:
-    wait_path = "/notebooks/{}/events".format(task_id) if task_type == "notebook" else "/tensorboard/{}/events?tail=1".format(task_id)
+    wait_path = (
+        "/notebooks/{}/events".format(task_id)
+        if task_type == "notebook"
+        else "/tensorboard/{}/events?tail=1".format(task_id)
+    )
     wait_path_url = service_address + wait_path
-    public_url = os.environ.get("PUBLIC_URL","/det")
-    wait_page_url = "{}/wait/{}/{}?eventUrl={}&serviceAddr={}".format(public_url,
-        task_type, task_id, wait_path_url, service_address
+    public_url = os.environ.get("PUBLIC_URL", "/det")
+    wait_page_url = "{}/wait/{}/{}?eventUrl={}&serviceAddr={}".format(
+        public_url, task_type, task_id, wait_path_url, service_address
     )
     task_web_url = "{}/interactive/{}/{}/{}/{}/{}".format(
-        public_url,task_id, task_type, description, resource_pool, parse.quote_plus(wait_page_url)
+        public_url, task_id, task_type, description, resource_pool, parse.quote_plus(wait_page_url)
     )
     return task_web_url
 
