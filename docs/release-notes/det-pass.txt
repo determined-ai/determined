@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  CLI: ``det user login <username>`` now supports an environment variable ``DET_PASS`` to allow for
-   easier use of the determined CLI in scripts.
+-  CLI: ``det user login <username>`` now supports an environment variable ``DET_PASS`` to skip the
+   password prompt allowing for easier use of the determined CLI in scripts.
