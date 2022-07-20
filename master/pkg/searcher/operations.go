@@ -251,6 +251,7 @@ func NewClose(requestID model.RequestID) Close {
 	}
 }
 
+// CloseFromProto returns a Close operation from its protobuf representation.
 func CloseFromProto(
 	op *experimentv1.SearcherOperation_CloseTrial,
 ) Close {
