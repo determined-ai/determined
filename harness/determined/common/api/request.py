@@ -1,6 +1,5 @@
-import os 
-
 import json as _json
+import os
 import webbrowser
 from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
