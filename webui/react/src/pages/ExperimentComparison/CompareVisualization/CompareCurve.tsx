@@ -18,7 +18,7 @@ import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
 import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareCurve.module.scss';
-import HpTrialTable, { TrialHParams } from './CompareTable';
+import HpTrialTable, { TrialHParams, TrialMetrics } from './CompareTable';
 
 interface Props {
   batches: number[]
@@ -33,6 +33,8 @@ interface Props {
   selectedScale: Scale;
   trialHps: TrialHParams[];
   trialIds: number[];
+  trialMetrics: Record<number, TrialMetrics>;
+  metrics: MetricName[];
 
 }
 
@@ -48,6 +50,8 @@ const CompareCurve: React.FC<Props> = ({
   batches,
   hyperparameters,
   hasLoaded,
+  trialMetrics,
+  metrics
 }: Props) => {
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
@@ -140,10 +144,12 @@ const CompareCurve: React.FC<Props> = ({
             hpVals={hpVals}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
+            trialMetrics={trialMetrics}
             selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}
             trialIds={trialIds}
+            metrics={metrics}
             onMouseEnter={handleTableMouseEnter}
             onMouseLeave={handleTableMouseLeave}
           />

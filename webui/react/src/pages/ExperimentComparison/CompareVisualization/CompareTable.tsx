@@ -27,12 +27,14 @@ interface Props {
   hpVals: HpValsMap
   hyperparameters: HyperparametersFlattened;
   metric: MetricName;
+  metrics: MetricName[];
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
   selectedRowKeys?: number[];
   selection?: boolean;
   trialHps: TrialHParams[];
   trialIds: number[];
+  trialMetrics: Record<number, TrialMetrics>,
 }
 
 export interface TrialHParams {
@@ -40,6 +42,12 @@ export interface TrialHParams {
   hparams: Record<RecordKey, Primitive>;
   id: number;
   metric: number | null;
+  metrics: Record<RecordKey, Primitive>
+}
+
+export interface TrialMetrics {
+  id: number;
+  metrics: Record<RecordKey, Primitive>;
 }
 
 const HpTrialTable: React.FC<Props> = ({
@@ -56,10 +64,20 @@ const HpTrialTable: React.FC<Props> = ({
   selection,
   handleTableRowSelect,
   selectedRowKeys,
+  trialMetrics,
+  metrics
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const dataSource = useMemo(() => {
-    if (!filteredTrialIdMap) return trialHps;
+    if (!filteredTrialIdMap){
+      trialHps.forEach(hp => 
+        {
+        if(trialMetrics[hp.id]){
+          hp.metrics = trialMetrics[hp.id].metrics;
+        }
+      })
+      return trialHps;
+    }
     return trialHps.filter(trial => filteredTrialIdMap[trial.id]);
   }, [ filteredTrialIdMap, trialHps ]);
 
@@ -91,6 +109,25 @@ const HpTrialTable: React.FC<Props> = ({
     const metricRenderer = (_: string, record: TrialHParams) => {
       return <HumanReadableNumber num={record.metric} />;
     };
+
+    const metricsRenderer = (key: string) => {
+      return (_: string, record: TrialHParams) => {
+        if(record.metrics && isNumber(record.metrics[key])){
+          const value = record.metrics[key] as number;
+          return <HumanReadableNumber num={value} />
+        }
+        return "-" ;
+      };
+    };
+
+    const metricsSorter = (key: string) => {
+      return (recordA: TrialHParams, recordB: TrialHParams): number => {
+        const a = recordA.metrics[key] as Primitive;
+        const b = recordB.metrics[key] as Primitive;
+        return primitiveSorter(a, b);
+      };
+    };
+
     const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
       return numericSorter(recordA.metric ?? undefined, recordB.metric ?? undefined);
     };
@@ -153,7 +190,18 @@ const HpTrialTable: React.FC<Props> = ({
         };
       });
 
-    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns ];
+      const metricsColumns = metrics.filter(metricEntry => metricEntry.name != metric.name).map(metric => {
+        const key = metric.name;
+        return {
+          key,
+          render: metricsRenderer(key),
+          sorter: metricsSorter(key),
+          title: key,
+        };
+      });
+
+
+    return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns, ...metricsColumns ];
   }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
 
   const handleTableChange = useCallback((tablePagination) => {
