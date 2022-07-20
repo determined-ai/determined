@@ -10,7 +10,7 @@ const (
 	FilterOperationGreaterThan
 	// FilterOperationLessThanEqual checks if the field is less than or equal to a value.
 	FilterOperationLessThanEqual
-	// FilterOperationStringContainment checks if the field a value as a substring.
+	// FilterOperationStringContainment checks if the field contains a value as a substring.
 	FilterOperationStringContainment
 )
 

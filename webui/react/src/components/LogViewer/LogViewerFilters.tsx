@@ -153,13 +153,6 @@ const LogViewerFilters: React.FC<Props> = ({
             <Option key={level.value} value={level.value}>{level.label}</Option>
           ))}
         </MultiSelect>
-        {showSearch && (
-          <Input
-            placeholder="Search Logs..."
-            value={values.searchText}
-            onChange={handleSearch}
-          />
-        )}
         {isResetShown && <Button onClick={handleReset}>{ARIA_LABEL_RESET}</Button>}
       </Space>
     </>

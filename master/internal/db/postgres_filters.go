@@ -61,8 +61,7 @@ func filterToSQL(
 	case api.FilterOperationLessThanEqual:
 		return fmt.Sprintf("AND %s <= $%d", field, paramID)
 	case api.FilterOperationStringContainment:
-		// Suprisingly (?) this work for both bytea (needed for current)
-		// as well as plain text fields (not needed atm)
+		// Works for both bytea and text fields
 		return fmt.Sprintf("AND encode(%s::bytea, 'escape') ILIKE  ('%%%%' || $%d || '%%%%')", field, paramID)
 	default:
 		panic(fmt.Sprintf("cannot convert operation %d to SQL", f.Operation))
@@ -77,7 +76,6 @@ func filterToParams(f api.Filter) []interface{} {
 			params = append(params, v)
 		}
 	case string:
-		// any reason not to do this?
 		params = append(params, vs)
 	case []int64:
 		for _, v := range vs {
