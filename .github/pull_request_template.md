@@ -29,7 +29,7 @@ You may intentionally leave this section blank and remove the title.
 
 - [ ] User-facing API changes need the "User-facing API Change" label.
 - [ ] Release notes should be added as a separate file under `docs/release-notes/`.
-See [Release Note](../docs/release-notes/README.md) for details.
+See [Release Note](https://github.com/determined-ai/determined/blob/master/docs/release-notes/README.md) for details.
 - [ ] Licenses should be included for new code which was copied and/or modified from any external code.
 
 
