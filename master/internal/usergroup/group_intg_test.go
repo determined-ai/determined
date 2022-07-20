@@ -28,7 +28,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups", func(t *testing.T) {
-		groups, err := SearchGroups(ctx, "", 0)
+		groups, err := SearchGroups(ctx, "", 0, 0, 0)
 		require.NoError(t, err, "failed to search for groups")
 
 		index := groupsContain(groups, testGroup.ID)
@@ -36,7 +36,7 @@ func TestUserGroups(t *testing.T) {
 		foundGroup := groups[index]
 		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 
-		groups, err = SearchGroups(ctx, testGroup.Name, 0)
+		groups, err = SearchGroups(ctx, testGroup.Name, 0, 0, 0)
 		require.NoError(t, err, "failed to search for groups")
 		require.NotEmpty(t, groups, "failed to find group by name")
 		require.Len(t, groups, 1, "failed to narrow search to just matching name")
@@ -80,7 +80,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, err := SearchGroups(ctx, "", testUser.ID)
+		groups, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
 		require.NoError(t, err, "failed to search for groups that user blongs to")
 
 		index := groupsContain(groups, testGroup.ID)
@@ -166,16 +166,51 @@ func TestUserGroups(t *testing.T) {
 		index := usersContain(users, testUser.ID)
 		require.NotEqual(t, -1, index, "Expected users in static group to contain the test user")
 	})
+
+	t.Run("search group with offsets and limits", func(t *testing.T) {
+		group1 := Group{ID: 1001, Name: "group1"}
+		group2 := Group{ID: 1002, Name: "group2"}
+		group3 := Group{ID: 1003, Name: "group3"}
+		_, err := AddGroup(ctx, group1)
+		require.NoError(t, err, "failed to create group")
+		_, err := AddGroup(ctx, group2)
+		require.NoError(t, err, "failed to create group")
+		_, err := AddGroup(ctx, group3)
+		require.NoError(t, err, "failed to create group")
+
+		groups, err := SearchGroups(ctx, "", 0, 0, 1)
+		require.NoError(t, err, "failed to search for groups")
+		index := groupsContain(groups, group1.ID)
+		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
+		foundGroup := groups[index]
+		require.Equal(t, group1.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
+
+		groups, err = SearchGroups(ctx, "", 0, 1, 1)
+		require.NoError(t, err, "failed to search for groups")
+		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
+		index := groupsContain(groups, group2.ID)
+		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
+		foundGroup := groups[index]
+		require.Equal(t, group2.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+
+		_, err := DeleteGroup(ctx, 1001)
+		require.NoError(t, err, "errored when deleting group")
+		_, err := DeleteGroup(ctx, 1002)
+		require.NoError(t, err, "errored when deleting group")
+		_, err := DeleteGroup(ctx, 1003)
+		require.NoError(t, err, "errored when deleting group")
+	})
 }
 
 var (
 	testGroup = Group{
 		ID:   9001,
-		Name: "kljhadsflkgjhjklsfhg",
+		Name: "testGroup",
 	}
 	testGroupStatic = Group{
 		ID:   10001,
-		Name: "dsjkfkljjkasdfasdky",
+		Name: "testGroupStatic",
 	}
 	testUser = model.User{
 		ID:       1217651234,
