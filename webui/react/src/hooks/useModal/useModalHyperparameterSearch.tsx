@@ -12,9 +12,6 @@ import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { V1MetricNamesResponse } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
-import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
@@ -24,7 +21,6 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
 import { ExperimentBase, ExperimentSearcherName, Hyperparameter,
   HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters, TrialItem } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
 
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
@@ -85,9 +81,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   const [ form ] = Form.useForm();
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ canceler ] = useState(new AbortController());
-  const [ slotsError, setSlotsError ] = useState(false);
   const [ validationError, setValidationError ] = useState(false);
-  const [ metrics, setMetrics ] = useState<string[]>([ experiment.config.searcher.metric ]);
   const formValues = Form.useWatch([], form);
 
   const trialHyperparameters = useMemo(() => {
@@ -242,10 +236,6 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     setResourcePool(resourcePools[0]);
   }, [ resourcePool, resourcePools ]);
 
-  const validateSlots = useCallback((slots: number) => {
-    setSlotsError(!(Number.isInteger(slots) && slots >= 1 && slots <= maxSlots));
-  }, [ maxSlots ]);
-
   const validateForm = useCallback(() => {
     if (!formValues) return;
     if (currentPage === 1) {
@@ -286,30 +276,6 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     );
   }, []);
 
-  // Stream available metrics.
-  useEffect(() => {
-    const canceler = new AbortController();
-
-    readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(
-        experiment.id,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      event => {
-        if (!event || !event.validationMetrics || event.validationMetrics.length === 0) return;
-        /*
-         * The metrics endpoint can intermittently send empty lists,
-         * so we only update the state when the list is not empty.
-         */
-        const sortedValidationMetrics = event.validationMetrics.sort(alphaNumericSorter);
-        setMetrics(sortedValidationMetrics);
-      },
-    );
-
-    return () => canceler.abort();
-  }, [ experiment.id ]);
-
   const hyperparameterPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
     return (
@@ -318,7 +284,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <div
           className={css.hyperparameterContainer}
           style={{
-            gridTemplateColumns: `180px minmax(0, 1.25fr) 
+            gridTemplateColumns: `180px minmax(0, 1.4fr) 
               repeat(${searcher === SearchMethods.Grid ? 4 : 3}, minmax(0, 1fr))`,
           }}>
           <h2 className={css.hyperparameterName}>Hyperparameter</h2>
@@ -499,24 +465,21 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             <InputNumber precision={0} />
           </Form.Item>
         </div>
-
       </div>
     );
-  }, [ experiment.config.searcher.metric,
-    experiment.config.searcher.smallerIsBetter,
-    experiment.configRaw?.records_per_epoch,
+  }, [ experiment.configRaw?.records_per_epoch,
+    experiment.configRaw?.resources?.slots_per_trial,
+    experiment.configRaw.searcher?.mode,
+    experiment.configRaw.searcher?.stop_once,
     experiment.name,
     handleSelectPool,
     handleSelectSearcher,
     maxLength,
     maxLengthUnit,
     maxSlots,
-    metrics,
     modalError,
     resourcePools,
-    searcher,
-    slotsError,
-    validateSlots ]);
+    searcher ]);
 
   const pages = useMemo(
     () => [ searcherPage, hyperparameterPage ],
@@ -674,6 +637,7 @@ const HyperparameterRow: React.FC<RowProps> = (
                 key={HyperparameterType[type]}
                 value={HyperparameterType[type]}>
                 {type}
+                {type === 'Log' ? ' (base 10)' : ''}
               </Select.Option>
             ))}
         </Select>
@@ -764,8 +728,6 @@ const HyperparameterRow: React.FC<RowProps> = (
       )}
       {type === HyperparameterType.Categorical &&
         <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
-      {type === HyperparameterType.Log &&
-        <p className={css.warning}>Logs are base 10.</p>}
       {(!checked && valError) &&
         <p className={css.error}>{valError}</p>}
       {(checked && minError) &&
