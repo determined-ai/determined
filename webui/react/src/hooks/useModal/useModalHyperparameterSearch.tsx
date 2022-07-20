@@ -112,23 +112,17 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     baseConfig.searcher.max_trials = fields.searcher === SearchMethods.Grid.name ?
       undefined : fields.max_trials;
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
-    baseConfig.searcher.metric = fields.metric;
-    baseConfig.searcher.smaller_is_better = fields.smaller_is_better;
     baseConfig.resources.resource_pool = fields.pool;
-    baseConfig.resources.max_slots = fields.slots;
-    baseConfig.searcher.bracket_rungs = undefined;
+    baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
 
     if (fields.searcher === SearchMethods.ASHA.name) {
-      baseConfig.searcher.stop_once = baseConfig.stop_once ?? false;
-      baseConfig.searcher.max_rungs = baseConfig.max_rungs ?? 5;
-      baseConfig.searcher.divisor = baseConfig.divisor ?? 4;
-      baseConfig.searcher.mode = baseConfig.mode ?? 'standard';
-    } else if (fields.searcher === SearchMethods.AsyncHalving.name) {
-      baseConfig.searcher.stop_once = baseConfig.stop_once ?? false;
-      baseConfig.searcher.max_rungs = undefined;
-      baseConfig.searcher.divisor = baseConfig.divisor ?? 4;
-      baseConfig.searcher.mode = undefined;
+      baseConfig.searcher.bracket_rungs = baseConfig.searcher.bracket_rungs ?? [];
+      baseConfig.searcher.stop_once = fields.stop_once ?? baseConfig.searcher.stop_once ?? false;
+      baseConfig.searcher.max_rungs = baseConfig.searcher.max_rungs ?? 5;
+      baseConfig.searcher.divisor = baseConfig.searcher.divisor ?? 4;
+      baseConfig.searcher.mode = fields.mode ?? baseConfig.searcher.mode ?? 'standard';
     } else {
+      baseConfig.searcher.bracket_rungs = undefined;
       baseConfig.searcher.stop_once = undefined;
       baseConfig.searcher.max_rungs = undefined;
       baseConfig.searcher.divisor = undefined;
