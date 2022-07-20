@@ -18,7 +18,7 @@
       "resources": {
         "type": "object",
         "title": "Default Resources",
-        "description": "Experiments will launch with these default resource assignments by default. GPU type, CPU and Memory request can be overridden in the experiment configuration.",
+        "description": "Experiments will launch with these resource assignments by default. GPU type, CPU and Memory request can be overridden in the experiment configuration.",
         "form": true,
         "properties": {
           "cpu": {
