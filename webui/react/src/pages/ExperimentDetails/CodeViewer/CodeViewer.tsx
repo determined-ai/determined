@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
@@ -23,7 +24,18 @@ export type Props = {
   experimentId: number;
 }
 
+/**
+ * A component responsible to enable the user to view the code for a experiment.
+ * It renders a file tree and a selected file in the MonacoEditor
+ * Props:
+ * experimentID: the experiment ID;
+ * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
+ *
+ * Original ticket DET-7466
+ */
 const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
+  const { width: documentWidth } = useRecize();
+
   const [ config ] = useState(() => {
     /**
    * strip registry_auth from config for display
@@ -39,18 +51,15 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       return { environment: restEnvironment, ...restConfig };
     }
   });
-  const { width: documentWidth } = useRecize();
-
-  const [ fileData, setFileData ] = useState<string>();
-  const [ files, setFiles ] = useState<FileNode[]>([]);
-  const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
-  const [ treeMap ] = useState(() => new Map<string, string>());
+  const [ fileData, setFileData ] = useState<string>(); // Data to be renderer in the editor
+  const [ fileTree, setFileTree ] = useState<DataNode[]>([]); // Data structure to be used by the Tree
+  const [ treeMap ] = useState(() => new Map<string, string>()); // Map structure from the API
   const [ isFetching, setIsFetching ] = useState(false);
-  const [ fileDir, setFileDir ] = useState('');
-  const [ fileName, setFileName ] = useState('');
+  const [ fileDir, setFileDir ] = useState(''); // The directory of a file selected in the Tree component
+  const [ fileName, setFileName ] = useState(''); // The sliced file name from a file selected in the tree
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | undefined>(
     () => documentWidth <= 1024 ? 'tree' : undefined,
-  );
+  ); // To be used in the mobile view, switches the UI
 
   const treeClasses = classNames({
     [ css.hideElement ]:
@@ -61,59 +70,56 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     (documentWidth <= 1024) && (viewMode === 'tree'),
   });
 
-  // get the file tree from backend
-  useEffect(() => {
-    (async () => {
-      const files = await getExperimentFileTree({ experimentId });
-
-      setFiles(files);
-    })();
-    return () => {
-      setFiles([]);
-    };
-  }, [ experimentId ]);
-
   // map the file tree
   useEffect(() => {
-    const navigateTree = (node: FileNode, key: string): DataNode => {
-      treeMap.set(key, node.path);
+    try {
+      (async () => {
+        const files = await getExperimentFileTree({ experimentId });
 
-      const newNode: DataNode = {
-        className: 'treeNode',
-        isLeaf: true,
-        key,
-        title: node.name,
-      };
+        const navigateTree = (node: FileNode, key: string): DataNode => {
+          treeMap.set(key, node.path);
 
-      if (node.files?.length) {
-        newNode.children = node.files.map((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
-        newNode.isLeaf = false;
-      }
+          const newNode: DataNode = {
+            className: 'treeNode',
+            isLeaf: true,
+            key,
+            title: node.name,
+          };
 
-      return newNode;
-    };
-    if (config) {
-      setFileTree([
-        {
-          className: 'treeNode',
-          isLeaf: true,
-          key: '0-0',
-          title: 'Configuration',
-        },
-        ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
-      ]);
+          if (node.files?.length) {
+            newNode.children = node.files.map((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
+            newNode.isLeaf = false;
+          }
 
-      setFileName('Configuration');
-      setFileDir('Configuration');
-      setFileData(yaml.dump(config));
+          return newNode;
+        };
 
-      if (documentWidth <= 1024) {
-        setViewMode('editor');
-      }
-    } else {
-      setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
+        if (config) {
+          setFileTree([
+            {
+              className: 'treeNode',
+              isLeaf: true,
+              key: '0-0',
+              title: 'Configuration',
+            },
+            ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
+          ]);
+
+          setFileName('Configuration');
+          setFileDir('Configuration');
+          setFileData(yaml.dump(config));
+
+          if (documentWidth <= 1024) { // if it's in mobile view and we have a config file available, render it as default
+            setViewMode('editor');
+          }
+        } else {
+          setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
+        }
+      })();
+    } catch (error) {
+      throw new Error(error as string);
     }
-  }, [ treeMap, files, config, documentWidth ]);
+  }, [ treeMap, config, documentWidth, experimentId ]);
 
   const onSelectFile = async (
     keys: React.Key[],
@@ -154,12 +160,8 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   const setEditorLanguageSyntax = () => {
     const fileExt = fileDir.split('.')[1];
 
-    if (fileExt === 'js') {
-      return 'javascript';
-    }
-
-    if (fileExt === 'py') {
-      return 'python';
+    if (fileExt === 'md') {
+      return 'markdown';
     }
 
     if (fileExt === 'ts') {
