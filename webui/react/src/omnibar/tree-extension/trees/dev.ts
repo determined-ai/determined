@@ -1,10 +1,9 @@
-import { DaError, ErrorLevel, ErrorType } from 'ErrorHandler';
-
 import { resetServerAddress, setServerAddress } from 'dev';
 import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { checkServerAlive, serverAddress } from 'routes/utils';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 
 const dev: TreeNode[] = [
   {
@@ -24,14 +23,13 @@ const dev: TreeNode[] = [
               if (isAlive) {
                 setServerAddress(inp);
               } else {
-                const error: DaError = {
+                const error = new DetError(undefined, {
                   isUserTriggered: true,
                   level: ErrorLevel.Error,
-                  message: `Could not find a valid server at "${inp}"`,
                   publicMessage: `Could not find a valid server at "${inp}"`,
                   publicSubject: 'Server not found',
                   type: ErrorType.Ui,
-                };
+                });
                 throw error;
               }
             },

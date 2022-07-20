@@ -2,11 +2,11 @@ import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
-import handleError from 'ErrorHandler';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
+import handleError from 'utils/error';
 
 import css from './Omnibar.module.scss';
 
