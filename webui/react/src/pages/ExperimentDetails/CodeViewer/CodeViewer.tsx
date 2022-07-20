@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
 import useRecize from 'hooks/useResize';
-import { handlePath } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
@@ -220,7 +220,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                         <DownloadOutlined
                           className={css.noBorderButton}
                           onClick={e => handlePath(e, {
-                            path: `/experiments/${experimentId}/file/download?path=${fileInfo.path}`,
+                            path: paths.experimentFileFromTree(experimentId, fileInfo.path),
                             external: true
                           })}/>
                       </Tooltip>

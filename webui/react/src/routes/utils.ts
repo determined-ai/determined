@@ -90,6 +90,9 @@ export const paths = {
   experimentDetails: (experimentId: number | string): string => {
     return `/experiments/${experimentId}`;
   },
+  experimentFileFromTree: (experimentId: number | string, filePath: string): string => {
+    return `/experiments/${experimentId}/file/download?path=${filePath}`;
+  },
   experimentList: (): string => {
     return '/experiments';
   },
