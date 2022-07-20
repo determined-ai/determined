@@ -76,19 +76,11 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
             OnesDataset(self.dataset_len), batch_size=self.context.get_per_slot_batch_size()
         )
 
-
-class NoopPyTorchTrialWithCallbacks(NoopPyTorchTrial):
-    def __init__(self, context: pytorch.PyTorchTrialContext):
-        super().__init__(context)
-
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         return {"test_callbacks": TestCallbacks()}
 
 
 class TestCallbacks(PyTorchCallback):
-    def __init__(self) -> None:
-        pass
-
     def on_training_workload_end(
         self, avg_metrics: Dict[str, Any], batch_metrics: List[Dict[str, Any]]
     ) -> None:

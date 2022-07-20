@@ -156,6 +156,12 @@ def set_shared_fs_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return config
 
 
+def set_scheduling_unit(config: Dict[Any, Any], scheduling_unit: int) -> Dict[Any, Any]:
+    config = config.copy()
+    config["scheduling_unit"] = scheduling_unit
+    return config
+
+
 def set_s3_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
     config = config.copy()
     config["data_layer"] = {}

@@ -284,23 +284,30 @@ def test_epoch_sync(num_workers: int, global_batch_size: int, dataset_len: int) 
 
 @pytest.mark.e2e_cpu
 def test_pytorch_on_training_workload_end_callback() -> None:
-    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const_callbacks.yaml"))
-    max_len_batches = 2
+    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
+    max_len_batches = 4
+    min_val_period = min_ckpt_period = scheduling_unit = 2
     config = conf.set_max_length(config, {"batches": max_len_batches})
+    config = conf.set_min_validation_period(config, {"batches": min_val_period})
+    config = conf.set_min_checkpoint_period(config, {"batches": min_ckpt_period})
+    config = conf.set_scheduling_unit(config, scheduling_unit)
 
     e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
 
     # Expect on_training_workload_end_callback to be called max_len_batches times.
-    patterns = max_len_batches * ["Calling on_training_workload_end", "{'batch_metrics':"]
+    num_workloads = max_len_batches // scheduling_unit
+    patterns = num_workloads * [
+        "Calling on_training_workload_end",
+        "avg_metrics:",
+        "batch_metrics:",
+    ]
     trial_id = exp.experiment_trials(e_id)[0].trial.id
     exp.assert_patterns_in_trial_logs(trial_id, patterns)
 
 
 @pytest.mark.e2e_cpu
 def test_pytorch_on_checkpoint_upload_end() -> None:
-    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const_callbacks.yaml"))
-    max_len_batches = 2
-    config = conf.set_max_length(config, {"batches": max_len_batches})
+    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
 
     e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
 
