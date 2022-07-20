@@ -10,7 +10,6 @@ from determined.cli import command, task
 from determined.cli.util import format_args
 from determined.common import api, constants, context
 from determined.common.api import authentication, request
-from determined.common.api.request import make_interactive_task_url
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
