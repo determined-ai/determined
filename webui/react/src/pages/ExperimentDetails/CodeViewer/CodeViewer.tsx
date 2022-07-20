@@ -26,9 +26,9 @@ export type Props = {
 }
 
 type FileInfo = {
+  data: string;
   name: string;
   path: string;
-  data: string;
 };
 
 /**
@@ -111,9 +111,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
           ]);
 
           setFileInfo({
+            data: yaml.dump(config),
             name: 'Configuration',
             path: 'Configuration',
-            data: yaml.dump(config)
           });
 
           if (documentWidth <= 1024) { // if it's in mobile view and we have a config file available, render it as default
@@ -134,9 +134,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   ) => {
     if (info.node.title === 'Configuration') {
       setFileInfo({
+        data: yaml.dump(config),
         name: 'Configuration',
         path: 'Configuration',
-        data: yaml.dump(config)
       });
 
       return;
@@ -152,9 +152,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
 
         setIsFetching(false);
         setFileInfo({
+          data: decodeURIComponent(escape(window.atob(file))),
           name: info.node.title as string,
           path: filePath,
-          data: decodeURIComponent(escape(window.atob(file)))
         });
 
         if (documentWidth <= 1024) {
@@ -220,9 +220,10 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                         <DownloadOutlined
                           className={css.noBorderButton}
                           onClick={e => handlePath(e, {
+                            external: true,
                             path: paths.experimentFileFromTree(experimentId, fileInfo.path),
-                            external: true
-                          })}/>
+                          })}
+                        />
                       </Tooltip>
                     )
                   }
