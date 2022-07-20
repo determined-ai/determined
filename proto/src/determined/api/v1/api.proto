@@ -1636,16 +1636,6 @@ service Determined {
     };
   }
 
-  // Find users that belong to a group
-  rpc GetUsersInGroup(GetUsersInGroupRequest) returns (GetUsersInGroupResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/groups/{group_id}/users"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"
-    };
-  }
-
   // Create a group with optional members on creation
   rpc CreateGroup(CreateGroupRequest) returns (GroupWriteResponse) {
     option (google.api.http) = {

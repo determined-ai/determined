@@ -3,8 +3,6 @@ package internal
 import (
 	"context"
 
-	"github.com/determined-ai/determined/proto/pkg/userv1"
-
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -159,26 +157,6 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 			Name:    newName,
 			Users:   model.Users(users).Proto(),
 		},
-	}
-
-	return resp, nil
-}
-
-func (a *apiServer) GetUsersInGroup(ctx context.Context, req *apiv1.GetUsersInGroupRequest,
-) (resp *apiv1.GetUsersInGroupResponse, err error) {
-	// Detect whether we're returning special errors and convert to gRPC error
-	defer func() {
-		err = mapAndFilterErrors(err)
-	}()
-
-	users, err := usergroup.GetUsersInGroup(ctx, int(req.GetGroupId()))
-	if err != nil {
-		return nil, err
-	}
-
-	resp = &apiv1.GetUsersInGroupResponse{Users: []*userv1.User{}}
-	for _, user := range users {
-		resp.Users = append(resp.Users, user.Proto())
 	}
 
 	return resp, nil

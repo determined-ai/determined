@@ -29,17 +29,6 @@ message GroupSearchResponse {
     repeated determined.group.v1.Group groups = 1;
 }
 
-message GetUsersInGroupRequest {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: ["group_id"] }
-    };
-    int32 group_id = 1;
-}
-
-message GetUsersInGroupResponse {
-    repeated determined.user.v1.User users = 1;
-}
-
 message UpdateGroupRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: { required: ["group_id"] }
