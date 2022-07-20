@@ -110,7 +110,7 @@ export const getUsers: DetApi<
 > = {
   name: 'getUsers',
   postProcess: (response) => decoder.mapV1UserList(response),
-  request: (options) => detApi.Users.getUsers(options),
+  request: () => detApi.Users.getUsers(),
 };
 
 export const setUserPassword: DetApi<
