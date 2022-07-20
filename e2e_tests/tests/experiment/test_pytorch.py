@@ -294,7 +294,6 @@ def test_pytorch_on_training_workload_end_callback() -> None:
 
     e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
 
-    # Expect on_training_workload_end_callback to be called max_len_batches times.
     num_workloads = max_len_batches // scheduling_unit
     patterns = num_workloads * [
         "Calling on_training_workload_end",
