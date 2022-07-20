@@ -4,9 +4,8 @@ import { Button } from 'antd';
 import React, { PropsWithChildren, useCallback } from 'react';
 
 import StoreProvider from 'contexts/Store';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
-
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
 
 import useModalCheckpoint, { Props } from './useModalCheckpoint';
 

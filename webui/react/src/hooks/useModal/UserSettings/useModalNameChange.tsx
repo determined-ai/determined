@@ -4,10 +4,9 @@ import React, { useCallback } from 'react';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { patchUser } from 'services/api';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
-
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 
 interface Props {
   displayName?: string;

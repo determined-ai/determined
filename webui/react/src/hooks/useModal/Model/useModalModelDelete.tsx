@@ -4,15 +4,14 @@ import { useCallback } from 'react';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { deleteModel } from 'services/api';
+import useModal, {
+  CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
+} from 'shared/hooks/useModal/useModal';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
-
-import useModal, {
-  CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
-} from 'shared/hooks/useModal/useModal';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason) => void;

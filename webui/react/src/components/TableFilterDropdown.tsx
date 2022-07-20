@@ -3,9 +3,8 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
-import usePrevious from 'shared/hooks/usePrevious';
-
 import Icon from 'shared/components/Icon/Icon';
+import usePrevious from 'shared/hooks/usePrevious';
 
 import css from './TableFilterDropdown.module.scss';
 
