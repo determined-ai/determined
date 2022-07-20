@@ -9,7 +9,7 @@ from determined.cli import command, render, task
 from determined.cli.session import setup_session
 from determined.cli.util import format_args
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
 from determined.common.context import Context
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -54,7 +54,16 @@ def start_notebook(args: Namespace) -> None:
     with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
         for msg in ws:
             if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
-                url = api.browser_open(args.master, nb.serviceAddress)
+                url = api.browser_open(
+                    args.master,
+                    request.make_interactive_task_url(
+                        task_id=nb.id,
+                        service_address=nb.serviceAddress,
+                        description=nb.description,
+                        resource_pool=nb.resourcePool,
+                        task_type="notebook",
+                    ),
+                )
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
             render_event_stream(msg)
 
@@ -64,7 +73,17 @@ def open_notebook(args: Namespace) -> None:
     notebook_id = command.expand_uuid_prefixes(args)
     resp = api.get(args.master, "api/v1/notebooks/{}".format(notebook_id)).json()["notebook"]
     check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")
-    api.browser_open(args.master, resp["serviceAddress"])
+
+    api.browser_open(
+        args.master,
+        request.make_interactive_task_url(
+            task_id=resp["id"],
+            service_address=resp["serviceAddress"],
+            description=resp["description"],
+            resource_pool=resp["resourcePool"],
+            task_type="notebook",
+        ),
+    )
 
 
 # fmt: off
