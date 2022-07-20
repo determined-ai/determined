@@ -72,7 +72,7 @@ interface HyperparameterRowValues {
 }
 
 const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef, contextHolder } = useModal();
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal();
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
@@ -94,7 +94,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   }, [ trial ]);
 
   const hyperparameters = useMemo(() => {
-    return Object.entries(experiment.hyperparameters).map(hp => {
+    return Object.entries(experiment.hyperparameters).map((hp) => {
       const hpObject = ({ hyperparameter: hp[1], name: hp[0] });
       if (trialHyperparameters?.[hp[0]]) {
         hpObject.hyperparameter.val = trialHyperparameters[hp[0]];
@@ -130,8 +130,8 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     }
 
     Object.entries(fields)
-      .filter(field => typeof field[1] === 'object')
-      .forEach(hp => {
+      .filter((field) => typeof field[1] === 'object')
+      .forEach((hp) => {
         const hpName = hp[0];
         const hpInfo = hp[1] as HyperparameterRowValues;
         if (hpInfo.type === HyperparameterType.Categorical) return;
@@ -203,7 +203,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   }, [ currentPage, submitExperiment ]);
 
   const handleBack = useCallback(() => {
-    setCurrentPage(prev => prev - 1);
+    setCurrentPage((prev) => prev - 1);
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -211,7 +211,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   }, [ modalClose ]);
 
   const handleSelectPool = useCallback((value: SelectValue) => {
-    setResourcePool(resourcePools.find(pool => pool.name === value));
+    setResourcePool(resourcePools.find((pool) => pool.name === value));
   }, [ resourcePools ]);
 
   const maxSlots = useMemo(
@@ -234,7 +234,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     if (!formValues) return;
     if (currentPage === 1) {
       const hyperparameters = formValues as Record<string, HyperparameterRowValues>;
-      setValidationError(!Object.values(hyperparameters).every(hp => {
+      setValidationError(!Object.values(hyperparameters).every((hp) => {
         switch (hp.type) {
           case HyperparameterType.Constant:
           case HyperparameterType.Categorical:
@@ -266,7 +266,8 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
     const value = e.target.value;
     setSearcher(
-      Object.values(SearchMethods).find(searcher => searcher.name === value) ?? SearchMethods.ASHA,
+      Object.values(SearchMethods)
+        .find((searcher) => searcher.name === value) ?? SearchMethods.ASHA,
     );
   }, []);
 
@@ -287,7 +288,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <h2>Min Value</h2>
           <h2>Max Value</h2>
           {searcher === SearchMethods.Grid && <h2>Grid Count</h2>}
-          {hyperparameters.map(hp => (
+          {hyperparameters.map((hp) => (
             <HyperparameterRow
               key={hp.name}
               searcher={searcher}
@@ -322,7 +323,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             className={css.searcherGroup}
             optionType="button"
             onChange={handleSelectSearcher}>
-            {Object.values(SearchMethods).map(searcher => (
+            {Object.values(SearchMethods).map((searcher) => (
               <Radio.Button
                 key={searcher.name}
                 value={searcher.name}>
@@ -349,7 +350,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <SelectFilter
             showSearch={false}
             onChange={handleSelectPool}>
-            {resourcePools.map(pool => (
+            {resourcePools.map((pool) => (
               <Select.Option key={pool.name} value={pool.name}>
                 {pool.name}
               </Select.Option>
@@ -525,7 +526,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { contextHolder, modalClose, modalOpen, modalRef };
+  return { modalClose, modalOpen, modalRef, ...modalFields };
 };
 
 interface RowProps {
