@@ -72,26 +72,36 @@ The information we collect from the master periodically includes:
 -  the number of experiments that have been created
 -  the total number of trials across all experiments
 -  the number of active, paused, completed, and canceled experiments
+-  whether tasks are scheduled using Kubernetes or the built-in Determined scheduler
+-  the total number of slots (e.g., GPUs)
+-  the number of slots currently being utilized
+-  the type of each configured resource pool
 
 We also record when the following events happen:
 
 -  an experiment is created
--  an experiment's state changes
+-  an experiment changes state
 -  an agent connects or disconnects
 -  a user is created (the username is not transmitted)
 
 When an experiment is created, we report:
 
--  the ``searcher`` and ``resources`` sections of the experiment config
--  the name of the container image used
+-  the name of the hyperparameter search method
 -  the total number of hyperparameters
--  the value of the ``scheduling_unit`` configuration setting
+-  the number of slots (e.g., GPUs) used by each trial in the experiment
+-  the name of the container image used
 
-When an experiment terminates, we report:
+When a task terminates, we report:
 
--  the number of trials in the experiment
--  the total number of training workloads across all trials in the experiment
--  the total elapsed time for all workloads across all trials in the experiment
+-  the start and end time of the task
+
+-  the number of slots (e.g., GPUs) used
+
+-  for experiments, we also report:
+
+   -  the number of trials in the experiment
+   -  the total number of training workloads across all trials in the experiment
+   -  the total elapsed time for all workloads across all trials in the experiment
 
 The information we collect from the WebUI includes:
 

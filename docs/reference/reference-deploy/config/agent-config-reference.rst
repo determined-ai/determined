@@ -21,9 +21,9 @@
 -  ``container-master-port``: Master port that containers started by this agent will connect to.
    Defaults to the value of ``master_port``.
 
--  ``resource_pool``: Which resource pool the agent should join. Defaults to the
-      value of ``default``, which will work if and only if there is a resource pool named
-      ``default``. For more information please see :ref:`resource-pools`.
+-  ``resource_pool``: Which resource pool the agent should join. Defaults to the value of
+   ``default``, which will work if and only if there is a resource pool named ``default``. For more
+   information please see :ref:`resource-pools`.
 
 -  ``label``: The label to assign to this agent. An agent with a label will only be assigned
    workloads that have been assigned the same label (e.g., via the :ref:`agent_label
