@@ -62,7 +62,9 @@ func filterToSQL(
 		return fmt.Sprintf("AND %s <= $%d", field, paramID)
 	case api.FilterOperationStringContainment:
 		// Works for both bytea and text fields
-		return fmt.Sprintf("AND encode(%s::bytea, 'escape') ILIKE  ('%%%%' || $%d || '%%%%')", field, paramID)
+		return fmt.Sprintf("AND encode(%s::bytea, 'escape') ILIKE  ('%%%%' || $%d || '%%%%')",
+			field,
+			paramID)
 	default:
 		panic(fmt.Sprintf("cannot convert operation %d to SQL", f.Operation))
 	}
