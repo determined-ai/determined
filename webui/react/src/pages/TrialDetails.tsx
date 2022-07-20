@@ -52,7 +52,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
-    hasBeenInitialized: false,
     isLoading: true,
   });
   const pageRef = useRef<HTMLElement>(null);
@@ -92,12 +91,7 @@ const TrialDetailsComp: React.FC = () => {
   const fetchTrialDetails = useCallback(async () => {
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails((prev) => ({
-        ...prev,
-        data: response,
-        hasBeenInitialized: true,
-        isLoading: false,
-      }));
+      setTrialDetails((prev) => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
         setTrialDetails((prev) => ({ ...prev, error: e as Error }));
