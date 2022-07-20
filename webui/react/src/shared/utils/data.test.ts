@@ -191,11 +191,11 @@ describe('Data Utilities', () => {
        * otherwise you would have the following:
        * > a.forEach(x => b.delete(x)); isEquals(a, b)
        * true
-       */ 
+       */
       {
         input: [
-          new Set([[ 1 ]]),
-          new Set([[ 1 ]]),
+          new Set([ [ 1 ] ]),
+          new Set([ [ 1 ] ]),
         ],
         output: false,
       },
