@@ -77,7 +77,7 @@ def open_tensorboard(args: Namespace) -> None:
     check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
     api.browser_open(
         args.master,
-        make_interactive_task_url(
+        request.make_interactive_task_url(
             task_id=resp["id"],
             service_address=resp["serviceAddress"],
             resource_pool=resp["resourcePool"],
