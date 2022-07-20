@@ -185,6 +185,20 @@ describe('Data Utilities', () => {
         ],
         output: false,
       },
+      /**
+       * for now isEquals for set elements respects how the set views
+       * equality of its members, as opposed to how isEquals views them
+       * otherwise you would have the following:
+       * > a.forEach(x => b.delete(x)); isEquals(a, b)
+       * true
+       */ 
+      {
+        input: [
+          new Set([[ 1 ]]),
+          new Set([[ 1 ]]),
+        ],
+        output: false,
+      },
     ];
     tests.forEach((test) => {
       const [ a, b ] = test.input;
