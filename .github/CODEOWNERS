@@ -15,4 +15,4 @@
 /agent/internal/ @ioga
 
 # Hamid and Trent care about shared code
-/webui/react/src/shared/ @hamidzr @trentwatt
+/webui/react/src/shared/ @trentwatt
