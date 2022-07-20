@@ -5,8 +5,7 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
-
-import Spinner from '../shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
 
 import SkeletonTable from './Skeleton/SkeletonTable';
 

@@ -3,10 +3,7 @@ import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { BrandingType, CommandTask } from 'types';
-import { waitPageUrl } from 'wait';
-
-import { RouteConfig } from '../shared/types';
+import { RouteConfig } from 'shared/types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,
@@ -17,7 +14,9 @@ import {
   reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
-} from '../shared/utils/routes';
+} from 'shared/utils/routes';
+import { BrandingType, CommandTask } from 'types';
+import { waitPageUrl } from 'wait';
 
 import routes from './routes';
 

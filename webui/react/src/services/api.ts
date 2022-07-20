@@ -2,11 +2,10 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
+import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
-
-import { EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { generateDetApi } from '../shared/utils/service';
 
 export { isLoginFailure } from './utils';
 
@@ -400,5 +399,5 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from '../shared/utils/service';
-export { isAuthFailure } from '../shared/utils/service';
+export { isNotFound } from 'shared/utils/service';
+export { isAuthFailure } from 'shared/utils/service';

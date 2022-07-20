@@ -9,9 +9,8 @@ import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
+import Icon from 'shared/components/Icon/Icon';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-
-import Icon from '../shared/components/Icon/Icon';
 
 import css from './NavigationTabbar.module.scss';
 

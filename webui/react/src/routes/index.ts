@@ -21,8 +21,7 @@ import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
-
-import { RouteConfig } from '../shared/types';
+import { RouteConfig } from 'shared/types';
 
 import Routes from './routes';
 

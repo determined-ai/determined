@@ -12,11 +12,10 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner';
+import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../../shared/utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 

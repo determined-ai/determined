@@ -7,10 +7,9 @@ import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 const { TabPane } = Tabs;
 
