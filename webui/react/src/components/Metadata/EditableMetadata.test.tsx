@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
@@ -55,17 +55,17 @@ describe('EditableMetadata', () => {
     expect(handleOnChange).toHaveBeenLastCalledWith(resultMetadata);
   });
 
-  it.skip('handles metadata removal', async () => {
+  it('handles metadata removal', async () => {
     const metadataArray = Object.entries(initMetadata);
     const removalIndex = Math.floor(Math.random() * metadataArray.length);
-    const removalMetadata = metadataArray[removalIndex];
     const resultMetadata = Object.fromEntries(metadataArray.filter(
-      ([ key, value ]) => key !== removalMetadata[0] && value !== removalMetadata[1],
+      (_metadata, idx) => idx !== removalIndex,
     ));
-    const { handleOnChange } = setup(initMetadata, true);
+    const { handleOnChange, view } = setup(initMetadata, true);
 
-    await user.click((await screen.findAllByRole('button'))[removalIndex]);
-    await user.click(await screen.findByText('Delete Row'));
+    const actionButton = (view.getAllByRole('button', { name: 'action' }))[removalIndex];
+    await user.click(actionButton);
+    await user.click(await within(actionButton).findByText('Delete Row'));
     expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });
 });
