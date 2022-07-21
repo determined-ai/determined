@@ -2,4 +2,5 @@
 
 **Bug Fix**
 
--  When creating a `test` experiment the number of slots should be set to 1 but a bug kept it at the original number. This fix ensures that the number of slots is configured to 1.
+-  When creating a `test` experiment the number of slots should be set to 1 but a bug kept it at the
+   original number. This fix ensures that the number of slots is configured to 1.
