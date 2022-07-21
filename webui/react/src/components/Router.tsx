@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import { Redirect, Switch } from 'react-router-dom';
-import { CompatRoute } from 'react-router-dom-v5-compat';
+import { Redirect } from 'react-router-dom';
+import { CompatRoute, CompatRouter, Routes } from 'react-router-dom-v5-compat';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -33,46 +33,48 @@ const Router: React.FC<Props> = (props: Props) => {
   }, [ canceler ]);
 
   return (
-    <Switch>
-      {props.routes.map((config) => {
-        const { component, ...route } = config;
+    <CompatRouter>
+      <Routes>
+        {props.routes.map((config) => {
+          const { component, ...route } = config;
 
-        if (route.needAuth && !auth.isAuthenticated) {
+          if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <CompatRoute key={route.id} {...route} />;
-          return (
-            <CompatRoute
-              key={route.id}
-              {...route}
-              render={({ location }: any): ReactNode => (
-                <Redirect
-                  to={{
-                    pathname: paths.login(),
-                    state: { loginRedirect: filterOutLoginLocation(location) },
-                  }}
-                />
-              )}
-            />
-          );
-        } else if (route.redirect) {
+            if (!auth.checked) return <CompatRoute key={route.id} {...route} />;
+            return (
+              <CompatRoute
+                key={route.id}
+                {...route}
+                render={({ location }: any): ReactNode => (
+                  <Redirect
+                    to={{
+                      pathname: paths.login(),
+                      state: { loginRedirect: filterOutLoginLocation(location) },
+                    }}
+                  />
+                )}
+              />
+            );
+          } else if (route.redirect) {
           /*
           * We treat '*' as a catch-all path and specifically avoid wrapping the
           * `Redirect` with a `DomRoute` component. This ensures the catch-all
           * redirect will occur when encountered in the `Switch` traversal.
           */
-          if (route.path === '*') {
-            return <Redirect key={route.id} to={route.redirect} />;
-          } else {
-            return (
-              <CompatRoute exact={route.exact} key={route.id} path={route.path}>
-                <Redirect to={route.redirect} />;
-              </CompatRoute>
-            );
+            if (route.path === '*') {
+              return <Redirect key={route.id} to={route.redirect} />;
+            } else {
+              return (
+                <CompatRoute key={route.id} path={route.path}>
+                  <Redirect to={route.redirect} />;
+                </CompatRoute>
+              );
+            }
           }
-        }
-        return <CompatRoute component={component} key={route.id} {...route} />;
-      })}
-    </Switch>
+          return <CompatRoute element={component} key={route.id} {...route} />;
+        })}
+      </Routes>
+    </CompatRouter>
   );
 };
 
