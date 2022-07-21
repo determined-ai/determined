@@ -1045,19 +1045,19 @@ class v1CloseTrialOperation:
     def __init__(
         self,
         *,
-        trialId: "typing.Optional[str]" = None,
+        requestId: "typing.Optional[str]" = None,
     ):
-        self.trialId = trialId
+        self.requestId = requestId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CloseTrialOperation":
         return cls(
-            trialId=obj.get("trialId", None),
+            requestId=obj.get("requestId", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "trialId": self.trialId if self.trialId is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
         }
 
 class v1ColumnFilter:
@@ -1207,25 +1207,6 @@ class v1CompleteValidateAfterOperation:
             "searcherMetric": dump_float(self.searcherMetric) if self.searcherMetric is not None else None,
         }
 
-class v1ConstantHyperparameter:
-    def __init__(
-        self,
-        *,
-        val: "typing.Optional[float]" = None,
-    ):
-        self.val = val
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ConstantHyperparameter":
-        return cls(
-            val=float(obj["val"]) if obj.get("val", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "val": dump_float(self.val) if self.val is not None else None,
-        }
-
 class v1Container:
     def __init__(
         self,
@@ -1365,19 +1346,23 @@ class v1CreateTrialOperation:
     def __init__(
         self,
         *,
-        hyperparams: "typing.Optional[typing.Dict[str, v1Hyperparameter]]" = None,
+        hyperparams: "typing.Optional[str]" = None,
+        requestId: "typing.Optional[str]" = None,
     ):
+        self.requestId = requestId
         self.hyperparams = hyperparams
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateTrialOperation":
         return cls(
-            hyperparams={k: v1Hyperparameter.from_json(v) for k, v in obj["hyperparams"].items()} if obj.get("hyperparams", None) is not None else None,
+            requestId=obj.get("requestId", None),
+            hyperparams=obj.get("hyperparams", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "hyperparams": {k: v.to_json() for k, v in self.hyperparams.items()} if self.hyperparams is not None else None,
+            "requestId": self.requestId if self.requestId is not None else None,
+            "hyperparams": self.hyperparams if self.hyperparams is not None else None,
         }
 
 class v1CreateTrialsCollectionRequest:
@@ -1861,6 +1846,25 @@ class v1Experiment:
             "config": self.config,
             "originalConfig": self.originalConfig,
             "projectOwnerId": self.projectOwnerId,
+        }
+
+class v1ExperimentInactive:
+    def __init__(
+        self,
+        *,
+        experimentState: "typing.Optional[str]" = None,
+    ):
+        self.experimentState = experimentState
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentInactive":
+        return cls(
+            experimentState=obj.get("experimentState", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "experimentState": self.experimentState if self.experimentState is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -3615,29 +3619,6 @@ class v1GroupSearchResult:
         return {
             "group": self.group.to_json(),
             "numMembers": self.numMembers,
-        }
-
-class v1Hyperparameter:
-    def __init__(
-        self,
-        *,
-        constantHyperparam: "typing.Optional[v1ConstantHyperparameter]" = None,
-        nestedHyperparam: "typing.Optional[v1RawNestedHyperparameter]" = None,
-    ):
-        self.constantHyperparam = constantHyperparam
-        self.nestedHyperparam = nestedHyperparam
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1Hyperparameter":
-        return cls(
-            constantHyperparam=v1ConstantHyperparameter.from_json(obj["constantHyperparam"]) if obj.get("constantHyperparam", None) is not None else None,
-            nestedHyperparam=v1RawNestedHyperparameter.from_json(obj["nestedHyperparam"]) if obj.get("nestedHyperparam", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "constantHyperparam": self.constantHyperparam.to_json() if self.constantHyperparam is not None else None,
-            "nestedHyperparam": self.nestedHyperparam.to_json() if self.nestedHyperparam is not None else None,
         }
 
 class v1IdleNotebookRequest:
@@ -5839,25 +5820,6 @@ class v1RPQueueStat:
             "aggregates": [x.to_json() for x in self.aggregates] if self.aggregates is not None else None,
         }
 
-class v1RawNestedHyperparameter:
-    def __init__(
-        self,
-        *,
-        mapHyperparam: "typing.Optional[typing.Dict[str, v1Hyperparameter]]" = None,
-    ):
-        self.mapHyperparam = mapHyperparam
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1RawNestedHyperparameter":
-        return cls(
-            mapHyperparam={k: v1Hyperparameter.from_json(v) for k, v in obj["mapHyperparam"].items()} if obj.get("mapHyperparam", None) is not None else None,
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "mapHyperparam": {k: v.to_json() for k, v in self.mapHyperparam.items()} if self.mapHyperparam is not None else None,
-        }
-
 class v1RemoveAssignmentsRequest:
     def __init__(
         self,
@@ -6646,6 +6608,7 @@ class v1SearcherEvent:
     def __init__(
         self,
         *,
+        experimentInactive: "typing.Optional[v1ExperimentInactive]" = None,
         id: "typing.Optional[int]" = None,
         initialOperations: "typing.Optional[v1InitialOperations]" = None,
         trialClosed: "typing.Optional[v1TrialClosed]" = None,
@@ -6659,6 +6622,7 @@ class v1SearcherEvent:
         self.validationCompleted = validationCompleted
         self.trialClosed = trialClosed
         self.trialExitedEarly = trialExitedEarly
+        self.experimentInactive = experimentInactive
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherEvent":
@@ -6669,6 +6633,7 @@ class v1SearcherEvent:
             validationCompleted=v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj.get("validationCompleted", None) is not None else None,
             trialClosed=v1TrialClosed.from_json(obj["trialClosed"]) if obj.get("trialClosed", None) is not None else None,
             trialExitedEarly=v1TrialExitedEarly.from_json(obj["trialExitedEarly"]) if obj.get("trialExitedEarly", None) is not None else None,
+            experimentInactive=v1ExperimentInactive.from_json(obj["experimentInactive"]) if obj.get("experimentInactive", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -6679,6 +6644,7 @@ class v1SearcherEvent:
             "validationCompleted": self.validationCompleted.to_json() if self.validationCompleted is not None else None,
             "trialClosed": self.trialClosed.to_json() if self.trialClosed is not None else None,
             "trialExitedEarly": self.trialExitedEarly.to_json() if self.trialExitedEarly is not None else None,
+            "experimentInactive": self.experimentInactive.to_json() if self.experimentInactive is not None else None,
         }
 
 class v1SearcherOperation:
@@ -8155,17 +8121,21 @@ class v1ValidateAfterOperation:
         self,
         *,
         length: "typing.Optional[str]" = None,
+        requestId: "typing.Optional[str]" = None,
     ):
+        self.requestId = requestId
         self.length = length
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
         return cls(
+            requestId=obj.get("requestId", None),
             length=obj.get("length", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
+            "requestId": self.requestId if self.requestId is not None else None,
             "length": self.length if self.length is not None else None,
         }
 

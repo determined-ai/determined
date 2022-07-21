@@ -127,6 +127,13 @@ func (a *ExperimentAuthZBasic) CanAccessNTSCTask(
 	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
+// CanRunCustomSearch always returns a nil error.
+func (a *ExperimentAuthZBasic) CanRunCustomSearch(
+	curUser model.User, e *model.Experiment,
+) error {
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &ExperimentAuthZBasic{})
 }

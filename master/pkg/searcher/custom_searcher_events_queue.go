@@ -35,7 +35,6 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 func (q *SearcherEventQueue) RemoveUpTo(eventID int) error {
 	for i, v := range q.events {
 		if v.Id == int32(eventID) {
-			q.eventCount -= -v.Id
 			q.events = q.events[i+1:]
 			return nil
 		}

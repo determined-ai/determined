@@ -99,6 +99,10 @@ type ExperimentAuthZ interface {
 	// TODO(nick) move this when we add an AuthZ for notebooks.
 	CanGetActiveTasksCount(curUser model.User) error
 	CanAccessNTSCTask(curUser model.User, ownerID model.UserID) (canView bool, serverError error)
+
+	// GET /api/v1/experiments/:exp_id/searcher_events
+	// POST /api/v1/experiments/:exp_id/searcher_operations
+	CanRunCustomSearch(curUser model.User, e *model.Experiment) error
 }
 
 // AuthZProvider is the authz registry for experiments.
