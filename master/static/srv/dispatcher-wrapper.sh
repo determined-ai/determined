@@ -26,6 +26,11 @@ set -e
 # Controls debug logging for this method
 DEBUG=0
 
+# Clear all exported functions.  They are inherited into singularity containers
+# since they are passed by environment variables.  One specific breaking example
+# is the function that injects arguments into the which command.   These Redhat
+# options are not supported on Ubuntu which breaks the which use in the entrypoints.
+unset -f $(declare -Ffx | cut -f 3 -d ' ')
 
 # When the task container is invoked via SLURM, we have
 # to set the slot IDs from the Slurm-provided variable.
