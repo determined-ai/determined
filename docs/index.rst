@@ -108,11 +108,11 @@ environment so you can spend your time building models instead of managing infra
       <div class="tiles-flex">
           <a class="tile" href="quickstart-mdldev.html">
               <h2 class="tile-title">Start here ...</h2>
-              <p class="tile-description">Learn the basics steps needed to set up your Determined environment and train models.</p>
+              <p class="tile-description">Learn the basics steps needed to set up a Determined environment and train models.</p>
           </a>
           <a class="tile" href="introduction.html">
               <h2 class="tile-title">Introducing Determined</h2>
-              <p class="tile-description">Learn about core concepts and key features to get helpful context before diving into more detailed information.</p>
+              <p class="tile-description">Learn about core concepts and key features before diving into more detailed information.</p>
           </a>
           <a class="tile" href="cluster-setup-guide/basic.html">
               <h2 class="tile-title">Administrator Guide</h2>
@@ -120,7 +120,7 @@ environment so you can spend your time building models instead of managing infra
           </a>
           <a class="tile" href="training/dtrain-introduction.html">
               <h2 class="tile-title">Model Developer Guide</h2>
-              <p class="tile-description">Learn how to work with Training APIs, and how to configure your distributed training experiments.</p>
+              <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
           </a>
           <a class="tile" href="tutorials/index.html">
               <h2 class="tile-title">Tutorials</h2>
@@ -128,7 +128,7 @@ environment so you can spend your time building models instead of managing infra
           </a>
           <a class="tile" href="reference/python-api.html">
               <h2 class="tile-title">Reference</h2>
-              <p class="tile-description">The Determined reference documentation provides detailed information about configuration files, APIs, and the CLI.</p>
+              <p class="tile-description">Explore API libraries and configuration settings.</p>
           </a>
       </div>
    </div>
