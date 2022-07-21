@@ -176,16 +176,14 @@ const TrialDetailsComp: React.FC = () => {
           activeKey={tabKey}
           className="no-padding"
           tabBarExtraContent={(
-            <div style={{ bottom: 9, position: 'relative' }}>
-              <RoutePagination
-                currentId={trialId}
-                ids={experiment.trialIds ?? []}
-                tooltipLabel="Trial"
-                onSelectId={(selectedTrialId) => {
-                  history.push(paths.trialDetails(selectedTrialId, experiment?.id));
-                }}
-              />
-            </div>
+            <RoutePagination
+              currentId={trialId}
+              ids={experiment.trialIds ?? []}
+              tooltipLabel="Trial"
+              onSelectId={(selectedTrialId) => {
+                history.push(paths.trialDetails(selectedTrialId, experiment?.id));
+              }}
+            />
           )}
           onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">
