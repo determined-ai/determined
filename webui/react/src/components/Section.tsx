@@ -62,7 +62,7 @@ const Section: React.FC<Props> = ({ className = '', ...props }: PropsWithChildre
           {// validates the children
             React.Children.map(
               props.children,
-              child => !!child && React.cloneElement(child as ReactElement),
+              (child) => !!child && React.cloneElement(child as ReactElement),
             )
           }
         </Spinner>
