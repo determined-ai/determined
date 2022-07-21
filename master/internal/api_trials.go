@@ -928,7 +928,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	if err = a.ask(exp, trialCompleteOperation{
 		requestID: rID,
 		metric:    req.CompletedOperation.SearcherMetric,
-		op:        searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
+		op:        searcher.NewValidateAfter(rID, req.CompletedOperation.Op.Length),
 	}, nil); err != nil {
 		return nil, err
 	}
