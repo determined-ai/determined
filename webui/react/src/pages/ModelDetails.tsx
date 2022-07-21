@@ -36,13 +36,13 @@ import settingsConfig, {
 import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 
-interface Params {
+type Params = {
   modelName: string;
 }
 
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
-  const modelName = decodeURIComponent(useParams<Params>().modelName);
+  const modelName = decodeURIComponent(useParams<Params>().modelName!);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);

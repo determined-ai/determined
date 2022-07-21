@@ -35,7 +35,7 @@ const logoConfig: Record<RecordKey, string> = {
 };
 
 const SignIn: React.FC = () => {
-  const location = useLocation<{ loginRedirect: Location }>();
+  const location = useLocation();
   const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [ canceler ] = useState(new AbortController());

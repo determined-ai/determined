@@ -39,7 +39,7 @@ import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 
 const { Option } = Select;
 
-interface Params {
+type Params = {
   workspaceId: string;
 }
 
@@ -54,7 +54,7 @@ const WorkspaceDetails: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
-  const id = parseInt(workspaceId);
+  const id = parseInt(workspaceId!);
 
   const {
     settings,

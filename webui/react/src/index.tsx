@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import history from 'shared/routes/history';
 
@@ -15,9 +15,9 @@ import 'dev';
 
 ReactDOM.render(
   <React.StrictMode>
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <App />
-    </Router>
+    </HistoryRouter>
   </React.StrictMode>,
   document.getElementById('root'),
 );

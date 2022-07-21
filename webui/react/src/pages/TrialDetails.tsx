@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
@@ -35,7 +35,7 @@ enum TabType {
   Workloads = 'workloads',
 }
 
-interface Params {
+type Params = {
   experimentId?: string;
   tab?: TabType;
   trialId: string;
@@ -49,7 +49,7 @@ const TrialDetailsComp: React.FC = () => {
   const navigate = useNavigate();
   const routeParams = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
-  const [ trialId, setTrialId ] = useState<number>(parseInt(routeParams.trialId));
+  const [ trialId, setTrialId ] = useState<number>(parseInt(routeParams.trialId!));
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
@@ -57,7 +57,7 @@ const TrialDetailsComp: React.FC = () => {
   });
   const pageRef = useRef<HTMLElement>(null);
 
-  const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
+  const basePath = paths.trialDetails(routeParams.trialId!, routeParams.experimentId);
   const trial = trialDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -108,7 +108,7 @@ const TrialDetailsComp: React.FC = () => {
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
   useEffect(() => {
-    setTrialId(parseInt(routeParams.trialId));
+    setTrialId(parseInt(routeParams.trialId!));
   }, [ routeParams.trialId ]);
 
   useEffect(() => {

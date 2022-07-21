@@ -19,7 +19,7 @@ import { isSingleTrialExperiment } from 'utils/experiment';
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
 
-interface Params {
+type Params = {
   experimentId: string;
 }
 
@@ -35,7 +35,7 @@ const ExperimentDetails: React.FC = () => {
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
 
-  const id = parseInt(experimentId);
+  const id = parseInt(experimentId!);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {

@@ -1,7 +1,7 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Prompt, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
@@ -135,7 +135,7 @@ const NotesCard: React.FC<Props> = (
           onClick={handleNotesClick}
         />
       </Spinner>
-      <Prompt
+      {/* <Prompt
         message={(newLocation) => {
           const isSameExperiment = location.pathname.split('/')[0] === 'experiment' &&
              newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
@@ -146,7 +146,7 @@ const NotesCard: React.FC<Props> = (
           );
         }}
         when={editedNotes !== notes}
-      />
+      /> */}
     </Card>
   );
 };

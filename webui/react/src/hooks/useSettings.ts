@@ -1,7 +1,7 @@
 import queryString from 'query-string';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import { getUserSetting, updateUserSetting } from 'services/api';

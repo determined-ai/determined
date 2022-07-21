@@ -16,7 +16,7 @@ import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
 }
@@ -31,7 +31,7 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 export const TaskLogsWrapper: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
-  return <TaskLogs taskId={taskId} taskType={taskType} />;
+  return <TaskLogs taskId={taskId!} taskType={taskType!} />;
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [ filterOptions, setFilterOptions ] = useState<Filters>({});

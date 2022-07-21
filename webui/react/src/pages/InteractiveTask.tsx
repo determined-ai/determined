@@ -9,7 +9,7 @@ import { CommandState, CommandType } from 'types';
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
 
-interface Params {
+type Params = {
   taskId: string;
   taskName: string;
   taskResourcePool: string;
@@ -46,7 +46,6 @@ const getTitleState = (commandState?: CommandState): string => {
 };
 
 export const InteractiveTask: React.FC = () => {
-
   const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
   const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
   const [ taskState, setTaskState ] = useState<CommandState>();
@@ -85,25 +84,25 @@ export const InteractiveTask: React.FC = () => {
         <div className={css.barContainer}>
           <TaskBar
             handleViewLogsClick={() => setPageView(PageView.TASK_LOGS)}
-            id={taskId}
-            name={taskName}
-            resourcePool={taskResourcePool}
-            type={taskType}
+            id={taskId!}
+            name={taskName!}
+            resourcePool={taskResourcePool!}
+            type={taskType!}
           />
         </div>
         <div className={css.contentContainer}>
           {pageView === PageView.IFRAME && (
             <iframe
               allowFullScreen
-              src={decodeURIComponent(taskUrl)}
+              src={decodeURIComponent(taskUrl!)}
               title="Interactive Task"
             />
           )}
           {pageView === PageView.TASK_LOGS && (
             <TaskLogs
               headerComponent={<div />}
-              taskId={taskId}
-              taskType={taskType}
+              taskId={taskId!}
+              taskType={taskType!}
               onCloseLogs={() => setPageView(PageView.IFRAME)}
             />
           )}

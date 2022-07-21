@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -32,11 +32,7 @@ enum TabType {
   Notes = 'notes'
 }
 
-interface Params {
-  tab?: TabType;
-}
-
-const TAB_KEYS = Object.values(TabType);
+const TAB_KEYS: string[] = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
 const ExperimentConfiguration = React.lazy(() => {
@@ -57,7 +53,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
-  const { tab } = useParams<Params>();
+  const { tab } = useParams<'tab'>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);

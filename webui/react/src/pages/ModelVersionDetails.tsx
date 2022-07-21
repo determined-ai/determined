@@ -1,7 +1,6 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
@@ -26,7 +25,7 @@ import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 
 const { TabPane } = Tabs;
 
-interface Params {
+type Params = {
   modelName: string;
   tab?: TabType;
   versionId: string;
@@ -47,12 +46,12 @@ const ModelVersionDetails: React.FC = () => {
   const navigate = useNavigate();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
-  const basePath = paths.modelVersionDetails(modelName, versionId);
+  const basePath = paths.modelVersionDetails(modelName!, versionId!);
 
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion(
-        { modelName, versionId: parseInt(versionId) },
+        { modelName: modelName!, versionId: parseInt(versionId!) },
       );
       /**
        * TODO: can this compare againt prev instead of modelVersion, so that
@@ -82,9 +81,9 @@ const ModelVersionDetails: React.FC = () => {
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
       await patchModelVersion({
-        body: { metadata: editedMetadata, modelName },
-        modelName,
-        versionId: parseInt(versionId),
+        body: { metadata: editedMetadata, modelName: modelName! },
+        modelName: modelName!,
+        versionId: parseInt(versionId!),
       });
       await fetchModelVersion();
     } catch (e) {
@@ -99,9 +98,9 @@ const ModelVersionDetails: React.FC = () => {
   const saveNotes = useCallback(async (editedNotes: string) => {
     try {
       const versionResponse = await patchModelVersion({
-        body: { modelName, notes: editedNotes },
-        modelName,
-        versionId: parseInt(versionId),
+        body: { modelName: modelName!, notes: editedNotes },
+        modelName: modelName!,
+        versionId: parseInt(versionId!),
       });
       setModelVersion(versionResponse);
     } catch (e) {
@@ -116,9 +115,9 @@ const ModelVersionDetails: React.FC = () => {
   const saveDescription = useCallback(async (editedDescription: string) => {
     try {
       await patchModelVersion({
-        body: { comment: editedDescription, modelName },
-        modelName,
-        versionId: parseInt(versionId),
+        body: { comment: editedDescription, modelName: modelName! },
+        modelName: modelName!,
+        versionId: parseInt(versionId!),
       });
     } catch (e) {
       handleError(e, {
@@ -132,9 +131,9 @@ const ModelVersionDetails: React.FC = () => {
   const saveName = useCallback(async (editedName: string) => {
     try {
       await patchModelVersion({
-        body: { modelName, name: editedName },
-        modelName,
-        versionId: parseInt(versionId),
+        body: { modelName: modelName!, name: editedName },
+        modelName: modelName!,
+        versionId: parseInt(versionId!),
       });
     } catch (e) {
       handleError(e, {
@@ -148,9 +147,9 @@ const ModelVersionDetails: React.FC = () => {
   const saveVersionTags = useCallback(async (newTags) => {
     try {
       await patchModelVersion({
-        body: { labels: newTags, modelName },
-        modelName,
-        versionId: parseInt(versionId),
+        body: { labels: newTags, modelName: modelName! },
+        modelName: modelName!,
+        versionId: parseInt(versionId!),
       });
       fetchModelVersion();
     } catch (e) {
@@ -242,7 +241,7 @@ const ModelVersionDetails: React.FC = () => {
 
   if (!modelName) {
     return <Message title="Model name is empty" />;
-  } else if (isNaN(parseInt(versionId))) {
+  } else if (isNaN(parseInt(versionId!))) {
     return <Message title={`Invalid Version ID ${versionId}`} />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?

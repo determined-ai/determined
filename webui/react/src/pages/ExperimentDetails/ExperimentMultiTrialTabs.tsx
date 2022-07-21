@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
@@ -21,7 +21,7 @@ enum TabType {
   Notes = 'notes',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
   viz?: ExperimentVisualizationType;
 }

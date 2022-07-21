@@ -17,7 +17,7 @@ import { WaitStatus } from 'wait';
 
 import css from './Wait.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
 }
@@ -33,7 +33,7 @@ const Wait: React.FC = () => {
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
-  const capitalizedTaskType = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType!);
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;

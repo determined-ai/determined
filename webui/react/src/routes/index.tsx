@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import React from 'react';
 
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
@@ -25,45 +25,44 @@ import { RouteConfig } from 'shared/types';
 
 import Routes from './routes';
 
-const routeComponentMap: Record<string, FC> = {
-  cluster: Deprecated,
-  clusterHistorical: Deprecated,
-  clusterLogs: ClusterLogs,
-  clusters: Clusters,
-  experimentComparison: ExperimentComparison,
-  experimentDetails: ExperimentDetails,
-  interactive: InteractiveTask,
-  jobs: Deprecated,
-  modelDetails: ModelDetails,
-  models: ModelRegistry,
-  modelVersionDetails: ModelVersionDetails,
-  projectDetails: ProjectDetails,
-  reload: Reload,
-  resourcepool: ResourcepoolDetail,
-  settings: Settings,
-  signIn: SignIn,
-  signOut: SignOut,
-  taskList: TaskList,
-  taskLogs: TaskLogsWrapper,
-  trialDetails: TrialDetails,
-  uncategorized: ProjectDetails,
-  wait: Wait,
-  workspaceDetails: WorkspaceDetails,
-  workspaceList: WorkspaceList,
+const routeComponentMap: Record<string, JSX.Element> = {
+  cluster: <Deprecated />,
+  clusterHistorical: <Deprecated />,
+  clusterLogs: <ClusterLogs />,
+  clusters: <Clusters />,
+  experimentComparison: <ExperimentComparison />,
+  experimentDetails: <ExperimentDetails />,
+  interactive: <InteractiveTask />,
+  jobs: <Deprecated />,
+  modelDetails: <ModelDetails />,
+  models: <ModelRegistry />,
+  modelVersionDetails: <ModelVersionDetails />,
+  projectDetails: <ProjectDetails />,
+  reload: <Reload />,
+  resourcepool: <ResourcepoolDetail />,
+  settings: <Settings />,
+  signIn: <SignIn />,
+  signOut: <SignOut />,
+  taskList: <TaskList />,
+  taskLogs: <TaskLogsWrapper />,
+  trialDetails: <TrialDetails />,
+  uncategorized: <ProjectDetails />,
+  wait: <Wait />,
+  workspaceDetails: <WorkspaceDetails />,
+  workspaceList: <WorkspaceList />,
 };
 
 const defaultRouteId = 'uncategorized';
 
 const appRoutes: RouteConfig[] = Routes.map((route) => {
-  if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);
-  return {
-    ...route,
-    component: routeComponentMap[route.id],
-  };
+  if (!routeComponentMap[route.id])
+    throw new Error(`Missing route component for ${route.id}`);
+  return { ...route, element: routeComponentMap[route.id] };
 });
 
-export const defaultRoute = appRoutes
-  .find((route) => route.id === defaultRouteId) as RouteConfig;
+export const defaultRoute = appRoutes.find(
+  (route) => route.id === defaultRouteId,
+) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

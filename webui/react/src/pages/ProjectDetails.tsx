@@ -77,8 +77,8 @@ import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
-interface Params {
-  projectId: string;
+type Params = {
+  projectId?: string;
 }
 
 const batchActions = [
@@ -114,7 +114,7 @@ const ProjectDetails: React.FC = () => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
   }, [ updateDestinationSettings, project?.workspaceId ]);
 
-  const id = parseInt(projectId);
+  const id = parseInt(projectId ?? '1');
 
   const {
     settings,
