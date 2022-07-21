@@ -108,7 +108,7 @@ environment so you can spend your time building models instead of managing infra
       <div class="tiles-flex">
           <a class="tile" href="quickstart-mdldev.html">
               <h2 class="tile-title">Start here ...</h2>
-              <p class="tile-description">Learn the basics steps needed to set up your Determined environment and train models.</p>
+              <p class="tile-description">Learn the basics steps needed to set up a Determined environment and train models.</p>
           </a>
           <a class="tile" href="introduction.html">
               <h2 class="tile-title">Introducing Determined</h2>
