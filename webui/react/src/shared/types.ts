@@ -26,6 +26,8 @@ interface ApiBase {
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
+export type RecordUnknown = Record<RecordKey, unknown>;
+
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   postProcess: (response: DetOutput) => Output;
