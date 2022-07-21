@@ -128,7 +128,7 @@ environment so you can spend your time building models instead of managing infra
           </a>
           <a class="tile" href="reference/python-api.html">
               <h2 class="tile-title">Reference</h2>
-              <p class="tile-description">The Determined reference documentation provides detailed information about configuration files, APIs, and the CLI.</p>
+              <p class="tile-description">Explore API libraries and configuration settings.</p>
           </a>
       </div>
    </div>
