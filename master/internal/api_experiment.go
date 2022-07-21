@@ -119,37 +119,59 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 }
 
 func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
-	*apiv1.GetSearcherEventsResponse, error) {
+	resp *apiv1.GetSearcherEventsResponse, err error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching experiment from db")
+		return nil, err
+	}
+	if exp.State == experimentv1.State_STATE_COMPLETED {
+		event := experimentv1.SearcherEvent_ExperimentInactive{
+			ExperimentInactive: &experimentv1.ExperimentInactive{
+				ExperimentState: exp.State.Enum().String(),
+			},
+		}
+		searcherEvent := experimentv1.SearcherEvent{
+			Id:    int32(-1),
+			Event: &event,
+		}
+		events := []*experimentv1.SearcherEvent{&searcherEvent}
+		resp = &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}
+		return resp, nil
 	}
 
-	print(exp)
-	print(err)
-	return &apiv1.GetSearcherEventsResponse{}, nil
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to get events from actor %v", err)
+	default:
+		return resp, nil
+	}
 }
 
 func (a *apiServer) PostSearcherOperations(ctx context.Context,
-	req *apiv1.PostSearcherOperationsRequest) (*apiv1.PostSearcherOperationsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
+	req *apiv1.PostSearcherOperationsRequest) (
+	resp *apiv1.PostSearcherOperationsResponse, err error) {
 
-	exp, err := a.getExperiment(*curUser, int(req.ExperimentId))
+	_, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
+		expauth.AuthZProvider.Get().CanRunCustomSearch)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching experiment from db")
 	}
 
-	print(exp)
-	print(err)
-
-	return &apiv1.PostSearcherOperationsResponse{}, nil
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to post operations %v", err)
+	default:
+		logrus.Infof("Posted operations %v", req.SearcherOperations)
+		return resp, nil
+	}
 }
 
 func (a *apiServer) GetExperiment(
