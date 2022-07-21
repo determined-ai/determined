@@ -38,23 +38,7 @@ export const isSyncFunction = (fn: unknown): boolean => {
 };
 
 export const isEqual = (a: unknown, b: unknown): boolean => {
-  if (isMap(a) && isMap(b)) {
-    return JSON.stringify(Array.from(a as any)) === JSON.stringify(Array.from(b as any));
-  }
-  if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
-  if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
-  if (isSet(a) && isSet(b)) {
-    if (a.size !== b.size) return false;
-    for (const elem of a.values()) {
-      if (!b.has(elem)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  if (Array.isArray(a) && Array.isArray(b))
-    return a.length === b.length && a.every((x, i) => isEqual(x, b[i]));
-  return a === b;
+  return true
 };
 
 export const clone = (data: any, deep = true): any => {
