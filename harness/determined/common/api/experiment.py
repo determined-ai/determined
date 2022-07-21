@@ -217,6 +217,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 "max_length": {"batches": 1},
             },
             "hyperparameters": generate_random_hparam_values(config.get("hyperparameters", {})),
+            "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
             "max_restarts": 0,
         }
     )
