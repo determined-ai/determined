@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';

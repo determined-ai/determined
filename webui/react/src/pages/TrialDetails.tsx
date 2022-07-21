@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';

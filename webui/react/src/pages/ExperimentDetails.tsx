@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import { terminalRunStates } from 'constants/states';

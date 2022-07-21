@@ -1,6 +1,6 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Page from 'components/Page';

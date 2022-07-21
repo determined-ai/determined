@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
 import { getExperimentDetails } from 'services/api';

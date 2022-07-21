@@ -1,6 +1,6 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';

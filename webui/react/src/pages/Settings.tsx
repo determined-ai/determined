@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
