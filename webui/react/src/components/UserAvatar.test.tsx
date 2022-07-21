@@ -40,7 +40,7 @@ jest.mock('antd', () => {
 
 jest.mock('services/api', () => ({
   getUsers: () => {
-    return Promise.resolve([ testUser ]);
+    return Promise.resolve({users: [ testUser ]});
   },
 }));
 
