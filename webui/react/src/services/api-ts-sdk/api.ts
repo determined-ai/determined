@@ -1295,11 +1295,11 @@ export interface V1CheckpointWorkload {
  */
 export interface V1CloseTrialOperation {
     /**
-     * trial_id is the id of the trial to close.
+     * request_id is the id of the trial to close.
      * @type {string}
      * @memberof V1CloseTrialOperation
      */
-    trialId?: string;
+    requestId?: string;
 }
 
 /**
@@ -1447,20 +1447,6 @@ export interface V1ComputeHPImportanceResponse {
 }
 
 /**
- * 
- * @export
- * @interface V1ConstantHyperparameter
- */
-export interface V1ConstantHyperparameter {
-    /**
-     * value of the constant hyperparameter.
-     * @type {number}
-     * @memberof V1ConstantHyperparameter
-     */
-    val?: number;
-}
-
-/**
  * Container is a Docker container that is either scheduled to run or is currently running on a set of slots.
  * @export
  * @interface V1Container
@@ -1563,11 +1549,17 @@ export interface V1CreateExperimentResponse {
  */
 export interface V1CreateTrialOperation {
     /**
-     * The key refers to which part of the model this hyperparameters are for.
-     * @type {{ [key: string]: V1Hyperparameter; }}
+     * request_id is the id of the trial to close.
+     * @type {string}
      * @memberof V1CreateTrialOperation
      */
-    hyperparams?: { [key: string]: V1Hyperparameter; };
+    requestId?: string;
+    /**
+     * The key refers to which part of the model this hyperparameters are for.
+     * @type {string}
+     * @memberof V1CreateTrialOperation
+     */
+    hyperparams?: string;
 }
 
 /**
@@ -2008,6 +2000,20 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     projectOwnerId: number;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ExperimentInactive
+ */
+export interface V1ExperimentInactive {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1ExperimentInactive
+     */
+    experimentState?: string;
 }
 
 /**
@@ -3343,26 +3349,6 @@ export interface V1GetWorkspacesResponse {
      * @memberof V1GetWorkspacesResponse
      */
     pagination: V1Pagination;
-}
-
-/**
- * Hyperparameter.
- * @export
- * @interface V1Hyperparameter
- */
-export interface V1Hyperparameter {
-    /**
-     * Constant hyperparameter.
-     * @type {V1ConstantHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    constantHyperparam?: V1ConstantHyperparameter;
-    /**
-     * Nested hyperparameter.
-     * @type {V1RawNestedHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    nestedHyperparam?: V1RawNestedHyperparameter;
 }
 
 /**
@@ -5359,20 +5345,6 @@ export interface V1RPQueueStat {
 }
 
 /**
- * 
- * @export
- * @interface V1RawNestedHyperparameter
- */
-export interface V1RawNestedHyperparameter {
-    /**
-     * 
-     * @type {{ [key: string]: V1Hyperparameter; }}
-     * @memberof V1RawNestedHyperparameter
-     */
-    mapHyperparam?: { [key: string]: V1Hyperparameter; };
-}
-
-/**
  * The rendezvous info for the trial to rendezvous with sibling containers.
  * @export
  * @interface V1RendezvousInfo
@@ -6212,6 +6184,12 @@ export interface V1SearcherEvent {
      * @memberof V1SearcherEvent
      */
     trialExitedEarly?: V1TrialExitedEarly;
+    /**
+     * 
+     * @type {V1ExperimentInactive}
+     * @memberof V1SearcherEvent
+     */
+    experimentInactive?: V1ExperimentInactive;
 }
 
 /**
@@ -7333,6 +7311,12 @@ export interface V1UserWebSetting {
  * @interface V1ValidateAfterOperation
  */
 export interface V1ValidateAfterOperation {
+    /**
+     * request_id is the id of the trial to close.
+     * @type {string}
+     * @memberof V1ValidateAfterOperation
+     */
+    requestId?: string;
     /**
      * The length to train before reporting a validation.
      * @type {string}
