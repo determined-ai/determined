@@ -13,6 +13,7 @@ export type RawJson = Record<string, any>;
 export interface Pagination {
   limit: number;
   offset: number;
+  total?: number;
 }
 
 export interface FetchOptions {

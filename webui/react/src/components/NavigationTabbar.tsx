@@ -124,7 +124,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'settings',
             label: 'Settings',
-            onClick: (e) => handlePathUpdate(e, paths.settings()),
+            onClick: (e) => handlePathUpdate(e, paths.settings('account')),
           },
           {
             icon: 'user',
