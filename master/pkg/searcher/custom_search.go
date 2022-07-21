@@ -75,7 +75,7 @@ func (s *customSearch) progress(
 }
 
 func (s *customSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{

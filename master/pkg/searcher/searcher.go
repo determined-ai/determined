@@ -126,7 +126,7 @@ func (s *Searcher) ValidationCompleted(
 		return nil, fmt.Errorf("operation %v was already completed", op)
 	}
 
-	operations, err := s.method.validationCompleted(s.context(), requestID, metric)
+	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}

@@ -26,6 +26,8 @@ message ValidationCompleted {
   string request_id = 1;
   // value of the validation metric used to direct the search
   double metric = 2;
+  // Need the length from ValidateAfterOperation. 
+  ValidateAfterOperation op = 3; 
 }
 
 // TrialClosed is a searcher event triggered when a trial has successfully
