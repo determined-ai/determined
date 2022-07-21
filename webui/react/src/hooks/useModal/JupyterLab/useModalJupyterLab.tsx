@@ -5,11 +5,11 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
-import usePrevious from 'hooks/usePrevious';
 import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { ResourcePool, Template } from 'types';
 import handleError from 'utils/error';

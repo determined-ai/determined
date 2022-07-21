@@ -4,6 +4,7 @@ import { ModalFunc } from 'antd/es/modal/confirm';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { RecordUnknown } from 'shared/types';
 import { isAsyncFunction } from 'shared/utils/data';
 
 import usePrevious from '../usePrevious';
@@ -13,10 +14,19 @@ export enum ModalCloseReason {
   Ok = 'Ok',
 }
 
-export interface ModalHooks {
+interface ModalProps<T> extends ModalFuncProps {
+  /** use to provide context only available at modal open time */
+  context?: T;
+}
+
+export type ModalOpen<T = RecordUnknown> = (
+  modalProps?: ModalProps<T>
+) => void;
+
+export interface ModalHooks<T = RecordUnknown> {
   contextHolder: React.ReactElement;
   modalClose: (reason?: ModalCloseReason) => void;
-  modalOpen: (modalProps?: ModalFuncProps) => void;
+  modalOpen: ModalOpen<T>;
   modalRef: React.MutableRefObject<ReturnType<ModalFunc> | undefined>;
 }
 

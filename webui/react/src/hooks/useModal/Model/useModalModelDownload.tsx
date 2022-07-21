@@ -2,7 +2,7 @@ import { Input } from 'antd';
 import React, { useCallback } from 'react';
 
 import CopyButton from 'components/CopyButton';
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { copyToClipboard } from 'shared/utils/dom';
 import { ModelVersion } from 'types';
 
