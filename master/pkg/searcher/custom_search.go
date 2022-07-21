@@ -53,9 +53,11 @@ func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
 	return s.SearcherEventQueue
 }
 
-func (s *customSearch) trialCreated(context, model.RequestID) ([]Operation, error) {
+func (s *customSearch) trialCreated(ctx context, requestID model.RequestID) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_TrialCreated{
-		TrialCreated: &experimentv1.TrialCreated{},
+		TrialCreated: &experimentv1.TrialCreated{
+			RequestId: requestID.String(),
+		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
 		Event: &event,
@@ -73,10 +75,13 @@ func (s *customSearch) progress(
 }
 
 func (s *customSearch) validationCompleted(
-	context, model.RequestID, float64,
+	ctx context, requestID model.RequestID, metric float64,
 ) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_ValidationCompleted{
-		ValidationCompleted: &experimentv1.ValidationCompleted{},
+		ValidationCompleted: &experimentv1.ValidationCompleted{
+			RequestId: requestID.String(),
+			Metric:    metric,
+		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
 		Event: &event,
@@ -86,10 +91,13 @@ func (s *customSearch) validationCompleted(
 	return nil, nil
 }
 
-func (s *customSearch) trialExitedEarly(context, model.RequestID,
-	model.ExitedReason) ([]Operation, error) {
+func (s *customSearch) trialExitedEarly(
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
+) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_TrialExitedEarly{
-		TrialExitedEarly: &experimentv1.TrialExitedEarly{},
+		TrialExitedEarly: &experimentv1.TrialExitedEarly{
+			RequestId: requestID.String(),
+		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
 		Event: &event,
@@ -101,7 +109,9 @@ func (s *customSearch) trialExitedEarly(context, model.RequestID,
 
 func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_TrialClosed{
-		TrialClosed: &experimentv1.TrialClosed{},
+		TrialClosed: &experimentv1.TrialClosed{
+			RequestId: requestID.String(),
+		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
 		Event: &event,

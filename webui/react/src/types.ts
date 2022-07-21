@@ -265,6 +265,7 @@ export enum ExperimentSearcherName {
   Pbt = 'pbt',
   Random = 'random',
   Single = 'single',
+  Custom = 'custom',
 }
 
 export interface ExperimentConfig {
