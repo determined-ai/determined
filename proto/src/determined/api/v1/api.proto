@@ -1661,7 +1661,7 @@ service Determined {
   // Remove a group
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
-      post: "/api/v1/groups/{group_id}"
+      delete: "/api/v1/groups/{group_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
