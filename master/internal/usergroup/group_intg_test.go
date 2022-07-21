@@ -168,41 +168,29 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search group with offsets and limits", func(t *testing.T) {
-		group1 := Group{ID: 1001, Name: "group1"}
-		group2 := Group{ID: 1002, Name: "group2"}
-		group3 := Group{ID: 1003, Name: "group3"}
-
-		t.Cleanup(func() {})
-
-		_, err := AddGroup(ctx, group1)
-		require.NoError(t, err, "failed to create group")
-		_, err = AddGroup(ctx, group2)
-		require.NoError(t, err, "failed to create group")
-		_, err = AddGroup(ctx, group3)
-		require.NoError(t, err, "failed to create group")
+		answerGroups, err := SearchGroups(ctx, "", 0, 0, 3)
+		require.NoError(t, err, "failed to search for groups")
 
 		groups, err := SearchGroups(ctx, "", 0, 0, 1)
 		require.NoError(t, err, "failed to search for groups")
-		index := groupsContain(groups, group1.ID)
+		index := groupsContain(groups, answerGroups[0].ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup := groups[index]
-		require.Equal(t, group1.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+		require.Equal(t, answerGroups[0].Name, foundGroup.Name, "Expected found group to have the same name as the first answerGroup")
 		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
 
-		groups, err = SearchGroups(ctx, "", 0, 1, 1)
+		groups, err = SearchGroups(ctx, "", 0, 1, 2)
 		require.NoError(t, err, "failed to search for groups")
-		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
-		index = groupsContain(groups, group2.ID)
+		require.Equal(t, 2, len(groups), "Expected no more than two groups to have been returned")
+		index = groupsContain(groups, answerGroups[1].ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup = groups[index]
-		require.Equal(t, group2.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+		require.Equal(t, answerGroups[1].Name, foundGroup.Name, "Expected found group to have the same name as the second answerGroup")
 
-		err = DeleteGroup(ctx, 1001)
-		require.NoError(t, err, "errored when deleting group")
-		err = DeleteGroup(ctx, 1002)
-		require.NoError(t, err, "errored when deleting group")
-		err = DeleteGroup(ctx, 1003)
-		require.NoError(t, err, "errored when deleting group")
+		index = groupsContain(groups, answerGroups[2].ID)
+		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
+		foundGroup = groups[index]
+		require.Equal(t, answerGroups[2].Name, foundGroup.Name, "Expected found group to have the same name as the third answerGroup")
 	})
 }
 

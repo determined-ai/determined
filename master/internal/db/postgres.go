@@ -52,8 +52,18 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
-func PaginateBun(query *bun.SelectQuery, offset, limit int) *bun.SelectQuery {
-	query = query.Order("id ASC")
+func PaginateBun(query *bun.SelectQuery, column, order string, offset, limit int,) *bun.SelectQuery {
+	sortString := "id "
+	if column != "" {
+		sortString = column + " "
+	}
+	if order != "" {
+		sortString += order
+	} else {
+		sortString += "ASC"
+	}
+
+	query = query.Order(sortString)
 	query = query.Offset(offset)
 	if limit > 0 {
 		query = query.Limit(limit)

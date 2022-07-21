@@ -37,7 +37,7 @@ func SearchGroups(ctx context.Context,
 	offset, limit int,
 ) ([]Group, error) {
 	var groups []Group
-	query := db.PaginateBun(db.Bun().NewSelect().Model(&groups), offset, limit)
+	query := db.PaginateBun(db.Bun().NewSelect().Model(&groups), "", "", offset, limit)
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)
