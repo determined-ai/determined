@@ -87,10 +87,9 @@ func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 		return nil, err
 	}
 
-	gProto := g.Proto()
 	gDetail := groupv1.GroupDetails{
-		GroupId: gProto.GroupId,
-		Name:    gProto.Name,
+		GroupId: int32(g.ID),
+		Name:    g.Name,
 		Users:   model.Users(users).Proto(),
 	}
 
@@ -192,7 +191,7 @@ var (
 	errNotFound        = status.Error(codes.NotFound, "Not found")
 	errDuplicateRecord = status.Error(codes.AlreadyExists, "Duplicate record")
 	errInternal        = status.Error(codes.Internal, "Internal server error")
-	errorWhitelist     = map[error]bool{
+	errPassthroughMap  = map[error]bool{
 		nil:                true,
 		errBadRequest:      true,
 		errNotFound:        true,
@@ -202,7 +201,7 @@ var (
 )
 
 func mapAndFilterErrors(err error) error {
-	if whitelisted := errorWhitelist[err]; whitelisted {
+	if whitelisted := errPassthroughMap[err]; whitelisted {
 		return err
 	}
 
