@@ -2112,8 +2112,7 @@ workflows:
           requires:
             - build-helm
             - build-proto
-      - build-go:
-          context: determined-ci
+      - build-go
       - package-and-push-system-local:
           requires:
             - build-react
