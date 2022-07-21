@@ -2,5 +2,5 @@
 
 **Breaking Changes**
 
--  API: the `GetProjectExperiments` endpoint (`/projects/:id/experiments`) is removed and replaced
-   with a *project_id* parameter on the `GetExperiments` endpoint (`/experiments`).
+-  API: the ``GetProjectExperiments`` endpoint (``/projects/:id/experiments``) is removed and
+   replaced with a *project_id* parameter on the ``GetExperiments`` endpoint (``/experiments``).
