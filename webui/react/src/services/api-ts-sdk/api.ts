@@ -4180,25 +4180,25 @@ export interface FileNode {
    * @type {number}
    * @memberof FileNode
    */
-  content_length: number;
+  contentLength: number;
   /**
    * MIME type of file.
    * @type {string}
    * @memberof FileNode
    */
-  content_type?: string;
+  contentType?: string;
   /**
    * Is this a directory.
    * @type {boolean}
    * @memberof FileNode
    */
-  is_dir: boolean;
+  isDir: boolean;
   /**
    * Modification time of file.
    * @type {boolean}
    * @memberof FileNode
    */
-  modified_time: string;
+  modifiedTime: string;
   /**
    * Path of file.
    * @type {boolean}
