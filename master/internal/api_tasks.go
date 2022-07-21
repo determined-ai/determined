@@ -236,6 +236,14 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 			Values:    req.TimestampAfter.AsTime(),
 		})
 	}
+
+	if req.SearchText != "" {
+		filters = append(filters, api.Filter{
+			Field:     "log",
+			Operation: api.FilterOperationStringContainment,
+			Values:    req.SearchText,
+		})
+	}
 	return filters, nil
 }
 
