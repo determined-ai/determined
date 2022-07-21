@@ -96,9 +96,6 @@ func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherE
 		}
 		return resp, nil
 	}
-	if err = a.checkExperimentExists(int(req.ExperimentId)); err != nil {
-		return nil, err
-	}
 
 	addr := experimentsAddr.Child(req.ExperimentId)
 	switch err = a.ask(addr, req, &resp); {

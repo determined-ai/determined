@@ -43,9 +43,7 @@ class ExitedReason(Enum):
 
 
 class Operation:
-    def __init__(self) -> None:
-        pass
-
+    @abstractmethod
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         pass
 
@@ -82,9 +80,7 @@ class Shutdown(Operation):
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
-            shutdown=bindings.v1ShutdownOperation(
-                emptyField=0,
-            )
+            shutdown=bindings.v1ShutdownOperation()
         )
 
 
