@@ -2742,26 +2742,6 @@ export interface V1GetNotebooksResponse {
 }
 
 /**
- * Response to GetProjectExperimentsRequest.
- * @export
- * @interface V1GetProjectExperimentsResponse
- */
-export interface V1GetProjectExperimentsResponse {
-    /**
-     * The experiments associated with the project.
-     * @type {Array<V1Experiment>}
-     * @memberof V1GetProjectExperimentsResponse
-     */
-    experiments: Array<V1Experiment>;
-    /**
-     * Pagination information of the full dataset.
-     * @type {V1Pagination}
-     * @memberof V1GetProjectExperimentsResponse
-     */
-    pagination: V1Pagination;
-}
-
-/**
  * Response to GetProjectRequest.
  * @export
  * @interface V1GetProjectResponse
@@ -10001,10 +9981,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10061,6 +10042,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 
             if (userIds) {
                 localVarQueryParameter['userIds'] = userIds;
+            }
+
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -11027,11 +11012,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, options);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11504,11 +11490,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, options)(fetch, basePath);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11860,12 +11847,13 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
      * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+     * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, options)(this.fetch, this.basePath);
+    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17644,98 +17632,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get experiments associated with a project.
-         * @param {number} id The id of the project.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the experiments to those matching the name.
-         * @param {string} [description] Limit the experiments to those matching the description.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
-            // verify required parameter 'id' is not null or undefined
-            if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectExperiments.');
-            }
-            const localVarPath = `/api/v1/projects/{id}/experiments`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy;
-            }
-
-            if (orderBy !== undefined) {
-                localVarQueryParameter['orderBy'] = orderBy;
-            }
-
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset;
-            }
-
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit;
-            }
-
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name;
-            }
-
-            if (description !== undefined) {
-                localVarQueryParameter['description'] = description;
-            }
-
-            if (labels) {
-                localVarQueryParameter['labels'] = labels;
-            }
-
-            if (archived !== undefined) {
-                localVarQueryParameter['archived'] = archived;
-            }
-
-            if (states) {
-                localVarQueryParameter['states'] = states;
-            }
-
-            if (users) {
-                localVarQueryParameter['users'] = users;
-            }
-
-            if (userIds) {
-                localVarQueryParameter['userIds'] = userIds;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -18043,36 +17939,6 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get experiments associated with a project.
-         * @param {number} id The id of the project.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the experiments to those matching the name.
-         * @param {string} [description] Limit the experiments to those matching the description.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectExperimentsResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, userIds, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -18222,27 +18088,6 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get experiments associated with a project.
-         * @param {number} id The id of the project.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
-         * @param {string} [name] Limit the experiments to those matching the name.
-         * @param {string} [description] Limit the experiments to those matching the description.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return ProjectsApiFp(configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, userIds, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -18352,29 +18197,6 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get experiments associated with a project.
-     * @param {number} id The id of the project.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID'} [sortBy] Sort the experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
-     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-     * @param {number} [limit] Limit the number of experiments. A value of 0 denotes no limit.
-     * @param {string} [name] Limit the experiments to those matching the name.
-     * @param {string} [description] Limit the experiments to those matching the description.
-     * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-     * @param {boolean} [archived] Limit experiments to those that are archived.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match one of the provided states.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
-     * @param {Array<string>} [users] Limit experiments to those that are owned by one of the specified users.
-     * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ProjectsApi
-     */
-    public getProjectExperiments(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectExperiments(id, sortBy, orderBy, offset, limit, name, description, labels, archived, states, users, userIds, options)(this.fetch, this.basePath);
     }
 
     /**

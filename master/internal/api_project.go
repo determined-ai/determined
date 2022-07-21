@@ -2,9 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -49,84 +46,6 @@ func (a *apiServer) GetProject(
 ) (*apiv1.GetProjectResponse, error) {
 	p, err := a.GetProjectByID(req.Id)
 	return &apiv1.GetProjectResponse{Project: p}, err
-}
-
-func (a *apiServer) GetProjectExperiments(_ context.Context,
-	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
-	error,
-) {
-	// Verify that project exists.
-	if _, err := a.GetProjectByID(req.Id); err != nil {
-		return nil, err
-	}
-
-	// Construct the experiment filtering expression.
-	allStates := make([]string, 0, len(req.States))
-	for _, state := range req.States {
-		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
-	}
-	stateFilterExpr := strings.Join(allStates, ",")
-	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0, len(req.UserIds))
-	for _, userID := range req.UserIds {
-		userIds = append(userIds, strconv.Itoa(int(userID)))
-	}
-	userIDFilterExpr := strings.Join(userIds, ",")
-	labelFilterExpr := strings.Join(req.Labels, ",")
-	archivedExpr := ""
-	if req.Archived != nil {
-		archivedExpr = strconv.FormatBool(req.Archived.Value)
-	}
-
-	// Construct the ordering expression.
-	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
-		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
-		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:   "description",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:          "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
-		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
-		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
-	}
-	sortByMap := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-	}
-	orderExpr := ""
-	switch _, ok := orderColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case orderColMap[req.SortBy] != "id":
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
-	}
-
-	resp := &apiv1.GetProjectExperimentsResponse{}
-	return resp, a.m.db.QueryProtof(
-		"get_experiments",
-		[]interface{}{orderExpr},
-		resp,
-		stateFilterExpr,
-		archivedExpr,
-		userFilterExpr,
-		userIDFilterExpr,
-		labelFilterExpr,
-		req.Description,
-		req.Name,
-		req.Id,
-		req.Offset,
-		req.Limit,
-	)
 }
 
 func (a *apiServer) PostProject(

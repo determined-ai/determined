@@ -2143,28 +2143,6 @@ class v1GetNotebooksResponse:
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
-class v1GetProjectExperimentsResponse:
-    def __init__(
-        self,
-        experiments: "typing.Sequence[v1Experiment]",
-        pagination: "v1Pagination",
-    ):
-        self.experiments = experiments
-        self.pagination = pagination
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetProjectExperimentsResponse":
-        return cls(
-            experiments=[v1Experiment.from_json(x) for x in obj["experiments"]],
-            pagination=v1Pagination.from_json(obj["pagination"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "experiments": [x.to_json() for x in self.experiments],
-            "pagination": self.pagination.to_json(),
-        }
-
 class v1GetProjectResponse:
     def __init__(
         self,
@@ -7015,6 +6993,7 @@ def get_GetExperiments(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    projectId: "typing.Optional[int]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -7028,6 +7007,7 @@ def get_GetExperiments(
         "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "projectId": projectId,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
         "userIds": userIds,
@@ -7379,48 +7359,6 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
-
-def get_GetProjectExperiments(
-    session: "client.Session",
-    *,
-    id: int,
-    archived: "typing.Optional[bool]" = None,
-    description: "typing.Optional[str]" = None,
-    labels: "typing.Optional[typing.Sequence[str]]" = None,
-    limit: "typing.Optional[int]" = None,
-    name: "typing.Optional[str]" = None,
-    offset: "typing.Optional[int]" = None,
-    orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
-    userIds: "typing.Optional[typing.Sequence[int]]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
-) -> "v1GetProjectExperimentsResponse":
-    _params = {
-        "archived": str(archived).lower() if archived is not None else None,
-        "description": description,
-        "labels": labels,
-        "limit": limit,
-        "name": name,
-        "offset": offset,
-        "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
-        "states": [x.value for x in states] if states is not None else None,
-        "userIds": userIds,
-        "users": users,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/projects/{id}/experiments",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1GetProjectExperimentsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetProjectExperiments", _resp)
 
 def get_GetResourcePools(
     session: "client.Session",
