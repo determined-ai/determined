@@ -9,18 +9,19 @@
 
 import queryString from 'query-string';
 import { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 const Reload: React.FC = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const queryParams = queryString.parse(location.search);
     if (queryParams.path) {
-      history.replace(queryParams.path as string);
+      navigate(queryParams.path as string, { replace: true });
     }
-  }, [ history, location.search ]);
+  }, [ navigate, location.search ]);
 
   return null;
 };

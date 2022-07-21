@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
@@ -45,7 +46,7 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const TrialDetailsComp: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
-  const history = useHistory();
+  const navigate = useNavigate();
   const routeParams = useParams<Params>();
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
   const [ trialId, setTrialId ] = useState<number>(parseInt(routeParams.trialId));
@@ -71,7 +72,7 @@ const TrialDetailsComp: React.FC = () => {
 
       // Experiment id does not exist in route, reroute to the one with it
       if (!routeParams.experimentId) {
-        history.replace(paths.trialDetails(trial.id, trial.experimentId));
+        navigate(paths.trialDetails(trial.id, trial.experimentId), { replace: true });
       }
     } catch (e) {
       handleError(e, {
@@ -81,12 +82,7 @@ const TrialDetailsComp: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [
-    canceler,
-    history,
-    routeParams.experimentId,
-    trial,
-  ]);
+  }, [ canceler, navigate, routeParams.experimentId, trial ]);
 
   const fetchTrialDetails = useCallback(async () => {
     try {
@@ -101,13 +97,13 @@ const TrialDetailsComp: React.FC = () => {
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  }, [ basePath, history ]);
+    navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
+  }, [ basePath, navigate ]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
-    history.replace(`${basePath}/${TabType.Logs}?tail`);
-  }, [ basePath, history ]);
+    navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
+  }, [ basePath, navigate ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails, { rerunOnNewFn: true });
 
@@ -180,7 +176,7 @@ const TrialDetailsComp: React.FC = () => {
               ids={experiment.trialIds ?? []}
               tooltipLabel="Trial"
               onSelectId={(selectedTrialId) => {
-                history.push(paths.trialDetails(selectedTrialId, experiment?.id));
+                navigate(paths.trialDetails(selectedTrialId, experiment?.id));
               }}
             />
           )}

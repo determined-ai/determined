@@ -1,6 +1,7 @@
 import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Link from 'components/Link';
 import { terminalRunStates } from 'constants/states';
@@ -76,7 +77,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   type,
 }: Props) => {
   const { ui } = useStore();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
@@ -144,17 +145,17 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleTabChange = useCallback((type: string) => {
     setTypeKey(type as ExperimentVisualizationType);
-    history.replace(`${basePath}/${type}`);
-  }, [ basePath, history ]);
+    navigate(`${basePath}/${type}`, { replace: true });
+  }, [ basePath, navigate ]);
 
   // Sets the default sub route.
   useEffect(() => {
     const isVisualizationRoute = location.pathname.includes(basePath);
     const isInvalidType = type && !TYPE_KEYS.includes(type);
     if (isVisualizationRoute && (!type || isInvalidType)) {
-      history.replace(`${basePath}/${typeKey}`);
+      navigate(`${basePath}/${typeKey}`, { replace: true });
     }
-  }, [ basePath, history, location, type, typeKey ]);
+  }, [ basePath, navigate, location, type, typeKey ]);
 
   // Stream available metrics.
   useEffect(() => {

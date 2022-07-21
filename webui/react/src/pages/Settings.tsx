@@ -1,8 +1,8 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
@@ -26,14 +26,14 @@ const SettingsContent: React.FC = () => {
   const location = useLocation();
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const basePath = paths.settings();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const { rbac } = queryString.parse(location.search);
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  }, [ basePath, history ]);
+    navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
+  }, [ basePath, navigate ]);
 
   return rbac ? (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
