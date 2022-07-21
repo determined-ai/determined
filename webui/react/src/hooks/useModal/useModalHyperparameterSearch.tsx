@@ -75,7 +75,10 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal();
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
-  const [ searcher, setSearcher ] = useState(SearchMethods.ASHA);
+  const [ searcher, setSearcher ] = useState(
+    Object.values(SearchMethods).find((searcher) => searcher.name === experiment.searcherType) ??
+    SearchMethods.ASHA,
+  );
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
   const [ form ] = Form.useForm();
@@ -344,7 +347,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item
-          initialValue={resourcePools?.[0]?.name}
+          initialValue={experiment.resourcePool}
           label="Resource Pool"
           name="pool"
           rules={[ { required: true } ]}>
@@ -366,14 +369,14 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             label="Max Length"
             name="max_length"
             rules={[ { min: 1, required: true, type: 'number' } ]}>
-            <InputNumber precision={0} />
+            <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
             initialValue={maxLengthUnit}
             label="Units"
             name="length_units"
             rules={[ { required: true } ]}>
-            <SelectFilter>
+            <SelectFilter showSearch={false}>
               <Select.Option value="records">
                 records
               </Select.Option>
@@ -392,8 +395,11 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
               maxSlots === 0 ? 0 : 1}
             label="Slots per trial"
             name="slots_per_trial"
-            rules={[ { max: maxSlots, min: 0, required: true, type: 'number' } ]}>
-            <InputNumber precision={0} />
+            rules={[ { max: maxSlots, min: 0, required: true, type: 'number' } ]}
+            validateStatus={
+              (formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 0) ?
+                'error' : 'success'}>
+            <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
         </div>
         {searcher.name === 'adaptive_asha' && (
@@ -439,14 +445,14 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <div className={css.inputRow}>
           <Form.Item
             hidden={searcher === SearchMethods.Grid}
-            initialValue={1}
+            initialValue={experiment.config.searcher.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
             rules={[ { min: 1, required: true, type: 'number' } ]}>
-            <InputNumber precision={0} />
+            <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
-            initialValue={0}
+            initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 0}
             label={(
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
@@ -457,16 +463,20 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             )}
             name="max_concurrent_trials"
             rules={[ { min: 0, required: true, type: 'number' } ]}>
-            <InputNumber precision={0} />
+            <InputNumber min={0} precision={0} />
           </Form.Item>
         </div>
       </div>
     );
-  }, [ experiment.configRaw?.records_per_epoch,
+  }, [ experiment.config.searcher.max_trials,
+    experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
+    experiment.configRaw.searcher.max_concurrent_trials,
     experiment.configRaw.searcher?.mode,
     experiment.configRaw.searcher?.stop_once,
     experiment.name,
+    experiment.resourcePool,
+    formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,
     maxLength,
