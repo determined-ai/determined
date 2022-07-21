@@ -43,7 +43,7 @@ class SingleSearchMethod(SearchMethod):
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
         return []
 
-    def on_validation_completed(self, metric: float) -> List[Operation]:
+    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
         return []
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:

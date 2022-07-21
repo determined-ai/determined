@@ -79,9 +79,7 @@ class Shutdown(Operation):
         super().__init__()
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
-        return bindings.v1SearcherOperation(
-            shutdown=bindings.v1ShutdownOperation()
-        )
+        return bindings.v1SearcherOperation(shutdown=bindings.v1ShutdownOperation())
 
 
 class Create(Operation):
@@ -129,7 +127,7 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_validation_completed(self, metric: float) -> List[Operation]:
+    def on_validation_completed(self, request_id: uuid.UUID, metric: float) -> List[Operation]:
         """
         on_validation_completed informs the searcher that the validation workload
         initiated by the same searcher has completed. It returns any new operations

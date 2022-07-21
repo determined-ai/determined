@@ -88,7 +88,8 @@ class SearchRunner:
                                 "validationCompleted event is invalid without a metric"
                             )
                         operations = self.search_method.on_validation_completed(
-                            e.validationCompleted.metric
+                            uuid.UUID(e.validationCompleted.requestId),
+                            e.validationCompleted.metric,
                         )
                     elif e.experimentInactive:
                         logging.info(
