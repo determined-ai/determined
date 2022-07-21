@@ -1,5 +1,5 @@
 import classnames from 'classnames';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, ReactElement } from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isString } from 'shared/utils/data';
@@ -58,7 +58,14 @@ const Section: React.FC<Props> = ({ className = '', ...props }: PropsWithChildre
         </div>
       )}
       <div className={css.body}>
-        <Spinner spinning={!!props.loading}>{props.children}</Spinner>
+        <Spinner spinning={!!props.loading}>
+          {// validates the children
+            React.Children.map(
+              props.children,
+              child => !!child && React.cloneElement(child as ReactElement),
+            )
+          }
+        </Spinner>
       </div>
     </section>
   );

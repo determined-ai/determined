@@ -1,16 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable max-len */
 /* eslint-disable no-console */
-const mockGetExperimentFileFromTree = jest.fn((id: number) => {
-  console.log(`getExperimentFileFromTree api called with ${id}`);
 
-  return { file: 'ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg==' };
+const MonacoEditorMock: React.FC = () => <></>;
+
+jest.mock('routes/utils', () => {
+  return {
+    __esModule: true,
+    handlePath: () => Promise.resolve(),
+    paths: { experimentFileFromTree: () => '/fakePath' },
+  };
 });
 
-const mockGetExperimentFileTree = jest.fn((id: number) => {
-  console.log(`getExperimentFileTree api called with ${id}`);
-
+jest.mock('services/api', () => {
   return {
-    files: [
+    __esModule: true,
+    getExperimentFileFromTree: (id: number) => Promise.resolve('ZGVzY3JpcHRpb246IG5vb3Bfc2luZ2xlCmNoZWNrcG9pbnRfc3RvcmFnZToKICB0eXBlOiBzaGFyZWRfZnMKICBob3N0X3BhdGg6IC90bXAKICBzdG9yYWdlX3BhdGg6IGRldGVybWluZWQtaW50ZWdyYXRpb24tY2hlY2twb2ludHMKICBzYXZlX3RyaWFsX2Jlc3Q6IDMwCmh5cGVycGFyYW1ldGVyczoKICBnbG9iYWxfYmF0Y2hfc2l6ZTogMzIKICBtZXRyaWNzX3Byb2dyZXNzaW9uOiBkZWNyZWFzaW5nCiAgbWV0cmljc19iYXNlOiAwLjkKICBtZXRyaWNzX3NpZ21hOiAwCnNlYXJjaGVyOgogIG1ldHJpYzogdmFsaWRhdGlvbl9lcnJvcgogIHNtYWxsZXJfaXNfYmV0dGVyOiB0cnVlCiAgbmFtZTogc2luZ2xlCiAgbWF4X2xlbmd0aDoKICAgIHJlY29yZHM6IDgwMDAKcmVwcm9kdWNpYmlsaXR5OgogIGV4cGVyaW1lbnRfc2VlZDogOTk5Cm1pbl92YWxpZGF0aW9uX3BlcmlvZDoKICByZWNvcmRzOiA0MDAwCm1heF9yZXN0YXJ0czogMAplbnRyeXBvaW50OiBtb2RlbF9kZWY6Tm9PcFRyaWFsCg=='),
+    getExperimentFileTree: (id: number) => Promise.resolve([
       {
         contentLength: 505,
         contentType: 'text/plain; charset=utf-8',
@@ -47,24 +53,21 @@ const mockGetExperimentFileTree = jest.fn((id: number) => {
         name: 'model_def.py',
         path: 'model_def.py',
       },
-    ],
+    ]),
   };
 });
 
-jest.mock('services/api', () => {
-  const actualModule = jest.requireActual('services/api');
+jest.mock('components/MonacoEditor', () => ({
+  __esModule: true,
+  default: () => MonacoEditorMock,
+}));
 
-  return {
-    ...actualModule,
-    getExperimentFileFromTree: mockGetExperimentFileFromTree,
-    getExperimentFileTree: mockGetExperimentFileTree,
-  };
-});
-
-import { getAllByText, screen } from '@testing-library/dom';
+import { getAllByText, getByRole, screen, waitFor } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+
+import { paths } from 'routes/utils';
 
 import CodeViewer, { Props } from './CodeViewer';
 
@@ -72,19 +75,54 @@ const experimentIdMock = 123;
 const user = userEvent.setup();
 
 const setup = (props: Props = { experimentId: experimentIdMock }) => {
-// const setup = () => {
-  // const view = render(<div />);
   const view = render(<CodeViewer experimentId={props.experimentId} />);
 
   return view;
 };
 
+const getElements = async () => {
+  const tree = await screen.findByTestId('fileTree');
+  const treeNodes = getAllByText(tree, /[a-zA-Z\-_]{1,}\./);
+  const defaultMessage = await screen.findByText('Please, choose a file to preview.');
+
+  return { defaultMessage, treeNodes };
+};
+
 describe('CodeViewer', () => {
-  it('should render the file tree and the text editor properly', async () => {
+  afterAll(() => jest.clearAllMocks());
+
+  it('should handle the initial render properly', async () => {
     setup();
-    const tree = await screen.findByTestId('fileTree');
-    const treeNodes = getAllByText(tree, /[a-zA-Z\-_]{1,}\./g);
+    const { treeNodes, defaultMessage } = await getElements();
+
     expect(treeNodes).toHaveLength(4);
     expect([ 1, 2, 3, 4 ]).toHaveLength(4);
+    expect(defaultMessage).toBeInTheDocument();
+  });
+
+  it('should handle clicking a tree node', async () => {
+    setup();
+    const { treeNodes, defaultMessage } = await getElements();
+
+    await waitFor(() => user.click(treeNodes[1]));
+
+    expect(defaultMessage).not.toBeInTheDocument();
+
+    // TODO: figure out how to do assertions with the MonacoEditor...
+  });
+
+  it('should handle clicking in the download icon when opening a file from the tree', async () => {
+    const pathBuilderSpy = jest.spyOn(paths, 'experimentFileFromTree').mockReturnValueOnce('');
+    setup();
+
+    const { treeNodes } = await getElements();
+
+    await waitFor(() => user.click(treeNodes[1]));
+
+    const button = await screen.getByLabelText('download');
+
+    await waitFor(() => user.click(button));
+
+    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'single-one-short-step.yaml');
   });
 });
