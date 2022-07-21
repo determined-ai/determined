@@ -11,7 +11,7 @@ import Section from 'components/Section';
 import useRecize from 'hooks/useResize';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
-import { FileNode } from 'services/api-ts-sdk';
+import { V1FileNode as FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { RawJson } from 'shared/types';
 
@@ -82,7 +82,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         const files = await getExperimentFileTree({ experimentId });
 
         const navigateTree = (node: FileNode, key: string): DataNode => {
-          treeMap.set(key, node.path);
+          treeMap.set(key, node.path || '');
 
           const newNode: DataNode = {
             className: 'treeNode',

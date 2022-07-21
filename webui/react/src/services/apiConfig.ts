@@ -528,7 +528,7 @@ export const getExperimentFileFromTree: DetApi<
 > = {
   name: 'getExperimentFileFromTree',
   postProcess: (response) => response.file || '',
-  request: params => {
+  request: (params) => {
     return detApi.Experiments.getExperimentFileFromTree(params.experimentId, params.filePath);
   },
 };

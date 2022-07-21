@@ -4234,7 +4234,7 @@ export interface V1GetExperimentFileFromTreeResponse {
  * @interface V1GetExperimentFileTreeResponse
  */
 export interface V1GetExperimentFileTreeResponse {
-  files: FileNode[];
+  files: V1FileNode[];
 }
 
 /**
