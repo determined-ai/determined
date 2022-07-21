@@ -112,7 +112,7 @@ environment so you can spend your time building models instead of managing infra
           </a>
           <a class="tile" href="introduction.html">
               <h2 class="tile-title">Introducing Determined</h2>
-              <p class="tile-description">Learn about core concepts and key features to get helpful context before diving into more detailed information.</p>
+              <p class="tile-description">Learn about core concepts and key features before diving into more detailed information.</p>
           </a>
           <a class="tile" href="cluster-setup-guide/basic.html">
               <h2 class="tile-title">Administrator Guide</h2>
@@ -120,7 +120,7 @@ environment so you can spend your time building models instead of managing infra
           </a>
           <a class="tile" href="training/dtrain-introduction.html">
               <h2 class="tile-title">Model Developer Guide</h2>
-              <p class="tile-description">Learn how to work with Training APIs, and how to configure your distributed training experiments.</p>
+              <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
           </a>
           <a class="tile" href="tutorials/index.html">
               <h2 class="tile-title">Tutorials</h2>
