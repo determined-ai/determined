@@ -102,6 +102,11 @@ The master supports the following configuration settings:
 -  ``root``: Specifies the root directory of the state files. Defaults to
    ``/usr/share/determined/master``.
 
+-  ``cache``: Configuration for file cache.
+
+   -  ``cache_dir``: Specifies the root directory for file cache. Defaults to ``/var/cache/determined``.
+      Note that the master would break on startup if it does not have access to create this default directory.
+
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 
 -  ``tensorboard_timeout``: Specifies the duration in seconds before idle TensorBoard instances are
