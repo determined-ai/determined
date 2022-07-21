@@ -1,0 +1,6 @@
+:orphan:
+
+**Security Fixes** **Breaking Changes**
+
+-  PyTorch Lightning is no longer a part of determined environments. When needed, it should be
+   installed as part of startup hooks.
