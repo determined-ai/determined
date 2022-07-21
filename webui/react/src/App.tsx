@@ -24,7 +24,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-
+const const const const 
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
