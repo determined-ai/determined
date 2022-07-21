@@ -9,8 +9,10 @@ from determined.common.declarative_argparse import Arg, Cmd
 from .errors import EnterpriseOnlyError
 
 
+
 @authentication.required
 def list_clients(parsed_args: Namespace) -> None:
+    """list the clients"""
     try:
         clients = api.get(parsed_args.master, "oauth2/clients").json()
     except api.errors.NotFoundException:
