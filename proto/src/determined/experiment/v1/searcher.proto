@@ -55,6 +55,13 @@ message TrialExitedEarly {
   ExitedReason exited_reason = 2;
 }
 
+// ExperimentInactive is a searcher event triggered when an experiment
+// is no longer active
+message ExperimentInactive {
+  // experiment_state
+  string experiment_state = 1;
+}
+
 // SearcherEvent is a message from master to a client-driven
 // custom searcher informing it of relevant changes in the state
 // of an experiment
@@ -73,14 +80,18 @@ message SearcherEvent {
     TrialClosed trial_closed = 6;
     // trial exited early
     TrialExitedEarly trial_exited_early = 7;
+    // experiment is inactive
+    ExperimentInactive experiment_inactive = 8;
   }
 }
 
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.
 message ValidateAfterOperation {
+  // request_id is the id of the trial to close.
+  string request_id = 1;
   // The length to train before reporting a validation.
-  uint64 length = 1;
+  uint64 length = 2;
 }
 
 // Used to complete a ValidateAfterOperation.
@@ -92,48 +103,25 @@ message CompleteValidateAfterOperation {
   double searcher_metric = 2;
 }
 
-// Constant Hyperparameter
-message ConstantHyperparameter {
-  // value of the constant hyperparameter.
-  double val = 1;
-}
-
-// Nested Hyperparamater
-message RawNestedHyperparameter {
-  // An example in a nested param would be: {"optimizer": {"learning_rate":
-  // 0.01}}
-  map<string, Hyperparameter> map_hyperparam = 1;
-}
-
-// Hyperparameter.
-message Hyperparameter {
-  // A user can provide one of the hyperparameter types for
-  // the custom searcher.
-  oneof union {
-    // Constant hyperparameter.
-    ConstantHyperparameter constant_hyperparam = 1;
-    // Nested hyperparameter.
-    RawNestedHyperparameter nested_hyperparam = 2;
-  }
-}
-
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
+  // request_id is the id of the trial to close.
+  string request_id = 1;
   // The key refers to which part of the model this hyperparameters are for.
-  map<string, Hyperparameter> hyperparams = 1;
+  string hyperparams = 2;
 }
 
 // Close a trial with given id.
 message CloseTrialOperation {
-  // trial_id is the id of the trial to close.
-  string trial_id = 1;
+  // request_id is the id of the trial to close.
+  string request_id = 1;
 }
 
 // Shutdown custom searcher method.
 message ShutdownOperation {
   // A message field can't be empty because bindings won't compile.
   // Making this a message to keep it consistent with other operations.
-  int32 empty_field = 2;
+  int32 empty_field = 1;
 }
 
 // SearcherOperation is an operation issued by the searcher.
