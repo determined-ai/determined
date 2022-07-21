@@ -117,7 +117,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 
 		cmd := exec.Command("rocm-smi", args...)
 
-		out, err := cmd.Output()
+		out, err = cmd.Output()
 		if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
 			return nil, nil
 		} else if err != nil {
