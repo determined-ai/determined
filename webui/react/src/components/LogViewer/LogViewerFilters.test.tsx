@@ -32,18 +32,19 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
 };
 
 describe('LogViewerFilter', () => {
-  it('should render all filters with options', async () => {
+  it('should render all select filters with options', async () => {
     setup(DEFAULT_FILTER_OPTIONS, {});
 
     await waitFor(() => {
       Object.values(LABELS).forEach((label) => {
+        if (!DEFAULT_FILTER_OPTIONS[label]) return
         const regex = new RegExp(`All ${label}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
       });
     });
   });
 
-  it('should render filters with selected options', async () => {
+  it('should render select filters with selected options', async () => {
     const values: Filters = {
       agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ],
       allocationIds: [ DEFAULT_FILTER_OPTIONS.allocationIds[1] ],
@@ -56,7 +57,7 @@ describe('LogViewerFilter', () => {
     await waitFor(() => {
       Object.keys(LABELS).forEach((labelKey) => {
         const key = labelKey as keyof Filters;
-        if (values[key]?.length ?? 0 === 0) return;
+        if (!values[key]?.length) return;
 
         const regex = new RegExp(`${values[key]?.length} ${LABELS[key]}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
