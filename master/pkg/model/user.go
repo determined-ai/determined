@@ -123,6 +123,7 @@ func (user *User) UpdatePasswordHash(password string) error {
 	return nil
 }
 
+// Proto converts a user to its protobuf representation.
 func (user *User) Proto() *userv1.User {
 	return &userv1.User{
 		Id:         int32(user.ID),
@@ -133,8 +134,10 @@ func (user *User) Proto() *userv1.User {
 	}
 }
 
+// Users is a slice container User.
 type Users []User
 
+// Proto converts a slice of users to its protobuf representation.
 func (users Users) Proto() []*userv1.User {
 	out := make([]*userv1.User, len(users))
 	for i, u := range users {

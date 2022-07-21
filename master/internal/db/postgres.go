@@ -52,6 +52,8 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+// PaginateBun adds sorting and pagination to the provided bun query, defaulting to certain values
+// if they are not specified. By default, we order by ascending on the id column, with no limit.
 func PaginateBun(query *bun.SelectQuery, orderColumn, direction string, offset, limit int) *bun.SelectQuery {
 	if orderColumn == "" {
 		orderColumn = "id"
@@ -99,8 +101,8 @@ func ConnectPostgres(url string) (*PgDB, error) {
 }
 
 const (
-	// CodeUniqueViolation is the error code that Postgres uses to indicate that an attempted insert/update
-	// violates a uniqueness constraint.  Obtained from:
+	// CodeUniqueViolation is the error code that Postgres uses to indicate that an attempted
+	// insert/update violates a uniqueness constraint.  Obtained from:
 	// https://www.postgresql.org/docs/10/errcodes-appendix.html
 	CodeUniqueViolation = "23505"
 	// CodeForeignKeyViolation is the error code that Postgres uses to indicate that an attempted

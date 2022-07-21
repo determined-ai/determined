@@ -57,7 +57,8 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
+	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
+		int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +129,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.AddUsers {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.AddUsersToGroup(ctx, int(req.GroupId), users...)
+		err = usergroup.AddUsersToGroup(ctx, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +140,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.RemoveUsers {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.RemoveUsersFromGroup(ctx, int(req.GroupId), users...)
+		err = usergroup.RemoveUsersFromGroup(ctx, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
