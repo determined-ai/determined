@@ -23,12 +23,12 @@ import {
 import { Scale } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
 
-import css from './CompareVisualization.module.scss';
-import CompareCurve from './CompareVisualization/CompareCurve';
-import CompareFilters, {
+import css from './TrialsComparison.module.scss';
+import Compare from './Compare';
+import TrialFilters, {
   ViewType, VisualizationFilters,
-} from './CompareVisualization/CompareFilters';
-import { TrialHParams, TrialMetrics } from './CompareVisualization/CompareTable';
+} from './TrialFilters';
+import { TrialHParams, TrialMetrics } from './TrialsTable/TrialsTable';
 import { CompareTrialsParams } from 'services/types';
 
 enum PageError {
@@ -50,7 +50,7 @@ const PAGE_ERROR_MESSAGES = {
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
   [PageError.ExperimentSample]: 'Unable to retrieve experiment info.',
 };
-const CompareVisualization: React.FC = () => {
+const TrialsComparison: React.FC = () => {
 
   const { ui } = useStore();
 
@@ -294,7 +294,7 @@ const CompareVisualization: React.FC = () => {
   }
 
   const visualizationFilters = (
-    <CompareFilters
+    <TrialFilters
       batches={batches || []}
       filters={filters}
       fullHParams={fullHParams.current}
@@ -314,7 +314,7 @@ const CompareVisualization: React.FC = () => {
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
           {(experimentIds.length > 0 && filters.metric?.name && (
-            <CompareCurve
+            <Compare
               trialMetrics={trialMetrics}
               batches={batches}
               chartData={chartData}
@@ -336,4 +336,4 @@ const CompareVisualization: React.FC = () => {
   );
 };
 
-export default CompareVisualization;
+export default TrialsComparison;

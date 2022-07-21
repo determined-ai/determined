@@ -3,7 +3,7 @@ import React from 'react';
 
 import PageHeaderFoldable from 'components/PageHeaderFoldable';
 
-import css from './CompareHeader.module.scss';
+import css from './TrialsComparisonHeader.module.scss';
 
 const ComparisonHeader: React.FC = () => {
   return (
@@ -12,10 +12,8 @@ const ComparisonHeader: React.FC = () => {
 
         leftContent={(
           <Space align="center" className={css.base}>
-
             <div className={css.id}>Experiment Comparison</div>
             <div className={css.name} />
-
           </Space>
         )}
       />

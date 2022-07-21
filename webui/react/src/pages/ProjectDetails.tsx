@@ -565,10 +565,7 @@ const ProjectDetails: React.FC = () => {
         sourceWorkspaceId: project?.workspaceId,
       });
     }
-    if (action === Action.CompareExperiments) {
-      if (settings.row?.length)
-        return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
-    }
+
 
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {
@@ -597,6 +594,11 @@ const ProjectDetails: React.FC = () => {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
         openCommand(result as CommandTask);
+      }
+
+      if (action === Action.CompareExperiments) {
+        if (settings.row?.length)
+          return routeToReactUrl(paths.experimentComparison(settings.row.map(id => id.toString())));
       }
 
       /*
@@ -635,7 +637,7 @@ const ProjectDetails: React.FC = () => {
   }, [ submitBatchAction ]);
 
   const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.OpenTensorBoard || action === Action.Move) {
+    if (action === Action.OpenTensorBoard || action === Action.Move || action === Action.CompareExperiments) {
       submitBatchAction(action);
     } else {
       showConfirmation(action as Action);

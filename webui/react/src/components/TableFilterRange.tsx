@@ -8,41 +8,52 @@ import css from './TableFilterSearch.module.scss';
 
 interface Props extends FilterDropdownProps {
   onReset?: () => void;
-  onSearch?: (search: string) => void;
-  value: string;
+  onSet?: (min: string, max: string) => void;
+  min: string;
+  max: string;
 }
 
-const TableFilterSearch: React.FC<Props> = ({
+const TableFilterRange: React.FC<Props> = ({
   clearFilters,
   confirm,
   onReset,
-  onSearch,
-  value,
+  onSet,
+  min,
+  max,
   visible,
 }: Props) => {
-  const inputRef = useRef<Input>(null);
-  const [ search, setSearch ] = useState(value);
+  const inputMinRef = useRef<Input>(null);
+  const inputMaxRef = useRef<Input>(null);
+  const [ inputMin, setInputMin ] = useState(min);
+  const [ inputMax, setInputMax ] = useState(max);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
+  console.log(min, inputMin)
+
+
+  const handleMinChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMin(e.target.value || '');
+  }, []);
+  const handleMaxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMax(e.target.value || '');
   }, []);
 
   const handleReset = useCallback(() => {
-    setSearch('');
+    setInputMin('')
+    setInputMax('')
     if (onReset) onReset();
     if (clearFilters) clearFilters();
   }, [ clearFilters, onReset ]);
 
   const handleSearch = useCallback(() => {
-    if (onSearch) onSearch(search);
+    onSet?.(inputMin, inputMax);
     confirm();
-  }, [ confirm, onSearch, search ]);
+  }, [ confirm, onSet, inputMin, inputMax ]);
 
   useEffect(() => {
     if (!visible) return;
 
     setTimeout(() => {
-      if (inputRef.current) inputRef.current.focus({ cursor: 'all' });
+      inputMinRef.current?.focus({ cursor: 'all' });
     }, 0);
   }, [ visible ]);
 
@@ -52,11 +63,21 @@ const TableFilterSearch: React.FC<Props> = ({
         <Input
           allowClear
           bordered={false}
-          placeholder="search"
-          prefix={<Icon name="search" size="tiny" />}
-          ref={inputRef}
-          value={search}
-          onChange={handleSearchChange}
+          placeholder="min"
+          // prefix={<Icon name="search" size="tiny" />}
+          ref={inputMinRef}
+          value={inputMin}
+          onChange={handleMinChange}
+          onPressEnter={() => inputMaxRef.current?.focus({ cursor: 'all' })}
+        />
+        <Input
+          allowClear
+          bordered={false}
+          placeholder="max"
+          // prefix={<Icon name="search" size="tiny" />}
+          ref={inputMaxRef}
+          value={inputMax}
+          onChange={handleMaxChange}
           onPressEnter={handleSearch}
         />
       </div>
@@ -80,4 +101,4 @@ const TableFilterSearch: React.FC<Props> = ({
   );
 };
 
-export default TableFilterSearch;
+export default TableFilterRange;

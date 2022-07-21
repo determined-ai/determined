@@ -5,8 +5,10 @@ import { useLocation } from 'react-router';
 import Page from 'components/Page';
 import Message from 'shared/components/Message';
 
-import ComparisonHeader from './ExperimentComparison/CompareHeader';
-import ComparisonTabs from './ExperimentComparison/CompareTabs';
+import ComparisonHeader from './TrialsComparison/TrialsComparisonHeader';
+import TrialsComparison from './TrialsComparison/TrialsComparison';
+import Spinner from 'shared/components/Spinner';
+
 interface Query {
   id?: string[];
 }
@@ -46,9 +48,12 @@ const ExperimentComparison: React.FC = () => {
       )}
       stickyHeader
       title="Compare Experiments">
-      <ComparisonTabs />
+          <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+      <TrialsComparison />
+    </React.Suspense>
     </Page>
   );
 };
+
 
 export default ExperimentComparison;

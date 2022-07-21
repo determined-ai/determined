@@ -11,7 +11,7 @@ import SelectFilter from 'components/SelectFilter';
 import { Scale } from 'types';
 import { ExperimentVisualizationType, MetricName } from 'types';
 
-import css from './CompareFilters.module.scss';
+import css from './TrialFilters.module.scss';
 
 const { Option } = Select;
 
@@ -94,7 +94,7 @@ const reducer = (state: VisualizationFilters, action: Action) => {
   }
 };
 
-const CompareFilters: React.FC<Props> = ({
+const TrialFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
@@ -265,4 +265,4 @@ const CompareFilters: React.FC<Props> = ({
   );
 };
 
-export default CompareFilters;
+export default TrialFilters;

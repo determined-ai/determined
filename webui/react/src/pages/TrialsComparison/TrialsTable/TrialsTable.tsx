@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+
+import React, { useCallback, useMemo, useState, MutableRefObject, useEffect } from 'react';
+import { FilterDropdownProps } from 'antd/lib/table/interface';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
@@ -14,10 +15,17 @@ import {
 } from 'types';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
-import { Primitive, RecordKey } from '../../../shared/types';
-import { HpValsMap } from '../CompareVisualization';
+import { Primitive, RecordKey, RawJson } from '../../../shared/types';
+import { HpValsMap } from '../TrialsComparison';
 
-import css from './CompareTable.module.scss';
+import css from './TrialsTable.module.scss';
+import InteractiveTable, {InteractiveTableSettings} from 'components/InteractiveTable';
+
+import settingsConfig, { 
+ CompareTableSettings 
+} from './TrialsTable.settings';
+import useSettings, {UpdateSettings} from 'hooks/useSettings';
+import TableFilterRange from 'components/TableFilterRange';
 
 interface Props {
   colorScale?: ColorScale[];
@@ -35,6 +43,8 @@ interface Props {
   trialHps: TrialHParams[];
   trialIds: number[];
   trialMetrics: Record<number, TrialMetrics>,
+  containerRef: MutableRefObject<HTMLElement | null>,
+
 }
 
 export interface TrialHParams {
@@ -50,7 +60,7 @@ export interface TrialMetrics {
   metrics: Record<RecordKey, Primitive>;
 }
 
-const HpTrialTable: React.FC<Props> = ({
+const CompareTable: React.FC<Props> = ({
   colorScale,
   filteredTrialIdMap,
   hyperparameters,
@@ -65,9 +75,17 @@ const HpTrialTable: React.FC<Props> = ({
   handleTableRowSelect,
   selectedRowKeys,
   trialMetrics,
-  metrics
+  metrics,
+  containerRef
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+
+
+  // PLACHOLDER, would actually be passed in
+  const [filters, setFilters] = useState<RawJson>({})
+  console.log({filters})
+
+  const {settings, updateSettings }= useSettings<CompareTableSettings>(settingsConfig)
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap){
       trialHps.forEach(hp => 
@@ -104,7 +122,7 @@ const HpTrialTable: React.FC<Props> = ({
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphaNumericSorter(a.id, b.id);
     const experimentIdSorter = (a: TrialHParams, b: TrialHParams): number =>
       alphaNumericSorter(a.experimentId, b.experimentId);
-    const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
+    const idColumn = { key: 'id', render: idRenderer, defaultWidth: 60, dataIndex: 'id', sorter: idSorter, title: 'Trial ID' };
 
     const metricRenderer = (_: string, record: TrialHParams) => {
       return <HumanReadableNumber num={record.metric} />;
@@ -134,6 +152,7 @@ const HpTrialTable: React.FC<Props> = ({
 
     const metricColumn = {
       dataIndex: 'metric',
+      defaultWidth: 60,
       key: 'metric',
       render: metricRenderer,
       sorter: metricSorter,
@@ -142,6 +161,7 @@ const HpTrialTable: React.FC<Props> = ({
 
     const experimentIdColumn = {
       dataIndex: 'experimentId',
+      defaultWidth: 60,
       key: 'experimentId',
       render: (_: string, record: TrialHParams) => (
         <Link path={paths.experimentDetails(record.experimentId)}>
@@ -178,12 +198,40 @@ const HpTrialTable: React.FC<Props> = ({
       };
     };
 
+
+
+
+    const hpFilterRange = (hp: string) => (filterProps: FilterDropdownProps) => {
+
+      const handleHpRangeApply = (min: string, max: string) => {
+        filters[hp] = {min, max}
+      }
+  
+      const handleHpRangeReset = ()  => {
+        filters[hp] = undefined;
+        setFilters(filters)
+      };
+
+      return <TableFilterRange
+        {...filterProps}
+        min={filters[hp]?.min}
+        max={filters[hp]?.max}
+        onReset={handleHpRangeReset}
+        onSet={handleHpRangeApply}
+      />
+    };
+
+
+
     const hpColumns = Object
       .keys(hyperparameters || {})
       .filter(hpParam => hpVals[hpParam]?.size > 1)
       .map(key => {
         return {
           key,
+          defaultWidth: 60,
+          filterDropdown: hpFilterRange(key),
+          dataIndex: key,
           render: hpRenderer(key),
           sorter: hpColumnSorter(key),
           title: key,
@@ -194,6 +242,8 @@ const HpTrialTable: React.FC<Props> = ({
         const key = metric.name;
         return {
           key,
+          defaultWidth: 60,
+          dataIndex: key,
           render: metricsRenderer(key),
           sorter: metricsSorter(key),
           title: key,
@@ -204,7 +254,13 @@ const HpTrialTable: React.FC<Props> = ({
     return [ idColumn, experimentIdColumn, metricColumn, ...hpColumns, ...metricsColumns ];
   }, [ colorScale, hyperparameters, metric, trialIds, hpVals ]);
 
-  const handleTableChange = useCallback((tablePagination) => {
+
+  useEffect(() => {
+    updateSettings({columns: columns.map(c => c.dataIndex), columnWidths: columns.map(_ => 100)})
+  },[columns])
+
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    console.log(tablePagination, tableFilters, tableSorter)
     setPageSize(tablePagination.pageSize);
   }, []);
 
@@ -225,7 +281,10 @@ const HpTrialTable: React.FC<Props> = ({
   }, [ highlightedTrialId ]);
 
   return (
-    <ResponsiveTable<TrialHParams>
+    <InteractiveTable<TrialHParams>
+      containerRef={containerRef}
+      settings={settings as InteractiveTableSettings }
+      updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       columns={columns}
       dataSource={dataSource}
       pagination={getPaginationConfig(dataSource.length, pageSize)}
@@ -240,10 +299,10 @@ const HpTrialTable: React.FC<Props> = ({
       showSorterTooltip={false}
       size="small"
       sortDirections={[ 'ascend', 'descend', 'ascend' ]}
-      onChange={handleTableChange}
+      // onChange={handleTableChange}
       onRow={handleTableRow}
     />
   );
 };
 
-export default HpTrialTable;
+export default CompareTable;

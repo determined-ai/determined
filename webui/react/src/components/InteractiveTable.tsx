@@ -364,6 +364,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
+      console.log({tablePagination, tableFilters, tableSorter})
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;

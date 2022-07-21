@@ -1,5 +1,5 @@
 import { Alert } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
@@ -14,11 +14,12 @@ import {
 import handleError from 'utils/error';
 import { openCommand } from 'wait';
 
-import { ErrorLevel, ErrorType } from '../../../shared/utils/error';
-import { HpValsMap } from '../CompareVisualization';
+import { ErrorLevel, ErrorType } from '../../shared/utils/error';
+import { HpValsMap } from './TrialsComparison';
 
-import css from './CompareCurve.module.scss';
-import HpTrialTable, { TrialHParams, TrialMetrics } from './CompareTable';
+import css from './Compare.module.scss';
+import CompareTable, { TrialHParams, TrialMetrics } from './TrialsTable/TrialsTable';
+import Page from 'components/Page';
 
 interface Props {
   batches: number[]
@@ -38,7 +39,7 @@ interface Props {
 
 }
 
-const CompareCurve: React.FC<Props> = ({
+const Compare: React.FC<Props> = ({
   hpVals,
   filters,
   // fullHParams,
@@ -53,6 +54,8 @@ const CompareCurve: React.FC<Props> = ({
   trialMetrics,
   metrics
 }: Props) => {
+  const containerRef = useRef<HTMLElement>(null);
+
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
 
@@ -115,7 +118,7 @@ const CompareCurve: React.FC<Props> = ({
   }
 
   return (
-    <div className={css.base}>
+    <Page containerRef={containerRef} className={css.base}>
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
@@ -138,7 +141,8 @@ const CompareCurve: React.FC<Props> = ({
             onAction={action => submitBatchAction(action as Action)}
             onClear={clearSelected}
           />
-          <HpTrialTable
+          <CompareTable
+            containerRef={containerRef}
             handleTableRowSelect={handleTableRowSelect}
             highlightedTrialId={highlightedTrialId}
             hpVals={hpVals}
@@ -155,9 +159,8 @@ const CompareCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
-
-    </div>
+    </Page>
   );
 };
 
-export default CompareCurve;
+export default Compare;

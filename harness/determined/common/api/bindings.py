@@ -131,8 +131,9 @@ class QueryFiltersExpRank:
         }
 
 class QueryTrialsSortByNamespace(enum.Enum):
-    VALIDATION_METRICS = "VALIDATION_METRICS"
-    TRAINING_METRICS = "TRAINING_METRICS"
+    TRIAL_ITSELF = "TRIAL_ITSELF"
+    VALIDATION_METRIC = "VALIDATION_METRIC"
+    TRAINING_METRIC = "TRAINING_METRIC"
 
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
@@ -2624,6 +2625,24 @@ class v1GetTrialWorkloadsResponse:
         return {
             "workloads": [x.to_json() for x in self.workloads],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1GetTrialsCollectionsResponse:
+    def __init__(
+        self,
+        collections: "typing.Optional[typing.Sequence[v1TrialsCollection]]" = None,
+    ):
+        self.collections = collections
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialsCollectionsResponse":
+        return cls(
+            collections=[v1TrialsCollection.from_json(x) for x in obj["collections"]] if obj.get("collections", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "collections": [x.to_json() for x in self.collections] if self.collections is not None else None,
         }
 
 class v1GetUserResponse:
@@ -5337,6 +5356,42 @@ class v1SSOProvider:
             "ssoUrl": self.ssoUrl,
         }
 
+class v1SaveTrialsCollectionRequest:
+    def __init__(
+        self,
+        collection: "typing.Optional[v1TrialsCollection]" = None,
+    ):
+        self.collection = collection
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SaveTrialsCollectionRequest":
+        return cls(
+            collection=v1TrialsCollection.from_json(obj["collection"]) if obj.get("collection", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "collection": self.collection.to_json() if self.collection is not None else None,
+        }
+
+class v1SaveTrialsCollectionResponse:
+    def __init__(
+        self,
+        collection: "typing.Optional[v1TrialsCollection]" = None,
+    ):
+        self.collection = collection
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SaveTrialsCollectionResponse":
+        return cls(
+            collection=v1TrialsCollection.from_json(obj["collection"]) if obj.get("collection", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "collection": self.collection.to_json() if self.collection is not None else None,
+        }
+
 class v1Scale(enum.Enum):
     SCALE_UNSPECIFIED = "SCALE_UNSPECIFIED"
     SCALE_LINEAR = "SCALE_LINEAR"
@@ -6124,6 +6179,36 @@ class v1TrialTag:
         return {
             "key": self.key if self.key is not None else None,
             "value": self.value if self.value is not None else None,
+        }
+
+class v1TrialsCollection:
+    def __init__(
+        self,
+        filters: "typing.Optional[v1QueryFilters]" = None,
+        id: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+        userId: "typing.Optional[int]" = None,
+    ):
+        self.id = id
+        self.userId = userId
+        self.name = name
+        self.filters = filters
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialsCollection":
+        return cls(
+            id=obj.get("id", None),
+            userId=obj.get("userId", None),
+            name=obj.get("name", None),
+            filters=v1QueryFilters.from_json(obj["filters"]) if obj.get("filters", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "id": self.id if self.id is not None else None,
+            "userId": self.userId if self.userId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "filters": self.filters.to_json() if self.filters is not None else None,
         }
 
 class v1TrialsSampleResponse:
@@ -8078,6 +8163,23 @@ def get_GetTrialWorkloads(
         return v1GetTrialWorkloadsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrialWorkloads", _resp)
 
+def get_GetTrialsCollections(
+    session: "client.Session",
+) -> "v1GetTrialsCollectionsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/trials/collections",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialsCollectionsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialsCollections", _resp)
+
 def get_GetUser(
     session: "client.Session",
     *,
@@ -9140,6 +9242,25 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def post_SaveTrialsCollection(
+    session: "client.Session",
+    *,
+    body: "v1SaveTrialsCollectionRequest",
+) -> "v1SaveTrialsCollectionResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/trials/collections/save",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1SaveTrialsCollectionResponse.from_json(_resp.json())
+    raise APIHttpError("post_SaveTrialsCollection", _resp)
 
 def post_SetCommandPriority(
     session: "client.Session",
