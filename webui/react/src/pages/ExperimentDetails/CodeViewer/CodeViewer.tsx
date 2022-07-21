@@ -219,7 +219,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
                       <Tooltip title="Download File">
                         <DownloadOutlined
                           className={css.noBorderButton}
-                          onClick={e => handlePath(e, {
+                          onClick={(e) => handlePath(e, {
                             external: true,
                             path: paths.experimentFileFromTree(experimentId, fileInfo.path),
                           })}
