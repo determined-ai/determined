@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -30,6 +32,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -92,6 +95,7 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
+		queue               *searcher.SearcherEventQueue
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
@@ -414,22 +418,47 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *apiv1.PostSearcherOperationsRequest:
 		queue := e.searcher.GetCustomSearcherEventQueue()
 		if queue == nil {
-			ctx.Log().Errorf("Custom Searcher Event Queue was not retrieved.")
+			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Events Queue not found"))
+			return nil
 		}
-		// TODO:  Get the maximum event ID sent in TriggeredByEvent list.
-		// Then use RemoveUpTo and remove all events (including that max ID).
-		// Then, process operations.
+		ops := make([]searcher.Operation, 0)
+		log.Info("Actor is processing post operations")
+		for _, searcherOp := range msg.SearcherOperations {
+			switch concreteOperation := searcherOp.GetUnion().(type) {
+			case *experimentv1.SearcherOperation_CreateTrial:
+				ops = append(ops, searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType))
+			case *experimentv1.SearcherOperation_Shutdown:
+				ops = append(ops, searcher.NewShutdown())
+			case *experimentv1.SearcherOperation_ValidateAfter:
+				ops = append(ops, searcher.ValidateAfterFromProto(concreteOperation))
+			case *experimentv1.SearcherOperation_CloseTrial:
+				ops = append(ops, searcher.CloseFromProto(concreteOperation))
+			default:
+				ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
+			}
+		}
+		ctx.Log().Warnf("Processing operations %+v", ops)
+
+		// remove from queue
+		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
+			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
+		} else {
+			e.searcher.Record(ops)
+			e.processOperations(ctx, ops, nil)
+			ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
+		}
 
 	case *apiv1.GetSearcherEventsRequest:
 		queue := e.searcher.GetCustomSearcherEventQueue()
 		if queue == nil {
-			ctx.Respond(status.Error(codes.Internal, "failed to get events from custom searcher"))
+			ctx.Respond(status.Error(codes.Internal, "Custom Searcher Event Queue not found"))
 		} else {
 			resp := &apiv1.GetSearcherEventsResponse{
 				SearcherEvents: queue.GetEvents(),
 			}
 			ctx.Respond(resp)
 		}
+
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
 			State:               model.ActiveState,

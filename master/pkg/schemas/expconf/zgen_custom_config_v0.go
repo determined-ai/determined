@@ -8,6 +8,17 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
+func (c CustomConfigV0) MaxLength() LengthV0 {
+	if c.RawMaxLength == nil {
+		panic("You must call WithDefaults on CustomConfigV0 before .MaxLength")
+	}
+	return *c.RawMaxLength
+}
+
+func (c *CustomConfigV0) SetMaxLength(val LengthV0) {
+	c.RawMaxLength = &val
+}
+
 func (c CustomConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedCustomConfigV0()
 }

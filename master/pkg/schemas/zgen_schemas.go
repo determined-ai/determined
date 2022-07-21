@@ -2481,11 +2481,21 @@ var (
         "name"
     ],
     "eventuallyRequired": [
+        "max_length",
         "metric"
     ],
     "properties": {
         "name": {
             "const": "custom"
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher-length.json"
         },
         "metric": {
             "type": [

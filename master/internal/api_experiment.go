@@ -74,28 +74,52 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 }
 
 func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherEventsRequest) (
-	*apiv1.GetSearcherEventsResponse, error) {
+	resp *apiv1.GetSearcherEventsResponse, err error) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching experiment from db")
+		return nil, err
+	}
+	if exp.State == experimentv1.State_STATE_COMPLETED {
+		event := experimentv1.SearcherEvent_ExperimentInactive{
+			ExperimentInactive: &experimentv1.ExperimentInactive{
+				ExperimentState: exp.State.Enum().String(),
+			},
+		}
+		searcherEvent := experimentv1.SearcherEvent{
+			Id:    int32(-1),
+			Event: &event,
+		}
+		events := []*experimentv1.SearcherEvent{&searcherEvent}
+		resp = &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}
+		return resp, nil
 	}
 
-	print(exp)
-	print(err)
-	return &apiv1.GetSearcherEventsResponse{}, nil
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to get events from actor %v", err)
+	default:
+		return resp, nil
+	}
 }
 
 func (a *apiServer) PostSearcherOperations(_ context.Context,
-	req *apiv1.PostSearcherOperationsRequest) (*apiv1.PostSearcherOperationsResponse, error) {
-	exp, err := a.getExperiment(int(req.ExperimentId))
-	if err != nil {
-		return nil, errors.Wrap(err, "fetching experiment from db")
+	req *apiv1.PostSearcherOperationsRequest) (
+	resp *apiv1.PostSearcherOperationsResponse, err error) {
+	if err = a.checkExperimentExists(int(req.ExperimentId)); err != nil {
+		return nil, err
 	}
 
-	print(exp)
-	print(err)
-
-	return &apiv1.PostSearcherOperationsResponse{}, nil
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to post operations %v", err)
+	default:
+		logrus.Infof("Posted operations %v", req.SearcherOperations)
+		return resp, nil
+	}
 }
 
 func (a *apiServer) GetExperiment(
