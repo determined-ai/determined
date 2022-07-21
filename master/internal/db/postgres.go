@@ -52,7 +52,7 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
-func PaginateBun(query *bun.SelectQuery, column, order string, offset, limit int,) *bun.SelectQuery {
+func PaginateBun(query *bun.SelectQuery, column, order string, offset, limit int) *bun.SelectQuery {
 	sortString := "id "
 	if column != "" {
 		sortString = column + " "
