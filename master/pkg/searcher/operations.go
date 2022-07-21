@@ -136,40 +136,23 @@ func NewCreateFromCheckpoint(
 	return create
 }
 
-func hparamValFromProto(protoHparam *experimentv1.Hyperparameter) interface{} {
-	switch protoHparam.Union.(type) {
-	case *experimentv1.Hyperparameter_CategoricalHyperparam:
-		return protoHparam.GetCategoricalHyperparam().Val
-	case *experimentv1.Hyperparameter_DoubleHyperparam:
-		return protoHparam.GetDoubleHyperparam().Val
-	case *experimentv1.Hyperparameter_IntegerHyperparam:
-		return protoHparam.GetIntegerHyperparam().Val
-	case *experimentv1.Hyperparameter_NestedHyperparam:
-		p := make(map[string]interface{})
-		for key, val := range protoHparam.GetNestedHyperparam().MapHyperparam {
-			p[key] = hparamValFromProto(val)
-		}
-		return p
-	default:
-		panic(fmt.Sprintf("unexpected hyperparameter type %+v", protoHparam.Union))
-	}
-}
-
 // CreateFromProto initializes a new Create operation from
 // an experimentv1.SearcherOperation_CreateTrial.
 func CreateFromProto(
 	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
-	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.TrialId)
+	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", protoSearcherOp.CreateTrial.TrialId))
+		panic(fmt.Sprintf("Unparseable trial id %s", protoSearcherOp.CreateTrial.RequestId))
 	}
 	// TODO determine whether trial seed is set on client or on master
 	trialSeed := uint32(42)
-	hparams := make(HParamSample)
-	for name, protoHparam := range protoSearcherOp.CreateTrial.Hyperparams {
-		hparams[name] = hparamValFromProto(protoHparam)
+	var hparams HParamSample
+	err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams)
+	if err != nil {
+		// TODO should we return this err instead?
+		panic(fmt.Sprintf("Unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams))
 	}
 	return Create{
 		RequestID:             model.RequestID(requestID),
@@ -217,9 +200,9 @@ func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 func ValidateAfterFromProto(
 	op *experimentv1.SearcherOperation_ValidateAfter,
 ) ValidateAfter {
-	requestID, err := uuid.Parse(op.ValidateAfter.TrialId)
+	requestID, err := uuid.Parse(op.ValidateAfter.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", op.ValidateAfter.TrialId))
+		panic(fmt.Sprintf("Unparseable trial id %s", op.ValidateAfter.RequestId))
 	}
 	return ValidateAfter{
 		RequestID: model.RequestID(requestID),
@@ -255,9 +238,9 @@ func NewClose(requestID model.RequestID) Close {
 func CloseFromProto(
 	op *experimentv1.SearcherOperation_CloseTrial,
 ) Close {
-	requestID, err := uuid.Parse(op.CloseTrial.TrialId)
+	requestID, err := uuid.Parse(op.CloseTrial.RequestId)
 	if err != nil {
-		panic(fmt.Sprintf("Unparseable trial id %s", op.CloseTrial.TrialId))
+		panic(fmt.Sprintf("Unparseable trial id %s", op.CloseTrial.RequestId))
 	}
 	return Close{
 		RequestID: model.RequestID(requestID),

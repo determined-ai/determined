@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import uuid
 from abc import abstractmethod
 from enum import Enum
@@ -50,28 +51,28 @@ class Operation:
 
 
 class ValidateAfter(Operation):
-    def __init__(self, trial_id: uuid.UUID, length: int) -> None:
+    def __init__(self, request_id: uuid.UUID, length: int) -> None:
         super().__init__()
-        self.trial_id = trial_id
+        self.request_id = request_id
         self.length = length
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
             validateAfter=bindings.v1ValidateAfterOperation(
-                trialId=str(self.trial_id),
+                requestId=str(self.request_id),
                 length=str(self.length),
             )
         )
 
 
 class Close(Operation):
-    def __init__(self, trial_id: uuid.UUID):
+    def __init__(self, request_id: uuid.UUID):
         super().__init__()
-        self.trial_id = trial_id
+        self.request_id = request_id
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
-            closeTrial=bindings.v1CloseTrialOperation(trialId=str(self.trial_id))
+            closeTrial=bindings.v1CloseTrialOperation(requestId=str(self.request_id))
         )
 
 
@@ -90,19 +91,19 @@ class Shutdown(Operation):
 class Create(Operation):
     def __init__(
         self,
-        trial_id: uuid.UUID,
+        request_id: uuid.UUID,
         hparams: Dict[str, Any],
         checkpoint: Optional[Checkpoint],
     ) -> None:
         super().__init__()
-        self.trial_id = trial_id
-        self.hparams = hparams
+        self.request_id = request_id
+        self.hparams = json.dumps(hparams)
         self.checkpoint = checkpoint
 
     def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
         return bindings.v1SearcherOperation(
             createTrial=bindings.v1CreateTrialOperation(
-                hyperparams=self.hparams, trialId=str(self.trial_id)
+                hyperparams=self.hparams, requestId=str(self.request_id)
             )
         )
 
@@ -124,7 +125,7 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_trial_created(self, trial_id: uuid.UUID) -> List[Operation]:
+    def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
         """
         on_trial_created informs the searcher that a trial has been created
         as a result of Create operation.
@@ -141,7 +142,7 @@ class SearchMethod:
         pass
 
     @abstractmethod
-    def on_trial_closed(self, trial_id: uuid.UUID) -> List[Operation]:
+    def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         """
         trialClosed informs the searcher that the trial has been closed as a result of a Close
         operation.
@@ -158,7 +159,7 @@ class SearchMethod:
     @abstractmethod
     def on_trial_exited_early(
         self,
-        trial_id: uuid.UUID,
+        request_id: uuid.UUID,
         exited_reason: ExitedReason,
     ) -> List[Operation]:
         """

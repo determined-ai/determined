@@ -127,6 +127,11 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	resources.SetResourcePool(poolName)
 	conf.SetResources(resources)
 
+	method := searcher.NewSearchMethod(conf.Searcher())
+	search := searcher.NewSearcher(
+		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
+	)
+
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
 		master.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
@@ -141,10 +146,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		telemetry.ReportExperimentCreated(master.system, expModel)
 	}
 
-	method := searcher.NewSearchMethod(conf.Searcher())
-	search := searcher.NewSearcher(
-		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
-	)
 	log.Infof("created experiment Id=%d, JobId=%s", expModel.ID, expModel.JobID)
 
 	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)

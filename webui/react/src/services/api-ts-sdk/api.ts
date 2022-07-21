@@ -1127,20 +1127,6 @@ export interface V1CancelExperimentResponse {
 }
 
 /**
- * 
- * @export
- * @interface V1CategoricalHyperparameter
- */
-export interface V1CategoricalHyperparameter {
-    /**
-     * 
-     * @type {string}
-     * @memberof V1CategoricalHyperparameter
-     */
-    val?: string;
-}
-
-/**
  * Checkpoint a collection of files saved by a task.
  * @export
  * @interface V1Checkpoint
@@ -1291,11 +1277,11 @@ export interface V1CheckpointWorkload {
  */
 export interface V1CloseTrialOperation {
     /**
-     * trial_id is the id of the trial to close.
+     * request_id is the id of the trial to close.
      * @type {string}
      * @memberof V1CloseTrialOperation
      */
-    trialId?: string;
+    requestId?: string;
 }
 
 /**
@@ -1545,17 +1531,17 @@ export interface V1CreateExperimentResponse {
  */
 export interface V1CreateTrialOperation {
     /**
-     * trial_id is the id of the trial to close.
+     * request_id is the id of the trial to close.
      * @type {string}
      * @memberof V1CreateTrialOperation
      */
-    trialId?: string;
+    requestId?: string;
     /**
      * The key refers to which part of the model this hyperparameters are for.
-     * @type {{ [key: string]: V1Hyperparameter; }}
+     * @type {string}
      * @memberof V1CreateTrialOperation
      */
-    hyperparams?: { [key: string]: V1Hyperparameter; };
+    hyperparams?: string;
 }
 
 /**
@@ -1740,20 +1726,6 @@ export interface V1DisableSlotResponse {
      * @memberof V1DisableSlotResponse
      */
     slot?: V1Slot;
-}
-
-/**
- * 
- * @export
- * @interface V1DoubleHyperparameter
- */
-export interface V1DoubleHyperparameter {
-    /**
-     * value of the double-precision numeric hyperparameter.
-     * @type {number}
-     * @memberof V1DoubleHyperparameter
-     */
-    val?: number;
 }
 
 /**
@@ -3214,38 +3186,6 @@ export interface V1GetWorkspacesResponse {
 }
 
 /**
- * Hyperparameter.
- * @export
- * @interface V1Hyperparameter
- */
-export interface V1Hyperparameter {
-    /**
-     * Double hyperparameter.
-     * @type {V1DoubleHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    doubleHyperparam?: V1DoubleHyperparameter;
-    /**
-     * Integer hyperparameter.
-     * @type {V1IntegerHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    integerHyperparam?: V1IntegerHyperparameter;
-    /**
-     * Categorical hyperparameter.
-     * @type {V1CategoricalHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    categoricalHyperparam?: V1CategoricalHyperparameter;
-    /**
-     * Nested hyperparameter.
-     * @type {V1RawNestedHyperparameter}
-     * @memberof V1Hyperparameter
-     */
-    nestedHyperparam?: V1RawNestedHyperparameter;
-}
-
-/**
  * Kill the requested notebook if idle.
  * @export
  * @interface V1IdleNotebookRequest
@@ -3285,20 +3225,6 @@ export interface V1InitialOperations {
      * @memberof V1InitialOperations
      */
     holder?: string;
-}
-
-/**
- * 
- * @export
- * @interface V1IntegerHyperparameter
- */
-export interface V1IntegerHyperparameter {
-    /**
-     * 
-     * @type {string}
-     * @memberof V1IntegerHyperparameter
-     */
-    val?: string;
 }
 
 /**
@@ -5258,20 +5184,6 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
-}
-
-/**
- * 
- * @export
- * @interface V1RawNestedHyperparameter
- */
-export interface V1RawNestedHyperparameter {
-    /**
-     * 
-     * @type {{ [key: string]: V1Hyperparameter; }}
-     * @memberof V1RawNestedHyperparameter
-     */
-    mapHyperparam?: { [key: string]: V1Hyperparameter; };
 }
 
 /**
@@ -7249,11 +7161,11 @@ export interface V1UserWebSetting {
  */
 export interface V1ValidateAfterOperation {
     /**
-     * trial_id is the id of the trial to close.
+     * request_id is the id of the trial to close.
      * @type {string}
      * @memberof V1ValidateAfterOperation
      */
-    trialId?: string;
+    requestId?: string;
     /**
      * The length to train before reporting a validation.
      * @type {string}
