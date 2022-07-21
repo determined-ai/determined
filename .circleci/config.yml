@@ -96,7 +96,7 @@ commands:
 
   skip-if-docs-only:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git remote add upstream https://github.com/determined-ai/determined 2>/dev/null
       - run: git fetch upstream
       - run:
           name: check for docs-only changes
@@ -112,9 +112,10 @@ commands:
 
   skip-if-webui-only:
     steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined 2>/dev/null
       - run: git fetch upstream
       - run:
-          name: check for webui-only changes # must be run after skip-if-docs-only
+          name: check for webui-only changes
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -127,9 +128,10 @@ commands:
 
   skip-if-not-shared:
     steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined 2>/dev/null
       - run: git fetch upstream
       - run:
-          name: check for shared changes # must be run after skip-if-docs-only
+          name: check for shared changes
           command: |
             MERGE_BASE="$(git merge-base upstream/test-downstream HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src")
