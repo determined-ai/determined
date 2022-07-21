@@ -3,6 +3,7 @@ package searcher
 import (
 	"testing"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -30,18 +31,46 @@ func TestCustomSearchMethod(t *testing.T) {
 	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
 		InitialOperations: &experimentv1.InitialOperations{},
 	}
+	expEventCount += 1
 	searcherEvent := experimentv1.SearcherEvent{
 		Event: &initOpsEvent,
-		Id:    1,
+		Id:    expEventCount,
 	}
 	expEvents = append(expEvents, &searcherEvent)
+	require.Equal(t, expEvents, queue.GetEvents())
+	// Add trialExitedEarly
+	requestID := model.NewRequestID(rand)
+	exitedReason := model.Errored
+	customSearchMethod.trialExitedEarly(ctx, requestID, exitedReason)
+	trialExitedEarlyEvent := experimentv1.SearcherEvent_TrialExitedEarly{
+		TrialExitedEarly: &experimentv1.TrialExitedEarly{
+			RequestId:    requestID.String(),
+			ExitedReason: experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED,
+		}}
 	expEventCount += 1
-	require.Equal(t, expEvents, queue.events)
-	require.Equal(t, expEventCount, queue.eventCount)
+	searcherEvent2 := experimentv1.SearcherEvent{
+		Event: &trialExitedEarlyEvent,
+		Id:    expEventCount,
+	}
+	expEvents = append(expEvents, &searcherEvent2)
+	require.Equal(t, expEvents, queue.GetEvents())
 
-	// Add trialClosed
-
-	//requestID := model.NewRequestID(rand)
-	//validateAfterOp := ValidateAfter{requestID, uint64(200)}
-
+	// Add validationAfter operation.
+	validateAfterOp := ValidateAfter{requestID, uint64(200)}
+	metric := float64(10.3)
+	customSearchMethod.validationCompleted(ctx, requestID, metric, validateAfterOp)
+	validationCompletedEvent := experimentv1.SearcherEvent_ValidationCompleted{
+		ValidationCompleted: &experimentv1.ValidationCompleted{
+			RequestId: requestID.String(),
+			Metric:    metric,
+			Op:        validateAfterOp.ToProto(),
+		},
+	}
+	expEventCount += 1
+	searcherEvent3 := experimentv1.SearcherEvent{
+		Event: &validationCompletedEvent,
+		Id:    expEventCount,
+	}
+	expEvents = append(expEvents, &searcherEvent3)
+	require.Equal(t, expEvents, queue.GetEvents())
 }

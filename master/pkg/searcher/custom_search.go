@@ -80,6 +80,7 @@ func (s *customSearch) validationCompleted(
 	event := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
 			RequestId: requestID.String(),
+			Op:        op.ToProto(),
 			Metric:    metric,
 		},
 	}
@@ -94,9 +95,11 @@ func (s *customSearch) validationCompleted(
 func (s *customSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
+
 	event := experimentv1.SearcherEvent_TrialExitedEarly{
 		TrialExitedEarly: &experimentv1.TrialExitedEarly{
-			RequestId: requestID.String(),
+			RequestId:    requestID.String(),
+			ExitedReason: model.ExitedReasonToProto(exitedReason),
 		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{
