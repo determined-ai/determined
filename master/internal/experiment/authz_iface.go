@@ -94,6 +94,10 @@ type ExperimentAuthZ interface {
 	CanSetExperimentsWeight(curUser model.User, e *model.Experiment, weight float64) error
 	CanSetExperimentsPriority(curUser model.User, e *model.Experiment, priority int) error
 	CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error
+
+	// GET /api/v1/experiments/:exp_id/searcher_events
+	// POST /api/v1/experiments/:exp_id/searcher_operations
+	CanRunCustomSearch(curUser model.User, e *model.Experiment) error
 }
 
 // AuthZProvider is the authz registry for experiments.
