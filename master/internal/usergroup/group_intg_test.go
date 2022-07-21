@@ -71,7 +71,7 @@ func TestUserGroups(t *testing.T) {
 		err := AddUsersToGroup(ctx, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to add users to group")
 
-		users, err := GetUsersInGroup(ctx, testGroup.ID)
+		users, err := UsersInGroup(ctx, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
 		require.Len(t, users, 1, "failed to return only the set of users in the group")
 
@@ -97,7 +97,7 @@ func TestUserGroups(t *testing.T) {
 		err = RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to remove users from group")
 
-		users, err := GetUsersInGroup(ctx, testGroup.ID)
+		users, err := UsersInGroup(ctx, testGroup.ID)
 		require.NoError(t, err, "failed to look for users in group")
 
 		i := usersContain(users, testUser.ID)
@@ -111,7 +111,7 @@ func TestUserGroups(t *testing.T) {
 		err := AddUsersToGroup(ctx, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
 		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
 
-		users, err := GetUsersInGroup(ctx, testGroup.ID)
+		users, err := UsersInGroup(ctx, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
 
 		index := usersContain(users, testUser.ID)
@@ -160,7 +160,7 @@ func TestUserGroups(t *testing.T) {
 		_, err := GroupByID(ctx, testGroupStatic.ID)
 		require.NoError(t, err, "errored while getting static test group")
 
-		users, err := GetUsersInGroup(ctx, testGroupStatic.ID)
+		users, err := UsersInGroup(ctx, testGroupStatic.ID)
 		require.NoError(t, err, "failed to search for users that belong to static group")
 
 		index := usersContain(users, testUser.ID)

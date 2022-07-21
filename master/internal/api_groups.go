@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// FIXME: look at how errors are handled in the rest of the API and follow that pattern
 func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.GroupWriteResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
@@ -37,7 +36,7 @@ func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 		return nil, err
 	}
 
-	users, err := usergroup.GetUsersInGroup(ctx, createdGroup.ID)
+	users, err := usergroup.UsersInGroup(ctx, createdGroup.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ func (a *apiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 		return nil, err
 	}
 
-	users, err := usergroup.GetUsersInGroup(ctx, gid)
+	users, err := usergroup.UsersInGroup(ctx, gid)
 	if err != nil {
 		return nil, err
 	}
@@ -105,18 +104,18 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		err = mapAndFilterErrors(err)
 	}()
 
-	oldGroup, err := usergroup.GroupByID(ctx, int(req.GetGroupId()))
+	oldGroup, err := usergroup.GroupByID(ctx, int(req.GroupId))
 	if err != nil {
 		return nil, err
 	}
 
 	newName := oldGroup.Name
-	if req.GetName() != "" {
-		newName = req.GetName()
+	if req.Name != "" {
+		newName = req.Name
 	}
 	err = usergroup.UpdateGroup(ctx, usergroup.Group{
 		BaseModel: bun.BaseModel{},
-		ID:        int(req.GetGroupId()),
+		ID:        int(req.GroupId),
 		Name:      newName,
 		OwnerID:   oldGroup.OwnerID,
 	})
@@ -124,29 +123,29 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		return nil, err
 	}
 
-	if len(req.GetAddUsers()) > 0 {
+	if len(req.AddUsers) > 0 {
 		var users []model.UserID
-		for _, id := range req.GetAddUsers() {
+		for _, id := range req.AddUsers {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.AddUsersToGroup(ctx, int(req.GetGroupId()), users...)
+		err := usergroup.AddUsersToGroup(ctx, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if len(req.GetRemoveUsers()) > 0 {
+	if len(req.RemoveUsers) > 0 {
 		var users []model.UserID
-		for _, id := range req.GetRemoveUsers() {
+		for _, id := range req.RemoveUsers {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.RemoveUsersFromGroup(ctx, int(req.GetGroupId()), users...)
+		err := usergroup.RemoveUsersFromGroup(ctx, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	users, err := usergroup.GetUsersInGroup(ctx, int(req.GetGroupId()))
+	users, err := usergroup.UsersInGroup(ctx, int(req.GroupId))
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,7 @@ func (a *apiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupReque
 		err = mapAndFilterErrors(err)
 	}()
 
-	err = usergroup.DeleteGroup(ctx, int(req.GetGroupId()))
+	err = usergroup.DeleteGroup(ctx, int(req.GroupId))
 	if err != nil {
 		return nil, err
 	}
@@ -190,11 +189,13 @@ var (
 	errBadRequest      = status.Error(codes.InvalidArgument, "Bad request")
 	errNotFound        = status.Error(codes.NotFound, "Not found")
 	errDuplicateRecord = status.Error(codes.AlreadyExists, "Duplicate record")
+	errInternal        = status.Error(codes.Internal, "Internal server error")
 	errorWhitelist     = map[error]bool{
 		nil:                true,
 		errBadRequest:      true,
 		errNotFound:        true,
 		errDuplicateRecord: true,
+		errInternal:        true,
 	}
 )
 
@@ -210,5 +211,5 @@ func mapAndFilterErrors(err error) error {
 		return errDuplicateRecord
 	}
 
-	return status.Error(codes.Internal, "Internal server error")
+	return errInternal
 }

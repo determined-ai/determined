@@ -52,22 +52,22 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
-func PaginateBun(query *bun.SelectQuery, column, order string, offset, limit int,) *bun.SelectQuery {
-	sortString := "id "
-	if column != "" {
-		sortString = column + " "
+func PaginateBun(query *bun.SelectQuery, orderColumn, direction string, offset, limit int) *bun.SelectQuery {
+	if orderColumn == "" {
+		orderColumn = "id"
 	}
-	if order != "" {
-		sortString += order
-	} else {
-		sortString += "ASC"
+	if direction != "DESC" {
+		direction = "ASC"
 	}
+	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
+	query = query.Order(orderExp)
 
-	query = query.Order(sortString)
 	query = query.Offset(offset)
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
+
 	return query
 }
 

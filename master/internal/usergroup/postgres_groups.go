@@ -116,10 +116,10 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 	return nil
 }
 
-// GetUsersInGroup searches for users that belong to a group and returns them.
+// UsersInGroup searches for users that belong to a group and returns them.
 // Does not return ErrNotFound if none are found, as that is considered a
 // successful search.
-func GetUsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
+func UsersInGroup(ctx context.Context, gid int) ([]model.User, error) {
 	var users []model.User
 	err := db.Bun().NewSelect().Model(&users).
 		Join(`INNER JOIN user_group_membership AS ugm ON "user"."id"=ugm.user_id`).
