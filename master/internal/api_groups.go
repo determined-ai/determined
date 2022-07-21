@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// FIXME: look at how errors are handled in the rest of the API and follow that pattern
 func (a *apiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.GroupWriteResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
@@ -58,7 +57,8 @@ func (a *apiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
+	groups, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
+		int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.GetAddUsers() {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.AddUsersToGroup(ctx, int(req.GetGroupId()), users...)
+		err = usergroup.AddUsersToGroup(ctx, int(req.GetGroupId()), users...)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func (a *apiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.GetRemoveUsers() {
 			users = append(users, model.UserID(id))
 		}
-		err := usergroup.RemoveUsersFromGroup(ctx, int(req.GetGroupId()), users...)
+		err = usergroup.RemoveUsersFromGroup(ctx, int(req.GetGroupId()), users...)
 		if err != nil {
 			return nil, err
 		}

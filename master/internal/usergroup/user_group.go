@@ -16,6 +16,7 @@ type Group struct {
 	OwnerID model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
 }
 
+// Proto converts a group to its protobuf representation.
 func (g *Group) Proto() *groupv1.Group {
 	return &groupv1.Group{
 		GroupId: int32(g.ID),
@@ -23,8 +24,10 @@ func (g *Group) Proto() *groupv1.Group {
 	}
 }
 
+// Groups is a slice containing Group.
 type Groups []Group
 
+// Proto converts Groups into its protobuf representation.
 func (gs Groups) Proto() []*groupv1.Group {
 	out := make([]*groupv1.Group, len(gs))
 	for i, g := range gs {
