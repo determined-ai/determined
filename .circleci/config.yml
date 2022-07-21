@@ -125,6 +125,20 @@ commands:
               echo "detected non-webui-only changes: $DIFF_DIRS"
             fi
 
+  skip-if-not-shared:
+    steps:
+      - run: git fetch upstream
+      - run:
+          name: check for shared changes (must be run after skip-if-docs-only)
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src")
+            if [ "$DIFF_DIRS" = "shared" ] ; then
+              echo "shared code changed, running downstream test"
+            else
+              echo "shared code not affected, halting job now"
+              circleci-agent step halt
+            fi
 
   set-slack-user-id:
     steps:
@@ -1268,14 +1282,15 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
-  test-unit-downstream:
+  test-intg-downstream:
     docker:
       - image: cimg/node:16.14
     steps:
       - checkout-with-sm
+      - skip-if-not-shared
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
-      - run: cd webui/react/src/shared && ./bin/test.py --test-local --repos saas 
+      - run: make -C webui/react test-shared
 
   build-storybook:
     docker:
@@ -2104,6 +2119,7 @@ workflows:
 
   test-intg:
     jobs:
+      - test-intg-downstream
       - test-intg-master
       - test-intg-agent
       - go-coverage:
