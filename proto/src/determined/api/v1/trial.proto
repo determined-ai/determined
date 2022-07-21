@@ -74,7 +74,7 @@ message TrialLogsRequest {
   // Order logs in either ascending or descending order by timestamp.
   OrderBy order_by = 14;
   // Search the logs by whether the text contains a substring.
-  string searchText = 15;
+  string search_text = 15;
 }
 
 // Response to TrialLogsRequest.

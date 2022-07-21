@@ -37,7 +37,7 @@ describe('LogViewerFilter', () => {
 
     await waitFor(() => {
       Object.values(LABELS).forEach((label) => {
-        if (!DEFAULT_FILTER_OPTIONS[label]) return
+        if (!DEFAULT_FILTER_OPTIONS[label]) return;
         const regex = new RegExp(`All ${label}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
       });

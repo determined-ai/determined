@@ -64,7 +64,7 @@ message TaskLogsRequest {
   // Order logs in either ascending or descending order by timestamp.
   OrderBy order_by = 15;
   // Search the logs by whether the text contains a substring.
-  string searchText = 16;
+  string search_text = 16;
 }
 
 // Response to TaskLogsRequest.
