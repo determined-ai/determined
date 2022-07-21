@@ -114,7 +114,7 @@ commands:
     steps:
       - run: git fetch upstream
       - run:
-          name: check for webui-only changes (must be run after skip-if-docs-only)
+          name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -129,7 +129,7 @@ commands:
     steps:
       - run: git fetch upstream
       - run:
-          name: check for shared changes (must be run after skip-if-docs-only)
+          name: check for shared changes # must be run after skip-if-docs-only
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src")
