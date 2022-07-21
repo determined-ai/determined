@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -135,6 +137,32 @@ func NewCreateFromCheckpoint(
 	return create
 }
 
+// CreateFromProto initializes a new Create operation from
+// an experimentv1.SearcherOperation_CreateTrial.
+func CreateFromProto(
+	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
+	sequencerType model.WorkloadSequencerType,
+) Create {
+	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.RequestId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", protoSearcherOp.CreateTrial.RequestId))
+	}
+	// TODO determine whether trial seed is set on client or on master
+	trialSeed := uint32(42)
+	var hparams HParamSample
+	err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams)
+	if err != nil {
+		// TODO should we return this err instead?
+		panic(fmt.Sprintf("Unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams))
+	}
+	return Create{
+		RequestID:             model.RequestID(requestID),
+		TrialSeed:             trialSeed,
+		Hparams:               hparams,
+		WorkloadSequencerType: sequencerType,
+	}
+}
+
 func (create Create) String() string {
 	if create.Checkpoint == nil {
 		return fmt.Sprintf("{Create %s, seed %d}", create.RequestID, create.TrialSeed)
@@ -171,11 +199,15 @@ func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 
 // ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
 func ValidateAfterFromProto(
-	rID model.RequestID, op *experimentv1.ValidateAfterOperation,
+	op *experimentv1.SearcherOperation_ValidateAfter,
 ) ValidateAfter {
+	requestID, err := uuid.Parse(op.ValidateAfter.RequestId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", op.ValidateAfter.RequestId))
+	}
 	return ValidateAfter{
-		RequestID: rID,
-		Length:    op.Length,
+		RequestID: model.RequestID(requestID),
+		Length:    op.ValidateAfter.Length,
 	}
 }
 
@@ -200,6 +232,19 @@ type Close struct {
 func NewClose(requestID model.RequestID) Close {
 	return Close{
 		RequestID: requestID,
+	}
+}
+
+// CloseFromProto returns a Close operation from its protobuf representation.
+func CloseFromProto(
+	op *experimentv1.SearcherOperation_CloseTrial,
+) Close {
+	requestID, err := uuid.Parse(op.CloseTrial.RequestId)
+	if err != nil {
+		panic(fmt.Sprintf("Unparseable trial id %s", op.CloseTrial.RequestId))
+	}
+	return Close{
+		RequestID: model.RequestID(requestID),
 	}
 }
 
