@@ -26,6 +26,7 @@ import { correctViewportHeight, refreshPage } from 'utils/browser';
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
+  console.log("app is here")
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
   const { auth, info, ui } = useStore();
