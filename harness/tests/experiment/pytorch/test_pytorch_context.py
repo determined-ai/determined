@@ -14,6 +14,8 @@ class TestPyTorchContext(unittest.TestCase):
         self.context: pytorch.PyTorchTrialContext = pytorch.PyTorchTrialContext.from_config(
             self.config
         )
+
+    def test_from_config(self) -> None:
         assert isinstance(self.context, pytorch.PyTorchTrialContext)
 
         trial = pytorch_onevar_model.OneVarTrial(self.context)
