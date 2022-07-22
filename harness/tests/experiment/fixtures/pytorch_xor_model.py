@@ -405,4 +405,3 @@ class XORTrialGradClipping(XORTrial):
             self.context.step_optimizer(self.optimizer)
 
         return {"loss": loss}
-
