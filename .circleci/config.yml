@@ -1455,17 +1455,16 @@ jobs:
 
   test-unit-harness-gpu:
     machine:
-      image: <<pipeline.parameters.machine-image>>
-    resource_class: gpu.nvidia.small
+      resource_class: gpu.nvidia.small
+      image: <<pipeline.parameters.gpu-machine-image>>
     steps:
-      - run: nvidia-smi
       - checkout
       - skip-if-docs-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.machine-image>>
+          executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -F harness
@@ -2054,7 +2053,8 @@ workflows:
       - test-unit-go
       - test-unit-react
       - test-unit-harness-cpu
-      - test-unit-harness-gpu
+      # Exclude gpu tests for now since we do not have access to those instance types on circleci.
+      #- test-unit-harness-gpu
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-unit-storage:
@@ -2359,7 +2359,7 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-        # DeepSpeed tests do not work on K80s, so we need V100 instances.
+        # DeepSpeed tests do not work on K80s so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-deepspeed
           context: aws
