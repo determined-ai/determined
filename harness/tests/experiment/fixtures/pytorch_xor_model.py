@@ -406,10 +406,3 @@ class XORTrialGradClipping(XORTrial):
 
         return {"loss": loss}
 
-
-class XORTrialWithApexAmp(XORTrial):
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        super().__init__(context)
-        self.model, self.optimizer = self.context.configure_apex_amp(
-            models=self.model, optimizers=self.optimizer
-        )
