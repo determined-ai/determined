@@ -116,7 +116,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials = fields.searcher === SearchMethods.Grid.name ?
       undefined : fields.max_trials;
-    baseConfig.searcher.max_length = undefined;
+    baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
