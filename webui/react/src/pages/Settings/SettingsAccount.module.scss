@@ -1,18 +1,30 @@
 .base {
-  padding: 16px;
+  margin: 0 auto;
+  max-width: $breakpoint-mobile;
+  padding: 32px 16px;
+  width: 100%;
 
-  .field {
+  .avatar {
+    align-items: center;
     display: flex;
     flex-direction: column;
-
-    .body {
-      color: var(--theme-colors-monochrome-8);
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .header {
-      margin-bottom: 8px;
-    }
+  }
+  .avatar > label {
+    margin-bottom: 8px;
+  }
+  .row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+  .info {
+    display: flex;
+    flex-direction: column;
+  }
+  .info > label {
+    color: var(--theme-surface-on-weak);
+  }
+  .info > span {
+    color: var(--theme-surface-on);
   }
 }

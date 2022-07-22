@@ -29,35 +29,32 @@ const SettingsAccount: React.FC = () => {
 
   return (
     <div className={css.base}>
-      <div className={css.field}>
-        <span className={css.header}>Avatar</span>
-        <span className={css.body}>
-          <Avatar hideTooltip large userId={auth.user?.id} />
-        </span>
-        <Divider />
+      <div className={css.avatar}>
+        <Avatar hideTooltip large userId={auth.user?.id} />
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Display name</span>
-        <span className={css.body}>
+      <Divider />
+      <div className={css.row}>
+        <div className={css.info}>
+          <label>Display Name</label>
           <span>{auth.user?.displayName}</span>
-          <Button onClick={handleDisplayNameClick}>
-            Change name
-          </Button>
-        </span>
-        <Divider />
+        </div>
+        <Button onClick={handleDisplayNameClick}>
+          Change name
+        </Button>
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Username</span>
-        <span className={css.body}>{auth.user?.username}</span>
-        <Divider />
+      <Divider />
+      <div className={css.row}>
+        <div className={css.info}>
+          <label>Username</label>
+          <span>{auth.user?.username}</span>
+        </div>
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Password</span>
-        <span className={css.body}>
-          <Button onClick={handlePasswordClick}>
-            Change password
-          </Button>
-        </span>
+      <Divider />
+      <div className={css.row}>
+        <label>Password</label>
+        <Button onClick={handlePasswordClick}>
+          Change password
+        </Button>
       </div>
       {modalNameChangeContextHolder}
       {modalPasswordChangeContextHolder}
