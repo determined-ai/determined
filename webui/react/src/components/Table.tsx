@@ -136,7 +136,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
+export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
   <TimeDuration duration={getDuration(record)} />
 );
 

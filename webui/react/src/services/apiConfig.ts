@@ -245,6 +245,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
+      params.projectId || 0,
       options,
     );
   },
@@ -803,37 +804,6 @@ export const getProject: DetApi<
   request: (params) => detApi.Projects.getProject(
     params.id,
   ),
-};
-
-export const getProjectExperiments: DetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
-> = {
-  name: 'getProjectExperiments',
-  postProcess: (response: Api.V1GetExperimentsResponse) => {
-    return {
-      experiments: decoder.mapV1ExperimentList(response.experiments),
-      pagination: response.pagination,
-    };
-  },
-  request: (params: Service.GetProjectExperimentsParams, options) => {
-    return detApi.Projects.getProjectExperiments(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.description,
-      params.labels,
-      params.archived,
-      params.states,
-      params.users,
-      params.userIds,
-      options,
-    );
-  },
 };
 
 export const addProjectNote: DetApi<

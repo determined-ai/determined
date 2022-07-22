@@ -3,11 +3,6 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "google/protobuf/wrappers.proto";
-
-import "determined/api/v1/experiment.proto";
-import "determined/api/v1/pagination.proto";
-import "determined/experiment/v1/experiment.proto";
 import "determined/project/v1/project.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -29,52 +24,6 @@ message GetProjectResponse {
 
   // The project requested.
   determined.project.v1.Project project = 1;
-}
-
-// Get experiments associated with the requested project.
-message GetProjectExperimentsRequest {
-  // Sort the experiments by the given field.
-  GetExperimentsRequest.SortBy sort_by = 1;
-  // Order experiments in either ascending or descending order.
-  OrderBy order_by = 2;
-
-  // Skip the number of experiments before returning results. Negative values
-  // denote number of experiments to skip from the end before returning results.
-  int32 offset = 3;
-  // Limit the number of experiments. A value of 0 denotes no limit.
-  int32 limit = 4;
-
-  // The id of the project.
-  int32 id = 5;
-
-  // Limit the experiments to those matching the name.
-  string name = 6;
-  // Limit the experiments to those matching the description.
-  string description = 7;
-
-  // Limit experiments to those that match the provided labels.
-  repeated string labels = 8;
-  // Limit experiments to those that are archived.
-  google.protobuf.BoolValue archived = 9;
-  // Limit experiments to those that match one of the provided states.
-  repeated determined.experiment.v1.State states = 10;
-  // Limit experiments to those that are owned by one of the specified users.
-  repeated string users = 11;
-  // Limit experiments to those that are owned by users with the specified
-  // userIds.
-  repeated int32 user_ids = 12;
-}
-
-// Response to GetProjectExperimentsRequest.
-message GetProjectExperimentsResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiments", "pagination" ] }
-  };
-
-  // The experiments associated with the project.
-  repeated determined.experiment.v1.Experiment experiments = 1;
-  // Pagination information of the full dataset.
-  Pagination pagination = 2;
 }
 
 // Request for creating a project.

@@ -288,12 +288,6 @@ export const getProject = generateDetApi<
   Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
 >(Config.getProject);
 
-export const getProjectExperiments = generateDetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
->(Config.getProjectExperiments);
-
 export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
