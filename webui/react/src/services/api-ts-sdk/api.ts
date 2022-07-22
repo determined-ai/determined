@@ -1930,6 +1930,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     parentArchived?: boolean;
+    /**
+     * The configuration of the experiment.
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    config?: any;
 }
 
 /**
@@ -2277,12 +2283,6 @@ export interface V1GetExperimentResponse {
      * @memberof V1GetExperimentResponse
      */
     experiment: V1Experiment;
-    /**
-     * The experiment config.
-     * @type {any}
-     * @memberof V1GetExperimentResponse
-     */
-    config: any;
     /**
      * Associated job summary.
      * @type {V1JobSummary}

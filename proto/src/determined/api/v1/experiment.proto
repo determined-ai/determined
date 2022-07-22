@@ -37,8 +37,6 @@ message GetExperimentResponse {
   };
   // The requested experiment.
   determined.experiment.v1.Experiment experiment = 1;
-  // The experiment config.
-  google.protobuf.Struct config = 2;
   // Associated job summary.
   determined.job.v1.JobSummary job_summary = 3;
 }

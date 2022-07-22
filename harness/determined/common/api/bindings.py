@@ -1241,6 +1241,7 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         description: "typing.Optional[str]" = None,
         displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
@@ -1280,6 +1281,7 @@ class v1Experiment:
         self.workspaceId = workspaceId
         self.workspaceName = workspaceName
         self.parentArchived = parentArchived
+        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1308,6 +1310,7 @@ class v1Experiment:
             workspaceId=obj.get("workspaceId", None),
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
+            config=obj.get("config", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1336,6 +1339,7 @@ class v1Experiment:
             "workspaceId": self.workspaceId if self.workspaceId is not None else None,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
+            "config": self.config if self.config is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -1660,26 +1664,22 @@ class v1GetExperimentLabelsResponse:
 class v1GetExperimentResponse:
     def __init__(
         self,
-        config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
         jobSummary: "typing.Optional[v1JobSummary]" = None,
     ):
         self.experiment = experiment
-        self.config = config
         self.jobSummary = jobSummary
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentResponse":
         return cls(
             experiment=v1Experiment.from_json(obj["experiment"]),
-            config=obj["config"],
             jobSummary=v1JobSummary.from_json(obj["jobSummary"]) if obj.get("jobSummary", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experiment": self.experiment.to_json(),
-            "config": self.config,
             "jobSummary": self.jobSummary.to_json() if self.jobSummary is not None else None,
         }
 
