@@ -1,5 +1,4 @@
 import getpass
-import os
 from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Optional
