@@ -630,7 +630,7 @@ class TestPyTorchTrial:
         assert controller.supports_mixed_precision()
         assert controller.supports_averaging_training_metrics()
 
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.skipif(apex is None or not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_apex_amp(self) -> None:
         apex.amp.register_float_function(torch, "sigmoid")
