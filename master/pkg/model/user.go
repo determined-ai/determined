@@ -134,7 +134,7 @@ func (user *User) Proto() *userv1.User {
 	}
 }
 
-// Users is a slice container User.
+// Users is a slice of User objects—primarily useful for its methods.
 type Users []User
 
 // Proto converts a slice of users to its protobuf representation.

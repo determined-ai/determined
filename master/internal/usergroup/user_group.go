@@ -24,7 +24,7 @@ func (g *Group) Proto() *groupv1.Group {
 	}
 }
 
-// Groups is a slice containing Group.
+// Groups is a slice of Group objects—primarily useful for its methods.
 type Groups []Group
 
 // Proto converts Groups into its protobuf representation.
