@@ -6,6 +6,12 @@
 
 The CoreWeave app allows for selection of a default region and hardware type for running experiments. These default selections allow users to submit experiments without any additional configuration. Storage volumes can also be attached, this allows for loading of training data and storage of checkpoints directly to a shared filesystem that can be mounted into Pods, Virtual Servers and File Browser (can be deployed from Apps).
 
+## Demo
+
+Watch our demo of installing and using Determined on CoreWeave Cloud:
+
+[![Watch our demo on installing and using Determined on CoreWeave Cloud](./coreweave-determinedvidprev-small.png)](https://www.youtube.com/watch?v=JBZOWrVJMZU)
+
 ## Pre-Requisites
 
 - You will need object storage bucket on CoreWeave Object Storage for checkpoints. _Please contact CoreWeave support to request Object Storage access_ 
