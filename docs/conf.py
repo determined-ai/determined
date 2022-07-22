@@ -21,11 +21,11 @@ version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text()
 release = version
 language = "en"
 
-source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
+source_suffix = {".rst": "restructuredtext"}
 templates_path = ["_templates"]
 html_static_path = ["assets"]
 html_css_files = [
-    'styles/determined.css',
+    "styles/determined.css",
 ]
 exclude_patterns = [
     "_build",
