@@ -1,12 +1,12 @@
-#############################################
+#################
  IDE Integration
-#############################################
+#################
 
 Determined shells can be used in the popular IDEs similarly to a common remote SSH host.
 
-******************
-Visual Studio Code
-******************
+********************
+ Visual Studio Code
+********************
 
 #. Make sure `Visual Studio Code Remote - SSH
    <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh>`__ extension is
@@ -31,9 +31,9 @@ Visual Studio Code
 #. The remote host will now be available in the VS Code **Remote Explorer**. For further detail,
    please refer to the `official documentation <https://code.visualstudio.com/docs/remote/ssh>`__.
 
-******************
-PyCharm
-******************
+*********
+ PyCharm
+*********
 
 #. **PyCharm Professional** is required for `remote Python interpreters via SSH
    <https://www.jetbrains.com/help/pycharm/configuring-remote-interpreters-via-ssh.html>`__.
@@ -77,4 +77,5 @@ PyCharm
    USERNAME`` in the corresponding fields. Then switch ``Authentication type`` dropdown to ``OpenSSH
    config and authentication agent``. Save the new configuration by clicking "OK".
 
-#. Use the new SSH configuration to setup a remote interpreter by following the official documentation.
+#. Use the new SSH configuration to setup a remote interpreter by following the official
+   documentation.

@@ -1,6 +1,6 @@
-##################
+###################
  Example Solutions
-##################
+###################
 
 Determined includes several example machine learning models that have been ported to Determined's
 APIs. These examples can be found in the ``examples/`` subdirectory of the `Determined GitHub repo

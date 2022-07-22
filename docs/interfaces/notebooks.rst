@@ -1,8 +1,8 @@
 .. _notebooks:
 
-##################
+###################
  Jupyter Notebooks
-##################
+###################
 
 `Jupyter Notebooks <https://jupyter.org/>`__ are a convenient way to develop and debug machine
 learning models, visualize the behavior of trained models, or even manage the training lifecycle of
@@ -21,18 +21,18 @@ Determined Notebooks have the following benefits:
 
 After a Notebook is terminated, it is not possible to restore the files that are not stored in the
 persistent directories. **You need to ensure that the cluster is configured to mount persistent
-directories into the container and save files in the persistent directories in the container.**
-See :ref:`notebook-state` for more information.
+directories into the container and save files in the persistent directories in the container.** See
+:ref:`notebook-state` for more information.
 
-If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be
-shut down automatically so you need to manually terminate the kernels.
+If you open a Notebook tab in JupyterLab, it will automatically open a kernel that will not be shut
+down automatically so you need to manually terminate the kernels.
 
 There are two ways to access notebooks in Determined: the command-line interface (CLI) and the
 WebUI. To install the CLI, see :ref:`install-cli`.
 
-************
-Command Line
-************
+**************
+ Command Line
+**************
 
 The following command will automatically start a notebook with a single GPU and open it in your
 browser.
@@ -83,9 +83,9 @@ configuration file.
 For more information on how to write the notebook configuration file, see
 :ref:`notebook-configuration`.
 
-*******************
-Useful CLI Commands
-*******************
+*********************
+ Useful CLI Commands
+*********************
 
 A full list of notebook-related commands can be found by running:
 
@@ -105,9 +105,9 @@ To kill a notebook, you need its ID, which can be found using the ``list`` comma
 
    det notebook kill <id>
 
-*****
-WebUI
-*****
+*******
+ WebUI
+*******
 
 Notebooks can also be started from the WebUI. You can click the "Tasks" tab to take you to a list of
 the tasks currently running on the cluster.
@@ -180,9 +180,9 @@ metrics of a previously trained model). To launch a notebook that does not use a
 
 .. _notebook-state:
 
-*************************************
+*********************************
  Save and Restore Notebook State
-*************************************
+*********************************
 
 .. warning::
 
@@ -230,9 +230,9 @@ functionality.
    > ``Advanced Settings Editor`` and change the value of ``"autosaveInternal"`` under ``Document
    Manager``.
 
-***************************************
+*************************************
  Use the Determined CLI in Notebooks
-***************************************
+*************************************
 
 The Determined CLI is installed into notebook containers by default. This allows users to interact
 with Determined from inside a notebook---e.g., to launch new deep learning workloads or examine the

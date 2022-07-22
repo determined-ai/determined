@@ -1,8 +1,8 @@
 .. _k8s-dev-guide:
 
-#####################################
+###################
  Development Guide
-#####################################
+###################
 
 ***************
  Prerequisites
@@ -13,9 +13,9 @@ nodes and Kubernetes version >= 1.19 and <= 1.21, though later versions may work
 Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
 <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
-**************************************
+**********************************
  Set up a Development Environment
-**************************************
+**********************************
 
 To deploy a custom version of the Determined Master, we deploy a long-running pod in Kubernetes,
 command it to sleep, then exec into it and build our Master. To add a sleep command, modify the
@@ -44,9 +44,9 @@ Next apply the Determined Helm chart and exec into the pod containing Master.
 
    kubectl exec -it <master-pod-name> -- /bin/bash
 
-*************************************
+*********************************
  Set up a Determined Environment
-*************************************
+*********************************
 
 Before installing Determined, you will need to install the dependencies specified in the
 `contributing guide <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
@@ -97,9 +97,9 @@ In addition to installing these packages, ``.bashrc`` needs to be updated with n
 After completing these steps, clone the Determined repository and create and activate a virtual
 environment for Determined.
 
-************************************
+**********************************
  Prepare to run Determined Master
-************************************
+**********************************
 
 After the dependencies have been installed, some changes need to be made within the Determined
 repository. First, copy the Master configuration found at ``/etc/determined/master.yaml`` and place

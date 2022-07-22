@@ -1,6 +1,6 @@
-######################
+###########
  Keras API
-######################
+###########
 
 +---------------------------------------------------------------------+
 | API reference                                                       |
@@ -17,9 +17,9 @@ To learn about this API, you can start by reading the trial definitions from the
 -  :download:`Fashion MNIST example </examples/fashion_mnist_tf_keras.tgz>`
 -  :download:`CIFAR-10 example </examples/cifar10_tf_keras.tgz>`
 
-**************
+***********
  Load Data
-**************
+***********
 
 .. note::
 
@@ -55,9 +55,9 @@ Users are required wrap their model prior to compiling it using :meth:`self.cont
 <determined.keras.TFKerasTrialContext.wrap_model>`. This is typically done inside
 :meth:`~determined.keras.TFKerasTrial.build_model`.
 
-********************************************
+******************************************
  Customize Calling Model Fitting Function
-********************************************
+******************************************
 
 The :class:`~determined.keras.TFKerasTrial` interface allows the user to configure how ``model.fit``
 is called by calling :meth:`self.context.configure_fit()

@@ -1,6 +1,6 @@
-#######################
+################
  Search Methods
-#######################
+################
 
 Determined supports a :ref:`variety of hyperparameter search algorithms <hyperparameter-tuning>`.
 Aside from the ``single`` searcher, a searcher runs multiple trials and decides the hyperparameter
@@ -31,9 +31,9 @@ checkpoints for downstream serving.
 
 .. image:: /assets/images/adaptive-asha-experiment-detail.png
 
-***************
-Adaptive Search
-***************
+*****************
+ Adaptive Search
+*****************
 
 Our default recommended search method is `Adaptive (ASHA) <https://arxiv.org/pdf/1810.05934.pdf>`_,
 a state-of-the-art early-stopping based technique that speeds up traditional techniques like random
@@ -43,16 +43,24 @@ fashion.
 :ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>` offers asynchronous search
 functionality more suitable for large-scale HP search experiments in the distributed setting.
 
-******************************
-Other Supported Search Methods
-******************************
+********************************
+ Other Supported Search Methods
+********************************
 
 Determined also supports other common hyperparameter search algorithms:
 
--  :ref:`Single <topic-guides_hp-tuning-det_single>` is appropriate for manual hyperparameter tuning, as it trains a single hyperparameter configuration.
--  :ref:`Grid <topic-guides_hp-tuning-det_grid>` brute force evaluates all possible hyperparameter configurations and returns the best.
--  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter configurations chosen at random and returns the best.
--  :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search but periodically replaces low-performing hyperparameter configurations with ones *near* the high-performing points in the hyperparameter space.
+-  :ref:`Single <topic-guides_hp-tuning-det_single>` is appropriate for manual hyperparameter
+   tuning, as it trains a single hyperparameter configuration.
+
+-  :ref:`Grid <topic-guides_hp-tuning-det_grid>` brute force evaluates all possible hyperparameter
+   configurations and returns the best.
+
+-  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
+   configurations chosen at random and returns the best.
+
+-  :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search
+   but periodically replaces low-performing hyperparameter configurations with ones *near* the
+   high-performing points in the hyperparameter space.
 
 .. toctree::
    :maxdepth: 1

@@ -27,9 +27,9 @@ Following the diagram, a standard execution would be:
 This section provides details on the core resources, which are required to run Determined, and
 peripheral resources, which are optionally configurable based on user requirements.
 
-**********************
-Core Resources
-**********************
+****************
+ Core Resources
+****************
 
 -  **Master Node**: A single EC2 instance that:
 
@@ -53,9 +53,9 @@ Core Resources
 -  **Security Groups**: VPC Security Groups ensure that each node in the cluster can communicate
    with each other.
 
-**********************
-Periphery Resources
-**********************
+*********************
+ Periphery Resources
+*********************
 
 -  **Network/Subnetwork**: The Determined cluster runs in an existing or newly created VPC.
 

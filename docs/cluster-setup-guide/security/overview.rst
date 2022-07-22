@@ -1,6 +1,6 @@
-###################
-Security
-###################
+##########
+ Security
+##########
 
 These security features apply only to Determined Enterprise Edition.
 
@@ -15,8 +15,8 @@ This section covers the following security topics:
 +-------------------+----------------------------------------------------------------------------+
 | :doc:`oidc`       | Integrate OpenID Connect, with and Okta example.                           |
 +-------------------+----------------------------------------------------------------------------+
-| :doc:`saml`       | Integrate Security Assertion Markup Language (SAML) authentication         |
-|                   | to use single sign-on (SSO) with your organizationidentity provider (IdP). |
+| :doc:`saml`       | Integrate Security Assertion Markup Language (SAML) authentication to use  |
+|                   | single sign-on (SSO) with your organizationidentity provider (IdP).        |
 +-------------------+----------------------------------------------------------------------------+
 | :doc:`scim`       | Integrate System for Cross-domain Identity Management (SCIM) for           |
 |                   | administrators to easily and securely provision users and groups           |

@@ -1,8 +1,8 @@
 .. _setup-eks-cluster:
 
-######################################################
+###################################################
  Set up and Manage an AWS Kubernetes (EKS) Cluster
-######################################################
+###################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as
 `Amazon EKS <https://aws.amazon.com/eks/>`_. This document describes how to set up an EKS cluster
@@ -43,9 +43,9 @@ Determined Helm chart.
 
 .. _cluster-creation:
 
-**********************
+********************
  Create the Cluster
-**********************
+********************
 
 The quickest and easiest way to deploy an EKS cluster is with ``eksctl``. ``eksctl`` supports
 cluster creation with either command line arguments or a cluster config file. Below is a template
@@ -178,9 +178,9 @@ To launch the cluster with ``eksctl``, run:
    . An example of this is provided in the Configuring Per-Task Pod Specs section of the
    :ref:`custom-pod-specs` guide.
 
-*******************************
+*****************************
  Create a kubeconfig for EKS
-*******************************
+*****************************
 
 After creating the cluster, ``kubectl`` should be used to deploy apps. In order for ``kubectl`` to
 be used with EKS, users need to create or update the cluster kubeconfig. This can be done with the
@@ -190,9 +190,9 @@ command:
 
    aws eks --region <region-code> update-kubeconfig --name <cluster_name>
 
-**********************
+********************
  Enable GPU support
-**********************
+********************
 
 To use GPU instances, the NVIDIA Kubernetes device plugin needs to be installed. Use the following
 command to install the plugin:
@@ -202,9 +202,9 @@ command to install the plugin:
    # Deploy a DaemonSet that enables the GPUs.
    kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml
 
-*********************
+*******************
  Enable Autoscaler
-*********************
+*******************
 
 Lastly, EKS requires manual deployment of an autoscaler. Save the following configuration in a new
 file such as ``determined-autoscaler.yaml``:
@@ -330,9 +330,9 @@ scheduled.
 
 .. _aws-lb:
 
-************************************
+*************************************
  Use an AWS Load Balancer (optional)
-************************************
+*************************************
 
 It is possible to use `ALB <https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/>`_
 with the Determined EKS cluster instead of :ref:`nginx <tls-on-kubernetes>`. Determined expects the

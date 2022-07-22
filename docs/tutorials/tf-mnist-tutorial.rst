@@ -52,9 +52,9 @@ We suggest you follow along with the code as you read through this tutorial.
    cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where
    Determined is running.
 
-************************
+*********************
  Build a Trial Class
-************************
+*********************
 
 Here is what the skeleton of our trial class looks like:
 
@@ -101,7 +101,7 @@ but we assign it to an instance variable so that we can use it later:
        self.context = context
 
 Build the Model
-==================
+===============
 
 The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a compiled ``tf.keras.Model``
 object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that
@@ -137,7 +137,7 @@ be wrapped by calling :func:`self.context.wrap_optimizer()
        return model
 
 Load Data
-============
+=========
 
 The last two methods we need to define are
 :meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and
@@ -168,16 +168,16 @@ The implementation of ``build_validation_data_loader`` is similar:
 
        return test_images, test_labels
 
-********************
+*****************
  Train the Model
-********************
+*****************
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single
-instance of the model or to do a hyperparameter search. In Determined, a trial
-is a training task that consists of a dataset, a deep learning model, and values
-for all of the model's hyperparameters. An experiment is a collection of
-one or more trials: an experiment can either train a single model (with a single trial), or it can
-perform a search over a user-defined hyperparameter space.
+instance of the model or to do a hyperparameter search. In Determined, a trial is a training task
+that consists of a dataset, a deep learning model, and values for all of the model's
+hyperparameters. An experiment is a collection of one or more trials: an experiment can either train
+a single model (with a single trial), or it can perform a search over a user-defined hyperparameter
+space.
 
 To create an experiment, we start by writing a configuration file which defines the kind of
 experiment we want to run. In this case, we want to train a single model for five epochs, using
@@ -209,9 +209,9 @@ defined in a Python file named ``model_def.py``.
 For more information on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.
 
-***********************
+*******************
  Run an Experiment
-***********************
+*******************
 
 The Determined CLI can be used to create a new experiment, which will immediately start running on
 the cluster. To do this, we run:
@@ -233,9 +233,9 @@ Once the experiment is started, you will see a notification:
    Preparing files (../fashion_mnist_tf_keras) to send to master... 2.5KB and 4 files
    Created experiment xxx
 
-**********************
+********************
  Evaluate the Model
-**********************
+********************
 
 Model evaluation is done automatically for you by Determined. To access information on both training
 and validation performance, simply go to the WebUI by entering the address of the Determined master

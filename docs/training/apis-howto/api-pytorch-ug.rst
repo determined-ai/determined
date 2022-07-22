@@ -1,6 +1,6 @@
-########################
+#############
  PyTorch API
-########################
+#############
 
 +---------------------------------------------------------------------+
 | API reference                                                       |
@@ -53,14 +53,14 @@ To learn about this API, you can start by reading the trial definitions from the
 
 .. _pytorch-downloading-data:
 
-******************
+***************
  Download Data
-******************
+***************
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with
-   different sources of data.
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
+   work with different sources of data.
 
 There are two ways to download your dataset in the PyTorch API:
 
@@ -90,14 +90,14 @@ directories on different ranks. See the following code example:
 
 .. _pytorch-data-loading:
 
-**************
+***********
  Load Data
-**************
+***********
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with
-   different sources of data.
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
+   work with different sources of data.
 
 Loading data into :class:`~determined.pytorch.PyTorchTrial` models is done by defining two
 functions, :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
@@ -395,7 +395,7 @@ function or an implementation of the :class:`determined.pytorch.MetricReducer` i
 .. _pytorch-reproducible-dataset:
 
 Customize a Reproducible Dataset
-==================================
+================================
 
 .. note::
 
@@ -527,7 +527,7 @@ If you port your code to Determined, you should walk through this checklist to e
 not conflict with the Determined library.
 
 Remove Pinned GPUs
-=====================
+==================
 
 Determined handles scheduling jobs on available slots. However, you need to let the Determined
 library handles choosing the GPUs.
@@ -543,7 +543,7 @@ example. It has the following code to configure the GPU:
 Any use of ``args.gpu`` should be removed.
 
 Remove Distributed Training Code
-==================================
+================================
 
 To run distributed training outside Determined, you need to have code that handles the logic of
 launching processes, moving models to pined GPUs, sharding data, and reducing metrics. You need to
@@ -633,7 +633,7 @@ of :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
 :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`.
 
 Get Hyperparameters from PyTorchTrialContext
-================================================
+============================================
 
 Take the following code for example.
 

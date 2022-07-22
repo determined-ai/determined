@@ -1,8 +1,8 @@
 .. _topic-guides_hp-tuning-det_adaptive-asha:
 
-################################################
-Adaptive (Asynchronous) Method
-################################################
+################################
+ Adaptive (Asynchronous) Method
+################################
 
 The state-of-the-art ``adaptive_asha`` search method employs an asynchronous version of successive
 halving (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable for large-scale

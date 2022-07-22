@@ -6,8 +6,10 @@
 
 Experiments can be organized into *projects* and *workspaces*. A project is a collection of
 experiments, and a workspace is a collection of projects. See the :doc:`Experiment Configuration
-</reference/reference-training/experiment-config-reference>` document, which specifies the location of a newly created experiment. If a workspace and project are not specified, the experiment is created in the default,
-``Uncategorized`` project. Experiments can be moved between projects, and projects can be moved between workspaces.
+</reference/reference-training/experiment-config-reference>` document, which specifies the location
+of a newly created experiment. If a workspace and project are not specified, the experiment is
+created in the default, ``Uncategorized`` project. Experiments can be moved between projects, and
+projects can be moved between workspaces.
 
 *****************
  Getting Started

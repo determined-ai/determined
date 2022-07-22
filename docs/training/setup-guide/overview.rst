@@ -1,6 +1,6 @@
-#############################
-Prepare Container Environment
-#############################
+###############################
+ Prepare Container Environment
+###############################
 
 This section covers resources and operations you might need to set up your environment for training:
 

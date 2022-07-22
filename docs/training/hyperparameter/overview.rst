@@ -1,4 +1,5 @@
 .. _hyperparameter-tuning:
+
 .. _topic-guides_hp-tuning-basics:
 
 #######################
@@ -15,9 +16,9 @@ architecture, and learning process parameters that yield an effective model.
 
 .. _topic-guides_hp-tuning-basics-example-hyperparameters:
 
-Why Do Hyperparameters Matter? During the model development lifecycle, a machine learning engineer makes a wide range of decisions
-impacting model performance. For example, a computer vision model requires decisions on sample
-features, model architecture, and training algorithm parameters, e.g.:
+Why Do Hyperparameters Matter? During the model development lifecycle, a machine learning engineer
+makes a wide range of decisions impacting model performance. For example, a computer vision model
+requires decisions on sample features, model architecture, and training algorithm parameters, e.g.:
 
 -  Should we consider features aside from the raw images in the training set?
 
@@ -65,12 +66,13 @@ Tuning deep learning models is difficult because:
    require hours or days to train on expensive hardware.
 
 Fortunately, there are automatic hyperparameter tuning techniques that the machine learning engineer
-can leverage to find an effective model.
-Determined provides support for hyperparameter search as a first-class workflow that is tightly
-integrated with Determined's job scheduler, which allows for efficient execution of state-of-the-art
-early-stopping based approaches as well as seamless parallelization of these methods.
+can leverage to find an effective model. Determined provides support for hyperparameter search as a
+first-class workflow that is tightly integrated with Determined's job scheduler, which allows for
+efficient execution of state-of-the-art early-stopping based approaches as well as seamless
+parallelization of these methods.
 
-An intuitive interface is provided to use hyperparameter searching as described in the following sections.
+An intuitive interface is provided to use hyperparameter searching as described in the following
+sections.
 
 .. toctree::
    :maxdepth: 1

@@ -1,8 +1,8 @@
 .. _topic-guides_hp-tuning-det_single:
 
-###############################
-Single Search Method
-###############################
+######################
+ Single Search Method
+######################
 
 The ``single`` search method does a very minimal "search": it trains a single hyperparameter
 configuration for the number of units specified by ``max_length`` (see :ref:`Training Units

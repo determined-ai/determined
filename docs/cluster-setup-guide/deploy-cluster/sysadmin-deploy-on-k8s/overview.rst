@@ -34,9 +34,9 @@ higher priority (e.g. a priority 40 task will run before a priority 50 task).
 
 .. _limitations-on-kubernetes:
 
-*****************************************
+***************************
  Limitations on Kubernetes
-*****************************************
+***************************
 
 This section outlines the current limitations of Determined on Kubernetes.
 
@@ -131,7 +131,7 @@ for diagnosing any issues that arise during installation.
    kubectl logs <determined-master-pod-name>
 
 Get All Running Task Pods
-=============================
+=========================
 
 These ``kubectl`` commands list and delete pods which are running Determined tasks:
 

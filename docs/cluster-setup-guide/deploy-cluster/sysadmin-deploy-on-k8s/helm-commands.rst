@@ -17,8 +17,9 @@ For all the commands listed below, include ``-n <kubernetes namespace name>`` if
 in a non-default `namespace
 <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`_.
 
-List Determined Installations
-================================
+*******************************
+ List Determined Installations
+*******************************
 
 To list the current installation of Determined on the Kubernetes cluster:
 
@@ -32,8 +33,9 @@ To list the current installation of Determined on the Kubernetes cluster:
 
 It is recommended to have just one instance of Determined per Kubernetes cluster.
 
-Get the Determined Master IP Address
-===========================================
+**************************************
+ Get the Determined Master IP Address
+**************************************
 
 To get the IP and port address of the Determined master:
 
@@ -47,8 +49,9 @@ To get the IP and port address of the Determined master:
    # ``helm list``.
    kubectl get service determined-master-service-<helm deployment name>
 
-Check the Determined Master Status
-=========================================
+************************************
+ Check the Determined Master Status
+************************************
 
 Logs for the Determined master are available via the CLI and WebUI. ``Kubectl`` commands are useful
 for diagnosing any issues that arise during installation.
@@ -71,8 +74,9 @@ for diagnosing any issues that arise during installation.
    # Get logs for the pod running the Determined master.
    kubectl logs <determined-master-pod-name>
 
-Get All Running Task Pods
-=============================
+***************************
+ Get All Running Task Pods
+***************************
 
 These ``kubectl`` commands list and delete pods which are running Determined tasks:
 
@@ -85,8 +89,9 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
    # unless they are removing a deployment of Determined.
    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
-Useful Debugging Commands
-==============================================================================
+***************************
+ Useful Debugging Commands
+***************************
 
 .. code:: bash
 

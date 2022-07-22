@@ -25,7 +25,8 @@ The easiest way to get started with **transformers** in Determined is to use one
 the `question answering example`_ to get a better understanding of how to use **model-hub** for
 transformers.
 
-The `question answering example`_ includes two implementations of :doc:`/training/apis-howto/api-pytorch-ug`:
+The `question answering example`_ includes two implementations of
+:doc:`/training/apis-howto/api-pytorch-ug`:
 
 -  qa_trial.py_ uses the :py:class:`model_hub.huggingface.BaseTransformerTrial` parent ``__init__``
    function to build **transformers** config, tokenizer, and model objects; and optimizer and
@@ -40,15 +41,16 @@ line but will highlight the parts that make use of **model-hub**.
 
 .. note::
 
-   If you are new to Determined, we recommend going through the Quickstart for ML Developers document to get a better    understanding of how to use PyTorch in Determined using
+   If you are new to Determined, we recommend going through the Quickstart for ML Developers
+   document to get a better understanding of how to use PyTorch in Determined using
    :py:class:`determined.harness.pytorch.PyTorchTrial`.
 
 After this tutorial, if you want to further customize a trial for your own use, you can look at
 qa_beam_search_trial.py_ for an example.
 
-**************************
+************************
  Initialize the QATrial
-**************************
+************************
 
 The ``__init__`` for ``QATrial`` is responsible for creating and processing the dataset; building
 the **transformers** config, tokenizer, and model; and tokenizing the dataset. The specifications
@@ -63,7 +65,7 @@ Note that ``context.get_hparams()`` and ``context.get_data_config()`` returns th
 <experiment-config-reference>` file squad.yaml_.
 
 Build **transformers** config, tokenizer, and model
-======================================================
+===================================================
 
 First, we build the **transformer** config, tokenizer, and model objects by calling
 :py:meth:`model_Hub.huggingface.BaseTransformerTrial.__init__`:
@@ -90,7 +92,7 @@ before creating the **transformers** objects (see ner_trial.py_ for example).
    calling transformers methods.
 
 Build the optimizer and LR scheduler
-=======================================
+====================================
 
 The :py:meth:`model_Hub.huggingface.BaseTransformerTrial.__init__` also parses the hyperparameters
 into :py:func:`model_hub.huggingface.OptimizerKwargs` and
@@ -107,7 +109,7 @@ at the associated class definitions for the Kwargs objects to see the fields you
    want.
 
 Load the Dataset
-===================
+================
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
    :language: python
@@ -153,7 +155,7 @@ no prescription for how you should process your data but all the provided exampl
    that contains unserializable objects.
 
 Define metrics
-================
+==============
 
 Next, we define the metrics that we wish to compute over the predictions generated for the
 validation dataset.
@@ -169,9 +171,9 @@ Determined supports parallel evaluation via :ref:`custom reducers <pytorch-custo
 ``reducer`` we created above will aggregate predictions across all GPUs then apply the
 ``qa_utils.compute_metrics`` function to the result.
 
-*************************************
+**********************************
  Fill in the Rest of PyTorchTrial
-*************************************
+**********************************
 
 The remaining class methods we must implement are
 :py:meth:`determined.harness.pytorch.PyTorchTrial.build_training_data_loader`,
@@ -179,7 +181,7 @@ The remaining class methods we must implement are
 :py:meth:`determined.harness.pytorch.PyTorchTrial.evaluate_batch`.
 
 Build the Dataloaders
-========================
+=====================
 
 The two functions below are responsible for building the dataloaders used for training and
 validation.
@@ -198,7 +200,7 @@ There are two things to note:
    state when recovering from a fault.
 
 Define the Training Routine
-=============================
+===========================
 
 The ``train_batch`` method below for :py:class:`model_hub.huggingface.BaseTransformerTrial` is
 sufficient for this example.
@@ -208,7 +210,7 @@ sufficient for this example.
    :pyobject: BaseTransformerTrial.train_batch
 
 Define the Evaluation Routine
-===============================
+=============================
 
 Finally, we can define the evaluation routine for this example.
 

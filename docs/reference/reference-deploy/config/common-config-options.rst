@@ -1,20 +1,20 @@
 .. _common-configuration-options:
 
-#############################
+##############################
  Common Configuration Options
-#############################
+##############################
 
-***********
-Master Port
-***********
+*************
+ Master Port
+*************
 
 By default, the master listens on TCP port 8080. This can be configured via the ``port`` option.
 
 .. _security:
 
-***********
-Security
-***********
+**********
+ Security
+**********
 
 The master can secure all incoming connections using `TLS
 <https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. That ability requires a TLS private key
@@ -24,9 +24,9 @@ the default port becomes 8443 rather than 8080. See :ref:`tls` for more informat
 
 .. _agent-network-proxy:
 
-********************************************
-Configuring Trial Runner Networking
-********************************************
+*************************************
+ Configuring Trial Runner Networking
+*************************************
 
 The master is capable of selecting the network interface that trial runners will use to communicate
 when performing distributed (multi-machine) training. The network interface can be configured by
@@ -44,16 +44,16 @@ Additionally, the ports used by the GLOO and NCCL libraries, which are used duri
 (multi-machine) training can be configured to fall within user-defined ranges. If left unspecified,
 ports will be chosen randomly from the unprivileged port range (1024-65535).
 
-*********************************
-Default Checkpoint Storage
-*********************************
+****************************
+ Default Checkpoint Storage
+****************************
 
 See :ref:`checkpoint-storage` for details.
 
 .. _telemetry:
 
 ***********
-Telemetry
+ Telemetry
 ***********
 
 By default, the master and WebUI collect anonymous information about how Determined is being used.

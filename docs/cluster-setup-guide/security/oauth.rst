@@ -1,8 +1,8 @@
 .. _oauth:
 
-################################
+#########################
  OAuth 2.0 Configuration
-################################
+#########################
 
 OAuth 2.0 applies to Determined Enterprise Edition.
 
@@ -11,9 +11,9 @@ Only the SCIM endpoints are supported.
 Determined EE allows requests to certain endpoints to be authenticated using OAuth 2.0 with the
 authorization code flow.
 
-********************
-Enable OAuth Support
-********************
+**********************
+ Enable OAuth Support
+**********************
 
 To enable OAuth support, set ``scim.auth.type`` to ``oauth`` in the Determined :ref:`master
 configuration <master-config-reference>`.
@@ -46,9 +46,9 @@ The values you'll need to configure an OAuth client application are as follows:
       There is no other way to obtain the secret. Make sure not to lose it before configuring your
       client.
 
-******************
-List OAuth Clients
-******************
+********************
+ List OAuth Clients
+********************
 
 Use the CLI to listing OAuth clients:
 
@@ -56,9 +56,9 @@ Use the CLI to listing OAuth clients:
 
    det oauth client list
 
-********************
-Remove OAuth Clients
-********************
+**********************
+ Remove OAuth Clients
+**********************
 
 Use the CLI to remove OAuth clients:
 

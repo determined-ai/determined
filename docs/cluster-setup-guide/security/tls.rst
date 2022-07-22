@@ -1,8 +1,8 @@
 .. _tls:
 
-####################################
+##########################
  Transport Layer Security
-####################################
+##########################
 
 **Transport Layer Security** (TLS) is a protocol for secure network communication. TLS prevents the
 data being transmitted from being modified or read while it is in transit and allows clients to
@@ -13,18 +13,16 @@ Communication between agents that occur as part of :ref:`distributed training <m
 will not use TLS, nor will proxied connections from the master to a :ref:`TensorBoards
 <tensorboards>` or :ref:`notebook <notebooks>` instance.
 
-After the master and agent are configured to use TLS, no additional configuration is needed for tasks
-run in the cluster. In shells and notebooks, the Determined Python libraries
-automatically make connections to the master using TLS with the appropriate
-certificate.
+After the master and agent are configured to use TLS, no additional configuration is needed for
+tasks run in the cluster. In shells and notebooks, the Determined Python libraries automatically
+make connections to the master using TLS with the appropriate certificate.
 
 **********************
-Master Configuration
+ Master Configuration
 **********************
 
-To :ref:`configure the master <master-config-reference>` to use TLS, set the
-``security.tls.cert`` and ``security.tls.key`` options to paths to a TLS certificate file and key
-file.
+To :ref:`configure the master <master-config-reference>` to use TLS, set the ``security.tls.cert``
+and ``security.tls.key`` options to paths to a TLS certificate file and key file.
 
 When TLS is in use, the master will listen on TCP port 8443 by default, rather than 8080.
 
@@ -34,13 +32,13 @@ When TLS is in use, the master will listen on TCP port 8443 by default, rather t
    file must contain a full certificate chain that goes all the way to a root certificate.
 
 **********************
-Agents Configuration
+ Agents Configuration
 **********************
 
 When the Determined master is using TLS, set the ``security.tls.enabled`` :ref:`agent configuration
-option <agent-config-reference>` to ``true``. If the master's certificate is signed by a well-known CA,
-then no other TLS-specific configuration is necessary. Otherwise, for the best security, place the
-master's certificate file somewhere accessible to the agent and set the agent's
+option <agent-config-reference>` to ``true``. If the master's certificate is signed by a well-known
+CA, then no other TLS-specific configuration is necessary. Otherwise, for the best security, place
+the master's certificate file somewhere accessible to the agent and set the agent's
 ``security.tls.master_cert`` option to the path to that file. For a more convenient but less secure
 setup, instead set the ``security.tls.skip_verify`` option to ``true``. With the latter
 configuration, the agent will be unable to verify the identity of the master, but the data sent over
@@ -64,12 +62,12 @@ the option should be set to the DNS name contained in the certificate.
 When :ref:`dynamic agents <elastic-infrastructure>` and TLS are both in use, the dynamic agents that
 the master creates will automatically be configured to connect securely to the master over TLS.
 
-**********************
-CLI Configuration
-**********************
+*******************
+ CLI Configuration
+*******************
 
-To use TLS, the CLI must be configured with a master address starting with ``https://``
-using either the ``-m`` flag or ``DET_MASTER`` environment variable.
+To use TLS, the CLI must be configured with a master address starting with ``https://`` using either
+the ``-m`` flag or ``DET_MASTER`` environment variable.
 
 If the master's certificate is signed by a well-known CA, then the connection should proceed
 immediately. If not, the CLI will indicate on the first connection that the master is presenting an

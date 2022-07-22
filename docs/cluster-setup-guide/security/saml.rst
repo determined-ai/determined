@@ -1,8 +1,8 @@
 .. _saml:
 
-#######################################
+##################
  SAML Integration
-#######################################
+##################
 
 SAML integration applies to Determined Enterprise Edition.
 
@@ -10,9 +10,9 @@ Determined EE provides a SAML integration to allow users to use single sign-on (
 organization's identity provider (IdP) and to provide system administrators better control over
 access to resources. Currently, the only officially supported identity provider is Okta.
 
-**********************
+********************
  Configure Your IdP
-**********************
+********************
 
 When configuring your IdP to allow users to SSO to Determined, you will need to specify the location
 of Determined's SSO URL and the audience URL. The audience URL should be set to the Determined
@@ -22,9 +22,9 @@ Determined also requires an additional attribute named ``userName`` with name fo
 set to the username of the user attempting SSO (e.g., for Okta, this is the attribute value
 ``user.login``).
 
-************************
+**********************
  Configure Determined
-************************
+**********************
 
 Determined requires your IdP's SSO URL, descriptor SSO URL, public certificate, and name as well as
 the hostname your IdP intends to use to communicate with Determined. These are all supplied in the

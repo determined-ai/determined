@@ -1,8 +1,8 @@
 .. _topic-guides_hp-tuning-det_grid:
 
-#############################
-Grid Method
-#############################
+#############
+ Grid Method
+#############
 
 The ``grid`` search method generates trials on a "grid" of hyperparameter configurations and trains
 each trial for the number of training units specified by ``max_length``. The user specifies a set of

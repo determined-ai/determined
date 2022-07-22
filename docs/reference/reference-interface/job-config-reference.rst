@@ -1,9 +1,10 @@
-.. _job-configuration-reference:
 .. _command-notebook-configuration:
 
-###############################
+.. _job-configuration-reference:
+
+#############################
  Job Configuration Reference
-###############################
+#############################
 
 The behavior of interactive jobs, such as :ref:`TensorBoards <tensorboards>`, :ref:`notebooks
 <notebooks>`, :ref:`commands, and shells <commands-and-shells>`, can be influenced by setting a

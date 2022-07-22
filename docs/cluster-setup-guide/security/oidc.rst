@@ -1,8 +1,8 @@
 .. _oidc:
 
-#################################################
+############################
  OpenID Connect Integration
-#################################################
+############################
 
 OpenID Connect Integration applies to Determined Enterprise Edition.
 
@@ -13,9 +13,9 @@ allows applications to request information about authenticated users.
 Note that users can only login in via OpenID Connect if they have already been provisioned into
 Determined. This can be done manually, or via SCIM.
 
-**********************
+********************
  Configure Your IdP
-**********************
+********************
 
 When configuring your IdP to allow users to SSO to Determined, you will need to specify the location
 of Determined's callback URL. This is the URL to which users will be redirected after
@@ -24,9 +24,9 @@ authentication.
 The callback URL should be set to the Determined master's base URL with a path of
 ``/oidc/callback``.
 
-************************
+**********************
  Configure Determined
-************************
+**********************
 
 Determined requires your IdP's SSO URL and name, the client id and client secret provided to you by
 your IdP, and the public hostname of the master. These are all configured in ``master.yaml``.

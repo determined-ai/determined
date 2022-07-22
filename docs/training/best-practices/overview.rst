@@ -1,6 +1,6 @@
-####################
-Best Practices
-####################
+################
+ Best Practices
+################
 
 ***************************************
  General Tips for the Trial Definition
@@ -19,15 +19,18 @@ Do:
    training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
    same task container.
 
-Do not use instance attributes on a trial class to save any state over time (e.g., storing metric history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights and optimizer state over time; ``self`` attributes may be reset to their initial state at any time if the Determined cluster reschedules the trial to another task container.
+Do not use instance attributes on a trial class to save any state over time (e.g., storing metric
+history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights
+and optimizer state over time; ``self`` attributes may be reset to their initial state at any time
+if the Determined cluster reschedules the trial to another task container.
 
 **********************************
  Separate Configuration from Code
 **********************************
 
 We encourage a clean separation of code from configuration via the :ref:`experiment configuration
-<experiment-config-reference>`. Specifically, you are encouraged to use the pre-defined fields in the
-experiment configuration, such as the ``searcher``, ``hyperparameters``, ``optimizations``, and
+<experiment-config-reference>`. Specifically, you are encouraged to use the pre-defined fields in
+the experiment configuration, such as the ``searcher``, ``hyperparameters``, ``optimizations``, and
 ``resources``. This not only allows you to reuse the trial definition when you tune different
 configuration fields but also improve the visualibility because those fields can be browsed in our
 WebUI.
@@ -43,7 +46,8 @@ Do:
 -  Move any hardcoded filesystem paths (e.g., ``/data/train.csv``) to the ``data`` field of the
    experiment configuration. Use ``context.get_data_config()`` to reference them in code.
 
-Do not use global variables in your model definition; consider moving them to the experiment configuration.
+Do not use global variables in your model definition; consider moving them to the experiment
+configuration.
 
 *************************
  Understand Dependencies
@@ -66,4 +70,5 @@ Do:
 -  Pin Python package dependencies to specific versions (e.g., ``<package>==<version>``) in build
    tools.
 
-Do not modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries by circumventing the Python packaging system.
+Do not modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries by
+circumventing the Python packaging system.

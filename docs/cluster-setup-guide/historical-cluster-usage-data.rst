@@ -22,9 +22,9 @@ still report one GPU hour.
    last night. It will not reflect changes to the metadata of a previously run experiment (e.g.,
    labels) until the next nightly aggregation.
 
-*******************
-WebUI Visualization
-*******************
+*********************
+ WebUI Visualization
+*********************
 
 We build WebUI visualizations for a quick snapshot of the historical cluster usage:
 
@@ -35,7 +35,8 @@ We build WebUI visualizations for a quick snapshot of the historical cluster usa
  Command-line Interface
 ************************
 
-Alternatively, you can use the :ref:`CLI <cli>` or the API endpoints to download the resource allocation data for analysis:
+Alternatively, you can use the :ref:`CLI <cli>` or the API endpoints to download the resource
+allocation data for analysis:
 
 -  ``det resources raw <start time> <end time>``: get raw allocation information, where the times
    are full times in the format yyyy-mm-ddThh:mm:ssZ.

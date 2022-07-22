@@ -1,6 +1,6 @@
-####################
-Model Management
-####################
+##################
+ Model Management
+##################
 
 *****************
  Use Checkpoints
@@ -38,8 +38,8 @@ experiment, run:
  Manage Trained Models
 ***********************
 
-Determined includes a built-in :doc:`model registry </training/model-management/model-registry-org>` to manage
-trained models and their respective versions.
+Determined includes a built-in :doc:`model registry </training/model-management/model-registry-org>`
+to manage trained models and their respective versions.
 
 .. toctree::
    :maxdepth: 1
