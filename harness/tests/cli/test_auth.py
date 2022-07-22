@@ -82,7 +82,6 @@ def test_auth_user_from_env(
 
         authentication = Authentication(MOCK_MASTER_URL, user)
         if has_token_store:
-            print(authentication.session.username, authentication.session.token)
             assert authentication.session.username == user or "determined"
             assert authentication.session.token == (
                 "det.token" if user == "determined" else "bob.token"
