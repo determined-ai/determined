@@ -418,7 +418,7 @@ class TestPyTorchTrial:
             "trial_startups": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
-            # Note: trial_shutdowns, checkpoints_ended, and checkpoints_uploaded cannot be
+            # Note: checkpoints_ended, checkpoints_uploaded, and trial_shutdowns, cannot be
             # persisted, as they are all updated after checkpointing.
             "checkpoints_ended": 0,
             "checkpoints_uploaded": 0,
