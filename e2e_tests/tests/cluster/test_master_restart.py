@@ -14,7 +14,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import det_spawn
 
-from .managed_cluster import ManagedCluster
+from .managed_cluster import ManagedCluster, get_agent_data
 from .utils import (
     command_succeeded,
     get_command_info,
@@ -281,3 +281,24 @@ def test_master_restart_tensorboard(
         _check_tb_url(tb_url)
 
         print("tensorboard ok")
+
+
+@pytest.mark.managed_devcluster
+def test_agent_devices_change(restartable_managed_cluster: ManagedCluster) -> None:
+    managed_cluster = restartable_managed_cluster
+    try:
+        managed_cluster.kill_agent()
+        managed_cluster.dc.restart_stage("agent10")
+
+        for _i in range(5):
+            agent_data = get_agent_data(conf.make_master_url())
+            if len(agent_data) == 0:
+                # Agent has exploded and been wiped due to device mismatch, as expected.
+                break
+        else:
+            pytest.fail(
+                f"agent with different devices is still present after {_i} ticks: {agent_data}"
+            )
+    finally:
+        managed_cluster.dc.kill_stage("agent10")
+        managed_cluster.restart_agent()

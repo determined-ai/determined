@@ -92,6 +92,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Tell(a.cm, *msg.StartContainer)
 		case msg.SignalContainer != nil:
 			ctx.Tell(a.cm, *msg.SignalContainer)
+		case msg.AgentShutdown != nil:
+			ctx.Log().Infof("shutting down agent due to master message: %s", msg.AgentShutdown.ErrMsg)
+			ctx.Self().Stop()
 		default:
 			panic(fmt.Sprintf("unknown message received: %+v", msg))
 		}
