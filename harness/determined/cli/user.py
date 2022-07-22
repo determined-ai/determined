@@ -187,8 +187,7 @@ args_description = [
     Cmd("u|ser", None, "manage users", [
         Cmd("list", list_users, "list users", [], is_default=True),
         Cmd("login", log_in_user, "log in user", [
-            Arg("username", nargs="?", default=None,
-                help="name of user to log in as")
+            Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),
         Cmd("rename", rename, "change username for user", [
             Arg("target_user", default=None, help="name of user whose username should be changed"),
