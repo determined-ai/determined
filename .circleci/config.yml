@@ -133,7 +133,7 @@ commands:
       - run:
           name: check for shared changes
           command: |
-            MERGE_BASE="$(git merge-base upstream/test-downstream HEAD)"
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
             if [ "$DIFF_DIRS" = "shared" ] ; then
               echo "shared code changed, running downstream test"
