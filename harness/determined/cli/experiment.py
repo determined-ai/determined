@@ -473,7 +473,9 @@ def experiment_logs(args: Namespace) -> None:
 
 @authentication.required
 def config(args: Namespace) -> None:
-    result = bindings.get_GetExperiment(setup_session(args), experimentId=args.experiment_id).config
+    result = bindings.get_GetExperiment(
+        setup_session(args), experimentId=args.experiment_id
+    ).experiment.config
     yaml.safe_dump(result, stream=sys.stdout, default_flow_style=False)
 
 
