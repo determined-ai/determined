@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
@@ -65,9 +65,7 @@ describe('EditableMetadata', () => {
 
     const actionButton = (view.getAllByRole('button', { name: 'action' }))[removalIndex];
     await user.click(actionButton);
-    await user.click(await within(actionButton).findByText('Delete Row'));
-    //expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
-
-    expect(true).toBeTruthy();
+    await user.click(await view.findByText('Delete Row', undefined, { container: actionButton }));
+    expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
   });
 });
