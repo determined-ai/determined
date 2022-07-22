@@ -110,19 +110,19 @@ commands:
               echo "detected non-docs-only changes: $DIFF_DIRS"
             fi
 
-  skip-if-webui-only:
+  skip-if-web-only:
     steps:
       - run: git fetch upstream
       - run:
-          name: check for webui-only changes (must be run after skip-if-docs-only)
+          name: check for web-only changes (must be run after skip-if-docs-only)
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "webui" ] ; then
-              echo "webui-only change detected, halting job now"
+            if [ "$DIFF_DIRS" = "web" ] ; then
+              echo "web-only change detected, halting job now"
               circleci-agent step halt
             else
-              echo "detected non-webui-only changes: $DIFF_DIRS"
+              echo "detected non-web-only changes: $DIFF_DIRS"
             fi
 
 
@@ -224,17 +224,17 @@ commands:
           at: .
       - restore_cache:
           keys:
-            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "web/package-lock.json" }}
       - run:
           name: Get React dependencies
           command: |
-            if [ ! -d "webui/react/node_modules" ]; then
-              make -C webui/react get-deps-npm
+            if [ ! -d "web/node_modules" ]; then
+              make -C web get-deps-npm
             fi
       - save_cache:
-          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "web/package-lock.json" }}
           paths:
-            - "webui/react/node_modules"
+            - "web/node_modules"
 
   install-wheel:
     parameters:
@@ -1224,7 +1224,7 @@ jobs:
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
-      - run: make -C webui/react check
+      - run: make -C web check
 
   build-react:
     parameters:
@@ -1243,11 +1243,11 @@ jobs:
               echo 'Setting development mode...'
               export DET_NODE_ENV=development
             fi
-            make -C webui/react build
+            make -C web build
       - persist_to_workspace:
           root: .
           paths:
-            - webui/react/build
+            - web/build
 
   test-unit-react:
     docker:
@@ -1259,14 +1259,14 @@ jobs:
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
-      - run: make -C webui/react test-ci
+      - run: make -C web test-ci
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
       - store_test_results:
-          path: webui/react/coverage
+          path: web/coverage
       - store_artifacts:
-          path: webui/react/coverage/lcov-report
+          path: web/coverage/lcov-report
 
   build-storybook:
     docker:
@@ -1276,9 +1276,9 @@ jobs:
       - checkout-with-sm
       - skip-if-docs-only
       - react-get-deps
-      - run: make -C webui/react build-storybook
+      - run: make -C web build-storybook
       - store_artifacts:
-          path: webui/react/build-storybook
+          path: web/build-storybook
 
   lint-go:
     docker:
@@ -1655,7 +1655,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
-      - skip-if-webui-only
+      - skip-if-web-only
       - attach_workspace:
           at: .
 

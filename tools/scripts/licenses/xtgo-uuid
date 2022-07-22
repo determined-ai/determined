@@ -2,7 +2,7 @@ Name: github.com/xtgo/uuid
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2012 The gocql Authors. All rights reserved.
 

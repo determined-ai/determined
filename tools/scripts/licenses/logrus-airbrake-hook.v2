@@ -2,7 +2,7 @@ Name: gopkg.in/gemnasium/logrus-airbrake-hook.v2
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 The MIT License (MIT)
 

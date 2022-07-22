@@ -2,7 +2,7 @@ Name: github.com/docker/go-units
 Type: apache2
 Agent: false
 Master: true
-Webui: false
+Web: false
 
                               Apache License
                         Version 2.0, January 2004

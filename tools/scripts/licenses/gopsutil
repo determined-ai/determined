@@ -2,7 +2,7 @@ Name: github.com/shirou/gopsutil
 Type: bsd3
 Agent: true
 Master: false
-Webui: false
+Web: false
 
 gopsutil is distributed under BSD license reproduced below.
 

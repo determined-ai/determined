@@ -2,7 +2,7 @@ Name: sprintf-js
 Type: bsd3
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 Copyright (c) 2007-present, Alexandru Mărășteanu <hello@alexei.ro>
 All rights reserved.

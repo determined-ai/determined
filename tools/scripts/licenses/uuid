@@ -2,7 +2,7 @@ Name: github.com/google/uuid
 Type: bsd3
 Agent: true
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
 

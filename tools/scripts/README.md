@@ -59,7 +59,7 @@ effectively statically linked, the maintenance effort is potentially very high.
 Therefore, to make life a little bit easier, we have a system for generating
 those license documents.  All you have to do is create specially formatted
 license files for every external dependency of `determined-master`,
-`determined-agent`, or the WebUI, and place them in the `licenses/` directory.
+`determined-agent`, or `web`, and place them in the `licenses/` directory.
 
 The format of the file is rfc822 format (the email format), which is a set of
 headers, followed by an empty line, followed by some preformatted text.  The
@@ -71,7 +71,7 @@ Here is an example:
     Type: mit
     Agent: false
     Master: true
-    Webui: false
+    Web: false
 
     Copyright (c) 2011-2013, 'pq' Contributors
     Portions Copyright (C) 2011 Blake Mizerany
@@ -88,7 +88,7 @@ The relevant metadata are:
 * `Type`: one of `apache2`, `bsd2`, `bsd3`, `mit`, `mozilla`, or `unlicense`
 * `Agent`: boolean indicating if this is a dependency of `determined-agent`
 * `Master`: boolean indicating if this is a dependency of `determined-master`
-* `Webui`: boolean indicating if this is a dependency of the WebUI
+* `Web`: boolean indicating if this is a dependency of `web`
 
 For instructions on how to use `gen-attributions.py`, just run it with no arguments.
 

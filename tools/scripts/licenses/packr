@@ -2,7 +2,7 @@ Name: github.com/gobuffalo/packr
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 The MIT License (MIT)
 Copyright (c) 2016 Mark Bates

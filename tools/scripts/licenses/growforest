@@ -2,7 +2,7 @@ Name: github.com/ryanbressler/CloudForest
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2013, the CloudForest Contributors listed at 
 http://github.com/ryanbressler/CloudForest/graphs/contributors

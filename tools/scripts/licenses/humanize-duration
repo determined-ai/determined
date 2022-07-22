@@ -2,7 +2,7 @@ Name: humanize-duration
 Type: unlicense
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 This is free and unencumbered software released into the public domain.
 

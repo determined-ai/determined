@@ -19,7 +19,7 @@ repos = {
     },
     'core': {
         'repo': CORE_REPO,
-        'web_dir': 'webui/react',
+        'web_dir': 'web',
         'using_sm': False,
     },
 }
@@ -80,9 +80,9 @@ def setup_user(user, name: str, sm_hash: t.Optional[str] = None, repo_hash: t.Op
 
 
 
-def run_webui_tests(web_dir: pathlib.Path):
+def run_web_tests(web_dir: pathlib.Path):
     """
-    runs webui tests. requires web_dir to be set up
+    runs web tests. requires web_dir to be set up
     """
     for target in ['check', 'build', 'test']:
         run(f'make {target}', cwd=web_dir)
@@ -107,7 +107,7 @@ def test(sm_hash: str, repo_names: t.List[str], args):
         user = repos[name]
         clone_dir = setup_user(user, name, sm_hash, repo_hash=args.repo_hash)
         web_dir = clone_dir / user['web_dir']
-        run_webui_tests(web_dir)
+        run_web_tests(web_dir)
 
 def test_local_shared(repo_names: t.List[str], args):
     """
@@ -120,7 +120,7 @@ def test_local_shared(repo_names: t.List[str], args):
         clone_dir = setup_user(user, name, repo_hash=args.repo_hash)
         web_dir = clone_dir / user['web_dir']
         overwrite_with_cur_shared(user, name)
-        run_webui_tests(web_dir)
+        run_web_tests(web_dir)
 
 
 def get_user_inputs():

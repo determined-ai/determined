@@ -2,7 +2,7 @@ Name: github.com/jmoiron/sqlx
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2013, Jason Moiron
 

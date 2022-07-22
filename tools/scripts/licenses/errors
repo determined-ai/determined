@@ -2,7 +2,7 @@ Name: github.com/pkg/errors
 Type: bsd2
 Agent: true
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2015, Dave Cheney <dave@cheney.net>
 All rights reserved.

@@ -2,7 +2,7 @@ Name: github.com/emirpasic/gods
 Type: bsd2
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2015, Emir Pasic
 All rights reserved.

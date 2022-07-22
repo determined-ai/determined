@@ -2,7 +2,7 @@ Name: history
 Type: mit
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 MIT License
 

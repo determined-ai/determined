@@ -52,7 +52,7 @@ class License:
         type: Optional[str] = None,
         master: str = "false",
         agent: str = "false",
-        webui: str = "false",
+        web: str = "false",
     ) -> None:
         assert text.strip(), "License text not found"
         assert name is not None, "a Name header is required"
@@ -62,7 +62,7 @@ class License:
         ), f"Type header must be one of {known_licenses}"
         assert master.lower() in {"true", "false"}, "Master must be true or false"
         assert agent.lower() in {"true", "false"}, "Agent must be true or false"
-        assert webui.lower() in {"true", "false"}, "Webui must be true or false"
+        assert web.lower() in {"true", "false"}, "Web must be true or false"
 
         self.tag = tag
         self.text = text
@@ -70,7 +70,7 @@ class License:
         self.type = type.lower()
         self.master = master.lower() == "true"
         self.agent = agent.lower() == "true"
-        self.webui = webui.lower() == "true"
+        self.web = web.lower() == "true"
 
     @classmethod
     def from_file(cls, tag: str, f: IO[str]) -> "License":
@@ -115,7 +115,7 @@ def sphinx_format_header(text: str, char: str) -> str:
     Example output:
 
         *******
-         WebUI
+         Web
         *******
     """
     return "\n".join(
@@ -171,8 +171,8 @@ def build_sphinx(licenses: List[License]) -> str:
 
     paragraphs = [
         sphinx_preamble,
-        sphinx_format_header("WebUI", "*"),
-        gen_sphinx_table([license for license in licenses if license.webui]),
+        sphinx_format_header("Web", "*"),
+        gen_sphinx_table([license for license in licenses if license.web]),
         sphinx_format_header("Determined Master", "*"),
         gen_sphinx_table([license for license in licenses if license.master]),
         sphinx_format_header("Determined Agent", "*"),
@@ -226,7 +226,7 @@ def main(build_type: str, path_out: Optional[str]) -> int:
         gen = build_sphinx(licenses)
     elif sys.argv[1] == "master":
         gen = build_ascii(
-            [license for license in licenses if license.master or license.webui],
+            [license for license in licenses if license.master or license.web],
             our_license_path,
         )
     elif sys.argv[1] == "agent":

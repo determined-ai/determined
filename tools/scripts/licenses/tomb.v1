@@ -2,7 +2,7 @@ Name: gopkg.in/tomb.v1
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 tomb - support for clean goroutine termination in Go.
 

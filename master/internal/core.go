@@ -70,13 +70,13 @@ import (
 const (
 	maxConcurrentRestores = 10
 	defaultAskTimeout     = 2 * time.Second
-	webuiBaseRoute        = "/det"
+	webBaseRoute          = "/det"
 )
 
 // staticWebDirectoryPaths are the locations of static files that comprise the webui.
 var staticWebDirectoryPaths = map[string]bool{
 	"/docs":          true,
-	webuiBaseRoute:   true,
+	webBaseRoute:     true,
 	"/docs/rest-api": true,
 }
 
@@ -935,31 +935,31 @@ func (m *Master) Run(ctx context.Context) error {
 	cluster.InitTheLastBootClusterHeartbeat()
 	go updateClusterHeartbeat(ctx, m.db)
 
-	// Docs and WebUI.
-	webuiRoot := filepath.Join(m.config.Root, "webui")
-	reactRoot := filepath.Join(webuiRoot, "react")
-	reactRootAbs, err := filepath.Abs(reactRoot)
+	// Docs and web.
+	webRoot := filepath.Join(m.config.Root, "web")
+	webRootAbs, err := filepath.Abs(webRoot)
 	if err != nil {
 		return errors.Wrap(err, "failed to get absolute path to react root")
 	}
-	reactIndex := filepath.Join(reactRoot, "index.html")
+
+	webIndex := filepath.Join(webRoot, "index.html")
 
 	// Docs.
-	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
-	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
+	m.echo.Static("/docs/rest-api", filepath.Join(webRoot, "docs", "rest-api"))
+	m.echo.Static("/docs", filepath.Join(webRoot, "docs"))
 
-	webuiGroup := m.echo.Group(webuiBaseRoute)
-	webuiGroup.File("/", reactIndex)
-	webuiGroup.GET("/*", func(c echo.Context) error {
-		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
-		requestedFile := filepath.Join(reactRoot, groupPath)
+	webGroup := m.echo.Group(webBaseRoute)
+	webGroup.File("/", webIndex)
+	webGroup.GET("/*", func(c echo.Context) error {
+		groupPath := strings.TrimPrefix(c.Request().URL.Path, webBaseRoute+"/")
+		requestedFile := filepath.Join(webRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
 		requestedFileAbs, fErr := filepath.Abs(requestedFile)
 		if fErr != nil {
 			log.WithError(fErr).Error("failed to get absolute path to requested file")
-			return c.File(reactIndex)
+			return c.File(webIndex)
 		}
-		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
+		isInReactDir := strings.HasPrefix(requestedFileAbs, webRootAbs)
 		if !isInReactDir {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
@@ -979,7 +979,7 @@ func (m *Master) Run(ctx context.Context) error {
 			return c.File(requestedFile)
 		}
 
-		return c.File(reactIndex)
+		return c.File(webIndex)
 	})
 
 	m.echo.Static("/api/v1/api.swagger.json",

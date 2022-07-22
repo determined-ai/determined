@@ -1,4 +1,4 @@
-# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all>) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg)](https://codecov.io/gh/determined-ai/determined)
+# React App [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all>) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg)](https://codecov.io/gh/determined-ai/determined)
 
 ## Brief Architecture
 
@@ -37,9 +37,9 @@ The page will automatically load and display new changes via [Hot Module Replace
 
 ## Environment Variables
 
-- `SERVER_ADDRESS`: If set, directs the WebUI to find the Determined cluster at this address.
-This allows users to host the WebUI on a separate server from Determined. This would need the target
-server to allow requests coming from the domain hosting the WebUI, aka CORS.
+- `SERVER_ADDRESS`: If set, directs the dev server to find the Determined cluster at this address.
+This allows users to host the dev server separately from the Determined cluster. This would need the target
+server to allow requests coming from the domain hosting the dev server, aka CORS.
 - `PUBLIC_URL`: Indicates where the React assets are being served from relative to the root of the webserver. Set this variable to an empty string to serve from `/`.
 This is set to `/det` by default for typical workflows in this project.  [More info](https://create-react-app.dev/docs/using-the-public-folder/)
 - `DET_NODE_ENV`: set this to `development` to skip some build optimizations when developing and building
@@ -50,7 +50,7 @@ locally to lower build time.
 If the remote cluster has `enable_cors` set to any value or allows CORS requests, set
 `SERVER_ADDRESS` to point to the cluster address. If that's not the case use the provided
 `./scripts/proxy.js` script to run a proxy pointing to the target server with
-`./scripts/proxy.js <REMOTE_SERVER_URL>` and then build the webui or the dev server with
+`./scripts/proxy.js <REMOTE_SERVER_URL>` and then run the dev server with
 `SERVER_ADDRESS` pointing to this local proxy.
 
 ## Testing

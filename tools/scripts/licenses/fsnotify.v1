@@ -2,7 +2,7 @@ Name: gopkg.in/fsnotify.v1
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2012-2019 fsnotify Authors. All rights reserved.

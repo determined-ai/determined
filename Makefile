@@ -4,7 +4,7 @@ all:
 	$(MAKE) build
 
 .PHONY: get-deps
-get-deps: get-deps-pip get-deps-go get-deps-bindings get-deps-webui
+get-deps: get-deps-pip get-deps-go get-deps-bindings get-deps-web
 
 .PHONY: get-deps-%
 get-deps-%:
@@ -38,9 +38,9 @@ build-docs: build-common build-harness build-cli build-deploy build-model_hub bu
 build-bindings: build-proto
 	$(MAKE) -C bindings build
 
-.PHONY: build-webui
-build-webui: build-bindings
-	$(MAKE) -C webui build
+.PHONY: build-web
+build-web: build-bindings
+	$(MAKE) -C web build
 
 .PHONY: build-agent
 build-agent: build-proto
@@ -51,32 +51,32 @@ build-master: build-proto
 	$(MAKE) -C master build
 
 .PHONY: build
-build: build-master build-agent build-webui build-docs 
+build: build-master build-agent build-web build-docs 
 
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $(subst -,/,$*) clean
 .PHONY: clean
-clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings 
+clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-model_hub clean-examples clean-docs clean-web clean-master clean-agent clean-bindings 
 
 .PHONY: check-%
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
-check: check-common check-proto check-harness check-cli check-deploy check-model_hub check-e2e_tests check-tools check-master check-webui check-examples check-docs check-schemas
+check: check-common check-proto check-harness check-cli check-deploy check-model_hub check-e2e_tests check-tools check-master check-web check-examples check-docs check-schemas
 	$(MAKE) check-agent
 
 .PHONY: fmt-%
 fmt-%:
 	$(MAKE) -C $(subst -,/,$*) fmt
 .PHONY: fmt
-fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-webui fmt-examples fmt-docs fmt-schemas fmt-proto 
+fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-model_hub fmt-e2e_tests fmt-tools fmt-master fmt-agent fmt-web fmt-examples fmt-docs fmt-schemas fmt-proto 
 
 .PHONY: test-%
 test-%:
 	$(MAKE) -C $(subst -,/,$*) test
 .PHONY: test
-test: test-harness test-model_hub test-master test-agent test-webui
+test: test-harness test-model_hub test-master test-agent test-web
 
 .PHONY: devcluster
 devcluster:

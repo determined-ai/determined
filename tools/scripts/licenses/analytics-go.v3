@@ -2,7 +2,7 @@ Name: gopkg.in/segmentio/analytics-go.v3
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 The MIT License (MIT)
 

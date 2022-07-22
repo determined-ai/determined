@@ -2,7 +2,7 @@ Name: github.com/gorilla/websocket
 Type: bsd2
 Agent: true
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
 

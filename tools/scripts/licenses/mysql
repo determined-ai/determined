@@ -2,7 +2,7 @@ Name: github.com/go-sql-driver/mysql
 Type: mozilla
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Mozilla Public License Version 2.0
 ==================================

@@ -2,7 +2,7 @@ Name: react-transition-group
 Type: bsd3
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 BSD 3-Clause License
 

@@ -2,7 +2,7 @@ Name: golang.org/x/net
 Type: bsd3
 Agent: true
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 

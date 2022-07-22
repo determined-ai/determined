@@ -2,7 +2,7 @@ Name: gopkg.in/guregu/null.v3
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2014, Greg Roseberry
 All rights reserved.

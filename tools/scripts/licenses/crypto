@@ -2,7 +2,7 @@ Name: golang.org/x/crypto
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 

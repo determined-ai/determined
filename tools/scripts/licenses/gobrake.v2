@@ -2,7 +2,7 @@ Name: gopkg.in/airbrake/gobrake.v2
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 MIT License
 

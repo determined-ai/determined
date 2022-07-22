@@ -2,7 +2,7 @@ Name: github.com/go-ole/go-ole
 Type: mit
 Agent: true
 Master: false
-Webui: false
+Web: false
 
 The MIT License (MIT)
 

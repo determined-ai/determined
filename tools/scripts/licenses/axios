@@ -2,7 +2,7 @@ Name: axios
 Type: mit
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 Copyright (c) 2014-present Matt Zabriskie
 

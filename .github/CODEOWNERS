@@ -14,5 +14,5 @@
 /proto/src/determined/ @ioga
 /agent/internal/ @ioga
 
-# Hamid and Trent care about shared code
-/webui/react/src/shared/ @trentwatt
+# until test-downstream is merged and validated
+/web/src/shared/ @trentwatt

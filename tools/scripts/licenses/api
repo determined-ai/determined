@@ -2,7 +2,7 @@ Name: google.golang.org/api
 Type: bsd3
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) 2011 Google Inc. All rights reserved.
 

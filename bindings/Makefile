@@ -1,7 +1,7 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 py_bindings_dest := ../harness/determined/common/api/bindings.py
-ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
+ts_bindings_dest := ../web/src/services/api-ts-sdk
 py_generator := generate_bindings.py
 
 .PHONY: all

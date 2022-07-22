@@ -3,7 +3,7 @@ startup_input: "p"
 
 commands:
   p: make -C harness clean build  # rebuild Python
-  w: make -C webui build          # rebuild Webui
+  w: make -C web build            # rebuild web
   c: make -C docs build           # rebuild doCs
 
 # Three stages: db, master, and agent.

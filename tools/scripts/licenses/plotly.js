@@ -2,7 +2,7 @@ Name: plotly.js
 Type: mit
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 The MIT License (MIT)
 

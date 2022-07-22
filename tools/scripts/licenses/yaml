@@ -2,7 +2,7 @@ Name: github.com/ghodss/yaml
 Type: mit
 Agent: true
 Master: true
-Webui: false
+Web: false
 
 The MIT License (MIT)
 

@@ -2,7 +2,7 @@ Name: github.com/hpcloud/tail
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 # The MIT License (MIT)
 

@@ -47,7 +47,7 @@ updates:
 
   # Maintain prod dependencies for WebUI
   - package-ecosystem: npm
-    directory: /webui/react/
+    directory: /web/
     schedule:
       interval: daily
     allow:
@@ -61,7 +61,7 @@ updates:
 
   # Maintain dev verion dependencies for WebUI monthly
   - package-ecosystem: npm
-    directory: /webui/react/
+    directory: /web/
     target-branch: master  # trick dependabot into thinking this is different
     schedule:
       interval: monthly  # security checks still happen daily

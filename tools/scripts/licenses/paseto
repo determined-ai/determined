@@ -2,7 +2,7 @@ Name: github.com/o1egl/paseto
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 MIT License
 

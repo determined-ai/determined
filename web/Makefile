@@ -1,3 +1,16 @@
+
+.PHONY: all
+all:
+	$(MAKE) get-deps
+	$(MAKE) build
+
+# .PHONY: clean
+# .PHONY: fmt
+# .PHONY: check
+# .PHONY: get-deps
+# .PHONY: build
+# .PHONY: test
+
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
@@ -88,4 +101,4 @@ push-shared: test-shared
 
 	# fail if there are uncommitted changes.
 	git diff --exit-code || (echo "uncommitted changes, please commit or stash" ; false)
-	cd $(git rev-parse --show-toplevel) && git subtree push --prefix=webui/react/src/shared https://github.com/determined-ai/shared-web main
+	cd $(git rev-parse --show-toplevel) && git subtree push --prefix=web/src/shared https://github.com/determined-ai/shared-web main

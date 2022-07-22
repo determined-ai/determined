@@ -24,10 +24,10 @@ jobs:
       - name: Cache node_modules
         uses: actions/cache@v3
         with:
-          key: webui/react/node_modules.${{ hashFiles('webui/react/package-lock.json') }}
-          path: webui/react/node_modules
+          key: web/node_modules.${{ hashFiles('web/package-lock.json') }}
+          path: web/node_modules
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: make -C webui/react get-deps-npm
+        run: make -C web get-deps-npm
       - name: Run checks
-        run: make -C webui/react check
+        run: make -C web check

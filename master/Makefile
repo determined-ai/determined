@@ -103,12 +103,12 @@ test-intg:
 .PHONY: pre-package
 pre-package:
 	rm -rf build
-	mkdir -p build/webui/docs
-	mkdir -p build/webui/react
+	mkdir -p build/web/docs
+	mkdir -p build/web/react
 	mkdir -p build/wheels/
 	cp -r ../proto/build/swagger build/swagger
-	cp -r ../docs/site/html/* build/webui/docs
-	cp -r ../webui/react/build/* build/webui/react
+	cp -r ../docs/site/html/* build/web/docs
+	cp -r ../web/build/* build/web/react
 	cp ../harness/dist/*.whl build/wheels/
 	cp $(shell packaging/fetch-cloud-forest.sh) build/
 

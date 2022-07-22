@@ -2,7 +2,7 @@ Name: js-sha512
 Type: mit
 Agent: false
 Master: false
-Webui: true
+Web: true
 
 Copyright 2014-2018 Chen, Yi-Cyuan
 

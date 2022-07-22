@@ -2,7 +2,7 @@ Name: github.com/mattn/go-isatty
 Type: mit
 Agent: false
 Master: true
-Webui: false
+Web: false
 
 Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
 
