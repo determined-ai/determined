@@ -58,11 +58,11 @@ def get_container_user_token() -> Optional[str]:
     return os.environ.get("DET_USER_TOKEN")
 
 
-def get_det_user_name() -> Optional[str]:
+def get_det_username_from_env() -> Optional[str]:
     return os.environ.get("DET_USERNAME")
 
 
-def get_det_password() -> Optional[str]:
+def get_det_password_from_env() -> Optional[str]:
     return os.environ.get("DET_PASSWORD")
 
 
