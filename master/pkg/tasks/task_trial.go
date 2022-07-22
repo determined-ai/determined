@@ -88,8 +88,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res.ExtraArchives = []cproto.RunArchive{
 		wrapArchive(
 			archive.Archive{
-				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
-				s.Base.AgentUserGroup.OwnedArchiveItem(modelCopy, nil, 0700, tar.TypeDir),
+				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0o700, tar.TypeDir),
+				s.Base.AgentUserGroup.OwnedArchiveItem(modelCopy, nil, 0o700, tar.TypeDir),
 			},
 			rootDir,
 		),

@@ -12,7 +12,7 @@ interface Props extends PropsWithChildren<unknown> {
 
 const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
   const { info } = useStore();
-  return(
+  return (
     <Page docTitle={title}>
       <div className={css.base}>
         <div className={css.content}>

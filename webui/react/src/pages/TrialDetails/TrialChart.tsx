@@ -10,6 +10,7 @@ import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
+import Spinner from 'shared/components/Spinner';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricName, MetricType, Scale, WorkloadGroup } from 'types';
 
@@ -44,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
     const yValues: Record<string, Record<string, number | null>> = {};
     metrics.forEach((metric, index) => yValues[index] = {});
 
-    (workloads || []).forEach(wlWrapper => {
+    (workloads || []).forEach((wlWrapper) => {
       metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
@@ -64,8 +65,8 @@ const TrialChart: React.FC<Props> = ({
 
     xValues.sort((a, b) => a - b);
 
-    const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
-      return xValues.map(xValue => yValue[xValue] != null ? yValue[xValue] : null);
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
+      return xValues.map((xValue) => yValue[xValue] != null ? yValue[xValue] : null);
     });
 
     return [ xValues, ...yValuesArray ];
@@ -110,9 +111,15 @@ const TrialChart: React.FC<Props> = ({
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {chartData[0].length === 0 ?
-          <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} /> :
-          <UPlotChart data={chartData} options={chartOptions} />}
+        {
+          <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
+            {
+              chartData[0].length === 0
+                ? <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                : <UPlotChart data={chartData} options={chartOptions} />
+            }
+          </Spinner>
+        }
       </div>
     </Section>
   );

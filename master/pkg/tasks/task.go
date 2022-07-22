@@ -96,7 +96,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 }
 
 // Archives returns all the archives.
-func (t *TaskSpec) Archives() []cproto.RunArchive {
+func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
 		runDirHelpersArchive(t.AgentUserGroup),
@@ -105,7 +105,37 @@ func (t *TaskSpec) Archives() []cproto.RunArchive {
 		masterCertArchive(t.MasterCert),
 	}
 	res = append(res, t.ExtraArchives...)
-	return res
+
+	// Split into root and non root required files. In the case the user
+	// is root we will still differentiate files that need to be root
+	// versus files that should be owned by the user.
+	var user, root []cproto.RunArchive
+	for _, a := range res {
+		var uItems, rItems archive.Archive
+		for _, item := range a.Archive {
+			if item.IsRootItem {
+				rItems = append(rItems, item)
+			} else {
+				uItems = append(uItems, item)
+			}
+		}
+
+		if len(rItems) > 0 {
+			root = append(root, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     rItems,
+			})
+		}
+		if len(uItems) > 0 {
+			user = append(user, cproto.RunArchive{
+				Path:        a.Path,
+				CopyOptions: a.CopyOptions,
+				Archive:     uItems,
+			})
+		}
+	}
+	return user, root
 }
 
 // EnvVars returns all the environment variables.
@@ -196,6 +226,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 		})
 	}
 
+	runArchives, rootArchives := t.Archives()
 	spec := cproto.Spec{
 		TaskType: string(t.TaskType),
 		PullSpec: cproto.PullSpec{
@@ -223,7 +254,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 					Devices: devices,
 				},
 			},
-			Archives:         t.Archives(),
+			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
 		},
 	}
@@ -236,12 +267,12 @@ func workDirArchive(
 	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
 ) cproto.RunArchive {
 	a := archive.Archive{
-		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
-		aug.OwnedArchiveItem(infoDir, nil, 0755, tar.TypeDir),
-		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(runDir, nil, 0o700, tar.TypeDir),
+		aug.OwnedArchiveItem(infoDir, nil, 0o755, tar.TypeDir),
+		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0o700, tar.TypeDir),
 	}
 	if createWorkDir {
-		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0700, tar.TypeDir))
+		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0o700, tar.TypeDir))
 	}
 	return wrapArchive(a, rootDir)
 }
@@ -291,9 +322,9 @@ func injectUserArchive(aug *model.AgentUserGroup, workDir string) cproto.RunArch
 
 	return wrapArchive(
 		archive.Archive{
-			archive.RootItem(passwdPath, passwdBytes, 0644, tar.TypeReg),
-			archive.RootItem(shadowPath, shadowBytes, 0600, tar.TypeReg),
-			archive.RootItem(groupPath, groupBytes, 0644, tar.TypeReg),
+			archive.RootItem(passwdPath, passwdBytes, 0o644, tar.TypeReg),
+			archive.RootItem(shadowPath, shadowBytes, 0o600, tar.TypeReg),
+			archive.RootItem(groupPath, groupBytes, 0o644, tar.TypeReg),
 		},
 		rootDir,
 	)

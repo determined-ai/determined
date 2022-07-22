@@ -247,6 +247,11 @@ export interface PatchUserParams {
   };
 }
 
+export interface UpdateUserSettingParams {
+  setting: Api.V1UserWebSetting;
+  storagePath: string;
+}
+
 export interface GetProjectParams {
   id: number;
 }

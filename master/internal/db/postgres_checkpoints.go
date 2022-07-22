@@ -58,7 +58,8 @@ type ExperimentCheckpointGrouping struct {
 // GroupCheckpointUUIDsByExperimentID creates the mapping of checkpoint uuids to experiment id.
 // The checkpount uuids grouped together are comma separated.
 func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
-	[]*ExperimentCheckpointGrouping, error) {
+	[]*ExperimentCheckpointGrouping, error,
+) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
 	rows, err := db.sql.Queryx(

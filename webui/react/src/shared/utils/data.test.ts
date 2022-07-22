@@ -92,11 +92,11 @@ describe('Data Utilities', () => {
       { type: Type.Object, value: {} },
       { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
       { type: [ Type.Primitive, Type.String ], value: 'hello world' },
-      { type: [ Type.Object, Type.Promise ], value: new Promise(resolve => resolve(undefined)) },
+      { type: [ Type.Object, Type.Promise ], value: new Promise((resolve) => resolve(undefined)) },
     ];
-    testGroups.forEach(group => {
+    testGroups.forEach((group) => {
       describe(group.fn.name, () => {
-        tests.forEach(test => {
+        tests.forEach((test) => {
           it(`should test value "${test.value}" correctly as ${JSON.stringify(test.type)}`, () => {
             const result = Array.isArray(test.type)
               ? test.type.includes(group.type)
@@ -165,7 +165,7 @@ describe('Data Utilities', () => {
         output: false,
       },
     ];
-    tests.forEach(test => {
+    tests.forEach((test) => {
       const [ a, b ] = test.input;
       const aLabel = utils.isPrimitive(a) ? String(a) : JSON.stringify(a);
       const bLabel = utils.isPrimitive(b) ? String(b) : JSON.stringify(b);
@@ -276,13 +276,13 @@ describe('Data Utilities', () => {
     ];
 
     it('should flatten object', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.flattenObject(test.input, test.options)).toStrictEqual(test.output);
       });
     });
 
     it('should unflatten object', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter))
           .toStrictEqual(test.input);
       });
@@ -397,7 +397,7 @@ describe('Data Utilities', () => {
         { input: CarType.SUV, output: CarType.SUV },
         { input: INVALID_CAR_TYPE, output: undefined },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         it(`"${test.input}" should ${test.output ? '' : 'not be '}valid`, () => {
           expect(utils.validateEnum(CarType, test.input)).toBe(test.output);
         });
@@ -422,7 +422,7 @@ describe('Data Utilities', () => {
           testName: 'should filter out invalid enum values',
         },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         it(test.testName, () => {
           expect(utils.validateEnumList(CarType, test.input)).toEqual(test.output);
         });

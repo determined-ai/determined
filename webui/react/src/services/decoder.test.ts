@@ -6,10 +6,10 @@ type FailReport<T = unknown> = {error: Error; sample: T;}
 
 const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailReport[] => {
   const fails: FailReport[] = [];
-  samples.forEach(sample => {
+  samples.forEach((sample) => {
     try {
       fn(sample);
-    } catch(e) {
+    } catch (e) {
       fails.push({ error: e, sample });
     }
   });
@@ -33,7 +33,7 @@ describe('Decoder', () => {
   });
 
   it('Should decode experiment configs', () => {
-    const fails = tryOnSamples(experimentResps.map(r => r.config), (config) => {
+    const fails = tryOnSamples(experimentResps.map((r) => r.config), (config) => {
       ioTypes
         .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
     });

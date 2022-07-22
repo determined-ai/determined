@@ -5,6 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchWorkspace } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { validateLength } from 'shared/utils/string';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -18,11 +19,9 @@ interface Props {
 const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
   const [ name, setName ] = useState(workspace.name);
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
+  const handleClose = useCallback(() => onClose?.(), [ onClose ]);
 
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -39,7 +38,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await patchWorkspace({ id: workspace.id, name: name });
+      await patchWorkspace({ id: workspace.id, name });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -56,7 +55,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Save changes',
       onOk: handleOk,
       title: 'Edit Workspace',
@@ -68,15 +67,15 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
     openOrUpdate({ ...getModalProps(workspace.name), ...initialModalProps });
   }, [ getModalProps, openOrUpdate, workspace.name ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalWorkspaceEdit;

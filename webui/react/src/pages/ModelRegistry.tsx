@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Modal, Space, Switch } from 'antd';
+import { Button, Dropdown, Menu, Space } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -6,22 +6,22 @@ import FilterCounter from 'components/FilterCounter';
 import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef, InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
-import showModalItemCannotDelete from 'components/ModalItemDelete';
 import Page from 'components/Page';
 import { checkmarkRenderer, defaultRowClassName, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
-import useCreateModelModal from 'hooks/useCreateModelModal';
 import { useFetchUsers } from 'hooks/useFetch';
+import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
+import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { archiveModel, deleteModel, getModelLabels,
+import { archiveModel, getModelLabels,
   getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
@@ -44,14 +44,23 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = [ 'tags', 'name', 'users', 'description' ];
 
 const ModelRegistry: React.FC = () => {
-  const { users, auth: { user } } = useStore();
+  const { users } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ tags, setTags ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
-  const { showModal } = useCreateModelModal();
   const pageRef = useRef<HTMLElement>(null);
+
+  const {
+    contextHolder: modalModelCreateContextHolder,
+    modalOpen: openModelCreate,
+  } = useModalModelCreate();
+
+  const {
+    contextHolder: modalModelDeleteContextHolder,
+    modalOpen: openModelDelete,
+  } = useModalModelDelete();
 
   const {
     activeSettings,
@@ -78,12 +87,12 @@ const ModelRegistry: React.FC = () => {
         users: settings.users,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total || 0);
-      setModels(prev => {
+      setModels((prev) => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
       setIsLoading(false);
-    } catch(e) {
+    } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
@@ -107,22 +116,13 @@ const ModelRegistry: React.FC = () => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  /*
-   * Get new models based on changes to the
-   * pagination and sorter.
+  /**
+   * Get new models based on changes to the pagination and sorter.
    */
   useEffect(() => {
     setIsLoading(true);
     fetchModels();
-  }, [
-    fetchModels,
-    settings,
-  ]);
-
-  const deleteCurrentModel = useCallback((model: ModelItem) => {
-    deleteModel({ modelName: model.name });
-    fetchModels();
-  }, [ fetchModels ]);
+  }, [ fetchModels, settings ]);
 
   const switchArchived = useCallback(async (model: ModelItem) => {
     try {
@@ -233,18 +233,8 @@ const ModelRegistry: React.FC = () => {
   ), [ handleLabelFilterApply, handleLabelFilterReset, settings.tags ]);
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
-    Modal.confirm({
-      closable: true,
-      content: `Are you sure you want to delete this model "${model.name}" and all
-      of its versions from the model registry?`,
-      icon: null,
-      maskClosable: true,
-      okText: 'Delete Model',
-      okType: 'danger',
-      onOk: () => deleteCurrentModel(model),
-      title: 'Confirm Delete',
-    });
-  }, [ deleteCurrentModel ]);
+    openModelDelete(model);
+  }, [ openModelDelete ]);
 
   const saveModelDescription = useCallback(async (modelName: string, editedDescription: string) => {
     try {
@@ -262,35 +252,25 @@ const ModelRegistry: React.FC = () => {
     }
   }, []);
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
 
-  const ModelActionMenu = useCallback((record: ModelItem) => {
-    const isDeletable = user?.isAdmin || user?.id === record.userId;
-    return (
-      <Menu>
-        <Menu.Item
-          key="switch-archived"
-          onClick={() => switchArchived(record)}>
-          {record.archived ? 'Unarchive' : 'Archive'}
-        </Menu.Item>
-        <Menu.Item
-          danger
-          key="delete-model"
-          onClick={() => isDeletable ?
-            showConfirmDelete(record) : showModalItemCannotDelete()}>
-          Delete Model
-        </Menu.Item>
-      </Menu>
-    );
-  }, [ showConfirmDelete, switchArchived, user?.id, user?.isAdmin ]);
+  const ModelActionMenu = useCallback((record: ModelItem) => (
+    <Menu>
+      <Menu.Item
+        key="switch-archived"
+        onClick={() => switchArchived(record)}>
+        {record.archived ? 'Unarchive' : 'Archive'}
+      </Menu.Item>
+      <Menu.Item
+        danger
+        key="delete-model"
+        onClick={() => showConfirmDelete(record)}>
+        Delete Model
+      </Menu.Item>
+    </Menu>
+  ), [ showConfirmDelete, switchArchived ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelItem) => (
@@ -302,22 +282,20 @@ const ModelRegistry: React.FC = () => {
       />
     );
 
-    const actionRenderer = (_:string, record: ModelItem) => {
-      return (
-        <Dropdown
-          overlay={() => ModelActionMenu(record)}
-          trigger={[ 'click' ]}>
-          <Button className={css.overflow} type="text">
-            <Icon name="overflow-vertical" />
-          </Button>
-        </Dropdown>
-      );
-    };
+    const actionRenderer = (_:string, record: ModelItem) => (
+      <Dropdown
+        overlay={() => ModelActionMenu(record)}
+        trigger={[ 'click' ]}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+    );
 
     const descriptionRenderer = (value:string, record: ModelItem) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
       />
@@ -367,7 +345,7 @@ const ModelRegistry: React.FC = () => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
-        filters: tags.map(tag => ({ text: tag, value: tag })),
+        filters: tags.map((tag) => ({ text: tag, value: tag })),
         isFiltered: (settings: Settings) => !!settings.tags,
         key: 'tags',
         render: tagsRenderer,
@@ -384,7 +362,7 @@ const ModelRegistry: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
         render: userRenderer,
@@ -411,13 +389,14 @@ const ModelRegistry: React.FC = () => {
     users,
     setModelTags,
     ModelActionMenu,
-    saveModelDescription ]);
+    saveModelDescription,
+  ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<ModelItem>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',
@@ -434,9 +413,7 @@ const ModelRegistry: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const showCreateModelModal = useCallback(() => {
-    showModal({});
-  }, [ showModal ]);
+  const showCreateModelModal = useCallback(() => openModelCreate(), [ openModelCreate ]);
 
   const switchShowArchived = useCallback((showArchived: boolean) => {
     let newColumns: ModelColumnName[];
@@ -491,9 +468,11 @@ const ModelRegistry: React.FC = () => {
       loading={isLoading}
       options={(
         <Space>
-          <Switch checked={settings.archived} onChange={switchShowArchived} />
-          <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
+          <Toggle
+            checked={settings.archived}
+            prefixLabel="Show Archived"
+            onChange={switchShowArchived}
+          />
           {filterCount > 0 &&
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
           <Button onClick={showCreateModelModal}>New Model</Button>
@@ -534,6 +513,8 @@ const ModelRegistry: React.FC = () => {
             onChange={handleTableChange}
           />
         )}
+      {modalModelCreateContextHolder}
+      {modalModelDeleteContextHolder}
     </Page>
   );
 };

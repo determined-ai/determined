@@ -52,7 +52,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
 
   const basePath = paths.experimentDetails(experiment.id);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(`${basePath}/${key}`);
   }, [ basePath, history ]);

@@ -236,10 +236,17 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.2`` for
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
          NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.2`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.2`` for CPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4`` for CPUs.
+
+   -  ``environment_variables``: A list of environment variables that will be set in every task
+      container. Each element of the list should be a string of the form ``NAME=VALUE``. See
+      :ref:`environment-variables` for more details. Environment variables specified in experiment
+      config will override default values specified here. Users can customize environment variables
+      for CUDA (NVIDIA GPU), CPU, and ROCm (AMD GPU) tasks differently by specifying a dict with
+      ``cuda`` (``gpu`` prior to 0.17.6), ``cpu``, and ``rocm`` keys.
 
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
       registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
@@ -256,7 +263,7 @@ The master supports the following configuration settings:
 
       -  ``username`` (required)
       -  ``password`` (required)
-      -  ``serveraddress`` (optional)
+      -  ``serveraddress`` (required)
       -  ``email`` (optional)
 
    -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.
@@ -816,6 +823,11 @@ The master supports the following configuration settings:
             -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed
                if the certificate is not signed by a well-known CA; cannot be specified if
                ``skip_verify`` is enabled.
+
+   -  ``additional_fluent_outputs``: An optional configuration string containing additional Fluent
+      Bit outputs for advanced users to specify logging integrations. See the `Fluent Bit
+      documentation <https://docs.fluentbit.io/manual/pipeline/outputs>`__ for the format and
+      supported logging outputs.
 
 -  ``scim``: (EE-only) Specifies whether the SCIM service is enabled and the credentials for clients
    to use it.

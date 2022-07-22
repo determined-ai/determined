@@ -84,7 +84,8 @@ func (db *PgDB) ExperimentLabelUsage(projectID int32) (labelUsage map[string]int
 
 // GetExperimentStatus returns the current state of the experiment.
 func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progress float64,
-	err error) {
+	err error,
+) {
 	row := db.sql.QueryRow(
 		"SELECT state, COALESCE(progress, 0) as progress FROM experiments WHERE id=$1",
 		experimentID)
@@ -95,7 +96,8 @@ func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progre
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
 func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
-	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
+	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error,
+) {
 	type namesWrapper struct {
 		Name    string    `db:"name"`
 		EndTime time.Time `db:"end_time"`
@@ -145,6 +147,59 @@ GROUP BY name`, &rows, experimentID, vStartTime)
 	return training, validation, sEndTime, vEndTime, err
 }
 
+// ExpCompareMetricNames returns the set of training and validation metric names
+// that have been recorded for a list of trials.
+func (db *PgDB) ExpCompareMetricNames(trialIDs []int32, sStartTime time.Time,
+	vStartTime time.Time) (training []string, validation []string, sEndTime time.Time,
+	vEndTime time.Time, err error,
+) {
+	type namesWrapper struct {
+		Name    string    `db:"name"`
+		EndTime time.Time `db:"end_time"`
+	}
+	var rows []namesWrapper
+	err = db.queryRows(`
+SELECT
+  jsonb_object_keys(s.metrics->'avg_metrics') AS name,
+  max(s.end_time) AS end_time
+FROM trials t
+JOIN steps s ON t.id=s.trial_id
+WHERE t.id IN (SELECT unnest($1::int [])::int)
+  AND s.end_time > $2
+GROUP BY name`, &rows, trialIDs, sStartTime)
+	if err != nil {
+		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+			"error querying training metric names fort rials")
+	}
+	for _, row := range rows {
+		training = append(training, row.Name)
+		if row.EndTime.After(sEndTime) {
+			sEndTime = row.EndTime
+		}
+	}
+
+	err = db.queryRows(`
+SELECT
+  jsonb_object_keys(v.metrics->'validation_metrics') AS name,
+  max(v.end_time) AS end_time
+FROM trials t
+JOIN validations v ON t.id = v.trial_id
+WHERE t.id IN (SELECT unnest($1::int [])::int)
+  AND v.end_time > $2
+GROUP BY name`, &rows, trialIDs, vStartTime)
+	if err != nil {
+		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
+			"error querying validation metric names for trials")
+	}
+	for _, row := range rows {
+		validation = append(validation, row.Name)
+		if row.EndTime.After(sEndTime) {
+			sEndTime = row.EndTime
+		}
+	}
+	return training, validation, sEndTime, vEndTime, err
+}
+
 type batchesWrapper struct {
 	Batches int32     `db:"batches_processed"`
 	EndTime time.Time `db:"end_time"`
@@ -153,7 +208,8 @@ type batchesWrapper struct {
 // TrainingMetricBatches returns the milestones (in batches processed) at which a specific training
 // metric was recorded.
 func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, startTime time.Time) (
-	batches []int32, endTime time.Time, err error) {
+	batches []int32, endTime time.Time, err error,
+) {
 	var rows []*batchesWrapper
 	err = db.queryRows(`
 SELECT s.total_batches AS batches_processed,
@@ -180,7 +236,8 @@ GROUP BY batches_processed;`, &rows, experimentID, metricName, startTime)
 // ValidationMetricBatches returns the milestones (in batches processed) at which a specific
 // validation metric was recorded.
 func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, startTime time.Time) (
-	batches []int32, endTime time.Time, err error) {
+	batches []int32, endTime time.Time, err error,
+) {
 	var rows []*batchesWrapper
 	err = db.queryRows(`
 SELECT
@@ -233,7 +290,8 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 // specific point of progress.
 func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error) {
+	endTime time.Time, err error,
+) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`
 SELECT
@@ -273,7 +331,8 @@ ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 // specific point of progress.
 func (db *PgDB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
 	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
-	endTime time.Time, err error) {
+	endTime time.Time, err error,
+) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`
 SELECT
@@ -313,7 +372,8 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, 
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
 func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool) (trials []int32, err error) {
+	smallerIsBetter bool,
+) (trials []int32, err error) {
 	order := desc
 	aggregate := max
 	if smallerIsBetter {
@@ -335,10 +395,37 @@ SELECT t.id FROM (
 	return trials, err
 }
 
+// ExpCompareTopTrialsByMetric chooses the subset of trials from a list of experiments
+// that recorded the best values for the specified metric at any point during the trial.
+func (db *PgDB) ExpCompareTopTrialsByMetric(experimentIDs []int32, maxTrials int, metric string,
+	smallerIsBetter bool,
+) (trials []int32, err error) {
+	order := desc
+	aggregate := max
+	if smallerIsBetter {
+		order = asc
+		aggregate = min
+	}
+	err = db.sql.Select(&trials, fmt.Sprintf(`
+SELECT t.id FROM (
+  SELECT t.id,
+    %s((v.metrics->'validation_metrics'->>$1)::float8) as best_metric
+  FROM trials t
+  JOIN validations v ON t.id = v.trial_id
+  WHERE t.experiment_id in (SELECT unnest($2::int [])::int)
+    AND v.state = 'COMPLETED'
+  GROUP BY t.id
+  ORDER BY best_metric %s
+  LIMIT $3
+) t;`, aggregate, order), metric, experimentIDs, maxTrials)
+	return trials, err
+}
+
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
 // number of batches, using the specified metric as a tie breaker.
 func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool) (trials []int32, err error) {
+	smallerIsBetter bool,
+) (trials []int32, err error) {
 	order := desc
 	aggregate := max
 	if smallerIsBetter {
@@ -385,7 +472,8 @@ func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point,
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
 	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-	err error) {
+	err error,
+) {
 	rows, err := db.sql.Query(`
 SELECT
   total_batches AS batches,
@@ -412,7 +500,8 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
 	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
-	err error) {
+	err error,
+) {
 	rows, err := db.sql.Query(`
 SELECT
   v.total_batches AS batches,
@@ -443,7 +532,8 @@ type hpImportanceDataWrapper struct {
 }
 
 func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportanceTrialData, int,
-	error) {
+	error,
+) {
 	entry := model.HPImportanceTrialData{
 		TrialID: r.TrialID,
 		Metric:  r.Metric,
@@ -455,7 +545,8 @@ func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportance
 // algorithm to measure the relative importance of various hyperparameters for one specific training
 // metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
-	map[int][]model.HPImportanceTrialData, error) {
+	map[int][]model.HPImportanceTrialData, error,
+) {
 	var rows []hpImportanceDataWrapper
 	results := make(map[int][]model.HPImportanceTrialData)
 	// TODO: aren't we ignoring overtraining by taking the last?
@@ -498,7 +589,8 @@ FROM trials t
 // algorithm to measure the relative importance of various hyperparameters for one specific
 // validation metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string) (
-	map[int][]model.HPImportanceTrialData, error) {
+	map[int][]model.HPImportanceTrialData, error,
+) {
 	var rows []hpImportanceDataWrapper
 	results := make(map[int][]model.HPImportanceTrialData)
 	err := db.queryRows(`

@@ -1,0 +1,55 @@
+temp_dir: /tmp/priority_scheduler
+
+stages:
+  - db:
+      name: db-priority-scheduler
+      db_name: db-priority-scheduler
+      container_name: determined_db-priority-scheduler
+      port: 5434
+
+  - elastic:
+      name: elastic-priority-scheduler
+      container_name: determined_elastic-priority-scheduler
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        port: 8082
+        db:
+          host: localhost
+          port: 5434
+          password: postgres
+          user: postgres
+          name: db-priority-scheduler
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp-priority
+        log:
+          level: debug
+        root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
+        resource_manager:
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+          scheduler:
+            fitting_policy: best
+            type: priority
+            default_priority: 40
+          type: agent
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8082
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true
+        fluent:
+          port: 24226  # default value is 24224
+          container_name: determined-fluent-priority-scheduler

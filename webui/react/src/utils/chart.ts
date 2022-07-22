@@ -67,7 +67,7 @@ export const normalizeRange = (values: number[], range: Range<number>): number[]
   if (range[1] === range[0]) return values;
 
   const diff = range[1] - range[0];
-  return values.map(value => (value - range[0]) / diff);
+  return values.map((value) => (value - range[0]) / diff);
 };
 
 export function distance(x0: number, y0: number, x1: number, y1: number): number {

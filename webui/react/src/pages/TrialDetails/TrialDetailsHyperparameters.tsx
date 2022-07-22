@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
+import SkeletonTable from 'components/Skeleton/SkeletonTable';
 import { defaultRowClassName } from 'components/Table';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import Spinner from 'shared/components/Spinner';
 import { isObject } from 'shared/utils/data';
 import { TrialDetails } from 'types';
 import { alphaNumericSorter } from 'utils/sort';
@@ -57,18 +59,26 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
 
   return (
     <div className={css.base}>
-      <InteractiveTable
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={dataSource}
-        pagination={false}
-        rowClassName={defaultRowClassName({ clickable: false })}
-        rowKey="hyperparameter"
-        settings={settings as InteractiveTableSettings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      />
+      <Spinner spinning={!trial}>
+        {
+          trial
+            ? (
+              <InteractiveTable
+                columns={columns}
+                containerRef={pageRef}
+                dataSource={dataSource}
+                pagination={false}
+                rowClassName={defaultRowClassName({ clickable: false })}
+                rowKey="hyperparameter"
+                settings={settings as InteractiveTableSettings}
+                showSorterTooltip={false}
+                size="small"
+                updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+              />
+            )
+            : <SkeletonTable columns={columns.length} />
+        }
+      </Spinner>
     </div>
   );
 };

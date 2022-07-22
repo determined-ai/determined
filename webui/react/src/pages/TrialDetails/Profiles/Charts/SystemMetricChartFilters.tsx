@@ -38,7 +38,7 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
 
   const uuidOptions = useMemo(() => {
     if (!settings.name || !settings.agentId) return [];
-    return systemSeries?.[settings.name]?.[settings.agentId]?.filter(uuid => !!uuid) || [];
+    return systemSeries?.[settings.name]?.[settings.agentId]?.filter((uuid) => !!uuid) || [];
   }, [ settings, systemSeries ]);
 
   if (!settings || !updateSettings) return null;
@@ -52,7 +52,7 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
         style={{ width: 220 }}
         value={settings.name}
         onChange={handleChangeName}>
-        {systemSeries && Object.keys(systemSeries).map(name => (
+        {systemSeries && Object.keys(systemSeries).map((name) => (
           <Option key={name} value={name}>{name}</Option>
         ))}
       </SelectFilter>
@@ -63,9 +63,11 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
         style={{ width: 220 }}
         value={settings.agentId}
         onChange={handleChangeAgentId}>
-        {settings.name && systemSeries && Object.keys(systemSeries[settings.name]).map(agentId => (
-          <Option key={agentId} value={agentId}>{agentId}</Option>
-        ))}
+        {settings.name && systemSeries && (
+          Object.keys(systemSeries[settings.name]).map((agentId) => (
+            <Option key={agentId} value={agentId}>{agentId}</Option>
+          ))
+        )}
       </SelectFilter>
       {uuidOptions.length !== 0 && (
         <SelectFilter
@@ -77,7 +79,7 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
           style={{ width: 220 }}
           value={settings.gpuUuid}
           onChange={handleChangeGpuUuid}>
-          {uuidOptions.map(gpuUuid => (
+          {uuidOptions.map((gpuUuid) => (
             <Option key={gpuUuid} value={gpuUuid}>{gpuUuid}</Option>
           ))}
         </SelectFilter>

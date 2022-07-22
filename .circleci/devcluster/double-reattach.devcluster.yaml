@@ -19,12 +19,14 @@ stages:
         log:
           level: debug
         root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
         resource_manager:
           default_aux_resource_pool: default
           default_compute_resource_pool: default
           scheduler:
             fitting_policy: best
-          type: fair_share
+            type: fair_share
           type: agent
         resource_pools:
           - agent_reattach_enabled: true

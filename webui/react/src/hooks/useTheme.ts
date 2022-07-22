@@ -1,37 +1,21 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useSettings from 'hooks/useSettings';
+import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
 import themes from 'themes';
-import { BrandingType } from 'types';
 
-import { DarkLight, globalCssVars, Theme } from '../shared/themes';
-
-import { config, Mode, Settings } from './useTheme.settings';
-
-type ThemeHook = {
-  mode: Mode,
-  setBranding: Dispatch<SetStateAction<BrandingType>>,
-  setMode: Dispatch<SetStateAction<Mode>>,
-  theme: Theme,
-  themeMode: DarkLight,
-  themeSetting: string,
-  updateTheme: (mode: Mode) => void
-};
+import { config, Settings } from './useTheme.settings';
 
 const STYLESHEET_ID = 'antd-stylesheet';
-
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
-
-const themeConfig = {
-  [Mode.Dark]: { antd: 'antd.dark.min.css' },
-  [Mode.Light]: { antd: 'antd.min.css' },
+const ANTD_THEMES = {
+  [DarkLight.Dark]: { antd: 'antd.dark.min.css' },
+  [DarkLight.Light]: { antd: 'antd.min.css' },
 };
-
-const getThemeType = (mode: Mode): DarkLight =>
-  mode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
 
 const createStylesheetLink = () => {
   const link = document.createElement('link');
@@ -41,6 +25,13 @@ const createStylesheetLink = () => {
   document.head.appendChild(link);
 
   return link;
+};
+
+const getDarkLight = (mode: Mode, systemMode: Mode): DarkLight => {
+  const resolvedMode = mode === Mode.System
+    ? (systemMode === Mode.System ? Mode.Light : systemMode)
+    : mode;
+  return resolvedMode === Mode.Light ? DarkLight.Light : DarkLight.Dark;
 };
 
 const getStylesheetLink = () => {
@@ -69,48 +60,30 @@ const updateAntDesignTheme = (path: string) => {
  * `useTheme` hook is meant to be used only once in the top level component such as App
  * and storybook Theme decorators and not individual components.
 */
-export const useTheme = (): ThemeHook => {
-
-  const {
-    settings,
-    updateSettings,
-  } = useSettings<Settings>(config);
-
-  const currentMode = getSystemMode();
-  const [ branding, setBranding ] = useState(BrandingType.Determined);
-  const [ mode, setMode ] = useState<Mode>(settings.theme);
-  const [ systemMode, setSystemMode ] = useState<Mode>(currentMode);
-
-  const themeMode = getThemeType(
-    mode === Mode.System ? (systemMode === Mode.System ? Mode.Light : systemMode) : mode,
-  );
-  const theme = useMemo(() => themes[branding][themeMode], [ branding, themeMode ]);
+export const useTheme = (): void => {
+  const { info, ui } = useStore();
+  const storeDispatch = useStoreDispatch();
+  const [ systemMode, setSystemMode ] = useState<Mode>(getSystemMode());
+  const [ isSettingsReady, setIsSettingsReady ] = useState(false);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
-    if(!event.matches){
-      setSystemMode(getSystemMode());
-    }
+    if (!event.matches) setSystemMode(getSystemMode());
   }, []);
-
-  const themeSetting = settings.theme;
-  const updateTheme = (mode: Mode) => {
-    setMode(mode);
-    updateSettings({ theme: mode });
-  };
 
   useEffect(() => {
     // Set global CSS variables shared across themes.
-    Object.keys(globalCssVars).forEach(key => {
+    Object.keys(globalCssVars).forEach((key) => {
       const value = (globalCssVars as Record<RecordKey, string>)[key];
       document.documentElement.style.setProperty(`--${camelCaseToKebab(key)}`, value);
     });
 
     // Set each theme property as top level CSS variable.
-    Object.keys(theme).forEach(key => {
-      const value = (theme as Record<RecordKey, string>)[key];
+    Object.keys(ui.theme).forEach((key) => {
+      const value = (ui.theme as Record<RecordKey, string>)[key];
       document.documentElement.style.setProperty(`--theme-${camelCaseToKebab(key)}`, value);
     });
-  }, [ theme ]);
+  }, [ ui.theme ]);
 
   // Detect browser/OS level dark/light mode changes.
   useEffect(() => {
@@ -121,15 +94,31 @@ export const useTheme = (): ThemeHook => {
       matchMedia?.(MATCH_MEDIA_SCHEME_DARK).removeEventListener('change', handleSchemeChange);
       matchMedia?.(MATCH_MEDIA_SCHEME_LIGHT).addEventListener('change', handleSchemeChange);
     };
-
   }, [ handleSchemeChange ]);
 
-  // When mode changes update theme.
+  // Update darkLight and theme when branding, system mode, or mode changes.
   useEffect(() => {
-    updateAntDesignTheme(themeConfig[themeMode].antd);
-  }, [ themeMode ]);
+    const darkLight = getDarkLight(ui.mode, systemMode);
+    storeDispatch({
+      type: StoreAction.SetTheme,
+      value: { darkLight, theme: themes[info.branding][darkLight] },
+    });
+  }, [ info.branding, storeDispatch, systemMode, ui.mode ]);
 
-  return { mode, setBranding, setMode, theme, themeMode, themeSetting, updateTheme };
+  // Update Ant Design theme when darkLight changes.
+  useEffect(() => updateAntDesignTheme(ANTD_THEMES[ui.darkLight].antd), [ ui.darkLight ]);
+
+  // Update setting mode when mode changes.
+  useEffect(() => {
+    if (isSettingsReady) {
+      // We have read from the settings, going forward any mode difference requires an update.
+      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
+    } else {
+      // Initially set the mode from settings.
+      storeDispatch({ type: StoreAction.SetMode, value: settings.mode });
+      setIsSettingsReady(true);
+    }
+  }, [ isSettingsReady, settings, storeDispatch, ui.mode, updateSettings ]);
 };
 
 export default useTheme;

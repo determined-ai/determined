@@ -21,7 +21,9 @@ interface Props {
 }
 
 const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWorkspace }: Props) => {
-  const { modalOpen: openProjectCreate } = useModalProjectCreate({ workspaceId: workspace.id });
+  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate(
+    { workspaceId: workspace.id },
+  );
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -29,7 +31,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
 
   const handleNameChange = useCallback(async (name: string) => {
     try {
-      await patchWorkspace({ id: workspace.id, name: name });
+      await patchWorkspace({ id: workspace.id, name });
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -78,8 +80,10 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, curUser, fetchWork
           </WorkspaceActionDropdown>
         )}
       </Space>
-      {(!workspace.immutable && !workspace.archived) &&
-        <Button onClick={handleProjectCreateClick}>New Project</Button>}
+      {(!workspace.immutable && !workspace.archived) && (
+        <Button onClick={handleProjectCreateClick}>New Project</Button>
+      )}
+      {contextHolder}
     </div>
   );
 };

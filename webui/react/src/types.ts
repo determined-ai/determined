@@ -111,7 +111,7 @@ export interface Resource {
 export interface Agent {
   id: string;
   registeredTime: number;
-  resourcePool: string;
+  resourcePools: string[];
   resources: Resource[];
 }
 
@@ -291,6 +291,7 @@ export enum ExperimentAction {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
+  CompareExperiments = 'Compare',
   CompareTrials = 'Compare Trials',
   ContinueTrial = 'Continue Trial',
   Delete = 'Delete',
@@ -423,13 +424,13 @@ type HpValue = Primitive | RawJson
 export type TrialHyperparameters = Record<string, HpValue>
 
 export interface TrialItem extends StartEndTimes {
+  autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }

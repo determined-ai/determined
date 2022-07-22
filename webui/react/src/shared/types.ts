@@ -63,11 +63,14 @@ export interface RouteConfig extends RouteProps {
   title?: string;
 }
 
-export type CommonProps = {
-  children?: React.ReactNode;
+export interface ClassNameProp {
+  /** classname to be applied to the base element */
   className?: string;
+}
+export interface CommonProps extends ClassNameProp {
+  children?: React.ReactNode;
   title?: string;
-};
+}
 
 export interface SemanticVersion {
   major: number;

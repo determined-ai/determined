@@ -24,8 +24,6 @@ message Agent {
   map<string, determined.container.v1.Container> containers = 4;
   // An optional label applied to the agent for scheduling restrictions.
   string label = 5;
-  // The name of the resource pool the agent is in
-  string resource_pool = 6;
   // The addresses of the agent.
   repeated string addresses = 7;
   // Flag notifying if containers can be scheduled on this agent.
@@ -35,6 +33,9 @@ message Agent {
   bool draining = 9;
   // The Determined version that this agent was built from.
   string version = 10;
+  // The name of the resource pools the agent is in. Only slurm can contain
+  // multiples.
+  repeated string resource_pools = 6;
 }
 
 // Slot wraps a single device on the agent.

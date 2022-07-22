@@ -44,7 +44,8 @@ const (
 // where order does matter. We need to keep define the Hps and
 // keep track of the order so the data columns will match.
 func createDataFile(data map[int][]model.HPImportanceTrialData,
-	experimentConfig expconf.ExperimentConfig, dataFile string) (int, error) {
+	experimentConfig expconf.ExperimentConfig, dataFile string,
+) (int, error) {
 	//nolint:gosec // Ignore security warning because none of this is user-provided input
 	f, err := os.Create(dataFile)
 	if err != nil {
@@ -195,7 +196,8 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 // defined range (maxDiffCompBatches).
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	experimentConfig expconf.ExperimentConfig, masterConfig config.HPImportanceConfig,
-	growforest string, workingDir string) (map[string]float64, error) {
+	growforest string, workingDir string,
+) (map[string]float64, error) {
 	if len(data) == 0 {
 		return nil, errors.New("not enough data to compute HP importance")
 	}

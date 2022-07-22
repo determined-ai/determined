@@ -64,11 +64,11 @@ export const columns: ColumnDef<TrialItem>[] = [
     title: 'Duration',
   },
   {
-    dataIndex: 'restarts',
-    defaultWidth: DEFAULT_COLUMN_WIDTHS['restarts'],
+    dataIndex: 'autoRestarts',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['autoRestarts'],
     key: V1GetExperimentTrialsRequestSortBy.RESTARTS,
     sorter: true,
-    title: 'Restarts',
+    title: 'Auto Restarts',
   },
   {
     dataIndex: 'checkpoint',

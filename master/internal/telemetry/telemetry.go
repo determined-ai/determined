@@ -13,8 +13,10 @@ import (
 	"github.com/determined-ai/determined/master/version"
 )
 
-const minTickIntervalMins = 10
-const maxTickIntervalMins = 60
+const (
+	minTickIntervalMins = 10
+	maxTickIntervalMins = 60
+)
 
 type telemetryTick struct{}
 

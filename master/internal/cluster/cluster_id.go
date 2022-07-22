@@ -18,8 +18,10 @@ type clusterID struct {
 	ClusterHeartbeat time.Time `bun:"cluster_heartbeat,notnull"`
 }
 
-var theLastBootMutex sync.Mutex
-var theLastBootClusterHeartbeat *time.Time
+var (
+	theLastBootMutex            sync.Mutex
+	theLastBootClusterHeartbeat *time.Time
+)
 
 // InitTheLastBootClusterHeartbeat preserves the last boot heartbeat for applications that need
 // it after the master has been running for some time (e.g. open allocation reattachment).

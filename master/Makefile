@@ -46,6 +46,7 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
+	go install mvdan.cc/gofumpt@v0.3.1
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 	go install github.com/bufbuild/buf/cmd/buf@v0.42.1
 	go install golang.org/x/tools/cmd/goimports@v0.1.5
@@ -86,6 +87,7 @@ check: check-gen
 .PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
+	gofumpt -l -w .
 
 .PHONY: test
 test:

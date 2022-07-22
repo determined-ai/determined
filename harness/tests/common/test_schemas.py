@@ -8,6 +8,8 @@ from determined.common import schemas, yaml
 from determined.common.schemas import expconf
 from determined.common.schemas.expconf import _v0
 
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+
 
 def strip_runtime_defaultable(obj: Any, defaulted: Any) -> Any:
     """
@@ -209,7 +211,7 @@ def all_cases() -> Iterator["str"]:
             if file.endswith(".yaml"):
                 path = os.path.join(root, file)
                 with open(path) as f:
-                    cases = yaml.safe_load(f)
+                    cases = yaml.load(f)
                 for case in cases:
                     display_path = os.path.relpath(path, CASES_ROOT)
                     yield display_path + "::" + case["name"]
@@ -219,7 +221,7 @@ def all_cases() -> Iterator["str"]:
 def test_schemas(test_case: str) -> None:
     cases_file, case_name = test_case.split("::", 1)
     with open(os.path.join(CASES_ROOT, cases_file)) as f:
-        cases = yaml.safe_load(f)
+        cases = yaml.load(f)
     # Find the right test from the file of test cases.
     case = [c for c in cases if c["name"] == case_name][0]
     Case(**case).run()

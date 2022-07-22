@@ -26,7 +26,7 @@ func TestItem(t *testing.T) {
 		Path:    "/test",
 		Type:    '0',
 		Content: "b3JpZ2luYWw=",
-		Mode:    0644,
+		Mode:    0o644,
 		Mtime:   1501632000,
 		UID:     0,
 		GID:     0,
@@ -96,7 +96,7 @@ func TestRoundtrip(t *testing.T) {
 		Item{
 			Path:     "dir",
 			Type:     tar.TypeDir,
-			FileMode: os.FileMode(0644),
+			FileMode: os.FileMode(0o644),
 			ModifiedTime: UnixTime{
 				Time: time.Unix(0, 0),
 			},
@@ -106,7 +106,7 @@ func TestRoundtrip(t *testing.T) {
 		Item{
 			Path:     "dir/b.txt",
 			Type:     tar.TypeReg,
-			FileMode: os.FileMode(0644),
+			FileMode: os.FileMode(0o644),
 			Content:  []byte("this is b"),
 			ModifiedTime: UnixTime{
 				Time: time.Unix(0, 0),
@@ -117,7 +117,7 @@ func TestRoundtrip(t *testing.T) {
 		Item{
 			Path:     "a.txt",
 			Type:     tar.TypeReg,
-			FileMode: os.FileMode(0644),
+			FileMode: os.FileMode(0o644),
 			Content:  []byte("this is a"),
 			ModifiedTime: UnixTime{
 				Time: time.Unix(0, 0),
@@ -128,7 +128,7 @@ func TestRoundtrip(t *testing.T) {
 		Item{
 			Path:     "link",
 			Type:     tar.TypeSymlink,
-			FileMode: os.FileMode(0644),
+			FileMode: os.FileMode(0o644),
 			Content:  []byte("targetoflink"),
 			ModifiedTime: UnixTime{
 				Time: time.Unix(0, 0),

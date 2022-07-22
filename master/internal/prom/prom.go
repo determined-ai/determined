@@ -97,7 +97,8 @@ func AssociateAllocationContainer(aID model.AllocationID, cID cproto.ID) {
 func AssociateAllocationTask(aID model.AllocationID,
 	tID model.TaskID,
 	taskActor actor.Address,
-	jID model.JobID) {
+	jID model.JobID,
+) {
 	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
 		jID.String()).Inc()
 }
@@ -128,7 +129,8 @@ func DisassociateJobExperiment(jID model.JobID, eID string, labels expconf.Label
 
 // DisassociateAllocationTask disassociates an allocation ID with its task info.
 func DisassociateAllocationTask(aID model.AllocationID, tID model.TaskID, taskActor actor.Address,
-	jID model.JobID) {
+	jID model.JobID,
+) {
 	allocationIDToTask.WithLabelValues(aID.String(), tID.String(), taskActor.String(),
 		jID.String()).Dec()
 }
@@ -140,7 +142,8 @@ func AssociateContainerRuntimeID(cID cproto.ID, dcID string) {
 
 // AddAllocationResources associates allocation and container and container and GPUs.
 func AddAllocationResources(summary sproto.ResourcesSummary,
-	containerStarted *sproto.ResourcesStarted) {
+	containerStarted *sproto.ResourcesStarted,
+) {
 	if summary.ContainerID == nil {
 		return
 	}

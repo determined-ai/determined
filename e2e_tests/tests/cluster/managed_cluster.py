@@ -11,10 +11,12 @@ import pytest
 from tests import config as conf
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
+from .utils import get_master_port
 
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
+DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
 
@@ -34,7 +36,6 @@ class ManagedCluster:
         from devcluster import Devcluster
 
         self.dc = Devcluster(config=config)
-        self.master_url = conf.make_master_url()
         self.reattach = reattach
 
     def __enter__(self) -> "ManagedCluster":
@@ -61,7 +62,7 @@ class ManagedCluster:
 
         WAIT_FOR_KILL = 5
         for _i in range(WAIT_FOR_KILL):
-            agent_data = _get_agent_data(self.master_url)
+            agent_data = _get_agent_data(conf.make_master_url())
             if len(agent_data) == 0:
                 break
             if len(agent_data) == 1 and agent_data[0]["draining"] is True:
@@ -71,7 +72,7 @@ class ManagedCluster:
             pytest.fail(f"Agent is still present after {WAIT_FOR_KILL} seconds")
 
     def restart_agent(self, wait_for_amnesia: bool = True) -> None:
-        agent_data = _get_agent_data(self.master_url)
+        agent_data = _get_agent_data(conf.make_master_url())
         if len(agent_data) == 1 and agent_data[0]["enabled"]:
             return
 
@@ -79,7 +80,7 @@ class ManagedCluster:
             # Currently, we've got to wait for master to "forget" the agent before reconnecting.
             WAIT_FOR_AMNESIA = 60
             for _i in range(WAIT_FOR_AMNESIA):
-                agent_data = _get_agent_data(self.master_url)
+                agent_data = _get_agent_data(conf.make_master_url())
                 if len(agent_data) == 0:
                     break
                 time.sleep(1)
@@ -98,7 +99,7 @@ class ManagedCluster:
         self.dc.restart_stage("proxy")
         if wait_for_reconnect:
             for _i in range(25):
-                agent_data = _get_agent_data(self.master_url)
+                agent_data = _get_agent_data(conf.make_master_url())
                 if (
                     len(agent_data) == 1
                     and agent_data[0]["enabled"] is True
@@ -110,14 +111,14 @@ class ManagedCluster:
                 pytest.fail(f"Agent didn't reconnect after {_i} seconds")
 
     def ensure_agent_ok(self) -> None:
-        agent_data = _get_agent_data(self.master_url)
+        agent_data = _get_agent_data(conf.make_master_url())
         assert len(agent_data) == 1
         assert agent_data[0]["enabled"] is True
         assert agent_data[0]["draining"] is False
 
     def wait_for_agent_ok(self, ticks: int) -> None:
         for _i in range(ticks):
-            agent_data = _get_agent_data(self.master_url)
+            agent_data = _get_agent_data(conf.make_master_url())
             if (
                 len(agent_data) == 1
                 and agent_data[0]["enabled"] is True
@@ -132,7 +133,7 @@ class ManagedCluster:
         with logged_in_user(ADMIN_CREDENTIALS):
             master_config = json.loads(
                 subprocess.run(
-                    ["det", "-m", self.master_url, "master", "config", "--json"],
+                    ["det", "-m", conf.make_master_url(), "master", "config", "--json"],
                     stdout=subprocess.PIPE,
                     check=True,
                 ).stdout.decode()
@@ -162,15 +163,51 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
         yield mc
 
 
+@pytest.fixture(scope="session")
+def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
+
+    with ManagedCluster(config, reattach=False) as mc:
+        mc.initial_startup()
+        yield mc
+
+
 def _now_ts() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat()
 
 
 @pytest.fixture
-def managed_cluster(
-    managed_cluster_session: ManagedCluster, request: Any
+def managed_cluster_priority_scheduler(
+    managed_cluster_session_priority_scheduler: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
+    lc = conf.load_config(config_path=config)
+    port = get_master_port(lc)
+    set_master_port_conf(port)
+
+    nodeid = request.node.nodeid
+    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    yield managed_cluster_session_priority_scheduler
+    managed_cluster_session_priority_scheduler.log_marker(
+        f"pytest [{_now_ts()}] {nodeid} teardown\n"
+    )
+
+
+@pytest.fixture
+def managed_cluster_restarts(
+    managed_cluster_session: ManagedCluster, request: Any
+) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
+    config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
+    # port number is same for both reattach on and off config files so you can use either.
+    lc = conf.load_config(config_path=config)
+    port = get_master_port(lc)
+    set_master_port_conf(port)
+
     nodeid = request.node.nodeid
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
     managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} teardown\n")
+
+
+def set_master_port_conf(port: str) -> None:
+    conf.MASTER_PORT = port

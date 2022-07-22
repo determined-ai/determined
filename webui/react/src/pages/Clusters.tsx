@@ -31,13 +31,13 @@ const Clusters: React.FC = () => {
   const history = useHistory();
 
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { cluster: overview, resourcePools } = useStore();
+  const { agents, cluster: overview, resourcePools } = useStore();
 
   const cluster = useMemo(() => {
-    return clusterStatusText(overview, resourcePools);
-  }, [ overview, resourcePools ]);
+    return clusterStatusText(overview, resourcePools, agents);
+  }, [ overview, resourcePools, agents ]);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);

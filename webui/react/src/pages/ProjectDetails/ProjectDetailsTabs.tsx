@@ -3,10 +3,10 @@ import { Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
-import PageHeader from 'shared/components/PageHeader';
 import { sentenceToCamelCase } from 'shared/utils/string';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -44,7 +44,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
   }, [ project.workspaceId ]);
 
   const handleTabSwitch = useCallback((tabKey: string) => {
-    setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
+    setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
   /**
@@ -60,10 +60,11 @@ const ProjectDetailsTabs: React.FC<Props> = (
   }, [ fetchWorkspace ]);
 
   if (project.immutable) {
-    const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
+    const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
     return (
       <div className={css.base}>
         <PageHeader
+          className={css.header}
           options={experimentsTab?.options}
           title="Uncategorized"
         />
@@ -104,7 +105,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ height: 50, paddingLeft: 16 }}
         onChange={handleTabSwitch}>
-        {tabs.map(tabInfo => {
+        {tabs.map((tabInfo) => {
           return (
             <TabPane
               className={css.tabPane}

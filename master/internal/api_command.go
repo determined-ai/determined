@@ -179,12 +179,14 @@ func (a *apiServer) GetCommands(
 }
 
 func (a *apiServer) GetCommand(
-	_ context.Context, req *apiv1.GetCommandRequest) (resp *apiv1.GetCommandResponse, err error) {
+	_ context.Context, req *apiv1.GetCommandRequest,
+) (resp *apiv1.GetCommandResponse, err error) {
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) KillCommand(
-	_ context.Context, req *apiv1.KillCommandRequest) (resp *apiv1.KillCommandResponse, err error) {
+	_ context.Context, req *apiv1.KillCommandRequest,
+) (resp *apiv1.KillCommandResponse, err error) {
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
@@ -219,7 +221,7 @@ func (a *apiServer) LaunchCommand(
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			commandEntrypoint,
 			etc.MustStaticFile(etc.CommandEntrypointResource),
-			0700,
+			0o700,
 			tar.TypeReg,
 		),
 	}

@@ -15,6 +15,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -114,6 +115,7 @@ const LogViewer: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
+  const [ isFetching, setIsFetching ] = useState(false);
   const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
   const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
@@ -140,7 +142,7 @@ const LogViewer: React.FC<Props> = ({
 
     const lineCount = log.message
       .split('\n')
-      .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
+      .map((line) => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
       .reduce((acc, count) => acc + count, 0);
     const itemHeight = lineCount * charMeasures.height;
 
@@ -152,19 +154,19 @@ const LogViewer: React.FC<Props> = ({
   const processLogs = useCallback((newLogs: Log[]) => {
     const map = local.current.idMap;
     return newLogs
-      .filter(log => {
+      .filter((log) => {
         const isDuplicate = map[log.id];
         const isTqdm = log.message.includes('\r');
         map[log.id] = true;
         return !isDuplicate && !isTqdm;
       })
-      .map(log => formatLogEntry(log))
+      .map((log) => formatLogEntry(log))
       .sort(logSorter(sortKey));
   }, [ sortKey ]);
 
   const addLogs = useCallback((newLogs: ViewerLog[], prepend = false): void => {
     if (newLogs.length === 0) return;
-    setLogs(prevLogs => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
+    setLogs((prevLogs) => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
     resizeLogs();
   }, [ resizeLogs ]);
 
@@ -176,16 +178,18 @@ const LogViewer: React.FC<Props> = ({
 
     const buffer: Log[] = [];
 
+    setIsFetching(true);
     local.current.isFetching = true;
 
     await readStream(
       onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
-      event => {
+      (event) => {
         const logEntry = decoder(event);
         fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
       },
     );
 
+    setIsFetching(false);
     local.current.isFetching = false;
 
     return processLogs(buffer);
@@ -312,7 +316,9 @@ const LogViewer: React.FC<Props> = ({
   }, [ fetchDirection, logs.length ]);
 
   const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
+    const content = logs.map((log) => (
+      `${formatClipboardHeader(log)}${log.message || ''}`
+    )).join('\n');
 
     try {
       await copyToClipboard(content);
@@ -339,7 +345,7 @@ const LogViewer: React.FC<Props> = ({
 
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
-    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then(logs => {
+    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then((logs) => {
       addLogs(logs, true);
 
       if (fetchDirection === FetchDirection.Older) {
@@ -385,7 +391,7 @@ const LogViewer: React.FC<Props> = ({
     if (fetchDirection === FetchDirection.Older && onFetch) {
       readStream(
         onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
-        event => {
+        (event) => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
         },
@@ -411,7 +417,7 @@ const LogViewer: React.FC<Props> = ({
   useEffect(() => {
     if (!initialLogs) return;
 
-    addLogs(initialLogs.map(log => formatLogEntry(decoder(log))));
+    addLogs(initialLogs.map((log) => formatLogEntry(decoder(log))));
   }, [ addLogs, decoder, initialLogs ]);
 
   // Abort all outstanding API calls if log viewer unmounts.
@@ -466,7 +472,7 @@ const LogViewer: React.FC<Props> = ({
       if (lines?.length <= 1) {
         e.clipboardData?.setData(clipboardFormat, selection);
       } else {
-        const oddOrEven = lines.map(line => /^\[/.test(line) || /\]$/.test(line))
+        const oddOrEven = lines.map((line) => /^\[/.test(line) || /\]$/.test(line))
           .reduce((acc, isTimestamp, index) => {
             if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
             return acc;
@@ -504,7 +510,7 @@ const LogViewer: React.FC<Props> = ({
             onClick={handleFullScreen}
           />
         </Tooltip>
-        {true && (
+        {handleCloseLogs && (
 
           <Link onClick={handleCloseLogs}>
             <Icon
@@ -563,11 +569,9 @@ const LogViewer: React.FC<Props> = ({
               {LogViewerRow}
             </VariableSizeList>
           </div>
-          {logs.length === 0 && (
-            <div className={css.empty}>
-              <Message title="No logs to show." type={MessageType.Empty} />
-            </div>
-          )}
+          <Spinner className={css.empty} conditionalRender spinning={isFetching}>
+            {(logs.length === 0) && <Message title="No logs to show." type={MessageType.Empty} />}
+          </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>

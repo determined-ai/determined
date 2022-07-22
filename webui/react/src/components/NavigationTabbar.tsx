@@ -1,13 +1,12 @@
-import { Modal } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import ActionSheet from 'components/ActionSheet';
-import AvatarCard from 'components/AvatarCard';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
+import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
-import useJupyterLabModal from 'hooks/useModal/useJupyterLabModal';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
@@ -42,13 +41,17 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { agents, auth, cluster: overview, ui, resourcePools, info, pinnedWorkspaces } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
-  const [ userSettingsModal, userSettingsModalContextHolder ] = Modal.useModal();
-  const [ jupyterLabModal, jupyterLabModalContextHolder ] = Modal.useModal();
-  const { modalOpen: openUserSettingsModal } = useModalUserSettings(userSettingsModal);
-  const { modalOpen: openJupyterLabModal } = useJupyterLabModal(jupyterLabModal);
   const [ isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces ] = useState(false);
+  const {
+    contextHolder: modalUserSettingsContextHolder,
+    modalOpen: openUserSettingsModal,
+  } = useModalUserSettings();
+  const {
+    contextHolder: modalJupyterLabContextHolder,
+    modalOpen: openJupyterLabModal,
+  } = useModalJupyterLab();
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
 
@@ -87,7 +90,7 @@ const NavigationTabbar: React.FC = () => {
           icon="cluster"
           label="Cluster"
           path={paths.cluster()}
-          status={clusterStatusText(overview, resourcePools)}
+          status={clusterStatusText(overview, resourcePools, agents)}
         />
         <ToolbarItem icon="workspaces" label="Workspaces" onClick={handleWorkspacesOpen} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
@@ -113,7 +116,16 @@ const NavigationTabbar: React.FC = () => {
       />
       <ActionSheet
         actions={[
-          { render: () => <AvatarCard className={css.user} key="avatar" user={auth.user} /> },
+          {
+            render: () => (
+              <AvatarCard
+                className={css.user}
+                darkLight={ui.darkLight}
+                key="avatar"
+                user={auth.user}
+              />
+            ),
+          },
           {
             icon: 'settings',
             label: 'Settings',
@@ -159,8 +171,8 @@ const NavigationTabbar: React.FC = () => {
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />
-      {userSettingsModalContextHolder}
-      {jupyterLabModalContextHolder}
+      {modalUserSettingsContextHolder}
+      {modalJupyterLabContextHolder}
     </nav>
   );
 };

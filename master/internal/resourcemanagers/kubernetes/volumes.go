@@ -107,7 +107,7 @@ func configureAdditionalFilesVolumes(
 	initContainerVolumeMounts = append(initContainerVolumeMounts, archiveVolumeMount)
 
 	entryPointVolumeName := "entrypoint-volume"
-	var entryPointVolumeMode int32 = 0700
+	var entryPointVolumeMode int32 = 0o555
 	entryPointVolume := k8sV1.Volume{
 		Name: entryPointVolumeName,
 		VolumeSource: k8sV1.VolumeSource{

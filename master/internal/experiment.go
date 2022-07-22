@@ -488,7 +488,8 @@ func (e *experiment) restoreTrials(ctx *actor.Context) {
 }
 
 func (e *experiment) processOperations(
-	ctx *actor.Context, ops []searcher.Operation, err error) {
+	ctx *actor.Context, ops []searcher.Operation, err error,
+) {
 	if _, ok := model.StoppingStates[e.State]; ok {
 		return
 	}

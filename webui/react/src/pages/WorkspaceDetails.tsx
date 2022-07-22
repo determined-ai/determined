@@ -1,4 +1,4 @@
-import { Select, Space, Switch } from 'antd';
+import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
@@ -8,12 +8,12 @@ import InlineEditor from 'components/InlineEditor';
 import InteractiveTable, { ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
-import Label, { LabelTypes } from 'components/Label';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import { checkmarkRenderer, GenericRenderer, getFullPaginationConfig,
   relativeTimeRenderer, userRenderer } from 'components/Table';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -32,7 +32,7 @@ import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
+  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
@@ -43,18 +43,11 @@ interface Params {
   workspaceId: string;
 }
 
-enum ProjectFilters {
-  All = 'ALL_PROJECTS',
-  Mine = 'MY_PROJECTS',
-  Others = 'OTHERS_PROJECTS'
-}
-
 const WorkspaceDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const { workspaceId } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ projects, setProjects ] = useState<Project[]>([]);
-  const [ projectFilter, setProjectFilter ] = useState<ProjectFilters>(ProjectFilters.All);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
@@ -90,7 +83,7 @@ const WorkspaceDetails: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setProjects(prev => {
+      setProjects((prev) => {
         if (isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
@@ -119,8 +112,8 @@ const WorkspaceDetails: React.FC = () => {
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const handleViewSelect = useCallback((value) => {
-    setProjectFilter(value as ProjectFilters);
-  }, []);
+    updateSettings({ whose: value });
+  }, [ updateSettings ]);
 
   const handleSortSelect = useCallback((value) => {
     updateSettings({
@@ -135,18 +128,18 @@ const WorkspaceDetails: React.FC = () => {
   }, [ updateSettings ]);
 
   useEffect(() => {
-    switch (projectFilter) {
-      case ProjectFilters.All:
+    switch (settings.whose) {
+      case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
-      case ProjectFilters.Mine:
+      case WhoseProjects.Mine:
         updateSettings({ user: user ? [ user.username ] : undefined });
         break;
-      case ProjectFilters.Others:
-        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+      case WhoseProjects.Others:
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [ projectFilter, updateSettings, user, users ]);
+  }, [ settings.whose, updateSettings, user, users ]);
 
   const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
     try {
@@ -179,7 +172,7 @@ const WorkspaceDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: Project) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
       />
@@ -298,7 +291,7 @@ const WorkspaceDetails: React.FC = () => {
             gap={ShirtSize.medium}
             minItemWidth={250}
             mode={GridMode.AutoFill}>
-            {projects.map(project => (
+            {projects.map((project) => (
               <ProjectCard
                 curUser={user}
                 fetchProjects={fetchProjects}
@@ -375,36 +368,33 @@ const WorkspaceDetails: React.FC = () => {
       id="workspaceDetails">
       <div className={css.controls}>
         <SelectFilter
-          bordered={false}
           dropdownMatchSelectWidth={140}
-          label="View:"
           showSearch={false}
-          value={projectFilter}
+          value={settings.whose}
           onSelect={handleViewSelect}>
-          <Option value={ProjectFilters.All}>All projects</Option>
-          <Option value={ProjectFilters.Mine}>My projects</Option>
-          <Option value={ProjectFilters.Others}>Others&apos; projects</Option>
+          <Option value={WhoseProjects.All}>All Projects</Option>
+          <Option value={WhoseProjects.Mine}>My Projects</Option>
+          <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
         </SelectFilter>
         <Space wrap>
           {!workspace.archived && (
-            <>
-              <Switch checked={settings.archived} onChange={switchShowArchived} />
-              <Label type={LabelTypes.TextOnly}>Show Archived</Label>
-            </>
+            <Toggle
+              checked={settings.archived}
+              prefixLabel="Show Archived"
+              onChange={switchShowArchived}
+            />
           )}
           <SelectFilter
-            bordered={false}
             dropdownMatchSelectWidth={150}
-            label="Sort:"
             showSearch={false}
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
-              Last updated
+              Last Updated
             </Option>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
-              Newest to oldest
+              Newest to Oldest
             </Option>
           </SelectFilter>
           <GridListRadioGroup value={settings.view} onChange={handleViewChange} />

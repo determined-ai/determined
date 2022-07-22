@@ -22,23 +22,25 @@ interface Props {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const WorkspaceActionDropdown: React.FC<Props> = (
-  {
-    workspace, children, curUser, onVisibleChange,
-    className, direction = 'vertical', onComplete, trigger,
-  }
-  : PropsWithChildren<Props>,
-) => {
+const WorkspaceActionDropdown: React.FC<Props> = ({
+  children,
+  curUser,
+  className,
+  direction = 'vertical',
+  workspace,
+  onComplete, trigger,
+  onVisibleChange,
+}: PropsWithChildren<Props>) => {
   const [ canceler ] = useState(new AbortController());
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
-  const { modalOpen: openWorkspaceDelete } = useModalWorkspaceDelete({
-    onClose: onComplete,
-    workspace,
-  });
-  const { modalOpen: openWorkspaceEdit } = useModalWorkspaceEdit({
-    onClose: onComplete,
-    workspace,
-  });
+  const {
+    contextHolder: modalWorkspaceDeleteContextHolder,
+    modalOpen: openWorkspaceDelete,
+  } = useModalWorkspaceDelete({ onClose: onComplete, workspace });
+  const {
+    contextHolder: modalWorkspaceEditContextHolder,
+    modalOpen: openWorkspaceEdit,
+  } = useModalWorkspaceEdit({ onClose: onComplete, workspace });
 
   const userHasPermissions = useMemo(() => {
     return curUser?.isAdmin || curUser?.id === workspace.userId;
@@ -114,23 +116,29 @@ const WorkspaceActionDropdown: React.FC<Props> = (
         )}
       </Menu>
     );
-  }, [ handlePinClick,
+  }, [
+    handlePinClick,
     workspace.pinned,
     workspace.archived,
     workspace.numExperiments,
     userHasPermissions,
     handleEditClick,
     handleArchiveClick,
-    handleDeleteClick ]);
+    handleDeleteClick,
+  ]);
 
   return children ? (
-    <Dropdown
-      overlay={WorkspaceActionMenu}
-      placement="bottomLeft"
-      trigger={trigger ?? [ 'contextMenu', 'click' ]}
-      onVisibleChange={onVisibleChange}>
-      {children}
-    </Dropdown>
+    <>
+      <Dropdown
+        overlay={WorkspaceActionMenu}
+        placement="bottomLeft"
+        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        onVisibleChange={onVisibleChange}>
+        {children}
+      </Dropdown>
+      {modalWorkspaceDeleteContextHolder}
+      {modalWorkspaceEditContextHolder}
+    </>
   ) : (
     <div
       className={[ css.base, className ].join(' ')}
@@ -144,6 +152,8 @@ const WorkspaceActionDropdown: React.FC<Props> = (
           <Icon name={`overflow-${direction}`} />
         </button>
       </Dropdown>
+      {modalWorkspaceDeleteContextHolder}
+      {modalWorkspaceEditContextHolder}
     </div>
   );
 };

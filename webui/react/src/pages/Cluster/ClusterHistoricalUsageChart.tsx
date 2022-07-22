@@ -31,14 +31,14 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   chartKey,
 }: ClusterHistoricalUsageChartProps) => {
   const chartData: AlignedData = useMemo(() => {
-    const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
+    const timeUnix: number[] = time.map((item) => Date.parse(item) / 1000);
 
     const data: AlignedData = [ timeUnix ];
     if (hoursTotal) {
       data.push(hoursTotal);
     }
 
-    Object.keys(hoursByLabel).forEach(label => {
+    Object.keys(hoursByLabel).forEach((label) => {
       data.push(hoursByLabel[label]);
     });
 
@@ -61,7 +61,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
         width: 2,
       });
     }
-    Object.keys(hoursByLabel).forEach(label => {
+    Object.keys(hoursByLabel).forEach((label) => {
       series.push({
         label,
         stroke: glasbeyColor(series.length - 1),
@@ -83,7 +83,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
             );
           },
           values: (self, splits) => {
-            return splits.map(i => {
+            return splits.map((i) => {
               const date = dayjs.utc(i * 1000);
               return date.hour() === 0 ? date.format(dateFormat) : '';
             });
@@ -94,7 +94,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       height,
       key: chartKey,
       series,
-      tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
+      tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
   }, [ groupBy, height, hoursByLabel, hoursTotal, label, chartKey ]);
   const hasData = useMemo(() => {

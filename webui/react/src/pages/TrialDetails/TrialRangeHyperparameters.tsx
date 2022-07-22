@@ -34,7 +34,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
           [ value.minval || 0, value.maxval || 1 ],
         type: value.type,
         val: String(trial.hyperparameters[name] || 0),
-        vals: value.vals?.map(val => String(val)) ||
+        vals: value.vals?.map((val) => String(val)) ||
           [ String(value.minval || 0), String(value.maxval || 1) ],
       };
     });
@@ -44,7 +44,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
     <div className={css.base}>
       <Section bodyBorder bodyScroll>
         <div className={css.container}>
-          {hyperparameters.map(hp => (
+          {hyperparameters.map((hp) => (
             <div key={hp.name}>
               <HyperparameterRange hp={hp} />
             </div>
@@ -100,13 +100,13 @@ interface TrackProps {
 }
 
 const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
-  switch(hp.type) {
+  switch (hp.type) {
     case HyperparameterType.Constant:
       return <div className={css.valuesTrack} />;
     case HyperparameterType.Categorical:
       return (
         <div className={css.valuesTrack}>
-          {hp.vals.map(option =>
+          {hp.vals.map((option) =>
             <p className={css.text} key={option.toString()}>{option}</p>)}
         </div>
       );
@@ -136,10 +136,12 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
 const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   let trackType;
   let content;
-  switch(hp.type) {
+  switch (hp.type) {
     case HyperparameterType.Categorical:
       trackType = css.grayTrack;
-      content = hp.vals.map(option => <div className={css.trackOption} key={option.toString()} />);
+      content = hp.vals.map((option) => (
+        <div className={css.trackOption} key={option.toString()} />
+      ));
       break;
     case HyperparameterType.Constant:
       trackType = css.constantTrack;
@@ -153,7 +155,9 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       break;
     default:
       trackType = css.blueTrack;
-      content = hp.vals.map(option => <div className={css.trackOption} key={option.toString()} />);
+      content = hp.vals.map((option) => (
+        <div className={css.trackOption} key={option.toString()} />
+      ));
   }
   return (
     <div className={trackType}>

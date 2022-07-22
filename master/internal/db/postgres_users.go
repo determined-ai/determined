@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // SessionDuration is how long a newly created session is valid.
@@ -56,7 +58,8 @@ func (db *PgDB) DeleteUserSessionByToken(token string) error {
 
 // UserByToken returns a user session given an authentication token.
 func (db *PgDB) UserByToken(token string, ext *model.ExternalSessions) (
-	*model.User, *model.UserSession, error) {
+	*model.User, *model.UserSession, error,
+) {
 	if ext.JwtKey != "" {
 		return db.UserByExternalToken(token, ext)
 	}
@@ -95,7 +98,8 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 
 // UserByExternalToken returns a user session derived from an external authentication token.
 func (db *PgDB) UserByExternalToken(tokenText string,
-	ext *model.ExternalSessions) (*model.User, *model.UserSession, error) {
+	ext *model.ExternalSessions,
+) (*model.User, *model.UserSession, error) {
 	type externalToken struct {
 		*jwt.StandardClaims
 		Email string
@@ -424,4 +428,33 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	default:
 		return &tokenKeypair, nil
 	}
+}
+
+// UpdateUserSetting updates user setting.
+func UpdateUserSetting(setting *model.UserWebSetting) error {
+	if len(setting.Value) == 0 {
+		_, err := Bun().NewDelete().Model(setting).Where(
+			"user_id = ?", setting.UserID).Where(
+			"storage_path = ?", setting.StoragePath).Where(
+			"key = ?", setting.Key).Exec(context.TODO())
+		return err
+	}
+
+	_, err := Bun().NewInsert().Model(setting).On("CONFLICT (user_id, key, storage_path) DO UPDATE").
+		Set("value = EXCLUDED.value").Exec(context.TODO())
+	return err
+}
+
+// GetUserSetting gets user setting.
+func GetUserSetting(userID model.UserID) ([]*userv1.UserWebSetting, error) {
+	setting := []*userv1.UserWebSetting{}
+	err := Bun().NewSelect().Model(&setting).Where("user_id = ?", userID).Scan(context.TODO())
+	return setting, err
+}
+
+// ResetUserSetting resets user setting.
+func ResetUserSetting(userID model.UserID) error {
+	var setting model.UserWebSetting
+	_, err := Bun().NewDelete().Model(&setting).Where("user_id = ?", userID).Exec(context.TODO())
+	return err
 }

@@ -25,13 +25,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const { defaultMetrics, metricNames, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
     const metricNames = extractMetricNames(trial?.workloads || []);
-    const defaultValidationMetric = metricNames.find(metricName => (
+    const defaultValidationMetric = metricNames.find((metricName) => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
-    const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
+    const fallbackMetric = metricNames[0];
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-    const settingMetrics: MetricName[] = (settings.metric || []).map(metric => {
+    const settingMetrics: MetricName[] = (settings.metric || []).map((metric) => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
@@ -40,7 +40,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   }, [ experiment?.config?.searcher, settings.metric, trial?.workloads ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
-    const newMetrics = value.map(metricName => `${metricName.type}|${metricName.name}`);
+    const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
     updateSettings({ metric: newMetrics, tableOffset: 0 });
   }, [ updateSettings ]);
 

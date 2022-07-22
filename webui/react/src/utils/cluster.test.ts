@@ -6,7 +6,7 @@ const AGENTS = [
   {
     id: 'Calebs-MacBook-Pro.local',
     registeredTime: 1637797899,
-    resourcePool: 'aux-pool',
+    resourcePools: [ 'aux-pool' ],
     resources: [
       {
         container: {
@@ -24,7 +24,7 @@ const AGENTS = [
   {
     id: 'i-05caeddde60b7bb2a',
     registeredTime: 1638250166,
-    resourcePool: 'compute-pool',
+    resourcePools: [ 'compute-pool' ],
     resources: [
       {
         container: {
@@ -42,7 +42,7 @@ const AGENTS = [
   {
     id: 'i-08c04ab8ca93366c4',
     registeredTime: 1638250636,
-    resourcePool: 'compute-pool',
+    resourcePools: [ 'compute-pool' ],
     resources: [
       {
         container: {

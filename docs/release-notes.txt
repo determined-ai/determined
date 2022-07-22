@@ -8,6 +8,89 @@
  Version 0.18
 **************
 
+Version 0.18.4
+==============
+
+**Release Date:** July 14, 2022
+
+**New Features**
+
+-  Configuration: Add support for ``task_container_defaults.environment_variables`` in the master
+   config, which allows users to specify a list of environment variables that will be set in the
+   default task container environment.
+
+-  Web: Most user settings and preferences, like filters, are now persisted to the database. Users
+   will now be able to retain their settings across devices.
+
+**Bug Fixes**
+
+-  Since 0.17.7, ``det experiment download-model-def $ID`` has been saving the downloaded tarballs
+   as just ``$ID``. This release corrects that behavior and names them
+   ``experiment_$ID_model_def.tgz`` instead.
+
+-  Kubernetes: Fix a bug where following the link to live TensorBoards would redirect to the
+   ``Uncategorized`` page.
+
+-  Ensure an allocation's recorded end time is always valid, even on restoration failures. Invalid
+   end times could cause historical reporting rollups to fail. Previous failures, if any, will be
+   fixed by database migrations this update.
+
+**Improvements**
+
+-  Add the resource pool field when listing experiments or commands in Kubernetes, where it was
+   previously left blank.
+
+Version 0.18.3
+==============
+
+**Release Date:** July 07, 2022
+
+**Breaking Changes**
+
+-  WebUI: Remove previously unlisted cluster page. This page has been replaced by a new version
+   available through the navigation bar.
+
+**New Features**
+
+-  Workspaces & Projects: Teams can now organize related experiments into projects and workspaces.
+   See `video <https://youtu.be/zJP7p0CWubw>`_ for a walkthrough.
+
+-  Logging: Master configuration now supports ``logging.additional_fluent_outputs`` allowing
+   advanced users to specify custom integrations for task logs.
+
+-  Kubernetes: Task init containers no longer require root privileges.
+
+-  API: Trial API now uploads profiling data to the checkpoint storage from all workers. Core API
+   users can now pass a new optional argument, ``tensorboard_mode``, to ``core.init()``. The default
+   value is ``AUTO``. In ``AUTO`` mode, TensorBoard metrics are written on the chief, and metrics as
+   well as profiling data are uploaded to checkpoint storage from the chief only. In ``MANUAL``
+   mode, the user is responsible for writing TensorBoard metrics and uploading profiling data. In
+   order to make that possible, two new methods are introduced on
+   :class:`~determined.core.TrainContext`:
+   :meth:`~determined.core.TrainContext.get_tensorboard_path()` returns the path to the directory
+   where metrics can be written and :meth:`~determined.core.TrainContext.upload_tensorboard_files()`
+   uploads metrics and other files, such as profiling data, to checkpoint storage.
+
+-  Add support for recovering live commands, notebooks, TensorBoards, and shells on master restart.
+   This is an extension of live trial recovery, available since version 0.18.1.
+
+**Bug Fixes**
+
+-  WebUI: Fix a bug where a previous resource pool selection would not update when a new resource
+   pool is selected for viewing associated jobs.
+-  API: Fix a bug where ``/api/v1/tasks/{taskId}`` would often return incorrect allocation states.
+-  Since 0.17.15, there was a bug where ``task_container_defaults.registry_auth`` was not correctly
+   passed to tasks, resulting in tasks being unable to pull images.
+
+**Improvements**
+
+-  CLI: Add new flag ``--agent-config-path`` to ``det deploy local agent-up``` allowing custom agent
+   configs to be used.
+-  CLI: Add ``det (notebook|shell|tensorboard) list --json`` option, allowing user to get
+   JSON-formatted notebook, shell or tensorboard task list.
+-  Configuration: Experiment configuration ``resources.shm_size`` now supports passing in a unit
+   like ``4.5 G`` or ``128MiB``.
+
 Version 0.18.2
 ==============
 

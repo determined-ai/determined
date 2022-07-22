@@ -1,11 +1,11 @@
 import { Space, Tooltip } from 'antd';
 import React from 'react';
 
-import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import ProgressBar from 'components/ProgressBar';
+import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -87,12 +87,12 @@ export const stateRenderer: Renderer<{ state: StateOfUnion}> =
   </div>
 );
 
-export const tooltipRenderer: Renderer = text => (
+export const tooltipRenderer: Renderer = (text) => (
   <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
 );
 
 export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
-  <Avatar userId={record.userId} />
+  <UserAvatar userId={record.userId} />
 );
 
 /* Command Task Table Column Renderers */
@@ -102,7 +102,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={children => (
+        wrapper={(children) => (
           <Link path={paths.interactive(record)}>
             {children}
           </Link>
@@ -125,7 +125,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
-      wrapper={ch => (
+      wrapper={(ch) => (
         <Link path={paths.interactive(record)}>
           {ch}
         </Link>

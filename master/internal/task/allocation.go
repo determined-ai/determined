@@ -49,6 +49,8 @@ type (
 		killedWhileRunning bool
 		// Marks that the trial exited successfully, but we killed some daemon containers.
 		killedDaemons bool
+		// Marks that we killed some daemon containers but after a zero exit.
+		killedDaemonsGracefully bool
 		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
 		// exits non zero. we don't need to send all these kills, so this exists.
 		killCooldown *time.Time
@@ -572,7 +574,8 @@ func (a *Allocation) ResourcesStateChanged(
 		}
 
 		if a.rendezvous != nil && a.rendezvous.try() {
-			ctx.Log().Info("all containers are connected successfully (task container state changed)")
+			ctx.Log().
+				Info("all containers are connected successfully (task container state changed)")
 		}
 		if a.req.ProxyPort != nil && msg.ResourcesStarted.Addresses != nil {
 			a.registerProxies(ctx, msg.ResourcesStarted.Addresses)
@@ -654,7 +657,8 @@ func (a *Allocation) ResourcesStateChanged(
 
 // RestoreResourceFailure handles the restored resource failures.
 func (a *Allocation) RestoreResourceFailure(
-	ctx *actor.Context, msg sproto.ResourcesFailure) {
+	ctx *actor.Context, msg sproto.ResourcesFailure,
+) {
 	ctx.Log().Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -663,7 +667,14 @@ func (a *Allocation) RestoreResourceFailure(
 	}
 
 	if a.req.Restore {
-		a.model.EndTime = cluster.TheLastBootClusterHeartbeat()
+		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
+		case a.model.StartTime == nil:
+			break
+		case heartbeat.Before(*a.model.StartTime):
+			a.model.EndTime = a.model.StartTime
+		default:
+			a.model.EndTime = heartbeat
+		}
 	} else {
 		a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	}
@@ -686,6 +697,9 @@ func (a *Allocation) Exit(ctx *actor.Context, reason string) (exited bool) {
 		return true
 	case a.allNonDaemonsExited():
 		a.killedDaemons = true
+		if a.exitedWithoutErr() {
+			a.killedDaemonsGracefully = true
+		}
 		a.kill(ctx, reason)
 	case len(a.resources.failed()) > 0:
 		a.kill(ctx, reason)
@@ -728,6 +742,16 @@ func (a *Allocation) allNonDaemonsExited() bool {
 		_, terminated := a.resources.exited()[id]
 		_, daemon := a.resources.daemons()[id]
 		if !(terminated || daemon) {
+			return false
+		}
+	}
+	return true
+}
+
+func (a *Allocation) exitedWithoutErr() bool {
+	for _, r := range a.resources.failed() {
+		code := r.Exited.Failure.ExitCode
+		if code != nil && *code != 0 {
 			return false
 		}
 	}
@@ -907,6 +931,11 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 		case sproto.ResourcesFailure:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
+				if a.killedDaemonsGracefully {
+					exitReason = fmt.Sprint("allocation terminated daemon processes as part of normal exit")
+					ctx.Log().Info(exitReason)
+					return
+				}
 				exitReason = fmt.Sprintf("allocation failed: %s", err)
 				ctx.Log().Info(exitReason)
 				exit.Err = err

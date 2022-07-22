@@ -7,6 +7,7 @@ import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { validateLength } from 'shared/utils/string';
 import handleError from 'utils/error';
 
 import css from './useModalWorkspaceCreate.module.scss';
@@ -15,14 +16,10 @@ interface Props {
   onClose?: () => void;
 }
 
-const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
+const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [ name, setName ] = useState('');
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -32,7 +29,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="name">Name</label>
-        <Input id="name" value={name} onChange={handleNameInput} />
+        <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
       </div>
     );
   }, [ handleNameInput, name ]);
@@ -52,12 +49,12 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
     }
   }, [ name ]);
 
-  const getModalProps = useCallback((name: string): ModalFuncProps => {
+  const getModalProps = useCallback((name = ''): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',
@@ -69,15 +66,15 @@ const useModalWorkspaceCreate = ({ onClose }: Props): ModalHooks => {
     openOrUpdate({ ...getModalProps(''), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalWorkspaceCreate;

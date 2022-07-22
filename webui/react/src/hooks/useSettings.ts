@@ -2,6 +2,10 @@ import queryString from 'query-string';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
+import { useStore } from 'contexts/Store';
+import { getUserSetting, updateUserSetting } from 'services/api';
+import { V1UserWebSetting } from 'services/api-ts-sdk';
+import { UpdateUserSettingParams } from 'services/types';
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
   isString } from 'shared/utils/data';
 import { Storage } from 'shared/utils/storage';
@@ -83,7 +87,7 @@ export const validateSetting = (config: SettingsConfigProp, value: unknown): boo
   if (value === undefined) return true;
   if (config.type.isArray) {
     if (!Array.isArray(value)) return false;
-    return value.every(val => validateBaseType(config.type.baseType, val));
+    return value.every((val) => validateBaseType(config.type.baseType, val));
   }
   return validateBaseType(config.type.baseType, value);
 };
@@ -130,7 +134,7 @@ export const queryToSettings = <T>(config: SettingsConfig, query: string): T => 
        */
       const queryValue = Array.isArray(paramValue)
         ? paramValue
-          .map(value => queryParamToType(baseType, value))
+          .map((value) => queryParamToType(baseType, value))
           .filter((value): value is Primitive => value !== undefined)
         : queryParamToType(baseType, paramValue);
 
@@ -179,13 +183,13 @@ const getNewQueryPath = (
   const keyMap = getConfigKeyMap(config);
   const params = queryString.parse(currentQuery);
   const cleanParams = {} as Record<RecordKey, unknown>;
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     if (!keyMap[key] && params[key]) cleanParams[key] = params[key];
   });
 
   // Add new query to the clean query.
   const cleanQuery = queryString.stringify(cleanParams);
-  const queries = [ cleanQuery, newQuery ].filter(query => !!query).join('&');
+  const queries = [ cleanQuery, newQuery ].filter((query) => !!query).join('&');
   return `${basePath}?${queries}`;
 };
 
@@ -198,6 +202,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(options?.storagePath || config.storagePath);
+  const { auth: { user } } = useStore();
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
   const [ pathChange, setPathChange ] = useState<PathChange<T>>(defaultPathChange);
@@ -241,11 +246,23 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
       // Store or clear setting if `storageKey` is available.
       if (config.storageKey && isValid) {
+        const persistedSetting: V1UserWebSetting = { key: config.storageKey };
         if (value === undefined || isDefault) {
           storage.remove(config.storageKey);
         } else {
           storage.set(config.storageKey, value);
+          persistedSetting.value = JSON.stringify(value);
         }
+        if (user?.id) {
+          // Persist storage to backend
+          updateUserSetting({
+            setting: persistedSetting,
+            storagePath: storage.getStoragePath(),
+            userId: user.id,
+          } as UpdateUserSettingParams);
+
+        }
+
       }
 
       // Keep track of internal setting changes to update async from query settings.
@@ -261,14 +278,14 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     });
 
     // Update internal settings state for when skipping url encoding of settings.
-    setSettings(prev => ({ ...clone(prev), ...internalSettings }));
+    setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
 
     // Mark to trigger side effect of updating path.
     setPathChange({
       querySettings,
       type: push ? PathChangeType.Push : PathChangeType.Replace,
     });
-  }, [ configMap, storage ]);
+  }, [ configMap, storage, user ]);
 
   const resetSettings = useCallback((keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -279,6 +296,34 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
 
     updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
+
+  const fetchUserSetting = useCallback(async () => {
+
+    if (!user) return;
+    const userSettingResponse = await getUserSetting({ userId: user.id });
+    userSettingResponse.settings.forEach((setting) => {
+      const { key, value, storagePath } = setting;
+      const jsonValue = JSON.parse(value || '');
+      const config = configMap[key];
+      if (!config) return;
+      const isValid = validateSetting(config, jsonValue);
+      const isDefault = isEqual(config.defaultValue, jsonValue);
+
+      // Store or clear setting if `storageKey` is available.
+      if (config.storageKey && isValid) {
+        if (jsonValue === undefined || isDefault) {
+          storage.remove(config.storageKey, storagePath);
+        } else {
+          storage.set(config.storageKey, jsonValue, storagePath);
+        }
+      }
+    });
+
+  }, [ configMap, storage, user ]);
+
+  useEffect(() => {
+    fetchUserSetting();
+  }, [ fetchUserSetting ]);
 
   useEffect(() => {
     if (location.search === prevSearch) return;
@@ -298,7 +343,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       history.replace(`${location.pathname}?${newQueries.join('&')}`);
     } else {
       // Otherwise read settings from the query string.
-      setSettings(prevSettings => {
+      setSettings((prevSettings) => {
         const defaultSettings = getDefaultSettings<T>(config, storage);
         const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
         return { ...prevSettings, ...defaultSettings, ...querySettings };

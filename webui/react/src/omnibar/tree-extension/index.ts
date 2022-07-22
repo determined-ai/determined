@@ -33,7 +33,7 @@ const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest
   };
 };
 
-const absPathToAddress = (path: TreePath): string[] => (path.map(tn => tn.title).slice(1));
+const absPathToAddress = (path: TreePath): string[] => (path.map((tn) => tn.title).slice(1));
 
 const noResultsNode: LeafNode = {
   closeBar: true,
@@ -56,7 +56,7 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
       threshold: 0.4,
     },
   );
-  const matches = query === '' ? children : fuse.search(query).map(r => r.item);
+  const matches = query === '' ? children : fuse.search(query).map((r) => r.item);
 
   if (isNLNode(node)) {
     if (node.onCustomInput) {

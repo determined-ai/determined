@@ -99,8 +99,8 @@ export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]):
   if (!Array.isArray(values)) return undefined;
 
   const enumValues = values
-    .map(value => validateDetApiEnum(enumObject, value))
-    .filter(enumValue => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
+    .map((value) => validateDetApiEnum(enumObject, value))
+    .filter((enumValue) => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
   return enumValues.length !== 0 ? enumValues : undefined;
 };
 /* eslint-disable-next-line */

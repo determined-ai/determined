@@ -82,3 +82,17 @@
 *************************************
 
 .. autoclass:: determined.core.TensorboardMode
+
+****************************
+ ``determined.ClusterInfo``
+****************************
+
+.. autoclass:: determined.ClusterInfo
+   :members:
+
+**************************
+ ``determined.TrialInfo``
+**************************
+
+.. autoclass:: determined.TrialInfo
+   :members:

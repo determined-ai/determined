@@ -5,6 +5,7 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'r
 import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { patchProject } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { validateLength } from 'shared/utils/string';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
@@ -19,11 +20,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
   const [ name, setName ] = useState(project.name);
   const [ description, setDescription ] = useState(project.description ?? '');
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHooks } = useModal({ onClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -67,7 +64,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: name.length === 0 },
+      okButtonProps: { disabled: !validateLength(name) },
       okText: 'Save Changes',
       onOk: handleOk,
       title: 'Edit Project',
@@ -78,15 +75,15 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
     openOrUpdate({ ...getModalProps(project.name), ...initialModalProps });
   }, [ getModalProps, openOrUpdate, project.name ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHooks };
 };
 
 export default useModalProjectEdit;

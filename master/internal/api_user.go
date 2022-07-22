@@ -78,7 +78,8 @@ func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
 }
 
 func (a *apiServer) GetUsers(
-	context.Context, *apiv1.GetUsersRequest) (*apiv1.GetUsersResponse, error) {
+	context.Context, *apiv1.GetUsersRequest,
+) (*apiv1.GetUsersResponse, error) {
 	users, err := a.m.db.UserList()
 	if err != nil {
 		return nil, err
@@ -94,13 +95,15 @@ func (a *apiServer) GetUsers(
 }
 
 func (a *apiServer) GetUser(
-	_ context.Context, req *apiv1.GetUserRequest) (*apiv1.GetUserResponse, error) {
+	_ context.Context, req *apiv1.GetUserRequest,
+) (*apiv1.GetUserResponse, error) {
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
 	return &apiv1.GetUserResponse{User: fullUser}, err
 }
 
 func (a *apiServer) PostUser(
-	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
+	ctx context.Context, req *apiv1.PostUserRequest,
+) (*apiv1.PostUserResponse, error) {
 	if err := userShouldBeAdmin(ctx, a); err != nil {
 		return nil, err
 	}
@@ -139,7 +142,8 @@ func (a *apiServer) PostUser(
 }
 
 func (a *apiServer) SetUserPassword(
-	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
+	ctx context.Context, req *apiv1.SetUserPasswordRequest,
+) (*apiv1.SetUserPasswordResponse, error) {
 	// TODO if ExternalSessions is there, don't even allow this
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
@@ -161,8 +165,10 @@ func (a *apiServer) SetUserPassword(
 	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
 }
+
 func (a *apiServer) PatchUser(
-	ctx context.Context, req *apiv1.PatchUserRequest) (*apiv1.PatchUserResponse, error) {
+	ctx context.Context, req *apiv1.PatchUserRequest,
+) (*apiv1.PatchUserResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
@@ -200,4 +206,43 @@ func (a *apiServer) PatchUser(
 
 	fullUser, err := getUser(a.m.db, uid)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
+}
+
+func (a *apiServer) GetUserSetting(
+	ctx context.Context, req *apiv1.GetUserSettingRequest,
+) (*apiv1.GetUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	settings, err := db.GetUserSetting(user.ID)
+	return &apiv1.GetUserSettingResponse{Settings: settings}, err
+}
+
+func (a *apiServer) PostUserSetting(
+	ctx context.Context, req *apiv1.PostUserSettingRequest,
+) (*apiv1.PostUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	settingModel := model.UserWebSetting{
+		UserID:      user.ID,
+		Key:         req.Setting.Key,
+		Value:       req.Setting.Value,
+		StoragePath: req.StoragePath,
+	}
+	err = db.UpdateUserSetting(&settingModel)
+	return &apiv1.PostUserSettingResponse{}, err
+}
+
+func (a *apiServer) ResetUserSetting(
+	ctx context.Context, req *apiv1.ResetUserSettingRequest,
+) (*apiv1.ResetUserSettingResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	err = db.ResetUserSetting(user.ID)
+	return &apiv1.ResetUserSettingResponse{}, err
 }

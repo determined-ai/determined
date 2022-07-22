@@ -59,7 +59,7 @@ const ModelVersionDetails: React.FC = () => {
        * modelVersion can be remove from deps? would need to get modelVersion
        * out of deps in order to repoll on change fn
        */
-      setModelVersion(prev => !isEqual(versionData, modelVersion) ? versionData : prev);
+      setModelVersion((prev) => !isEqual(versionData, modelVersion) ? versionData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
@@ -67,7 +67,7 @@ const ModelVersionDetails: React.FC = () => {
 
   usePolling(fetchModelVersion);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(`${basePath}/${key}`);
   }, [ basePath, history ]);
@@ -185,7 +185,7 @@ const ModelVersionDetails: React.FC = () => {
     const checkpointResources = modelVersion.checkpoint.resources || {};
     const resources = Object.keys(modelVersion.checkpoint.resources || {})
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
-      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
+      .map((key) => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
     const hasExperiment = !!modelVersion.checkpoint.experimentId;
     return [
       {
@@ -226,7 +226,7 @@ const ModelVersionDetails: React.FC = () => {
         label: 'Total Size',
       },
       {
-        content: resources.map(resource => renderResource(resource.name, resource.size)),
+        content: resources.map((resource) => renderResource(resource.name, resource.size)),
         label: 'Code',
       } ];
   }, [ modelVersion?.checkpoint ]);
@@ -234,7 +234,7 @@ const ModelVersionDetails: React.FC = () => {
   const validationMetrics = useMemo(() => {
     if (!modelVersion?.checkpoint) return [];
     const metrics = Object.entries(modelVersion?.checkpoint?.validationMetrics?.avgMetrics || {});
-    return metrics.map(metric => ({
+    return metrics.map((metric) => ({
       content: metric[1],
       label: metric[0],
     }));

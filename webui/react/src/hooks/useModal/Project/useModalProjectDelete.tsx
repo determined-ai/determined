@@ -20,11 +20,7 @@ interface Props {
 const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
   const [ name, setName ] = useState('');
 
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [ onClose ]);
-
-  const { modalClose, modalOpen: openOrUpdate, modalRef } = useModal({ onClose: handleClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -56,7 +52,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
     }
   }, [ project.id, project.workspaceId ]);
 
-  const getModalProps = useCallback((name: string): ModalFuncProps => {
+  const getModalProps = useCallback((name = ''): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
@@ -70,18 +66,18 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setName('');
-    openOrUpdate({ ...getModalProps(''), ...initialModalProps });
+    openOrUpdate({ ...getModalProps(), ...initialModalProps });
   }, [ getModalProps, openOrUpdate ]);
 
-  /*
+  /**
    * When modal props changes are detected, such as modal content
-   * title, and buttons, update the modal
+   * title, and buttons, update the modal.
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(name));
   }, [ getModalProps, modalRef, name, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalProjectDelete;

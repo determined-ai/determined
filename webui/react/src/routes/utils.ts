@@ -85,6 +85,9 @@ export const paths = {
   docs: (suffix?: string): string => {
     return `/docs${suffix || ''}`;
   },
+  experimentComparison: (experimentIds: string[]): string => {
+    return `/experiment-compare?id=${experimentIds.join('&id=')}`;
+  },
   experimentDetails: (experimentId: number | string): string => {
     return `/experiments/${experimentId}`;
   },
@@ -134,7 +137,7 @@ export const paths = {
     return '/tasks';
   },
   taskLogs: (task: CommandTask): string => {
-    return`/${task.type}/${task.id}/logs?id=${task.name}`;
+    return `/${task.type}/${task.id}/logs?id=${task.name}`;
   },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {
     if (!experimentId) {
@@ -211,8 +214,8 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
   // Check to see if the path matches any of the defined app routes.
   const pathname = url.replace(process.env.PUBLIC_URL, '');
   return routes
-    .filter(route => route.path !== '*')
-    .find(route => {
+    .filter((route) => route.path !== '*')
+    .find((route) => {
       const routeRegex = pathToRegexp(route.path);
       return routeRegex.test(pathname);
     });

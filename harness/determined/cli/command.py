@@ -12,6 +12,9 @@ from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
 
+yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+
+
 CONFIG_DESC = """
 Additional configuration arguments for setting up a command.
 Arguments should be specified as `key=value`. Nested configuration
@@ -266,12 +269,12 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
 
         key, value = config_arg.split("=", maxsplit=1)  # type: Tuple[str, Any]
 
-        # Separate values if a comma exists. Use yaml.safe_load() to cast
+        # Separate values if a comma exists. Use yaml.load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
         if "," in value:
-            value = [yaml.safe_load(v) for v in value.split(",")]
+            value = [yaml.load(v) for v in value.split(",")]
         else:
-            value = yaml.safe_load(value)
+            value = yaml.load(value)
 
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.

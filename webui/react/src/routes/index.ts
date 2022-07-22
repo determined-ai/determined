@@ -3,6 +3,7 @@ import { FC } from 'react';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Deprecated from 'pages/Deprecated';
+import ExperimentComparison from 'pages/ExperimentComparison';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
@@ -29,6 +30,7 @@ const routeComponentMap: Record<string, FC> = {
   clusterHistorical: Deprecated,
   clusterLogs: ClusterLogs,
   clusters: Clusters,
+  experimentComparison: ExperimentComparison,
   experimentDetails: ExperimentDetails,
   interactive: InteractiveTask,
   jobs: Deprecated,
@@ -51,7 +53,7 @@ const routeComponentMap: Record<string, FC> = {
 
 const defaultRouteId = 'uncategorized';
 
-const appRoutes: RouteConfig[] = Routes.map(route => {
+const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);
   return {
     ...route,
@@ -60,7 +62,7 @@ const appRoutes: RouteConfig[] = Routes.map(route => {
 });
 
 export const defaultRoute = appRoutes
-  .find(route => route.id === defaultRouteId) as RouteConfig;
+  .find((route) => route.id === defaultRouteId) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

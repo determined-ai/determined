@@ -77,13 +77,13 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     };
 
     const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
-    const newColumns = [ ...defaultColumns ].map(column => {
+    const newColumns = [ ...defaultColumns ].map((column) => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
     });
 
-    metrics.forEach(metricName => {
-      const stateIndex = newColumns.findIndex(column => column.key === 'state');
+    metrics.forEach((metricName) => {
+      const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder: metric && metric === metricName.name ?
           (smallerIsBetter ? 'ascend' : 'descend') : undefined,
@@ -97,7 +97,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       });
     });
 
-    return newColumns.map(column => {
+    return newColumns.map((column) => {
       column.sortOrder = null;
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
@@ -111,7 +111,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
-      : workloadSteps.filter(wlStep => {
+      : workloadSteps.filter((wlStep) => {
         if (settings.filter === TrialWorkloadFilter.Checkpoint) {
           return hasCheckpoint(wlStep);
         } else if (settings.filter === TrialWorkloadFilter.Validation) {
@@ -134,7 +134,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     updateSettings({
       sortDesc: order === 'descend',
@@ -151,7 +151,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         label="Show"
         value={settings.filter}
         onSelect={handleHasCheckpointOrValidationSelect}>
-        {Object.values(TrialWorkloadFilter).map(key => (
+        {Object.values(TrialWorkloadFilter).map((key) => (
           <Option key={key} value={key}>{key}</Option>
         ))}
       </SelectFilter>
@@ -164,6 +164,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         <ResponsiveTable<Step>
           columns={columns}
           dataSource={workloadSteps}
+          loading={!trial}
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,

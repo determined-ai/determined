@@ -18,7 +18,7 @@ const root: NonLeafNode = {
           sortBy: 'SORT_BY_START_TIME',
           states: activeRunStates,
         });
-        const options: LeafNode[] = exps.map(exp => (
+        const options: LeafNode[] = exps.map((exp) => (
           {
             onAction: () => pauseExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
@@ -34,7 +34,7 @@ const root: NonLeafNode = {
           sortBy: 'SORT_BY_START_TIME',
           states: [ 'STATE_PAUSED' ],
         });
-        const options: LeafNode[] = exps.map(exp => (
+        const options: LeafNode[] = exps.map((exp) => (
           {
             onAction: () => activateExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
@@ -49,9 +49,9 @@ const root: NonLeafNode = {
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_END_TIME',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          states: Array.from(terminalRunStates).map(s => 'STATE_' + s) as any,
+          states: Array.from(terminalRunStates).map((s) => 'STATE_' + s) as any,
         });
-        const options: Children = exps.map(exp => (
+        const options: Children = exps.map((exp) => (
           {
             onAction: (): unknown => archiveExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
@@ -75,8 +75,8 @@ const root: NonLeafNode = {
             });
 
             const options: LeafNode[] = cmds
-              .filter(cmd => !terminalCommandStates.has(cmd.state))
-              .map(cmd => (
+              .filter((cmd) => !terminalCommandStates.has(cmd.state))
+              .map((cmd) => (
                 {
                   onAction: () => killJupyterLab({ commandId: cmd.id }),
                   title: `${cmd.name}`, // differentiate view only vs command text?
@@ -93,8 +93,8 @@ const root: NonLeafNode = {
             });
 
             const options: LeafNode[] = cmds
-              .filter(cmd => !terminalCommandStates.has(cmd.state))
-              .map(cmd => (
+              .filter((cmd) => !terminalCommandStates.has(cmd.state))
+              .map((cmd) => (
                 {
                   onAction: () => killTensorBoard({ commandId: cmd.id }),
                   title: `${cmd.name}`,
@@ -111,7 +111,7 @@ const root: NonLeafNode = {
               sortBy: 'SORT_BY_START_TIME',
               states: activeRunStates,
             });
-            const options: LeafNode[] = exps.map(exp => (
+            const options: LeafNode[] = exps.map((exp) => (
               {
                 onAction: () => killExperiment({ experimentId: exp.id }),
                 title: `${exp.id}`,

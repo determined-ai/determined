@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import StoreProvider from 'contexts/Store';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import { generateAlphaNumeric } from 'shared/utils/string';
@@ -32,6 +33,8 @@ const NOW = Date.now();
 const VISIBLE_LINES = 57;
 const DEFAULT_SIZE = { height: 1024, width: 1280, x: 0, y: 0 };
 const DEFAULT_CHAR_SIZE = { height: 18, width: 7 };
+
+const user = userEvent.setup();
 
 const generateMessage = (options: {
   maxWordCount?: number,
@@ -70,7 +73,13 @@ const generateLogs = (
   });
 };
 
-const setup = (props: src.Props) => render(<src.default {...props} />);
+const setup = (props: src.Props) => {
+  return render(
+    <StoreProvider>
+      <src.default {...props} />
+    </StoreProvider>,
+  );
+};
 
 /**
  * canceler -        AbortController to manually stop ongoing API calls.
@@ -122,7 +131,7 @@ const mockOnFetch = (mockOptions: {
 
 const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   const timestamp = new Date(timeString).getTime().toString();
-  return logs.findIndex(log => log.message.includes(timestamp));
+  return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
 jest.mock('hooks/useResize', () => ({ __esModule: true, default: () => DEFAULT_SIZE }));
@@ -166,7 +175,7 @@ jest.mock('services/utils', () => ({
       const filteredLogs: TestLog[] = existingLogs.slice(range[0], range[1]);
       if (desc) filteredLogs.reverse();
       if (options.logsReference) options.logsReference.push(...filteredLogs);
-      filteredLogs.forEach(log => onEvent(log));
+      filteredLogs.forEach((log) => onEvent(log));
     } else if (options.follow && !skipStreaming) {
       let startIndex = existingLogs.length;
       let rounds = 0;
@@ -174,7 +183,7 @@ jest.mock('services/utils', () => ({
         const count = Math.floor(Math.random() * 4) + 1;
         const logs = generateLogs(count, startIndex, existingLogs.length - 1);
         if (options.logsReference) options.logsReference.push(...logs);
-        logs.forEach(log => onEvent(log));
+        logs.forEach((log) => onEvent(log));
         startIndex += count;
         rounds++;
       }
@@ -202,7 +211,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      userEvent.click(enableTailingButton);
+      await user.click(enableTailingButton);
 
       expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
       await waitFor(() => {
@@ -216,6 +225,23 @@ describe('LogViewer', () => {
       await waitFor(() => {
         expect(screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST)).not.toBeVisible();
         expect(screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING)).not.toBeVisible();
+      });
+    });
+
+    it('should not show log close button by default', async () => {
+      setup({ decoder });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show log close button when prop is supplied', async () => {
+      const handleCloseLogs = () => { return; };
+      setup({ decoder, handleCloseLogs });
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
       });
     });
   });
@@ -264,7 +290,7 @@ describe('LogViewer', () => {
       });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      userEvent.click(scrollToOldestButton);
+      await user.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -276,7 +302,7 @@ describe('LogViewer', () => {
       setup({ decoder, onFetch });
 
       const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST);
-      userEvent.click(scrollToOldestButton);
+      await user.click(scrollToOldestButton);
 
       await waitFor(() => {
         const firstLog = existingLogs[0];
@@ -284,7 +310,7 @@ describe('LogViewer', () => {
       });
 
       const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
-      userEvent.click(enableTailingButton);
+      await user.click(enableTailingButton);
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];

@@ -11,7 +11,7 @@ type GenericSorter = (a: any, b: any) => number;
 
 describe('sort utility', () => {
   const runSortTests = (tests: SortTest[], sorter: GenericSorter) => {
-    tests.forEach(test => {
+    tests.forEach((test) => {
       it(`compare "${test.input[0]}" with "${test.input[1]}"`, () => {
         const result = sorter(test.input[0], test.input[1]);
         expect(result).toStrictEqual(test.output);

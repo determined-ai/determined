@@ -26,6 +26,16 @@ def cluster_slots() -> Dict[str, Any]:
     return {agent["id"]: agent["slots"].values() for agent in json.values()}
 
 
+def get_master_port(loaded_config: dict) -> str:
+    for d in loaded_config["stages"]:
+        for k in d.keys():
+            if k == "master":
+                if "port" in d["master"]["config_file"]:
+                    return str(d["master"]["config_file"]["port"])
+
+    return "8080"  # default value if not explicit in config file
+
+
 def num_slots() -> int:
     return sum(len(agent_slots) for agent_slots in cluster_slots().values())
 
@@ -36,6 +46,24 @@ def num_free_slots() -> int:
         for agent_slots in cluster_slots().values()
         for slot in agent_slots
     )
+
+
+def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0) -> str:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "command",
+        "run",
+        "-d",
+        "--config",
+        f"resources.slots={slots}",
+        "--config",
+        f"resources.priority={priority}",
+        "sleep",
+        str(sleep),
+    ]
+    return subprocess.check_output(command).decode().strip()
 
 
 def run_command(sleep: int = 30, slots: int = 1) -> str:
@@ -72,6 +100,8 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
 
 
 def command_succeeded(command_id: str) -> bool:
+    print(get_command_info(command_id))
+
     return "success" in get_command_info(command_id)["exitStatus"]
 
 

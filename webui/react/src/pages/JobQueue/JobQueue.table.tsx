@@ -1,11 +1,11 @@
 import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
-import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
 import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import { relativeTimeRenderer } from 'components/Table';
+import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -35,7 +35,7 @@ const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
       throw new Error(`Unsupported job type: ${jobType}`);
   }
 
-  const task = cmds.find(t => t.id === taskId);
+  const task = cmds.find((t) => t.id === taskId);
   if (task) {
     openCommand(task);
   } else {
