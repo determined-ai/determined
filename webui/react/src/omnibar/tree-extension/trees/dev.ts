@@ -3,6 +3,7 @@ import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { checkServerAlive, serverAddress } from 'routes/utils';
+import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 
 const dev: TreeNode[] = [
   {
@@ -22,7 +23,14 @@ const dev: TreeNode[] = [
               if (isAlive) {
                 setServerAddress(inp);
               } else {
-                alertAction(`Could not find a valid server at ${inp}`)();
+                const error = new DetError(undefined, {
+                  isUserTriggered: true,
+                  level: ErrorLevel.Error,
+                  publicMessage: `Could not find a valid server at "${inp}"`,
+                  publicSubject: 'Server not found',
+                  type: ErrorType.Ui,
+                });
+                throw error;
               }
             },
             title: inp,
@@ -31,6 +39,7 @@ const dev: TreeNode[] = [
         title: 'set',
       },
       {
+        closeBar: true,
         onAction: () => resetServerAddress(),
         title: 'reset',
       },
@@ -38,10 +47,12 @@ const dev: TreeNode[] = [
     title: 'serverAddress',
   },
   {
+    closeBar: true,
     onAction: () => window.localStorage.clear(),
     title: 'resetLocalStorage',
   },
   {
+    closeBar: true,
     onAction: ():void => {
       const resetStorage = userPreferencesStorage();
       resetStorage();

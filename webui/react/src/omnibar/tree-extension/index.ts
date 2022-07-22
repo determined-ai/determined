@@ -103,5 +103,4 @@ export const onAction = async (
     inputEl.value = inputEl.value + SEPARATOR;
     query(inputEl.value);
   }
-  return Promise.resolve();
 };
