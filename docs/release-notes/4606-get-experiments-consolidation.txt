@@ -4,3 +4,7 @@
 
 -  API: the ``GetProjectExperiments`` endpoint (``/projects/:id/experiments``) is removed and
    replaced with a *project_id* parameter on the ``GetExperiments`` endpoint (``/experiments``).
+
+-  API: the *config* attribute on ``GetExperiment`` endpoint (``/experiments/:id``) is moved to be a
+   child of the *experiment* object. The *config* attribute is now also available for experiments
+   returned from the ``GetExperiments`` endpoint (``/experiments``).
