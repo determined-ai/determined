@@ -1,10 +1,8 @@
 import pytest
-
 import torch
 
-from determined import pytorch
+from determined import errors, pytorch
 from determined.common import check
-from determined import errors
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
