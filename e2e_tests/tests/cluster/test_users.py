@@ -369,8 +369,8 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
 def test_login_with_environment_variables(clean_auth: None) -> None:
     # Specifying both DET_USER and DET_PASS as environment variables.
     creds = create_test_user(ADMIN_CREDENTIALS, True)
-    os.environ["DET_USER"] = creds.username
-    os.environ["DET_PASS"] = creds.password
+    os.environ["DET_USERNAME"] = creds.username
+    os.environ["DET_PASSWORD"] = creds.password
     try:
         print(creds.username, creds.password)
         child = det_spawn(["user", "whoami"])
@@ -378,12 +378,12 @@ def test_login_with_environment_variables(clean_auth: None) -> None:
         child.wait()
         assert child.exitstatus == 0
     finally:
-        del os.environ["DET_USER"]
-        del os.environ["DET_PASS"]
+        del os.environ["DET_USERNAME"]
+        del os.environ["DET_PASSWORD"]
 
     # Specifying DET_PASS as an environment variable then username as -u.
     creds = create_test_user(ADMIN_CREDENTIALS, True)
-    os.environ["DET_PASS"] = creds.password
+    os.environ["DET_PASSWORD"] = creds.password
     try:
         print(creds.username, creds.password)
         child = det_spawn(["-u", creds.username, "user", "whoami"])
@@ -391,7 +391,7 @@ def test_login_with_environment_variables(clean_auth: None) -> None:
         child.wait()
         assert child.exitstatus == 0
     finally:
-        del os.environ["DET_PASS"]
+        del os.environ["DET_PASSWORD"]
 
 
 @pytest.mark.e2e_cpu

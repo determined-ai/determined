@@ -81,7 +81,7 @@ def test_auth_user_from_env(
         requests_mock.get("/users/me", status_code=200, json={"username": "alice"})
 
         authentication = Authentication(MOCK_MASTER_URL, user)
-        if has_token_store and user is not None:
+        if has_token_store:
             print(authentication.session.username, authentication.session.token)
             assert authentication.session.username == user or "determined"
             assert authentication.session.token == (

@@ -4,7 +4,6 @@ import functools
 import getpass
 import hashlib
 import json
-import os
 import pathlib
 from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
 
@@ -62,7 +61,7 @@ class Authentication:
     ) -> Session:
         session_user = (
             requested_user
-            or os.environ.get("DET_USER")
+            or util.get_det_user_name()
             or self.token_store.get_active_user()
             or constants.DEFAULT_DETERMINED_USER
         )
@@ -88,7 +87,7 @@ class Authentication:
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
 
-        password = os.environ.get("DET_PASS")
+        password = util.get_det_password()
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD

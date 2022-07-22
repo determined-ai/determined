@@ -58,6 +58,14 @@ def get_container_user_token() -> Optional[str]:
     return os.environ.get("DET_USER_TOKEN")
 
 
+def get_det_user_name() -> Optional[str]:
+    return os.environ.get("DET_USERNAME")
+
+
+def get_det_password() -> Optional[str]:
+    return os.environ.get("DET_PASSWORD")
+
+
 def debug_mode() -> bool:
     return os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes")
 
