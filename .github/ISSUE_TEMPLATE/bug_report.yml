@@ -1,3 +1,8 @@
+name: 🐛 Bug Report
+title: '[bug] '
+description: Report a bug
+labels: ['bug']
+
 body:
   - type: markdown
     attributes:
