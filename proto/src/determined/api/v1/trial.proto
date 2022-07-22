@@ -60,14 +60,8 @@ message TrialTag {
 
 
 message QueryTrialsSortBy {
-  enum Namespace {
-    TRIAL_ITSELF = 0;
-    VALIDATION_METRIC = 1;
-    TRAINING_METRIC = 2;
-  }
-  Namespace namespace = 1;
-  string field = 2;
-  OrderBy order_by = 3;
+  string field = 1;
+  OrderBy order_by = 2;
 }
 
 
@@ -111,7 +105,23 @@ message TrialsMetricsNamesRequest {
 }
 
 message QueryTrialsResponse {
-  repeated int32 trial_ids = 1;
+  int32  trial_id = 1;
+  string trial_state = 2;
+  google.protobuf.Struct hparams = 3; 
+  google.protobuf.Struct training_metrics = 4;
+  google.protobuf.Struct validation_metrics =  5;   
+  google.protobuf.Struct tags = 6; 
+  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp end_time = 8;
+  string searcher_type = 9;
+  int32 rank_within_exp = 10;
+  int32 experiment_id = 11;
+  string experiment_name = 12;
+  string experiment_description = 13;
+  repeated string experiment_labels = 14;
+  int32 user_id = 15;
+  int32 project_id = 16;
+  int32 workspace_id = 17;
 }
 
 

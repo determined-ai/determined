@@ -16,3 +16,61 @@ CREATE TABLE trials_collections (
 CREATE INDEX validations_archived ON raw_validations(archived);
 ALTER TABLE raw_validations DROP CONSTRAINT validations_trial_id_run_id_total_batches_unique;
 CREATE UNIQUE INDEX steps_trial_id_total_batches_run_id_unique ON raw_validations(trial_id, total_batches, trial_run_id);
+
+
+CREATE OR REPLACE VIEW public.trials_augmented_view AS 
+  SELECT
+      t.id AS trial_id,
+      t.state AS state,
+      t.start_time AS start_time,
+      t.end_time AS end_time,
+      t.hparams AS hparams,
+      t.tags AS tags,
+      e.id AS experiment_id,
+      e.config->>'name' AS experiment_name,
+      e.config->>'description' AS experiment_description,
+      e.config->'searcher'->>'name' as searcher_type,
+      e.config->'labels' AS experiment_labels,
+      e.owner_id AS user_id,
+      e.project_id AS project_id,
+      p.workspace_id AS workspace_id,
+      s.metrics->'avg_metrics' AS training_metrics,
+      v.metrics->'validation_metrics' AS validation_metrics
+  FROM trials t
+  LEFT JOIN experiments e ON t.experiment_id = e.id
+  LEFT JOIN projects p ON e.project_id = p.id
+  LEFT JOIN validations v ON t.id = v.trial_id AND v.id = t.best_validation_id
+  LEFT JOIN steps s on t.id = s.trial_id AND v.total_batches = s.total_batches;
+
+-- is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
+-- does avg_metrics correspond to the actual state at that batch?
+-- or an average over previous batches?
+
+
+CREATE OR REPLACE VIEW public.checkpoints_new_view AS
+    SELECT
+        c.id AS id,
+        c.uuid AS uuid,
+        c.task_id,
+        c.allocation_id,
+        c.report_time,
+        c.state,
+        c.resources,
+        c.metadata,
+        t.id AS trial_id,
+        e.id AS experiment_id,
+        e.config AS experiment_config,
+        t.hparams AS hparams,
+        s.metrics AS training_metrics,
+        v.metrics->'validation_metrics' AS validation_metrics,
+        (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
+        CAST(c.metadata->>'steps_completed' AS int) as steps_completed,
+        2 AS checkpoint_version
+    FROM checkpoints_v2 AS c
+    LEFT JOIN trials AS t on c.task_id = t.task_id
+    LEFT JOIN experiments AS e on t.experiment_id = e.id
+    LEFT JOIN raw_validations AS v on CAST(c.metadata->>'steps_completed' AS int) = v.total_batches and t.id = v.trial_id
+    LEFT JOIN raw_steps AS s on CAST(c.metadata->>'steps_completed' AS int) = s.total_batches and t.id = s.trial_id
+    -- avoiding the steps view causes Postgres to not "Materialize" in this join.
+    WHERE s.archived IS NULL OR s.archived = false
+      AND v.archived IS NULL OR v.archived = false;

@@ -444,76 +444,61 @@ WHERE t.id = $1;
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
 }
 
-func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err error) {
-	var trialIds []int32
-	// certain (outer) joins dont get materialized if they're not needed?
-	// or that only applies to views?
-	// any case we can do a CTE
-	qb := Bun().NewSelect().TableExpr("trials").
-		Column("trials.id").Join("INNER JOIN experiments ON trials.experiment_id = experiments.id").
-		Join("INNER JOIN projects ON projects.id = experiments.project_id").
-		Join("INNER JOIN validations ON trials.id = validations.trial_id AND validations.id = trial.best_validation_id").
-		Join("INNER JOIN steps on steps.trial_id = trials.id AND steps.total_batches = validations.total_batches")
-		// is the assumption here valid? will we always have the row in steps for a corresponding row in validations?s
-		// does avg_metrics correspond to the actual state at that batch?
-		// or an average over previous batches?
-
+func (db *PgDB) RankSelectQuery(q *bun.SelectQuery, r *apiv1.QueryFilters_ExpRank) (*bun.SelectQuery, error) {
 	orderHow := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
+	q = q.ColumnExpr(`ROW_NUMBER() OVER(
+		PARTITION BY t.experiment_id
+		ORDER BY ?  ?
+	) as exp_rank`, r.SortBy.Field, orderHow[r.SortBy.OrderBy])
+	q = q.Where(`exp_rank <= ?`, r.Rank)
+	return q, nil
+}
 
-	if filters.ExpRank.Rank != 0 {
-		rankSorter := filters.ExpRank.SortBy
-		switch rankSorter.Namespace {
-		case apiv1.QueryTrialsSortBy_TRIAL_ITSELF:
-			qb = qb.ColumnExpr("trials.? AS rank_sorter", rankSorter.Field)
-		case apiv1.QueryTrialsSortBy_VALIDATION_METRIC:
-			qb = qb.ColumnExpr("(validations.metrics->'validation_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
-		case apiv1.QueryTrialsSortBy_TRAINING_METRIC:
-			qb = qb.ColumnExpr("(steps.metrics->'avg_metrics'->>?)::float8 AS rank_sorter", rankSorter.Field)
-		default:
-			return nil, errors.New("no")
-		}
-		qb = qb.ColumnExpr(`ROW_NUMBER() OVER(
-			PARTITION BY t.experiment_id
-			ORDER BY rank_sorter  ?
-		) as exp_rank`, orderHow[rankSorter.OrderBy])
-		qb = qb.Where(`exp_rank <= ?`, filters.ExpRank.Rank)
+func (db *PgDB) RankUpdateQuery(q *bun.UpdateQuery, r *apiv1.QueryFilters_ExpRank) (*bun.UpdateQuery, error) {
+	orderHow := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
 	}
+	q = q.Where(`ROW_NUMBER() OVER(
+		PARTITION BY t.experiment_id
+		ORDER BY ?  ?
+	) <= ?`, r.SortBy.Field, orderHow[r.SortBy.OrderBy], r.Rank)
+	return q, nil
+}
 
+func (db *PgDB) FilterTrials(q *bun.QueryBuilder, filters *apiv1.QueryFilters) (*bun.QueryBuilder, error) {
 	if len(filters.Tags) > 0 {
 		tagExprKeyVals := ""
 		for _, tag := range filters.Tags {
 			tagExprKeyVals += fmt.Sprintf(`"%s":"%s"`, tag.Key, tag.Value)
 		}
-		qb = qb.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
+		q = q.Where(fmt.Sprintf("tags @> '{%s}'::jsonb", tagExprKeyVals))
 	}
 
 	if len(filters.ExperimentIds) > 0 {
-		qb = qb.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
+		q = q.Where("experiment_id IN (?)", bun.In(filters.ExperimentIds))
 	}
-
 	if len(filters.ProjectIds) > 0 {
-		qb = qb.Where("experiments.project_id IN (?)", bun.In(filters.ProjectIds))
+		q = q.Where("experiments.project_id IN (?)", bun.In(filters.ProjectIds))
 	}
-
 	if len(filters.WorkspaceIds) > 0 {
-		qb.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
+		q.Where("projects.workspace_id IN (?)", bun.In(filters.WorkspaceIds))
 	}
 
 	if len(filters.ValidationMetrics) > 0 {
-		// TODO trial has best validation? probably join that instead
 		for _, f := range filters.ValidationMetrics {
-			qb = qb.Where("(validations.metrics->'validation_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+			q = q.Where("(validation_metrics->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 
 	if len(filters.TrainingMetrics) > 0 {
 		for _, f := range filters.TrainingMetrics {
-			// TODO: avg metrics correct?
-			qb = qb.Where("(steps.metrics->'avg_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+			q = q.Where("(training_metrics'->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 	if len(filters.Hparams) > 0 {
@@ -522,21 +507,16 @@ func (db *PgDB) QueryTrials(filters *apiv1.QueryFilters) (trials []int32, err er
 		// what about nested?
 		// in that case, we probably want to send outer.inner in the api
 		// then construct trials.hparams->'outer'->'inner' expression in query
-		for _, f := range filters.TrainingMetrics {
-			qb = qb.Where("(trials.hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
+		for _, f := range filters.Hparams {
+			q = q.Where("(hparams->>?)::float8 BETWEEN ? AND ?", f.Name, f.Min, f.Max)
 		}
 	}
 	if filters.Searcher != "" {
-		qb = qb.Where("experiments.config->'searcher'->>'name' = ?", filters.Searcher)
+		q = q.Where("searcher_type = ?", filters.Searcher)
 	}
-
 	if len(filters.UserIds) > 0 {
-		qb = qb.Where("experiments.owner_id IN (?)", bun.In(filters.UserIds))
+		q = q.Where("user_id IN (?)", bun.In(filters.UserIds))
 	}
 
-	err = qb.Group("trials.id").Scan(context.TODO(), &trialIds)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error querying for filtered trials")
-	}
-	return trialIds, nil
+	return q, nil
 }
