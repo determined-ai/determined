@@ -13,6 +13,7 @@ import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import Icon from 'shared/components/Icon';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
 import { DetError, isDetError } from 'shared/utils/error';
@@ -22,7 +23,6 @@ import { validateLength } from 'shared/utils/string';
 import { ExperimentBase, ExperimentSearcherName, Hyperparameter,
   HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters, TrialItem } from 'types';
 
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from './useModal';
 import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
