@@ -1,4 +1,4 @@
-import unittest
+import pytest
 
 import torch
 
@@ -8,8 +8,8 @@ from determined.errors import InternalException
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
-class TestPyTorchContext(unittest.TestCase):
-    def setUp(self) -> None:
+class TestPyTorchContext:
+    def setup_method(self) -> None:
         self.config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
         self.context: pytorch.PyTorchTrialContext = pytorch.PyTorchTrialContext.from_config(
             self.config
@@ -32,21 +32,28 @@ class TestPyTorchContext(unittest.TestCase):
             metrics = trial.evaluate_batch(batch)
 
     def test_average_gradients(self) -> None:
-        self.assertRaises(CheckFailedError, self.context._average_gradients, None, 0)
-        self.assertIsNone(self.context._average_gradients(None, 1))
+        with pytest.raises(CheckFailedError):
+            self.context._average_gradients(None, 0)
+        assert self.context._average_gradients(None, 1) is None
 
     def test_training_not_started(self) -> None:
-        self.assertRaises(InternalException, self.context.is_epoch_start)
-        self.assertRaises(InternalException, self.context.is_epoch_end)
-        self.assertRaises(InternalException, self.context.current_train_batch)
-        self.assertRaises(InternalException, self.context.current_train_epoch)
+        with pytest.raises(InternalException):
+            self.context.is_epoch_start()
+        with pytest.raises(InternalException):
+            self.context.is_epoch_end()
+        with pytest.raises(InternalException):
+            self.context.current_train_batch()
+        with pytest.raises(InternalException):
+            self.context.current_train_epoch()
         self.context.env.managed_training = True
-        self.assertRaises(InternalException, self.context._should_communicate_and_update)
+        with pytest.raises(InternalException):
+            self.context._should_communicate_and_update()
 
     def test_wrap_scalar(self) -> None:
         scaler = 1
         if torch.cuda.is_available():
-            self.assertEqual(scaler, self.context.wrap_scaler(scaler))
-            self.assertEqual(scaler, self.context._scaler)
+            assert scaler == self.context.wrap_scaler(scaler)
+            assert scaler == self.context._scaler
         else:
-            self.assertRaises(CheckFailedError, self.context.wrap_scaler, scaler)
+            with pytest.raises(CheckFailedError):
+                self.context.wrap_scaler(scaler)
