@@ -74,7 +74,7 @@ def log_in_user(parsed_args: Namespace) -> None:
         print("Using the enviornment variable DET_PASS for a user's password")
         password = os.environ["DET_PASS"]
     else:
-        message = "Password for user '{}': ".format(username)
+        message = f"Password for user '{username}': "
         password = getpass.getpass(message)
     # In order to not send clear-text passwords, we hash the password.
     password = api.salt_and_hash(password)

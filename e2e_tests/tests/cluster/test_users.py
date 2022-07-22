@@ -55,16 +55,14 @@ def det_spawn(args: List[str], env: Optional[Dict[str, str]] = None) -> spawn:
 
 
 def det_run(args: List[str]) -> str:
-    return cast(
-        str, pexpect.run("det -m {} {}".format(conf.make_master_url(), " ".join(args))).decode()
-    )
+    return cast(str, pexpect.run(f"det -m {conf.make_master_url()} {' '.join(args)}").decode())
 
 
 def log_in_user(credentials: authentication.Credentials) -> int:
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
-    expected = "Password for user '{}':".format(username)
+    expected = f"Password for user '{username}':"
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(password)
     child.read()
@@ -77,7 +75,7 @@ def create_user(n_username: str, admin_credentials: authentication.Credentials) 
 
     child = det_spawn(["-u", a_username, "user", "create", n_username])
 
-    expected_password_prompt = "Password for user '{}':".format(a_username)
+    expected_password_prompt = f"Password for user '{a_username}':"
     i = child.expect([expected_password_prompt, pexpect.EOF], timeout=EXPECT_TIMEOUT)
     if i == 0:
         child.sendline(a_password)
@@ -101,8 +99,8 @@ def change_user_password(
     a_username, a_password = admin_credentials
 
     child = det_spawn(["-u", a_username, "user", "change-password", target_username])
-    expected_pword_prompt = "Password for user '{}':".format(a_username)
-    expected_new_pword_prompt = "New password for user '{}':".format(target_username)
+    expected_pword_prompt = f"Password for user '{a_username}':"
+    expected_new_pword_prompt = f"New password for user '{target_username}':"
     confirm_pword_prompt = "Confirm password:"
 
     i = child.expect([expected_pword_prompt, expected_new_pword_prompt], timeout=EXPECT_TIMEOUT)
@@ -154,7 +152,7 @@ def activate_deactivate_user(
     child = det_spawn(
         ["-u", a_username, "user", "activate" if active else "deactivate", target_user]
     )
-    expected_password_prompt = "Password for user '{}':".format(a_username)
+    expected_password_prompt = f"Password for user '{a_username}':"
     i = child.expect([expected_password_prompt, pexpect.EOF], timeout=EXPECT_TIMEOUT)
     if i == 0:
         child.sendline(a_password)
@@ -368,11 +366,11 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_login_det_pass_environment(clean_auth: None) -> None:
+def test_login_with_environment_variables(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
+    os.environ["DET_PASS"] = creds.password
     try:
-        os.environ["DET_PASS"] = creds.password
         child = det_spawn(["user", "login", creds.username])
         child.read()
         child.wait()
@@ -384,6 +382,21 @@ def test_login_det_pass_environment(clean_auth: None) -> None:
     child.expect(creds.username)
     child.wait()
     assert child.exitstatus == 0
+
+    """
+    # Ensure we don't need to call det login if DET_PASS and DET_USER are set.
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+    os.environ["DET_USER"] = creds.password
+    os.environ["DET_PASS"] = creds.username
+    try:
+        child = det_spawn(["user", "whoami"])
+        child.expect(creds.username)
+        child.wait()
+        assert child.exitstatus == 0
+    finally:
+        del os.environ["DET_USER"]
+        del os.environ["DET_PASS"]
+    """
 
 
 @pytest.mark.e2e_cpu
