@@ -4170,74 +4170,6 @@ export interface V1MoveExperimentResponse {
 }
 
 /**
- * Individual FileNode from the V1GetExperimentFileTreeResponse
- * @export
- * @interface FileNode
- */
-export interface FileNode {
-  /**
-   * Number of bytes in the file content.
-   * @type {number}
-   * @memberof FileNode
-   */
-  contentLength: number;
-  /**
-   * MIME type of file.
-   * @type {string}
-   * @memberof FileNode
-   */
-  contentType?: string;
-  /**
-   * Is this a directory.
-   * @type {boolean}
-   * @memberof FileNode
-   */
-  isDir: boolean;
-  /**
-   * Modification time of file.
-   * @type {boolean}
-   * @memberof FileNode
-   */
-  modifiedTime: string;
-  /**
-   * Path of file.
-   * @type {boolean}
-   * @memberof FileNode
-   */
-  path: string;
-  /**
-   * Subdirectory files.
-   * @type {boolean}
-   * @memberof FileNode
-   */
-  files?: FileNode[];
-  /**
-   * Subdirectory files.
-   * @type {string}
-   * @memberof FileNode
-   */
-  name: string;
-}
-
-/**
- * Response to GetExperimentFileFromTreeParams
- * @export
- * @interface V1GetExperimentFileFromTreeResponse
- */
-export interface V1GetExperimentFileFromTreeResponse {
-  file: string;
-}
-
-/**
- * Response to GetExperimentFileTree
- * @export
- * @interface V1GetExperimentFileTreeResponse
- */
-export interface V1GetExperimentFileTreeResponse {
-  files: V1FileNode[];
-}
-
-/**
  * Request to move a project into a workspace.
  * @export
  * @interface V1MoveProjectRequest
@@ -11534,7 +11466,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} experimentId The id of the experiment.
          * @throws {RequiredError}
          */
-        getExperimentFileTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentFileTreeResponse> {
+      getExperimentFileTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
           const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentFileTree(experimentId, options);
           return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
             return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -11552,7 +11484,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {number} experimentId The id of the experiment.
          * @throws {RequiredError}
          */
-        getExperimentFileFromTree(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentFileFromTreeResponse> {
+      getExperimentFileFromTree(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
           const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentFileFromTree(experimentId, path, options);
           return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
             return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {

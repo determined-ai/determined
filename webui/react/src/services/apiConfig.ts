@@ -524,7 +524,7 @@ export const getTrialWorkloads: DetApi<
 };
 
 export const getExperimentFileFromTree: DetApi<
-  Service.GetExperimentFileFromTreeParams, Api.V1GetExperimentFileFromTreeResponse, string
+  Service.GetExperimentFileFromTreeParams, Api.V1GetModelDefFileResponse, string
 > = {
   name: 'getExperimentFileFromTree',
   postProcess: (response) => response.file || '',
