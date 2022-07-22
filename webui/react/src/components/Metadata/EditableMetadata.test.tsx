@@ -65,7 +65,10 @@ describe('EditableMetadata', () => {
 
     const actionButton = (view.getAllByRole('button', { name: 'action' }))[removalIndex];
     await user.click(actionButton);
-    await user.click(await view.findByText('Delete Row', undefined, { container: actionButton }));
-    expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
+    user.click(await view.findByText('Delete Row', undefined, { container: actionButton }));
+
+    await waitFor(() => {
+      expect(handleOnChange).toHaveBeenCalledWith(resultMetadata);
+    });
   });
 });
