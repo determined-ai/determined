@@ -1,7 +1,7 @@
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import queryString from 'query-string';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -193,7 +193,7 @@ describe('useSettings', () => {
   beforeEach(() => {
     const RouterWrapper: React.FC = ({ children }) => (
       <StoreProvider>
-        <Router history={history}>{children}</Router>
+        <HistoryRouter history={history}>{children}</HistoryRouter>
       </StoreProvider>
     );
     const hookResult = renderHook(
