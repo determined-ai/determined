@@ -10,11 +10,11 @@ import handleError from 'utils/error';
 
 import css from './Omnibar.module.scss';
 
-/*
-Ideally we wouldn't need to access the element like this.
-A potential option is use the value prop in combinatio with encoding the tree path into
-the options returned by the tree extension.
-*/
+/**
+ * Ideally we wouldn't need to access the element like this.
+ * A potential option is use the value prop in combinatio with encoding the tree path into
+ * the options returned by the tree extension.
+ */
 const omnibarInput = () => document.querySelector(
   '#omnibar input[type="text"]',
 ) as (HTMLInputElement | null);
