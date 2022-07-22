@@ -284,12 +284,12 @@ class PyTorchTrialController(det.TrialController):
                         "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
-                    if self.is_chief:
-                        for callback in self.callbacks.values():
-                            callback.on_training_workload_end(
-                                avg_metrics=metrics["avg_metrics"],
-                                batch_metrics=metrics["batch_metrics"],
-                            )
+                    metrics = self.context.distributed.broadcast(metrics)
+                    for callback in self.callbacks.values():
+                        callback.on_training_workload_end(
+                            avg_metrics=metrics["avg_metrics"],
+                            batch_metrics=metrics["batch_metrics"],
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
@@ -298,6 +298,7 @@ class PyTorchTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
+                    uuid = ""
                     if self.is_chief:
                         metadata = {
                             "determined_version": det.__version__,
@@ -310,11 +311,13 @@ class PyTorchTrialController(det.TrialController):
                             storage_id,
                         ):
                             self._save(path)
-                        for callback in self.callbacks.values():
-                            callback.on_checkpoint_upload_end(uuid=storage_id)
+                            uuid = storage_id
                         response = {"uuid": storage_id}
                     else:
                         response = {}
+                    uuid = self.context.distributed.broadcast(uuid)
+                    for callback in self.callbacks.values():
+                        callback.on_checkpoint_upload_end(uuid=uuid)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))

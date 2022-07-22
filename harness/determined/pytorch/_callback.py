@@ -98,9 +98,6 @@ class PyTorchCallback:
     def on_checkpoint_upload_end(self, uuid: str) -> None:
         """
         Run after every checkpoint finishes uploading.
-
-        .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
         """
         pass
 
@@ -142,9 +139,6 @@ class PyTorchCallback:
         Run on end of a training workload. Workloads can contain varying numbers of batches. In the
         current implementation of PyTorchTrial, the maximum number of batches in a workload is equal
         to the ``scheduling_unit`` field defined in the experiment config.
-
-        .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
         """
         pass
 
