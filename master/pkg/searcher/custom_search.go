@@ -95,7 +95,6 @@ func (s *customSearch) validationCompleted(
 func (s *customSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
-
 	event := experimentv1.SearcherEvent_TrialExitedEarly{
 		TrialExitedEarly: &experimentv1.TrialExitedEarly{
 			RequestId:    requestID.String(),

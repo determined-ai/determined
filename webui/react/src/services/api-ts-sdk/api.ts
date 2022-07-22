@@ -7290,6 +7290,12 @@ export interface V1ValidationCompleted {
      * @memberof V1ValidationCompleted
      */
     metric?: number;
+    /**
+     * Need the length from ValidateAfterOperation.
+     * @type {V1ValidateAfterOperation}
+     * @memberof V1ValidationCompleted
+     */
+    op?: V1ValidateAfterOperation;
 }
 
 /**

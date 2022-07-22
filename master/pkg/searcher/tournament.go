@@ -19,7 +19,6 @@ type (
 		SearchMethodType        SearchMethodType        `json:"search_method_type"`
 	}
 	tournamentSearch struct {
-		defaultSearchMethod
 		subSearches []SearchMethod
 		tournamentSearchState
 	}

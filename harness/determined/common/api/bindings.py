@@ -6298,22 +6298,26 @@ class v1ValidationCompleted:
     def __init__(
         self,
         metric: "typing.Optional[float]" = None,
+        op: "typing.Optional[v1ValidateAfterOperation]" = None,
         requestId: "typing.Optional[str]" = None,
     ):
         self.requestId = requestId
         self.metric = metric
+        self.op = op
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         return cls(
             requestId=obj.get("requestId", None),
             metric=float(obj["metric"]) if obj.get("metric", None) is not None else None,
+            op=v1ValidateAfterOperation.from_json(obj["op"]) if obj.get("op", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "requestId": self.requestId if self.requestId is not None else None,
             "metric": dump_float(self.metric) if self.metric is not None else None,
+            "op": self.op.to_json() if self.op is not None else None,
         }
 
 class v1ValidationHistoryEntry:
