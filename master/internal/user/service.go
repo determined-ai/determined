@@ -324,7 +324,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	var toUpdate []string
 
 	if params.Password != nil {
-		if err := AuthZProvider.Get().CanSetUserPassword(authenticatedUser, *user); err != nil {
+		if err = AuthZProvider.Get().CanSetUserPassword(authenticatedUser, *user); err != nil {
 			return nil, forbiddenError
 		}
 		if err = user.UpdatePasswordHash(*params.Password); err != nil {

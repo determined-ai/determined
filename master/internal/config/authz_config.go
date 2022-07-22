@@ -5,20 +5,26 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"golang.org/x/exp/maps"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
-var knownAuthZTypes map[string]bool
-var authZConfigMutex sync.Mutex
+var (
+	knownAuthZTypes  map[string]bool
+	authZConfigMutex sync.Mutex
+)
 
+// BasicAuthZType is the default authz string id.
 const BasicAuthZType = "basic"
 
+// AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
 	Type         string  `json:"type"`
 	FallbackType *string `json:"fallback"`
 }
 
+// DefaultAuthZConfig returns default authz config.
 func DefaultAuthZConfig() *AuthZConfig {
 	return &AuthZConfig{
 		Type: BasicAuthZType,
@@ -27,6 +33,7 @@ func DefaultAuthZConfig() *AuthZConfig {
 	}
 }
 
+// Validate the authz config.
 func (c *AuthZConfig) Validate() []error {
 	var errs []error
 
@@ -57,6 +64,7 @@ func initAuthZTypes() {
 	knownAuthZTypes[BasicAuthZType] = true
 }
 
+// RegisterAuthZType adds new known authz type.
 func RegisterAuthZType(authzType string) {
 	initAuthZTypes()
 
@@ -66,6 +74,7 @@ func RegisterAuthZType(authzType string) {
 	knownAuthZTypes[authzType] = true
 }
 
+// GetAuthZConfig returns current global authz config.
 func GetAuthZConfig() AuthZConfig {
 	return GetMasterConfig().Security.AuthZ
 }

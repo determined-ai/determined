@@ -6,15 +6,18 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"golang.org/x/exp/maps"
+
+	"github.com/determined-ai/determined/master/internal/config"
 )
 
+// AuthZProviderType is a per-module registry for authz implementations.
 type AuthZProviderType[T any] struct {
 	registry map[string]T
 	once     sync.Once
 }
 
+// Register adds new implementation.
 func (p *AuthZProviderType[T]) Register(authZType string, impl T) {
 	p.once.Do(func() {
 		p.registry = make(map[string]T)
@@ -31,6 +34,7 @@ func (p *AuthZProviderType[T]) string() string {
 	return reflect.TypeOf((*T)(nil)).Elem().String()
 }
 
+// Get returns the selected implementation.
 func (p *AuthZProviderType[T]) Get() T {
 	if len(p.registry) == 0 {
 		panic(fmt.Errorf("empty registry for: %s", p.string()))
@@ -59,5 +63,4 @@ func (p *AuthZProviderType[T]) Get() T {
 	panic(fmt.Errorf(
 		"failed to find authz types %s, %s in %s for: %s",
 		authZConfig.Type, *authZConfig.FallbackType, okTypes, p.string()))
-
 }
