@@ -80,7 +80,9 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     SearchMethods.ASHA,
   );
   const { resourcePools } = useStore();
-  const [ resourcePool, setResourcePool ] = useState<ResourcePool>();
+  const [ resourcePool, setResourcePool ] = useState<ResourcePool>(
+    resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
+  );
   const [ form ] = Form.useForm();
   const [ currentPage, setCurrentPage ] = useState(0);
   const [ canceler ] = useState(new AbortController());
@@ -215,7 +217,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
   }, [ modalClose ]);
 
   const handleSelectPool = useCallback((value: SelectValue) => {
-    setResourcePool(resourcePools.find((pool) => pool.name === value));
+    setResourcePool(resourcePools.find((pool) => pool.name === value) ?? resourcePools[0]);
   }, [ resourcePools ]);
 
   const maxSlots = useMemo(
@@ -347,7 +349,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item
-          initialValue={experiment.resourcePool}
+          initialValue={resourcePool.name}
           label="Resource Pool"
           name="pool"
           rules={[ { required: true } ]}>
@@ -475,7 +477,6 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     experiment.configRaw.searcher?.mode,
     experiment.configRaw.searcher?.stop_once,
     experiment.name,
-    experiment.resourcePool,
     formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,
@@ -483,6 +484,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     maxLengthUnit,
     maxSlots,
     modalError,
+    resourcePool.name,
     resourcePools,
     searcher ]);
 
