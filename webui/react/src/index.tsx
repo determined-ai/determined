@@ -15,7 +15,7 @@ import 'dev';
 
 ReactDOM.render(
   <React.StrictMode>
-    <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
+    <HistoryRouter history={history}>
       <App />
     </HistoryRouter>
   </React.StrictMode>,
