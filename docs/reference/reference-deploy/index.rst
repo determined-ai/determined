@@ -14,7 +14,7 @@ This section includes reference documentation for configuring Determined deploym
 +----------------------------------------+-------------------------------------------------------+
 | :doc:`config/agent-config-reference`   | Agent node configuration option reference.            |
 +----------------------------------------+-------------------------------------------------------+
-| :doc:`config/helm-config-reference`    | Helm chart configuration option  reference.           |
+| :doc:`config/helm-config-reference`    | Helm chart configuration option reference.            |
 +----------------------------------------+-------------------------------------------------------+
 
 .. toctree::

@@ -27,12 +27,12 @@ Additionally, users must have the `Azure CLI
 <https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
 <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
-Finally, authenticate with the Azure CLI using ``az login`` in order to have access to your
-Azure subscription.
+Finally, authenticate with the Azure CLI using ``az login`` in order to have access to your Azure
+subscription.
 
-************************
+********************
  Set up the Cluster
-************************
+********************
 
 .. code:: bash
 
@@ -62,9 +62,9 @@ Azure subscription.
     --name ${AKS_GPU_NODE_POOL_NAME} --node-count 0 --node-vm-size ${GPU_VM_SIZE} \
     --enable-cluster-autoscaler --min-count 0 --max-count 4
 
-*******************************
+*****************************
  Create a kubeconfig for AKS
-*******************************
+*****************************
 
 After creating the cluster, ``kubectl`` should be used to deploy apps. In order for ``kubectl`` to
 be used with AKS, users need to create or update the cluster kubeconfig. This can be done with the
@@ -74,12 +74,12 @@ command:
 
    az aks get-credentials --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
 
-**********************
+********************
  Enable GPU Support
-**********************
+********************
 
-To allow the AKS cluster to recognize GPU hardware resources, refer to the instructions
-provided by Azure on the `Install NVIDIA Device Plugin
+To allow the AKS cluster to recognize GPU hardware resources, refer to the instructions provided by
+Azure on the `Install NVIDIA Device Plugin
 <https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
 
 With this, the cluster is fully set up, and Determined can be deployed onto it.
@@ -89,7 +89,7 @@ With this, the cluster is fully set up, and Determined can be deployed onto it.
 ***********************
 
 Update the Autoscaler
-=========================
+=====================
 
 To update the cluster autoscaler, use the following Azure CLI command:
 
@@ -100,7 +100,7 @@ To update the cluster autoscaler, use the following Azure CLI command:
    --cluster-name ${AKS_CLUSTER_NAME} --name ${AKS_GPU_NODE_POOL_NAME}
 
 Add Taints and Tolerations to Nodes
-=====================================
+===================================
 
 For general instructions on adding taints and tolerations to nodes, see the :ref:`Taints and
 Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
@@ -139,7 +139,7 @@ effect.
    --no-wait
 
 Delete the Cluster
-====================
+==================
 
 To delete the AKS cluster, use the following Azure CLI command:
 

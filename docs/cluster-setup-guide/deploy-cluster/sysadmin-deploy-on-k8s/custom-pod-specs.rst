@@ -1,8 +1,8 @@
 .. _custom-pod-specs:
 
-##################
+#################
  Customize a Pod
-##################
+#################
 
 In a :ref:`Determined cluster running on Kubernetes <determined-on-kubernetes>`, tasks (e.g.,
 experiments, notebooks) are executed by launching one or more Kubernetes pods. Users can customize
@@ -37,8 +37,8 @@ Determined provides two ways to configure pod specs. When Determined is installe
 administrator can configure pod specs that are used by default for all GPU and CPU tasks. In
 addition, users can specify a custom pod spec for individual tasks (e.g., for an experiment by
 specifying ``environment.pod_spec`` in the :ref:`experiment configuration
-<experiment-config-reference>`). If a custom pod spec is specified for a task, it overrides the default
-pod spec (if any).
+<experiment-config-reference>`). If a custom pod spec is specified for a task, it overrides the
+default pod spec (if any).
 
 ***************************
  Supported Pod Spec Fields
@@ -68,11 +68,12 @@ Determined currently supports configuring:
 *******************
 
 Default pod specs must be configured when :ref:`installing or upgrading <install-on-kubernetes>`
-Determined. The default pod specs are configured in ``values.yaml`` of the :doc:`/reference/reference-deploy/config/helm-config-reference` under ``taskContainerDefaults.cpuPodSpec`` and
-``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to all tasks that use GPUs
-(e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all tasks that only use CPUs (e.g.,
-TensorBoards, CPU-only notebooks). Fields that are not specified will remain at their default
-Determined values.
+Determined. The default pod specs are configured in ``values.yaml`` of the
+:doc:`/reference/reference-deploy/config/helm-config-reference` under
+``taskContainerDefaults.cpuPodSpec`` and ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is
+applied to all tasks that use GPUs (e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all
+tasks that only use CPUs (e.g., TensorBoards, CPU-only notebooks). Fields that are not specified
+will remain at their default Determined values.
 
 Example of configuring default pod specs in ``values.yaml``:
 

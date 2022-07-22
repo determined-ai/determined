@@ -2,9 +2,9 @@
 
 .. _upgrades-troubleshootings:
 
-##########
+#########
  Upgrade
-##########
+#########
 
 .. warning::
 

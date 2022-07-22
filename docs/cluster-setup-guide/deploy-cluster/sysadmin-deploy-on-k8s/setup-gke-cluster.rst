@@ -22,9 +22,9 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
 <https://cloud.google.com/sdk/docs/quickstarts/>`_ and `kubectl
 <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
-************************
+********************
  Set up the Cluster
-************************
+********************
 
 .. code:: bash
 
@@ -71,9 +71,9 @@ Before setting up a GKE cluster, the user should have `Google Cloud SDK
    # Create a GCS bucket to store checkpoints.
    gsutil mb gs://${GCS_BUCKET_NAME}
 
-************************
+**********************
  Manage a GKE Cluster
-************************
+**********************
 
 For general instructions on adding taints and tolerations to nodes, see the :ref:`Taints and
 Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes

@@ -1,8 +1,8 @@
 .. _organizing-models:
 
-#########################################
+#######################################
  Organize Models in the Model Registry
-#########################################
+#######################################
 
 Determined includes built-in support for a *model registry*, which makes it easy to organize trained
 models and their respective versions. Common use-cases for the model registry include:
@@ -28,9 +28,9 @@ use different network architectures, or even use different deep learning framewo
 approach would be to register a model named "FasterRCNN", and ensure that each version of the model
 uses that network architecture.
 
-*****************
+***************
  Manage Models
-*****************
+***************
 
 A *model* has a unique name, an optional description, user-defined metadata, and zero or more *model
 versions*. A model's metadata can contain arbitrary information about the model. The following is an
@@ -64,7 +64,7 @@ Once a model and/or version is created, notes, metadata, and other information c
 edited through the Model Registry page after selecting the model or model version in question.
 
 Register Models
-==================
+===============
 
 A model can be added to the registry via the WebUI, Python API, REST API, or CLI. This guide will
 cover the Python and CLI methods. For information on the REST API, see the `Swagger API
@@ -92,7 +92,7 @@ Similarly, you can create a model from the CLI using the following command.
    det model create <model_name>
 
 Query Models
-===============
+============
 
 The following example returns models registered in Determined as a list of
 :class:`~determined.experimental.Model` objects. Models can be sorted by name, description, creation
@@ -139,7 +139,7 @@ version of the model by default as well.
    det model describe <model_name>
 
 Modify Model Metadata
-========================
+=====================
 
 Currently, model metadata can only be edited via the WebUI and Python API. The following example
 demonstrates how to use this API.
@@ -166,9 +166,9 @@ demonstrates how to use this API.
 
    # Result: {"metrics": {"test_set_acc": 0.97}}.
 
-*************************
+***********************
  Manage Model Versions
-*************************
+***********************
 
 Once a model has been added to the registry, you can add one or more checkpoints to it. These
 registered checkpoints are known as *model versions*. Version numbers are assigned by the registry;
@@ -207,7 +207,7 @@ For illustration, this JSON document illustrates an example model with a single 
    }
 
 Create Versions
-=================
+===============
 
 The following snippet registers a new version of a model.
 :func:`~determined.experimental.Model.register_version()` returns an updated
@@ -232,7 +232,7 @@ Similarly, a new model version can be registered using the CLI as follows:
    det model register-version <model_name> <checkpoint_uuid>
 
 Access Versions
-==================
+===============
 
 The example below demonstrates how to retrieve versions of a model from the registry. If no version
 number is specified, the most recent version of the model is returned.

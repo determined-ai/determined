@@ -10,7 +10,8 @@
 | :doc:`/reference/reference-deploy/config/helm-config-reference` |
 +-----------------------------------------------------------------+
 
-This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
+This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. using
+the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
 When the Determined Helm chart is installed, the following entities will be created:
 
@@ -69,22 +70,22 @@ info on configuring EKS, refer to the :ref:`Instructions for setting up an EKS c
  Configuration
 ***************
 
-When installing Determined using Helm, first configure some aspects of the Determined
-deployment by editing the ``values.yaml`` and ``Chart.yaml`` files in the Helm chart.
+When installing Determined using Helm, first configure some aspects of the Determined deployment by
+editing the ``values.yaml`` and ``Chart.yaml`` files in the Helm chart.
 
 Image Registry Configuration
 ============================
 
-To configure which image registry of Determined will be installed by the Helm chart, 
-change ``imageRegistry`` in ``values.yaml``. You can specify the DockerHub public registry
-``determinedai`` or specify any private registry that hosts the Determined master image.
+To configure which image registry of Determined will be installed by the Helm chart, change
+``imageRegistry`` in ``values.yaml``. You can specify the DockerHub public registry ``determinedai``
+or specify any private registry that hosts the Determined master image.
 
 Image Pull Secret Configuration
 ===============================
 
-To configure which image pull secret will be used by the Helm chart, change
-``imagePullSecretName`` in ``values.yaml``. You can set it to empty for the DockerHub public
-registry or specify any secret that is configured using `kubectl create secret
+To configure which image pull secret will be used by the Helm chart, change ``imagePullSecretName``
+in ``values.yaml``. You can set it to empty for the DockerHub public registry or specify any secret
+that is configured using `kubectl create secret
 <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>`_.
 
 .. _configure-determined-kubernetes-version:
@@ -92,24 +93,24 @@ registry or specify any secret that is configured using `kubectl create secret
 Version Configuration
 =====================
 
-To configure which version of Determined will be installed by the Helm chart, change
-``appVersion`` in ``Chart.yaml``. You can specify a release version (e.g., ``0.13.0``) or specify
-any commit hash from the `upstream Determined repo <https://github.com/determined-ai/determined>`_
-(e.g., ``b13461ed06f2fad339e179af8028d4575db71a81``). You are strongly encouraged to use a
-released version.
+To configure which version of Determined will be installed by the Helm chart, change ``appVersion``
+in ``Chart.yaml``. You can specify a release version (e.g., ``0.13.0``) or specify any commit hash
+from the `upstream Determined repo <https://github.com/determined-ai/determined>`_ (e.g.,
+``b13461ed06f2fad339e179af8028d4575db71a81``). You are strongly encouraged to use a released
+version.
 
 Resource configuration (GPU-based setups)
 =========================================
 
-For GPU-based configurations, you must specify the number of GPUs on each node (for
-GPU-enabled nodes only). This is done by setting ``maxSlotsPerPod`` in ``values.yaml``. Determined
-uses this information when scheduling multi-GPU tasks. Each multi-GPU (distributed training) task
-will be scheduled as a set of ``slotsPerTask / maxSlotsPerPod`` separate pods, with each pod
-assigned up to ``maxSlotsPerPod`` GPUs. Distributed tasks with sizes that are not divisible by
-``maxSlotsPerPod`` are never scheduled. If you have a cluster of different size nodes, set
-``maxSlotsPerPod`` to the greatest common divisor of all the sizes. For example, if you have some
-nodes with 4 GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so that all
-distributed experiments will launch with 4 GPUs per pod (with two pods on 8-GPU nodes).
+For GPU-based configurations, you must specify the number of GPUs on each node (for GPU-enabled
+nodes only). This is done by setting ``maxSlotsPerPod`` in ``values.yaml``. Determined uses this
+information when scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be
+scheduled as a set of ``slotsPerTask / maxSlotsPerPod`` separate pods, with each pod assigned up to
+``maxSlotsPerPod`` GPUs. Distributed tasks with sizes that are not divisible by ``maxSlotsPerPod``
+are never scheduled. If you have a cluster of different size nodes, set ``maxSlotsPerPod`` to the
+greatest common divisor of all the sizes. For example, if you have some nodes with 4 GPUs and other
+nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so that all distributed experiments will launch
+with 4 GPUs per pod (with two pods on 8-GPU nodes).
 
 Resource configuration (CPU-based setups)
 =========================================
@@ -136,33 +137,34 @@ Checkpoints and TensorBoard events can be configured to be stored in ``shared_fs
 <https://cloud.google.com/storage>`__. By default, checkpoints and TensorBoard events are stored
 using ``shared_fs``, which creates a `hostPath Volume
 <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`__ and saves to the host file
-system. This configuration is intended for *initial testing only*; you are strongly discouraged
-from using ``shared_fs`` for actual deployments of Determined on Kubernetes, because most Kubernetes
+system. This configuration is intended for *initial testing only*; you are strongly discouraged from
+using ``shared_fs`` for actual deployments of Determined on Kubernetes, because most Kubernetes
 cluster nodes do not have a shared file system.
 
-Instead of using ``shared_fs``, configure either AWS S3, Microsoft Azure Blob Storage,
-or GCS:
+Instead of using ``shared_fs``, configure either AWS S3, Microsoft Azure Blob Storage, or GCS:
 
 -  **AWS S3**: To configure Determined to use AWS S3 for checkpoint and TensorBoard storage, you
    need to set ``checkpointStorage.type`` in ``values.yaml`` to ``s3`` and set
    ``checkpointStorage.bucket`` to the name of the bucket. The pods launched by the Determined
-   master must have read, write, and delete access to the bucket. To enable this you can
-   optionally configure ``checkpointStorage.accessKey`` and ``checkpointStorage.secretKey``. You can optionally configure ``checkpointStorage.endpointUrl`` which specifies the endpoint to
-   use for S3 clones (e.g., ``http://<minio-endpoint>:<minio-port|default=9000>``).
+   master must have read, write, and delete access to the bucket. To enable this you can optionally
+   configure ``checkpointStorage.accessKey`` and ``checkpointStorage.secretKey``. You can optionally
+   configure ``checkpointStorage.endpointUrl`` which specifies the endpoint to use for S3 clones
+   (e.g., ``http://<minio-endpoint>:<minio-port|default=9000>``).
 
 -  **Microsoft Azure Blob Storage**: To configure Determined to use Microsoft Azure Blob Storage for
-   checkpoint and TensorBoard storage, you need to set ``checkpointStorage.type`` in
-   ``values.yaml`` to ``azure`` and set ``checkpointStorage.container`` to the name of the container
-   to store it in. You must also specify one of ``connection_string`` - the connection string
-   associated with the Azure Blob Storage service account to use, or the tuple ``account_url`` and
-   ``credential`` - where ``account_url`` is the URL for the service account to use, and
-   ``credential`` is an optional credential.
+   checkpoint and TensorBoard storage, you need to set ``checkpointStorage.type`` in ``values.yaml``
+   to ``azure`` and set ``checkpointStorage.container`` to the name of the container to store it in.
+   You must also specify one of ``connection_string`` - the connection string associated with the
+   Azure Blob Storage service account to use, or the tuple ``account_url`` and ``credential`` -
+   where ``account_url`` is the URL for the service account to use, and ``credential`` is an
+   optional credential.
 
 -  **GCS**: To configure Determined to use Google Cloud Storage for checkpoints and TensorBoard
    data, set ``checkpointStorage.type`` in ``values.yaml`` to ``gcs`` and set
    ``checkpointStorage.bucket`` to the name of the bucket. The pods launched by the Determined
-   master must have read, write, and delete access to the bucket. For example, when launching `GKE nodes <https://cloud.google.com/sdk/gcloud/reference/container/node-pools/create>`__ you
-   need to specify ``--scopes=storage-full`` to configure proper GCS access.
+   master must have read, write, and delete access to the bucket. For example, when launching `GKE
+   nodes <https://cloud.google.com/sdk/gcloud/reference/container/node-pools/create>`__ you need to
+   specify ``--scopes=storage-full`` to configure proper GCS access.
 
 Default Pod Specs (Optional)
 ============================
@@ -179,10 +181,9 @@ Default Password (Optional)
 ===========================
 
 Unless otherwise specified, the pre-existing users, ``admin`` and ``determined``, do not have
-passwords associated with their accounts. You can set a default password for the ``determined``
-and ``admin`` accounts if preferred or needed. This password will not affect any other user account.
-For additional information on managing users in determined, see the :ref:`topic guide on users
-<users>`.
+passwords associated with their accounts. You can set a default password for the ``determined`` and
+``admin`` accounts if preferred or needed. This password will not affect any other user account. For
+additional information on managing users in determined, see the :ref:`topic guide on users <users>`.
 
 Database (Optional)
 ===================
@@ -219,8 +220,8 @@ cluster.
    Kubernetes cluster. All communication with the master will be encrypted. Communication between
    task containers (distributed training) will not be encrypted. To configure this option create a
    Kubernetes TLS secret within the namespace where Determined is being installed and set
-   ``tlsSecret`` to be the name of this secret. You also need to set ``useNodePortForMaster``
-   to ``true``. After the NodePort service is created, you can configure an Ingress to forward TLS
+   ``tlsSecret`` to be the name of this secret. You also need to set ``useNodePortForMaster`` to
+   ``true``. After the NodePort service is created, you can configure an Ingress to forward TLS
    encrypted data to the NodePort service.
 
 An example of how to configure an Ingress, which will perform TLS termination in the load-balancer
@@ -298,7 +299,7 @@ is necessary to use ``kubectl``. Tolerations can be added to Pods by including t
 field in the Pod specification.
 
 ``kubectl`` Taints
-^^^^^^^^^^^^^^^^^^
+------------------
 
 To taint a node with kubectl, use ``kubectl taint nodes``.
 
@@ -314,7 +315,7 @@ As an example, the following snippet taints nodes named ``node-1`` to not be sch
    kubectl taint nodes node-1 accelerator=gpu:NoSchedule
 
 ``kubectl`` Tolerations
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 To specify a toleration, use the ``toleration`` field in the PodSpec.
 
@@ -346,9 +347,9 @@ The next example is a toleration for when a node has the ``gpu`` taint type.
          operator: "Exists"
          effect: "NoSchedule"
 
-***********************
+********************
  Install Determined
-***********************
+********************
 
 Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml``, Determined is
 ready to be installed. To install Determined run:
@@ -359,10 +360,10 @@ ready to be installed. To install Determined run:
 
 ``determined-helm-chart`` is a relative path to where the :download:`Determined Helm Chart
 </helm/determined-latest.tgz>` is located. It may take a few minutes for all resources to come up.
-If you encounter issues during installation, refer to the list of :ref:`useful kubectl
-commands <useful-kubectl-commands>`. Helm will install Determined within the default namespace. If
-you wish to install Determined into a non-default namespace, add ``-n <namespace name>`` to the
-command shown above.
+If you encounter issues during installation, refer to the list of :ref:`useful kubectl commands
+<useful-kubectl-commands>`. Helm will install Determined within the default namespace. If you wish
+to install Determined into a non-default namespace, add ``-n <namespace name>`` to the command shown
+above.
 
 Once the installation has completed, instructions will be displayed for discovering the IP address
 assigned to the Determined master. The IP address can also be discovered by running ``kubectl get
@@ -375,9 +376,9 @@ You may be trying to install a non-released version of Determined or a version i
 without the right secret. See the documentation on how to configure which :ref:`version of
 Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
 
-**********************
+********************
  Upgrade Determined
-**********************
+********************
 
 To upgrade Determined or to change a configuration setting, first make the appropriate changes in
 ``values.yaml`` and ``Chart.yaml``, and then run:
@@ -390,9 +391,9 @@ Before upgrading Determined, consider pausing all active experiments. Any experi
 active when the Determined master restarts will resume training after the upgrade, but will be
 rolled back to their most recent checkpoint.
 
-*************************
+**********************
  Uninstall Determined
-*************************
+**********************
 
 To uninstall Determined run:
 
@@ -407,12 +408,9 @@ To uninstall Determined run:
    # pause all experiments prior to upgrading or uninstalling Determined.
    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
-**********
-Next Steps
-**********
+************
+ Next Steps
+************
 
-:doc:`custom-pod-specs`
-:doc:`k8s-dev-guide`
-:doc:`setup-aks-cluster`
-:doc:`setup-eks-cluster`
+:doc:`custom-pod-specs` :doc:`k8s-dev-guide` :doc:`setup-aks-cluster` :doc:`setup-eks-cluster`
 :doc:`setup-gke-cluster`

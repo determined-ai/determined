@@ -1,24 +1,29 @@
-############################
+#############
  Basic Setup
-############################
+#############
 
-This describes the basic steps for setting up your training environment, which can be a local development machine, an on-premise GPU cluster, or cloud resources.
+This describes the basic steps for setting up your training environment, which can be a local
+development machine, an on-premise GPU cluster, or cloud resources.
 
-************************************************
-Step 1 - Set ``DET_MASTER`` Environment Variable
-************************************************
+**************************************************
+ Step 1 - Set ``DET_MASTER`` Environment Variable
+**************************************************
 
-Set the ``DET_MASTER`` environment variable, which is the network address of the Determined master. You can override the value in the command line using the ``-m`` option.
+Set the ``DET_MASTER`` environment variable, which is the network address of the Determined master.
+You can override the value in the command line using the ``-m`` option.
 
-***************************************
-Step 2 - Install the Determined CLI
-***************************************
+*************************************
+ Step 2 - Install the Determined CLI
+*************************************
 
-The Determined CLI is a command line tool that lets you launch new experiments and interact with a Determined cluster. The CLI can be installed on any machine you want to use to access Determined. To install the CLI, follow the :ref:`installation <install-cli>` instructions.
+The Determined CLI is a command line tool that lets you launch new experiments and interact with a
+Determined cluster. The CLI can be installed on any machine you want to use to access Determined. To
+install the CLI, follow the :ref:`installation <install-cli>` instructions.
 
-The ``-m`` or ``--master`` flag determines the network address of the Determined master that the CLI connects to. If this flag is not specified, the value of the ``DET_MASTER`` environment variable is used; if
-that environment variable is not set, the default address is ``localhost``. The master address can
-be specified in three different formats:
+The ``-m`` or ``--master`` flag determines the network address of the Determined master that the CLI
+connects to. If this flag is not specified, the value of the ``DET_MASTER`` environment variable is
+used; if that environment variable is not set, the default address is ``localhost``. The master
+address can be specified in three different formats:
 
 -  ``example.org:port`` (if ``port`` is omitted, it defaults to ``8080``)
 -  ``http://example.org:port`` (if ``port`` is omitted, it defaults to ``80``)
@@ -46,19 +51,20 @@ Examples:
    # Set default Determined master address to example.org, port 8888.
    $ export DET_MASTER="example.org:8888"
 
-***************************************
-Step 3 - Set up Internet Access
-***************************************
+*********************************
+ Step 3 - Set up Internet Access
+*********************************
 
 -  The Determined Docker images are hosted on Docker Hub. Determined agents need access to Docker
    Hub for such tasks as building new images for user workloads.
 
 -  If packages, data, or other resources needed by user workloads are hosted on the public Internet,
-   Determined agents need to be able to access them. Note that agents can be :ref:`configured
-   to use proxies <agent-network-proxy>` when accessing network resources.
+   Determined agents need to be able to access them. Note that agents can be :ref:`configured to use
+   proxies <agent-network-proxy>` when accessing network resources.
 
--  For best performance, it is recommended that the Determined master and agents use the same physical
-   network or VPC. When using VPCs on a public cloud provider, additional steps might need to be taken to ensure that instances in the VPC can access the Internet:
+-  For best performance, it is recommended that the Determined master and agents use the same
+   physical network or VPC. When using VPCs on a public cloud provider, additional steps might need
+   to be taken to ensure that instances in the VPC can access the Internet:
 
    -  On GCP, the instances need to have an external IP address, or a `GCP Cloud NAT
       <https://cloud.google.com/nat/docs/overview>`_ should be configured for the VPC.
@@ -69,9 +75,9 @@ Step 3 - Set up Internet Access
 
 .. _firewall-rules:
 
-***************************************
-Step 4 - Set up Firewall Rules
-***************************************
+********************************
+ Step 4 - Set up Firewall Rules
+********************************
 
 The firewall rules must satisfy the following network access requirements for the master and agents.
 
@@ -92,7 +98,8 @@ Agents
 -  Outbound TCP from all ports on the agent to the master's network port.
 
 -  Outbound TCP to the services that host the Docker images, packages, data, and other resources
-   that need to be accessed by user workloads. For example, if your data is stored on Amazon S3, ensure the firewall rules allow access to this data.
+   that need to be accessed by user workloads. For example, if your data is stored on Amazon S3,
+   ensure the firewall rules allow access to this data.
 
 -  Inbound and outbound TCP on all ports to and from each Determined agent. The details are as
    follows:
@@ -116,11 +123,14 @@ Agents
    -  Each notebook uses a port in the range 2900–3199
    -  Each shell uses a port in the range 3200–3599
 
-***************************************
-Step 5 - Transfer the Context Directory
-***************************************
+*****************************************
+ Step 5 - Transfer the Context Directory
+*****************************************
 
-Use the ``-c <directory>`` option to transfer files from a directory on your local machine, called the context directory, to the container. The context directory contents are placed in the container working directory before the command or shell run. Files in the context can be accessed using relative paths.
+Use the ``-c <directory>`` option to transfer files from a directory on your local machine, called
+the context directory, to the container. The context directory contents are placed in the container
+working directory before the command or shell run. Files in the context can be accessed using
+relative paths.
 
 .. code::
 
@@ -128,21 +138,25 @@ Use the ``-c <directory>`` option to transfer files from a directory on your loc
    $ echo 'print("hello world")' > context/run.py
    $ det cmd run -c context python run.py
 
-The total size of the files in the context directory must be less than 95 MB. Larger files, such as datasets, must be mounted into the container, downloaded after the container starts, or included in a :ref:`custom Docker image <custom-docker-images>`.
+The total size of the files in the context directory must be less than 95 MB. Larger files, such as
+datasets, must be mounted into the container, downloaded after the container starts, or included in
+a :ref:`custom Docker image <custom-docker-images>`.
 
 .. _install-cluster:
 
-***************************************
-Step 6 - Install the Determined Cluster
-***************************************
+*****************************************
+ Step 6 - Install the Determined Cluster
+*****************************************
 
-A Determined cluster comprises a master and one or more agents. The cluster can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), on-premise, or on a local development machine.
+A Determined cluster comprises a master and one or more agents. The cluster can be installed on
+Amazon Web Services (AWS), Google Cloud Platform (GCP), on-premise, or on a local development
+machine.
 
 .. _cluster-configuration:
 
-***************************************
-Step 7 - Configure the Cluster
-***************************************
+********************************
+ Step 7 - Configure the Cluster
+********************************
 
 Common configuration reference: :doc:`/reference/reference-deploy/config/common-config-options`
 
@@ -151,7 +165,7 @@ Master configuration reference: :doc:`/reference/reference-deploy/config/master-
 Agent configuration reference: :doc:`/reference/reference-deploy/config/agent-config-reference`
 
 Basic Configuration
-======================
+===================
 
 The behavior of the master and agent can be controlled by setting configuration variables; this can
 be done using a configuration file, environment variables, or command-line options. Although values

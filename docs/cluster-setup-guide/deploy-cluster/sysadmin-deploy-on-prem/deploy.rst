@@ -31,9 +31,9 @@ Install ``determined`` python package by running
 
 .. _configuring-cluster-install:
 
-**************************************
+*********************************
  Configure and Start the Cluster
-**************************************
+*********************************
 
 A configuration file is needed to set important values in the master, such as where to save model
 checkpoints. For information about how to create a configuration file, see
@@ -46,7 +46,7 @@ checkpoints. For information about how to create a configuration file, see
    those services do not need to be set.
 
 Deploy a Single-Node Cluster
-===============================
+============================
 
 For local development or small clusters (such as a GPU workstation), you may wish to install both a
 master and an agent on the same node. To do this, run one of the following commands:
@@ -96,7 +96,7 @@ If you want to create more than one agent locally, you can use:
    det deploy local cluster-up --agents <number of agents>
 
 Stop a Single-Node Cluster
-==============================
+==========================
 
 To stop a Determined cluster, on the machine where a Determined cluster is currently running, run
 
@@ -110,7 +110,7 @@ To stop a Determined cluster, on the machine where a Determined cluster is curre
    agent-up``. To remove these agents, use ``det deploy local agent-down``.
 
 Deploy a Standalone Master
-=============================
+==========================
 
 In many cases, your Determined cluster will consist of multiple nodes. In this case you will need to
 start a master and agents separately. In order to start a standalone master, run:
@@ -132,7 +132,7 @@ To stop a running master, run:
    det deploy local master-down
 
 Deploy Agents
-================
+=============
 
 To deploy a standalone agent on a machine, run one of the following commands:
 

@@ -25,7 +25,7 @@ If you are using an existing PostgreSQL installation, we recommend confirming th
 ``max_connections`` is at least 96, which is sufficient for Determined.
 
 Run PostgreSQL in Docker
-----------------------------
+------------------------
 
 #. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
 
@@ -56,7 +56,7 @@ Run PostgreSQL in Docker
    interface, pass ``-p 127.0.0.1:5432:5432`` instead of ``-p 5432:5432``.
 
 Install PostgreSQL using ``apt`` or ``yum``
---------------------------------------------
+-------------------------------------------
 
 #. Install PostgreSQL 10.
 
@@ -120,9 +120,9 @@ Master and Agent
    each agent machine and, if the machine has GPUs, ensure that the :ref:`Nvidia Container Toolkit
    <validate-nvidia-container-toolkit>` is working as expected.
 
-**************************************
+*********************************
  Configure and Start the Cluster
-**************************************
+*********************************
 
 #. Ensure that an instance of PostgreSQL is running and accessible from the machine where the master
    will be run.
@@ -196,9 +196,9 @@ Master and Agent
 
 .. _socket-activation:
 
-*****************
-Socket Activation
-*****************
+*******************
+ Socket Activation
+*******************
 
 The master can be configured to use `systemd socket activation
 <https://0pointer.de/blog/projects/socket-activation.html>`__, allowing it to be started
@@ -243,9 +243,9 @@ See the systemd documentation on `socket unit files
 <https://www.freedesktop.org/software/systemd/man/systemd.socket.html>`__ or `systemctl
 <https://www.freedesktop.org/software/systemd/man/systemctl.html>`__ for more information.
 
-**********************
+********************
  Manage the Cluster
-**********************
+********************
 
 To configure a service to start running automatically when its machine boots up, run ``sudo
 systemctl enable <service>``, where the service is ``determined-master`` or ``determined-agent``.

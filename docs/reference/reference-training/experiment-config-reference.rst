@@ -1,9 +1,10 @@
 .. _experiment-config-reference:
+
 .. _experiment-configuration:
 
-###################################
+####################################
  Experiment Configuration Reference
-###################################
+####################################
 
 The behavior of an experiment can be configured via a YAML file. A configuration file is typically
 passed as a command-line argument when an experiment is created with the Determined CLI. For
@@ -63,21 +64,29 @@ example:
 
 ``entrypoint``
 
-A model definition trial class specification or Python launcher script, which is the model processing entrypoint. This field can have the following formats.
+A model definition trial class specification or Python launcher script, which is the model
+processing entrypoint. This field can have the following formats.
 
 Formats that specify a trial class have the form ``<module>:<object_reference>``.
 
-The ``<module>`` field specifies the module containing the trial class in the model definition, relative to root.
+The ``<module>`` field specifies the module containing the trial class in the model definition,
+relative to root.
 
-The ``<object_reference>`` specifies the trial class name in the module, which can be a nested object delimited by a period (``.``).
+The ``<object_reference>`` specifies the trial class name in the module, which can be a nested
+object delimited by a period (``.``).
 
 Examples:
 
--  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level of the context directory.
--  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at the top level of the context directory.
--  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
+-  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
+   of the context directory.
+-  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
+   the top level of the context directory.
+-  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an
+   attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
 
-These formats follow Python `Entry points <https://packaging.python.org/specifications/entry-points/>`_ specification except that the context directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
+These formats follow Python `Entry points
+<https://packaging.python.org/specifications/entry-points/>`_ specification except that the context
+directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
 
 Arbitrary Script
 ================

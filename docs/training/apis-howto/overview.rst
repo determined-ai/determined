@@ -12,8 +12,8 @@ way, Determined is able to run the training loop and provide advanced training a
 capabilities.
 
 Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
-configuration </reference/reference-training/experiment-config-reference>` to configure how Determined should train the model
-- e.g. multi-GPU, hyperparameter search, etc.
+configuration </reference/reference-training/experiment-config-reference>` to configure how
+Determined should train the model - e.g. multi-GPU, hyperparameter search, etc.
 
 If you have existing model code that you'd like to train with Determined, continue to one of the API
 docs below depending on your ML Framework.
@@ -25,9 +25,9 @@ docs below depending on your ML Framework.
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
 If you'd like a review of implementing the Determined APIs on example models, please take a look
-   at our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an existing model
-   that already runs on Determined, take a look at our :doc:`examples </example-solutions/examples>` to see if the
-   model you'd like to train is already available.
+   at our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
+   existing model that already runs on Determined, take a look at our :doc:`examples
+   </example-solutions/examples>` to see if the model you'd like to train is already available.
 
 ********************
  TensorFlow Support
@@ -36,8 +36,9 @@ If you'd like a review of implementing the Determined APIs on example models, pl
 TensorFlow Core Models
 ======================
 
-Determined has support for TensorFlow models that use the :doc:`/training/apis-howto/api-keras-ug` or
-:doc:`/training/apis-howto/api-estimator-ug` APIs. For models that use the low-level TensorFlow Core APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
+Determined has support for TensorFlow models that use the :doc:`/training/apis-howto/api-keras-ug`
+or :doc:`/training/apis-howto/api-estimator-ug` APIs. For models that use the low-level TensorFlow
+Core APIs, we recommend wrapping your model in Keras, as recommended by the official `TensorFlow
 <https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
 
 TensorFlow 1 vs 2

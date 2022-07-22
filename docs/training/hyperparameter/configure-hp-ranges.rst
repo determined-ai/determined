@@ -1,6 +1,6 @@
-###################################
+#################################
  Configure Hyperparameter Ranges
-###################################
+#################################
 
 The first step toward automatic hyperparameter tuning is to define the hyperparameter space, e.g.,
 by :ref:`listing the decisions <topic-guides_hp-tuning-basics-example-hyperparameters>` that may
@@ -21,8 +21,10 @@ Determined supports the following searchable hyperparameter data types:
 
 -  ``int``: an integer within a range
 -  ``double``: a floating point number within a range
--  ``log``: a logarithmically scaled floating point number---users specify a ``base`` and Determined searches the space of `exponents` within a range
--  ``categorical``: a variable that can take on a value within a specified set of values---the values themselves can be of any type
+-  ``log``: a logarithmically scaled floating point number---users specify a ``base`` and Determined
+   searches the space of `exponents` within a range
+-  ``categorical``: a variable that can take on a value within a specified set of values---the
+   values themselves can be of any type
 
 The :ref:`experiment configuration reference <experiment-configuration_hyperparameters>` details
 these data types and their associated options.

@@ -1,8 +1,8 @@
 .. _agent-config-reference:
 
-##############################
+###############################
  Agent Configuration Reference
-##############################
+###############################
 
 -  ``config_file``: Path to the agent configuration file. Normally this should only be set via an
    environment variable or command-line option. Defaults to ``/etc/determined/agent.yaml``.

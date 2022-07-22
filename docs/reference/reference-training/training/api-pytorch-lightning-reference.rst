@@ -8,9 +8,9 @@
 | :doc:`/training/apis-howto/api-pytorch-lightning-ug` |
 +------------------------------------------------------+
 
-*************************************************
-``determined.pytorch.lightning.LightningAdapter``
-*************************************************
+***************************************************
+ ``determined.pytorch.lightning.LightningAdapter``
+***************************************************
 
 .. autoclass:: determined.pytorch.lightning.LightningAdapter
    :members:

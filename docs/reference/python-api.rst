@@ -6,60 +6,64 @@
 
 You can interact with a Determined cluster with the Python API.
 
-The client module exposes many of the same capabilities as the det CLI tool directly to Python code with an object-oriented interface.
+The client module exposes many of the same capabilities as the det CLI tool directly to Python code
+with an object-oriented interface.
 
-***************************
-Experiment Workflow Example
-***************************
+*****************************
+ Experiment Workflow Example
+*****************************
 
-As a simple example, let’s walk through the most basic workflow for creating an experiment, waiting for it to complete, and finding the top-performing checkpoint.
+As a simple example, let’s walk through the most basic workflow for creating an experiment, waiting
+for it to complete, and finding the top-performing checkpoint.
 
 The first step is to import the client module and possibly to call login():
 
-.. code-block:: python
+.. code:: python
 
-    from determined.experimental import client
+   from determined.experimental import client
 
-    # We will assume that you have called `det user login`, so this is unnecessary:
-    # client.login(master=..., user=..., password=...)
+   # We will assume that you have called `det user login`, so this is unnecessary:
+   # client.login(master=..., user=..., password=...)
 
 The next step is to call create_experiment():
 
-.. code-block:: python
+.. code:: python
 
-    # config can be a path to a config file or a python dict of the config.
-    exp = client.create_experiment(config="my_config.yaml", model_dir=".")
-    print(f"started experiment {exp.id}")
+   # config can be a path to a config file or a python dict of the config.
+   exp = client.create_experiment(config="my_config.yaml", model_dir=".")
+   print(f"started experiment {exp.id}")
 
-The returned object will be an ExperimentReference which has methods for controlling the lifetime of the experiment running on the cluster. In this example, we will just wait for the experiment to complete.
+The returned object will be an ExperimentReference which has methods for controlling the lifetime of
+the experiment running on the cluster. In this example, we will just wait for the experiment to
+complete.
 
-.. code-block:: python
+.. code:: python
 
-    exit_status = exp.wait()
-    print(f"experiment completed with status {exit_status}")
+   exit_status = exp.wait()
+   print(f"experiment completed with status {exit_status}")
 
 Now that the experiment has completed, you can grab the top-performing checkpoint from training:
 
-.. code-block:: python
+.. code:: python
 
-    best_checkpoint = exp.top_checkpoint()
-    print(f"best checkpoint was {best_checkpoint.uuid}")
+   best_checkpoint = exp.top_checkpoint()
+   print(f"best checkpoint was {best_checkpoint.uuid}")
 
 .. _python-api-reference:
 
-***************************
+**********************
  Python API Reference
-***************************
+**********************
 
 ``Client``
-============
+==========
 
 .. automodule:: determined.experimental.client
    :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models
    :member-order: bysource
 
 ``Checkpoint``
-================
+==============
 
 .. autoclass:: determined.experimental.client.Checkpoint
    :members:
@@ -67,7 +71,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``Determined``
-================
+==============
 
 .. autoclass:: determined.experimental.client.Determined
    :members:
@@ -75,7 +79,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``ExperimentReference``
-=========================
+=======================
 
 .. autoclass:: determined.experimental.client.ExperimentReference
    :members:
@@ -83,7 +87,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``Model``
-===========
+=========
 
 .. autoclass:: determined.experimental.client.Model
    :members:
@@ -91,7 +95,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``ModelOrderBy``
-==================
+================
 
 .. autoclass:: determined.experimental.client.ModelOrderBy
    :members:
@@ -99,7 +103,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``ModelSortBy``
-=================
+===============
 
 .. autoclass:: determined.experimental.client.ModelSortBy
    :members:
@@ -107,7 +111,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    :member-order: bysource
 
 ``TrialReference``
-====================
+==================
 
 .. autoclass:: determined.experimental.client.TrialReference
    :members:

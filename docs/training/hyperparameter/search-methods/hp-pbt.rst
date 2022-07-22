@@ -1,8 +1,8 @@
 .. _topic-guides_hp-tuning-det_pbt:
 
-##################################################
-Population-based Training Method
-##################################################
+##################################
+ Population-based Training Method
+##################################
 
 Population-based training (PBT) is loosely based on genetic algorithms; see the original `paper
 <https://arxiv.org/abs/1711.09846>`__ or `blog post
@@ -12,9 +12,9 @@ well, because the performance of a model as a function of the hyperparameters is
 continuity. The algorithm works by repeatedly replacing low-performing hyperparameter configurations
 with modified versions of high-performing ones.
 
-*************
+************
  Quickstart
-*************
+************
 
 A typical set of configuration values for PBT:
 

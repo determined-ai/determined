@@ -52,9 +52,9 @@ We suggest you follow along with the code as you read through this tutorial.
    connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
    hostname or IP address where Determined is running.
 
-***********************************
+********************************
  Build a ``PyTorchTrial`` Class
-***********************************
+********************************
 
 Here is what the skeleton of our trial class looks like:
 
@@ -144,7 +144,7 @@ can be accessed via the :func:`~determined.TrialContext.get_hparam` method of th
        )
 
 Load Data
-============
+=========
 
 The next two methods we need to define are ``build_training_data_loader`` and
 ``build_validation_data_loader``. Determined uses these methods to load the training and validation
@@ -179,7 +179,7 @@ datasets, respectively. Both methods should return a :ref:`determined.pytorch.Da
        )
 
 Define ``train_batch``
-========================
+======================
 
 The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is passed a single batch of data
 from the validation data set; it should run the forward passes on the models, the backward passes on
@@ -205,7 +205,7 @@ the gradients and there will be no need to call ``optim.zero_grad()``.
        return {"loss": loss}
 
 Define ``evaluate_batch``
-===========================
+=========================
 
 The :func:`~determined.pytorch.PyTorchTrial.evaluate_batch` method is passed a single batch of data
 from the validation data set; it should compute the user-defined validation metrics on that data,
@@ -228,16 +228,16 @@ default, metric values are averaged but this behavior can be customized by overr
 
        return {"validation_loss": validation_loss, "accuracy": accuracy}
 
-********************
+*****************
  Train the Model
-********************
+*****************
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single
-instance of the model or to do a hyperparameter search. In Determined, a trial
-is a training task that consists of a dataset, a deep learning model, and values
-for all of the model's hyperparameters. An experiment is a collection of
-one or more trials: an experiment can either train a single model (with a single trial), or can
-define a search over a user-defined hyperparameter space.
+instance of the model or to do a hyperparameter search. In Determined, a trial is a training task
+that consists of a dataset, a deep learning model, and values for all of the model's
+hyperparameters. An experiment is a collection of one or more trials: an experiment can either train
+a single model (with a single trial), or can define a search over a user-defined hyperparameter
+space.
 
 To create an experiment, we start by writing a configuration file that defines the kind of
 experiment we want to run. In this case, we want to train a single model for a single epoch, using
@@ -272,9 +272,9 @@ because our trial class is named ``MNistTrial`` and it is defined in a Python fi
 For more information on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.
 
-***********************
+*******************
  Run an Experiment
-***********************
+*******************
 
 The Determined CLI can be used to create a new experiment, which will immediately start running on
 the cluster. To do this, we run:
@@ -296,9 +296,9 @@ Once the experiment is started, you will see a notification:
    Preparing files (.../mnist_pytorch) to send to master... 2.5KB and 4 files
    Created experiment xxx
 
-**********************
+********************
  Evaluate the Model
-**********************
+********************
 
 Model evaluation is done automatically for you by Determined. To access information on both training
 and validation performance, simply go to the WebUI by entering the address of the Determined master

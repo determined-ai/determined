@@ -11,9 +11,9 @@ experiment or to compare multiple experiments.
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
-***********************
+*********************
  Analyze Experiments
-***********************
+*********************
 
 To launch TensorBoard to analyze a single Determined experiment, use ``det tensorboard start
 <experiment-id>``:
@@ -50,9 +50,9 @@ experiments use ``det tensorboard start <experiment-id> <experiment-id> ...``.
    available after a trial workload is completed. TensorBoard pulls metrics from persistent storage.
    It may take up to 5 minutes for TensorBoard to receive data and render visualizations.
 
-**************************
+************************
  Customize TensorBoards
-**************************
+************************
 
 Determined supports initializing TensorBoard with a YAML configuration file. For example, this
 feature can be useful for running TensorBoard with a specific container image or for enabling access
@@ -75,9 +75,9 @@ To launch Tensorboard with a config file, use ``det tensorboard start <experimen
 To view the configuration of a running Tensorboard instance, use ``det tensorboard config
 <tensorboard_id>``.
 
-***************************
+*************************
  Analyze Specific Trials
-***************************
+*************************
 
 Determined also supports using TensorBoard to analyze specific trials from one or more experiments.
 This can be useful if an experiment has many trials but you would like to only compare a small
@@ -109,9 +109,9 @@ Determined-supported ``logdir`` is ``/tmp/tensorboard``. All tfevent files writt
 ``/tmp/tensorboard`` in a trial are uploaded to persistent storage when a trial is configured with
 Determined TensorBoard support.
 
-************************
-Determined Batch Metrics
-************************
+**************************
+ Determined Batch Metrics
+**************************
 
 At the end of every training workload, batch metrics are collected and stored in the database,
 providing a granular view of model metrics over time. Batch metrics will appear in TensorBoard under
@@ -152,8 +152,8 @@ which Determined then moves to ``/tmp/tensorboard``.
 PyTorch
 =======
 
-To add TensorBoard support for models that use the :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>`,
-use the ``writer`` field in an instance of the
+To add TensorBoard support for models that use the :doc:`PyTorch API
+</training/apis-howto/api-pytorch-ug>`, use the ``writer`` field in an instance of the
 :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter` class:
 
 .. code:: python

@@ -1,8 +1,8 @@
 .. _master-config-reference:
 
-###############################
+################################
  Master Configuration Reference
-###############################
+################################
 
 The Determined master supports a range of configuration settings that can be set via a :ref:`YAML
 configuration file <topic-guides_yaml>`, environment variables, or command-line options. The
@@ -104,8 +104,9 @@ The master supports the following configuration settings:
 
 -  ``cache``: Configuration for file cache.
 
-   -  ``cache_dir``: Specifies the root directory for file cache. Defaults to ``/var/cache/determined``.
-      Note that the master would break on startup if it does not have access to create this default directory.
+   -  ``cache_dir``: Specifies the root directory for file cache. Defaults to
+      ``/var/cache/determined``. Note that the master would break on startup if it does not have
+      access to create this default directory.
 
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 

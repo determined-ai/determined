@@ -1,17 +1,17 @@
 :orphan:
 
-##########################
-Introduction to Determined
-##########################
+############################
+ Introduction to Determined
+############################
 
 .. _features:
 
-********
-Features
-********
+**********
+ Features
+**********
 
 Interactive Job Configuration
-==============================
+=============================
 
 The behavior of interactive jobs, such as :ref:`TensorBoards <tensorboards>`, :ref:`notebooks
 <notebooks>`, :ref:`commands, and shells <commands-and-shells>`, can be influenced by setting a
@@ -28,7 +28,7 @@ Options set via ``--config`` take precedence over values specified in the config
 Configuration settings are compatible with any Determined task unless otherwise specified.
 
 Commands and Shells
-==============================
+===================
 
 In addition to structured model training workloads, which are handled using :ref:`experiments
 <experiments>`, Determined also supports more free-form tasks using *commands* and *shells*.
@@ -45,7 +45,7 @@ This document provides an overview of the most common CLI commands related to sh
 see :ref:`cli` for full documentation.
 
 Configuration Templates
-==============================
+=======================
 
 At a typical organization, many Determined configuration files will contain similar settings. For
 example, all of the training workloads run at a given organization might use the same checkpoint
@@ -64,7 +64,7 @@ A single configuration file can use at most one configuration template. A config
 cannot itself use another configuration template.
 
 Queue Management
-==============================
+================
 
 The Determined Queue Management system extends scheduler functionality to offer better visibility
 and control over scheduling decisions. It does this using the Job Queue, which provides better
@@ -79,7 +79,7 @@ To begin managing job queues, navigate to the WebUI ``Job Queue`` section or use
 of CLI commands.
 
 Model Registry
-==============================
+==============
 
 The Model Registry is a way to group together conceptually related checkpoints (including ones
 across different experiments), storing metadata and longform notes about a model, and retrieving the
@@ -98,7 +98,7 @@ For more information about how to use the model registry, see `Organizing Models
 Registry <../post-training/model-registry.html>`_
 
 Notebooks
-==============================
+=========
 
 `Jupyter Notebooks <https://jupyter.org/>`__ are a convenient way to develop and debug machine
 learning models, visualize the behavior of trained models, or even manage the training lifecycle of
@@ -124,7 +124,7 @@ Determined Notebooks have the following benefits:
    shut down automatically so you need to manually terminate the kernels.
 
 TensorBoards
-==============================
+============
 
 `TensorBoard <https://www.tensorflow.org/tensorboard>`__ is a widely used tool for visualizing and
 inspecting deep learning models. Determined makes it easy to use TensorBoard to examine a single
@@ -133,13 +133,15 @@ experiment or to compare multiple experiments.
 TensorBoard instances can be launched via the WebUI or the CLI. To launch TensorBoard instances from
 the CLI, first :ref:`install the CLI <install-cli>` on your development machine.
 
-********
-Benefits
-********
+**********
+ Benefits
+**********
 
-Determined is a deep learning training platform that simplifies infrastructure management
-for domain experts while enabling configuration-based deep learning functionality that engineering-oriented practitioners might find inconvenient to implement. The Determined cohesive, end-to-end training platform provides
-best-in-class functionality for deep learning model training, including the following benefits:
+Determined is a deep learning training platform that simplifies infrastructure management for domain
+experts while enabling configuration-based deep learning functionality that engineering-oriented
+practitioners might find inconvenient to implement. The Determined cohesive, end-to-end training
+platform provides best-in-class functionality for deep learning model training, including the
+following benefits:
 
 +------------------------------------------------+----------------------------------------------+
 | Implementation                                 | Benefit                                      |
@@ -153,8 +155,8 @@ best-in-class functionality for deep learning model training, including the foll
 |                                                | :doc:`/training/hyperparameter/overview`.    |
 +------------------------------------------------+----------------------------------------------+
 | Cluster-backed notebooks, commands, and shells | Leverage your shared cluster computing       |
-|                                                | devices in a more versatile environment.     |
-|                                                | See :doc:`/interfaces/notebooks` and         |
+|                                                | devices in a more versatile environment. See |
+|                                                | :doc:`/interfaces/notebooks` and             |
 |                                                | :doc:`/interfaces/commands-and-shells`.      |
 +------------------------------------------------+----------------------------------------------+
 | Cluster management                             | Automatically manage ML accelerators, such   |
@@ -210,19 +212,18 @@ best-in-class functionality for deep learning model training, including the foll
 |                                                | instances.                                   |
 +------------------------------------------------+----------------------------------------------+
 
-********
-Concepts
-********
+**********
+ Concepts
+**********
 
 .. _elastic-infrastructure:
 
 Elastic Infrastructure
-========================
+======================
 
 When running in a cloud environment, Determined can automatically provision and terminate GPU
 instances as the set of deep learning workloads on the cluster changes. This capability is called
-*elastic infrastructure*. The agents that are provisioned by the system are called *dynamic
-agents*.
+*elastic infrastructure*. The agents that are provisioned by the system are called *dynamic agents*.
 
 The diagram below outlines the high-level system architecture when using dynamic agents:
 
@@ -249,20 +250,21 @@ Following the diagram, the execution would be:
    instance type, but >60 seconds is typical.
 
 Experiment
-========================
+==========
 
-An *experiment* represents the basic unit of running the model training code. An experiment
-is a collection of one or more trials that are exploring a user-defined hyperparameter space. For
+An *experiment* represents the basic unit of running the model training code. An experiment is a
+collection of one or more trials that are exploring a user-defined hyperparameter space. For
 example, during a learning rate hyperparameter search, an experiment might consist of three trials
 with learning rates of .001, .01, and .1.
 
-To run experiments, you need to write your model training code. A *model definition*
-represents a specification of a deep learning model and its training procedure. It contains
-training code that implements :doc:`training APIs </training/apis-howto/overview>`.
+To run experiments, you need to write your model training code. A *model definition* represents a
+specification of a deep learning model and its training procedure. It contains training code that
+implements :doc:`training APIs </training/apis-howto/overview>`.
 
-For each experiment, you can configure a *searcher*, also known as a *search algorithm*. The
-search algorithm determines how many trials will be run for a particular experiment and how the
-hyperparameters will be set. More information can be found at :doc:`/training/hyperparameter/overview`.
+For each experiment, you can configure a *searcher*, also known as a *search algorithm*. The search
+algorithm determines how many trials will be run for a particular experiment and how the
+hyperparameters will be set. More information can be found at
+:doc:`/training/hyperparameter/overview`.
 
 .. _resource-pools:
 
@@ -285,9 +287,10 @@ When you configure a cluster, you set which pool is the default for auxiliary ta
 is the default for compute tasks. CPU-only tasks such as Tensorboards will run on the default
 auxiliary pool unless you specify that they should run in a different pool when launching the task.
 Tasks which require a slot, such as experiments or GPU-notebooks, will use the default compute pool
-unless otherwise specified. For this reason it is recommended that you always create a cluster with at
-least two pools, one with low-cost CPU instances for auxiliary tasks and one with GPU instances for
-compute tasks. This is the default setup when launching a cluster on AWS or GCP using ``det deploy``.
+unless otherwise specified. For this reason it is recommended that you always create a cluster with
+at least two pools, one with low-cost CPU instances for auxiliary tasks and one with GPU instances
+for compute tasks. This is the default setup when launching a cluster on AWS or GCP using ``det
+deploy``.
 
 Here are some scenarios where it can be valuable to use multiple resource pools:
 
@@ -328,7 +331,7 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
    sets and another pool that you use for training more mature models on large datasets.
 
 Limitations
-^^^^^^^^^^^
+-----------
 
 Currently resource pools are completely independent from each other so it is not possible to launch
 an experiment that tries to use one pool and then falls back to another one if a certain condition
@@ -343,19 +346,19 @@ with CPU-only instances), that task can never get scheduled. Currently that task
 PENDING permanently.
 
 Set up Resource Pools
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
-Resource pools are configured using the :ref:`master-config-reference`. For each resource pool, you can
-configure scheduler and provider information.
+Resource pools are configured using the :ref:`master-config-reference`. For each resource pool, you
+can configure scheduler and provider information.
 
 If you are using static resource pools and launching agents by hand, you will need to update the
 :ref:`agent-config-reference` to specify which resource pool the agent should join.
 
 Migrate to Resource Pools
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
-With the introduction of resource pools, the :ref:`master-config-reference` format has changed to a new
-format.
+With the introduction of resource pools, the :ref:`master-config-reference` format has changed to a
+new format.
 
 This is a backwards compatible change and cluster configurations in the old format will continue to
 work. A configuration in the old format is interpreted as a cluster with a single resource pool that
@@ -397,7 +400,11 @@ Here is an example master configuration illustrating the potential problem.
        scheduler:
          fitting_policy: worst
 
-This example sets the cluster-wide scheduler defaults to use a best-fit, round robin scheduler in ``resource_manager.scheduler``. The scheduler settings at the pool level for ``pool1`` are then overwritten. Because ``scheduler.fitting_policy=worst`` is set, no settings are inherited from ``resource_manager.scheduler`` so pool1 uses a worst-fit, fair share scheduler because for a blank ``scheduler.type`` field, the default value is ``fair_share``).
+This example sets the cluster-wide scheduler defaults to use a best-fit, round robin scheduler in
+``resource_manager.scheduler``. The scheduler settings at the pool level for ``pool1`` are then
+overwritten. Because ``scheduler.fitting_policy=worst`` is set, no settings are inherited from
+``resource_manager.scheduler`` so pool1 uses a worst-fit, fair share scheduler because for a blank
+``scheduler.type`` field, the default value is ``fair_share``).
 
 If you want to have ``pool1`` use a worst-fit, round robin scheduler, you need to make sure you
 redefine the scheduler type at the pool-specific level:
@@ -419,7 +426,7 @@ redefine the scheduler type at the pool-specific level:
          fitting_policy: worst
 
 Launch Tasks into Resource Pools
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 When creating a task, the job configuration file has a section called "resources". You can set the
 ``resource_pool`` subfield to specify the ``resource_pool`` that a task should be launched into.
@@ -441,14 +448,15 @@ slots (for example the "Launch CPU-only Notebook" button in the Web UI) will use
 Scheduling
 ==========
 
-This document covers the supported scheduling policies. The first section describes the native scheduling capabilities supported by Determined. The next section describes how Determined schedules tasks when running on Kubernetes.
+This document covers the supported scheduling policies. The first section describes the native
+scheduling capabilities supported by Determined. The next section describes how Determined schedules
+tasks when running on Kubernetes.
 
 Native Scheduler
-^^^^^^^^^^^^^^^^
+----------------
 
-Administrators can configure the desired scheduler in master configuration file. It is also
-possible to configure different scheduling behavior for different :ref:`resource pools
-<resource-pools>`.
+Administrators can configure the desired scheduler in master configuration file. It is also possible
+to configure different scheduling behavior for different :ref:`resource pools <resource-pools>`.
 
 Once the scheduling policy has been defined for the current master and/or resource pool, the
 scheduling behavior of an individual task is influenced by several task configuration values:
@@ -467,7 +475,7 @@ scheduling behavior of an individual task is influenced by several task configur
    priority.
 
 Fair-Share
-""""""""""
+^^^^^^^^^^
 
 The master allocates cluster resources (*slots*) among the active experiments using a weighted
 fair-share scheduling policy. Slots are divided among the active experiments according to the
@@ -477,26 +485,32 @@ six slots respectively. As new experiments become active or the resource demand 
 experiment changes, the scheduler will adjust how slots are allocated to experiments as appropriate.
 
 The behavior of the fair-share scheduler can be modified by changing the *weight* of a workload. A
-workload demand for slots is multiplied by the workload weight for scheduling purposes. A workload with a higher weight will be assigned proportionally more resources than a workload with lower weight. The default weight is ``1``. For example, in the scenario above, if the weight of the first experiment is set to 3 and the weight of the second experiment is set to 1, each experiment will be assigned four slots.
+workload demand for slots is multiplied by the workload weight for scheduling purposes. A workload
+with a higher weight will be assigned proportionally more resources than a workload with lower
+weight. The default weight is ``1``. For example, in the scenario above, if the weight of the first
+experiment is set to 3 and the weight of the second experiment is set to 1, each experiment will be
+assigned four slots.
 
 Task Priority
-"""""""""""""
+^^^^^^^^^^^^^
 
 The master allocates cluster resources (*slots*) to active tasks based on their *priority*.
 High-priority tasks are preferred to low-priority tasks. Low-priority tasks will be preempted to
 make space for pending high-priority tasks if possible. Tasks of equal priority are scheduled in the
 order in which they were created.
 
-By default, the priority scheduler does not use preemption. If preemption is enabled in the master configuration file, when a higher priority task is pending and cannot be scheduled
-because no idle resources are available, the scheduler will attempt to schedule it by preempting
-lower priority tasks, starting with the task with the lowest priority. If there are no tasks to
-preempt, lower priority tasks might be backfilled on the idle resources. When a trial is preempted,
-its state is checkpointed so that the progress of the trial is not lost. Enabling preemption ensures
-that cluster resources can be reallocated to high priority tasks more promptly and backfilled to
-make the most use of the idle resources; however, preemption can also result in additional overhead
-due to checkpointing low priority tasks, which might be expensive for some models.
+By default, the priority scheduler does not use preemption. If preemption is enabled in the master
+configuration file, when a higher priority task is pending and cannot be scheduled because no idle
+resources are available, the scheduler will attempt to schedule it by preempting lower priority
+tasks, starting with the task with the lowest priority. If there are no tasks to preempt, lower
+priority tasks might be backfilled on the idle resources. When a trial is preempted, its state is
+checkpointed so that the progress of the trial is not lost. Enabling preemption ensures that cluster
+resources can be reallocated to high priority tasks more promptly and backfilled to make the most
+use of the idle resources; however, preemption can also result in additional overhead due to
+checkpointing low priority tasks, which might be expensive for some models.
 
-Notebooks, tensorboards, shells, and commands are not preemptible. These tasks will continue to occupy cluster resources until they complete or are terminated.
+Notebooks, tensorboards, shells, and commands are not preemptible. These tasks will continue to
+occupy cluster resources until they complete or are terminated.
 
 The priority of any task can be changed after it is created using one of the following commands:
 
@@ -519,8 +533,8 @@ An example of priority scheduler behavior with preemption enabled:
 
 #. User submits a priority 1 distributed training experiment with slots_per_trial 4. 4 ASHA trials
    are preempted so the new distributed training experiment can run. Note that if preemption was not
-   enabled, the new experiment would not get scheduled until the ASHA experiment GPU demand
-   becomes <= 4.
+   enabled, the new experiment would not get scheduled until the ASHA experiment GPU demand becomes
+   <= 4.
 
 #. User starts a priority 3 notebook with resources.slots 1. The notebook has a lower priority than
    the two active experiments, so it will run as soon as the two active experiments collectively
@@ -540,20 +554,22 @@ An example of priority scheduler behavior with preemption enabled:
    priority 1 distributed training experiment starts running. Once that experiment is complete,
    distributed training experiment with priority 2 restarts.
 
-The priority scheduler can be used with the Determined job queue, which provides more insight
-into scheduling decisions.
+The priority scheduler can be used with the Determined job queue, which provides more insight into
+scheduling decisions.
 
 .. _scheduling-on-kubernetes:
 
 Scheduling with Kubernetes
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
-When using Determined on Kubernetes, Determined workloads, such as experiments, notebooks, and shells, are started by launching Kubernetes pods. The scheduling behavior that applies to those workloads depends on how the Kubernetes scheduler has been configured.
+When using Determined on Kubernetes, Determined workloads, such as experiments, notebooks, and
+shells, are started by launching Kubernetes pods. The scheduling behavior that applies to those
+workloads depends on how the Kubernetes scheduler has been configured.
 
 .. _gang-scheduling-on-kubernetes:
 
 Gang Scheduling
-"""""""""""""""
+^^^^^^^^^^^^^^^
 
 By default, the Kubernetes scheduler does not perform gang scheduling or support preemption of pods.
 While it does take pod priority into account, it greedily schedules pods without consideration for
@@ -616,7 +632,7 @@ a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 .. _priority-scheduling-on-kubernetes:
 
 Priority Scheduling with Preemption
-"""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Determined also makes available a priority scheduler that extends the Kubernetes scheduler to
 support preemption with backfilling. This plugin will preempt existing pods if higher priority pods
@@ -637,8 +653,9 @@ priorityClass will take precedence over the priority field. In Kubernetes, a hig
 means a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 
 Additionally, if using a cluster with tainted nodes or labels, users must specify the tolerations or
-node selectors in the ``pod_spec``. It is recommended that you use both tolerations and node selectors to better
-constrain where your experiments can run, especially on clusters that contain multiple GPU types.
+node selectors in the ``pod_spec``. It is recommended that you use both tolerations and node
+selectors to better constrain where your experiments can run, especially on clusters that contain
+multiple GPU types.
 
 Below is an example that illustrates how to set priorities, tolerations, and node selectors.
 
@@ -660,8 +677,8 @@ Below is an example that illustrates how to set priorities, tolerations, and nod
                value: "value"
                effect: "NoSchedule"
 
-The Kubernetes priority scheduler can be used with the Determined job queue feature, which
-allows more insight into scheduling decisions.
+The Kubernetes priority scheduler can be used with the Determined job queue feature, which allows
+more insight into scheduling decisions.
 
 .. _concept-trial:
 
@@ -681,7 +698,7 @@ at :doc:`/cluster-setup-guide/workspaces`.
 .. _topic-guides_yaml:
 
 YAML Configuration
-========================
+==================
 
 `YAML <https://yaml.org/>`__ is a markup language often used for configuration. Determined uses YAML
 for configuring tasks such as :ref:`experiments <experiment-config-reference>` and :ref:`notebooks
@@ -691,9 +708,11 @@ Determined. This is not a full description of YAML; see the `specification
 <https://yaml.org/spec/1.2/spec.html>`__ or other online guides for more details.
 
 YAML Types
-^^^^^^^^^^
+----------
 
-A value in YAML can be a ``null`` or number, string, or Boolean scalar, or an array or map collection. Collections can contain other collections nested to any depth, although, the Determined YAML files generally have a fixed structure.
+A value in YAML can be a ``null`` or number, string, or Boolean scalar, or an array or map
+collection. Collections can contain other collections nested to any depth, although, the Determined
+YAML files generally have a fixed structure.
 
 A comment in a YAML file starts with a ``#`` character and extends to the end of the line.
 
@@ -702,7 +721,7 @@ way of expressing JSON objects that is meant to be easier for humans to read and
 allows comments and has fewer markup characters around the content.
 
 Maps
-""""
+^^^^
 
 Maps represent unordered mappings from strings to YAML values. A map is written as a sequence of
 key-value pairs. Each key is followed by a colon and the corresponding value. The value can be on
@@ -724,7 +743,7 @@ The snippet above describes a map with one key, ``hyperparameters``; the corresp
 itself a map whose keys are ``base_learning_rate``, ``weight_cost``, etc.
 
 Arrays
-""""""
+^^^^^^
 
 An array contains multiple other YAML values in some order. An array is written as a sequence of
 values, each one preceded by a hyphen and a space. The hyphens for one list must all be indented by
@@ -741,7 +760,7 @@ An array is used in the experiment configuration to configure environment variab
        - C=C
 
 Scalars
-"""""""
+^^^^^^^
 
 Scalars generally behave naturally: ``null``, ``true``, ``2.718``, and ``"foo"`` all have the same
 meanings that they would in JSON (and many programming languages). However, YAML allows strings to
@@ -762,7 +781,7 @@ block represents a list containing several values whose types are listed in the 
    - foo bar       # string
 
 Example Experiment Configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 A Determined configuration file consists of a YAML object with a particular structure: a map at the
 top level that is expected to have certain keys, with the value for each key expected to have a
@@ -797,7 +816,7 @@ In this example experiment configuration, numbers, strings, maps, and an array a
        - C=C
 
 Reference
-^^^^^^^^^
+---------
 
 -  YAML: https://learnxinyminutes.com/docs/yaml/
 -  Validate YAML: http://www.yamllint.com/

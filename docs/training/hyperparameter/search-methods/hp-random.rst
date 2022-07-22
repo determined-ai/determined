@@ -1,8 +1,8 @@
 .. _topic-guides_hp-tuning-det_random:
 
-###############################
-Random Method
-###############################
+###############
+ Random Method
+###############
 
 The ``random`` search method generates ``max_trials`` trials with hyperparameters chosen uniformly
 at random from the configured hyperparameter space. Each trial is trained for the number of units
