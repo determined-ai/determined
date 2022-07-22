@@ -17,7 +17,7 @@ def get_neox_args(context):
     exp_config = context.get_experiment_config()
 
     # Gather overrides.
-    overwrite_values = args.pop("overwrite_values")
+    overwrite_values = args.pop("overwrite_values", {})
     # We are going to overwrite certain neox_args with determined config values
     # from the experiment config to ensure consistency.
     assert (
