@@ -39,6 +39,7 @@ const dev: TreeNode[] = [
         title: 'set',
       },
       {
+        closeBar: true,
         onAction: () => resetServerAddress(),
         title: 'reset',
       },
@@ -46,6 +47,7 @@ const dev: TreeNode[] = [
     title: 'serverAddress',
   },
   {
+    closeBar: true,
     onAction: () => window.localStorage.clear(),
     title: 'resetLocalStorage',
   },
