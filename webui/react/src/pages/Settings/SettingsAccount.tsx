@@ -1,19 +1,23 @@
-import { Button, Divider } from 'antd';
+import { Button, Divider, message } from 'antd';
 import React, { useCallback } from 'react';
 
+import InlineEditor from 'components/InlineEditor';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
-import useModalNameChange from 'hooks/useModal/UserSettings/useModalNameChange';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
+import { patchUser } from 'services/api';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import css from './SettingsAccount.module.scss';
 
+export const API_SUCCESS_MESSAGE = 'Display name updated.';
+export const API_ERROR_MESSAGE = 'Could not update display name.';
+
 const SettingsAccount: React.FC = () => {
   const { auth } = useStore();
-  const {
-    contextHolder: modalNameChangeContextHolder,
-    modalOpen: openChangeDisplayNameModal,
-  } = useModalNameChange();
+  const storeDispatch = useStoreDispatch();
+
   const {
     contextHolder: modalPasswordChangeContextHolder,
     modalOpen: openChangePasswordModal,
@@ -23,9 +27,19 @@ const SettingsAccount: React.FC = () => {
     openChangePasswordModal();
   }, [ openChangePasswordModal ]);
 
-  const handleDisplayNameClick = useCallback(() => {
-    openChangeDisplayNameModal();
-  }, [ openChangeDisplayNameModal ]);
+  const handleSave = useCallback(async (newValue: string) => {
+    try {
+      const user = await patchUser({
+        userId: auth.user?.id || 0,
+        userParams: { displayName: newValue },
+      });
+      storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+      message.success(API_SUCCESS_MESSAGE);
+    } catch (e) {
+      message.error(API_ERROR_MESSAGE);
+      handleError(e, { silent: true, type: ErrorType.Input });
+    }
+  }, [ auth.user ]);
 
   return (
     <div className={css.base}>
@@ -34,29 +48,23 @@ const SettingsAccount: React.FC = () => {
       </div>
       <Divider />
       <div className={css.row}>
-        <div className={css.info}>
-          <label>Display Name</label>
-          <span>{auth.user?.displayName}</span>
-        </div>
-        <Button onClick={handleDisplayNameClick}>
-          Change name
-        </Button>
+        <label>Username</label>
+        <div className={css.info}>{auth.user?.username}</div>
       </div>
       <Divider />
       <div className={css.row}>
-        <div className={css.info}>
-          <label>Username</label>
-          <span>{auth.user?.username}</span>
-        </div>
+        <label>Display Name</label>
+        <InlineEditor
+          placeholder="Add display name"
+          value={auth.user?.displayName || ''}
+          onSave={handleSave}
+        />
       </div>
       <Divider />
       <div className={css.row}>
         <label>Password</label>
-        <Button onClick={handlePasswordClick}>
-          Change password
-        </Button>
+        <Button onClick={handlePasswordClick}>Change Password</Button>
       </div>
-      {modalNameChangeContextHolder}
       {modalPasswordChangeContextHolder}
     </div>
   );

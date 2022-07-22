@@ -9,22 +9,16 @@
     display: flex;
     flex-direction: column;
   }
-  .avatar > label {
-    margin-bottom: 8px;
-  }
   .row {
     align-items: center;
     display: flex;
     justify-content: space-between;
   }
-  .info {
-    display: flex;
-    flex-direction: column;
-  }
-  .info > label {
+  label {
     color: var(--theme-surface-on-weak);
   }
-  .info > span {
+  .info {
     color: var(--theme-surface-on);
+    padding: 0 8px;
   }
 }

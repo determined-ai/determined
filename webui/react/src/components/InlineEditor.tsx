@@ -36,7 +36,6 @@ const InlineEditor: React.FC<Props> = ({
   ...props
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
-
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [ currentValue, setCurrentValue ] = useState(value);
   const [ isEditable, setIsEditable ] = useState(false);
@@ -63,7 +62,7 @@ const InlineEditor: React.FC<Props> = ({
     let newValue = value;
     if (maxLength) newValue = newValue.slice(0, maxLength);
     if (textareaRef.current) textareaRef.current.value = newValue;
-    if (growWrapRef.current) growWrapRef.current.dataset.value = newValue;
+    if (growWrapRef.current) growWrapRef.current.dataset.value = newValue || placeholder;
     setCurrentValue(newValue);
   }, [ maxLength ]);
 
