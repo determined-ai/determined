@@ -1,4 +1,4 @@
-import { RouteProps } from 'react-router';
+import { RouteProps } from 'react-router-dom';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
