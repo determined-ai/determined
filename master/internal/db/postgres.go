@@ -52,14 +52,23 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+type SortDirection string
+
+const (
+	SortDirectionAsc           SortDirection = "ASC"
+	SortDirectionDesc          SortDirection = "DESC"
+	SortDirectionAscNullsFirst SortDirection = "ASC NULLS FIRST"
+	SortDirectionDescNullsLast SortDirection = "DESC NULLS LAST"
+)
+
 // PaginateBun adds sorting and pagination to the provided bun query, defaulting to certain values
 // if they are not specified. By default, we order by ascending on the id column, with no limit.
-func PaginateBun(query *bun.SelectQuery, orderColumn, direction string, offset, limit int) *bun.SelectQuery {
+func PaginateBun(query *bun.SelectQuery, orderColumn string, direction SortDirection, offset, limit int) *bun.SelectQuery {
 	if orderColumn == "" {
 		orderColumn = "id"
 	}
-	if direction != "DESC" {
-		direction = "ASC"
+	if len(direction) == 0 {
+		direction = SortDirectionAsc
 	}
 	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
 	query = query.Order(orderExp)
