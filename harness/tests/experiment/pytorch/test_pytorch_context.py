@@ -3,8 +3,8 @@ import pytest
 import torch
 
 from determined import pytorch
-from determined.common.check import CheckFailedError
-from determined.errors import InternalException
+from determined.common import check
+from determined import errors
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
@@ -32,21 +32,21 @@ class TestPyTorchContext:
             metrics = trial.evaluate_batch(batch)
 
     def test_average_gradients(self) -> None:
-        with pytest.raises(CheckFailedError):
+        with pytest.raises(check.CheckFailedError):
             self.context._average_gradients(None, 0)
         assert self.context._average_gradients(None, 1) is None
 
     def test_training_not_started(self) -> None:
-        with pytest.raises(InternalException):
+        with pytest.raises(errors.InternalException):
             self.context.is_epoch_start()
-        with pytest.raises(InternalException):
+        with pytest.raises(errors.InternalException):
             self.context.is_epoch_end()
-        with pytest.raises(InternalException):
+        with pytest.raises(errors.InternalException):
             self.context.current_train_batch()
-        with pytest.raises(InternalException):
+        with pytest.raises(errors.InternalException):
             self.context.current_train_epoch()
         self.context.env.managed_training = True
-        with pytest.raises(InternalException):
+        with pytest.raises(errors.InternalException):
             self.context._should_communicate_and_update()
 
     def test_wrap_scalar(self) -> None:
@@ -55,5 +55,5 @@ class TestPyTorchContext:
             assert scaler == self.context.wrap_scaler(scaler)
             assert scaler == self.context._scaler
         else:
-            with pytest.raises(CheckFailedError):
+            with pytest.raises(check.CheckFailedError):
                 self.context.wrap_scaler(scaler)
