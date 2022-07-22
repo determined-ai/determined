@@ -127,7 +127,7 @@ commands:
 
   skip-if-not-shared:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined 2>/dev/null
+      - run: git remote add upstream https://github.com/determined-ai/determined
       - run: git fetch upstream
       - run:
           name: check for shared changes
