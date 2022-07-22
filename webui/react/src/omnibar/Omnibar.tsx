@@ -48,6 +48,7 @@ const Omnibar: React.FC = () => {
     if (ui.omnibar.isShowing) {
       if (input) {
         input.focus();
+        input.select();
       }
     }
   }, [ ui.omnibar.isShowing ]);
