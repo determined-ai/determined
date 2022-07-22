@@ -217,7 +217,7 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
   return routes
     .filter((route) => route.path !== '*')
     .find((route) => {
-      const routeRegex = pathToRegexp(`/${route.path}`);
+      const routeRegex = pathToRegexp(route.path);
       return routeRegex.test(pathname);
     });
 };
