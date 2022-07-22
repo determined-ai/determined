@@ -1,7 +1,6 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
@@ -39,7 +38,6 @@ const NotesCard: React.FC<Props> = (
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
-  const location = useLocation();
 
   const existingNotes = useRef(notes);
 
@@ -135,18 +133,6 @@ const NotesCard: React.FC<Props> = (
           onClick={handleNotesClick}
         />
       </Spinner>
-      {/* <Prompt
-        message={(newLocation) => {
-          const isSameExperiment = location.pathname.split('/')[0] === 'experiment' &&
-             newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
-          return (
-            isSameExperiment ?
-              true :
-              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
-          );
-        }}
-        when={editedNotes !== notes}
-      /> */}
     </Card>
   );
 };

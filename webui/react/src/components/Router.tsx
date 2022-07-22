@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -16,6 +16,7 @@ const Router: React.FC<Props> = (props: Props) => {
   const storeDispatch = useStoreDispatch();
   const [ canceler ] = useState(new AbortController());
   const checkAuth = useAuthCheck(canceler);
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
@@ -38,17 +39,17 @@ const Router: React.FC<Props> = (props: Props) => {
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <Route key={route.id} {...route} element={element} />;
+          if (!auth.checked) return <Route element={element} key={route.id} {...route} />;
           return (
             <Route
-              key={route.id}
-              {...route}
               element={(
                 <Navigate
-                  state={{ loginRedirect: filterOutLoginLocation(location) }}
+                  state={filterOutLoginLocation(location)}
                   to={paths.login()}
                 />
               )}
+              key={route.id}
+              {...route}
             />
           );
         } else if (route.redirect) {
