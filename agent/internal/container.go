@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -146,6 +147,14 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		// TODO(ilia): When do we need to start a checker for these containers?
 
 	case containerReady:
+		taskInfo := c.makeTaskInfo()
+		ctx.Tell(ctx.Self().Parent(), aproto.ContainerLog{
+			Timestamp:  time.Now().UTC(),
+			Level:      ptrs.Ptr(model.LogLevelInfo),
+			AuxMessage: &taskInfo,
+			Container:  c.Container,
+		})
+
 		c.containerStarted(ctx, aproto.ContainerStarted{ContainerInfo: *c.containerInfo})
 
 	case containerTerminated:
@@ -241,6 +250,21 @@ func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
 	l.Source = &source
 
 	return l
+}
+
+func (c *containerActor) makeTaskInfo() string {
+	b, err := json.Marshal(map[string]interface{}{
+		"agent_id":            c.baseTaskLog.AgentID,
+		"docker_container_id": c.containerInfo.ID,
+		"task_id":             c.baseTaskLog.TaskID,
+		"allocation_id":       c.baseTaskLog.AllocationID,
+		"container_id":        c.baseTaskLog.ContainerID,
+		"devices":             c.Container.Devices,
+	})
+	if err == nil {
+		return fmt.Sprintf("TaskInfo: %s", b)
+	}
+	return fmt.Sprintf("TaskInfo: Error: %s", err)
 }
 
 func (c *containerActor) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
