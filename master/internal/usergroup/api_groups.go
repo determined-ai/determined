@@ -58,7 +58,7 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
+	groups, count, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
 		int(req.Limit))
 	if err != nil {
 		return nil, err
@@ -66,6 +66,13 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 
 	return &apiv1.GroupSearchResponse{
 		Groups: Groups(groups).Proto(),
+		Pagination: &apiv1.Pagination{
+			Offset:     req.Offset,
+			Limit:      req.Limit,
+			StartIndex: req.Offset,
+			EndIndex:   req.Offset + int32(len(groups)),
+			Total:      int32(count),
+		},
 	}, nil
 }
 

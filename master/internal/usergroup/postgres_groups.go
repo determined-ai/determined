@@ -35,9 +35,9 @@ func SearchGroups(ctx context.Context,
 	name string,
 	userBelongsTo model.UserID,
 	offset, limit int,
-) ([]Group, error) {
+) ([]Group, int, error) {
 	var groups []Group
-	query := db.PaginateBun(db.Bun().NewSelect().Model(&groups), "", "", offset, limit)
+	query := db.Bun().NewSelect().Model(&groups)
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)
@@ -49,9 +49,17 @@ func SearchGroups(ctx context.Context,
 			Where("ugm.user_id = ?", userBelongsTo)
 	}
 
-	err := query.Scan(ctx)
+	err := db.PaginateBun(query, "", "", offset, limit).Scan(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 
-	return groups, err
+	count, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return groups, count, err
 }
 
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the

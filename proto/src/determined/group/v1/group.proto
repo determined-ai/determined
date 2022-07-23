@@ -29,6 +29,4 @@ message GroupDetails {
     string name = 2;
     // The members of the group
     repeated determined.user.v1.User users = 3;
-    // repeated int32 AddRoles // for milestone 0
-    // repeated int32 RemoveRoles // for milestone 0
 }
