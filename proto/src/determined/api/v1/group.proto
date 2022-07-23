@@ -16,6 +16,9 @@ message GetGroupRequest {
 }
 
 message GetGroupResponse {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["group"] }
+    };
     determined.group.v1.GroupDetails group = 1;
 }
 
@@ -51,6 +54,9 @@ message UpdateGroupRequest {
 } // returns GroupWriteResponse
 
 message GroupWriteResponse {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["group"] }
+    };
     determined.group.v1.GroupDetails group = 1;
 }
 
