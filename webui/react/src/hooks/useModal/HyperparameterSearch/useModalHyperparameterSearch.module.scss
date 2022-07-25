@@ -23,10 +23,6 @@
     :global(.ant-form-item) { margin: 0; }
     :global(.ant-input-number) {
       width: 100%;
-
-      &:global(.ant-input-number-status-error) {
-        background-color: inherit;
-      }
     }
     .fullWidth {
       width: 100%;

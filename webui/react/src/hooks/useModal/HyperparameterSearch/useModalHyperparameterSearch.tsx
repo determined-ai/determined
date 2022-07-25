@@ -158,7 +158,9 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             val: parsedVal,
           };
         } else {
+          const prevBase: number | undefined = baseConfig.hyperparameters[hpName]?.base;
           baseConfig.hyperparameters[hpName] = {
+            base: hpInfo.type === HyperparameterType.Log ? (prevBase ?? 10.0) : undefined,
             count: fields.searcher === SearchMethods.Grid.name ? hpInfo.count : undefined,
             maxval: hpInfo.type === HyperparameterType.Int ?
               roundToPrecision(hpInfo.max ?? 0, 0) :
@@ -169,7 +171,6 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             type: hpInfo.type,
           };
         }
-        if (hpInfo.type === HyperparameterType.Log) baseConfig.hyperparameters[hpName].base = 10.0;
       });
 
     baseConfig.hyperparameters = unflattenObject(baseConfig.hyperparameters);
@@ -664,7 +665,7 @@ const HyperparameterRow: React.FC<RowProps> = (
                 key={HyperparameterType[type]}
                 value={HyperparameterType[type]}>
                 {type}
-                {type === 'Log' ? ' (base 10)' : ''}
+                {type === 'Log' ? ` (base ${hyperparameter.base ?? 10})` : ''}
               </Select.Option>
             ))}
         </Select>
