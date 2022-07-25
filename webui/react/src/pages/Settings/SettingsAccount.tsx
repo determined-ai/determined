@@ -11,6 +11,7 @@ import handleError from 'utils/error';
 
 import css from './SettingsAccount.module.scss';
 
+export const CHANGE_PASSWORD_TEXT = 'Change Password';
 export const API_SUCCESS_MESSAGE = 'Display name updated.';
 export const API_ERROR_MESSAGE = 'Could not update display name.';
 
@@ -63,7 +64,7 @@ const SettingsAccount: React.FC = () => {
       <Divider />
       <div className={css.row}>
         <label>Password</label>
-        <Button onClick={handlePasswordClick}>Change Password</Button>
+        <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
       </div>
       {modalPasswordChangeContextHolder}
     </div>
