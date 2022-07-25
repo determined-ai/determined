@@ -47,7 +47,7 @@ class TestPyTorchContext:
         with pytest.raises(errors.InternalException):
             self.context._should_communicate_and_update()
 
-    def test_wrap_scalar(self) -> None:
+    def test_wrap_scaler(self) -> None:
         scaler = 1
         if torch.cuda.is_available():
             assert scaler == self.context.wrap_scaler(scaler)
