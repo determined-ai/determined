@@ -82,3 +82,6 @@ gobin
 
 # Hydra output
 model_hub/examples/mmdetection/hydra/outputs
+
+# signal dev tooling to ignore dupliacte paths introduced by the symlink
+web/*
