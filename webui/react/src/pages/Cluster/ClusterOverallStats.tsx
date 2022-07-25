@@ -17,7 +17,7 @@ export const ClusterOverallStats: React.FC = () => {
     cluster: overview,
     resourcePools,
   } = useStore();
-
+  
   const auxContainers = useMemo(() => {
     const tally = {
       running: 0,
@@ -55,49 +55,33 @@ export const ClusterOverallStats: React.FC = () => {
           <OverviewStats title="Aux Containers Running">
             {auxContainers.running} <small>/ {auxContainers.total}</small>
           </OverviewStats>
-          {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map(resType => (
-            (maxTotalSlots[resType] > 0) ? (
-              <OverviewStats
-                key={resType}
-                title={`${resType} Slots Allocated`}>
-                {overview[resType].total - overview[resType].available}
-                <small>
-                  / {maxTotalSlots[resType]}
-                </small>
-              </OverviewStats>
-            ) : null))}
-          {auxContainers.total ? (
-            <OverviewStats title="Aux Containers Running">
-              {auxContainers.running} <small>/ {auxContainers.total}</small>
-            </OverviewStats>
-          ) : null}
-          {activeExperiments ? (
-            <OverviewStats title="Active Experiments">
-              {activeExperiments}
-            </OverviewStats>
-          ) : null}
-          {activeTasks.notebooks ? (
-            <OverviewStats title="Active JupyterLabs">
-              {activeTasks.notebooks}
-            </OverviewStats>
-          ) : null}
-          {activeTasks.tensorboards ? (
-            <OverviewStats title="Active TensorBoards">
-              {activeTasks.tensorboards}
-            </OverviewStats>
-          ) : null}
-          {activeTasks.shells ? (
-            <OverviewStats title="Active Shells">
-              {activeTasks.shells}
-            </OverviewStats>
-          ) : null}
-          {activeTasks.commands ? (
-            <OverviewStats title="Active Commands">
-              {activeTasks.commands}
-            </OverviewStats>
-          ) : null}
-        </Grid>
-      </Section>
-    </>
+        ) : null}
+        {activeExperiments ? (
+          <OverviewStats title="Active Experiments">
+            {activeExperiments}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.notebooks ? (
+          <OverviewStats title="Active JupyterLabs">
+            {activeTasks.notebooks}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.tensorboards ? (
+          <OverviewStats title="Active TensorBoards">
+            {activeTasks.tensorboards}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.shells ? (
+          <OverviewStats title="Active Shells">
+            {activeTasks.shells}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.commands ? (
+          <OverviewStats title="Active Commands">
+            {activeTasks.commands}
+          </OverviewStats>
+        ) : null}
+      </Grid>
+    </Section>
   );
 };
