@@ -107,11 +107,14 @@ In addition, we also patched some ``LightningModule`` methods to make porting yo
 
 .. note::
 
-   Determined environment images no longer contain PyTorch Lightning. To use PyTorch Lightning, you
-   have to install it by adding a line like the following to ``startup-hooks.sh``: ``pip install
-   pytorch_lightning==1.5.10 torchmetrics==0.5.1``
+   Determined environment images no longer contain PyTorch Lightning. To use PyTorch Lightning, add
+   a line similar to the following in the ``startup-hooks.sh`` script:
 
-To learn about this API, you can start by reading the trial definitions from the following examples:
+.. code:: bash
+
+   pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1
+
+To learn about this API, start by reading the trial definitions from the following examples:
 
 -  :download:`gan_mnist_pl.tgz </examples/gan_mnist_pl.tgz>`
 -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
