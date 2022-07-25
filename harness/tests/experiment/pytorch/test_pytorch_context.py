@@ -48,10 +48,11 @@ class TestPyTorchContext:
             self.context._should_communicate_and_update()
 
     def test_wrap_scaler(self) -> None:
-        scaler = 1
         if torch.cuda.is_available():
+            scaler = torch.cuda.amp.GradScaler()
             assert scaler == self.context.wrap_scaler(scaler)
             assert scaler == self.context._scaler
         else:
+            scaler = None
             with pytest.raises(check.CheckFailedError):
                 self.context.wrap_scaler(scaler)
