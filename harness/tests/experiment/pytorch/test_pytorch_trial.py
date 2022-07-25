@@ -601,24 +601,6 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    # At the time of writing this test, supports_mixed_precision and
-    # supports_averaging_training_metrics are class methods, but we instantiate a
-    # PyTorchTrialController here in case that ever changes. We expect that a controller
-    # instantiated in the following way should always provide these supports.
-    def test_supports(self) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialAccessContext,
-            hparams=self.hparams,
-            workloads=make_workloads(),
-            trial_seed=self.trial_seed,
-        )
-        assert controller.supports_mixed_precision()
-        assert controller.supports_averaging_training_metrics()
-
     @pytest.mark.skipif(not HAVE_APEX or not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_apex_amp(self) -> None:
