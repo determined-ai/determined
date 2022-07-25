@@ -173,8 +173,7 @@
 
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to:
-      ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5``.
+      Defaults to: ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults

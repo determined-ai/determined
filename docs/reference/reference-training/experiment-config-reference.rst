@@ -1038,8 +1038,7 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for
-      NVIDIA GPUs.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for NVIDIA GPUs.
    -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
    -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
 
