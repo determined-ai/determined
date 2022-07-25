@@ -216,7 +216,9 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 "metric": config_test["searcher"]["metric"],
                 "max_length": {"batches": 1},
             },
-            "hyperparameters": generate_random_hparam_values(config_test.get("hyperparameters", {})),
+            "hyperparameters": generate_random_hparam_values(
+                config_test.get("hyperparameters", {})
+            ),
             "resources": config_test.get("resources", {}),
             "max_restarts": 0,
         }
