@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
+import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
@@ -25,23 +26,24 @@ const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const location = useLocation();
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const basePath = paths.settings();
   const history = useHistory();
 
   const { rbac } = queryString.parse(location.search);
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
-  }, [ basePath, history ]);
+    let path = paths.settings(key);
+    path = rbac ? `${path}?rbac=1` : path;
+    history.replace(path);
+  }, [ history, rbac ]);
 
   return rbac ? (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="account" tab="Account">
         <SettingsAccount />
       </TabPane>
-      <TabPane key="userManagement" tab="User Management">
-        User Management
+      <TabPane key="user-management" tab="User Management">
+        <UserManagement />
       </TabPane>
     </Tabs>
   ) : <SettingsAccount />;

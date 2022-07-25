@@ -24,10 +24,11 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map((user) => mapV1User(user));
 };
 
-export const mapV1Pagination = (data: Sdk.V1Pagination): Pagination => {
+export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   return {
-    limit: data.limit ?? 0,
-    offset: data.offset ?? 0,
+    limit: data?.limit ?? 0,
+    offset: data?.offset ?? 0,
+    total: data?.total ?? 0,
   };
 };
 

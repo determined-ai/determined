@@ -39,8 +39,8 @@ export const useFetchUsers = (canceler: AbortController): () => Promise<void> =>
 
   return useCallback(async (): Promise<void> => {
     try {
-      const usersResponse = await getUsers({ signal: canceler.signal });
-      storeDispatch({ type: StoreAction.SetUsers, value: usersResponse });
+      const usersResponse = await getUsers({}, { signal: canceler.signal });
+      storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
     } catch (e) { handleError(e); }
   }, [ canceler, storeDispatch ]);
 };

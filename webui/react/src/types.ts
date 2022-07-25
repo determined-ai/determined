@@ -20,6 +20,10 @@ export interface DetailedUser extends User {
   isAdmin: boolean;
 }
 
+export interface DetailedUserList extends WithPagination {
+  users: DetailedUser[],
+}
+
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;

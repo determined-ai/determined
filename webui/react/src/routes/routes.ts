@@ -170,7 +170,7 @@ const routes: RouteConfig[] = [
   {
     id: 'settings',
     needAuth: true,
-    path: '/settings',
+    path: '/settings/:tab?',
     title: 'Settings',
   },
 ];

@@ -37,7 +37,8 @@ export const getCurrentUser = generateDetApi<
 >(Config.getCurrentUser);
 
 export const getUsers = generateDetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams,
+   Api.V1GetUsersResponse, Type.DetailedUserList
 >(Config.getUsers);
 
 export const setUserPassword = generateDetApi<
