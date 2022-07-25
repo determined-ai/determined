@@ -306,8 +306,8 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <h2 className={css.hyperparameterName}>Hyperparameter</h2>
           <h2>Type</h2>
           <h2>Current</h2>
-          <h2>Min Value</h2>
-          <h2>Max Value</h2>
+          <h2>Min value</h2>
+          <h2>Max value</h2>
           {searcher === SearchMethods.Grid && <h2>Grid Count</h2>}
           {hyperparameters.map((hp) => (
             <HyperparameterRow
@@ -358,7 +358,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         </Form.Item>
         <Form.Item
           initialValue={experiment.name}
-          label="New Experiment Name"
+          label="New experiment name"
           name="name"
           rules={[ { required: true } ]}>
           <Input maxLength={80} />
@@ -366,7 +366,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <div className={css.poolContainer}>
           <Form.Item
             initialValue={resourcePool?.name}
-            label="Resource Pool"
+            label="Resource pool"
             name="pool"
             rules={[ { required: true } ]}>
             <SelectFilter
@@ -385,7 +385,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <div className={css.inputRow}>
           <Form.Item
             initialValue={maxLength}
-            label="Max Length"
+            label="Max length"
             name="max_length"
             rules={[ { min: 1, required: true, type: 'number' } ]}>
             <InputNumber min={1} precision={0} />
@@ -426,7 +426,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
             initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
             label={(
               <div className={css.labelWithTooltip}>
-                Early Stopping Mode
+                Early stopping mode
                 <Tooltip
                   title="How aggressively to perform early stopping of underperforming trials">
                   <InfoCircleOutlined />
