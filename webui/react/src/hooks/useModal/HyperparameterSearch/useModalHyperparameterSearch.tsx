@@ -27,8 +27,8 @@ import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
   experiment: ExperimentItem;
-  trial?: TrialDetails | TrialItem;
   onClose?: () => void;
+  trial?: TrialDetails | TrialItem;
 }
 
 export interface ShowModalProps {
@@ -73,9 +73,9 @@ interface HyperparameterRowValues {
 }
 
 const useModalHyperparameterSearch = ({ 
-  experiment, 
-  onClose, 
-  trial: trialIn 
+  experiment,
+  onClose,
+  trial: trialIn,
 }: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal({ onClose });
   const [ trial, setTrial ] = useState(trialIn);
