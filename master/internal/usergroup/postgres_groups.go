@@ -13,9 +13,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// AddGroup adds a group to the database. Returns ErrDuplicateRow if a
-// group already exists with the same name or ID.
-func AddGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
+// addGroup adds a group to the database. Returns ErrDuplicateRow if a
+// group already exists with the same name or ID. Will use db.Bun() if
+// passed nil for idb.
+func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -25,21 +26,25 @@ func AddGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 }
 
 // AddGroupWithMembers creates a group and adds members to it all in one transaction.
-// Because of the overhead of using transactions, only use this if you also need to add
-// users to the group (i.e. the set of uids is not empty).
+// If an empty user set is passed in, no transaction is used for performance reasons.
 func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID) (Group, []model.User, error) {
+	if len(uids) == 0 {
+		group, err := addGroup(ctx, nil, group)
+		return group, nil, err
+	}
+
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return Group{}, nil, err
 	}
 	defer func() {
 		err := tx.Rollback()
-		if err != nil {
+		if err != nil && err != sql.ErrTxDone {
 			logrus.WithError(err).Error("error rolling back transaction in AddGroupWithMembers")
 		}
 	}()
 
-	group, err = AddGroup(ctx, tx, group)
+	group, err = addGroup(ctx, tx, group)
 	if err != nil {
 		return Group{}, nil, err
 	}
@@ -126,7 +131,8 @@ func UpdateGroup(ctx context.Context, group Group) error {
 
 // AddUsersToGroup adds users to a group by creating GroupMembership rows.
 // Returns ErrNotFound if the group isn't found or ErrDuplicateRow if one
-// of the users is already in the group.
+// of the users is already in the group. Will use db.Bun() if passed nil
+// for idb.
 func AddUsersToGroup(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
 	if idb == nil {
 		idb = db.Bun()
@@ -173,7 +179,7 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 
 // UsersInGroup searches for users that belong to a group and returns them.
 // Does not return ErrNotFound if none are found, as that is considered a
-// successful search.
+// successful search. Will use db.Bun() if passed nil for idb.
 func UsersInGroup(ctx context.Context, idb bun.IDB, gid int) ([]model.User, error) {
 	if idb == nil {
 		idb = db.Bun()

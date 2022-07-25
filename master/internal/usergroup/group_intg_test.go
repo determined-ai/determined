@@ -23,7 +23,7 @@ func TestUserGroups(t *testing.T) {
 	setUp(ctx, t, pgDB)
 
 	t.Run("group creation", func(t *testing.T) {
-		_, err := AddGroup(ctx, nil, testGroup)
+		_, _, err := AddGroupWithMembers(ctx, testGroup)
 		require.NoError(t, err, "failed to create group")
 	})
 
@@ -133,7 +133,7 @@ func TestUserGroups(t *testing.T) {
 		tmpGroup.ID++
 		tmpGroup.Name += tmpGroup.Name
 
-		_, err := AddGroup(ctx, nil, tmpGroup)
+		_, _, err := AddGroupWithMembers(ctx, tmpGroup)
 		require.NoError(t, err, "failed to create group")
 
 		err = AddUsersToGroup(ctx, nil, tmpGroup.ID, testUser.ID)
@@ -147,7 +147,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("AddGroup returns ErrDuplicateRecord when creating a group that already exists", func(t *testing.T) {
-		_, err := AddGroup(ctx, nil, testGroupStatic)
+		_, _, err := AddGroupWithMembers(ctx, testGroupStatic)
 		require.Equal(t, db.ErrDuplicateRecord, err, "didn't return ErrDuplicateRecord")
 	})
 
@@ -198,7 +198,22 @@ func TestUserGroups(t *testing.T) {
 		require.Equal(t, answerGroups[2].Name, foundGroup.Name, "Expected found group to have the same name as the third answerGroup")
 	})
 
-	// FIXME: add test for AddGroupWithMembers
+	t.Run("AddGroupWithMembers rolls back transactions", func(t *testing.T) {
+		const tempGroupName = "tempGroupName"
+		g, _, err := AddGroupWithMembers(ctx, Group{Name: tempGroupName}, 1, 2, 3, 1856109534)
+		// Just in case this fails, clean up.
+		defer func(g Group) {
+			if g.ID != 0 {
+				DeleteGroup(ctx, g.ID)
+			}
+		}(g)
+		require.Equal(t, db.ErrNotFound, err, "error")
+
+		groups, count, err := SearchGroups(ctx, tempGroupName, 0, 0, 0)
+		require.NoError(t, err, "error searching for groups to verify rollback")
+		require.Equal(t, 0, count, "should be zero matching groups in the DB")
+		require.Equal(t, 0, len(groups), "should be zero matching groups returned")
+	})
 }
 
 var (
@@ -227,11 +242,8 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	_, err := pgDB.AddUser(&testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
 
-	_, err = AddGroup(ctx, nil, testGroupStatic)
+	_, _, err = AddGroupWithMembers(ctx, testGroupStatic, testUser.ID)
 	require.NoError(t, err, "failure creating static test group")
-
-	err = AddUsersToGroup(ctx, nil, testGroupStatic.ID, testUser.ID)
-	require.NoError(t, err, "failure adding user to static group")
 }
 
 func cleanUp(ctx context.Context, t *testing.T) {
