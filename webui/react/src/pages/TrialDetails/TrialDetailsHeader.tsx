@@ -6,7 +6,8 @@ import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
-import useModalHyperparameterSearch from 'hooks/useModal/useModalHyperparameterSearch';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
