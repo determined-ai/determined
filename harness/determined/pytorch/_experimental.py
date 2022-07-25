@@ -4,9 +4,10 @@ from typing import Any
 # AMP is only available in PyTorch 1.6+
 try:
     import torch.cuda.amp as amp
+    HAVE_AMP = True
 except ImportError:  # pragma: no cover
     # A warning is logged in _pytorch_context.py
-    amp = None
+    HAVE_AMP = False
     pass
 
 
@@ -27,9 +28,9 @@ class PyTorchExperimentalContext:
 
         PyTorch 1.6 or greater is required for this feature.
         """
-        # FIXME: will cause a runtime error if importing amp failed
-        self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
-        self._auto_amp = True
+        if HAVE_AMP:
+            self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
+            self._auto_amp = True
 
     def disable_dataset_reproducibility_checks(self) -> None:
         """

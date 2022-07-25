@@ -15,7 +15,6 @@ from determined.tensorboard import get_base_path
 try:
     import apex
 except ImportError:  # pragma: no cover
-    apex = None
     if torch.cuda.is_available():
         logging.warning("Failed to import apex.")
     pass
@@ -23,11 +22,9 @@ except ImportError:  # pragma: no cover
 # AMP is only available in PyTorch 1.6+
 try:
     import torch.cuda.amp as amp
-
-    amp_import_error = False
+    HAVE_AMP = True
 except ImportError:  # pragma: no cover
-    amp = None
-    amp_import_error = True
+    HAVE_AMP = False
     if torch.cuda.is_available():
         logging.warning("PyTorch AMP is unavailable.")
     pass
@@ -370,7 +367,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             The scaler. It may be wrapped to add additional functionality for use in Determined.
         """
 
-        check.false(amp_import_error, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
+        check.true(HAVE_AMP, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
 
         check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
 

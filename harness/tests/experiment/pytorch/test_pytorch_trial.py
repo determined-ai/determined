@@ -14,8 +14,9 @@ from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 # Apex is included only for GPU trials.
 try:
     import apex
+    HAVE_APEX = True
 except ImportError:  # pragma: no cover
-    apex = None
+    HAVE_APEX = False
     pass
 
 
@@ -630,7 +631,7 @@ class TestPyTorchTrial:
         assert controller.supports_mixed_precision()
         assert controller.supports_averaging_training_metrics()
 
-    @pytest.mark.skipif(apex is None or not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.skipif(not HAVE_APEX or not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     def test_apex_amp(self) -> None:
         apex.amp.register_float_function(torch, "sigmoid")
