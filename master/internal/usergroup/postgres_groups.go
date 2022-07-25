@@ -32,7 +32,8 @@ func GroupByID(ctx context.Context, gid int) (Group, error) {
 // does not return an error if no groups are found, as that is considered a
 // successful search.
 func SearchGroups(ctx context.Context,
-	userBelongsTo model.UserID) ([]Group, error) {
+	userBelongsTo model.UserID,
+) ([]Group, error) {
 	var groups []Group
 	query := db.Bun().NewSelect().Model(&groups)
 
