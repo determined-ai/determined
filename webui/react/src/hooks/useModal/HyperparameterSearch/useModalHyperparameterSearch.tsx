@@ -72,7 +72,11 @@ interface HyperparameterRowValues {
   value?: number | string,
 }
 
-const useModalHyperparameterSearch = ({ experiment, trial: trialIn, onClose }: Props): ModalHooks => {
+const useModalHyperparameterSearch = ({ 
+  experiment, 
+  onClose, 
+  trial: trialIn 
+}: Props): ModalHooks => {
   const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal({ onClose });
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
