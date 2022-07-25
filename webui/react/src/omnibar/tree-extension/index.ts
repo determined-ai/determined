@@ -8,10 +8,9 @@ import {
 import {
   getNodeChildren, isLeafNode, isNLNode, traverseTree,
 } from 'omnibar/tree-extension/utils';
+import { ErrorType } from 'shared/utils/error';
+import { noOp } from 'shared/utils/service';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../../shared/utils/error';
-import { noOp } from '../../shared/utils/service';
 
 const SEPARATOR = ' ';
 
@@ -104,5 +103,4 @@ export const onAction = async (
     inputEl.value = inputEl.value + SEPARATOR;
     query(inputEl.value);
   }
-  return Promise.resolve();
 };

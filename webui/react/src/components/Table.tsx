@@ -9,6 +9,7 @@ import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
@@ -16,8 +17,6 @@ import {
   Project, StartEndTimes, TrialItem, Workspace,
 } from 'types';
 import { canBeOpened } from 'utils/task';
-
-import { Pagination } from '../shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';
@@ -137,7 +136,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
+export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
   <TimeDuration duration={getDuration(record)} />
 );
 

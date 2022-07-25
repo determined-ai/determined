@@ -2,11 +2,10 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
+import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
-
-import { EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { generateDetApi } from '../shared/utils/service';
 
 export { isLoginFailure } from './utils';
 
@@ -289,12 +288,6 @@ export const getProject = generateDetApi<
   Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
 >(Config.getProject);
 
-export const getProjectExperiments = generateDetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
->(Config.getProjectExperiments);
-
 export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
@@ -400,5 +393,5 @@ export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Pro
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from '../shared/utils/service';
-export { isAuthFailure } from '../shared/utils/service';
+export { isNotFound } from 'shared/utils/service';
+export { isAuthFailure } from 'shared/utils/service';

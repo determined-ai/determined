@@ -27,6 +27,7 @@ import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -35,8 +36,6 @@ import {
 } from 'utils/sort';
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
-
-import { ErrorLevel, ErrorType } from '../shared/utils/error';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';

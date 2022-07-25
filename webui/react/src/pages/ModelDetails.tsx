@@ -23,11 +23,10 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted, validateDetApiEnum } from 'shared/utils/service';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../shared/utils/error';
-import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {

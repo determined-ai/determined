@@ -1,13 +1,11 @@
 import React from 'react';
 
-import RouterDecorator from 'storybook/RouterDecorator';
 import { HyperparameterType, MetricType } from 'types';
 
 import HpTrialTable from './HpTrialTable';
 
 export default {
   component: HpTrialTable,
-  decorators: [ RouterDecorator ],
   parameters: { layout: 'padded' },
   title: 'HpTrialTable',
 };

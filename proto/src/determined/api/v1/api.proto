@@ -1514,16 +1514,6 @@ service Determined {
       tags: "Projects"
     };
   }
-  // Get experiments associated with a project.
-  rpc GetProjectExperiments(GetProjectExperimentsRequest)
-      returns (GetProjectExperimentsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/projects/{id}/experiments"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
-    };
-  }
   // Create a project.
   rpc PostProject(PostProjectRequest) returns (PostProjectResponse) {
     option (google.api.http) = {

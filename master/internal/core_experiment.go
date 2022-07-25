@@ -441,6 +441,10 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
+	config, ok := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	if !ok {
+		return nil, errors.Errorf("could not copy experiment's config to return")
+	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
 	if params.Activate {
@@ -459,7 +463,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	response := model.ExperimentDescriptor{
 		ID:       e.ID,
 		Archived: false,
-		Config:   e.Config,
+		Config:   config,
 		Labels:   make([]string, 0),
 	}
 	return response, nil

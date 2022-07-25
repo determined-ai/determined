@@ -5,10 +5,9 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
-
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { identity, noOp } from '../shared/utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
@@ -110,7 +109,7 @@ export const getUsers: DetApi<
 > = {
   name: 'getUsers',
   postProcess: (response) => decoder.mapV1UserList(response),
-  request: (options) => detApi.Users.getUsers(options),
+  request: () => detApi.Users.getUsers(),
 };
 
 export const setUserPassword: DetApi<
@@ -246,6 +245,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
+      params.projectId || 0,
       options,
     );
   },
@@ -804,37 +804,6 @@ export const getProject: DetApi<
   request: (params) => detApi.Projects.getProject(
     params.id,
   ),
-};
-
-export const getProjectExperiments: DetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
-> = {
-  name: 'getProjectExperiments',
-  postProcess: (response: Api.V1GetExperimentsResponse) => {
-    return {
-      experiments: decoder.mapV1ExperimentList(response.experiments),
-      pagination: response.pagination,
-    };
-  },
-  request: (params: Service.GetProjectExperimentsParams, options) => {
-    return detApi.Projects.getProjectExperiments(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.description,
-      params.labels,
-      params.archived,
-      params.states,
-      params.users,
-      params.userIds,
-      options,
-    );
-  },
 };
 
 export const addProjectNote: DetApi<

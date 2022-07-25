@@ -26,6 +26,8 @@ interface ApiBase {
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
+export type RecordUnknown = Record<RecordKey, unknown>;
+
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   postProcess: (response: DetOutput) => Output;
@@ -33,10 +35,23 @@ export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   stubbedResponse?: DetOutput;
 }
 
+/**
+ * @description helper to organize storing api response data.
+ */
 export interface ApiState<T> {
   data?: T;
+  /**
+   * error, if any, with the last state update.
+   * this should be cleared on the next successful update.
+  */
   error?: Error;
-  isLoading: boolean;
+  /**
+   * indicates whether the state has been fetched at least once or not.
+   * should always be initialized to false.
+   */
+  hasBeenInitialized?: boolean;
+  /** is the state being updated? */
+  isLoading?: boolean;
 }
 
 export interface SingleEntityParams {

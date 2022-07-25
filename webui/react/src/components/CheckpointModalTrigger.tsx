@@ -4,8 +4,8 @@ import React, { PropsWithChildren, useCallback } from 'react';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
-import { ModalCloseReason } from 'hooks/useModal/useModal';
 import Icon from 'shared/components/Icon/Icon';
+import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { CheckpointWorkloadExtended, ExperimentBase } from 'types';
 
 interface Props {

@@ -1,0 +1,7 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Notebooks: Fix a bug where notebooks would ignore the ``--template`` CLI argument.
+-  Notebooks: Fix a bug where notebooks with the CLI argument ``--preview`` would still launch a
+   notebook instead of just displaying the configuration.

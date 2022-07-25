@@ -114,7 +114,7 @@ commands:
     steps:
       - run: git fetch upstream
       - run:
-          name: check for webui-only changes (must be run after skip-if-docs-only)
+          name: check for webui-only changes  # must be run after skip-if-docs-only
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -125,6 +125,21 @@ commands:
               echo "detected non-webui-only changes: $DIFF_DIRS"
             fi
 
+  skip-if-not-shared:
+    steps:
+      - run: git remote add upstream https://github.com/determined-ai/determined
+      - run: git fetch upstream
+      - run:
+          name: check for shared changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/master HEAD)"
+            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
+            if [ "$DIFF_DIRS" = "shared" ] ; then
+              echo "shared code changed, running downstream test"
+            else
+              echo "shared code not affected, halting job now"
+              circleci-agent step halt
+            fi
 
   set-slack-user-id:
     steps:
@@ -1268,9 +1283,20 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
+  test-intg-downstream:
+    docker:
+      - image: cimg/node:16.14
+    steps:
+      - checkout-with-sm
+      - skip-if-not-shared
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
+      - run: make -C webui/react test-shared
+
   build-storybook:
     docker:
       - image: cimg/node:16.14.2
+    resource_class: medium+
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -2093,6 +2119,7 @@ workflows:
 
   test-intg:
     jobs:
+      - test-intg-downstream
       - test-intg-master
       - test-intg-agent
       - go-coverage:
@@ -2111,8 +2138,7 @@ workflows:
           requires:
             - build-helm
             - build-proto
-      - build-go:
-          context: determined-ci
+      - build-go
       - package-and-push-system-local:
           requires:
             - build-react
@@ -2276,129 +2302,6 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - request-dev-deploy:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - deploy:
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-dev-deploy
-            - package-and-push-system-dev
-
-      - request-gpu-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-parallel
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["parallel"]
-              mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-single
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["e2e-gpu"]
-              enable-tls: [true]
-              mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - request-transformers-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-transformers
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers"]
-              mark: ["model_hub_transformers"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
-      - test-e2e-aws:
-          name: test-e2e-transformers-amp
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-transformers-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["transformers-amp"]
-              mark: ["model_hub_transformers_amp"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
-      - request-mmdetection-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-mmdetection
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-mmdetection-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["mmdetection"]
-              mark: ["model_hub_mmdetection"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
-      - request-deepspeed-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-        # DeepSpeed tests do not work on K80s so we need V100 instances.
-      - test-e2e-aws:
-          name: test-e2e-deepspeed
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-deepspeed-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["p3.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["deepspeed"]
-              mark: ["deepspeed"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
-
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
           context: gcp
@@ -2452,18 +2355,46 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
 
-      - request-k8-tests:
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+
+  test-e2e-longrunning:
+    jobs:
+      # Build and publish artifacts used in tests
+      - build-helm
+      - build-proto
+      - build-react:
+          dev-mode: true
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - package-and-push-system-dev:
+          requires:
+            - build-react
+            - build-docs
+          filters: *any-upstream
+
+      # Deploy full cluster
+      - request-dev-deploy:
           type: approval
           filters: *upstream-feature-branch
 
-      - request-k8-tests-cuda-11:
-          type: approval
+      - deploy:
+          context: aws
           filters: *upstream-feature-branch
+          requires:
+            - request-dev-deploy
+            - package-and-push-system-dev
 
-      - request-k8-tests-cpu:
-          type: approval
-          filters: *upstream-feature-branch
-
+      # Dsitributed tests
       - request-e2e-cpu-distributed:
           type: approval
           filters: *upstream-feature-branch
@@ -2484,19 +2415,32 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
 
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu
-          context: gcp
+      # Deepseed tests
+      - request-deepspeed-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+        # DeepSpeed tests do not work on K80s so we need V100 instances.
+      - test-e2e-aws:
+          name: test-e2e-deepspeed
+          context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-k8-tests
+            - request-deepspeed-tests
             - package-and-push-system-dev
           matrix:
             parameters:
-              cluster-id-prefix: ["e2e-gpu"]
-              mark: ["e2e_gpu"]
-              parallelism: [1]
+              compute-agent-instance-type: ["p3.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["deepspeed"]
+              mark: ["deepspeed"]
               slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      # K8s GPU tests
+      - request-k8-tests:
+          type: approval
+          filters: *upstream-feature-branch
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -2514,6 +2458,49 @@ workflows:
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-gpu
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      # K8s CPU tests
+      - request-k8-tests-cpu:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-cpu
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+
+      # K8s Cuda 11 tests
+      - request-k8-tests-cuda-11:
+          type: approval
+          filters: *upstream-feature-branch
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-cuda-11
@@ -2591,52 +2578,7 @@ workflows:
                 - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.18.4
                 - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.18.4
 
-      - test-e2e-gke:
-          name: test-e2e-gke-single-cpu
-          context: gcp
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests-cpu
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-cpu"]
-              mark: ["e2e_gpu and not gpu_required"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-8"]
-              gpus-per-machine: [0]
-              environment-gpu-enabled: ["0"]
-              slot-type: ["cpu"]
-              slot-resource-requests-cpu: [7]
-
-      - test-det-deploy:
-          name: test-det-deploy-local
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [2]
-              mark: ["det_deploy_local"]
-              det-version: [$CIRCLE_SHA1]
-
-      - request-gpu-nightly:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-nightly
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["nightly"]
-              mark: ["nightly"]
-
+      # Nightly distributed tests
       - request-gpu-distributed-nightly:
           type: approval
           filters: *upstream-feature-branch
@@ -2654,6 +2596,118 @@ workflows:
               mark: ["distributed"]
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+
+      # Nightly tests
+      - request-gpu-nightly:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-nightly
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
+
+      # GPU tests
+      - request-gpu-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-parallel
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-single
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["e2e-gpu"]
+              enable-tls: [true]
+              mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      # mmdetection tests
+      - request-mmdetection-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-mmdetection
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-mmdetection-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      # Transformers tests
+      - request-transformers-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-transformers
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-transformers-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      - test-e2e-aws:
+          name: test-e2e-transformers-amp
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-transformers-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
   nightly:
