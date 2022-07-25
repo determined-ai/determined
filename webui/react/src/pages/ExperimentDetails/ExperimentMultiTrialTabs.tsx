@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';

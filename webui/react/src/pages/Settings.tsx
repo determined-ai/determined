@@ -1,8 +1,7 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
 import React, { useCallback, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
