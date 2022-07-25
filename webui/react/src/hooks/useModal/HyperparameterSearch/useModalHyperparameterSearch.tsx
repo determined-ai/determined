@@ -2,9 +2,9 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Alert, Button, Checkbox, Form, Input, InputNumber, ModalFuncProps,
   Radio, RadioChangeEvent, Select, Space, Tooltip, Typography } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
-import { SelectValue } from 'antd/lib/select';
+import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
@@ -288,6 +288,15 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     return (
       <div className={css.base}>
         {modalError && <Alert className={css.error} message={modalError} type="error" />}
+        <div className={css.labelWithLink}>
+          <p>Select hyperparameters and define the search space.</p>
+          <Link
+            external
+            path={paths.
+              docs('training/hyperparameter/configure-hp-ranges')}>
+            Learn more
+          </Link>
+        </div>
         <div
           className={css.hyperparameterContainer}
           style={{
@@ -320,7 +329,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         <Form.Item
           initialValue={searcher.name}
           label={(
-            <div className={css.searchTitle}>
+            <div className={css.labelWithLink}>
               <p>Select search method</p>
               <Link
                 external
@@ -354,22 +363,24 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           rules={[ { required: true } ]}>
           <Input maxLength={80} />
         </Form.Item>
-        <Form.Item
-          initialValue={resourcePool.name}
-          label="Resource Pool"
-          name="pool"
-          rules={[ { required: true } ]}>
-          <SelectFilter
-            showSearch={false}
-            onChange={handleSelectPool}>
-            {resourcePools.map((pool) => (
-              <Select.Option key={pool.name} value={pool.name}>
-                {pool.name}
-              </Select.Option>
-            ))}
-          </SelectFilter>
-        </Form.Item>
-        <p>{maxSlots} max slots</p>
+        <div className={css.poolContainer}>
+          <Form.Item
+            initialValue={resourcePool?.name}
+            label="Resource Pool"
+            name="pool"
+            rules={[ { required: true } ]}>
+            <SelectFilter
+              showSearch={false}
+              onChange={handleSelectPool}>
+              {resourcePools.map((pool) => (
+                <Select.Option key={pool.name} value={pool.name}>
+                  {pool.name}
+                </Select.Option>
+              ))}
+            </SelectFilter>
+          </Form.Item>
+          <p>{maxSlots} max slots</p>
+        </div>
         <h2 className={css.sectionTitle}>Configure Trials</h2>
         <div className={css.inputRow}>
           <Form.Item
@@ -490,7 +501,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
     maxLengthUnit,
     maxSlots,
     modalError,
-    resourcePool.name,
+    resourcePool?.name,
     resourcePools,
     searcher ]);
 
@@ -558,6 +569,7 @@ const HyperparameterRow: React.FC<RowProps> = (
 ) => {
   const form = Form.useFormInstance();
   const type: HyperparameterType | undefined = Form.useWatch([ name, 'type' ]);
+  const typeRef = useRef<RefSelectProps>(null);
   const checked: boolean | undefined = Form.useWatch([ name, 'active' ]);
   const min: number | undefined = Form.useWatch([ name, 'min' ]);
   const max: number | undefined = Form.useWatch([ name, 'max' ]);
@@ -573,6 +585,7 @@ const HyperparameterRow: React.FC<RowProps> = (
       name: [ name, 'type' ],
       value: checked ? HyperparameterType.Double : HyperparameterType.Constant,
     } ]);
+    if (checked) typeRef.current?.focus();
   }, [ form, name ]);
 
   const handleTypeChange = useCallback((value: HyperparameterType) => {
@@ -642,7 +655,7 @@ const HyperparameterRow: React.FC<RowProps> = (
         initialValue={hyperparameter.type}
         name={[ name, 'type' ]}
         noStyle>
-        <Select onChange={handleTypeChange}>
+        <Select ref={typeRef} onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
             .map((type) => (
               <Select.Option
