@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -183,14 +184,15 @@ func (a *apiServer) SetUserPassword(
 	if err != nil {
 		return nil, err
 	}
-	if !curUser.Admin && curUser.ID != model.UserID(req.UserId) {
+	targetUser := &model.User{ID: model.UserID(req.UserId)}
+	if err = user.AuthZProvider.Get().CanSetUserPassword(*curUser, *targetUser); err != nil {
 		return nil, grpcutil.ErrPermissionDenied
 	}
-	user := &model.User{ID: model.UserID(req.UserId)}
-	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+
+	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
-	switch err = a.m.db.UpdateUser(user, []string{"password_hash"}, nil); {
+	switch err = a.m.db.UpdateUser(targetUser, []string{"password_hash"}, nil); {
 	case err == db.ErrNotFound:
 		return nil, errUserNotFound
 	case err != nil:
