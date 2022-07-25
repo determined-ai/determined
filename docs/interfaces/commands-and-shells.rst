@@ -119,11 +119,12 @@ Environment Variables
 
 -  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
    be overridden using the ``-m`` flag.
+
 -  ``DET_USER`` and ``DET_PASS``: Specifies the current Determined user and password for use when
    non-interactive behaviour is required such as scripts. ``det user login`` is preferred for normal
    usage. Both ``DET_USER`` and ``DET_PASS`` must be set together to take effect. These variables
    can be overridden by using the ``-u`` flag.
-   
+
 Examples
 ========
 
