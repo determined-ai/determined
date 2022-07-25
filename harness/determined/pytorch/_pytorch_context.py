@@ -22,6 +22,7 @@ except ImportError:  # pragma: no cover
 # AMP is only available in PyTorch 1.6+
 try:
     import torch.cuda.amp as amp
+
     HAVE_AMP = True
 except ImportError:  # pragma: no cover
     HAVE_AMP = False

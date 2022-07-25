@@ -14,6 +14,7 @@ from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 # Apex is included only for GPU trials.
 try:
     import apex
+
     HAVE_APEX = True
 except ImportError:  # pragma: no cover
     HAVE_APEX = False
