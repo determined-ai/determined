@@ -255,11 +255,17 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
         searcher, name, pool, slots_per_trial, max_trials, max_length,
         length_units, mode, stop_once, max_concurrent_trials,
       } = formValues;
-      setValidationError(!(validateLength(name ?? '') && slots_per_trial != null &&
-        slots_per_trial >= 0 && slots_per_trial <= maxSlots && max_length != null &&
-        max_length > 0 && max_concurrent_trials != null && max_concurrent_trials >= 0 &&
-        (searcher === SearchMethods.Grid.name || (max_trials != null && max_trials > 0)) &&
-        pool != null && length_units != null &&
+
+      const validName = validateLength(name ?? '');
+      const validSlotsPerTrial = slots_per_trial != null && slots_per_trial >= 0 &&
+        slots_per_trial <= maxSlots;
+      const validMaxLength = max_length != null && max_length > 0;
+      const validMaxConcurrentTrials = max_concurrent_trials != null && max_concurrent_trials >= 0;
+      const validMaxTrials = (searcher === SearchMethods.Grid.name ||
+        (max_trials != null && max_trials > 0));
+
+      setValidationError(!(validName && validSlotsPerTrial && validMaxLength &&
+        validMaxConcurrentTrials && validMaxTrials && pool != null && length_units != null &&
         (searcher !== SearchMethods.ASHA.name || (mode != null && isBoolean(stop_once)))
       ));
     }
