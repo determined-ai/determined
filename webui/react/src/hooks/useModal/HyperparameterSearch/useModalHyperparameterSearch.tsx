@@ -72,7 +72,7 @@ interface HyperparameterRowValues {
   value?: number | string,
 }
 
-const useModalHyperparameterSearch = ({ 
+const useModalHyperparameterSearch = ({
   experiment,
   onClose,
   trial: trialIn,
