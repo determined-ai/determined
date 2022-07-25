@@ -52,12 +52,17 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+// SortDirection represents the order by in a query.
 type SortDirection string
 
 const (
-	SortDirectionAsc           SortDirection = "ASC"
-	SortDirectionDesc          SortDirection = "DESC"
+	// SortDirectionAsc represents ordering by ascending.
+	SortDirectionAsc SortDirection = "ASC"
+	// SortDirectionDesc represents ordering by descending.
+	SortDirectionDesc SortDirection = "DESC"
+	// SortDirectionAscNullsFirst represents ordering by ascending with nulls first.
 	SortDirectionAscNullsFirst SortDirection = "ASC NULLS FIRST"
+	// SortDirectionDescNullsLast represents ordering by descending with nulls last.
 	SortDirectionDescNullsLast SortDirection = "DESC NULLS LAST"
 )
 

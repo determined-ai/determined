@@ -32,7 +32,6 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 		group, err := addGroup(ctx, nil, group)
 		return group, nil, err
 	}
-
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return Group{}, nil, err
@@ -68,9 +67,12 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 }
 
 // GroupByID looks for a group by id. Returns ErrNotFound if the group isn't found.
-func GroupByID(ctx context.Context, gid int) (Group, error) {
+func GroupByID(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
+	if idb == nil {
+		idb = db.Bun()
+	}
 	var g Group
-	err := db.Bun().NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
+	err := idb.NewSelect().Model(&g).Where("id = ?", gid).Scan(ctx)
 
 	return g, matchSentinelError(err)
 }
@@ -123,8 +125,11 @@ func DeleteGroup(ctx context.Context, gid int) error {
 
 // UpdateGroup updates a group in the database. Returns ErrNotFound if the
 // group isn't found.
-func UpdateGroup(ctx context.Context, group Group) error {
-	res, err := db.Bun().NewUpdate().Model(&group).WherePK().Exec(ctx)
+func UpdateGroup(ctx context.Context, idb bun.IDB, group Group) error {
+	if idb == nil {
+		idb = db.Bun()
+	}
+	res, err := idb.NewUpdate().Model(&group).WherePK().Exec(ctx)
 
 	return matchSentinelError(mustHaveAffectedRows(res, err))
 }
@@ -161,12 +166,15 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 // RemoveUsersFromGroup removes users from a group. Removes nothing and
 // returns ErrNotFound if the group or one of the users' membership rows
 // aren't found.
-func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) error {
+func RemoveUsersFromGroup(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
+	if idb == nil {
+		idb = db.Bun()
+	}
 	if len(uids) < 1 {
 		return nil
 	}
 
-	res, err := db.Bun().NewDelete().Table("user_group_membership").
+	res, err := idb.NewDelete().Table("user_group_membership").
 		Where("group_id = ?", gid).
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
@@ -175,6 +183,74 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 	}
 
 	return nil
+}
+
+// UpdateGroupAndMembers updates a group and adds or removes members all in one transaction.
+func UpdateGroupAndMembers(
+	ctx context.Context,
+	gid int, name string,
+	addUsers,
+	removeUsers []model.UserID,
+) ([]model.User, string, error) {
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	defer func() {
+		err = tx.Rollback()
+		if err != nil {
+			logrus.WithError(err).Error("error rolling back transaction in UpdateGroupAndMembers")
+		}
+	}()
+
+	oldGroup, err := GroupByID(ctx, tx, gid)
+	if err != nil {
+		return nil, "", err
+	}
+
+	newName := oldGroup.Name
+	if name != "" {
+		newName = name
+	}
+	err = UpdateGroup(ctx, tx, Group{
+		BaseModel: bun.BaseModel{},
+		ID:        gid,
+		Name:      newName,
+		OwnerID:   oldGroup.OwnerID,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(addUsers) > 0 {
+		err = AddUsersToGroupTx(ctx, tx, gid, addUsers...)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	if len(removeUsers) > 0 {
+		var users []model.UserID
+		for _, id := range removeUsers {
+			users = append(users, id)
+		}
+		err = RemoveUsersFromGroup(ctx, tx, gid, users...)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	users, err := UsersInGroupTx(ctx, tx, gid)
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return users, newName, nil
 }
 
 // UsersInGroupTx searches for users that belong to a group and returns them.

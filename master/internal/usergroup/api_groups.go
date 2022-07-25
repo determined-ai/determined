@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
-	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -79,7 +78,7 @@ func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 	}()
 
 	gid := int(req.GroupId)
-	g, err := GroupByID(ctx, gid)
+	g, err := GroupByID(ctx, nil, gid)
 	if err != nil {
 		return nil, err
 	}
@@ -107,55 +106,23 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		err = mapAndFilterErrors(err)
 	}()
 
-	oldGroup, err := GroupByID(ctx, int(req.GroupId))
-	if err != nil {
-		return nil, err
-	}
-
-	newName := oldGroup.Name
-	if req.Name != "" {
-		newName = req.Name
-	}
-	err = UpdateGroup(ctx, Group{
-		BaseModel: bun.BaseModel{},
-		ID:        int(req.GroupId),
-		Name:      newName,
-		OwnerID:   oldGroup.OwnerID,
-	})
-	if err != nil {
-		return nil, err
-	}
+	var addUsers []model.UserID
+	var removeUsers []model.UserID
 
 	if len(req.AddUsers) > 0 {
-		var users []model.UserID
-		for _, id := range req.AddUsers {
-			users = append(users, model.UserID(id))
-		}
-		err = AddUsersToGroupTx(ctx, nil, int(req.GroupId), users...)
-		if err != nil {
-			return nil, err
-		}
+		addUsers = intsToUserIDs(req.AddUsers)
 	}
 
 	if len(req.RemoveUsers) > 0 {
-		var users []model.UserID
-		for _, id := range req.RemoveUsers {
-			users = append(users, model.UserID(id))
-		}
-		err = RemoveUsersFromGroup(ctx, int(req.GroupId), users...)
-		if err != nil {
-			return nil, err
-		}
+		removeUsers = intsToUserIDs(req.RemoveUsers)
 	}
 
-	users, err := UsersInGroupTx(ctx, nil, int(req.GroupId))
-	if err != nil {
-		return nil, err
-	}
+	users, newName, err := UpdateGroupAndMembers(ctx,
+		int(req.GroupId), req.Name, addUsers, removeUsers)
 
 	resp = &apiv1.GroupWriteResponse{
 		Group: &groupv1.GroupDetails{
-			GroupId: int32(oldGroup.ID),
+			GroupId: req.GroupId,
 			Name:    newName,
 			Users:   model.Users(users).Proto(),
 		},
