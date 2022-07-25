@@ -2,6 +2,6 @@
 
 **Improvements**
 
--  CLI: Commands now support setting the environment variables ``DET_USERNAME`` and ``DET_PASSWORD``
-   to skip the need for running ``det login`` allowing for easier use of the Determined CLI in
-   scripts.
+-  CLI: Commands now support setting the environment variables ``DET_USER`` and ``DET_PASS`` to skip
+   the need for running ``det user login`` allowing for easier use of the Determined CLI in scripts.
+   ``det user login`` is still the preferred mechanism for most use cases of the CLI.

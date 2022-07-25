@@ -367,31 +367,24 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_login_with_environment_variables(clean_auth: None) -> None:
-    # Specifying both DET_USER and DET_PASS as environment variables.
     creds = create_test_user(ADMIN_CREDENTIALS, True)
-    os.environ["DET_USERNAME"] = creds.username
-    os.environ["DET_PASSWORD"] = creds.password
+    os.environ["DET_USER"] = creds.username
+    os.environ["DET_PASS"] = creds.password
     try:
-        print(creds.username, creds.password)
         child = det_spawn(["user", "whoami"])
         child.expect(creds.username)
         child.wait()
         assert child.exitstatus == 0
-    finally:
-        del os.environ["DET_USERNAME"]
-        del os.environ["DET_PASSWORD"]
 
-    # Specifying DET_PASS as an environment variable then username as -u.
-    creds = create_test_user(ADMIN_CREDENTIALS, True)
-    os.environ["DET_PASSWORD"] = creds.password
-    try:
-        print(creds.username, creds.password)
-        child = det_spawn(["-u", creds.username, "user", "whoami"])
-        child.expect(creds.username)
-        child.wait()
-        assert child.exitstatus == 0
+        # Can still override with -u.
+        with logged_in_user(ADMIN_CREDENTIALS):
+            child = det_spawn(["-u", ADMIN_CREDENTIALS.username, "user", "whoami"])
+            child.expect(ADMIN_CREDENTIALS.username)
+            child.wait()
+            assert child.exitstatus == 0
     finally:
-        del os.environ["DET_PASSWORD"]
+        del os.environ["DET_USER"]
+        del os.environ["DET_PASS"]
 
 
 @pytest.mark.e2e_cpu

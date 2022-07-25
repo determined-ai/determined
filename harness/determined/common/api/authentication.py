@@ -61,34 +61,36 @@ class Authentication:
     ) -> Session:
         session_user = (
             requested_user
-            or util.get_det_username_from_env()
             or self.token_store.get_active_user()
             or constants.DEFAULT_DETERMINED_USER
         )
+
+        if (
+            requested_user is None
+            and util.get_det_username_from_env() is not None
+            and util.get_det_password_from_env() is not None
+        ):
+            session_user = util.get_det_username_from_env()  # type: ignore
+            password = util.get_det_password_from_env()
 
         token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
             self.token_store.drop_user(session_user)
             token = None
 
-        # util.get_container_user_name() and util.get_container_user_token()
-        # are either both None or both strings
         if (
             token is None
-            and util.get_container_user_name() is not None
-            and util.get_container_user_token() is not None
+            and util.get_det_username_from_env() is not None
+            and util.get_det_user_token_from_env() is not None
         ):
-            session_user = util.get_container_user_name()  # type: ignore
-            token = util.get_container_user_token()
+            session_user = util.get_det_username_from_env()  # type: ignore
+            token = util.get_det_user_token_from_env()
 
         if token is not None:
             return Session(session_user, token)
 
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
-
-        if password is None:
-            password = util.get_det_password_from_env()
 
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
