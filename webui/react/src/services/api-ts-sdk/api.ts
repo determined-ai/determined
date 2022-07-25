@@ -7291,11 +7291,11 @@ export interface V1ValidationCompleted {
      */
     metric?: number;
     /**
-     * Need the length from ValidateAfterOperation.
-     * @type {V1ValidateAfterOperation}
+     * length from ValidateAfterOperation.
+     * @type {string}
      * @memberof V1ValidationCompleted
      */
-    op?: V1ValidateAfterOperation;
+    validateAfterLength?: string;
 }
 
 /**

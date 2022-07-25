@@ -79,9 +79,9 @@ func (s *customSearch) validationCompleted(
 ) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
-			RequestId: requestID.String(),
-			Op:        op.ToProto(),
-			Metric:    metric,
+			RequestId:           requestID.String(),
+			ValidateAfterLength: op.ToProto().Length,
+			Metric:              metric,
 		},
 	}
 	searcherEvent := experimentv1.SearcherEvent{

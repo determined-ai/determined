@@ -71,9 +71,9 @@ func TestCustomSearchMethod(t *testing.T) {
 	require.NoError(t, err)
 	validationCompletedEvent := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
-			RequestId: requestID.String(),
-			Metric:    metric,
-			Op:        validateAfterOp.ToProto(),
+			RequestId:           requestID.String(),
+			Metric:              metric,
+			ValidateAfterLength: validateAfterOp.ToProto().Length,
 		},
 	}
 	expEventCount++
