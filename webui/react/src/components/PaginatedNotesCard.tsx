@@ -3,8 +3,8 @@ import { Button, Dropdown, Menu, Modal } from 'antd';
 import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import usePrevious from 'hooks/usePrevious';
 import Icon from 'shared/components/Icon/Icon';
+import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
 import NotesCard from './NotesCard';
@@ -114,8 +114,8 @@ const PaginatedNotesCard: React.FC<Props> = (
   }, [ currentPage, notes.length, fireNoteChangeSignal ]);
 
   useEffect(() => {
-    setEditedContents(prev => notes?.[currentPage]?.contents ?? prev);
-    setEditedName(prev => notes?.[currentPage]?.name ?? prev);
+    setEditedContents((prev) => notes?.[currentPage]?.contents ?? prev);
+    setEditedName((prev) => notes?.[currentPage]?.name ?? prev);
   }, [ currentPage, notes ]);
 
   const ActionMenu = useCallback((pageNumber: number) => {
@@ -167,7 +167,7 @@ const PaginatedNotesCard: React.FC<Props> = (
                     <Dropdown
                       overlay={() => ActionMenu(idx)}
                       trigger={[ 'click' ]}>
-                      <div className={css.action} onClick={e => e.stopPropagation()}>
+                      <div className={css.action} onClick={(e) => e.stopPropagation()}>
                         <Icon name="overflow-horizontal" />
                       </div>
                     </Dropdown>

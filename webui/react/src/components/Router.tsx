@@ -4,9 +4,8 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { paths } from 'routes/utils';
-
-import { RouteConfig } from '../shared/types';
-import { filterOutLoginLocation } from '../shared/utils/routes';
+import { RouteConfig } from 'shared/types';
+import { filterOutLoginLocation } from 'shared/utils/routes';
 
 interface Props {
   routes: RouteConfig[];
@@ -34,7 +33,7 @@ const Router: React.FC<Props> = (props: Props) => {
 
   return (
     <Switch>
-      {props.routes.map(config => {
+      {props.routes.map((config) => {
         const { component, ...route } = config;
 
         if (route.needAuth && !auth.isAuthenticated) {

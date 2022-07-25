@@ -5,15 +5,16 @@ import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 import { routeToReactUrl } from 'shared/utils/routes';
+/** generates a handler that alerts when called */
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeToReactUrl(url));
 export const noOp = (): void => undefined;
-export const parseIds = (input: string): number[] => input.split(',').map(i => parseInt(i));
+export const parseIds = (input: string): number[] => input.split(',').map((i) => parseInt(i));
 
 export const displayHelp = (): void => {
   const commands = dfsStaticRoutes([], [], root)
-    .map(path => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
-    .map(addr => addr.replace('root ', ''))
+    .map((path) => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
+    .map((addr) => addr.replace('root ', ''))
     .sort();
 
   const keymap = [

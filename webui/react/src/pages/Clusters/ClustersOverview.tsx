@@ -6,14 +6,15 @@ import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import { useFetchAgents, useFetchResourcePools } from 'hooks/useFetch';
+import { useFetchActiveExperiments, useFetchActiveTasks, useFetchAgents,
+  useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 
-import { percent } from '../../shared/utils/number';
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
@@ -47,7 +48,7 @@ export const maxClusterSlotCapacity = (
 
   if (allPoolsStatic) {
     return agents.reduce((acc, agent) => {
-      agent.resources.forEach(resource => {
+      agent.resources.forEach((resource) => {
         if (!(resource.type in acc)) acc[resource.type] = 0;
         acc[resource.type] += 1;
         acc[ResourceType.ALL] += 1;
@@ -84,9 +85,17 @@ const ClusterOverview: React.FC = () => {
 
   const [ canceler ] = useState(new AbortController());
 
+  const fetchActiveExperiments = useFetchActiveExperiments(canceler);
+  const fetchActiveTasks = useFetchActiveTasks(canceler);
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
+  const fetchActiveRunning = useCallback(async () => {
+    await fetchActiveExperiments();
+    await fetchActiveTasks();
+  }, [ fetchActiveExperiments, fetchActiveTasks ]);
+
+  usePolling(fetchActiveRunning);
   usePolling(fetchResourcePools, { interval: 10000 });
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
@@ -101,8 +110,7 @@ const ClusterOverview: React.FC = () => {
     <div className={css.base}>
       <ClusterOverallStats />
       <ClusterOverallBar />
-      <Section
-        title={'Resource Pools'}>
+      <Section title="Resource Pools">
         <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>

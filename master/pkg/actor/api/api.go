@@ -10,9 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-var (
-	upgrader = websocket.Upgrader{}
-)
+var upgrader = websocket.Upgrader{}
 
 // Route aims at routing HTTP and websocket requests to an actor. It returns an
 // echo handler function to register with endpoints. Requests will be routed to

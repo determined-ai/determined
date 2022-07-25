@@ -15,7 +15,8 @@ import (
 )
 
 func (a *apiServer) GetTemplates(
-	_ context.Context, req *apiv1.GetTemplatesRequest) (*apiv1.GetTemplatesResponse, error) {
+	_ context.Context, req *apiv1.GetTemplatesRequest,
+) (*apiv1.GetTemplatesResponse, error) {
 	resp := &apiv1.GetTemplatesResponse{}
 	if err := a.m.db.QueryProto("get_templates", &resp.Templates); err != nil {
 		return nil, errors.Wrap(err, "error fetching templates from database")
@@ -28,7 +29,8 @@ func (a *apiServer) GetTemplates(
 }
 
 func (a *apiServer) GetTemplate(
-	_ context.Context, req *apiv1.GetTemplateRequest) (*apiv1.GetTemplateResponse, error) {
+	_ context.Context, req *apiv1.GetTemplateRequest,
+) (*apiv1.GetTemplateResponse, error) {
 	t := &templatev1.Template{}
 	switch err := a.m.db.QueryProto("get_template", t, req.TemplateName); err {
 	case db.ErrNotFound:
@@ -41,7 +43,8 @@ func (a *apiServer) GetTemplate(
 }
 
 func (a *apiServer) PutTemplate(
-	_ context.Context, req *apiv1.PutTemplateRequest) (*apiv1.PutTemplateResponse, error) {
+	_ context.Context, req *apiv1.PutTemplateRequest,
+) (*apiv1.PutTemplateResponse, error) {
 	config, err := protojson.Marshal(req.Template.Config)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid config provided: %s", err.Error())
@@ -52,7 +55,8 @@ func (a *apiServer) PutTemplate(
 }
 
 func (a *apiServer) DeleteTemplate(
-	_ context.Context, req *apiv1.DeleteTemplateRequest) (*apiv1.DeleteTemplateResponse, error) {
+	_ context.Context, req *apiv1.DeleteTemplateRequest,
+) (*apiv1.DeleteTemplateResponse, error) {
 	switch err := a.m.db.DeleteTemplate(req.TemplateName); err {
 	case nil:
 		return &apiv1.DeleteTemplateResponse{}, nil

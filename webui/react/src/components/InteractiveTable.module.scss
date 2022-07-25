@@ -1,6 +1,7 @@
 .tableContainer {
   :global(.ant-table) {
     overflow-x: scroll;
+    overflow-y: hidden;
   }
 }
 .headerCell {

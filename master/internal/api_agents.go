@@ -42,17 +42,20 @@ func slotAddr(agentID, slotID string) actor.Address {
 }
 
 func (a *apiServer) GetAgent(
-	_ context.Context, req *apiv1.GetAgentRequest) (resp *apiv1.GetAgentResponse, err error) {
+	_ context.Context, req *apiv1.GetAgentRequest,
+) (resp *apiv1.GetAgentResponse, err error) {
 	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) GetSlots(
-	_ context.Context, req *apiv1.GetSlotsRequest) (resp *apiv1.GetSlotsResponse, err error) {
+	_ context.Context, req *apiv1.GetSlotsRequest,
+) (resp *apiv1.GetSlotsResponse, err error) {
 	return resp, a.ask(agentAddr(req.AgentId), req, &resp)
 }
 
 func (a *apiServer) GetSlot(
-	_ context.Context, req *apiv1.GetSlotRequest) (resp *apiv1.GetSlotResponse, err error) {
+	_ context.Context, req *apiv1.GetSlotRequest,
+) (resp *apiv1.GetSlotResponse, err error) {
 	return resp, a.ask(slotAddr(req.AgentId, req.SlotId), req, &resp)
 }
 

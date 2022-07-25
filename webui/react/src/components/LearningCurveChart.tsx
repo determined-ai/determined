@@ -98,7 +98,7 @@ const LearningCurveChart: React.FC<Props> = ({
   useEffect(() => {
     let seriesIdx = -1;
     if (focusedTrialId && trialIds.includes(focusedTrialId)) {
-      seriesIdx = trialIds.findIndex(id => id === focusedTrialId);
+      seriesIdx = trialIds.findIndex((id) => id === focusedTrialId);
     }
     setFocusIndex(seriesIdx !== -1 ? seriesIdx : undefined);
   }, [ focusedTrialId, trialIds ]);

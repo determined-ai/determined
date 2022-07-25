@@ -22,8 +22,10 @@ def test_start_notebook_with_template() -> None:
     template_name = "test_start_notebook_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
 
-    with cmd.interactive_command("notebook", "start", "--template", template_name, "--detach"):
-        pass
+    with cmd.interactive_command(
+        "notebook", "start", "--template", template_name, "--detach"
+    ) as nb:
+        assert "SHOULDBE=SET" in cmd.get_command_config("notebook", str(nb.task_id))
 
 
 @pytest.mark.slow
@@ -35,8 +37,8 @@ def test_start_command_with_template() -> None:
 
     with cmd.interactive_command(
         "command", "run", "--template", template_name, "--detach", "sleep infinity"
-    ):
-        pass
+    ) as command:
+        assert "SHOULDBE=SET" in cmd.get_command_config("command", str(command.task_id))
 
 
 @pytest.mark.slow
@@ -46,5 +48,7 @@ def test_start_shell_with_template() -> None:
     template_name = "test_start_shell_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
 
-    with cmd.interactive_command("shell", "start", "--template", template_name, "--detach"):
-        pass
+    with cmd.interactive_command(
+        "shell", "start", "--template", template_name, "--detach"
+    ) as shell:
+        assert "SHOULDBE=SET" in cmd.get_command_config("shell", str(shell.task_id))

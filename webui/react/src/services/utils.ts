@@ -1,10 +1,9 @@
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'shared/utils/data';
+import { DetError } from 'shared/utils/error';
+import { getResponseStatus, processApiError } from 'shared/utils/service';
 import handleError from 'utils/error';
-
-import { DetError } from '../shared/utils/error';
-import { getResponseStatus, processApiError } from '../shared/utils/service';
 
 /* Response Helpers */
 
@@ -26,7 +25,7 @@ export const isLoginFailure = (e: any): boolean => {
 
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
-  onEvent: (event: T) => void,
+  onEvent?: (event: T) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
@@ -60,7 +59,7 @@ export const readStream = async <T = unknown>(
       if (isCancelled) return;
       try {
         const ndjson = JSON.parse(line);
-        onEvent(ndjson.result);
+        onEvent?.(ndjson.result);
       } catch {
         // JSON parsing error occurred, no-op.
       }
@@ -79,7 +78,7 @@ export const readStream = async <T = unknown>(
 
       // Process only newline delimited data buffer.
       const lines = buffer.split('\n');
-      for(let i = 0; i < lines.length - 1; ++i) {
+      for (let i = 0; i < lines.length - 1; ++i) {
         const line = lines[i].trim();
         if (line.length === 0) continue;
         handleStreamLine(line);

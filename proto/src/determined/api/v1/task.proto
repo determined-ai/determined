@@ -24,6 +24,27 @@ message GetTaskResponse {
   determined.task.v1.Task task = 1;
 }
 
+// Request a count of active tasks by type.
+message GetTasksCountRequest {}
+
+// Response to GetTasksCountRequest.
+message GetTasksCountResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "commands", "notebooks", "shells", "tensorboards" ]
+    }
+  };
+
+  // The count of commands.
+  int32 commands = 1;
+  // The count of notebooks.
+  int32 notebooks = 2;
+  // The count of shells.
+  int32 shells = 3;
+  // The count of TensorBoards.
+  int32 tensorboards = 4;
+}
+
 // Mark the given task as ready.
 message AllocationReadyRequest {
   // The id of the allocation.
@@ -63,6 +84,8 @@ message TaskLogsRequest {
   google.protobuf.Timestamp timestamp_after = 14;
   // Order logs in either ascending or descending order by timestamp.
   OrderBy order_by = 15;
+  // Search the logs by whether the text contains a substring.
+  string search_text = 16;
 }
 
 // Response to TaskLogsRequest.

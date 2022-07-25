@@ -22,7 +22,7 @@ describe('LogViewerEntry', () => {
 
   it('should render with all level types', () => {
     const enumRecord = LogLevel as Record<string, string>;
-    Object.values(enumRecord).forEach(level => {
+    Object.values(enumRecord).forEach((level) => {
       const { container } = setup({ formattedTime, level: level as LogLevel, message });
       const icon = container.querySelector(`.icon-${level}`);
       expect(icon).not.toBeNull();

@@ -6,11 +6,11 @@ import { FixedSizeList as List } from 'react-window';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';
@@ -175,7 +175,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             style={{ width: '100%' }}
             value={destSettings.workspaceId}
             onSelect={handleWorkspaceSelect}>
-            {workspaces.map(workspace => {
+            {workspaces.map((workspace) => {
               return (
                 <Option
                   disabled={workspace.archived}
@@ -234,7 +234,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       experimentIds.map((experimentId) =>
         moveExperimentWithHandler(experimentId, destSettings.projectId as number)),
     );
-    const numFailures = results.filter(res => res.status !== 'fulfilled' || res.value === 1).length;
+    const numFailures = results.filter((res) => (
+      res.status !== 'fulfilled' || res.value === 1
+    )).length;
 
     const experimentText = experimentIds.length === 1
       ? `Experiment ${experimentIds[0]}`

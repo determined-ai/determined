@@ -21,7 +21,7 @@ const columns = new Array(20).fill(null).map(() => {
 
 const data = new Array(100).fill(null).map(() => {
   const row: Record<string, string> = {};
-  columns.forEach(column => {
+  columns.forEach((column) => {
     row[column.dataIndex] = generateAlphaNumeric();
   });
   return row;

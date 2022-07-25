@@ -1,8 +1,7 @@
 import { Dayjs } from 'dayjs';
 
+import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
 import { DetailedUser, Job, Metadata, MetricName, MetricType, Note, Scale } from 'types';
-
-import { FetchOptions, RecordKey, SingleEntityParams } from '../shared/types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -61,6 +60,7 @@ export interface GetExperimentsParams extends PaginationParams {
   labels?: Array<string>;
   name?: string;
   options?: never;
+  projectId?: number;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
   | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
   | 'SORT_BY_USER' | 'SORT_BY_NAME';
@@ -233,6 +233,11 @@ export interface GetJobsResponse extends Api.V1GetJobsResponse {
 }
 export interface GetJobQStatsParams extends FetchOptions {
   resourcePools?: string[];
+}
+
+export interface GetUsersParams extends PaginationParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_USER_NAME'
+  | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' |'SORT_BY_MODIFIED_TIME';
 }
 
 export interface SetUserPasswordParams {

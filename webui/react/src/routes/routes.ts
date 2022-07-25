@@ -1,4 +1,4 @@
-import { RouteConfig } from '../shared/types';
+import { RouteConfig } from 'shared/types';
 
 const routes: RouteConfig[] = [
   {
@@ -166,6 +166,12 @@ const routes: RouteConfig[] = [
     path: '/jobs',
     redirect: '/clusters',
     title: 'Job Queue',
+  },
+  {
+    id: 'settings',
+    needAuth: true,
+    path: '/settings/:tab?',
+    title: 'Settings',
   },
 ];
 

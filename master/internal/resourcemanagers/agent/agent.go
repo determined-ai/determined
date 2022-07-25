@@ -418,22 +418,39 @@ func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMessage) {
+	log := ctx.Log().WithField("agent-id", ctx.Self().Address().Local())
 	switch {
 	case msg.AgentStarted != nil:
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 
-		// TODO(ilia): Error out on a change in devices.
-		if !a.started {
+		if a.started {
+			err := a.agentState.checkAgentStartedDevicesMatch(ctx, msg.AgentStarted)
+			if err != nil {
+				log.WithError(err).
+					Error("change in agent devices was detected")
+				wsm := ws.WriteMessage{
+					Message: aproto.AgentMessage{
+						AgentShutdown: &aproto.AgentShutdown{
+							ErrMsg: aproto.ErrAgentMustReconnect.Error(),
+						},
+					},
+				}
+				if err = ctx.Ask(a.socket, wsm).Error(); err != nil {
+					log.WithError(err).Error("failed to tell agent to reconnect")
+					panic(err)
+				}
+				ctx.Self().Stop()
+				return
+			}
+		} else {
 			a.agentStarted(ctx, msg.AgentStarted)
 		}
 
 		a.started = true
 
 		if err := a.handleContainersReattached(ctx, msg.AgentStarted); err != nil {
-			ctx.Log().
-				WithError(err).
-				WithField("agent-id", ctx.Self().Address().Local()).
+			log.WithError(err).
 				Error("failure in handleContainersReattached")
 		}
 	case msg.ContainerStateChanged != nil:
@@ -442,13 +459,14 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		ref, ok := a.agentState.containerAllocation[msg.ContainerLog.Container.ID]
 		if !ok {
 			containerID := msg.ContainerLog.Container.ID
-			ctx.Log().WithField("container-id", containerID).Warnf(
+			log.WithField("container-id", containerID).Warnf(
 				"received ContainerLog from container not allocated to agent: "+
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
+			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
 			RunMessage:  msg.ContainerLog.RunMessage,
@@ -463,7 +481,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
 			}
 			if err != nil {
-				ctx.Log().Errorf("Error record task stats %s", err)
+				log.Errorf("error recording task stats %s", err)
 			}
 		}
 
@@ -480,12 +498,13 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 	a.agentState = NewAgentState(
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
-	a.agentState.resourcePoolName = a.resourcePoolName // TODO that's where it gets set
+	a.agentState.resourcePoolName = a.resourcePoolName
 	a.agentState.agentStarted(ctx, agentStarted)
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
 		Label: agentStarted.Label,
-		Slots: a.agentState.NumSlots()})
+		Slots: a.agentState.NumSlots(),
+	})
 
 	// TODO(ilia): Deprecate together with the old slots API.
 	ctx.Tell(a.slots, *agentStarted)
@@ -563,7 +582,8 @@ func (a *agent) gatherContainersToReattach(ctx *actor.Context) []aproto.Containe
 }
 
 func (a *agent) handleContainersReattached(
-	ctx *actor.Context, agentStarted *aproto.AgentStarted) error {
+	ctx *actor.Context, agentStarted *aproto.AgentStarted,
+) error {
 	ctx.Log().Debugf("agent ContainersRestored ip: %v , reattached: %v, allocations: %v",
 		a.address, agentStarted.ContainersReattached, maps.Keys(a.agentState.containerState))
 

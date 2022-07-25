@@ -9,7 +9,7 @@ from termcolor import colored
 from determined.cli import command, task
 from determined.cli.util import format_args
 from determined.common import api, constants, context
-from determined.common.api import authentication
+from determined.common.api import authentication, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -51,7 +51,16 @@ def start_tensorboard(args: Namespace) -> None:
                 if args.no_browser:
                     url = api.make_url(args.master, resp["serviceAddress"])
                 else:
-                    url = api.browser_open(args.master, resp["serviceAddress"])
+                    url = api.browser_open(
+                        args.master,
+                        request.make_interactive_task_url(
+                            task_id=resp["id"],
+                            service_address=resp["serviceAddress"],
+                            resource_pool=resp["resourcePool"],
+                            description=resp["description"],
+                            task_type="tensorboard",
+                        ),
+                    )
 
                 print(colored("TensorBoard is running at: {}".format(url), "green"))
                 render_event_stream(msg)
@@ -66,7 +75,16 @@ def open_tensorboard(args: Namespace) -> None:
         "tensorboard"
     ]
     check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
-    api.browser_open(args.master, resp["serviceAddress"])
+    api.browser_open(
+        args.master,
+        request.make_interactive_task_url(
+            task_id=resp["id"],
+            service_address=resp["serviceAddress"],
+            resource_pool=resp["resourcePool"],
+            description=resp["description"],
+            task_type="tensorboard",
+        ),
+    )
 
 
 # fmt: off

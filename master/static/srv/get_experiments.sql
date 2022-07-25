@@ -23,9 +23,16 @@ WITH page_info AS (
             AND ($7 = '' OR (e.config->>'name') ILIKE ('%%' || $7 || '%%'))
             AND ($8 = 0 OR e.project_id = $8)
     ), $9, $10) AS page_info
-), exps AS (
+),
+pj AS (
+  SELECT projects.id, projects.name AS project_name, workspaces.name AS workspace_name
+  FROM projects
+  JOIN workspaces ON workspaces.id = projects.workspace_id
+),
+exps AS (
     SELECT
         e.id AS id,
+        e.config AS config,
         e.config->>'name' AS name,
         e.config->>'description' AS description,
         e.config->'labels' AS labels,
@@ -46,9 +53,12 @@ WITH page_info AS (
         e.owner_id AS user_id,
         e.project_id AS project_id,
         u.username AS username,
-        COALESCE(u.display_name, u.username) as display_name
+        COALESCE(u.display_name, u.username) as display_name,
+        pj.project_name,
+        pj.workspace_name
     FROM experiments e
     JOIN users u ON e.owner_id = u.id
+    JOIN pj ON e.project_id = pj.id
     WHERE
         ($1 = '' OR e.state IN (SELECT unnest(string_to_array($1, ','))::experiment_state))
         AND ($2 = '' OR e.archived = $2::BOOL)

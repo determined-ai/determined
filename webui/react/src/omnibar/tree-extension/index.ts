@@ -8,10 +8,9 @@ import {
 import {
   getNodeChildren, isLeafNode, isNLNode, traverseTree,
 } from 'omnibar/tree-extension/utils';
+import { ErrorType } from 'shared/utils/error';
+import { noOp } from 'shared/utils/service';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../../shared/utils/error';
-import { noOp } from '../../shared/utils/service';
 
 const SEPARATOR = ' ';
 
@@ -33,7 +32,7 @@ const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest
   };
 };
 
-const absPathToAddress = (path: TreePath): string[] => (path.map(tn => tn.title).slice(1));
+const absPathToAddress = (path: TreePath): string[] => (path.map((tn) => tn.title).slice(1));
 
 const noResultsNode: LeafNode = {
   closeBar: true,
@@ -56,7 +55,7 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
       threshold: 0.4,
     },
   );
-  const matches = query === '' ? children : fuse.search(query).map(r => r.item);
+  const matches = query === '' ? children : fuse.search(query).map((r) => r.item);
 
   if (isNLNode(node)) {
     if (node.onCustomInput) {
@@ -104,5 +103,4 @@ export const onAction = async (
     inputEl.value = inputEl.value + SEPARATOR;
     query(inputEl.value);
   }
-  return Promise.resolve();
 };

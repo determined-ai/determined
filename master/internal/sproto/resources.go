@@ -144,7 +144,8 @@ type ResourcesFailure struct {
 
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
 func NewResourcesFailure(
-	failureType FailureType, msg string, code *ExitCode) *ResourcesFailure {
+	failureType FailureType, msg string, code *ExitCode,
+) *ResourcesFailure {
 	return &ResourcesFailure{
 		FailureType: failureType,
 		ErrMsg:      msg,

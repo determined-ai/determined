@@ -26,13 +26,12 @@ import { archiveModel, getModelLabels,
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { validateDetApiEnum } from 'shared/utils/service';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
-
-import { ErrorType } from '../shared/utils/error';
-import { validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, {
@@ -87,12 +86,12 @@ const ModelRegistry: React.FC = () => {
         users: settings.users,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total || 0);
-      setModels(prev => {
+      setModels((prev) => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
       setIsLoading(false);
-    } catch(e) {
+    } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch models.',
         silent: true,
@@ -252,12 +251,6 @@ const ModelRegistry: React.FC = () => {
     }
   }, []);
 
-  const resetColumnWidths = useCallback(
-    () =>
-      updateSettings({ columnWidths: settings.columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]) }),
-    [ settings.columns, updateSettings ],
-  );
-
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
   }, [ resetSettings ]);
@@ -301,7 +294,7 @@ const ModelRegistry: React.FC = () => {
     const descriptionRenderer = (value:string, record: ModelItem) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
       />
@@ -351,7 +344,7 @@ const ModelRegistry: React.FC = () => {
         dataIndex: 'tags',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
-        filters: tags.map(tag => ({ text: tag, value: tag })),
+        filters: tags.map((tag) => ({ text: tag, value: tag })),
         isFiltered: (settings: Settings) => !!settings.tags,
         key: 'tags',
         render: tagsRenderer,
@@ -368,7 +361,7 @@ const ModelRegistry: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
-        filters: users.map(user => ({ text: getDisplayName(user), value: user.id })),
+        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
         render: userRenderer,
@@ -402,7 +395,7 @@ const ModelRegistry: React.FC = () => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<ModelItem>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',
@@ -479,7 +472,6 @@ const ModelRegistry: React.FC = () => {
             prefixLabel="Show Archived"
             onChange={switchShowArchived}
           />
-          <Button onClick={resetColumnWidths}>Reset Widths</Button>
           {filterCount > 0 &&
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
           <Button onClick={showCreateModelModal}>New Model</Button>

@@ -5,9 +5,8 @@ import { Router } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { RecordKey } from 'shared/types';
 import { MemoryStore, Storage } from 'shared/utils/storage';
-
-import { RecordKey } from '../shared/types';
 
 import useSettings, * as hook from './useSettings';
 
@@ -90,8 +89,8 @@ describe('useSettings helper functions', () => {
         { type: hook.BaseType.String, value: 'hello' },
         { type: hook.BaseType.String, value: 'The quick fox jumped over the lazy dog.' },
       ];
-      (Object.keys(hook.BaseType) as hook.BaseType[]).forEach(baseType => {
-        tests.forEach(test => {
+      (Object.keys(hook.BaseType) as hook.BaseType[]).forEach((baseType) => {
+        tests.forEach((test) => {
           const result = Array.isArray(test.type)
             ? test.type.includes(baseType)
             : test.type === baseType;
@@ -136,9 +135,9 @@ describe('useSettings helper functions', () => {
         { config: configs[hook.BaseType.String], value: 'Hello' },
         { config: configs[hook.BaseType.String + arraySuffix], value: [ 'Hello', 'Jumping Dog' ] },
       ];
-      Object.keys(configs).forEach(key => {
+      Object.keys(configs).forEach((key) => {
         const config = configs[key];
-        tests.forEach(test => {
+        tests.forEach((test) => {
           const result = Array.isArray(test.config)
             ? test.config.includes(config)
             : test.config === config;
@@ -210,7 +209,7 @@ describe('useSettings', () => {
   });
 
   it('should have default settings', () => {
-    config.settings.forEach(configProp => {
+    config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
       expect(result.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
@@ -221,7 +220,7 @@ describe('useSettings', () => {
   it('should update settings', () => {
     act(() => result.current.updateSettings(newSettings));
 
-    config.settings.forEach(configProp => {
+    config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
       expect(result.current.settings[settingsKey])
         .toStrictEqual(newSettings[settingsKey]);
@@ -244,7 +243,7 @@ describe('useSettings', () => {
   it('should have default settings after reset', () => {
     act(() => result.current.resetSettings());
 
-    config.settings.forEach(configProp => {
+    config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
       expect(result.current.settings[settingsKey]).toStrictEqual(configProp.defaultValue);
     });
@@ -256,13 +255,13 @@ describe('useSettings', () => {
       extraResult.current.updateSettings(newExtraSettings);
     });
 
-    config.settings.forEach(configProp => {
+    config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
       expect(result.current.settings[settingsKey])
         .toStrictEqual(newSettings[settingsKey]);
     });
 
-    extraConfig.settings.forEach(configProp => {
+    extraConfig.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof ExtraSettings;
       expect(extraResult.current.settings[settingsKey])
         .toStrictEqual(newExtraSettings[settingsKey]);
@@ -296,7 +295,7 @@ describe('useSettings', () => {
     expect(result.current.settings.boolean).toBe(newQueryParams.boolean);
     expect(result.current.settings.number).toBe(newQueryParams.number);
     expect(result.current.settings.string)
-      .toBe(config.settings.find(setting => setting.key === 'string')?.defaultValue);
+      .toBe(config.settings.find((setting) => setting.key === 'string')?.defaultValue);
     expect(extraResult.current.settings.extra).toBe(newQueryParams.extra);
 
     /**

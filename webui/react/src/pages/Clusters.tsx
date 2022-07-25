@@ -37,7 +37,7 @@ const Clusters: React.FC = () => {
     return clusterStatusText(overview, resourcePools, agents);
   }, [ overview, resourcePools, agents ]);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);
@@ -46,7 +46,6 @@ const Clusters: React.FC = () => {
     <Page
       bodyNoPadding
       id="cluster"
-      stickyHeader
       title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
       <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">

@@ -3,8 +3,8 @@ import uPlot from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import QuadTree, { pointWithin } from 'components/UPlot/UPlotScatter/quadtree';
+import { Range } from 'shared/types';
 
-import { Range } from '../../shared/types';
 import { Scale } from '../../types';
 
 import { FacetedData, UPlotData } from './types';
@@ -66,7 +66,7 @@ const UPlotScatter: React.FC<Props> = ({
 
             const [ minValue, maxValue ] = ranges.current[SIZE_INDEX];
             const seriesData = (sizeData || []) as unknown as UPlotData[];
-            return seriesData.map(value => getSize(value, minValue, maxValue)) || [];
+            return seriesData.map((value) => getSize(value, minValue, maxValue)) || [];
           },
         },
         stroke: {
@@ -118,7 +118,7 @@ const UPlotScatter: React.FC<Props> = ({
               const cy = (u.cursor.top || 0) * devicePixelRatio;
 
               hRect.current = null;
-              quadtree.current?.get(cx, cy, 1, 1, o => {
+              quadtree.current?.get(cx, cy, 1, 1, (o) => {
                 if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
                   const ocx = o.x + o.w / 2;
                   const ocy = o.y + o.h / 2;
@@ -164,7 +164,7 @@ const UPlotScatter: React.FC<Props> = ({
         height: 350,
         hooks: {
           drawClear: [
-            u => {
+            (u) => {
               quadtree.current = quadtree.current
               || new QuadTree(0, 0, u.bbox.width, u.bbox.height);
               quadtree.current.clear();
@@ -176,7 +176,7 @@ const UPlotScatter: React.FC<Props> = ({
             },
           ],
           setData: [
-            u => {
+            (u) => {
               // Calculate the min and max of each data properties such as size, fill and stroke.
               (u.data[1] || []).forEach((data, index) => {
                 if (data != null) ranges.current[index] = getMinMax(u, index);

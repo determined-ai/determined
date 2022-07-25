@@ -6,12 +6,11 @@ import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
+import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
-
-import { ErrorType } from '../../shared/utils/error';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;
@@ -92,8 +91,8 @@ const ManageJob: React.FC<Props> = (
     ];
     const tableDetails: Record<string, Item> = {};
 
-    tableKeys.forEach(td => {
-      const col = columns.find(col => col.key === td);
+    tableKeys.forEach((td) => {
+      const col = columns.find((col) => col.key === td);
       if (!col || !col.render) return;
       tableDetails[td] = { label: col.title, value: col.render(undefined, job, 0) };
     });
@@ -121,16 +120,16 @@ const ManageJob: React.FC<Props> = (
       tableDetails.user,
     ];
 
-    return items.filter(item => !!item && item.value !== undefined) as Item[];
+    return items.filter((item) => !!item && item.value !== undefined) as Item[];
 
   }, [ job, isOrderedQ ]);
 
   const currentPool = useMemo(() => {
-    return resourcePools.find(rp => rp.name === selectedPoolName);
+    return resourcePools.find((rp) => rp.name === selectedPoolName);
   }, [ resourcePools, selectedPoolName ]);
 
   const currentPoolStats = useMemo(() => {
-    return rpStats.find(rp => rp.resourcePool === selectedPoolName);
+    return rpStats.find((rp) => rp.resourcePool === selectedPoolName);
   }, [ rpStats, selectedPoolName ]);
 
   const poolDetails = useMemo(() => {
@@ -155,7 +154,7 @@ const ManageJob: React.FC<Props> = (
 
   const onOk = useCallback(
     async () => {
-      try{
+      try {
         const update = formRef.current &&
           formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
         if (update) await updateJobQueue({ updates: [ update ] });
@@ -238,7 +237,7 @@ const ManageJob: React.FC<Props> = (
           label="Resource Pool"
           name="resourcePool">
           <Select disabled={job.type !== JobType.EXPERIMENT}>
-            {resourcePools.map(rp => (
+            {resourcePools.map((rp) => (
               <Option key={rp.name} value={rp.name}>{rp.name}</Option>
             ))}
           </Select>
@@ -249,7 +248,7 @@ const ManageJob: React.FC<Props> = (
       </h6>
       <List
         dataSource={details}
-        renderItem={item => (
+        renderItem={(item) => (
           <List.Item className={css.item}>
             <Typography.Text className={css.key}>{item.label}</Typography.Text>
             <div className={css.value}>

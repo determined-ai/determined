@@ -18,7 +18,7 @@ describe('Datetime Utilities', () => {
     [
       { input: DATE[0], output: '2021-11-23, 05:59:59' },
       { input: DATE[1], output: '1980-12-31, 23:59:59' },
-    ].forEach(test => {
+    ].forEach((test) => {
       it(`should format "${test.input}" as default format`, () => {
         expect(utils.formatDatetime(test.input)).toBe(test.output);
       });
@@ -33,7 +33,7 @@ describe('Datetime Utilities', () => {
         input: { date: DATE[1], options: { format: FORMAT[1] } },
         output: 'December 31 (Wednesday)',
       },
-    ].forEach(test => {
+    ].forEach((test) => {
       const { date, options } = test.input;
       it(`should format "${date}" as "${options.format}" in UTC`, () => {
         expect(utils.formatDatetime(date, options)).toBe(test.output);
@@ -49,7 +49,7 @@ describe('Datetime Utilities', () => {
         input: { date: DATE[3], options: { format: FORMAT[1], outputUTC: false } },
         output: dayjs.utc(DATE[3]).local().format(FORMAT[1]),
       },
-    ].forEach(test => {
+    ].forEach((test) => {
       const { date, options } = test.input;
       it(`should format "${date}" as "${options.format}" in local time`, () => {
         expect(utils.formatDatetime(date, options)).toBe(test.output);
@@ -70,7 +70,7 @@ describe('Datetime Utilities', () => {
           .local()
           .format(utils.DEFAULT_DATETIME_FORMAT),
       },
-    ].forEach(test => {
+    ].forEach((test) => {
       const { date, options } = test.input;
       const resultFormat = options.outputUTC ? 'UTC' : 'local time';
       it(`should read "${date}" as UTC and format as ${resultFormat}`, () => {
@@ -90,7 +90,7 @@ describe('Datetime Utilities', () => {
       { input: { endTime: DATES[1], startTime: DATES[0] }, output: 36610000 },
       { input: { endTime: DATES[0], startTime: DATES[1] }, output: -36610000 },
       { input: { endTime: DATES[2], startTime: DATES[0] }, output: 36610000 },
-    ].forEach(test => {
+    ].forEach((test) => {
       const { endTime: end, startTime: start } = test.input;
       it(`should get duration from start "${start}" and end "${end}"`, () => {
         expect(utils.getDuration(test.input)).toBe(test.output);
@@ -122,7 +122,7 @@ describe('Datetime Utilities', () => {
       { input: 3024000000, output: '1mo 1w' },
       { input: 31536000000, output: '1y' },
     ];
-    tests.forEach(test => {
+    tests.forEach((test) => {
       it(`should humanize duration of ${test.input} seconds to english "${test.output}"`, () => {
         expect(utils.durationInEnglish(test.input)).toBe(test.output);
       });
@@ -135,7 +135,7 @@ describe('Datetime Utilities', () => {
       { input: 3600, output: 1 },
       { input: 87300, output: 24.25 },
     ];
-    tests.forEach(test => {
+    tests.forEach((test) => {
       it(`should convert ${test.input} second(s) to ${test.output} hour(s)`, () => {
         expect(utils.secondToHour(test.input)).toBe(test.output);
       });
@@ -150,7 +150,7 @@ describe('Datetime Utilities', () => {
         { input: '2021-11-11T00:00:00+11:11', output: '2021-11-11T00:00:00' },
         { input: '2021-11-11T00:00:00-05:05', output: '2021-11-11T00:00:00' },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.stripTimezone(test.input)).toBe(test.output);
       });
     });

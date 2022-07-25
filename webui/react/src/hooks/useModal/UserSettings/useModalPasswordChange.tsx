@@ -1,146 +1,138 @@
-import { Button, Form, Input, message } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Form, Input, message } from 'antd';
+import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import React, { useCallback } from 'react';
 
 import { useStore } from 'contexts/Store';
 import { login, setUserPassword } from 'services/api';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import useModal, { ModalHooks } from '../useModal';
-
-import css from './useModalPasswordChange.module.scss';
-
 interface Props {
-  onComplete: () => void;
+  form: FormInstance;
+  username?: string;
 }
 
-const ChangePassword: React.FC<Props> = ({ onComplete }) => {
-  const { auth } = useStore();
-  const username = auth.user?.username ?? '';
-  const userId = auth.user?.id ?? 0;
-  const [ form ] = Form.useForm();
-  const [ isUpdating, setIsUpdating ] = useState(false);
+export const MODAL_HEADER_LABEL = 'Change Password';
+export const OLD_PASSWORD_LABEL = 'Old Password';
+export const OLD_PASSWORD_NAME = 'oldPassword';
+export const NEW_PASSWORD_LABEL = 'New Password';
+export const NEW_PASSWORD_NAME = 'newPassword';
+export const CONFIRM_PASSWORD_LABEL = 'Confirm Password';
+export const CONFIRM_PASSWORD_NAME = 'confirmPassword';
+export const CANCEL_BUTTON_LABEL = 'Cancel';
+export const OK_BUTTON_LABEL = 'Change Password';
+export const INCORRECT_PASSWORD_MESSAGE = 'Incorrect password.';
+export const NEW_PASSWORD_REQUIRED_MESSAGE = 'New password required.';
+export const PASSWORD_TOO_SHORT_MESSAGE = 'Password isn\'t long enough.';
+export const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
+export const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
+export const PASSWORD_NUMBER_MESSAGE = 'Password must include a number.';
+export const CONFIRM_PASSWORD_REQUIRED_MESSAGE = 'Confirmed password required.';
+export const PASSWORDS_NOT_MATCHING_MESSAGE = 'Passwords do not match.';
+export const API_SUCCESS_MESSAGE = 'Password updated.';
+export const API_ERROR_MESSAGE = 'Could not update password.';
 
-  const handleFormCancel = useCallback(() => {
-    form.resetFields();
-    onComplete();
-  }, [ form, onComplete ]);
-
-  const handleFormSubmit = useCallback(async () => {
-    setIsUpdating(true);
-    try {
-      await setUserPassword({
-        password: form.getFieldValue('newPassword'),
-        userId,
-      });
-      message.success('Password updated');
-      form.resetFields();
-      onComplete();
-    } catch (e) {
-      message.error('Could not update password');
-      handleError(e);
-    }
-    setIsUpdating(false);
-  }, [ form, onComplete, userId ]);
-
-  return (
-    <div className={css.base}>
-      <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
-        <Form.Item
-          label="Old Password"
-          name="oldPassword"
-          required
-          rules={[
-            {
-              message: 'Incorrect password',
-              validator: async (rule, value) => {
-                setIsUpdating(true); // prevent resubmission while validating
-                try {
-                  return await login({
-                    password: value ?? '',
-                    username,
-                  });
-                } finally {
-                  setIsUpdating(false);
-                }
-              },
-            },
-          ]}
-          validateTrigger={[ 'onSubmit' ]}>
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          label="New Password"
-          name="newPassword"
-          rules={[
-            { message: 'New password required', required: true },
-            { message: "Your new password isn't long enough", min: 8 },
-            {
-              message: 'Your new password must include an uppercase letter',
-              pattern: /[A-Z]+/,
-            },
-            {
-              message: 'Your new password must include a lowercase letter',
-              pattern: /[a-z]+/,
-            },
-            {
-              message: 'Your new password must include a number',
-              pattern: /\d/,
-            },
-          ]}>
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          dependencies={[ 'newPassword' ]}
-          label="Confirm Password"
-          name="confirmPassword"
-          rules={[
-            { message: 'Confirmed password required', required: true },
-            {
-              message: 'Your new passwords do not match',
-              validator: (rule, value) => {
-                return value === form.getFieldValue('newPassword')
-                  ? Promise.resolve()
-                  : Promise.reject();
-              },
-            },
-          ]}>
-          <Input.Password />
-        </Form.Item>
-        <Form.Item>
-          <span>
-            Password must be at least 8 characters
-            and contain an uppercase letter, a lowercase letter, and a number.
-          </span>
-        </Form.Item>
-        <Form.Item>
-          {/* override modal buttons with form buttons
-          to ensure form validation works as intended */}
-          <div className={css.buttons}>
-            <Button onClick={handleFormCancel}>Cancel</Button>
-            <Button htmlType="submit" loading={isUpdating} type="primary">
-              Change password
-            </Button>
-          </div>
-        </Form.Item>
-      </Form>
-    </div>
-  );
-};
+const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
+  <Form form={form} layout="vertical">
+    <Form.Item
+      label={OLD_PASSWORD_LABEL}
+      name={OLD_PASSWORD_NAME}
+      required
+      rules={[
+        {
+          message: INCORRECT_PASSWORD_MESSAGE,
+          validator: async (rule, value) => {
+            await login({ password: value ?? '', username });
+          },
+        },
+      ]}
+      validateTrigger={[ 'onSubmit' ]}>
+      <Input.Password />
+    </Form.Item>
+    <Form.Item
+      label={NEW_PASSWORD_LABEL}
+      name={NEW_PASSWORD_NAME}
+      rules={[
+        { message: NEW_PASSWORD_REQUIRED_MESSAGE, required: true },
+        { message: PASSWORD_TOO_SHORT_MESSAGE, min: 8 },
+        {
+          message: PASSWORD_UPPERCASE_MESSAGE,
+          pattern: /[A-Z]+/,
+        },
+        {
+          message: PASSWORD_LOWERCASE_MESSAGE,
+          pattern: /[a-z]+/,
+        },
+        {
+          message: PASSWORD_NUMBER_MESSAGE,
+          pattern: /\d/,
+        },
+      ]}>
+      <Input.Password />
+    </Form.Item>
+    <Form.Item
+      dependencies={[ NEW_PASSWORD_NAME ]}
+      label={CONFIRM_PASSWORD_LABEL}
+      name={CONFIRM_PASSWORD_NAME}
+      rules={[
+        { message: CONFIRM_PASSWORD_REQUIRED_MESSAGE, required: true },
+        {
+          message: PASSWORDS_NOT_MATCHING_MESSAGE,
+          validator: (rule, value) => {
+            return value === form.getFieldValue(NEW_PASSWORD_NAME)
+              ? Promise.resolve()
+              : Promise.reject();
+          },
+        },
+      ]}>
+      <Input.Password />
+    </Form.Item>
+    <Form.Item>
+      Password must be at least 8 characters
+      and contain an uppercase letter, a lowercase letter, and a number.
+    </Form.Item>
+  </Form>
+);
 
 const useModalPasswordChange = (): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal();
+  const [ form ] = Form.useForm();
+  const { auth } = useStore();
+
+  const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+
+  const handleCancel = useCallback(() => form.resetFields(), [ form ]);
+
+  const handleOkay = useCallback(async () => {
+    await form.validateFields();
+
+    try {
+      const password = form.getFieldValue(NEW_PASSWORD_NAME);
+      await setUserPassword({ password, userId: auth.user?.id ?? 0 });
+      message.success(API_SUCCESS_MESSAGE);
+      form.resetFields();
+    } catch (e) {
+      message.error(API_ERROR_MESSAGE);
+      handleError(e, { silent: true, type: ErrorType.Input });
+
+      // Re-throw error to prevent modal from getting dismissed.
+      throw e;
+    }
+  }, [ auth.user?.id, form ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
-      className: css.noFooter,
       closable: true,
-      content: <ChangePassword onComplete={modalClose} />,
+      content: <ModalForm form={form} username={auth.user?.username} />,
       icon: null,
-      title: <h5>Change password</h5>,
+      okText: OK_BUTTON_LABEL,
+      onCancel: handleCancel,
+      onOk: handleOkay,
+      title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [ modalClose, openOrUpdate ]);
+  }, [ auth.user?.username, form, handleCancel, handleOkay, openOrUpdate ]);
 
-  return { modalClose, modalOpen, ...modalHook };
+  return { modalOpen, ...modalHook };
 };
 
 export default useModalPasswordChange;

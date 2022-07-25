@@ -20,8 +20,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var once sync.Once
-var userService *Service
+var (
+	once        sync.Once
+	userService *Service
+)
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`

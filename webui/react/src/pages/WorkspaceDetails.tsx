@@ -32,7 +32,7 @@ import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  ProjectColumnName, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
+  ProjectColumnName, WhoseProjects, WorkspaceDetailsSettings } from './WorkspaceDetails.settings';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from './WorkspaceDetails/ProjectCard';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
@@ -43,18 +43,11 @@ interface Params {
   workspaceId: string;
 }
 
-enum ProjectFilters {
-  All = 'ALL_PROJECTS',
-  Mine = 'MY_PROJECTS',
-  Others = 'OTHERS_PROJECTS'
-}
-
 const WorkspaceDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const { workspaceId } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ projects, setProjects ] = useState<Project[]>([]);
-  const [ projectFilter, setProjectFilter ] = useState<ProjectFilters>(ProjectFilters.All);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
@@ -90,7 +83,7 @@ const WorkspaceDetails: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setProjects(prev => {
+      setProjects((prev) => {
         if (isEqual(prev, response.projects)) return prev;
         return response.projects;
       });
@@ -119,8 +112,8 @@ const WorkspaceDetails: React.FC = () => {
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const handleViewSelect = useCallback((value) => {
-    setProjectFilter(value as ProjectFilters);
-  }, []);
+    updateSettings({ whose: value });
+  }, [ updateSettings ]);
 
   const handleSortSelect = useCallback((value) => {
     updateSettings({
@@ -135,18 +128,18 @@ const WorkspaceDetails: React.FC = () => {
   }, [ updateSettings ]);
 
   useEffect(() => {
-    switch (projectFilter) {
-      case ProjectFilters.All:
+    switch (settings.whose) {
+      case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
-      case ProjectFilters.Mine:
+      case WhoseProjects.Mine:
         updateSettings({ user: user ? [ user.username ] : undefined });
         break;
-      case ProjectFilters.Others:
-        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+      case WhoseProjects.Others:
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [ projectFilter, updateSettings, user, users ]);
+  }, [ settings.whose, updateSettings, user, users ]);
 
   const saveProjectDescription = useCallback(async (newDescription, projectId: number) => {
     try {
@@ -179,7 +172,7 @@ const WorkspaceDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: Project) => (
       <InlineEditor
         disabled={record.archived}
-        placeholder="Add description..."
+        placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
       />
@@ -298,7 +291,7 @@ const WorkspaceDetails: React.FC = () => {
             gap={ShirtSize.medium}
             minItemWidth={250}
             mode={GridMode.AutoFill}>
-            {projects.map(project => (
+            {projects.map((project) => (
               <ProjectCard
                 curUser={user}
                 fetchProjects={fetchProjects}
@@ -321,6 +314,7 @@ const WorkspaceDetails: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
+            rowKey="id"
             settings={settings}
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
@@ -377,11 +371,11 @@ const WorkspaceDetails: React.FC = () => {
         <SelectFilter
           dropdownMatchSelectWidth={140}
           showSearch={false}
-          value={projectFilter}
+          value={settings.whose}
           onSelect={handleViewSelect}>
-          <Option value={ProjectFilters.All}>All Projects</Option>
-          <Option value={ProjectFilters.Mine}>My Projects</Option>
-          <Option value={ProjectFilters.Others}>Others&apos; Projects</Option>
+          <Option value={WhoseProjects.All}>All Projects</Option>
+          <Option value={WhoseProjects.Mine}>My Projects</Option>
+          <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
         </SelectFilter>
         <Space wrap>
           {!workspace.archived && (

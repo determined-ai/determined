@@ -12,7 +12,7 @@ export default {
   title: 'SlotAllocationBar',
 };
 
-const Wrapper: React.FC<SlotAllocationProps> = props => (
+const Wrapper: React.FC<SlotAllocationProps> = (props) => (
   <div style={{ minWidth: 500 }}>
     <SlotAllocationBar {...props} />
   </div>

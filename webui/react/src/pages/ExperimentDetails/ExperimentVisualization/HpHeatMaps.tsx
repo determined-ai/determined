@@ -16,6 +16,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive, Range } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
@@ -24,8 +25,6 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';
-
-import { Primitive, Range } from '../../../shared/types';
 
 import css from './HpHeatMaps.module.scss';
 
@@ -115,8 +114,8 @@ const HpHeatMaps: React.FC<Props> = ({
     const fill = [ rgba2str(rgbaFill0), rgba2str(rgbaFill1) ].join(' ');
     const stroke = [ rgba2str(rgbaStroke0), rgba2str(rgbaStroke1) ].join(' ');
 
-    selectedHParams.forEach(hParam1 => {
-      selectedHParams.forEach(hParam2 => {
+    selectedHParams.forEach((hParam1) => {
+      selectedHParams.forEach((hParam2) => {
         const key = generateHpKey(hParam1, hParam2);
         const xLabel = hParam2;
         const yLabel = hParam1;
@@ -179,7 +178,7 @@ const HpHeatMaps: React.FC<Props> = ({
   const handleGalleryClose = useCallback(() => setActiveHParam(undefined), []);
 
   const handleGalleryNext = useCallback(() => {
-    setActiveHParam(prev => {
+    setActiveHParam((prev) => {
       if (!prev) return prev;
       const [ hParam1, hParam2 ] = parseHpKey(prev);
       const index0 = selectedHParams.indexOf(hParam1);
@@ -196,7 +195,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [ selectedHParams ]);
 
   const handleGalleryPrevious = useCallback(() => {
-    setActiveHParam(prev => {
+    setActiveHParam((prev) => {
       if (!prev) return prev;
       const [ hParam1, hParam2 ] = parseHpKey(prev);
       const index0 = selectedHParams.indexOf(hParam1);
@@ -234,7 +233,7 @@ const HpHeatMaps: React.FC<Props> = ({
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const hpLogScaleMap: Record<string, boolean> = {};
@@ -242,13 +241,13 @@ const HpHeatMaps: React.FC<Props> = ({
         const hpValues: HpValue = {};
         const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
 
-        event.trials.forEach(trial => {
+        event.trials.forEach((trial) => {
           if (!isObject(trial.hparams)) return;
 
           const trialId = trial.trialId;
           const flatHParams = flattenObject(trial.hparams);
           const trialHParams = Object.keys(flatHParams)
-            .filter(hParam => fullHParams.includes(hParam))
+            .filter((hParam) => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));
 
           /**
@@ -260,9 +259,9 @@ const HpHeatMaps: React.FC<Props> = ({
           trialIds.push(trialId);
           hpMetricMap[trialId] = hpMetricMap[trialId] || {};
           hpValueMap[trialId] = hpValueMap[trialId] || {};
-          trialHParams.forEach(hParam1 => {
+          trialHParams.forEach((hParam1) => {
             hpValueMap[trialId][hParam1] = flatHParams[hParam1];
-            trialHParams.forEach(hParam2 => {
+            trialHParams.forEach((hParam2) => {
               const key = generateHpKey(hParam1, hParam2);
               hpMetricMap[trialId][key] = trialMetric;
             });
@@ -272,7 +271,7 @@ const HpHeatMaps: React.FC<Props> = ({
           if (trialMetric !== null && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
         });
 
-        fullHParams.forEach(hParam1 => {
+        fullHParams.forEach((hParam1) => {
           const hp = experiment.hyperparameters?.[hParam1];
           if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam1] = true;
 
@@ -280,7 +279,7 @@ const HpHeatMaps: React.FC<Props> = ({
           hpLabelValueMap[hParam1] = [];
           hpValues[hParam1] = [];
 
-          trialIds.forEach(trialId => {
+          trialIds.forEach((trialId) => {
             const hpRawValue = hpValueMap[trialId][hParam1];
             const hpValue = isBoolean(hpRawValue) ? hpRawValue.toString() : hpRawValue;
 
@@ -299,9 +298,9 @@ const HpHeatMaps: React.FC<Props> = ({
             }
           });
 
-          fullHParams.forEach(hParam2 => {
+          fullHParams.forEach((hParam2) => {
             const key = generateHpKey(hParam1, hParam2);
-            hpMetrics[key] = trialIds.map(trialId => hpMetricMap[trialId][key]);
+            hpMetrics[key] = trialIds.map((trialId) => hpMetricMap[trialId][key]);
           });
         });
 
@@ -316,7 +315,7 @@ const HpHeatMaps: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => {
+    ).catch((e) => {
       setPageError(e);
       setHasLoaded(true);
     });
@@ -371,7 +370,7 @@ const HpHeatMaps: React.FC<Props> = ({
                   border={true}
                   minItemWidth={resize.width > 320 ? 350 : 270}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
-                  {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
+                  {selectedHParams.map((hParam1) => selectedHParams.map((hParam2) => {
                     const key = generateHpKey(hParam1, hParam2);
                     return (
                       <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>

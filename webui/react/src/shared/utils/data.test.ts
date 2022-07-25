@@ -92,11 +92,11 @@ describe('Data Utilities', () => {
       { type: Type.Object, value: {} },
       { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
       { type: [ Type.Primitive, Type.String ], value: 'hello world' },
-      { type: [ Type.Object, Type.Promise ], value: new Promise(resolve => resolve(undefined)) },
+      { type: [ Type.Object, Type.Promise ], value: new Promise((resolve) => resolve(undefined)) },
     ];
-    testGroups.forEach(group => {
+    testGroups.forEach((group) => {
       describe(group.fn.name, () => {
-        tests.forEach(test => {
+        tests.forEach((test) => {
           it(`should test value "${test.value}" correctly as ${JSON.stringify(test.type)}`, () => {
             const result = Array.isArray(test.type)
               ? test.type.includes(group.type)
@@ -143,8 +143,8 @@ describe('Data Utilities', () => {
       { input: [ Symbol('bit'), 123 ], output: false },
       {
         input: [
-          new Set([ 'abc', 123, Symbol('xyz') ]),
-          new Set([ 'abc', 123, Symbol('xyz') ]),
+          new Set([ 'abc', 123 ]),
+          new Set([ 'abc', 123 ]),
         ],
         output: true,
       },
@@ -164,8 +164,43 @@ describe('Data Utilities', () => {
         ],
         output: false,
       },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 3, 2 ]),
+        ],
+        output: true,
+      },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 2, 3, 4 ]),
+        ],
+        output: false,
+      },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 2, 5 ]),
+        ],
+        output: false,
+      },
+      /**
+       * for now isEquals for set elements respects how the set views
+       * equality of its members, as opposed to how isEquals views them
+       * otherwise you would have the following:
+       * > a.forEach(x => b.delete(x)); isEquals(a, b)
+       * true
+       */
+      {
+        input: [
+          new Set([ [ 1 ] ]),
+          new Set([ [ 1 ] ]),
+        ],
+        output: false,
+      },
     ];
-    tests.forEach(test => {
+    tests.forEach((test) => {
       const [ a, b ] = test.input;
       const aLabel = utils.isPrimitive(a) ? String(a) : JSON.stringify(a);
       const bLabel = utils.isPrimitive(b) ? String(b) : JSON.stringify(b);
@@ -276,13 +311,13 @@ describe('Data Utilities', () => {
     ];
 
     it('should flatten object', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.flattenObject(test.input, test.options)).toStrictEqual(test.output);
       });
     });
 
     it('should unflatten object', () => {
-      tests.forEach(test => {
+      tests.forEach((test) => {
         expect(utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter))
           .toStrictEqual(test.input);
       });
@@ -397,7 +432,7 @@ describe('Data Utilities', () => {
         { input: CarType.SUV, output: CarType.SUV },
         { input: INVALID_CAR_TYPE, output: undefined },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         it(`"${test.input}" should ${test.output ? '' : 'not be '}valid`, () => {
           expect(utils.validateEnum(CarType, test.input)).toBe(test.output);
         });
@@ -422,7 +457,7 @@ describe('Data Utilities', () => {
           testName: 'should filter out invalid enum values',
         },
       ];
-      tests.forEach(test => {
+      tests.forEach((test) => {
         it(test.testName, () => {
           expect(utils.validateEnumList(CarType, test.input)).toEqual(test.output);
         });

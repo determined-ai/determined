@@ -225,9 +225,14 @@ def main(
                     conn.set_tlsext_host_name(cast(str, addr.hostname).encode())
                     conn.connect(cast(Sequence[Union[str, int]], (addr.hostname, addr.port)))
                     conn.do_handshake()
+                    peer_cert_chain = conn.get_peer_cert_chain()
+                    if peer_cert_chain is None:
+                        # Peer presented no cert.  It seems unlikely that this is possible after
+                        # do_handshake() succeeded, but checking for None makes mypy happy.
+                        raise crypto.Error()
                     cert_pem_data = "".join(
                         crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode()
-                        for cert in conn.get_peer_cert_chain()
+                        for cert in peer_cert_chain
                     )
                 except crypto.Error:
                     die(

@@ -31,6 +31,7 @@ import {
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
 import {
   ExperimentAction as Action,
@@ -42,8 +43,6 @@ import {
 import handleError from 'utils/error';
 import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'wait';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './ExperimentDetailsHeader.module.scss';
 
@@ -86,7 +85,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const classes = [ css.state ];
 
   const maxRestarts = experiment.config.maxRestarts;
-  const restarts = trial?.restarts ?? 0;
+  const autoRestarts = trial?.autoRestarts ?? 0;
 
   const isPausable = pausableRunStates.has(experiment.state);
   const isPaused = experiment.state === RunState.Paused;
@@ -310,7 +309,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
     const availableActions = getActionsForExperiment(experiment, headerActions, curUser);
 
-    return availableActions.map(action => options[action]) as Option[];
+    return availableActions.map((action) => options[action]) as Option[];
   }, [
     curUser,
     isRunningDelete,
@@ -351,7 +350,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 disabled={disabled}
                 isOnDark
                 maxLength={500}
-                placeholder="Add description..."
+                placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate}
@@ -374,8 +373,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </div>
             )}
             <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Restarts:</span>
-              <span>{restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+              <span className={css.foldableItemLabel}>Auto Restarts:</span>
+              <span>{autoRestarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
             </div>
             <TagList
               disabled={disabled}

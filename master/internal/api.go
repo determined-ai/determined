@@ -49,7 +49,8 @@ func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, l
 // in ascending or descending order. All following parameters are the sort keys. Sort keys must be
 // the same value as the field number that must be sorted.
 func (a *apiServer) sort(
-	slice interface{}, order apiv1.OrderBy, keys ...interface{}) {
+	slice interface{}, order apiv1.OrderBy, keys ...interface{},
+) {
 	rv := reflect.ValueOf(slice)
 	sort.Slice(slice, func(i, j int) bool {
 		a1 := rv.Index(i).Interface().(proto.Message).ProtoReflect()

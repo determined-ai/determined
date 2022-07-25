@@ -23,11 +23,10 @@ import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted, validateDetApiEnum } from 'shared/utils/service';
 import { ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../shared/utils/error';
-import { isAborted, validateDetApiEnum } from '../shared/utils/service';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -66,7 +65,7 @@ const ModelDetails: React.FC = () => {
         },
       );
       setTotal(modelData?.pagination.total || 0);
-      setModel(prev => !isEqual(modelData, prev) ? modelData : prev);
+      setModel((prev) => !isEqual(modelData, prev) ? modelData : prev);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
@@ -152,7 +151,7 @@ const ModelDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: ModelVersion) => (
       <InlineEditor
         disabled={record.model.archived}
-        placeholder="Add description..."
+        placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
         onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
       />
@@ -217,7 +216,7 @@ const ModelDetails: React.FC = () => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',

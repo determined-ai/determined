@@ -5,11 +5,11 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
-import usePrevious from 'hooks/usePrevious';
 import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
@@ -103,7 +103,7 @@ const useModalJupyterLab = (): ModalHooks => {
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) setButtonDisabled(false);
-    setShowFullConfig(show => !show);
+    setShowFullConfig((show) => !show);
   }, [ showFullConfig ]);
 
   const handleCreateEnvironment = useCallback(() => {
@@ -264,7 +264,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find(pool => pool.name === fields.pool);
+    const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -277,7 +277,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
     if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && !fields.slots) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
+    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
@@ -322,8 +322,8 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="No template (optional)"
               value={fields.template}
-              onChange={value => updateFields?.({ template: value?.toString() })}>
-              {templates.map(temp => (
+              onChange={(value) => updateFields?.({ template: value?.toString() })}>
+              {templates.map((temp) => (
                 <Option key={temp.name} value={temp.name}>{temp.name}</Option>
               ))}
             </Select>
@@ -346,8 +346,8 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               allowClear
               placeholder="Pick the best option"
               value={fields.pool}
-              onChange={value => updateFields?.({ pool: value })}>
-              {resourcePools.map(pool => (
+              onChange={(value) => updateFields?.({ pool: value })}>
+              {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>{pool.name}</Option>
               ))}
             </Select>
@@ -367,7 +367,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           ),
           label: 'Slots',
         },
-      ].map(row => {
+      ].map((row) => {
         if (row.condition === false) return null;
         return <div className={css.line} key={row.label}><p>{row.label}</p>{row.content}</div>;
       })}

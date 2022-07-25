@@ -2,9 +2,12 @@ package internal
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -25,13 +28,38 @@ const (
 	osDarwin = "darwin"
 )
 
+// randFromString returns a random-number generated seeded from an input string.
+func randFromString(seed string) (*rand.Rand, error) {
+	h := sha256.New()
+	h.Write([]byte(seed))
+	rndSource, bytesRead := binary.Varint(h.Sum(nil)[:8])
+	if bytesRead <= 0 {
+		return nil, fmt.Errorf(
+			"failed to init random source for artificial slots ids. bytes read: %d", bytesRead)
+	}
+	rnd := rand.New(rand.NewSource(rndSource)) // nolint:gosec
+	return rnd, nil
+}
+
 func (a *agent) detect() error {
 	switch {
 	case a.ArtificialSlots > 0:
+		// Generate random UUIDs consistent across agent restarts as long as
+		// agentID is the same.
+		rnd, err := randFromString(a.AgentID)
+		if err != nil {
+			return err
+		}
+
 		for i := 0; i < a.ArtificialSlots; i++ {
-			id := uuid.New().String()
+			u, err := uuid.NewRandomFromReader(rnd)
+			if err != nil {
+				return err
+			}
+			id := u.String()
 			a.Devices = append(a.Devices, device.Device{
-				ID: device.ID(i), Brand: "Artificial", UUID: id, Type: device.CPU})
+				ID: device.ID(i), Brand: "Artificial", UUID: id, Type: device.CPU,
+			})
 		}
 	case a.SlotType == "none":
 		a.Devices = []device.Device{}
@@ -121,14 +149,17 @@ func detectCPUs() ([]device.Device, error) {
 	}
 }
 
-var detectMIGEnabled = []string{
-							"nvidia-smi", "--query-gpu=mig.mode.current", "--format=csv,noheader"}
-var detectCudaDevices = []string{"nvidia-smi", "-L"} // Lists both GPUs and MIG instances
-var detectMIGRegExp = regexp.MustCompile(`(?P<dev>MIG \S+).+\(UUID.+(?P<uuid>MIG.+)\)`)
-
-var detectCudaGPUsArgs = []string{
-	"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
-var detectCudaGPUsIDFlagTpl = "--id=%v"
+var (
+	detectMIGEnabled = []string{
+		"nvidia-smi", "--query-gpu=mig.mode.current", "--format=csv,noheader",
+	}
+	detectMIGRegExp    = regexp.MustCompile(`(?P<dev>MIG \S+).+\(UUID.+(?P<uuid>MIG.+)\)`)
+	detectCudaDevices  = []string{"nvidia-smi", "-L"} // Lists both GPUs and MIG instances
+	detectCudaGPUsArgs = []string{
+		"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader",
+	}
+	detectCudaGPUsIDFlagTpl = "--id=%v"
+)
 
 // detect if MIG is enabled and if there are instances configured.
 func detectMigInstances(visibleGPUs string) ([]device.Device, error) {

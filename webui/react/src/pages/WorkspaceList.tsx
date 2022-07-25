@@ -29,22 +29,15 @@ import { Workspace } from 'types';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
-  WorkspaceColumnName, WorkspaceListSettings } from './WorkspaceList.settings';
+  WhoseWorkspaces, WorkspaceColumnName, WorkspaceListSettings } from './WorkspaceList.settings';
 import WorkspaceActionDropdown from './WorkspaceList/WorkspaceActionDropdown';
 import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 
 const { Option } = Select;
 
-enum WorkspaceFilters {
-  All = 'ALL_WORKSPACES',
-  Mine = 'MY_WORKSPACES',
-  Others = 'OTHERS_WORKSPACES'
-}
-
 const WorkspaceList: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const [ workspaces, setWorkspaces ] = useState<Workspace[]>([]);
-  const [ workspaceFilter, setWorkspaceFilter ] = useState<WorkspaceFilters>(WorkspaceFilters.All);
   const [ total, setTotal ] = useState(0);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
@@ -72,8 +65,8 @@ const WorkspaceList: React.FC = () => {
         users: settings.user,
       }, { signal: canceler.signal });
       setTotal(response.pagination.total ?? 0);
-      setWorkspaces(prev => {
-        const withoutDefault = response.workspaces.filter(w => !w.immutable);
+      setWorkspaces((prev) => {
+        const withoutDefault = response.workspaces.filter((w) => !w.immutable);
         if (isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
       });
@@ -95,8 +88,9 @@ const WorkspaceList: React.FC = () => {
   usePolling(fetchWorkspaces);
 
   const handleViewSelect = useCallback((value) => {
-    setWorkspaceFilter(value as WorkspaceFilters);
-  }, []);
+    updateSettings({ whose: value });
+
+  }, [ updateSettings ]);
 
   const handleSortSelect = useCallback((value) => {
     updateSettings({
@@ -110,18 +104,18 @@ const WorkspaceList: React.FC = () => {
   }, [ updateSettings ]);
 
   useEffect(() => {
-    switch (workspaceFilter) {
-      case WorkspaceFilters.All:
+    switch (settings.whose) {
+      case WhoseWorkspaces.All:
         updateSettings({ user: undefined });
         break;
-      case WorkspaceFilters.Mine:
+      case WhoseWorkspaces.Mine:
         updateSettings({ user: user ? [ user.username ] : undefined });
         break;
-      case WorkspaceFilters.Others:
-        updateSettings({ user: users.filter(u => u.id !== user?.id).map(u => u.username) });
+      case WhoseWorkspaces.Others:
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [ updateSettings, user, users, workspaceFilter ]);
+  }, [ updateSettings, user, users, settings.whose ]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
@@ -232,7 +226,7 @@ const WorkspaceList: React.FC = () => {
             gap={ShirtSize.medium}
             minItemWidth={300}
             mode={GridMode.AutoFill}>
-            {workspaces.map(workspace => (
+            {workspaces.map((workspace) => (
               <WorkspaceCard
                 curUser={user}
                 fetchWorkspaces={fetchWorkspaces}
@@ -296,11 +290,11 @@ const WorkspaceList: React.FC = () => {
         <SelectFilter
           dropdownMatchSelectWidth={160}
           showSearch={false}
-          value={workspaceFilter}
+          value={settings.whose}
           onSelect={handleViewSelect}>
-          <Option value={WorkspaceFilters.All}>All Workspaces</Option>
-          <Option value={WorkspaceFilters.Mine}>My Workspaces</Option>
-          <Option value={WorkspaceFilters.Others}>Others&apos; Workspaces</Option>
+          <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
+          <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
+          <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
         </SelectFilter>
         <Space wrap>
           <Toggle
@@ -325,7 +319,7 @@ const WorkspaceList: React.FC = () => {
         {workspaces.length !== 0 ? (
           workspacesList
         ) :
-          (workspaceFilter === WorkspaceFilters.All && settings.archived && !isLoading) ?
+          (settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading) ?
             (
               <div className={css.emptyBase}>
                 <div className={css.icon}>

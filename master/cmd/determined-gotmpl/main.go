@@ -27,7 +27,7 @@ func stdinData() map[string]interface{} {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var data = map[string]interface{}{}
+	data := map[string]interface{}{}
 	err = yaml.Unmarshal(stdin, &data)
 	if err != nil {
 		log.Fatal(err)
@@ -141,7 +141,7 @@ Adds:
 	b := RunTmpl(data, files)
 
 	if output != "" {
-		var err = ioutil.WriteFile(output, b.Bytes(), 0644) //nolint: gosec
+		err := ioutil.WriteFile(output, b.Bytes(), 0o644) //nolint: gosec
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -76,7 +76,7 @@ def list_project_experiments(args: Namespace) -> None:
     sess = setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     kwargs: Dict[str, Any] = {
-        "id": p.id,
+        "projectId": p.id,
         "orderBy": bindings.v1OrderBy[f"ORDER_BY_{args.order_by.upper()}"],
         "sortBy": bindings.v1GetExperimentsRequestSortBy[f"SORT_BY_{args.sort_by.upper()}"],
     }
@@ -88,7 +88,7 @@ def list_project_experiments(args: Namespace) -> None:
     internal_offset = args.offset if ("offset" in args and args.offset) else 0
     limit = args.limit if "limit" in args else 200
     while True:
-        experiments = bindings.get_GetProjectExperiments(
+        experiments = bindings.get_GetExperiments(
             sess, limit=limit, offset=internal_offset, **kwargs
         ).experiments
         all_experiments += experiments

@@ -131,8 +131,7 @@ func (lb *LogBuffer) Entries(startID int, endID int, limit int) []*Entry {
 	lb.lock.RLock()
 	defer lb.lock.RUnlock()
 
-	startIndex, entryCount :=
-		computeSlice(startID, endID, limit, lb.totalEntries, len(lb.buffer))
+	startIndex, entryCount := computeSlice(startID, endID, limit, lb.totalEntries, len(lb.buffer))
 	if entryCount <= 0 {
 		return nil
 	}

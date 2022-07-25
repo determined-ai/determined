@@ -234,7 +234,8 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 }
 
 func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) (
-	cproto.Spec, error) {
+	cproto.Spec, error,
+) {
 	autoRemove := !c.Options.ContainerAutoRemoveDisabled
 	return overwriteSpec(cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort, autoRemove)
 }
@@ -361,7 +362,8 @@ func containerEnvVars(cont cproto.Container) []string {
 
 func (c *containerManager) reattachContainers(
 	ctx *actor.Context, expectedSurvivors []aproto.ContainerReattach) (
-	[]aproto.ContainerReattachAck, error) {
+	[]aproto.ContainerReattachAck, error,
+) {
 	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
 
 	runningContainers, err := c.listRunningContainers(ctx)
@@ -420,7 +422,8 @@ func (c *containerManager) reattachContainers(
 
 func (c *containerManager) reattachContainer(
 	ctx *actor.Context, containerPrevState cproto.Container, containerInfo types.Container) (
-	*cproto.Container, error) {
+	*cproto.Container, error,
+) {
 	containerCurrState, err := c.unmakeContainerDockerLabels(ctx, containerInfo)
 	if err != nil {
 		return nil, err
@@ -452,7 +455,8 @@ func (c *containerManager) reattachContainer(
 }
 
 func (c *containerManager) listRunningContainers(ctx *actor.Context) (
-	map[cproto.ID]types.Container, error) {
+	map[cproto.ID]types.Container, error,
+) {
 	// List "our" running containers, based on `dockerAgentLabel`.
 	// This doesn't affect fluentbit, or containers spawned by other agents.
 	containers, err := c.docker.ContainerList(context.Background(), types.ContainerListOptions{
@@ -494,7 +498,8 @@ func makeContainerDockerLabels(cont cproto.Container) map[string]string {
 }
 
 func (c *containerManager) unmakeContainerDockerLabels(ctx *actor.Context, cont types.Container) (
-	*cproto.Container, error) {
+	*cproto.Container, error,
+) {
 	// TODO(ilia): Shim old versions whenever possible, when we'll have them.
 	if cont.Labels[dockerContainerVersionLabel] != dockerContainerVersionValue {
 		return nil, errors.New(fmt.Sprintf(
@@ -531,7 +536,8 @@ func (c *containerManager) unmakeContainerDockerLabels(ctx *actor.Context, cont 
 
 func (c *containerManager) revalidateContainers(
 	ctx *actor.Context, expectedSurvivors []aproto.ContainerReattach) (
-	[]aproto.ContainerReattachAck, error) {
+	[]aproto.ContainerReattachAck, error,
+) {
 	result := make([]aproto.ContainerReattachAck, 0, len(expectedSurvivors))
 
 	for _, expectedSurvivor := range expectedSurvivors {

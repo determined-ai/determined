@@ -9,6 +9,7 @@ import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
@@ -16,8 +17,6 @@ import {
   Project, StartEndTimes, TrialItem, Workspace,
 } from 'types';
 import { canBeOpened } from 'utils/task';
-
-import { Pagination } from '../shared/types';
 
 import Link from './Link';
 import css from './Table.module.scss';
@@ -87,7 +86,7 @@ export const stateRenderer: Renderer<{ state: StateOfUnion}> =
   </div>
 );
 
-export const tooltipRenderer: Renderer = text => (
+export const tooltipRenderer: Renderer = (text) => (
   <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
 );
 
@@ -102,7 +101,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={children => (
+        wrapper={(children) => (
           <Link path={paths.interactive(record)}>
             {children}
           </Link>
@@ -125,7 +124,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   <div>
     <ConditionalWrapper
       condition={canBeOpened(record)}
-      wrapper={ch => (
+      wrapper={(ch) => (
         <Link path={paths.interactive(record)}>
           {ch}
         </Link>
@@ -137,7 +136,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const expermentDurationRenderer: ExperimentRenderer = (_, record) => (
+export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
   <TimeDuration duration={getDuration(record)} />
 );
 

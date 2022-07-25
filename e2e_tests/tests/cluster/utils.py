@@ -26,6 +26,16 @@ def cluster_slots() -> Dict[str, Any]:
     return {agent["id"]: agent["slots"].values() for agent in json.values()}
 
 
+def get_master_port(loaded_config: dict) -> str:
+    for d in loaded_config["stages"]:
+        for k in d.keys():
+            if k == "master":
+                if "port" in d["master"]["config_file"]:
+                    return str(d["master"]["config_file"]["port"])
+
+    return "8080"  # default value if not explicit in config file
+
+
 def num_slots() -> int:
     return sum(len(agent_slots) for agent_slots in cluster_slots().values())
 

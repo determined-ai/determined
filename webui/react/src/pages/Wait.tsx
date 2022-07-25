@@ -9,12 +9,11 @@ import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
 import handleError from 'utils/error';
 import { WaitStatus } from 'wait';
-
-import { ErrorType } from '../shared/utils/error';
 
 import css from './Wait.module.scss';
 
@@ -68,6 +67,7 @@ const Wait: React.FC = () => {
           return;
         }
         const lastRun = response.allocations[0];
+        window.parent.postMessage({ commandState: lastRun.state });
         if (!lastRun) {
           return;
         }

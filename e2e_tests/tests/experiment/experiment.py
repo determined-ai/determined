@@ -207,7 +207,8 @@ def determined_test_session() -> session.Session:
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     r = bindings.get_GetExperiment(determined_test_session(), experimentId=experiment_id)
-    return r.config
+    assert r.experiment and r.experiment.config
+    return r.experiment.config
 
 
 def experiment_state(experiment_id: int) -> determinedexperimentv1State:
@@ -556,7 +557,16 @@ def run_basic_test(
 
 
 def set_priority(experiment_id: int, priority: int) -> None:
-    command = ["det", "experiment", "set", "priority", str(experiment_id), str(priority)]
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "experiment",
+        "set",
+        "priority",
+        str(experiment_id),
+        str(priority),
+    ]
 
     completed_process = subprocess.run(
         command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE

@@ -53,7 +53,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-3e933ea",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-55a3e1c",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -310,7 +310,7 @@ func (t gceInstanceType) Slots() int {
 }
 
 func (t gceInstanceType) Validate() []error {
-	var checkMachineType = errors.Errorf("gce VM machine type must be within: %v",
+	checkMachineType := errors.Errorf("gce VM machine type must be within: %v",
 		strings.Join(gceMachineTypes, ", "))
 	if items := strings.Split(t.MachineType, "-"); len(items) == 3 {
 		for _, mType := range gceMachineTypes {

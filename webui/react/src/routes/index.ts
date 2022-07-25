@@ -12,6 +12,7 @@ import ModelVersionDetails from 'pages/ModelVersionDetails';
 import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
+import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
@@ -20,8 +21,7 @@ import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 import WorkspaceDetails from 'pages/WorkspaceDetails';
 import WorkspaceList from 'pages/WorkspaceList';
-
-import { RouteConfig } from '../shared/types';
+import { RouteConfig } from 'shared/types';
 
 import Routes from './routes';
 
@@ -40,6 +40,7 @@ const routeComponentMap: Record<string, FC> = {
   projectDetails: ProjectDetails,
   reload: Reload,
   resourcepool: ResourcepoolDetail,
+  settings: Settings,
   signIn: SignIn,
   signOut: SignOut,
   taskList: TaskList,
@@ -53,7 +54,7 @@ const routeComponentMap: Record<string, FC> = {
 
 const defaultRouteId = 'uncategorized';
 
-const appRoutes: RouteConfig[] = Routes.map(route => {
+const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);
   return {
     ...route,
@@ -62,7 +63,7 @@ const appRoutes: RouteConfig[] = Routes.map(route => {
 });
 
 export const defaultRoute = appRoutes
-  .find(route => route.id === defaultRouteId) as RouteConfig;
+  .find((route) => route.id === defaultRouteId) as RouteConfig;
 
 appRoutes.push({
   id: 'catch-all',

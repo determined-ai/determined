@@ -138,11 +138,11 @@ export const rgbaMix = (
   const dg = rgba1.g - rgba0.g;
   const db = rgba1.b - rgba0.b;
   const da = (rgba1.a ?? 1.0) - (rgba0.a ?? 1.0);
-  const [ adr, adg, adb, ada ] = [ dr, dg, db, da ].map(x => Math.abs(x));
+  const [ adr, adg, adb, ada ] = [ dr, dg, db, da ].map((x) => Math.abs(x));
   const delta = adr + adg + adb + (255 * ada);
   if (delta === 0) return rgba0;
 
-  const [ pr, pg, pb, pa ] = [ dr, dg, db, da ].map(x => x * amount / delta);
+  const [ pr, pg, pb, pa ] = [ dr, dg, db, da ].map((x) => x * amount / delta);
   const r = Math.min(255, Math.max(0, rgba0.r + pr));
   const g = Math.min(255, Math.max(0, rgba0.g + pg));
   const b = Math.min(255, Math.max(0, rgba0.b + pb));

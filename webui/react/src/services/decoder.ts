@@ -1,12 +1,11 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
+import { Pagination, RawJson } from 'shared/types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject,
   isPrimitive } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
-
-import { Pagination, RawJson } from '../shared/types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 
@@ -22,13 +21,14 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
 };
 
 export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[] => {
-  return (data.users || []).map(user => mapV1User(user));
+  return (data.users || []).map((user) => mapV1User(user));
 };
 
-export const mapV1Pagination = (data: Sdk.V1Pagination): Pagination => {
+export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   return {
-    limit: data.limit ?? 0,
-    offset: data.offset ?? 0,
+    limit: data?.limit ?? 0,
+    offset: data?.offset ?? 0,
+    total: data?.total ?? 0,
   };
 };
 
@@ -60,9 +60,9 @@ export const mapV1ResourcePool = (
 };
 
 export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
-  return agents.map(agent => {
+  return agents.map((agent) => {
     const agentSlots = agent.slots || {};
-    const resources = Object.keys(agentSlots).map(slotId => {
+    const resources = Object.keys(agentSlots).map((slotId) => {
       const slot = agentSlots[slotId];
 
       let resourceContainer = undefined;
@@ -175,7 +175,7 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
 
 export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
   return {
-    allocations: task.allocations?.map(a => {
+    allocations: task.allocations?.map((a) => {
       const setState = {
         STATE_ASSIGNED: types.CommandState.Assigned,
         STATE_PENDING: types.CommandState.Pending,
@@ -239,7 +239,7 @@ export const mapV1ModelDetails = (
     !modelDetailsResponse.pagination) return;
   return {
     model: mapV1Model(modelDetailsResponse.model),
-    modelVersions: modelDetailsResponse.modelVersions.map(version =>
+    modelVersions: modelDetailsResponse.modelVersions.map((version) =>
       mapV1ModelVersion(version) as types.ModelVersion),
     pagination: modelDetailsResponse.pagination,
   };
@@ -263,7 +263,7 @@ const ioToHyperparametereters = (
   io: ioTypes.ioTypeHyperparameters,
 ): types.Hyperparameters => {
   const hparams: Record<string, unknown> = {};
-  Object.keys(io).forEach(key => {
+  Object.keys(io).forEach((key) => {
     /*
      * Keep only the hyperparameters which have a primitive `val` value or
      * where `vals` is a list of primitive values. It is possible for `val`
@@ -355,16 +355,16 @@ export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): ty
 export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexperimentv1State => {
   const stateKey = Object
     .keys(experimentStateMap)
-    .find(key => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state);
+    .find((key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state);
   if (stateKey) return stateKey as unknown as Sdk.Determinedexperimentv1State;
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
 export const mapV1GetExperimentDetailsResponse = (
-  { experiment: exp, config, jobSummary }: Sdk.V1GetExperimentResponse,
+  { experiment: exp, jobSummary }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
-    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, exp.config);
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(
     ioConfig.hyperparameters,
@@ -379,7 +379,7 @@ export const mapV1GetExperimentDetailsResponse = (
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: config,
+    configRaw: exp.config,
     hyperparameters,
     parentArchived: exp.parentArchived ?? false,
     projectName: exp.projectName ?? '',
@@ -503,6 +503,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCh
 
 export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
+    autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
     endTime: data.endTime && data.endTime as unknown as string,
@@ -510,7 +511,6 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     hyperparameters: flattenObject(data.hparams),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
-    restarts: data.restarts,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,
@@ -520,8 +520,8 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
 const decodeSummaryMetrics = (
   data: Sdk.V1SummarizedMetric[],
 ): types.MetricContainer[] => {
-  return data.map(m => ({
-    data: m.data.map(pt => ({
+  return data.map((m) => ({
+    data: m.data.map((pt) => ({
       batches: pt.batches,
       value: pt.value,
     })),
@@ -550,7 +550,7 @@ export const decodeTrialResponseToTrialDetails = (
   let workloads;
 
   if (data.workloads) {
-    workloads = data.workloads.map(ww => ({
+    workloads = data.workloads.map((ww) => ({
       checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
       training: ww.training && decodeMetricsWorkload(ww.training),
       validation: ww.validation && decodeMetricsWorkload(ww.validation),

@@ -51,6 +51,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
     containerIds: settings.containerId,
     levels: settings.level,
     rankIds: settings.rankId,
+    searchText: settings.searchText,
   }), [ settings ]);
 
   const handleFilterChange = useCallback((filters: Filters) => {
@@ -60,6 +61,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       containerId: filters.containerIds,
       level: filters.levels,
       rankId: filters.rankIds,
+      searchText: filters.searchText,
     });
   }, [ updateSettings ]);
 
@@ -104,6 +106,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       options.timestampBefore ? new Date(options.timestampBefore) : undefined,
       options.timestampAfter ? new Date(options.timestampAfter) : undefined,
       options.orderBy as OrderBy,
+      settings.searchText,
       { signal: config.canceler.signal },
     );
   }, [ settings, taskId ]);
@@ -117,7 +120,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         true,
         { signal: canceler.signal },
       ),
-      event => setFilterOptions(event as Filters),
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();
@@ -127,6 +130,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
     <div className={css.filters}>
       <LogViewerFilters
         options={filterOptions}
+        showSearch={true}
         values={filterValues}
         onChange={handleFilterChange}
         onReset={handleFilterReset}

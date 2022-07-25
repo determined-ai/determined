@@ -4,10 +4,10 @@ import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { getWorkspaces, moveProject } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';
@@ -31,8 +31,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const fetchWorkspaces = useCallback(async () => {
     try {
       const response = await getWorkspaces({ limit: 0 });
-      setWorkspaces(prev => {
-        const withoutDefault = response.workspaces.filter(w =>
+      setWorkspaces((prev) => {
+        const withoutDefault = response.workspaces.filter((w) =>
           !w.immutable);
         if (isEqual(prev, withoutDefault)) return prev;
         return withoutDefault;
@@ -55,11 +55,11 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
   const handleWorkspaceSelect = useCallback((selectedWorkspaceId: SelectValue) => {
 
     if (typeof selectedWorkspaceId !== 'number') return;
-    const workspace = workspaces.find(w => w.id === selectedWorkspaceId);
+    const workspace = workspaces.find((w) => w.id === selectedWorkspaceId);
     if (!workspace) return;
     const disabled = workspace.archived || workspace.id === project.workspaceId;
     if (disabled) return;
-    setDestinationWorkspaceId(prev => disabled ? prev : selectedWorkspaceId as number);
+    setDestinationWorkspaceId((prev) => disabled ? prev : selectedWorkspaceId as number);
   }, [ workspaces, project.workspaceId ]);
 
   const modalContent = useMemo(() => {
@@ -73,7 +73,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
           style={{ width: '100%' }}
           value={destinationWorkspaceId}
           onSelect={handleWorkspaceSelect}>
-          {workspaces.map(workspace => {
+          {workspaces.map((workspace) => {
             const disabled = workspace.archived || workspace.id === project.workspaceId;
             return (
               <Option

@@ -1,10 +1,9 @@
 import { updateJobQueue } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
+import { DetError, DetErrorOptions, ErrorType } from 'shared/utils/error';
+import { capitalize } from 'shared/utils/string';
 import { CommandType, Job, JobType, ResourcePool } from 'types';
 import handleError from 'utils/error';
-
-import { DetError, DetErrorOptions, ErrorType } from '../shared/utils/error';
-import { capitalize } from '../shared/utils/string';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
@@ -63,8 +62,8 @@ export const moveJobToPositionUpdate = (
       { ...errOpts, type: ErrorType.Input },
     );
   }
-  const anchorJob = jobs.find(job => job.summary.jobsAhead === position - 1);
-  const job = jobs.find(job => job.jobId === jobId);
+  const anchorJob = jobs.find((job) => job.summary.jobsAhead === position - 1);
+  const job = jobs.find((job) => job.jobId === jobId);
 
   if (!anchorJob || !job) {
     // job view is out of sync.

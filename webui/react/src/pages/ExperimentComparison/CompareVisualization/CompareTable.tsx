@@ -6,6 +6,7 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
+import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
   str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
@@ -14,7 +15,6 @@ import {
 } from 'types';
 import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
-import { Primitive, RecordKey } from '../../../shared/types';
 import { HpValsMap } from '../CompareVisualization';
 
 import css from './CompareTable.module.scss';
@@ -60,12 +60,12 @@ const HpTrialTable: React.FC<Props> = ({
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const dataSource = useMemo(() => {
     if (!filteredTrialIdMap) return trialHps;
-    return trialHps.filter(trial => filteredTrialIdMap[trial.id]);
+    return trialHps.filter((trial) => filteredTrialIdMap[trial.id]);
   }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex(trialId => trialId === record.id);
+      const index = trialIds.findIndex((trialId) => trialId === record.id);
       let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
       if (record.metric != null && colorScale) {
         const scaleRange = colorScale[1].scale - colorScale[0].scale;
@@ -143,8 +143,8 @@ const HpTrialTable: React.FC<Props> = ({
 
     const hpColumns = Object
       .keys(hyperparameters || {})
-      .filter(hpParam => hpVals[hpParam]?.size > 1)
-      .map(key => {
+      .filter((hpParam) => hpVals[hpParam]?.size > 1)
+      .map((key) => {
         return {
           key,
           render: hpRenderer(key),

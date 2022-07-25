@@ -4,14 +4,13 @@ import { useLocation } from 'react-router';
 
 import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';
+import { routeAll } from 'routes/utils';
 import { getCurrentUser, isAuthFailure } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted } from 'shared/utils/service';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
-
-import { routeAll } from '../routes/utils';
-import { ErrorType } from '../shared/utils/error';
-import { isAborted } from '../shared/utils/service';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
   const { info } = useStore();

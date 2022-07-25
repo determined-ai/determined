@@ -17,13 +17,12 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { ApiState } from 'shared/types';
+import { ErrorType } from 'shared/utils/error';
+import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
-
-import { ApiState } from '../shared/types';
-import { ErrorType } from '../shared/utils/error';
-import { isAborted } from '../shared/utils/service';
 
 const { TabPane } = Tabs;
 
@@ -53,7 +52,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
-    isLoading: true,
   });
   const pageRef = useRef<HTMLElement>(null);
 
@@ -92,15 +90,15 @@ const TrialDetailsComp: React.FC = () => {
   const fetchTrialDetails = useCallback(async () => {
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
+      setTrialDetails((prev) => ({ ...prev, data: response }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
-        setTrialDetails(prev => ({ ...prev, error: e as Error }));
+        setTrialDetails((prev) => ({ ...prev, error: e as Error }));
       }
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const handleTabChange = useCallback(key => {
+  const handleTabChange = useCallback((key) => {
     setTabKey(key);
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);
@@ -176,16 +174,14 @@ const TrialDetailsComp: React.FC = () => {
           activeKey={tabKey}
           className="no-padding"
           tabBarExtraContent={(
-            <div style={{ bottom: 9, position: 'relative' }}>
-              <RoutePagination
-                currentId={trialId}
-                ids={experiment.trialIds ?? []}
-                tooltipLabel="Trial"
-                onSelectId={(selectedTrialId) => {
-                  history.push(paths.trialDetails(selectedTrialId, experiment?.id));
-                }}
-              />
-            </div>
+            <RoutePagination
+              currentId={trialId}
+              ids={experiment.trialIds ?? []}
+              tooltipLabel="Trial"
+              onSelectId={(selectedTrialId) => {
+                history.push(paths.trialDetails(selectedTrialId, experiment?.id));
+              }}
+            />
           )}
           onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">

@@ -30,6 +30,13 @@ interface UI {
 }
 
 export interface State {
+  activeExperiments: number;
+  activeTasks: {
+    commands: number;
+    notebooks: number;
+    shells: number;
+    tensorboards: number;
+  },
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
@@ -79,6 +86,12 @@ export enum StoreAction {
 
   // PinnedWorkspaces
   SetPinnedWorkspaces,
+
+  // Tasks
+  SetActiveTasks,
+
+  // Active Experiments
+  SetActiveExperiments,
 }
 
 export type Action =
@@ -103,6 +116,13 @@ export type Action =
 | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
+| { type: StoreAction.SetActiveTasks, value: {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
+}}
+| { type: StoreAction.SetActiveExperiments, value: number }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -138,6 +158,13 @@ const initUI = {
   theme: themes[BrandingType.Determined][DarkLight.Light],
 };
 const initState: State = {
+  activeExperiments: 0,
+  activeTasks: {
+    commands: 0,
+    notebooks: 0,
+    shells: 0,
+    tensorboards: 0,
+  },
   agents: [],
   auth: initAuth,
   cluster: initClusterOverview,
@@ -160,10 +187,10 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
   const overview: ClusterOverview = clone(initClusterOverview);
 
-  agents.forEach(agent => {
+  agents.forEach((agent) => {
     agent.resources
-      .filter(resource => resource.enabled)
-      .forEach(resource => {
+      .filter((resource) => resource.enabled)
+      .forEach((resource) => {
         const isResourceFree = resource.container == null;
         const availableResource = isResourceFree ? 1 : 0;
         overview[resource.type].available += availableResource;
@@ -184,12 +211,12 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 
 export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   const overview: PoolOverview = {};
-  agents.forEach(agent => {
-    agent.resourcePools.forEach(pname => {
+  agents.forEach((agent) => {
+    agent.resourcePools.forEach((pname) => {
       overview[pname] = clone(initResourceTally);
       agent.resources
-        .filter(resource => resource.enabled)
-        .forEach(resource => {
+        .filter((resource) => resource.enabled)
+        .forEach((resource) => {
           const isResourceFree = resource.container == null;
           const availableResource = isResourceFree ? 1 : 0;
           overview[pname].available += availableResource;
@@ -266,7 +293,7 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
       const users = [ ...state.users ];
-      const userIdx = users.findIndex(user => user.id === action.value.id);
+      const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
@@ -282,6 +309,12 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
+    case StoreAction.SetActiveExperiments:
+      if (isEqual(state.activeExperiments, action.value)) return state;
+      return { ...state, activeExperiments: action.value };
+    case StoreAction.SetActiveTasks:
+      if (isEqual(state.activeTasks, action.value)) return state;
+      return { ...state, activeTasks: action.value };
     default:
       return state;
   }

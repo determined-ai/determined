@@ -5,10 +5,9 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import React from 'react';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { Pagination, RecordKey, UnknownRecord } from 'shared/types';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { alphaNumericSorter, numericSorter } from 'utils/sort';
-
-import { Pagination, RecordKey, UnknownRecord } from '../shared/types';
 
 import ResponsiveTable from './ResponsiveTable';
 import TableFilterDropdown, {
@@ -115,7 +114,7 @@ const setup = (options?: { pagination?: Pagination }) => {
   const onIdReset = jest.fn();
 
   const data = generateTableData(DATA_ENTRY_COUNT);
-  const idList = data.map(row => row.id);
+  const idList = data.map((row) => row.id);
   const paginationConfig = options?.pagination
     ? getFullPaginationConfig(options?.pagination, data.length)
     : undefined;
@@ -132,10 +131,10 @@ const setup = (options?: { pagination?: Pagination }) => {
   );
 
   // Apply id column filter config.
-  const newColumns = columns.map(column => {
+  const newColumns = columns.map((column) => {
     if (column.key === 'id') {
       column.filterDropdown = idFilterDropdown;
-      column.filters = idList.map(id => ({ text: id, value: id }));
+      column.filters = idList.map((id) => ({ text: id, value: id }));
     }
     return column;
   });

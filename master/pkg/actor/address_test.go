@@ -226,14 +226,30 @@ func TestAddress_nextParent(t *testing.T) {
 		panics bool
 	}
 	tests := []testCase{
-		{"next parent", fields{path: "/grand"},
-			args{Addr("grand", "parent", "child")}, Addr("grand", "parent"), false},
-		{"last parent", fields{path: "/test"},
-			args{Addr("test", "child")}, Addr("test", "child"), false},
-		{"is not ancestor", fields{path: "/test/child2"},
-			args{Addr("test", "child")}, Addr("test", "child"), true},
-		{"from root", fields{path: "/"},
-			args{Addr("test")}, Addr("test"), false},
+		{
+			"next parent",
+			fields{path: "/grand"},
+			args{Addr("grand", "parent", "child")},
+			Addr("grand", "parent"), false,
+		},
+		{
+			"last parent",
+			fields{path: "/test"},
+			args{Addr("test", "child")},
+			Addr("test", "child"), false,
+		},
+		{
+			"is not ancestor",
+			fields{path: "/test/child2"},
+			args{Addr("test", "child")},
+			Addr("test", "child"), true,
+		},
+		{
+			"from root",
+			fields{path: "/"},
+			args{Addr("test")},
+			Addr("test"), false,
+		},
 	}
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {

@@ -19,11 +19,11 @@ import { throttle } from 'throttle-debounce';
 
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
+import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, UnknownRecord } from 'shared/types';
 
-import Spinner from '../shared/components/Spinner/Spinner';
-
 import css from './InteractiveTable.module.scss';
+import SkeletonTable from './Skeleton/SkeletonTable';
 
 /*
  * This indicates that the cell contents are rightClickable
@@ -483,7 +483,7 @@ const InteractiveTable: InteractiveTable = ({
 
   const renderColumns = useMemo(
     () => {
-      const columns = settings.columns.filter(columnName => columnDefs[columnName])
+      const columns = settings.columns.filter((columnName) => columnDefs[columnName])
         .map((columnName, index) => {
           const column = columnDefs[columnName];
           const columnWidth = widthData.widths[index];
@@ -517,25 +517,29 @@ const InteractiveTable: InteractiveTable = ({
   return (
     <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
-        <Table
-          bordered
-          /* next one is just so ant doesnt complain */
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          columns={renderColumns as ColumnsType<any>}
-          components={components}
-          dataSource={dataSource}
-          tableLayout="fixed"
-          onChange={handleChange}
-          onRow={(record, index) =>
-            ({
-              areRowsSelected,
-              ContextMenu,
-              index,
-              record,
-            } as React.HTMLAttributes<HTMLElement>)
-          }
-          {...props}
-        />
+        {
+          spinning
+            ? <SkeletonTable columns={renderColumns.length} />
+            : (
+              <Table
+                bordered
+                /* next one is just so ant doesnt complain */
+                /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                columns={renderColumns as ColumnsType<any>}
+                components={components}
+                dataSource={dataSource}
+                tableLayout="fixed"
+                onChange={handleChange}
+                onRow={(record, index) => ({
+                  areRowsSelected,
+                  ContextMenu,
+                  index,
+                  record,
+                } as React.HTMLAttributes<HTMLElement>)}
+                {...props}
+              />
+            )
+        }
       </Spinner>
     </div>
   );

@@ -1,6 +1,5 @@
+import { RecordKey } from 'shared/types';
 import * as Type from 'types';
-
-import { RecordKey } from '../shared/types';
 
 // Checkpoint size in bytes.
 export const checkpointSize = (
@@ -15,7 +14,7 @@ export const checkpointSize = (
 export const getWorkload = (
   workload: Type.WorkloadGroup,
 ): Type.MetricsWorkload | Type.CheckpointWorkload => {
-  return Object.values(workload).find(val => !!val);
+  return Object.values(workload).find((val) => !!val);
 };
 
 export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
@@ -38,7 +37,7 @@ export const isMetricsWorkload = (
 export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
   const stepsDict: Record<number, Partial<Type.Step>> = {};
 
-  workloads.forEach(workload => {
+  workloads.forEach((workload) => {
     const wl = getWorkload(workload);
     const batchNum = wl.totalBatches;
     if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};

@@ -3,14 +3,16 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import { useStore } from 'contexts/Store';
-import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/Message';
+import usePrevious from 'shared/hooks/usePrevious';
+import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
 import { useSyncableBounds } from './SyncableBounds';
 import { FacetedData } from './types';
+import css from './UPlotChart.module.scss';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   key?: number;
@@ -88,11 +90,14 @@ const UPlotChart: React.FC<Props> = ({
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const [ isReady, setIsReady ] = useState(false);
+  const classes = [ css.base ];
 
   const { ui } = useStore();
   const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
+
+  if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
@@ -111,7 +116,7 @@ const UPlotChart: React.FC<Props> = ({
     if (ui.theme && extended.axes) {
       const borderColor = ui.theme.surfaceBorderWeak;
       const labelColor = ui.theme.surfaceOn;
-      extended.axes = extended.axes.map(axis => {
+      extended.axes = extended.axes.map((axis) => {
         return {
           ...axis,
           border: { stroke: borderColor },
@@ -143,7 +148,7 @@ const UPlotChart: React.FC<Props> = ({
         if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length){
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
         }
-      } catch(e) {
+      } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
         handleError(e, {
@@ -159,7 +164,7 @@ const UPlotChart: React.FC<Props> = ({
         if (chartRef.current && isReady){
           chartRef.current.setData(data as AlignedData, !zoomed);
         }
-      } catch(e) {
+      } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
         handleError(e, {
@@ -217,7 +222,7 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   return (
-    <div ref={chartDivRef} style={style}>
+    <div className={classes.join(' ')} ref={chartDivRef} style={style}>
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}

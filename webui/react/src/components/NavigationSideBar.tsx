@@ -10,14 +10,12 @@ import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import useModalUserSettings from 'hooks/useModal/UserSettings/useModalUserSettings';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-
-import Icon from '../shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -99,10 +97,6 @@ const NavigationSideBar: React.FC = () => {
     modalOpen: openJupyterLabModal,
   } = useModalJupyterLab();
   const {
-    contextHolder: modalUserSettingsContextHolder,
-    modalOpen: openUserSettingsModal,
-  } = useModalUserSettings();
-  const {
     contextHolder: modalWorkspaceCreateContextHolder,
     modalOpen: openWorkspaceCreateModal,
   } = useModalWorkspaceCreate();
@@ -172,8 +166,8 @@ const NavigationSideBar: React.FC = () => {
                 <Menu.Item key="theme-toggle">
                   <ThemeToggle />
                 </Menu.Item>
-                <Menu.Item key="settings" onClick={() => openUserSettingsModal()}>
-                  Settings
+                <Menu.Item key="settings">
+                  <Link path={paths.settings('account')}>Settings</Link>
                 </Menu.Item>
                 <Menu.Item key="sign-out">
                   <Link path={paths.logout()}>Sign Out</Link>
@@ -200,7 +194,7 @@ const NavigationSideBar: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            {menuConfig.top.map(config => (
+            {menuConfig.top.map((config) => (
               <NavigationItem
                 key={config.icon}
                 status={config.icon === 'cluster' ?
@@ -226,7 +220,7 @@ const NavigationSideBar: React.FC = () => {
             {pinnedWorkspaces.length === 0 ?
               <p className={css.noWorkspaces}>No pinned workspaces</p> : (
                 <ul className={css.pinnedWorkspaces} role="list">
-                  {pinnedWorkspaces.map(workspace => (
+                  {pinnedWorkspaces.map((workspace) => (
                     <WorkspaceActionDropdown
                       curUser={auth.user}
                       key={workspace.id}
@@ -256,7 +250,7 @@ const NavigationSideBar: React.FC = () => {
               )}
           </section>
           <section className={css.bottom}>
-            {menuConfig.bottom.map(config => (
+            {menuConfig.bottom.map((config) => (
               <NavigationItem
                 key={config.icon}
                 tooltip={settings.navbarCollapsed}
@@ -283,7 +277,6 @@ const NavigationSideBar: React.FC = () => {
           </div>
         </footer>
         {modalJupyterLabContextHolder}
-        {modalUserSettingsContextHolder}
         {modalWorkspaceCreateContextHolder}
       </nav>
     </CSSTransition>

@@ -1,13 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 
-import Avatar from './UserAvatar';
+import UserAvatar, { Props } from './UserAvatar';
 
-const testUser = { displayName: 'Bugs Bunny', id: 44, initials: 'BB', username: 'elmerFudd01' };
-const mockUsers = [ testUser ];
+const testUser = {
+  displayName: 'Bugs Bunny',
+  id: 44,
+  initials: 'BB',
+  userId: 44,
+  username: 'elmerFudd01',
+};
 
 jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
@@ -15,7 +21,7 @@ jest.mock('antd', () => {
   /** We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
    * sets the DOM container and if this prop is set, the popup div may not be available in the body
    */
-  const Tooltip = (props: unknown) => {
+  const Tooltip = (props: TooltipProps) => {
     return (
       <antd.Tooltip
         {...props}
@@ -34,41 +40,32 @@ jest.mock('antd', () => {
 
 jest.mock('services/api', () => ({
   getUsers: () => {
-    return Promise.resolve(mockUsers);
+    return Promise.resolve({ users: [ testUser ] });
   },
 }));
 
-const TestApp: React.FC = () => {
-  return (
-    <div>
-      <Avatar hideTooltip={false} userId={testUser.id} />
-    </div>
-  );
-};
+const user = userEvent.setup();
 
-const setup = () => {
+const setup = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) => {
   render(
     <StoreProvider>
-      <TestApp />
+      <UserAvatar hideTooltip={hideTooltip} userId={userId} {...props} />
     </StoreProvider>,
   );
 };
 
-describe('Avatar', () => {
-  it('displays initials of name', async () => {
-    setup();
+describe('UserAvatar', () => {
+  it('should display initials of name', async () => {
+    setup(testUser);
 
-    await waitFor(() => {
-      expect(screen.getByText(testUser.initials)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(testUser.initials)).toBeInTheDocument();
   });
 
-  it('displays name on hover', async () => {
-    setup();
+  it('should display name on hover', async () => {
+    setup(testUser);
 
-    await waitFor(() => {
-      userEvent.hover(screen.getByText(testUser.initials));
-      expect(screen.getByText(testUser.displayName)).toBeInTheDocument();
-    });
+    await user.hover(await screen.findByText(testUser.initials));
+
+    expect(await screen.findByText(testUser.displayName)).toBeInTheDocument();
   });
 });

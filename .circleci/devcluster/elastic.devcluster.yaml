@@ -22,6 +22,8 @@ stages:
         log:
           level: debug
         root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
         logging:
             type: elastic
             host: localhost

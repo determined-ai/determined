@@ -1,0 +1,73 @@
+################
+ Search Methods
+################
+
+Determined supports a :ref:`variety of hyperparameter search algorithms <hyperparameter-tuning>`.
+Aside from the ``single`` searcher, a searcher runs multiple trials and decides the hyperparameter
+values to use in each trial. Every searcher is configured with the name of the validation metric to
+optimize (via the ``metric`` field), in addition to other searcher-specific options. For example,
+the (`state-of-the-art <https://arxiv.org/pdf/1810.05934.pdf>`_) ``adaptive_asha`` searcher,
+suitable for larger experiments with many trials, is configured with the maximum number of trials to
+run, the maximum training length allowed per trial, and the maximum number of trials that can be
+worked on simultaneously:
+
+.. code:: yaml
+
+   searcher:
+     name: "adaptive_asha"
+     metric: "validation_loss"
+     max_trials: 16
+     max_length:
+         epochs: 1
+     max_concurrent_trials: 8
+
+For details on the supported searchers and their respective configuration options, refer to
+:ref:`hyperparameter-tuning`.
+
+That's it! After submitting an experiment, users can easily see the best validation metric observed
+across all trials over time in the WebUI. After the experiment has completed, they can view the
+hyperparameter values for the best-performing trials and then export the associated model
+checkpoints for downstream serving.
+
+.. image:: /assets/images/adaptive-asha-experiment-detail.png
+
+*****************
+ Adaptive Search
+*****************
+
+Our default recommended search method is `Adaptive (ASHA) <https://arxiv.org/pdf/1810.05934.pdf>`_,
+a state-of-the-art early-stopping based technique that speeds up traditional techniques like random
+search by periodically abandoning low-performing hyperparameter configurations in a principled
+fashion.
+
+:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>` offers asynchronous search
+functionality more suitable for large-scale HP search experiments in the distributed setting.
+
+********************************
+ Other Supported Search Methods
+********************************
+
+Determined also supports other common hyperparameter search algorithms:
+
+-  :ref:`Single <topic-guides_hp-tuning-det_single>` is appropriate for manual hyperparameter
+   tuning, as it trains a single hyperparameter configuration.
+
+-  :ref:`Grid <topic-guides_hp-tuning-det_grid>` brute force evaluates all possible hyperparameter
+   configurations and returns the best.
+
+-  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
+   configurations chosen at random and returns the best.
+
+-  :ref:`Population-based training (PBT) <topic-guides_hp-tuning-det_pbt>` begins as random search
+   but periodically replaces low-performing hyperparameter configurations with ones *near* the
+   high-performing points in the hyperparameter space.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   hp-adaptive-asha
+   hp-grid
+   hp-pbt
+   hp-random
+   hp-single

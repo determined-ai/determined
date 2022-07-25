@@ -1,8 +1,7 @@
 import React from 'react';
 
+import { RawJson } from 'shared/types';
 import { isObject } from 'shared/utils/data';
-
-import { RawJson } from '../shared/types';
 
 import css from './Json.module.scss';
 
@@ -47,8 +46,8 @@ const Json: React.FC<Props> = (
   { json, translateLabel, hideDivider, alternateBackground }: Props,
 ) => {
   const classes = [ css.base ];
-  if(hideDivider) classes.push(css.hideDivider);
-  if(alternateBackground) classes.push(css.alternateBackground);
+  if (hideDivider) classes.push(css.hideDivider);
+  if (alternateBackground) classes.push(css.alternateBackground);
   return (
     <ul className={classes.join(' ')}>
       {Object.entries(json).map(([ label, value ]) => (

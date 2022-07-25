@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import Icon from '../shared/components/Icon/Icon';
+import Icon from 'shared/components/Icon/Icon';
 
 import css from './ActionSheet.module.scss';
 import Link, { Props as LinkProps } from './Link';
@@ -34,7 +34,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
   }, [ onCancel ]);
 
   function renderActionItem(action: ActionItem) {
-    if(action.render) {
+    if (action.render) {
       return action.render();
     } else {
       return (
@@ -64,7 +64,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       <div className={css.base} onClick={handleOverlayClick}>
         <div className={css.sheet} ref={sheetRef}>
           <div className={css.actionList}>
-            {props.actions.map(action => (
+            {props.actions.map((action) => (
               renderActionItem(action)
             ))}
           </div>

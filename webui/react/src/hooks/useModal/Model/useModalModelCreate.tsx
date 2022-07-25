@@ -6,10 +6,10 @@ import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
-import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getModels, postModel } from 'services/api';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
+import usePrevious from 'shared/hooks/usePrevious';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { Metadata } from 'types';
@@ -114,31 +114,31 @@ const useModalModelCreate = (): ModalHooks => {
 
   const findIsNameUnique = useCallback(async (name) => {
     const modelsList = await getModels({ name: name });
-    setModalState(prev => ({
+    setModalState((prev) => ({
       ...prev,
       isNameUnique: modelsList.pagination.total === 0 || name === '',
     }));
   }, []);
 
   const updateModelName = useCallback((e) => {
-    setModalState(prev => ({ ...prev, modelName: e.target.value }));
+    setModalState((prev) => ({ ...prev, modelName: e.target.value }));
     debounce(250, () => findIsNameUnique(e.target.value))();
   }, [ findIsNameUnique ]);
 
   const updateModelDescription = useCallback((e) => {
-    setModalState(prev => ({ ...prev, modelDescription: e.target.value }));
+    setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
   const openDetails = useCallback(() => {
-    setModalState(prev => ({ ...prev, expandDetails: true }));
+    setModalState((prev) => ({ ...prev, expandDetails: true }));
   }, []);
 
   const updateMetadata = useCallback((value) => {
-    setModalState(prev => ({ ...prev, metadata: value }));
+    setModalState((prev) => ({ ...prev, metadata: value }));
   }, []);
 
   const updateTags = useCallback((value) => {
-    setModalState(prev => ({ ...prev, tags: value }));
+    setModalState((prev) => ({ ...prev, tags: value }));
   }, []);
 
   const getModalContent = useCallback((state: ModalState): React.ReactNode => {

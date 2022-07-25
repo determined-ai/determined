@@ -257,8 +257,8 @@ func TestLegacyConfig(t *testing.T) {
                     gpu: []
                   force_pull_image: false
                   image:
-                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-3e933ea
-                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-3e933ea
+                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-55a3e1c
+                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-55a3e1c
                   pod_spec:
                     apiVersion: v1
                     kind: Pod
@@ -381,15 +381,16 @@ func getTestPodSpec() *PodSpec {
 			Labels: map[string]string{"customLabel": "test-label"},
 		},
 		Spec: k8sV1.PodSpec{
-			Volumes: []k8sV1.Volume{{
-				Name: "test-volume",
-				VolumeSource: k8sV1.VolumeSource{
-					HostPath: &k8sV1.HostPathVolumeSource{
-						Path: "/data",
-						Type: nil,
+			Volumes: []k8sV1.Volume{
+				{
+					Name: "test-volume",
+					VolumeSource: k8sV1.VolumeSource{
+						HostPath: &k8sV1.HostPathVolumeSource{
+							Path: "/data",
+							Type: nil,
+						},
 					},
 				},
-			},
 			},
 			Containers: []k8sV1.Container{{
 				Name:      "determined-container",

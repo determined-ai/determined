@@ -12,11 +12,10 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner';
+import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError from 'utils/error';
-
-import { ErrorType } from '../../shared/utils/error';
 
 import css from './TrialDetailsLogs.module.scss';
 
@@ -43,6 +42,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     containerIds: settings.containerId,
     levels: settings.level,
     rankIds: settings.rankId,
+    searchText: settings.searchText,
   }), [ settings ]);
 
   const handleFilterChange = useCallback((filters: Filters) => {
@@ -51,6 +51,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       containerId: filters.containerIds,
       level: filters.levels,
       rankId: filters.rankIds,
+      searchText: filters.searchText,
     });
   }, [ updateSettings ]);
 
@@ -137,6 +138,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       options.timestampBefore ? new Date(options.timestampBefore) : undefined,
       options.timestampAfter ? new Date(options.timestampAfter) : undefined,
       options.orderBy as OrderBy,
+      settings.searchText,
       { signal: config.canceler.signal },
     );
   }, [ settings, trial?.id ]);
@@ -153,7 +155,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         true,
         { signal: canceler.signal },
       ),
-      event => setFilterOptions(event as Filters),
+      (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();
@@ -163,6 +165,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     <div className={css.filters}>
       <LogViewerFilters
         options={filterOptions}
+        showSearch={true}
         values={filterValues}
         onChange={handleFilterChange}
         onReset={handleFilterReset}

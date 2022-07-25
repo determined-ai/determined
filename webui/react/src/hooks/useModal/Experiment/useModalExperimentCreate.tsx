@@ -2,12 +2,12 @@ import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'hooks/useModal/useModal';
-import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
+import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { DetError, isDetError, isError } from 'shared/utils/error';
@@ -118,7 +118,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
   });
 
   const handleFieldsChange = useCallback(() => {
-    setModalState(prev => {
+    setModalState((prev) => {
       if (prev.error) return { ...prev, error: undefined };
       return prev;
     });
@@ -126,7 +126,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
 
   const handleEditorChange = useCallback((newConfigString: string) => {
     // Update config string and config error upon each keystroke change.
-    setModalState(prev => {
+    setModalState((prev) => {
       if (!prev) return prev;
 
       const newModalState = { ...prev, configString: newConfigString };
@@ -151,7 +151,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     if (!close) {
       modalClose(ModalCloseReason.Cancel);
     } else {
-      setModalState(prev => {
+      setModalState((prev) => {
         if (!prev) return prev;
 
         if (prev.isAdvancedMode && formRef.current) {
@@ -228,7 +228,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         errorMessage = e.publicMessage || e.message;
       }
 
-      setModalState(prev => ({ ...prev, error: errorMessage }));
+      setModalState((prev) => ({ ...prev, error: errorMessage }));
 
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
@@ -385,7 +385,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
       workspace: experiment.workspaceName,
       ...restConfig,
     };
-    setModalState(prev => {
+    setModalState((prev) => {
       const newModalState = {
         config: publicConfig,
         configString: yaml.dump(publicConfig),
@@ -402,7 +402,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
   // Update the config from form when switching to advanced mode.
   useEffect(() => {
     if (modalState.isAdvancedMode !== prevModalState.isAdvancedMode && modalState.isAdvancedMode) {
-      setModalState(prev => ({ ...prev, configString: getConfigFromForm(prev.config) }));
+      setModalState((prev) => ({ ...prev, configString: getConfigFromForm(prev.config) }));
     }
   }, [ getConfigFromForm, modalState.isAdvancedMode, prevModalState ]);
 

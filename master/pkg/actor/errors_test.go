@@ -12,22 +12,43 @@ func Test_errUnexpectedMessage_Error(t *testing.T) {
 		want   string
 	}
 	tests := []testCase{
-		{"blank message", fields{ctx: &Context{message: ""}},
-			"unexpected message from <external> to <unknown> (string):  (no response expected)"},
-		{"sender", fields{ctx: &Context{message: "msg", sender: &Ref{address: Address{"/test"}}}},
-			"unexpected message from /test to <unknown> (string): msg (no response expected)"},
-		{"recipient", fields{ctx: &Context{message: "msg", recipient: &Ref{address: Address{"/test"}}}},
-			"unexpected message from <external> to /test (string): msg (no response expected)"},
-		{"response", fields{ctx: &Context{message: "msg", result: make(chan Message)}},
-			"unexpected message from <external> to <unknown> (string): msg (response expected)"},
-		{"array", fields{ctx: &Context{message: []string{"array"}}},
-			"unexpected message from <external> to <unknown> ([]string): [array] (no response expected)"},
-		{"struct", fields{ctx: &Context{message: struct{ key string }{key: "value"}}},
+		{
+			"blank message",
+			fields{ctx: &Context{message: ""}},
+			"unexpected message from <external> to <unknown> (string):  (no response expected)",
+		},
+		{
+			"sender",
+			fields{ctx: &Context{message: "msg", sender: &Ref{address: Address{"/test"}}}},
+			"unexpected message from /test to <unknown> (string): msg (no response expected)",
+		},
+		{
+			"recipient",
+			fields{ctx: &Context{message: "msg", recipient: &Ref{address: Address{"/test"}}}},
+			"unexpected message from <external> to /test (string): msg (no response expected)",
+		},
+		{
+			"response",
+			fields{ctx: &Context{message: "msg", result: make(chan Message)}},
+			"unexpected message from <external> to <unknown> (string): msg (response expected)",
+		},
+		{
+			"array",
+			fields{ctx: &Context{message: []string{"array"}}},
+			"unexpected message from <external> to <unknown> ([]string): [array] (no response expected)",
+		},
+		{
+			"struct",
+			fields{ctx: &Context{message: struct{ key string }{key: "value"}}},
 			"unexpected message from <external> to <unknown> " +
-				"(struct { key string }): {key:value} (no response expected)"},
-		{"pointer", fields{ctx: &Context{message: &struct{ key string }{key: "value"}}},
+				"(struct { key string }): {key:value} (no response expected)",
+		},
+		{
+			"pointer",
+			fields{ctx: &Context{message: &struct{ key string }{key: "value"}}},
 			"unexpected message from <external> to <unknown> " +
-				"(*struct { key string }): {key:value} (no response expected)"},
+				"(*struct { key string }): {key:value} (no response expected)",
+		},
 	}
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {

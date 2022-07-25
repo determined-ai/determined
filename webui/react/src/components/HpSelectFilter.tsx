@@ -54,7 +54,7 @@ const HpSelectFilter: React.FC<Props> = ({
     if (!onChange) return;
 
     const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
-    const newValue = (clone(values) as SelectValue[]).filter(item => item !== selectedValue);
+    const newValue = (clone(values) as SelectValue[]).filter((item) => item !== selectedValue);
 
     onChange(newValue as SelectValue, option);
   }, [ onChange, values ]);
@@ -72,7 +72,7 @@ const HpSelectFilter: React.FC<Props> = ({
       onSelect={handleSelect}
       {...props}>
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-      {sortedFullHParams.map(hParam => {
+      {sortedFullHParams.map((hParam) => {
         const importance = hpImportance[hParam];
         return (
           <Option className={css.option} key={hParam} value={hParam}>

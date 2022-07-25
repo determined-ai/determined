@@ -70,11 +70,10 @@ const CompareVisualization: React.FC = () => {
 
   const experimentIds: number[] = useMemo(() => {
     const query = queryString.parse(location.search);
-    if(query.id && typeof query.id === 'string'){
+    if (query.id && typeof query.id === 'string'){
       return [ parseInt(query.id) ];
-
-    } else if(Array.isArray(query.id)){
-      return query.id.map(x => parseInt(x));
+    } else if (Array.isArray(query.id)){
+      return query.id.map((x) => parseInt(x));
     }
     return [];
 
@@ -83,17 +82,15 @@ const CompareVisualization: React.FC = () => {
   const [ filters, setFilters ] = useState<VisualizationFilters>(defaultFilters);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ activeMetric, setActiveMetric ] = useState<MetricName>();
 
   const [ pageError, setPageError ] = useState<PageError>();
 
   useEffect(() => {
     if (filters.metric) return;
     const id = experimentIds[0];
-    getExperimentDetails({ id }).then(experiment => {
+    getExperimentDetails({ id }).then((experiment) => {
       const metric = { name: experiment.config.searcher.metric, type: MetricType.Validation };
       setFilters((filters) => ({ ...filters, metric }));
-      setActiveMetric(metric);
 
     });
   }, [ filters.metric, experimentIds ]);
@@ -112,11 +109,11 @@ const CompareVisualization: React.FC = () => {
   }, [ ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
-    setActiveMetric(metric);
+    setFilters((filters) => ({ ...filters, metric }));
   }, []);
 
   useEffect(() => {
-    if (ui.isPageHidden || !experimentIds.length || !activeMetric) return;
+    if (ui.isPageHidden || !experimentIds.length || !filters.metric?.name) return;
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
@@ -126,12 +123,12 @@ const CompareVisualization: React.FC = () => {
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
     const hyperparameters: Record<string, Hyperparameter> = {};
-    const metricTypeParam = metricTypeParamMap[activeMetric.type];
+    const metricTypeParam = metricTypeParamMap[filters.metric.type];
 
     readStream<V1ExpCompareTrialsSampleResponse>(
       detApi.StreamingInternal.expCompareTrialsSample(
         experimentIds,
-        activeMetric.name,
+        filters.metric.name,
         metricTypeParam,
         filters.maxTrial,
         undefined,
@@ -140,18 +137,18 @@ const CompareVisualization: React.FC = () => {
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event || !event.trials) return;
 
-        (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
+        (event.promotedTrials || []).forEach((trialId) => trialIdsMap[trialId] = trialId);
         // (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds(prevTrialIds =>
+        setTrialIds((prevTrialIds) =>
           isEqual(prevTrialIds, newTrialIds)
             ? prevTrialIds
             : newTrialIds);
 
-        (event.trials || []).forEach(trial => {
+        (event.trials || []).forEach((trial) => {
           const id = trial.trialId;
           const flatHParams = flattenObject(trial.hparams || {});
           Object.keys(flatHParams).forEach(
@@ -182,40 +179,40 @@ const CompareVisualization: React.FC = () => {
           trialDataMap[id] = trialDataMap[id] || [];
           metricsMap[id] = metricsMap[id] || {};
 
-          trial.data.forEach(datapoint => {
+          trial.data.forEach((datapoint) => {
             batchesMap[datapoint.batches] = datapoint.batches;
             metricsMap[id][datapoint.batches] = datapoint.value;
             trialHpMap[id].metric = datapoint.value;
           });
         });
 
-        Object.keys(hpValsMap).forEach(hpParam => {
+        Object.keys(hpValsMap).forEach((hpParam) => {
           const hpVals = hpValsMap[hpParam];
-          if (!hpVals.has('-') && newTrialIds.some(id => trialHpMap[id] == null)) {
+          if (!hpVals.has('-') && newTrialIds.some((id) => trialHpMap[id] == null)) {
             hpValsMap[hpParam].add('-');
           }
         });
         setHpVals(hpValsMap);
 
-        const newTrialHps = newTrialIds.map(id => trialHpMap[id]);
+        const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
         const newBatches = Object.values(batchesMap);
         setBatches(newBatches);
 
-        const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
+        const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
           const value = metricsMap[trialId][batch];
           return Number.isFinite(value) ? value : null;
         }));
         setChartData(newChartData);
 
       },
-    ).catch(e => {
+    ).catch((e) => {
       setPageError(e);
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
+  }, [ filters.metric, ui.isPageHidden, filters.maxTrial, experimentIds ]);
 
   useEffect(() => {
     if (ui.isPageHidden || !trialIds?.length) return;
@@ -230,16 +227,16 @@ const CompareVisualization: React.FC = () => {
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
-        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
 
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
-          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetrics(newMetrics);
       },

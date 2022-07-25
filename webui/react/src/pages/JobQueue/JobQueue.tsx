@@ -18,14 +18,13 @@ import { GetJobsResponse } from 'services/types';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, moveJobToPosition, orderedSchedulers,
   unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -41,7 +40,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { resourcePools } = useStore();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
-    resourcePools.map(rp => ({
+    resourcePools.map((rp) => ({
       resourcePool: rp.name,
       stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
     } as RPStats)),
@@ -79,7 +78,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       const [ jobs, stats ] = await Promise.all(promises);
 
       // Process jobs response.
-      setJobs(jobState ? jobs.jobs.filter(j => j.summary.state === jobState) : jobs.jobs);
+      setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
@@ -92,7 +91,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         type: ErrorType.Server,
       });
     } finally {
-      setPageState(cur => ({ ...cur, isLoading: false }));
+      setPageState((cur) => ({ ...cur, isLoading: false }));
     }
   }, [ canceler.signal, selectedRp.name, settings, jobState ]);
 
@@ -139,7 +138,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       triggers[JobAction.ManageJob] = () => setManagingJob(job);
     }
 
-    Object.keys(triggers).forEach(key => {
+    Object.keys(triggers).forEach((key) => {
       const action = key as JobAction;
       const fn = triggers[action];
       if (!fn) return;
@@ -157,7 +156,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [ fetchAll ]);
 
   const columns = useMemo(() => {
-    return defaultColumns.map(col => {
+    return defaultColumns.map((col) => {
       switch (col.key) {
         case 'actions':
           col.render = (_, record) => {
@@ -228,7 +227,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           break;
       }
       return col;
-    }).map(column => {
+    }).map((column) => {
       column.sortOrder = null;
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
@@ -245,7 +244,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [ canceler, fetchResourcePools ]);
 
   useEffect(() => {
-    setPageState(cur => ({ ...cur, isLoading: true }));
+    setPageState((cur) => ({ ...cur, isLoading: true }));
     fetchAll();
     return () => canceler.abort();
   }, [
@@ -259,7 +258,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   useEffect(() => {
     if (!managingJob) return;
-    const job = jobs.find(j => j.jobId === managingJob.jobId);
+    const job = jobs.find((j) => j.jobId === managingJob.jobId);
     if (!job) {
       setManagingJob(undefined);
     } else if (!isEqual(job, managingJob)) {

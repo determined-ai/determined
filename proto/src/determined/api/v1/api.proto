@@ -334,6 +334,27 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the model definition file tree of an experiment.
+  rpc GetModelDefTree(GetModelDefTreeRequest)
+      returns (GetModelDefTreeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/file_tree"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+  // Get one file content of model definition of an experiment.
+  rpc GetModelDefFile(GetModelDefFileRequest)
+      returns (GetModelDefFileResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/file"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Get a list of unique experiment labels (sorted by popularity).
   rpc GetExperimentLabels(GetExperimentLabelsRequest)
       returns (GetExperimentLabelsResponse) {
@@ -1087,6 +1108,16 @@ service Determined {
     };
   }
 
+  // Get a count of active tasks.
+  rpc GetTasksCount(GetTasksCountRequest) returns (GetTasksCountResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/count"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
+    };
+  }
+
   // Check the status of a requested task.
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
     option (google.api.http) = {
@@ -1488,16 +1519,6 @@ service Determined {
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{id}"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
-    };
-  }
-  // Get experiments associated with a project.
-  rpc GetProjectExperiments(GetProjectExperimentsRequest)
-      returns (GetProjectExperimentsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/projects/{id}/experiments"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

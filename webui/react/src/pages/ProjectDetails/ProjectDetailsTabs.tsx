@@ -44,7 +44,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
   }, [ project.workspaceId ]);
 
   const handleTabSwitch = useCallback((tabKey: string) => {
-    setActiveTab(tabs.find(tab => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
+    setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
   }, [ tabs ]);
 
   /**
@@ -60,7 +60,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
   }, [ fetchWorkspace ]);
 
   if (project.immutable) {
-    const experimentsTab = tabs.find(tab => tab.title === 'Experiments');
+    const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
     return (
       <div className={css.base}>
         <PageHeader
@@ -105,7 +105,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ height: 50, paddingLeft: 16 }}
         onChange={handleTabSwitch}>
-        {tabs.map(tabInfo => {
+        {tabs.map((tabInfo) => {
           return (
             <TabPane
               className={css.tabPane}

@@ -16,13 +16,12 @@ import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import { RecordKey } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { Log, LogLevel } from 'types';
 import { dateTimeStringSorter, numericSorter } from 'utils/sort';
-
-import { RecordKey } from '../../shared/types';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
@@ -142,7 +141,7 @@ const LogViewer: React.FC<Props> = ({
 
     const lineCount = log.message
       .split('\n')
-      .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
+      .map((line) => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
       .reduce((acc, count) => acc + count, 0);
     const itemHeight = lineCount * charMeasures.height;
 
@@ -154,19 +153,19 @@ const LogViewer: React.FC<Props> = ({
   const processLogs = useCallback((newLogs: Log[]) => {
     const map = local.current.idMap;
     return newLogs
-      .filter(log => {
+      .filter((log) => {
         const isDuplicate = map[log.id];
         const isTqdm = log.message.includes('\r');
         map[log.id] = true;
         return !isDuplicate && !isTqdm;
       })
-      .map(log => formatLogEntry(log))
+      .map((log) => formatLogEntry(log))
       .sort(logSorter(sortKey));
   }, [ sortKey ]);
 
   const addLogs = useCallback((newLogs: ViewerLog[], prepend = false): void => {
     if (newLogs.length === 0) return;
-    setLogs(prevLogs => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
+    setLogs((prevLogs) => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
     resizeLogs();
   }, [ resizeLogs ]);
 
@@ -183,7 +182,7 @@ const LogViewer: React.FC<Props> = ({
 
     await readStream(
       onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
-      event => {
+      (event) => {
         const logEntry = decoder(event);
         fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
       },
@@ -316,7 +315,9 @@ const LogViewer: React.FC<Props> = ({
   }, [ fetchDirection, logs.length ]);
 
   const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
+    const content = logs.map((log) => (
+      `${formatClipboardHeader(log)}${log.message || ''}`
+    )).join('\n');
 
     try {
       await copyToClipboard(content);
@@ -343,7 +344,7 @@ const LogViewer: React.FC<Props> = ({
 
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
-    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then(logs => {
+    fetchLogs({ canceler, fetchDirection }, FetchType.Initial).then((logs) => {
       addLogs(logs, true);
 
       if (fetchDirection === FetchDirection.Older) {
@@ -389,7 +390,7 @@ const LogViewer: React.FC<Props> = ({
     if (fetchDirection === FetchDirection.Older && onFetch) {
       readStream(
         onFetch({ canceler, fetchDirection, limit: PAGE_LIMIT }, FetchType.Stream),
-        event => {
+        (event) => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
         },
@@ -415,7 +416,7 @@ const LogViewer: React.FC<Props> = ({
   useEffect(() => {
     if (!initialLogs) return;
 
-    addLogs(initialLogs.map(log => formatLogEntry(decoder(log))));
+    addLogs(initialLogs.map((log) => formatLogEntry(decoder(log))));
   }, [ addLogs, decoder, initialLogs ]);
 
   // Abort all outstanding API calls if log viewer unmounts.
@@ -470,7 +471,7 @@ const LogViewer: React.FC<Props> = ({
       if (lines?.length <= 1) {
         e.clipboardData?.setData(clipboardFormat, selection);
       } else {
-        const oddOrEven = lines.map(line => /^\[/.test(line) || /\]$/.test(line))
+        const oddOrEven = lines.map((line) => /^\[/.test(line) || /\]$/.test(line))
           .reduce((acc, isTimestamp, index) => {
             if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
             return acc;

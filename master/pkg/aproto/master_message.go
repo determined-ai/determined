@@ -165,9 +165,9 @@ func (c ContainerStopped) String() string {
 
 // ContainerLog notifies the master that a new log message is available for the container.
 type ContainerLog struct {
-	Container cproto.Container
-	Timestamp time.Time
-
+	Container   cproto.Container
+	Timestamp   time.Time
+	Level       *string
 	PullMessage *string
 	RunMessage  *RunMessage
 	AuxMessage  *string

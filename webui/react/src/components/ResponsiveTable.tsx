@@ -5,8 +5,9 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
+import Spinner from 'shared/components/Spinner/Spinner';
 
-import Spinner from '../shared/components/Spinner/Spinner';
+import SkeletonTable from './Skeleton/SkeletonTable';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Comparable = any;
@@ -17,7 +18,6 @@ interface Settings {
   tableLimit: number;
   tableOffset: number;
 }
-
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
 
@@ -31,7 +31,7 @@ export const handleTableChange = (
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<unknown>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',
@@ -86,13 +86,19 @@ const ResponsiveTable: ResponsiveTable = ({
 
   return (
     <div ref={tableRef}>
-      <Spinner conditionalRender spinning={spinning}>
-        <Table
-          bordered
-          scroll={tableScroll}
-          tableLayout="auto"
-          {...props}
-        />
+      <Spinner spinning={spinning}>
+        {
+          spinning
+            ? <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
+            : (
+              <Table
+                bordered
+                scroll={tableScroll}
+                tableLayout="auto"
+                {...props}
+              />
+            )
+        }
       </Spinner>
     </div>
   );

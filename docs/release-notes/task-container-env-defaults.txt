@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Configuration: Add support for ``task_container_defaults.environment_variables`` in master
-   config. Users can now specify a list of environment variables that will be set in all task
-   containers.

@@ -95,7 +95,7 @@ describe('useModalCustomizeColumns', () => {
     expect(Array.isArray(hiddenList)).toBeTruthy();
     expect(Array.isArray(visibleList)).toBeTruthy();
 
-    expect(visibleList.map(item => item.textContent))
+    expect(visibleList.map((item) => item.textContent))
       .toContain(camelCaseToListItem(DEFAULT_COLUMNS[0]));
   });
 
@@ -183,7 +183,7 @@ describe('useModalCustomizeColumns', () => {
       .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
 
     expect(within(lists[1]).getAllByRole('listitem')
-      .map(item => sentenceToCamelCase(item.textContent ?? '')))
+      .map((item) => sentenceToCamelCase(item.textContent ?? '')))
       .toEqual(DEFAULT_COLUMNS);
 
     const transferredColumn = within(lists[1]).getAllByRole('listitem')[0];
@@ -191,7 +191,7 @@ describe('useModalCustomizeColumns', () => {
 
     await waitFor(() => {
       expect(within(lists[1]).getAllByRole('listitem')
-        .map(item => sentenceToCamelCase(item.textContent ?? '')))
+        .map((item) => sentenceToCamelCase(item.textContent ?? '')))
         .not.toEqual(DEFAULT_COLUMNS);
     });
 
@@ -201,7 +201,7 @@ describe('useModalCustomizeColumns', () => {
 
     await waitFor(() => {
       expect(within(lists[1]).getAllByRole('listitem')
-        .map(item => sentenceToCamelCase(item.textContent ?? '')))
+        .map((item) => sentenceToCamelCase(item.textContent ?? '')))
         .toEqual(DEFAULT_COLUMNS);
     });
 

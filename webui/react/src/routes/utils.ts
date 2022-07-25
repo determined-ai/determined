@@ -3,10 +3,7 @@ import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
-import { BrandingType, CommandTask } from 'types';
-import { waitPageUrl } from 'wait';
-
-import { RouteConfig } from '../shared/types';
+import { RouteConfig } from 'shared/types';
 import {
   AnyMouseEvent,
   AnyMouseEventHandler,
@@ -17,7 +14,9 @@ import {
   reactHostAddress,
   routeToExternalUrl,
   routeToReactUrl,
-} from '../shared/utils/routes';
+} from 'shared/utils/routes';
+import { BrandingType, CommandTask } from 'types';
+import { waitPageUrl } from 'wait';
 
 import routes from './routes';
 
@@ -128,6 +127,9 @@ export const paths = {
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;
   },
+  settings: (tab = ''): string => {
+    return `/settings/${tab}`;
+  },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
@@ -137,7 +139,7 @@ export const paths = {
     return '/tasks';
   },
   taskLogs: (task: CommandTask): string => {
-    return`/${task.type}/${task.id}/logs?id=${task.name}`;
+    return `/${task.type}/${task.id}/logs?id=${task.name}`;
   },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {
     if (!experimentId) {
@@ -160,7 +162,6 @@ export const paths = {
   workspaceList: (): string => {
     return '/workspaces';
   },
-
 };
 /*
   routeAll determines whether a path should be routed through internal React router or hanled
@@ -214,8 +215,8 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
   // Check to see if the path matches any of the defined app routes.
   const pathname = url.replace(process.env.PUBLIC_URL, '');
   return routes
-    .filter(route => route.path !== '*')
-    .find(route => {
+    .filter((route) => route.path !== '*')
+    .find((route) => {
       const routeRegex = pathToRegexp(route.path);
       return routeRegex.test(pathname);
     });

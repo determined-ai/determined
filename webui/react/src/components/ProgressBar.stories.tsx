@@ -12,7 +12,7 @@ export default {
   title: 'ProgressBar',
 };
 
-const Wrapper: React.FC<ProgressBarProps> = props => (
+const Wrapper: React.FC<ProgressBarProps> = (props) => (
   <div style={{ width: 240 }}>
     <ProgressBar {...props} />
   </div>

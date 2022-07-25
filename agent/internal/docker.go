@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
@@ -26,11 +28,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type dockerActor struct {
 	*client.Client
 	credentialStores map[string]*credentialStore
+	authConfigs      map[string]types.AuthConfig
 }
 
 type (
@@ -68,6 +72,21 @@ type (
 
 // registryToString converts the Registry struct to a base64 encoding for json strings.
 func registryToString(reg types.AuthConfig) (string, error) {
+	// Docker stores the username and password in an auth section types.AuthConfig
+	// formatted as user:pass then base64ed. This is not documented clearly.
+	// https://github.com/docker/cli/blob/master/cli/config/configfile/file.go#L76
+	if reg.Auth != "" {
+		bytes, err := base64.StdEncoding.DecodeString(reg.Auth)
+		if err != nil {
+			return "", err
+		}
+		userAndPass := strings.SplitN(string(bytes), ":", 2)
+		if len(userAndPass) != 2 {
+			return "", errors.Errorf("auth field of docker authConfig must be base64ed user:pass")
+		}
+		reg.Username, reg.Password = userAndPass[0], userAndPass[1]
+		reg.Auth = ""
+	}
 	bs, err := json.Marshal(reg)
 	if err != nil {
 		return "", err
@@ -79,13 +98,17 @@ func registryToString(reg types.AuthConfig) (string, error) {
 func (d *dockerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		stores, err := getAllCredentialStores()
+		stores, auths, err := processDockerConfig()
 		if err != nil {
-			ctx.Log().Infof(
-				"can't find any docker credential stores, continuing without them %v", err)
+			ctx.Log().Infof("couldn't process ~/.docker/config.json %v", err)
 		}
-		d.credentialStores = stores
-
+		if len(stores) == 0 {
+			ctx.Log().Info("can't find any docker credential stores, continuing without them")
+		}
+		if len(auths) == 0 {
+			ctx.Log().Info("can't find any auths in ~/.docker/config.json, continuing without them")
+		}
+		d.credentialStores, d.authConfigs = stores, auths
 	case pullImage:
 		go d.pullImage(ctx, msg)
 
@@ -115,17 +138,19 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	switch {
 	case msg.ForcePull:
 		if err == nil {
-			d.sendAuxLog(ctx, fmt.Sprintf(
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
 				"image present, but force_pull_image is set; checking for updates: %s",
 				ref.String(),
 			))
 		}
 	case err == nil:
-		d.sendAuxLog(ctx, fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("image already found, skipping pull phase: %s", ref.String()))
 		ctx.Tell(ctx.Sender(), imagePulled{})
 		return
 	case client.IsErrNotFound(err):
-		d.sendAuxLog(ctx, fmt.Sprintf("image not found, pulling image: %s", ref.String()))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("image not found, pulling image: %s", ref.String()))
 	default:
 		sendErr(ctx, errors.Wrapf(err, "error checking if image exists: %s", ref.String()))
 		return
@@ -139,7 +164,8 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 			AllocationID: msg.AllocationID,
 			EventType:    "IMAGEPULL",
 			StartTime:    &now,
-		}})
+		},
+	})
 
 	defer func() {
 		now := time.Now().UTC()
@@ -150,38 +176,23 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 				AllocationID: msg.AllocationID,
 				EventType:    "IMAGEPULL",
 				EndTime:      &now,
-			}})
+			},
+		})
 	}()
 
-	// TODO: replace with command.EncodeAuthToBase64
-	reg := ""
-	if msg.Registry != nil {
-		if reg, err = registryToString(*msg.Registry); err != nil {
-			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials"))
-			return
-		}
-	} else {
-		domain := reference.Domain(ref)
-		if store, ok := d.credentialStores[domain]; ok {
-			var creds types.AuthConfig
-			creds, err = store.get()
-			if err != nil {
-				sendErr(ctx, errors.Wrap(err, "unable to get credentials from helper"))
-				return
-			}
-			reg, err = registryToString(creds)
-			if err != nil {
-				sendErr(ctx, errors.Wrap(err, "error encoding registry credentials from helper"))
-				return
-			}
-			d.sendAuxLog(ctx, fmt.Sprintf(
-				"domain '%s' found in 'credHelpers' config. Using credentials helper.", domain))
-		}
+	auth, err := d.getDockerAuths(ctx, msg.Registry, ref)
+	if err != nil {
+		sendErr(ctx, errors.Wrap(err, "could not get docker authentication"))
+		return
 	}
-
+	authString, err := registryToString(auth)
+	if err != nil {
+		sendErr(ctx, errors.Wrap(err, "error encoding docker credentials"))
+		return
+	}
 	opts := types.ImagePullOptions{
 		All:          false,
-		RegistryAuth: reg,
+		RegistryAuth: authString,
 	}
 
 	logs, err := d.ImagePull(context.Background(), ref.String(), opts)
@@ -202,6 +213,54 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	ctx.Tell(ctx.Sender(), imagePulled{})
 }
 
+func (d *dockerActor) getDockerAuths(
+	ctx *actor.Context,
+	expconfReg *types.AuthConfig,
+	image reference.Named,
+) (types.AuthConfig, error) {
+	imageDomain := reference.Domain(image)
+	// Try expconf registry auth config.
+	if expconfReg != nil {
+		didNotPassServerAddress := expconfReg.ServerAddress == ""
+		if didNotPassServerAddress {
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning), "setting registry_auth "+
+				"without registry_auth.serveraddress is deprecated and will soon be required")
+		}
+
+		expconfDomain := registry.ConvertToHostname(expconfReg.ServerAddress)
+		if expconfDomain == imageDomain ||
+			didNotPassServerAddress { // TODO remove didNotPassServerAddress when it becomes required.
+			return *expconfReg, nil
+		}
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning),
+			fmt.Sprintf("not using expconfig registry_auth since expconf "+
+				"registry_auth.serverAddress %s did not match the image serverAddress %s",
+				expconfDomain, imageDomain))
+	}
+
+	// Try using credential stores specified in ~/.docker/config.json.
+	if store, ok := d.credentialStores[imageDomain]; ok {
+		creds, err := store.get()
+		if err == nil {
+			d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
+				"domain '%s' found in 'credHelpers' config. Using credentials helper.", imageDomain))
+		}
+		return creds, errors.Wrap(err, "unable to get credentials from helper")
+	}
+
+	// Finally try using auths section of users ~/.docker/config.json.
+	index, err := registry.ParseSearchIndexInfo(image.String())
+	if err != nil {
+		return types.AuthConfig{}, errors.Wrap(err, "error invalid docker repo name")
+	}
+	reg := registry.ResolveAuthConfig(d.authConfigs, index)
+	if reg != (types.AuthConfig{}) {
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo), fmt.Sprintf(
+			"domain '%s' found in 'auths' ~/.docker/config.json", imageDomain))
+	}
+	return reg, nil
+}
+
 func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	response, err := d.ContainerCreate(
 		context.Background(), &msg.ContainerConfig, &msg.HostConfig, &msg.NetworkingConfig, nil, "")
@@ -211,11 +270,13 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg cproto.RunSpec) {
 	}
 	containerID := response.ID
 	for _, w := range response.Warnings {
-		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelWarning),
+			fmt.Sprintf("warning when creating container: %s", w))
 	}
 
 	for _, copyArx := range msg.Archives {
-		d.sendAuxLog(ctx, fmt.Sprintf("copying files to container: %s", copyArx.Path))
+		d.sendAuxLog(ctx, ptrs.Ptr(model.LogLevelInfo),
+			fmt.Sprintf("copying files to container: %s", copyArx.Path))
 		files, aerr := archive.ToIOReader(copyArx.Archive)
 		if aerr != nil {
 			sendErr(ctx, errors.Wrap(aerr, "error converting RunSpec Archive files to io.Reader"))
@@ -321,9 +382,10 @@ func sendErr(ctx *actor.Context, err error) {
 	ctx.Tell(ctx.Sender(), dockerErr{Error: err})
 }
 
-func (d *dockerActor) sendAuxLog(ctx *actor.Context, msg string) {
+func (d *dockerActor) sendAuxLog(ctx *actor.Context, level *string, msg string) {
 	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
 		Timestamp:  time.Now().UTC(),
+		Level:      level,
 		AuxMessage: &msg,
 	})
 }

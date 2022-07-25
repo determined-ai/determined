@@ -22,6 +22,9 @@ import {
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
+import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import {
   ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   RunState, TrialItem,
@@ -29,10 +32,6 @@ import {
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { openCommand } from 'wait';
-
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
-import { routeToReactUrl } from '../../shared/utils/routes';
-import { validateDetApiEnum, validateDetApiEnumList } from '../../shared/utils/service';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
@@ -106,11 +105,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       </Link>
     );
 
-    const restartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
+    const autoRestartsRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const maxRestarts = experiment.config.maxRestarts ?? 0;
-      const className = record.restarts ? css.hasRestarts : undefined;
+      const className = record.autoRestarts ? css.hasRestarts : undefined;
       return (
-        <span className={className}>{record.restarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+        <span className={className}>
+          {record.autoRestarts}{maxRestarts ? `/${maxRestarts}` : ''}
+        </span>
       );
     };
 
@@ -151,7 +152,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       />
     );
 
-    const newColumns = [ ...defaultColumns ].map(column => {
+    const newColumns = [ ...defaultColumns ].map((column) => {
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
@@ -170,7 +171,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             value,
           }));
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.RESTARTS) {
-        column.render = restartsRenderer;
+        column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       }
@@ -187,7 +188,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     if (Array.isArray(tableSorter)) return;
 
     const { columnKey, order } = tableSorter as SorterResult<TrialItem>;
-    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
     const newSettings = {
       sortDesc: order === 'descend',
@@ -202,7 +203,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
   const fetchExperimentTrials = useCallback(async () => {
     try {
-      const states = (settings.state || []).map(state => encodeExperimentState(state as RunState));
+      const states = (settings.state || []).map((state) => (
+        encodeExperimentState(state as RunState)
+      ));
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -289,7 +292,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const handleTableRowSelect = useCallback(rowKeys => {
+  const handleTableRowSelect = useCallback((rowKeys) => {
     updateSettings({ row: rowKeys });
   }, [ updateSettings ]);
 
@@ -298,7 +301,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [ updateSettings ]);
 
   const handleTrialUnselect = useCallback((trialId: number) => {
-    const trialIds = settings.row ? settings.row.filter(id => id !== trialId) : undefined;
+    const trialIds = settings.row ? settings.row.filter((id) => id !== trialId) : undefined;
     updateSettings({ row: trialIds });
   }, [ settings.row, updateSettings ]);
 
@@ -335,7 +338,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
           selectedRowCount={(settings.row ?? []).length}
-          onAction={action => submitBatchAction(action as Action)}
+          onAction={(action) => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
         <InteractiveTable

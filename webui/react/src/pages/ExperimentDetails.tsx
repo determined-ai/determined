@@ -12,10 +12,9 @@ import {
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
+import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
-
-import { isAborted } from '../shared/utils/service';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';

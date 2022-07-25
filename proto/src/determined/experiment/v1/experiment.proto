@@ -106,6 +106,8 @@ message Experiment {
   // The archived status of the parent project (can be inherited from
   // workspace).
   bool parent_archived = 25;
+  // The configuration of the experiment.
+  google.protobuf.Struct config = 26;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.
@@ -138,4 +140,22 @@ message ValidationHistoryEntry {
   // The value of the `searcher.metric`, indicated by the experiment config, for
   // the validation.
   float searcher_metric = 3;
+}
+
+// File node is one node of file in experiment model definition file tree.
+message FileNode {
+  // Path of file.
+  string path = 1;
+  // Name of file.
+  string name = 2;
+  // Modification time of file.
+  google.protobuf.Timestamp modified_time = 3;
+  // Number of bytes in file content.
+  int32 content_length = 4;
+  // Is this a directory.
+  bool is_dir = 5;
+  // MIME type of file.
+  string content_type = 6;
+  // Subdirectory files.
+  repeated FileNode files = 7;
 }

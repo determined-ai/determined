@@ -2,9 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -45,90 +42,15 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(pid int32) error {
 }
 
 func (a *apiServer) GetProject(
-	_ context.Context, req *apiv1.GetProjectRequest) (*apiv1.GetProjectResponse, error) {
+	_ context.Context, req *apiv1.GetProjectRequest,
+) (*apiv1.GetProjectResponse, error) {
 	p, err := a.GetProjectByID(req.Id)
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
-func (a *apiServer) GetProjectExperiments(_ context.Context,
-	req *apiv1.GetProjectExperimentsRequest) (*apiv1.GetProjectExperimentsResponse,
-	error) {
-	// Verify that project exists.
-	if _, err := a.GetProjectByID(req.Id); err != nil {
-		return nil, err
-	}
-
-	// Construct the experiment filtering expression.
-	allStates := make([]string, 0, len(req.States))
-	for _, state := range req.States {
-		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
-	}
-	stateFilterExpr := strings.Join(allStates, ",")
-	userFilterExpr := strings.Join(req.Users, ",")
-	userIds := make([]string, 0, len(req.UserIds))
-	for _, userID := range req.UserIds {
-		userIds = append(userIds, strconv.Itoa(int(userID)))
-	}
-	userIDFilterExpr := strings.Join(userIds, ",")
-	labelFilterExpr := strings.Join(req.Labels, ",")
-	archivedExpr := ""
-	if req.Archived != nil {
-		archivedExpr = strconv.FormatBool(req.Archived.Value)
-	}
-
-	// Construct the ordering expression.
-	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
-		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:   "id",
-		apiv1.GetExperimentsRequest_SORT_BY_ID:            "id",
-		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:   "description",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:          "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:    "start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:      "end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:         "state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:    "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:      "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:          "username",
-		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:   "forked_from",
-		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL: "resource_pool",
-	}
-	sortByMap := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-	}
-	orderExpr := ""
-	switch _, ok := orderColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case orderColMap[req.SortBy] != "id":
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
-	}
-
-	resp := &apiv1.GetProjectExperimentsResponse{}
-	return resp, a.m.db.QueryProtof(
-		"get_experiments",
-		[]interface{}{orderExpr},
-		resp,
-		stateFilterExpr,
-		archivedExpr,
-		userFilterExpr,
-		userIDFilterExpr,
-		labelFilterExpr,
-		req.Description,
-		req.Name,
-		req.Id,
-		req.Offset,
-		req.Limit,
-	)
-}
-
 func (a *apiServer) PostProject(
-	ctx context.Context, req *apiv1.PostProjectRequest) (*apiv1.PostProjectResponse, error) {
+	ctx context.Context, req *apiv1.PostProjectRequest,
+) (*apiv1.PostProjectResponse, error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -148,7 +70,8 @@ func (a *apiServer) PostProject(
 }
 
 func (a *apiServer) AddProjectNote(
-	_ context.Context, req *apiv1.AddProjectNoteRequest) (*apiv1.AddProjectNoteResponse, error) {
+	_ context.Context, req *apiv1.AddProjectNoteRequest,
+) (*apiv1.AddProjectNoteResponse, error) {
 	p, err := a.GetProjectByID(req.ProjectId)
 	if err != nil {
 		return nil, err
@@ -167,7 +90,8 @@ func (a *apiServer) AddProjectNote(
 }
 
 func (a *apiServer) PutProjectNotes(
-	_ context.Context, req *apiv1.PutProjectNotesRequest) (*apiv1.PutProjectNotesResponse, error) {
+	_ context.Context, req *apiv1.PutProjectNotesRequest,
+) (*apiv1.PutProjectNotesResponse, error) {
 	newp := &projectv1.Project{}
 	err := a.m.db.QueryProto("insert_project_note", newp, req.ProjectId, req.Notes)
 	return &apiv1.PutProjectNotesResponse{Notes: newp.Notes},
@@ -175,7 +99,8 @@ func (a *apiServer) PutProjectNotes(
 }
 
 func (a *apiServer) PatchProject(
-	_ context.Context, req *apiv1.PatchProjectRequest) (*apiv1.PatchProjectResponse, error) {
+	_ context.Context, req *apiv1.PatchProjectRequest,
+) (*apiv1.PatchProjectResponse, error) {
 	// Verify current project exists and can be edited.
 	currProject, err := a.GetProjectByID(req.Id)
 	if err != nil {
@@ -219,7 +144,8 @@ func (a *apiServer) PatchProject(
 
 func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -240,7 +166,8 @@ func (a *apiServer) DeleteProject(
 
 func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
-	error) {
+	error,
+) {
 	_, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, 0, true)
 	if err != nil {
 		return nil, err
@@ -266,7 +193,8 @@ func (a *apiServer) MoveProject(
 
 func (a *apiServer) ArchiveProject(
 	ctx context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -292,7 +220,8 @@ func (a *apiServer) ArchiveProject(
 
 func (a *apiServer) UnarchiveProject(
 	ctx context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse,
-	error) {
+	error,
+) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err

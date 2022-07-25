@@ -16,6 +16,12 @@ export const DEFAULT_COLUMNS: WorkspaceColumnName[] = [
   'userId',
 ];
 
+export enum WhoseWorkspaces {
+  All = 'ALL_WORKSPACES',
+  Mine = 'MY_WORKSPACES',
+  Others = 'OTHERS_WORKSPACES'
+}
+
 export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   action: 46,
   archived: 75,
@@ -31,6 +37,7 @@ export interface WorkspaceListSettings extends InteractiveTableSettings {
   sortKey: V1GetWorkspacesRequestSortBy;
   user?: string[];
   view: GridListView;
+  whose: WhoseWorkspaces;
 }
 
 const config: SettingsConfig = {
@@ -100,6 +107,13 @@ const config: SettingsConfig = {
       key: 'view',
       skipUrlEncoding: true,
       storageKey: 'view',
+      type: { baseType: BaseType.String },
+    },
+    {
+      defaultValue: WhoseWorkspaces.All,
+      key: 'whose',
+      skipUrlEncoding: true,
+      storageKey: 'whose',
       type: { baseType: BaseType.String },
     },
   ],

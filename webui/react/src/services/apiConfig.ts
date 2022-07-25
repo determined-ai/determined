@@ -5,10 +5,9 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
-
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { identity, noOp } from '../shared/utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
@@ -24,6 +23,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
     Auth: new Api.AuthenticationApi(config),
+    Checkpoint: Api.CheckpointsApiFetchParamCreator(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
@@ -69,8 +69,8 @@ export const commandToEndpoint: Record<Type.CommandType, string> = {
 
 export const getUserIds = (users: string[] = []): number[] | undefined => {
   const userIds = users
-    .map(user => parseInt(user))
-    .filter(user => !isNaN(user));
+    .map((user) => parseInt(user))
+    .filter((user) => !isNaN(user));
   return userIds.length !== 0 ? userIds : undefined;
 };
 
@@ -105,11 +105,19 @@ export const getCurrentUser: DetApi<
 };
 
 export const getUsers: DetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams, Api.V1GetUsersResponse, Type.DetailedUserList
 > = {
   name: 'getUsers',
-  postProcess: (response) => decoder.mapV1UserList(response),
-  request: (options) => detApi.Users.getUsers(options),
+  postProcess: (response) => ({
+    pagination: decoder.mapV1Pagination(response.pagination),
+    users: decoder.mapV1UserList(response),
+  }),
+  request: (params) => detApi.Users.getUsers(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
 export const setUserPassword: DetApi<
@@ -245,6 +253,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
+      params.projectId || 0,
       options,
     );
   },
@@ -384,7 +393,7 @@ export const getExpValidationHistory: DetApi<
   name: 'getExperimentValidationHistory',
   postProcess: (response) => {
     if (!response.validationHistory) return [];
-    return response.validationHistory?.map(vh => ({
+    return response.validationHistory?.map((vh) => ({
       endTime: vh.endTime as unknown as string,
       trialId: vh.trialId,
       validationError: vh.searcherMetric,
@@ -402,7 +411,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map(trial => ({
+      trials: response.trials.map((trial) => ({
         workloads: [],
         ...decoder.decodeV1TrialToTrialItem(trial),
       })),
@@ -463,7 +472,7 @@ export const compareTrials: DetApi<
   request: (params: Service.CompareTrialsParams) => detApi.Experiments.compareTrials(
     params.trialIds,
     params.maxDatapoints,
-    params.metricNames.map(m => m.name),
+    params.metricNames.map((m) => m.name),
     params.startBatches,
     params.endBatches,
     params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
@@ -485,6 +494,14 @@ export const getTask: DetApi<
   ),
 };
 
+export const getActiveTasks: DetApi<
+  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+> = {
+  name: 'getTasksCount',
+  postProcess: (response) => response,
+  request: () => detApi.Tasks.getTasksCount(),
+};
+
 /* Models */
 
 export const getModels: DetApi<
@@ -493,7 +510,7 @@ export const getModels: DetApi<
   name: 'getModels',
   postProcess: (response) => {
     return {
-      models: (response.models).map(model => decoder.mapV1Model(model)),
+      models: (response.models).map((model) => decoder.mapV1Model(model)),
       pagination: response.pagination,
     };
   },
@@ -805,37 +822,6 @@ export const getProject: DetApi<
   ),
 };
 
-export const getProjectExperiments: DetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
-> = {
-  name: 'getProjectExperiments',
-  postProcess: (response: Api.V1GetExperimentsResponse) => {
-    return {
-      experiments: decoder.mapV1ExperimentList(response.experiments),
-      pagination: response.pagination,
-    };
-  },
-  request: (params: Service.GetProjectExperimentsParams, options) => {
-    return detApi.Projects.getProjectExperiments(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.description,
-      params.labels,
-      params.archived,
-      params.states,
-      params.users,
-      params.userIds,
-      options,
-    );
-  },
-};
-
 export const addProjectNote: DetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 > = {
@@ -948,7 +934,7 @@ export const getCommands: DetApi<
 > = {
   name: 'getCommands',
   postProcess: (response) => (response.commands || [])
-    .map(command => decoder.mapV1Command(command)),
+    .map((command) => decoder.mapV1Command(command)),
   request: (params: Service.GetCommandsParams) => detApi.Commands.getCommands(
     params.sortBy,
     params.orderBy,
@@ -964,7 +950,7 @@ export const getJupyterLabs: DetApi<
 > = {
   name: 'getJupyterLabs',
   postProcess: (response) => (response.notebooks || [])
-    .map(jupyterLab => decoder.mapV1Notebook(jupyterLab)),
+    .map((jupyterLab) => decoder.mapV1Notebook(jupyterLab)),
   request: (params: Service.GetJupyterLabsParams) => detApi.Notebooks.getNotebooks(
     params.sortBy,
     params.orderBy,
@@ -980,7 +966,7 @@ export const getShells: DetApi<
 > = {
   name: 'getShells',
   postProcess: (response) => (response.shells || [])
-    .map(shell => decoder.mapV1Shell(shell)),
+    .map((shell) => decoder.mapV1Shell(shell)),
   request: (params: Service.GetShellsParams) => detApi.Shells.getShells(
     params.sortBy,
     params.orderBy,
@@ -996,7 +982,7 @@ export const getTensorBoards: DetApi<
 > = {
   name: 'getTensorBoards',
   postProcess: (response) => (response.tensorboards || [])
-    .map(tensorboard => decoder.mapV1TensorBoard(tensorboard)),
+    .map((tensorboard) => decoder.mapV1TensorBoard(tensorboard)),
   request: (params: Service.GetTensorBoardsParams) => detApi.TensorBoards.getTensorboards(
     params.sortBy,
     params.orderBy,
@@ -1048,7 +1034,7 @@ export const getTemplates: DetApi<
 > = {
   name: 'getTemplates',
   postProcess: (response) => (response.templates || [])
-    .map(template => decoder.mapV1Template(template)),
+    .map((template) => decoder.mapV1Template(template)),
   request: (params: Service.GetTemplatesParams) => detApi.Templates.getTemplates(
     params.sortBy,
     params.orderBy,
@@ -1092,7 +1078,7 @@ export const getJobQueue: DetApi<
 > = {
   name: 'getJobQ',
   postProcess: (response) => {
-    response.jobs = response.jobs.filter(job => !!job.summary);
+    response.jobs = response.jobs.filter((job) => !!job.summary);
     // we don't work with jobs without a summary in the ui yet
     return response as Service.GetJobsResponse;
   },

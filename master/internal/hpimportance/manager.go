@@ -76,7 +76,8 @@ type manager struct {
 
 // NewManager initializes the master actor (of which there should only be one instance running).
 func NewManager(db *db.PgDB, system *actor.System,
-	config config.HPImportanceConfig, masterRoot string) (actor.Actor, error) {
+	config config.HPImportanceConfig, masterRoot string,
+) (actor.Actor, error) {
 	// growforest should either be installed in PATH (when running from source) or package with the
 	// master (when running from binary packages).
 	growforest := path.Join(masterRoot, growforestBin)
@@ -94,7 +95,7 @@ func NewManager(db *db.PgDB, system *actor.System,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to clean scratch space for HP importance computation")
 	}
-	err = os.MkdirAll(workingDir, 0700)
+	err = os.MkdirAll(workingDir, 0o700)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scratch space for HP importance computation")
 	}

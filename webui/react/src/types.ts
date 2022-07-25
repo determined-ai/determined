@@ -1,6 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-
-import { Primitive, RawJson, RecordKey } from './shared/types';
+import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
@@ -19,6 +18,10 @@ export interface DetailedUser extends User {
   id: number;
   isActive: boolean;
   isAdmin: boolean;
+}
+
+export interface DetailedUserList extends WithPagination {
+  users: DetailedUser[],
 }
 
 export interface Auth {
@@ -424,13 +427,13 @@ type HpValue = Primitive | RawJson
 export type TrialHyperparameters = Record<string, HpValue>
 
 export interface TrialItem extends StartEndTimes {
+  autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
-  restarts: number;
   state: RunState;
   totalBatchesProcessed: number;
 }
@@ -519,6 +522,13 @@ interface Allocation {
 export interface TaskItem {
   allocations: Allocation[];
   taskId: string;
+}
+
+export interface TaskCounts {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
 }
 
 export interface ModelItem {

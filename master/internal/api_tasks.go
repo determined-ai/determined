@@ -140,6 +140,42 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func (a *apiServer) GetTasksCount(
+	_ context.Context, req *apiv1.GetTasksCountRequest,
+) (resp *apiv1.GetTasksCountResponse, err error) {
+	finalResp := &apiv1.GetTasksCountResponse{}
+
+	req1 := &apiv1.GetNotebooksRequest{}
+	resp1 := &apiv1.GetNotebooksResponse{}
+	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
+		return nil, err
+	}
+	finalResp.Notebooks = int32(len(resp1.Notebooks))
+
+	req2 := &apiv1.GetTensorboardsRequest{}
+	resp2 := &apiv1.GetTensorboardsResponse{}
+	if err = a.ask(tensorboardsAddr, req2, &resp2); err != nil {
+		return nil, err
+	}
+	finalResp.Tensorboards = int32(len(resp2.Tensorboards))
+
+	req3 := &apiv1.GetCommandsRequest{}
+	resp3 := &apiv1.GetCommandsResponse{}
+	if err = a.ask(commandsAddr, req3, &resp3); err != nil {
+		return nil, err
+	}
+	finalResp.Commands = int32(len(resp3.Commands))
+
+	req4 := &apiv1.GetShellsRequest{}
+	resp4 := &apiv1.GetShellsResponse{}
+	if err = a.ask(shellsAddr, req4, &resp4); err != nil {
+		return nil, err
+	}
+	finalResp.Shells = int32(len(resp4.Shells))
+
+	return finalResp, err
+}
+
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {
@@ -234,6 +270,14 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 			Field:     "timestamp",
 			Operation: api.FilterOperationGreaterThan,
 			Values:    req.TimestampAfter.AsTime(),
+		})
+	}
+
+	if req.SearchText != "" {
+		filters = append(filters, api.Filter{
+			Field:     "log",
+			Operation: api.FilterOperationStringContainment,
+			Values:    req.SearchText,
 		})
 	}
 	return filters, nil
