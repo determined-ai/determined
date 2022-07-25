@@ -20,14 +20,15 @@ import { DetError, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
-import { ExperimentBase, ExperimentSearcherName, Hyperparameter,
+import { ExperimentItem, ExperimentSearcherName, Hyperparameter,
   HyperparameterType, ResourcePool, TrialDetails, TrialHyperparameters, TrialItem } from 'types';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
 interface Props {
-  experiment: ExperimentBase;
+  experiment: ExperimentItem;
   trial?: TrialDetails | TrialItem;
+  onClose?: () => void;
 }
 
 export interface ShowModalProps {
@@ -71,8 +72,8 @@ interface HyperparameterRowValues {
   value?: number | string,
 }
 
-const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal();
+const useModalHyperparameterSearch = ({ experiment, trial: trialIn, onClose }: Props): ModalHooks => {
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal({ onClose });
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(

@@ -391,11 +391,21 @@ export const mapV1GetExperimentDetailsResponse = (
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
 ): types.ExperimentItem => {
+  const ioConfig = ioTypes
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, data.config);
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    ioConfig.hyperparameters,
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: data.config,
     description: data.description,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
+    hyperparameters,
     id: data.id,
     jobId: data.jobId,
     labels: data.labels || [],

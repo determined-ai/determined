@@ -119,8 +119,32 @@ export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
     .map((_, idx) => {
       const experimentTask = generateExperimentTask(idx);
       const user = sampleUsers.random();
+      const config = {
+        name: experimentTask.name,
+        resources: {},
+        searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+      };
       return {
         ...experimentTask,
+        config: {
+          checkpointPolicy: 'best',
+          checkpointStorage: {
+            hostPath: '/tmp',
+            saveExperimentBest: 0,
+            saveTrialBest: 1,
+            saveTrialLatest: 1,
+            storagePath: 'determined-integration-checkpoints',
+            type: 'shared_fs',
+          },
+          dataLayer: { type: 'shared_fs' },
+          hyperparameters: {},
+          maxRestarts: 5,
+          name: experimentTask.name,
+          resources: {},
+          searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+        },
+        configRaw: config,
+        hyperparameters: {},
         id: idx,
         jobId: idx.toString(),
         labels: [],

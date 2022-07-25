@@ -467,9 +467,12 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
   endTime?: string;
   forkedFrom?: number;
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
   id: number;
   jobId: string;
   jobSummary?: JobSummary;
@@ -494,12 +497,9 @@ export interface ProjectExperiment extends ExperimentItem {
   workspaceName: string;
 }
 
-export interface ExperimentBase extends ProjectExperiment {
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+// TODO remove ExperimentBase, the extra info that was in it got migrated to ExperimentItem
+export type ExperimentBase = ProjectExperiment;
 
-}
 // TODO we should be able to remove ExperimentOld but leaving this off.
 export interface ExperimentOld extends ExperimentItem {
   config: ExperimentConfig;
