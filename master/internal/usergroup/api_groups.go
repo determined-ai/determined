@@ -25,19 +25,9 @@ func (a *ApiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 	group := Group{
 		Name: req.Name,
 	}
-
-	createdGroup, err := AddGroup(ctx, group)
-	if err != nil {
-		return nil, err
-	}
-
 	uids := intsToUserIDs(req.AddUsers)
-	err = AddUsersToGroup(ctx, createdGroup.ID, uids...)
-	if err != nil {
-		return nil, err
-	}
 
-	users, err := UsersInGroup(ctx, createdGroup.ID)
+	createdGroup, users, err := AddGroupWithMembers(ctx, group, uids...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +48,7 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
-	groups, count, err := usergroup.SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
+	groups, count, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
 		int(req.Limit))
 	if err != nil {
 		return nil, err
@@ -89,7 +79,7 @@ func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 		return nil, err
 	}
 
-	users, err := UsersInGroup(ctx, gid)
+	users, err := UsersInGroup(ctx, nil, gid)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +126,7 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.AddUsers {
 			users = append(users, model.UserID(id))
 		}
-		err = AddUsersToGroup(ctx, int(req.GroupId), users...)
+		err = AddUsersToGroup(ctx, nil, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +143,7 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		}
 	}
 
-	users, err := UsersInGroup(ctx, int(req.GroupId))
+	users, err := UsersInGroup(ctx, nil, int(req.GroupId))
 	if err != nil {
 		return nil, err
 	}
