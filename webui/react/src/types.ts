@@ -524,6 +524,13 @@ export interface TaskItem {
   taskId: string;
 }
 
+export interface TaskCounts {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
+}
+
 export interface ModelItem {
   archived?: boolean;
   creationTime: string;
