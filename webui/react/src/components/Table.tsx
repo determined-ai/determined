@@ -165,7 +165,7 @@ export const modelNameRenderer = (value: string, record: ModelItem): React.React
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
-  <Link path={paths.modelVersionDetails(record.model.name, record.version)}>
+  <Link path={paths.modelVersionDetails(record.model.name, record.id)}>
     {value ? value : 'Version ' + record.version}
   </Link>
 );
