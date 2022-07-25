@@ -61,11 +61,12 @@ def describe_group(args: Namespace) -> None:
         print(json.dumps(group_details.to_json(), indent=2))
     else:
         print(f"group ID {group_details.groupId} group name {group_details.name} with users added")
-        if group_details.users is not None:
-            render.render_objects(
-                v1UserHeaders,
-                [render.unmarshal(v1UserHeaders, u.to_json()) for u in group_details.users],
-            )
+        if group_details.users is None:
+            group_details.users = []
+        render.render_objects(
+            v1UserHeaders,
+            [render.unmarshal(v1UserHeaders, u.to_json()) for u in group_details.users],
+        )
 
 
 @authentication.required
