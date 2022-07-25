@@ -17,7 +17,7 @@ export const ClusterOverallStats: React.FC = () => {
     cluster: overview,
     resourcePools,
   } = useStore();
-  
+
   const auxContainers = useMemo(() => {
     const tally = {
       running: 0,
