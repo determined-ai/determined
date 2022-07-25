@@ -1031,6 +1031,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1215,6 +1216,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
@@ -2033,6 +2035,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - run: docker load --input build/master.image
