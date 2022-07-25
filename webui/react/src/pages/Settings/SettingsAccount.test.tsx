@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React, { useCallback, useEffect } from 'react';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';

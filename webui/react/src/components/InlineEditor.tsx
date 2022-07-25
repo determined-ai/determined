@@ -64,7 +64,7 @@ const InlineEditor: React.FC<Props> = ({
     if (textareaRef.current) textareaRef.current.value = newValue;
     if (growWrapRef.current) growWrapRef.current.dataset.value = newValue || placeholder;
     setCurrentValue(newValue);
-  }, [ maxLength ]);
+  }, [ maxLength, placeholder ]);
 
   const cancel = useCallback(() => {
     updateEditorValue(value);

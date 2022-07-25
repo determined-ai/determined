@@ -1,10 +1,11 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
+import { useStore } from 'contexts/Store';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
@@ -23,23 +24,28 @@ interface Params {
 const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
+  const { auth: { user } } = useStore();
   const { tab } = useParams<Params>();
   const location = useLocation();
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const history = useHistory();
 
-  const { rbac } = queryString.parse(location.search);
+  const rbacEnabled = queryString.parse(location.search).rbac !== undefined;
+
+  const showTabs = useMemo(() => {
+    return user?.isAdmin || rbacEnabled;
+  }, [ rbacEnabled, user?.isAdmin ]);
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
 
     const basePath = paths.settings(key);
-    const query = queryString.stringify({ rbac });
+    const query = rbacEnabled ? 'rbac' : '';
     const newPath = key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`;
     history.replace(`${newPath}?${query}`);
-  }, [ history, rbac ]);
+  }, [ history, rbacEnabled ]);
 
-  return rbac ? (
+  return showTabs ? (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="account" tab="Account">
         <SettingsAccount />

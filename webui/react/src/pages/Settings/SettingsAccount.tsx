@@ -40,7 +40,7 @@ const SettingsAccount: React.FC = () => {
       message.error(API_ERROR_MESSAGE);
       handleError(e, { silent: true, type: ErrorType.Input });
     }
-  }, [ auth.user ]);
+  }, [ auth.user, storeDispatch ]);
 
   return (
     <div className={css.base}>
