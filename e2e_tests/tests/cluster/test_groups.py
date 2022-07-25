@@ -81,12 +81,9 @@ def test_group_updates() -> None:
 
 
 @pytest.mark.parametrize("offset", [0, 2])
-@pytest.mark.parametrize("limit", [0, 2, 10])
+@pytest.mark.parametrize("limit", [1, 3])
 @pytest.mark.e2e_cpu
 def test_group_list_pagination(offset: int, limit: int) -> None:
-    offset = 3
-    limit = 5
-
     # Ensure we have at minimum n groups.
     n = 5
     group_list = det_cmd_json(["user-group", "list", "--json"])["groups"]
