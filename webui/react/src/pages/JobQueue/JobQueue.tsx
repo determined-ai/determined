@@ -117,20 +117,18 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   };
 
   const dropDownOnTrigger = useCallback((job: Job) => {
+    const triggers: Triggers<JobAction> = {};
     const commandType = getCommandType(job.type);
 
-    const triggers: Triggers<JobAction> = {
-      [JobAction.Kill]: () => {
-        if (commandType) {
-          killTask({ id: job.entityId, type: commandType });
-        }
-      },
-      [JobAction.ViewLog]: () => {
-        if (commandType) {
-          history.push(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
-        }
-      },
-    };
+    if (commandType) {
+      triggers[JobAction.Kill] = () => {
+        killTask({ id: job.entityId, type: commandType });
+      };
+      triggers[JobAction.ViewLog] = () => {
+        history.push(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
+      };
+    }
+
     if (selectedRp && isJobOrderAvailable &&
         job.summary.jobsAhead > 0 && canManageJob(job, selectedRp) &&
         !unsupportedQPosSchedulers.has(selectedRp.schedulerType)) {
