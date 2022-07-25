@@ -8,6 +8,7 @@ from determined.cli.session import setup_session
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.experimental import session
 
 from . import render
 
@@ -24,17 +25,15 @@ v1GroupHeaders = namedtuple(
 
 @authentication.required
 def create_group(args: Namespace) -> None:
-    add_users = usernames_to_user_ids(args, args.add_user)
+    session = setup_session(args)
+    add_users = usernames_to_user_ids(session, args.add_user)
     body = bindings.v1CreateGroupRequest(add_users, args.group_name)
-    resp = bindings.post_CreateGroup(setup_session(args), body=body)
+    resp = bindings.post_CreateGroup(session, body=body)
     group = resp.group
-    if group is None:
-        print("could not create group")
-        return
 
     print(f"user group with name {group.name} and ID {group.groupId} created")
     if group.users:
-        print(f"{', '.join(args.add_user)} were added to the group")
+        print(f"{', '.join([g.username for g in group.users])} was added to the group")
 
 
 @authentication.required
@@ -53,91 +52,75 @@ def list_groups(args: Namespace) -> None:
 
 @authentication.required
 def describe_group(args: Namespace) -> None:
-    group_id = group_name_to_group_id(args, args.group_name)
-    resp = bindings.get_GetGroup(setup_session(args), groupId=group_id)
+    session = setup_session(args)
+    group_id = group_name_to_group_id(session, args.group_name)
+    resp = bindings.get_GetGroup(session, groupId=group_id)
     group_details = resp.group
-    if group_details is None:
-        print("could not get group details")
-        return
 
     if args.json:
         print(json.dumps(group_details.to_json(), indent=2))
     else:
         print(f"group ID {group_details.groupId} group name {group_details.name} with users added")
-        if group_details.users is None:
-            group_details.users = []
-        render.render_objects(
-            v1UserHeaders,
-            [render.unmarshal(v1UserHeaders, u.to_json()) for u in group_details.users],
-        )
+        if group_details.users is not None:
+            render.render_objects(
+                v1UserHeaders,
+                [render.unmarshal(v1UserHeaders, u.to_json()) for u in group_details.users],
+            )
 
 
 @authentication.required
 def add_user_to_group(args: Namespace) -> None:
+    session = setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = group_name_to_group_id(args, args.group_name)
-    user_ids = usernames_to_user_ids(args, usernames)
+    group_id = group_name_to_group_id(session, args.group_name)
+    user_ids = usernames_to_user_ids(session, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, addUsers=user_ids)
-    resp = bindings.put_UpdateGroup(setup_session(args), groupId=group_id, body=body)
-    g = resp.group
-    if g is None:
-        print("could not add user to group")
-        return
+    resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
 
-    print(f"user group with ID {g.groupId} name {g.name}")
+    print(f"user group with ID {resp.group.groupId} name {resp.group.name}")
     for user_id, username in zip(user_ids, usernames):
         print(f"user added to group with username {username} and ID {user_id}")
 
 
 @authentication.required
 def remove_user_from_group(args: Namespace) -> None:
+    session = setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = group_name_to_group_id(args, args.group_name)
-    user_ids = usernames_to_user_ids(args, usernames)
+    group_id = group_name_to_group_id(session, args.group_name)
+    user_ids = usernames_to_user_ids(session, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, removeUsers=user_ids)
     resp = bindings.put_UpdateGroup(setup_session(args), groupId=group_id, body=body)
-    g = resp.group
-    if g is None:
-        print("could not remove user from group")
-        return
 
-    print(f"user group with ID {g.groupId} name {g.name}")
+    print(f"user group with ID {resp.group.groupId} name {resp.group.name}")
     for user_id, username in zip(user_ids, usernames):
         print(f"user removed from the group with username {username} and ID {user_id}")
 
 
 @authentication.required
 def change_group_name(args: Namespace) -> None:
-    group_id = group_name_to_group_id(args, args.old_group_name)
+    session = setup_session(args)
+    group_id = group_name_to_group_id(session, args.old_group_name)
     body = bindings.v1UpdateGroupRequest(groupId=group_id, name=args.new_group_name)
-    resp = bindings.put_UpdateGroup(setup_session(args), groupId=group_id, body=body)
+    resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
     g = resp.group
-    if g is None:
-        print("could not change group name")
-        return
 
     print(f"user group with ID {g.groupId} name changed from {args.old_group_name} to {g.name}")
 
 
 @authentication.required
 def delete_group(args: Namespace) -> None:
-    group_id = group_name_to_group_id(args, args.group_name)
-    bindings.delete_DeleteGroup(setup_session(args), groupId=group_id)
+    session = setup_session(args)
+    group_id = group_name_to_group_id(session, args.group_name)
+    bindings.delete_DeleteGroup(session, groupId=group_id)
     print(f"user group with name {args.group_name} and ID {group_id} deleted")
 
 
-def usernames_to_user_ids(args: Namespace, usernames: List[str]) -> List[int]:
-    # TODO rewrite this function.
-    usernames_to_ids: Dict[str, Optional[int]] = {}
-    for username in usernames:
-        usernames_to_ids[username] = None
-
-    resp = bindings.get_GetUsers(setup_session(args))
-    if resp.users is None:
-        resp.users = []
-    for user in resp.users:
+def usernames_to_user_ids(session: session.Session, usernames: List[str]) -> List[int]:
+    usernames_to_ids: Dict[str, Optional[int]] = {u: None for u in usernames}
+    users = bindings.get_GetUsers(session).users or []
+    for user in users:
         if user.username in usernames_to_ids:
             usernames_to_ids[user.username] = user.id
 
@@ -148,6 +131,7 @@ def usernames_to_user_ids(args: Namespace, usernames: List[str]) -> List[int]:
             missing_users.append(username)
         else:
             user_ids.append(user_id)
+
     if missing_users:
         raise api.errors.BadRequestException(
             f"could not find users for usernames {', '.join(missing_users)}"
@@ -155,9 +139,9 @@ def usernames_to_user_ids(args: Namespace, usernames: List[str]) -> List[int]:
     return user_ids
 
 
-def group_name_to_group_id(args: Namespace, group_name: str) -> int:
+def group_name_to_group_id(session: session.Session, group_name: str) -> int:
     body = bindings.v1GroupSearchRequest(name=group_name)
-    resp = bindings.post_GetGroups(setup_session(args), body=body)
+    resp = bindings.post_GetGroups(session, body=body)
     groups = resp.groups
     if groups is None or len(groups) != 1 or groups[0].groupId is None:
         raise api.errors.BadRequestException(f"could not find user group name {group_name}")
