@@ -14,13 +14,9 @@ MAX_TRIAL_BUILD_SECS = 90
 
 
 DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-ecee7c1"
-DEFAULT_TF2_CPU_IMAGE = (
-    "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1"
-)
+DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1"
 DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-ecee7c1"
-DEFAULT_TF2_GPU_IMAGE = (
-    "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1"
-)
+DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1"
 
 TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
