@@ -68,10 +68,12 @@ const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
 
 type AntModalPromise = (...args: any[]) => any;
 
-const useModal = (config: {
-  onClose?: (reason?: ModalCloseReason) => void,
-  options?: ModalOptions,
-} = {}): ModalHooks => {
+interface ModalConfig {
+  onClose?: (reason?: ModalCloseReason) => void;
+  options?: ModalOptions;
+}
+
+function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   const modalRef = useRef<ReturnType<ModalFunc>>();
   const componentUnmounting = useRef(false);
   const [ modalProps, setModalProps ] = useState<ModalFuncProps>();
@@ -165,6 +167,6 @@ const useModal = (config: {
   }, [ internalClose ]);
 
   return { contextHolder, modalClose, modalOpen, modalRef };
-};
+}
 
 export default useModal;
