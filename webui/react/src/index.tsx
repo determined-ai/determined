@@ -1,5 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+/**
+ * It's considered unstable until `react-router-dom` can detect
+ * history version mismatches when supplying your own history.
+ * https://reactrouter.com/docs/en/v6/routers/history-router
+ */
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import history from 'shared/routes/history';

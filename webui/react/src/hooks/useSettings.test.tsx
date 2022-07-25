@@ -1,6 +1,11 @@
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import queryString from 'query-string';
 import React from 'react';
+/**
+ * It's considered unstable until `react-router-dom` can detect
+ * history version mismatches when supplying your own history.
+ * https://reactrouter.com/docs/en/v6/routers/history-router
+ */
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
