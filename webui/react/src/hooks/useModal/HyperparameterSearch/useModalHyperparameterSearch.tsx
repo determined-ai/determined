@@ -293,7 +293,7 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
           <Link
             external
             path={paths.
-              docs('training/hyperparameter/configure-hp-ranges')}>
+              docs('/training/hyperparameter/configure-hp-ranges')}>
             Learn more
           </Link>
         </div>
@@ -334,7 +334,8 @@ const useModalHyperparameterSearch = ({ experiment, trial: trialIn }: Props): Mo
               <Link
                 external
                 path={paths.
-                  docs('/training-hyperparameter/index.html#specifying-the-search-algorithm')}>
+                  docs('/training-hyperparameter/index.html#specifying-the-search-algorithm.html')}
+                popout>
                 Learn more
               </Link>
             </div>
