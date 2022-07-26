@@ -8909,6 +8909,12 @@ export interface V1ValidationCompleted {
      * @memberof V1ValidationCompleted
      */
     metric?: number;
+    /**
+     * length from ValidateAfterOperation.
+     * @type {string}
+     * @memberof V1ValidationCompleted
+     */
+    validateAfterLength?: string;
 }
 
 /**
