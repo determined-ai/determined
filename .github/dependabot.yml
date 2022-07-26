@@ -10,6 +10,8 @@ updates:
     open-pull-requests-limit: 10
     reviewers:
       - determined-ai/infrastructure
+    ignore:
+      - dependency-name: "*"
 
   # Maintain dependencies for leader Docker
   - package-ecosystem: docker
@@ -19,6 +21,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain dependencies for agent Docker
   - package-ecosystem: docker
@@ -28,6 +32,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain dependencies for leader Golang
   - package-ecosystem: gomod
@@ -37,6 +43,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain dependencies for agent Golang
   - package-ecosystem: gomod
@@ -46,6 +54,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain prod dependencies for WebUI
   - package-ecosystem: npm
@@ -56,10 +66,12 @@ updates:
       # Leave the dev dependencies alone
       - dependency-type: production
       # Allow updates for React and any packages starting with "react"
-      #   - dependency-name: "react*"
+      #   - - dependency-name: "react*"
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain dev verion dependencies for WebUI monthly
   - package-ecosystem: npm
@@ -76,6 +88,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for main product
   - package-ecosystem: pip
@@ -85,6 +99,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for examples
   - package-ecosystem: pip
@@ -94,6 +110,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for Model Hub
   - package-ecosystem: pip
@@ -103,6 +121,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for docs
   - package-ecosystem: pip
@@ -112,6 +132,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for end-to-end tests
   - package-ecosystem: pip
@@ -121,6 +143,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for harness tests
   - package-ecosystem: pip
@@ -130,6 +154,8 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
 
   # Maintain python dependencies for harness tests
   - package-ecosystem: pip
@@ -139,3 +165,5 @@ updates:
     # reviewers:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
