@@ -24,7 +24,7 @@ class Counter(pytorch.PyTorchCallback):
     def on_validation_end(self, metrics: Dict[str, Any]) -> None:
         self.validation_steps_ended += 1
 
-    def on_checkpoint_end(self, checkpoint_dir: str):
+    def on_checkpoint_write_end(self, checkpoint_dir: str):
         self.checkpoints_ended += 1
 
     def on_checkpoint_upload_end(self, uuid: str) -> None:

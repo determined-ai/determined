@@ -39,6 +39,11 @@ class PyTorchTrialController(det.TrialController):
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
+        for callback in self.callbacks.values():
+            if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
+                logging.warning(
+                    "on_checkpoint_end is deprecated, please use on_checkpoint_write_end instead"
+                )
 
         check.gt_eq(
             len(self.context.models),
@@ -834,6 +839,7 @@ class PyTorchTrialController(det.TrialController):
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_end(str(path))
+            callback.on_checkpoint_write_end(str(path))
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
