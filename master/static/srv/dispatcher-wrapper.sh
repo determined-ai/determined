@@ -17,8 +17,8 @@
 #
 # This is additionally a place for all common behavior specific to SLURM/Singularity
 # which addresses:
-#    - DET_SLOT_IDS inheritied from SLURM-provided CUDA_VISIBLE_DEVICES
-#    - DET_UNIQUE_PORT_OFFSET inherited from SLURM-provided least(CUDA_VISIBLE_DEVICES)
+#    - DET_SLOT_IDS inherited from SLURM-provided CUDA_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES
+#    - DET_UNIQUE_PORT_OFFSET inherited from SLURM-provided least(CUDA_VISIBLE_DEVICES/ROCR_VISIBLE_DEVICES)
 
 # Fail on unexpected non-zero exit statuses.
 set -e
@@ -60,6 +60,24 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                 fi
             else
                 # If CUDA_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
+                # Determined agents deployment would, which should indicate to Determined to just use the
+                # CPU.
+                export DET_SLOT_IDS="[0]"
+            fi
+            ;;
+
+        "rocm")
+            export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
+            export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
+            export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
+
+            if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
+                # Test if "rocm-smi" exists in the PATH before trying to invoking it.
+                if [ ! type rocm-smi > /dev/null 2>&1 ]; then
+                    echo "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
+                fi
+            else
+                # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
                 # Determined agents deployment would, which should indicate to Determined to just use the
                 # CPU.
                 export DET_SLOT_IDS="[0]"
