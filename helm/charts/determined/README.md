@@ -10,7 +10,7 @@ The CoreWeave app allows for selection of a default region and hardware type for
 
 Watch our demo of installing and using Determined on CoreWeave Cloud:
 
-[![Watch our demo on installing and using Determined on CoreWeave Cloud](./coreweave-determinedvidprev-small.png)](https://www.youtube.com/watch?v=JBZOWrVJMZU)
+[![Watch our demo on installing and using Determined on CoreWeave Cloud](https://github.com/coreweave/coreweave_determined/raw/coreweave/helm/charts/determined/coreweave-determinedvidprev-small.png)](https://www.youtube.com/watch?v=JBZOWrVJMZU)
 
 ## Pre-Requisites
 
