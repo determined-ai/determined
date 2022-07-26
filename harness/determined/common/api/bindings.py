@@ -8051,21 +8051,25 @@ class v1ValidationCompleted:
         *,
         metric: "typing.Optional[float]" = None,
         requestId: "typing.Optional[str]" = None,
+        validateAfterLength: "typing.Optional[str]" = None,
     ):
         self.requestId = requestId
         self.metric = metric
+        self.validateAfterLength = validateAfterLength
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         return cls(
             requestId=obj.get("requestId", None),
             metric=float(obj["metric"]) if obj.get("metric", None) is not None else None,
+            validateAfterLength=obj.get("validateAfterLength", None),
         )
 
     def to_json(self) -> typing.Any:
         return {
             "requestId": self.requestId if self.requestId is not None else None,
             "metric": dump_float(self.metric) if self.metric is not None else None,
+            "validateAfterLength": self.validateAfterLength if self.validateAfterLength is not None else None,
         }
 
 class v1ValidationHistoryEntry:
