@@ -120,10 +120,6 @@ class MetricMaker(det.TrialController):
             ) as load_path:
                 self.load(pathlib.Path(load_path))
 
-    @classmethod
-    def supports_average_training_metrics(cls: Type["MetricMaker"]) -> bool:
-        return False
-
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
         return MetricMaker(*args, **kwargs)

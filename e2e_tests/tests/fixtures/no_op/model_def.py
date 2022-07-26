@@ -100,10 +100,6 @@ class NoOpTrialController(det.TrialController):
         else:
             self.trained_steps = collections.Counter()
 
-    @classmethod
-    def supports_average_training_metrics(cls: Type["NoOpTrialController"]) -> bool:
-        return False
-
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
         return NoOpTrialController(*args, **kwargs)

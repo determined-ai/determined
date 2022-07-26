@@ -432,12 +432,6 @@ class EstimatorTrialController(det.TrialController):
         self._init_model()
 
     @classmethod
-    def supports_average_training_metrics(cls: Type["EstimatorTrialController"]) -> bool:
-        # Return True with a warning in order to pass tests.
-        warnings.warn("EstimatorTrialController does not support average_training_metrics = True")
-        return True
-
-    @classmethod
     def pre_execute_hook(
         cls: Type["EstimatorTrialController"],
         env: det.EnvContext,
