@@ -86,8 +86,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			}
 
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
-			if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled { // configure where you set the values for this.
-				opentelemetry.ConfigureOtel(a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
+			if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled {
+				opentelemetry.ConfigureOtel(
+					a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
 			}
 			return a.setup(ctx)
 		case msg.StartContainer != nil:
