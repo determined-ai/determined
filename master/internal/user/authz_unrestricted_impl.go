@@ -15,6 +15,27 @@ func (a *UserAuthZUnrestricted) CanSetUserPassword(
 	return nil
 }
 
+// CanSetUserActive for unresticted authz.
+func (a *UserAuthZUnrestricted) CanSetUserActive(
+	currentUser model.User, targetUser model.User,
+) error {
+	return nil
+}
+
+// CanSetUserAdmin for unresticted authz.
+func (a *UserAuthZUnrestricted) CanSetUserAdmin(
+	currentUser model.User, targetUser model.User,
+) error {
+	return nil
+}
+
+// CanSetUserAgentGroup for unresticted authz.
+func (a *UserAuthZUnrestricted) CanSetUserAgentGroup(
+	currentUser model.User, targetUser model.User,
+) error {
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("unrestricted", &UserAuthZUnrestricted{})
 }

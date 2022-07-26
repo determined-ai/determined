@@ -241,6 +241,43 @@ func (a *apiServer) PatchUser(
 		}
 	}
 
+	targetUser := &model.User{ID: model.UserID(req.UserId)}
+	var toUpdate []string
+	if req.User.Active != nil {
+		if err = user.AuthZProvider.Get().CanSetUserActive(*curUser, *targetUser); err != nil {
+			return nil, grpcutil.ErrPermissionDenied
+		}
+		targetUser.Active = req.User.Active.Value
+		toUpdate = append(toUpdate, "active")
+	}
+
+	if req.User.Admin != nil {
+		if err = user.AuthZProvider.Get().CanSetUserAdmin(*curUser, *targetUser); err != nil {
+			return nil, grpcutil.ErrPermissionDenied
+		}
+		targetUser.Admin = req.User.Admin.Value
+		toUpdate = append(toUpdate, "admin")
+	}
+
+	var ug *model.AgentUserGroup
+	if pug := req.User.AgentUserGroup; pug != nil {
+		if err = user.AuthZProvider.Get().CanSetUserAgentGroup(*curUser, *targetUser); err != nil {
+			return nil, grpcutil.ErrPermissionDenied
+		}
+
+		ug = &model.AgentUserGroup{
+			UID: int(req.User.AgentUserGroup.AgentUid),
+			GID: int(req.User.AgentUserGroup.AgentGid),
+		}
+	}
+
+	switch err = a.m.db.UpdateUser(targetUser, toUpdate, ug); {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
+		return nil, err
+	}
+
 	fullUser, err := getUser(a.m.db, uid)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
