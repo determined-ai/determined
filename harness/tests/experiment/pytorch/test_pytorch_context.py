@@ -49,10 +49,9 @@ class TestPyTorchContext:
 
     def test_wrap_scaler(self) -> None:
         if torch.cuda.is_available():
-            scaler = torch.cuda.amp.GradScaler()
+            scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
             assert scaler == self.context.wrap_scaler(scaler)
             assert scaler == self.context._scaler
         else:
-            scaler = None
             with pytest.raises(check.CheckFailedError):
-                self.context.wrap_scaler(scaler)
+                self.context.wrap_scaler(None)
