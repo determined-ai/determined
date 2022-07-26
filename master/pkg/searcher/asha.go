@@ -27,7 +27,6 @@ type (
 	}
 
 	asyncHalvingSearch struct {
-		defaultSearchMethod
 		expconf.AsyncHalvingConfig
 		SmallerIsBetter bool
 		asyncHalvingSearchState
@@ -175,7 +174,7 @@ func (s *asyncHalvingSearch) trialClosed(
 }
 
 func (s *asyncHalvingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
 	s.PendingTrials--
 	if !s.SmallerIsBetter {
