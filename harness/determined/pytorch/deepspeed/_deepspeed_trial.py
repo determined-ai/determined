@@ -332,7 +332,7 @@ class DeepSpeedTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
-                    uuid = ""
+                    storage_id = ""
                     # The checkpointing api would have been sufficient if the base_path for the
                     # storage manager is guaranteed to be a shared file system.
                     #
@@ -352,7 +352,6 @@ class DeepSpeedTrialController(det.TrialController):
                             # Broadcast checkpoint path to all ranks.
                             self.context.distributed.broadcast((storage_id, path))
                             self._save(path)
-                            uuid = storage_id
                             # If the storage manager is a sharedfs, then the checkpoint directory
                             # will already contain all the files.  Otherwise, checkpoint files are
                             # saved to a local directory before being uploaded to cloud storage so
@@ -373,7 +372,6 @@ class DeepSpeedTrialController(det.TrialController):
                     else:
                         storage_id, path = self.context.distributed.broadcast(None)
                         self._save(path)
-                        uuid = storage_id
                         if not isinstance(storage_manager, storage.SharedFSStorageManager):
                             # Gather resources across nodes.
                             if self.context.distributed.local_rank == 0:
@@ -384,9 +382,9 @@ class DeepSpeedTrialController(det.TrialController):
                         if self.context.distributed.local_rank == 0:
                             storage_manager.post_store_path(str(path), storage_id)
                         response = {}
-                    uuid = self.context.distributed.broadcast(uuid)
+                    storage_id = self.context.distributed.broadcast(storage_id)
                     for callback in self.callbacks.values():
-                        callback.on_checkpoint_upload_end(uuid=uuid)
+                        callback.on_checkpoint_upload_end(uuid=storage_id)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
