@@ -2083,7 +2083,7 @@ jobs:
       - pull-task-images:
           tf1: True
 
-      - run-stress-test:
+      - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
