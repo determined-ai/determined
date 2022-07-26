@@ -19,7 +19,6 @@ import (
 // The searcher state and config match that of AsyncHalvingSearch but we will only run
 // the stopping based version if StopOnce is true.
 type asyncHalvingStoppingSearch struct {
-	defaultSearchMethod
 	expconf.AsyncHalvingConfig
 	SmallerIsBetter bool
 	asyncHalvingSearchState
@@ -137,7 +136,7 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
 	if !s.SmallerIsBetter {
 		metric *= -1
