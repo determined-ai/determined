@@ -2,7 +2,7 @@
 
 **Improvements**
 
-- API: new ``on_training_workload_end`` and ``on_checkpoint_upload_end`` callbacks available for
-  ``PyTorchTrial``.
-- API: ``PyTorchTrial`` callback ```on_checkpoint_end`` deprecated in favor of
-  ``on_checkpoint_write_end``, re-named for clarity.
+-  API: new ``on_training_workload_end`` and ``on_checkpoint_upload_end`` callbacks available for
+   ``PyTorchTrial``.
+-  API: ``PyTorchTrial`` callback ```on_checkpoint_end`` deprecated in favor of
+   ``on_checkpoint_write_end``, re-named for clarity.

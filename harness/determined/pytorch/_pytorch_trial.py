@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from abc import abstractmethod
 from inspect import signature
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
@@ -41,9 +42,10 @@ class PyTorchTrialController(det.TrialController):
         self.callbacks = self.trial.build_callbacks()
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
-                logging.warning(
+                warnings.warn(
                     "The on_checkpoint_end callback is deprecated, please use on"
-                    "checkpoint_write_end instead"
+                    "checkpoint_write_end instead",
+                    FutureWarning,
                 )
 
         check.gt_eq(
