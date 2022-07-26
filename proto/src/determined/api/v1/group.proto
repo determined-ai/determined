@@ -61,11 +61,17 @@ message GroupWriteResponse {
 }
 
 message CreateGroupRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["name"] }
+    };
     string name = 1;
     repeated int32 add_users = 2;
 } // returns GroupWriteResponse
 
 message DeleteGroupRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["group_id"] }
+    };
     int32 group_id = 1;
 }
 

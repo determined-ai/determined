@@ -70,10 +70,10 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("add users to group", func(t *testing.T) {
-		err := AddUsersToGroup(ctx, nil, testGroup.ID, testUser.ID)
+		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to add users to group")
 
-		users, err := UsersInGroup(ctx, nil, testGroup.ID)
+		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
 		require.Len(t, users, 1, "failed to return only the set of users in the group")
 
@@ -97,7 +97,7 @@ func TestUserGroups(t *testing.T) {
 		err = RemoveUsersFromGroup(ctx, testGroup.ID, testUser.ID, -500)
 		require.NoError(t, err, "erroneously returned error when trying to remove a mix of users in a group and not")
 
-		users, err := UsersInGroup(ctx, nil, testGroup.ID)
+		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to look for users in group")
 
 		i := usersContain(users, testUser.ID)
@@ -108,10 +108,10 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound", func(t *testing.T) {
-		err := AddUsersToGroup(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
+		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
 		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
 
-		users, err := UsersInGroup(ctx, nil, testGroup.ID)
+		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
 
 		index := usersContain(users, testUser.ID)
@@ -119,7 +119,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("AddUsersToGroup fails with ErrNotFound when attempting to add users to a non-existent group", func(t *testing.T) {
-		err := AddUsersToGroup(ctx, nil, -500, testUser.ID)
+		err := AddUsersToGroupTx(ctx, nil, -500, testUser.ID)
 		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when trying to add users to a non-existent group")
 	})
 
@@ -136,7 +136,7 @@ func TestUserGroups(t *testing.T) {
 		_, _, err := AddGroupWithMembers(ctx, tmpGroup)
 		require.NoError(t, err, "failed to create group")
 
-		err = AddUsersToGroup(ctx, nil, tmpGroup.ID, testUser.ID)
+		err = AddUsersToGroupTx(ctx, nil, tmpGroup.ID, testUser.ID)
 		require.NoError(t, err, "failed to add user to group")
 
 		err = DeleteGroup(ctx, tmpGroup.ID)
@@ -152,7 +152,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a group they're already in", func(t *testing.T) {
-		err := AddUsersToGroup(ctx, nil, testGroupStatic.ID, testUser.ID)
+		err := AddUsersToGroupTx(ctx, nil, testGroupStatic.ID, testUser.ID)
 		require.Equal(t, db.ErrDuplicateRecord, err, "should have returned ErrDuplicateRecord")
 	})
 
@@ -160,7 +160,7 @@ func TestUserGroups(t *testing.T) {
 		_, err := GroupByID(ctx, testGroupStatic.ID)
 		require.NoError(t, err, "errored while getting static test group")
 
-		users, err := UsersInGroup(ctx, nil, testGroupStatic.ID)
+		users, err := UsersInGroupTx(ctx, nil, testGroupStatic.ID)
 		require.NoError(t, err, "failed to search for users that belong to static group")
 
 		index := usersContain(users, testUser.ID)

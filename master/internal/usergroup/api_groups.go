@@ -3,6 +3,7 @@ package usergroup
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,6 +49,10 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		err = mapAndFilterErrors(err)
 	}()
 
+	if req.Limit > maxLimit || req.Limit == 0 {
+		return nil, errInvalidLimit
+	}
+
 	groups, count, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
 		int(req.Limit))
 	if err != nil {
@@ -79,7 +84,7 @@ func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 		return nil, err
 	}
 
-	users, err := UsersInGroup(ctx, nil, gid)
+	users, err := UsersInGroupTx(ctx, nil, gid)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +131,7 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		for _, id := range req.AddUsers {
 			users = append(users, model.UserID(id))
 		}
-		err = AddUsersToGroup(ctx, nil, int(req.GroupId), users...)
+		err = AddUsersToGroupTx(ctx, nil, int(req.GroupId), users...)
 		if err != nil {
 			return nil, err
 		}
@@ -143,7 +148,7 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		}
 	}
 
-	users, err := UsersInGroup(ctx, nil, int(req.GroupId))
+	users, err := UsersInGroupTx(ctx, nil, int(req.GroupId))
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +188,13 @@ func intsToUserIDs(ints []int32) []model.UserID {
 	return ids
 }
 
+const (
+	maxLimit = 500
+)
+
 var (
 	errBadRequest      = status.Error(codes.InvalidArgument, "Bad request")
+	errInvalidLimit    = status.Errorf(codes.InvalidArgument, "Bad request: limit is required and must be <= %d", maxLimit)
 	errNotFound        = status.Error(codes.NotFound, "Not found")
 	errDuplicateRecord = status.Error(codes.AlreadyExists, "Duplicate record")
 	errInternal        = status.Error(codes.Internal, "Internal server error")
@@ -208,6 +218,8 @@ func mapAndFilterErrors(err error) error {
 	case db.ErrDuplicateRecord:
 		return errDuplicateRecord
 	}
+
+	logrus.WithError(err).Debug("suppressing error at API boundary")
 
 	return errInternal
 }

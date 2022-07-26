@@ -49,12 +49,12 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 		return Group{}, nil, err
 	}
 
-	err = AddUsersToGroup(ctx, tx, group.ID, uids...)
+	err = AddUsersToGroupTx(ctx, tx, group.ID, uids...)
 	if err != nil {
 		return Group{}, nil, err
 	}
 
-	users, err := UsersInGroup(ctx, tx, group.ID)
+	users, err := UsersInGroupTx(ctx, tx, group.ID)
 	if err != nil {
 		return Group{}, nil, err
 	}
@@ -129,11 +129,11 @@ func UpdateGroup(ctx context.Context, group Group) error {
 	return matchSentinelError(mustHaveAffectedRows(res, err))
 }
 
-// AddUsersToGroup adds users to a group by creating GroupMembership rows.
+// AddUsersToGroupTx adds users to a group by creating GroupMembership rows.
 // Returns ErrNotFound if the group isn't found or ErrDuplicateRow if one
 // of the users is already in the group. Will use db.Bun() if passed nil
 // for idb.
-func AddUsersToGroup(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
+func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -177,10 +177,10 @@ func RemoveUsersFromGroup(ctx context.Context, gid int, uids ...model.UserID) er
 	return nil
 }
 
-// UsersInGroup searches for users that belong to a group and returns them.
+// UsersInGroupTx searches for users that belong to a group and returns them.
 // Does not return ErrNotFound if none are found, as that is considered a
 // successful search. Will use db.Bun() if passed nil for idb.
-func UsersInGroup(ctx context.Context, idb bun.IDB, gid int) ([]model.User, error) {
+func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
