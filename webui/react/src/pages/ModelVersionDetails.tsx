@@ -26,7 +26,7 @@ import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 const { TabPane } = Tabs;
 
 interface Params {
-  modelName: string;
+  modelId: string;
   tab?: TabType;
   versionId: string;
 }
@@ -41,17 +41,17 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 
 const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
-  const { modelName, versionId, tab } = useParams<Params>();
+  const { modelId, versionId, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
   const history = useHistory();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
-  const basePath = paths.modelVersionDetails(modelName, versionId);
+  const basePath = paths.modelVersionDetails(modelId, versionId);
 
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion(
-        { modelName, versionId: parseInt(versionId) },
+        { modelName: modelId, versionId: parseInt(versionId) },
       );
       /**
        * TODO: can this compare againt prev instead of modelVersion, so that
@@ -62,7 +62,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [ modelName, modelVersion, pageError, versionId ]);
+  }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
 
@@ -81,8 +81,8 @@ const ModelVersionDetails: React.FC = () => {
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
       await patchModelVersion({
-        body: { metadata: editedMetadata, modelName },
-        modelName,
+        body: { metadata: editedMetadata, modelName: modelId },
+        modelName: modelId,
         versionId: parseInt(versionId),
       });
       await fetchModelVersion();
@@ -93,13 +93,13 @@ const ModelVersionDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ fetchModelVersion, modelName, versionId ]);
+  }, [ fetchModelVersion, modelId, versionId ]);
 
   const saveNotes = useCallback(async (editedNotes: string) => {
     try {
       const versionResponse = await patchModelVersion({
-        body: { modelName, notes: editedNotes },
-        modelName,
+        body: { modelName: modelId, notes: editedNotes },
+        modelName: modelId,
         versionId: parseInt(versionId),
       });
       setModelVersion(versionResponse);
@@ -110,13 +110,13 @@ const ModelVersionDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName, versionId ]);
+  }, [ modelId, versionId ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
     try {
       await patchModelVersion({
-        body: { comment: editedDescription, modelName },
-        modelName,
+        body: { comment: editedDescription, modelName: modelId },
+        modelName: modelId,
         versionId: parseInt(versionId),
       });
     } catch (e) {
@@ -126,13 +126,13 @@ const ModelVersionDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName, versionId ]);
+  }, [ modelId, versionId ]);
 
   const saveName = useCallback(async (editedName: string) => {
     try {
       await patchModelVersion({
-        body: { modelName, name: editedName },
-        modelName,
+        body: { modelName: modelId, name: editedName },
+        modelName: modelId,
         versionId: parseInt(versionId),
       });
     } catch (e) {
@@ -142,13 +142,13 @@ const ModelVersionDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName, versionId ]);
+  }, [ modelId, versionId ]);
 
   const saveVersionTags = useCallback(async (newTags) => {
     try {
       await patchModelVersion({
-        body: { labels: newTags, modelName },
-        modelName,
+        body: { labels: newTags, modelName: modelId },
+        modelName: modelId,
         versionId: parseInt(versionId),
       });
       fetchModelVersion();
@@ -159,7 +159,7 @@ const ModelVersionDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ fetchModelVersion, modelName, versionId ]);
+  }, [ fetchModelVersion, modelId, versionId ]);
 
   const deleteVersion = useCallback(() => {
     deleteModelVersion({
@@ -239,17 +239,17 @@ const ModelVersionDetails: React.FC = () => {
     }));
   }, [ modelVersion?.checkpoint ]);
 
-  if (!modelName) {
+  if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (isNaN(parseInt(versionId))) {
     return <Message title={`Invalid Version ID ${versionId}`} />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?
-      `Unable to find model ${modelName} version ${versionId}` :
-      `Unable to fetch model ${modelName} version ${versionId}`;
+      `Unable to find model ${modelId} version ${versionId}` :
+      `Unable to fetch model ${modelId} version ${versionId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion) {
-    return <Spinner tip={`Loading model ${modelName} version ${versionId} details...`} />;
+    return <Spinner tip={`Loading model ${modelId} version ${versionId} details...`} />;
   }
 
   return (
