@@ -1105,7 +1105,7 @@ experiment.
    For multi-GPU training, whether to average the training metrics across GPUs instead of only using
    metrics from the chief GPU. This impacts the metrics shown in the Determined UI and TensorBoard,
    but does not impact the outcome of training or hyperparameter search. This option is currently
-   only supported in PyTorch. Defaults to ``false``.
+   only supported in PyTorch. Defaults to ``true``.
 
 ``gradient_compression``
    Whether to compress gradients when they are exchanged during :ref:`multi-gpu-training`.
