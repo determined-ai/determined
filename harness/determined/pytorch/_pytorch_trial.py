@@ -839,6 +839,7 @@ class PyTorchTrialController(det.TrialController):
             )
 
         for callback in self.callbacks.values():
+            # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
             callback.on_checkpoint_end(str(path))
             callback.on_checkpoint_write_end(str(path))
 

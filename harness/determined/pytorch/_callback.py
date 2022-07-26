@@ -94,6 +94,7 @@ class PyTorchCallback:
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.
         """
+        # TODO(DET-7912): remove this once it has been deprecated long enough.
         pass
 
     def on_checkpoint_write_end(self, checkpoint_dir: str) -> None:
