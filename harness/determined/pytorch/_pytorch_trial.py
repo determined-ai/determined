@@ -298,7 +298,6 @@ class PyTorchTrialController(det.TrialController):
                             avg_metrics=metrics["avg_metrics"],
                             batch_metrics=metrics["batch_metrics"],
                         )
-
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
