@@ -298,14 +298,6 @@ class PyTorchTrialController(det.TrialController):
                             avg_metrics=metrics["avg_metrics"],
                             batch_metrics=metrics["batch_metrics"],
                         )
-                        if (
-                            self.context.distributed.size > 1
-                            and not self.context._average_training_metrics
-                        ):
-                            logging.warning(
-                                "Only the chief worker's training metrics are being reported, due "
-                                "to setting average_training_metrics to False."
-                            )
 
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
