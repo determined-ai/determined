@@ -165,27 +165,6 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 	return nil
 }
 
-// RemoveUserFromGroup removes a single user from a group.
-func RemoveUserFromGroup(ctx context.Context, idb bun.IDB, gid int, uid model.UserID) error {
-	if idb == nil {
-		idb = db.Bun()
-	}
-
-	res, err := idb.NewDelete().Table("user_group_membership").Where("group_id = ?", gid).
-		Where("user_id = ?", uid).Exec(ctx)
-	if err != nil {
-		return matchSentinelError(err)
-	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return matchSentinelError(err)
-	}
-	if affected != 1 {
-		return db.ErrNotFound
-	}
-	return nil
-}
-
 // RemoveUsersFromGroup removes users from a group. Removes nothing and
 // returns ErrNotFound if the group or one of the users' membership rows
 // aren't found.
@@ -258,12 +237,6 @@ func UpdateGroupAndMembers(
 			return nil, "", err
 		}
 	}
-	//else if len(removeUsers) == 1 {
-	//	err = RemoveUserFromGroup(ctx, tx, gid, removeUsers[0])
-	//	if err != nil {
-	//		return nil, "", err
-	//	}
-	//}
 
 	users, err := UsersInGroupTx(ctx, tx, gid)
 	if err != nil {

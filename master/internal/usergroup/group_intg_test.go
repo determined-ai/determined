@@ -249,14 +249,12 @@ func TestUserGroups(t *testing.T) {
 		require.NotEqual(t, -1, index, "group users not updated properly")
 
 		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil, []model.UserID{-500})
-		// this test should pass, but only passing -500 should fail, and only passing correct users should succeed. Also test adding an invalid user.
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err := GroupByID(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
 		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
 
 		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", []model.UserID{-500}, nil)
-		// this test should pass, but only passing -500 should fail, and only passing correct users should succeed. Also test adding an invalid user.
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err = GroupByID(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
