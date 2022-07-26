@@ -222,7 +222,7 @@ func UpdateGroupAndMembers(
 	}
 	defer func() {
 		err := tx.Rollback()
-		if err != nil {
+		if err != nil && err != sql.ErrTxDone {
 			logrus.WithError(err).Error("error rolling back transaction in UpdateGroupAndMembers")
 		}
 	}()
@@ -252,17 +252,18 @@ func UpdateGroupAndMembers(
 		}
 	}
 
-	if len(removeUsers) >= 2 {
+	if len(removeUsers) > 0 {
 		err = RemoveUsersFromGroup(ctx, tx, gid, removeUsers...)
 		if err != nil {
 			return nil, "", err
 		}
-	} else if len(removeUsers) == 1 {
-		err = RemoveUserFromGroup(ctx, tx, gid, removeUsers[0])
-		if err != nil {
-			return nil, "", err
-		}
 	}
+	//else if len(removeUsers) == 1 {
+	//	err = RemoveUserFromGroup(ctx, tx, gid, removeUsers[0])
+	//	if err != nil {
+	//		return nil, "", err
+	//	}
+	//}
 
 	users, err := UsersInGroupTx(ctx, tx, gid)
 	if err != nil {
