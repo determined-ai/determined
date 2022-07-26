@@ -1,18 +1,24 @@
 .base {
-  padding: 16px;
+  margin: 0 auto;
+  max-width: $breakpoint-mobile;
+  padding: 32px 16px;
+  width: 100%;
 
-  .field {
+  .avatar {
+    align-items: center;
     display: flex;
     flex-direction: column;
-
-    .body {
-      color: var(--theme-colors-monochrome-8);
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .header {
-      margin-bottom: 8px;
-    }
+  }
+  .row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+  label {
+    color: var(--theme-surface-on-weak);
+  }
+  .info {
+    color: var(--theme-surface-on);
+    padding: 0 8px;
   }
 }

@@ -1,19 +1,24 @@
-import { Button, Divider } from 'antd';
+import { Button, Divider, message } from 'antd';
 import React, { useCallback } from 'react';
 
+import InlineEditor from 'components/InlineEditor';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
-import useModalNameChange from 'hooks/useModal/UserSettings/useModalNameChange';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
+import { patchUser } from 'services/api';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 import css from './SettingsAccount.module.scss';
 
+export const CHANGE_PASSWORD_TEXT = 'Change Password';
+export const API_SUCCESS_MESSAGE = 'Display name updated.';
+export const API_ERROR_MESSAGE = 'Could not update display name.';
+
 const SettingsAccount: React.FC = () => {
   const { auth } = useStore();
-  const {
-    contextHolder: modalNameChangeContextHolder,
-    modalOpen: openChangeDisplayNameModal,
-  } = useModalNameChange();
+  const storeDispatch = useStoreDispatch();
+
   const {
     contextHolder: modalPasswordChangeContextHolder,
     modalOpen: openChangePasswordModal,
@@ -23,43 +28,44 @@ const SettingsAccount: React.FC = () => {
     openChangePasswordModal();
   }, [ openChangePasswordModal ]);
 
-  const handleDisplayNameClick = useCallback(() => {
-    openChangeDisplayNameModal();
-  }, [ openChangeDisplayNameModal ]);
+  const handleSave = useCallback(async (newValue: string) => {
+    try {
+      const user = await patchUser({
+        userId: auth.user?.id || 0,
+        userParams: { displayName: newValue },
+      });
+      storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+      message.success(API_SUCCESS_MESSAGE);
+    } catch (e) {
+      message.error(API_ERROR_MESSAGE);
+      handleError(e, { silent: true, type: ErrorType.Input });
+    }
+  }, [ auth.user, storeDispatch ]);
 
   return (
     <div className={css.base}>
-      <div className={css.field}>
-        <span className={css.header}>Avatar</span>
-        <span className={css.body}>
-          <Avatar hideTooltip large userId={auth.user?.id} />
-        </span>
-        <Divider />
+      <div className={css.avatar}>
+        <Avatar hideTooltip large userId={auth.user?.id} />
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Display name</span>
-        <span className={css.body}>
-          <span>{auth.user?.displayName}</span>
-          <Button onClick={handleDisplayNameClick}>
-            Change name
-          </Button>
-        </span>
-        <Divider />
+      <Divider />
+      <div className={css.row}>
+        <label>Username</label>
+        <div className={css.info}>{auth.user?.username}</div>
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Username</span>
-        <span className={css.body}>{auth.user?.username}</span>
-        <Divider />
+      <Divider />
+      <div className={css.row}>
+        <label>Display Name</label>
+        <InlineEditor
+          placeholder="Add display name"
+          value={auth.user?.displayName || ''}
+          onSave={handleSave}
+        />
       </div>
-      <div className={css.field}>
-        <span className={css.header}>Password</span>
-        <span className={css.body}>
-          <Button onClick={handlePasswordClick}>
-            Change password
-          </Button>
-        </span>
+      <Divider />
+      <div className={css.row}>
+        <label>Password</label>
+        <Button onClick={handlePasswordClick}>{CHANGE_PASSWORD_TEXT}</Button>
       </div>
-      {modalNameChangeContextHolder}
       {modalPasswordChangeContextHolder}
     </div>
   );
