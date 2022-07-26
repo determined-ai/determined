@@ -98,10 +98,6 @@ class DeepSpeedTrialController(det.TrialController):
     ) -> det.TrialController:
         return cls(*args, **kwargs)
 
-    @classmethod
-    def supports_average_training_metrics(cls: Type["DeepSpeedTrialController"]) -> bool:
-        return True
-
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.steps_completed
 

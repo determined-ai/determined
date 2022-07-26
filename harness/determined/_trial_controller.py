@@ -106,7 +106,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
     @classmethod
     def supports_average_training_metrics(cls: Type["TrialController"]) -> bool:
-        return False
+        return True
 
     @classmethod
     @abc.abstractmethod

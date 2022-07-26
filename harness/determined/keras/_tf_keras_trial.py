@@ -164,10 +164,6 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 class TFKerasTrialController(det.TrialController):
     @classmethod
-    def supports_average_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
-        return True
-
-    @classmethod
     def create_metric_writer(
         cls: Type["TFKerasTrialController"],
     ) -> tensorboard.BatchMetricWriter:

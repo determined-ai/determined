@@ -119,10 +119,6 @@ class PyTorchTrialController(det.TrialController):
     def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
-    @classmethod
-    def supports_average_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
-        return True
-
     def _check_evaluate_implementation(self) -> None:
         """
         Check if the user has implemented evaluate_batch

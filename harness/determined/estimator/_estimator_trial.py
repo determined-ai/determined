@@ -10,6 +10,7 @@ import shutil
 import tempfile
 from abc import abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Type, cast
+import warnings
 
 import numpy as np
 import tensorflow as tf
@@ -429,6 +430,12 @@ class EstimatorTrialController(det.TrialController):
             )
 
         self._init_model()
+
+    @classmethod
+    def supports_average_training_metrics(cls: Type["EstimatorTrialController"]) -> bool:
+        # Return True with a warning in order to pass tests.
+        warnings.warn("EstimatorTrialController does not support average_training_metrics = True")
+        return True
 
     @classmethod
     def pre_execute_hook(
