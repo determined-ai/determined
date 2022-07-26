@@ -17,6 +17,11 @@ func (a *UserAuthZBasic) CanSetUserPassword(currentUser model.User, targetUser m
 	return nil
 }
 
+// CanGetMe for basic authz.
+func (a *UserAuthZBasic) CanGetMe(currentUser model.User) error {
+	return nil
+}
+
 func init() {
-	AuthZProvider.Register("basic", &UserAuthZBasic{})
+	// AuthZProvider.Register("basic", &UserAuthZBasic{})
 }

@@ -185,7 +185,7 @@ func (a *apiServer) SetUserPassword(
 		return nil, err
 	}
 	targetUser := &model.User{ID: model.UserID(req.UserId)}
-	if err = user.AuthZProvider.Get().CanSetUserPassword(*curUser, *targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, *targetUser); err != nil {
 		return nil, grpcutil.ErrPermissionDenied
 	}
 

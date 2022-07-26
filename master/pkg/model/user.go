@@ -86,6 +86,7 @@ func (user User) PasswordCanBeModifiedBy(other User) bool {
 	return false
 }
 
+// TODO delete this.
 // CanCreateUser checks whether the calling user
 // has the authority to create other users.
 func (user User) CanCreateUser() bool {
