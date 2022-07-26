@@ -9,13 +9,11 @@ from tests.experiment.fixtures import pytorch_onevar_model
 class TestPyTorchContext:
     def setup_method(self) -> None:
         self.config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
-        self.context: pytorch.PyTorchTrialContext = pytorch.PyTorchTrialContext.from_config(
-            self.config
-        )
+        context = pytorch.PyTorchTrialContext.from_config(self.config)
+        assert isinstance(context, pytorch.PyTorchTrialContext)
+        self.context = context
 
     def test_from_config(self) -> None:
-        assert isinstance(self.context, pytorch.PyTorchTrialContext)
-
         trial = pytorch_onevar_model.OneVarTrial(self.context)
 
         train_ds = trial.build_training_data_loader()
