@@ -4,6 +4,8 @@ description: An open source deep learning training platform with support for dis
 version: "0.18.43"
 icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
 home: https://www.determined.ai/
+annotations:
+  category: MachineLearning
 
 # appVersion controls the version Determined that is deployed. If using a
 # a non-release version (e.g., X.Y.Z.dev0) you will have to specify an
