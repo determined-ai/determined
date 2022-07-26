@@ -193,9 +193,8 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
     The experiment configuration is modified such that:
     1. Only train one batch.
-    2. Only use one slot.
-    3. The experiment does not attempt restarts on failure.
-    4. All checkpoints are GC'd after experiment finishes.
+    2. The experiment does not attempt restarts on failure.
+    3. All checkpoints are GC'd after experiment finishes.
     """
     config_test = config.copy()
     config_test.update(
@@ -216,12 +215,15 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 "metric": config_test["searcher"]["metric"],
                 "max_length": {"batches": 1},
             },
-            "hyperparameters": generate_random_hparam_values(config.get("hyperparameters", {})),
-            "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
+            "hyperparameters": generate_random_hparam_values(
+                config_test.get("hyperparameters", {})
+            ),
+            "resources": config_test.get("resources", {"slots_per_trial": 1}),
             "max_restarts": 0,
         }
     )
-    config.setdefault(
+
+    config_test.setdefault(
         "data_layer", {"type": "shared_fs", "container_storage_path": "/tmp/determined"}
     )
 
