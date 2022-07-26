@@ -39,8 +39,7 @@ def test_node_not_available() -> None:
     exp.run_failure_test(
         conf.fixtures_path("failures/slurm-requested-node-not-available.yaml"),
         conf.fixtures_path("failures/"),
-        "ERROR: task failed without an associated exit code: sbatch: error: "
-        + "Batch job submission failed: Requested node configuration is not available",
+        "Batch job submission failed: Requested node configuration is not available",
     )
 
 
@@ -56,7 +55,7 @@ def test_bad_slurm_option() -> None:
     )
 
 
-@pytest.mark.e2e_slurm
+@pytest.mark.e2e_slurm_internet_connected_cluster
 def test_docker_login() -> None:
     # Creates an experiment that references a valid docker image,
     # but it fails to download due to the lack of a docker login.
@@ -76,8 +75,7 @@ def test_docker_login() -> None:
 
 # Not possible right now due to incomplete state of circleci runner
 # A devcluster needs to be run with the master host entered incorrectly.
-# This is only possible in circleci not python
-@pytest.mark.e2e_slurm
+@pytest.mark.e2e_slurm_misconfigured
 def test_master_host() -> None:
     # Creates an experiment normally, should error if the back communication channel is broken
     exp.run_failure_test(

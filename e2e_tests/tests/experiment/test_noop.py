@@ -14,6 +14,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_slurm
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
