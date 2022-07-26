@@ -26,16 +26,14 @@ func TestCustomSearchMethod(t *testing.T) {
 	ctx := context{rand: rand}
 
 	var queue *SearcherEventQueue
-	if csMethod, ok := customSearchMethod.(CustomSearchMethod); ok {
-		queue = csMethod.getSearcherEventQueue()
-	}
+	queue = customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
+
 	expEvents := make([]*experimentv1.SearcherEvent, 0)
 	require.Equal(t, 0, len(queue.events))
 	// Add initialOperations
 	_, err := customSearchMethod.initialOperations(ctx)
 	require.NoError(t, err)
 	var expEventCount int32
-	expEventCount = 0
 	initOpsEvent := experimentv1.SearcherEvent_InitialOperations{
 		InitialOperations: &experimentv1.InitialOperations{},
 	}
