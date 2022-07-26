@@ -19,8 +19,8 @@ html {
     border-color: var(--theme-ix-border-active);
     color: var(--theme-ix-on-active);
   }
-  .ant-btn[disabled]:not(.ant-btn-link),
-  .ant-btn[disabled]:not(.ant-btn-link):hover {
+  .ant-btn[disabled]:not(.ant-btn-link):not(.ant-btn-primary),
+  .ant-btn[disabled]:not(.ant-btn-link):not(.ant-btn-primary):hover {
     background-color: var(--theme-ix-inactive);
     border-color: var(--theme-ix-border-inactive);
     color: var(--theme-ix-on-inactive);
@@ -84,6 +84,9 @@ html {
   .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-prefix > i,
   .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-suffix > i {
     font-size: 16px;
+  }
+  .ant-input-number-status-error {
+    background-color: inherit;
   }
 
   /* Modal */
