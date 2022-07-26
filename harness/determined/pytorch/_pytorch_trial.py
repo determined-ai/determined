@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from abc import abstractmethod
 from inspect import signature
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
@@ -278,6 +279,15 @@ class PyTorchTrialController(det.TrialController):
                         ),
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
+                    if (
+                        self.context.distributed.size > 1
+                        and not self.context._average_training_metrics
+                    ):
+                        warnings.warn(
+                            "Only the chief worker's training metrics are being reported, due "
+                            "to setting average_training_metrics to False.",
+                            FutureWarning,
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
