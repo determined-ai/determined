@@ -68,7 +68,13 @@ const (
 
 // PaginateBun adds sorting and pagination to the provided bun query, defaulting to certain values
 // if they are not specified. By default, we order by ascending on the id column, with no limit.
-func PaginateBun(query *bun.SelectQuery, orderColumn string, direction SortDirection, offset, limit int) *bun.SelectQuery {
+func PaginateBun(
+	query *bun.SelectQuery,
+	orderColumn string,
+	direction SortDirection,
+	offset,
+	limit int,
+) *bun.SelectQuery {
 	if orderColumn == "" {
 		orderColumn = "id"
 	}
