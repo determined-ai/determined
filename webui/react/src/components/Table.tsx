@@ -160,12 +160,12 @@ export const modelNameRenderer = (value: string, record: ModelItem): React.React
     <div style={{ paddingInline: 4 }}>
       <Icon name="model" size="medium" />
     </div>
-    <Link path={paths.modelDetails(record.name)}>{value}</Link>
+    <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
   </Space>
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
-  <Link path={paths.modelVersionDetails(record.model.name, record.id)}>
+  <Link path={paths.modelVersionDetails(String(record.model?.id ?? ''), record.id)}>
     {value ? value : 'Version ' + record.version}
   </Link>
 );

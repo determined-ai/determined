@@ -85,13 +85,13 @@ const routes: RouteConfig[] = [
   {
     id: 'modelVersionDetails',
     needAuth: true,
-    path: '/models/:modelName/versions/:versionId',
+    path: '/models/:modelId/versions/:versionId',
     title: 'Version Details',
   },
   {
     id: 'modelDetails',
     needAuth: true,
-    path: '/models/:modelName',
+    path: '/models/:modelId',
     title: 'Model Details',
   },
   {
