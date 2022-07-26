@@ -22,9 +22,10 @@ const workDir = "/workdir"
 
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 	type args struct {
-		slotType       device.Type
-		workDir        string
-		slurmPartition string
+		slotType         device.Type
+		workDir          string
+		slurmPartition   string
+		containerRunType string
 	}
 	tests := []struct {
 		name string
@@ -60,16 +61,18 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "Verify behavior when no partition specified",
+			name: "Verify behavior when no partition specified, but using podman",
 			args: args{
-				slotType:       device.CUDA,
-				workDir:        workDir,
-				slurmPartition: "",
+				slotType:         device.CUDA,
+				workDir:          workDir,
+				slurmPartition:   "",
+				containerRunType: "podman",
 			},
 			want: &map[string]string{
 				"workingDir":          workDir,
 				"enableNvidia":        trueValue,
 				"enableWritableTmpFs": trueValue,
+				"networkMode":         "host",
 			},
 		},
 	}
@@ -79,7 +82,8 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 			if got := tr.computeLaunchConfig(
 				tt.args.slotType,
 				tt.args.workDir,
-				tt.args.slurmPartition); !reflect.DeepEqual(got, tt.want) {
+				tt.args.slurmPartition,
+				tt.args.containerRunType); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TaskSpec.computeLaunchConfig() = %v, want %v", got, tt.want)
 			}
 		})

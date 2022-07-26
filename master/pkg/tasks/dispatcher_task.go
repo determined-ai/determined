@@ -22,6 +22,7 @@ import (
 
 const (
 	trueValue = "true"
+	podman    = "podman"
 	// dispatcherEntrypointScriptResource is the script to handle container initialization
 	// before transferring to the defined entrypoint script.
 	dispatcherEntrypointScriptResource = "dispatcher-wrapper.sh"
@@ -114,7 +115,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetCarriers([]string{
 		singularityCarrier,
 	})
-	if containerRunType == "podman" {
+	if containerRunType == podman {
 		payload.GetCarriers()[0] = podmanCarrier
 	}
 
@@ -136,7 +137,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		workDir = "/var/tmp"
 	}
 
-	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition)
+	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition, containerRunType)
 	launchParameters.SetConfiguration(*launchConfig)
 
 	// Determined generates tar archives including initialization, garbage collection,
@@ -236,7 +237,7 @@ func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
 // computeLaunchConfig computes the launch configuration for the Slurm job manifest.
 func (t *TaskSpec) computeLaunchConfig(
 	slotType device.Type, workDir string,
-	slurmPartition string,
+	slurmPartition string, containerRunType string,
 ) *map[string]string {
 	launchConfig := map[string]string{
 		"workingDir":          workDir,
@@ -250,6 +251,9 @@ func (t *TaskSpec) computeLaunchConfig(
 	}
 	if slotType == device.ROCM {
 		launchConfig["enableROCM"] = trueValue
+	}
+	if containerRunType == podman {
+		launchConfig["networkMode"] = "host"
 	}
 	return &launchConfig
 }
