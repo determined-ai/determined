@@ -446,7 +446,7 @@ commands:
           steps:
             - install-wheel:
                 package-name: determined
-                package-location: ~/project/harness
+                package-location: ./harness
       - when:
           condition: <<parameters.model-hub>>
           steps:
@@ -457,7 +457,7 @@ commands:
                   sudo apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
-                package-location: ~/project/model_hub
+                package-location: ./model_hub
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -571,8 +571,9 @@ commands:
 
       - run:
           name: Split tests
-          working_directory: ~/project/e2e_tests
+          working_directory: ./e2e_tests
           command: |
+            set -vx
             # Preselect the files that contain any matching tests to minimize how wrong CircleCI's
             # splitting can get things. (The presence of files with no tests can cause the files
             # with tests to be bunched up incorrectly, making the split suboptimal.)
@@ -597,7 +598,7 @@ commands:
 
       - run:
           name: Run e2e tests
-          working_directory: ~/project/e2e_tests
+          working_directory: ./e2e_tests
           no_output_timeout: 30m
           command: |
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
@@ -626,7 +627,8 @@ commands:
     steps:
       - run:
           name: Run det-deploy tests
-          working_directory: ~/project/e2e_tests
+          # TODO(Brad): backport workdir fixes to oss determined
+          working_directory: ./e2e_tests
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
@@ -2025,6 +2027,127 @@ jobs:
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
 
+  test-e2e-slurm:
+    parameters:
+      mark:
+        type: string
+        default: e2e_slurm
+      master_config:
+        type: string
+        default: |
+          task_container_defaults:
+            image:
+              cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5
+            bind_mounts:
+            - host_path: /home/launcher/default-nsswitch.conf
+              container_path: /etc/nsswitch.conf
+          checkpoint_storage:
+            type: shared_fs
+            host_path: /home/launcher/determinedai/checkpoints
+            storage_path: determined-checkpoint
+            save_experiment_best: 0
+            save_trial_best: 1
+            save_trial_latest: 1
+          db:
+            user: postgres
+            host: 127.0.0.1
+            port: 5432
+            name: determined
+            password: initial0
+          resource_manager:
+            type: slurm
+            master_host: el8kb3-C2
+            master_port: 8080
+            host: 127.0.0.1
+            port: 8181
+            protocol: http
+            slot_type: cpu
+            user_name: launcher
+            group_name: launcher
+            singularity_image_root: /home/launcher/images/determinedai
+            job_storage_root: /home/launcher/.capsules
+            auth_file: /root/.launcher.token
+            path: /opt/singularity-3.7.3/bin:/usr/local/bin:${PATH}
+            ld_library_path: /usr/local/lib:/usr/local/lib/slurm:${LD_LIBRARY_PATH}
+      determined_master_host:
+        type: string
+        default: localhost:8080
+      cluster_unix_user:
+        type: string
+        default: launcher
+      cluster_determined_user:
+        type: string
+        default: determined
+      determined_admin_username:
+        type: string
+        default: admin
+      determined_admin_password:
+        type: string
+        default: ""
+    # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
+    machine: true
+    resource_class: determined-ai/local-cluster
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run: sudo yum install -y xmlsec1
+      - run: |
+          export DET_PKG_NAME=$(rpm -qp --queryformat "%{NAME}" master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm)
+          if rpm -q $DET_PKG_NAME; then
+            sudo rpm -e $DET_PKG_NAME
+          fi
+      - run: |
+          sudo rpm -i master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm
+          cat \<< EOF > ./master.yaml
+          <<parameters.master_config>>
+          EOF
+          sudo cp ./master.yaml /etc/determined/master.yaml
+          sudo systemctl daemon-reload
+          sudo systemctl restart determined-master
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          install-python: false
+          executor: determined-ai/local-cluster
+
+      - run: |
+          id <<parameters.cluster_unix_user>> || sudo useradd <<parameters.cluster_unix_user>>
+          TOKEN=$(
+            curl "<<parameters.determined_master_host>>/api/v1/auth/login" \
+              -f \
+              -X POST \
+              --data-binary @- \<< EOF | jq -r '.token'
+            {
+                "username": "<<parameters.determined_admin_username>>",
+                "password": "<<parameters.determined_admin_password>>"
+            }
+          EOF
+          )
+          curl "<<parameters.determined_master_host>>/users/<<parameters.determined_admin_username>>" \
+            -f \
+            -X PATCH \
+            -H "Authorization: Bearer ${TOKEN}" \
+            --data-binary @- \<< EOF
+            {
+              "uid": $(id -u <<parameters.cluster_unix_user>>),
+              "user": "<<parameters.cluster_unix_user>>",
+              "gid": $(id -g <<parameters.cluster_unix_user>>),
+              "group": "$(id -gn <<parameters.cluster_unix_user>>)"
+            }
+          EOF
+
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          master-host: localhost
+          managed-devcluster: false
+          extra-pytest-flags: ""
+
+      - store_test_results:
+          path: /tmp/test-results/
+
   test-e2e:
     parameters:
       tf2:
@@ -2793,6 +2916,54 @@ workflows:
             branches:
               only:
                 - main
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm
+          requires:
+            - package-and-push-system-local
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-misconfigured
+          requires:
+            - package-and-push-system-local
+          mark: e2e_slurm_misconfigured
+          master_config: |
+            task_container_defaults:
+              image:
+                cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5
+              bind_mounts:
+              - host_path: /home/launcher/default-nsswitch.conf
+                container_path: /etc/nsswitch.conf
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /home/launcher/determinedai/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: 127.0.0.1
+              port: 5432
+              name: determined
+              password: initial0
+            resource_manager:
+              type: slurm
+              master_host: 127.0.0.1
+              master_port: 8080
+              host: 127.0.0.1
+              port: 8181
+              protocol: http
+              slot_type: cpu
+              rendezvous_network_interface:
+              proxy_network_interface:
+              user_name: launcher
+              group_name: launcher
+              singularity_image_root: /home/launcher/images/determinedai
+              job_storage_root: /home/launcher/.capsules
+              auth_file: /root/.launcher.token
+              path: /opt/singularity-3.7.3/bin:/usr/local/bin:${PATH}
+              ld_library_path: /usr/local/lib:/usr/local/lib/slurm:${LD_LIBRARY_PATH}
 
       - test-e2e:
           name: test-e2e-cpu

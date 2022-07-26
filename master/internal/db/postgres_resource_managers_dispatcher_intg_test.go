@@ -15,12 +15,12 @@ import (
 )
 
 func TestDispatchPersistence(t *testing.T) {
-	etc.SetRootPath(rootFromDB)
+	etc.SetRootPath(RootFromDB)
 
 	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, migrationsFromDB)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	u := requireMockUser(t, db)
+	u := RequireMockUser(t, db)
 	tk := RequireMockTask(t, db, &u.ID)
 	a := requireMockAllocation(t, db, tk.TaskID)
 
