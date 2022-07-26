@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from abc import abstractmethod
 from inspect import signature
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
@@ -118,10 +119,6 @@ class PyTorchTrialController(det.TrialController):
 
     @classmethod
     def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
-        return True
-
-    @classmethod
-    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
     def _check_evaluate_implementation(self) -> None:
@@ -283,6 +280,15 @@ class PyTorchTrialController(det.TrialController):
                         ),
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
+                    if (
+                        self.context.distributed.size > 1
+                        and not self.context._average_training_metrics
+                    ):
+                        warnings.warn(
+                            "Only the chief worker's training metrics are being reported, due "
+                            "to setting average_training_metrics to False.",
+                            UserWarning,
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {

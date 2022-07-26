@@ -85,7 +85,7 @@
       aggregation_frequency: 1
       auto_tune_tensor_fusion: false
       average_aggregated_gradients: true
-      average_training_metrics: false
+      average_training_metrics: true
       gradient_compression: false
       grad_updates_size_file: "/tmp/hi I am a size file"
       mixed_precision: O0
@@ -184,7 +184,7 @@
       aggregation_frequency: 1
       auto_tune_tensor_fusion: false
       average_aggregated_gradients: true
-      average_training_metrics: false
+      average_training_metrics: true
       gradient_compression: false
       grad_updates_size_file: null
       mixed_precision: O0

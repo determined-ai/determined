@@ -164,10 +164,6 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 class TFKerasTrialController(det.TrialController):
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
-        return True
-
-    @classmethod
     def create_metric_writer(
         cls: Type["TFKerasTrialController"],
     ) -> tensorboard.BatchMetricWriter:
@@ -921,7 +917,7 @@ class TFKerasTrialController(det.TrialController):
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
         final_metrics = self.train_workload_metrics[-1]
-        if self.env.experiment_config.averaging_training_metrics_enabled():
+        if self.env.experiment_config.average_training_metrics_enabled():
             final_metrics = self._allreduce_logs(final_metrics)
 
         self.multiplexer._train_workload_end(final_metrics)
