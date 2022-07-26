@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 
 import InteractiveTable, { InteractiveTableSettings } from 'components/InteractiveTable';
 import Page from 'components/Page';
@@ -15,17 +14,17 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { Determinedjobv1Type } from 'services/api-ts-sdk';
 import { GetJobsResponse } from 'services/types';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
-import { CommandType, Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
+import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
-import { canManageJob, moveJobToPosition, orderedSchedulers,
-  unsupportedQPosSchedulers } from 'utils/job';
+import { canManageJob, jobTypeToCommandType, moveJobToPosition,
+  orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 
 import css from './JobQueue.module.scss';
@@ -40,7 +39,6 @@ interface Props {
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { resourcePools } = useStore();
-  const history = useHistory();
   const [ managingJob, setManagingJob ] = useState<Job>();
   const [ rpStats, setRpStats ] = useState<RPStats[]>(
     resourcePools.map((rp) => ({
@@ -100,31 +98,16 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
-  const getCommandType = (jobType: Determinedjobv1Type): CommandType | null => {
-    switch (jobType) {
-      case Determinedjobv1Type.COMMAND:
-        return CommandType.Command;
-      case Determinedjobv1Type.NOTEBOOK:
-        return CommandType.JupyterLab;
-      case Determinedjobv1Type.SHELL:
-        return CommandType.Shell;
-      case Determinedjobv1Type.TENSORBOARD:
-        return CommandType.TensorBoard;
-      default:
-        return null;
-    }
-  };
-
   const dropDownOnTrigger = useCallback((job: Job) => {
     const triggers: Triggers<JobAction> = {};
-    const commandType = getCommandType(job.type);
+    const commandType = jobTypeToCommandType(job.type);
 
     if (commandType) {
       triggers[JobAction.Kill] = () => {
         killTask({ id: job.entityId, type: commandType });
       };
       triggers[JobAction.ViewLog] = () => {
-        history.push(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
+        routeToReactUrl(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
       };
     }
 
@@ -158,7 +141,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     });
     return triggers;
-  }, [ selectedRp, isJobOrderAvailable, jobs, history, fetchAll ]);
+  }, [ selectedRp, isJobOrderAvailable, jobs, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
