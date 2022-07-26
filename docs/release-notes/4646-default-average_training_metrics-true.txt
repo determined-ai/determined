@@ -3,4 +3,8 @@
 **Breaking Changes**
 
 -  Experiment: the ``average_training_metrics`` experiment configuration default has been changed to
-   ``True``.
+   ``True``.  This change only affects distributed training.  The previous default of ``False``
+   leads to only the chief worker's training metrics being reported. Setting this configuration to
+   ``True`` instead reports the true average of all workers' training metrics at the cost of
+   increased communication overhead.  Users who do not require accurate training metrics may
+   explicitly revert this configuration to ``False`` as an optimization.
