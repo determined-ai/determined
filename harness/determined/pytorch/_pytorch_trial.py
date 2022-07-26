@@ -43,8 +43,8 @@ class PyTorchTrialController(det.TrialController):
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
                 warnings.warn(
-                    "The on_checkpoint_end callback is deprecated, please use on"
-                    "checkpoint_write_end instead",
+                    "The on_checkpoint_end callback is deprecated, please use "
+                    "on_checkpoint_write_end instead",
                     FutureWarning,
                 )
 
