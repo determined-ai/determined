@@ -5,7 +5,6 @@ from typing import Any, Optional, Type
 
 import determined as det
 from determined import profiler, tensorboard, workload
-from determined.common import check
 from determined.tensorboard.util import get_rank_aware_path
 
 
