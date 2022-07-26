@@ -126,7 +126,7 @@ func (s *Searcher) ValidationCompleted(
 		return nil, fmt.Errorf("operation %v was already completed", op)
 	}
 
-	operations, err := s.method.validationCompleted(s.context(), requestID, metric)
+	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
@@ -163,8 +163,10 @@ func (s *Searcher) Progress() float64 {
 // It returns an error if the queue is nil because it means the searcher
 // method is not of type CustomSearcher.
 func (s *Searcher) GetCustomSearcherEventQueue() *SearcherEventQueue {
-	queue := s.method.getSearcherEventQueue()
-	return queue
+	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+		return sMethod.getSearcherEventQueue()
+	}
+	return nil
 }
 
 // Record records operations that were requested by the searcher for a specific trial.

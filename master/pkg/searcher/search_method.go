@@ -24,7 +24,8 @@ type SearchMethod interface {
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
-	validationCompleted(ctx context, requestID model.RequestID, metric float64) ([]Operation, error)
+	validationCompleted(ctx context, requestID model.RequestID,
+		metric float64, op ValidateAfter) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
 	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
@@ -34,14 +35,19 @@ type SearchMethod interface {
 	trialExitedEarly(
 		ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 	) ([]Operation, error)
-	// this is only meaningful in the custom searcher method.
-	// All the other methods will not implement this which is okay
-	// if defaultSearchMethod is a part of that method's struct.
-	getSearcherEventQueue() *SearcherEventQueue
 
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
 	expconf.InUnits
+}
+
+// CustomSearchMethod is the interface for custom search method so that it can hold
+// getSearcherEventQueue.
+type CustomSearchMethod interface {
+	// this is only meaningful in the custom searcher method.
+	// All the other methods will not implement this which is okay
+	// if defaultSearchMethod is a part of that method's struct.
+	getSearcherEventQueue() *SearcherEventQueue
 }
 
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
@@ -95,7 +101,7 @@ func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, 
 }
 
 func (defaultSearchMethod) validationCompleted(
-	context, model.RequestID, float64,
+	context, model.RequestID, float64, ValidateAfter,
 ) ([]Operation, error) {
 	return nil, nil
 }
@@ -108,8 +114,4 @@ func (defaultSearchMethod) trialExitedEarly(
 	context, model.RequestID, model.ExitedReason,
 ) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
-}
-
-func (defaultSearchMethod) getSearcherEventQueue() *SearcherEventQueue {
-	return nil
 }
