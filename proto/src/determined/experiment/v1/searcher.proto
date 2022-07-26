@@ -19,6 +19,16 @@ message TrialCreated {
   string request_id = 1;
 }
 
+// TrialProgress is a searcher event that tells you the
+// number of batches completed in the trial.
+message TrialProgress {
+  // uuid identifying the trial to the searcher
+  string request_id = 1;
+  // partial_units represent partial epochs, batches or records where the Unit
+  // is implied.
+  double partial_units = 2;
+}
+
 // ValidationCompleted is a searcher event triggered when a validation has been
 // completed.
 message ValidationCompleted {
