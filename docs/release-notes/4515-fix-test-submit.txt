@@ -3,4 +3,4 @@
 **Bug Fix**
 
 -  When creating a `test` experiment the container storage path was not being set correctly.
-   Also fixes the docstring which incorrectly claimed that only one slot would be used.
+
