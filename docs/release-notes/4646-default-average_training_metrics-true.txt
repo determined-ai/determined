@@ -1,0 +1,6 @@
+:orphan:
+
+**Breaking Changes**
+
+-  Experiment: the ``average_training_metrics`` experiment configuration default has been changed to
+   ``True``.

@@ -8,9 +8,9 @@ import pickle
 import random
 import shutil
 import tempfile
+import warnings
 from abc import abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Type, cast
-import warnings
 
 import numpy as np
 import tensorflow as tf
