@@ -286,7 +286,7 @@ class PyTorchTrialController(det.TrialController):
                         warnings.warn(
                             "Only the chief worker's training metrics are being reported, due "
                             "to setting average_training_metrics to False.",
-                            FutureWarning,
+                            UserWarning,
                         )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
