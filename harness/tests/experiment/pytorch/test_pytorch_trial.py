@@ -338,7 +338,7 @@ class TestPyTorchTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 0,
                 "validation_steps_ended": 0,
-                "checkpoints_ended": 0,
+                "checkpoints_written": 0,
                 "checkpoints_uploaded": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
@@ -355,7 +355,7 @@ class TestPyTorchTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
-                "checkpoints_ended": 0,
+                "checkpoints_written": 0,
                 "checkpoints_uploaded": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
@@ -376,7 +376,7 @@ class TestPyTorchTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
-                "checkpoints_ended": 1,
+                "checkpoints_written": 1,
                 "checkpoints_uploaded": 1,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
@@ -418,9 +418,9 @@ class TestPyTorchTrial:
             "trial_startups": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
-            # Note: checkpoints_ended, checkpoints_uploaded, and trial_shutdowns, cannot be
+            # Note: checkpoints_written, checkpoints_uploaded, and trial_shutdowns, cannot be
             # persisted, as they are all updated after checkpointing.
-            "checkpoints_ended": 0,
+            "checkpoints_written": 0,
             "checkpoints_uploaded": 0,
             "training_started_times": 2,
             "training_epochs_started": 3,

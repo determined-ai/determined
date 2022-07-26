@@ -9,7 +9,7 @@ class Counter(pytorch.PyTorchCallback):
     def __init__(self) -> None:
         self.validation_steps_started = 0
         self.validation_steps_ended = 0
-        self.checkpoints_ended = 0
+        self.checkpoints_written = 0
         self.checkpoints_uploaded = 0
         self.training_started_times = 0
         self.training_epochs_started = 0
@@ -25,7 +25,7 @@ class Counter(pytorch.PyTorchCallback):
         self.validation_steps_ended += 1
 
     def on_checkpoint_write_end(self, checkpoint_dir: str):
-        self.checkpoints_ended += 1
+        self.checkpoints_written += 1
 
     def on_checkpoint_upload_end(self, uuid: str) -> None:
         logging.debug(f"checkpoint upload uuid {uuid}")
