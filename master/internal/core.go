@@ -61,6 +61,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -143,11 +144,19 @@ func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDe
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
-	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
+	if m.config.Telemetry.SegmentWebUIKey != "" {
+		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
+	}
+
+	if m.config.Telemetry.Enabled {
 		// Only advertise a Segment WebUI key if a key has been configured and
 		// telemetry is enabled.
 		telemetryInfo.Enabled = true
-		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
+
+		if m.config.Telemetry.OtelEnabled && m.config.Telemetry.OtelExportedOtlpEndpoint != "" {
+			telemetryInfo.OtelEnabled = true
+			telemetryInfo.OtelExportedOtlpEndpoint = m.config.Telemetry.OtelExportedOtlpEndpoint
+		}
 	}
 
 	masterInfo := aproto.MasterInfo{
@@ -868,7 +877,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	if m.config.Telemetry.OtelEnabled {
-		configureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint)
+		opentelemetry.ConfigureOtel(m.config.Telemetry.OtelExportedOtlpEndpoint, "determined-master")
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 

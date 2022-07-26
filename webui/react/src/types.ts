@@ -20,6 +20,10 @@ export interface DetailedUser extends User {
   isAdmin: boolean;
 }
 
+export interface DetailedUserList extends WithPagination {
+  users: DetailedUser[],
+}
+
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;
@@ -518,6 +522,13 @@ interface Allocation {
 export interface TaskItem {
   allocations: Allocation[];
   taskId: string;
+}
+
+export interface TaskCounts {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
 }
 
 export interface ModelItem {

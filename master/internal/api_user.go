@@ -210,7 +210,8 @@ func (a *apiServer) PatchUser(
 	if req.User.DisplayName != nil {
 		u := &userv1.User{}
 		if req.User.DisplayName.Value == "" {
-			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, "")
+			// Disallow empty diaplay name for sorting purpose.
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, nil)
 		} else {
 			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
 			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")

@@ -39,7 +39,7 @@ def manual_init_distributed() -> Iterator[None]:
 @pytest.mark.gpu
 class TestDeepSpeedTrial:
     def setup_method(self) -> None:
-        # These environment variables are usually set by the launcher but we set them manually here
+        # These environment variables are usually set by the launcher, but we set them manually here
         # since they are required internally by the deepspeed model engine.
         os.environ["RANK"] = "0"
         os.environ["LOCAL_RANK"] = "0"

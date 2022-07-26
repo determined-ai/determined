@@ -37,7 +37,8 @@ export const getCurrentUser = generateDetApi<
 >(Config.getCurrentUser);
 
 export const getUsers = generateDetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams,
+   Api.V1GetUsersResponse, Type.DetailedUserList
 >(Config.getUsers);
 
 export const setUserPassword = generateDetApi<
@@ -185,6 +186,10 @@ export const moveExperiment = generateDetApi<
 export const getTask = generateDetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
 >(Config.getTask);
+
+export const getActiveTasks = generateDetApi<
+  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+>(Config.getActiveTasks);
 
 /* Models */
 

@@ -105,11 +105,19 @@ export const getCurrentUser: DetApi<
 };
 
 export const getUsers: DetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams, Api.V1GetUsersResponse, Type.DetailedUserList
 > = {
   name: 'getUsers',
-  postProcess: (response) => decoder.mapV1UserList(response),
-  request: () => detApi.Users.getUsers(),
+  postProcess: (response) => ({
+    pagination: decoder.mapV1Pagination(response.pagination),
+    users: decoder.mapV1UserList(response),
+  }),
+  request: (params) => detApi.Users.getUsers(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
 export const setUserPassword: DetApi<
@@ -484,6 +492,14 @@ export const getTask: DetApi<
   request: (params: Service.GetTaskParams) => detApi.Tasks.getTask(
     params.taskId,
   ),
+};
+
+export const getActiveTasks: DetApi<
+  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+> = {
+  name: 'getTasksCount',
+  postProcess: (response) => response,
+  request: () => detApi.Tasks.getTasksCount(),
 };
 
 /* Models */

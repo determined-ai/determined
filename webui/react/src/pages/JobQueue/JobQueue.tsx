@@ -14,7 +14,6 @@ import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/Jo
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
-import { GetJobsResponse } from 'services/types';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
@@ -63,7 +62,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const fetchAll = useCallback(async () => {
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-      const promises = [
+      const [ jobs, stats ] = await Promise.all([
         getJobQ(
           {
             limit: settings.tableLimit,
@@ -74,9 +73,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
           { signal: canceler.signal },
         ),
         getJobQStats({}, { signal: canceler.signal }),
-      ] as [ Promise<GetJobsResponse>, Promise<Api.V1GetJobQueueStatsResponse> ];
-
-      const [ jobs, stats ] = await Promise.all(promises);
+      ]);
 
       // Process jobs response.
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);

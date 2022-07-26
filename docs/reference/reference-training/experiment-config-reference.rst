@@ -1038,10 +1038,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
-      NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
+   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
 
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to
@@ -1105,7 +1104,7 @@ experiment.
    For multi-GPU training, whether to average the training metrics across GPUs instead of only using
    metrics from the chief GPU. This impacts the metrics shown in the Determined UI and TensorBoard,
    but does not impact the outcome of training or hyperparameter search. This option is currently
-   only supported in PyTorch. Defaults to ``false``.
+   supported for ``PyTorchTrial`` and ``TFKerasTrial`` instances. Defaults to ``true``.
 
 ``gradient_compression``
    Whether to compress gradients when they are exchanged during :ref:`multi-gpu-training`.
