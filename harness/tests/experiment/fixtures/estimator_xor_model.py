@@ -211,7 +211,7 @@ class CustomHook(estimator.RunHook):
         with open(os.path.join(checkpoint_dir, "custom.log"), "r") as fp:
             self._num_checkpoints = int(fp.readline())
 
-    def on_checkpoint_write_end(self, checkpoint_dir: str) -> None:
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         self._num_checkpoints += 1
         with open(os.path.join(checkpoint_dir, "custom.log"), "w") as fp:
             fp.write(f"{self._num_checkpoints}")
