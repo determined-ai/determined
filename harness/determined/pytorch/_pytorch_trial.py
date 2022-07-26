@@ -120,7 +120,7 @@ class PyTorchTrialController(det.TrialController):
         return True
 
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
+    def supports_average_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
     def _check_evaluate_implementation(self) -> None:

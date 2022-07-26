@@ -105,7 +105,7 @@ class TrialController(metaclass=abc.ABCMeta):
         return False
 
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["TrialController"]) -> bool:
+    def supports_average_training_metrics(cls: Type["TrialController"]) -> bool:
         return False
 
     @classmethod
@@ -117,8 +117,8 @@ class TrialController(metaclass=abc.ABCMeta):
         pass
 
     def _check_if_trial_supports_configurations(self, env: det.EnvContext) -> None:
-        if env.experiment_config.averaging_training_metrics_enabled():
-            check.true(self.supports_averaging_training_metrics())
+        if env.experiment_config.average_training_metrics_enabled():
+            check.true(self.supports_average_training_metrics())
 
     def close(self) -> None:
         self.context.close()

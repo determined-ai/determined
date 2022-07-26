@@ -99,7 +99,7 @@ class DeepSpeedTrialController(det.TrialController):
         return cls(*args, **kwargs)
 
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["DeepSpeedTrialController"]) -> bool:
+    def supports_average_training_metrics(cls: Type["DeepSpeedTrialController"]) -> bool:
         return True
 
     def _set_data_loaders(self) -> None:

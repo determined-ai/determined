@@ -103,7 +103,7 @@ def make_default_exp_config(
             "mixed_precision": "O0",
             "aggregation_frequency": 1,
             "gradient_compression": False,
-            "average_training_metrics": False,
+            "average_training_metrics": True,
             "auto_tune_tensor_fusion": False,
             "tensor_fusion_threshold": 100,
             "tensor_fusion_cycle_time": 3.5,
