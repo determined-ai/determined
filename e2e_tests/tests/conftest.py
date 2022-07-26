@@ -26,6 +26,7 @@ _INTEG_MARKERS = {
     "e2e_cpu_elastic",
     "e2e_gpu",
     "det_deploy_local",
+    "stress_test",
     "distributed",
     "parallel",
     "nightly",
