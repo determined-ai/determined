@@ -473,7 +473,7 @@ export interface ExperimentItem {
   description?: string;
   endTime?: string;
   forkedFrom?: number;
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+  hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
   id: number;
   jobId: string;
   jobSummary?: JobSummary;

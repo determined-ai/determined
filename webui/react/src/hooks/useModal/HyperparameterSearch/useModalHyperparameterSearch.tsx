@@ -46,7 +46,7 @@ interface SearchMethod {
   name: `${ExperimentSearcherName}`;
 }
 
-const SearchMethods: Record<string, SearchMethod> = {
+const SEARCH_METHODS: Record<string, SearchMethod> = {
   ASHA: {
     displayName: 'Adaptive',
     icon: <Icon name="searcher-adaptive" />,
@@ -63,6 +63,8 @@ const SearchMethods: Record<string, SearchMethod> = {
     name: 'random',
   },
 } as const;
+
+const DEFAULT_LOG_BASE = 10;
 
 interface HyperparameterRowValues {
   count?: number;
@@ -81,8 +83,8 @@ const useModalHyperparameterSearch = ({
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(
-    Object.values(SearchMethods).find((searcher) => searcher.name === experiment.searcherType) ??
-    SearchMethods.ASHA,
+    Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
+    SEARCH_METHODS.ASHA,
   );
   const { resourcePools } = useStore();
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>(
@@ -119,14 +121,14 @@ const useModalHyperparameterSearch = ({
     const baseConfig = clone(experiment.configRaw, true);
     baseConfig.name = (fields.name as string).trim();
     baseConfig.searcher.name = fields.searcher;
-    baseConfig.searcher.max_trials = fields.searcher === SearchMethods.Grid.name ?
+    baseConfig.searcher.max_trials = fields.searcher === SEARCH_METHODS.Grid.name ?
       undefined : fields.max_trials;
     baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
 
-    if (fields.searcher === SearchMethods.ASHA.name) {
+    if (fields.searcher === SEARCH_METHODS.ASHA.name) {
       baseConfig.searcher.bracket_rungs = baseConfig.searcher.bracket_rungs ?? [];
       baseConfig.searcher.stop_once = fields.stop_once ?? baseConfig.searcher.stop_once ?? false;
       baseConfig.searcher.max_rungs = baseConfig.searcher.max_rungs ?? 5;
@@ -165,8 +167,9 @@ const useModalHyperparameterSearch = ({
         } else {
           const prevBase: number | undefined = baseConfig.hyperparameters[hpName]?.base;
           baseConfig.hyperparameters[hpName] = {
-            base: hpInfo.type === HyperparameterType.Log ? (prevBase ?? 10.0) : undefined,
-            count: fields.searcher === SearchMethods.Grid.name ? hpInfo.count : undefined,
+            base: hpInfo.type === HyperparameterType.Log ?
+              (prevBase ?? DEFAULT_LOG_BASE) : undefined,
+            count: fields.searcher === SEARCH_METHODS.Grid.name ? hpInfo.count : undefined,
             maxval: hpInfo.type === HyperparameterType.Int ?
               roundToPrecision(hpInfo.max ?? 0, 0) :
               hpInfo.max,
@@ -254,7 +257,7 @@ const useModalHyperparameterSearch = ({
             return hp.value != null;
           default:
             return hp.min != null && hp.max != null && hp.max >= hp.min &&
-              (searcher !== SearchMethods.Grid || (hp.count != null && hp.count > 0));
+              (searcher !== SEARCH_METHODS.Grid || (hp.count != null && hp.count > 0));
         }
       }));
     } else if (currentPage === 0) {
@@ -268,12 +271,12 @@ const useModalHyperparameterSearch = ({
         slots_per_trial <= maxSlots;
       const validMaxLength = max_length != null && max_length > 0;
       const validMaxConcurrentTrials = max_concurrent_trials != null && max_concurrent_trials >= 0;
-      const validMaxTrials = (searcher === SearchMethods.Grid.name ||
+      const validMaxTrials = (searcher === SEARCH_METHODS.Grid.name ||
         (max_trials != null && max_trials > 0));
 
       setValidationError(!(validName && validSlotsPerTrial && validMaxLength &&
         validMaxConcurrentTrials && validMaxTrials && pool != null && length_units != null &&
-        (searcher !== SearchMethods.ASHA.name || (mode != null && isBoolean(stop_once)))
+        (searcher !== SEARCH_METHODS.ASHA.name || (mode != null && isBoolean(stop_once)))
       ));
     }
   }, [ currentPage, formValues, maxSlots, searcher ]);
@@ -285,8 +288,8 @@ const useModalHyperparameterSearch = ({
   const handleSelectSearcher = useCallback((e: RadioChangeEvent) => {
     const value = e.target.value;
     setSearcher(
-      Object.values(SearchMethods)
-        .find((searcher) => searcher.name === value) ?? SearchMethods.ASHA,
+      Object.values(SEARCH_METHODS)
+        .find((searcher) => searcher.name === value) ?? SEARCH_METHODS.ASHA,
     );
   }, []);
 
@@ -308,14 +311,14 @@ const useModalHyperparameterSearch = ({
           className={css.hyperparameterContainer}
           style={{
             gridTemplateColumns: `180px minmax(0, 1.4fr) 
-              repeat(${searcher === SearchMethods.Grid ? 4 : 3}, minmax(0, 1fr))`,
+              repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(0, 1fr))`,
           }}>
           <h2 className={css.hyperparameterName}>Hyperparameter</h2>
           <h2>Type</h2>
           <h2>Current</h2>
           <h2>Min value</h2>
           <h2>Max value</h2>
-          {searcher === SearchMethods.Grid && <h2>Grid Count</h2>}
+          {searcher === SEARCH_METHODS.Grid && <h2>Grid Count</h2>}
           {hyperparameters.map((hp) => (
             <HyperparameterRow
               key={hp.name}
@@ -352,7 +355,7 @@ const useModalHyperparameterSearch = ({
             className={css.searcherGroup}
             optionType="button"
             onChange={handleSelectSearcher}>
-            {Object.values(SearchMethods).map((searcher) => (
+            {Object.values(SEARCH_METHODS).map((searcher) => (
               <Radio.Button
                 key={searcher.name}
                 value={searcher.name}>
@@ -471,7 +474,7 @@ const useModalHyperparameterSearch = ({
         <h2 className={css.sectionTitle}>Set Training Limits</h2>
         <div className={css.inputRow}>
           <Form.Item
-            hidden={searcher === SearchMethods.Grid}
+            hidden={searcher === SEARCH_METHODS.Grid}
             initialValue={experiment.config.searcher.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
@@ -671,7 +674,7 @@ const HyperparameterRow: React.FC<RowProps> = (
                 key={HyperparameterType[type]}
                 value={HyperparameterType[type]}>
                 {type}
-                {type === 'Log' ? ` (base ${hyperparameter.base ?? 10})` : ''}
+                {type === 'Log' ? ` (base ${hyperparameter.base ?? DEFAULT_LOG_BASE})` : ''}
               </Select.Option>
             ))}
         </Select>
@@ -702,7 +705,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             <Input disabled />
           </Form.Item>
           <Form.Item
-            hidden={searcher !== SearchMethods.Grid}
+            hidden={searcher !== SEARCH_METHODS.Grid}
             name={[ name, 'count' ]}>
             <InputNumber disabled />
           </Form.Item>
@@ -742,14 +745,14 @@ const HyperparameterRow: React.FC<RowProps> = (
             />
           </Form.Item>
           <Form.Item
-            hidden={searcher !== SearchMethods.Grid}
+            hidden={searcher !== SEARCH_METHODS.Grid}
             name={[ name, 'count' ]}
             rules={[ {
               min: 0,
-              required: checked && searcher === SearchMethods.Grid,
+              required: checked && searcher === SEARCH_METHODS.Grid,
               type: 'number',
             } ]}
-            validateStatus={(typeof countError === 'string' && searcher === SearchMethods.Grid
+            validateStatus={(typeof countError === 'string' && searcher === SEARCH_METHODS.Grid
                 && checked) ? 'error' : undefined}>
             <InputNumber
               disabled={!checked}
@@ -770,7 +773,7 @@ const HyperparameterRow: React.FC<RowProps> = (
         <p className={css.error}>{maxError}</p>}
       {(checked && rangeError) &&
         <p className={css.error}>{rangeError}</p>}
-      {(checked && countError && searcher === SearchMethods.Grid) &&
+      {(checked && countError && searcher === SEARCH_METHODS.Grid) &&
         <p className={css.error}>{countError}</p>}
     </>
   );

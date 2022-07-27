@@ -90,23 +90,23 @@ const Container: React.FC = () => {
   );
 };
 
-const setup = async () => {
-  const user = userEvent.setup();
+const user = userEvent.setup();
 
+const setup = async () => {
   const view = render(<Container />);
   await user.click(screen.getByRole('button', { name: 'Open Modal' }));
 
-  return { user, view };
+  return { view };
 };
 
 describe('useModalHyperparameterSearch', () => {
-  it('modal can be opened', async () => {
+  it('should open modal', async () => {
     const { view } = await setup();
 
     expect(await view.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
-  it('modal can be cancelled', async () => {
-    const { view, user } = await setup();
+  it('should cancel modal', async () => {
+    const { view } = await setup();
 
     await user.click(view.getAllByRole('button', { name: 'Cancel' })[0]);
 
@@ -115,8 +115,8 @@ describe('useModalHyperparameterSearch', () => {
       expect(view.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
-  it('hp search can be submitted', async () => {
-    const { view, user } = await setup();
+  it('should submit experiment', async () => {
+    const { view } = await setup();
 
     await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
     mockCreateExperiment.mockReturnValue({ id: 1 });
