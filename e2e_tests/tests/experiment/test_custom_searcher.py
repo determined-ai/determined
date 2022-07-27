@@ -84,8 +84,8 @@ def test_run_random_searcher_exp() -> None:
     }
     config["description"] = "custom searcher"
 
-    max_trials = 5
-    max_concurrent_trials = 2
+    max_trials = 10
+    max_concurrent_trials = 1
 
     search_method = RandomSearcherMethod(max_trials, max_concurrent_trials)
     search_runner = SearchRunner(search_method)
@@ -157,7 +157,7 @@ class RandomSearcherMethod(SearchMethod):
 
         ops = []
 
-        for i in range(initial_trials):
+        for _ in range(initial_trials):
             create = Create(
                 request_id=uuid.uuid4(),
                 hparams=self.sample_params(),
