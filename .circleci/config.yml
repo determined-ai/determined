@@ -2415,6 +2415,8 @@ workflows:
 
   test-e2e-longrunning:
     jobs:
+      - checkout
+      - skip-if-webui-only
       # Build and publish artifacts used in tests
       - build-helm
       - build-proto
