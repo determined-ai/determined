@@ -30,6 +30,7 @@ type DB interface {
 	UpdateUsername(userID *model.UserID, newUsername string) error
 	UserList() (values []model.FullUser, err error)
 	UserByID(userID model.UserID) (*model.FullUser, error)
+	UserImage(username string) (photo []byte, err error)
 	AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
 	Migrate(migrationURL string, actions []string) error
 	Close() error

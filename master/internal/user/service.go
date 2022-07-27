@@ -58,13 +58,13 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 
 // Service describes a user manager.
 type Service struct {
-	db        *db.PgDB
+	db        db.DB
 	system    *actor.System
 	extConfig *model.ExternalSessions
 }
 
 // InitService creates the user service singleton.
-func InitService(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) {
+func InitService(db db.DB, system *actor.System, extConfig *model.ExternalSessions) {
 	once.Do(func() {
 		userService = &Service{db, system, extConfig}
 	})
@@ -296,6 +296,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		}
 	)
 
+	fmt.Println(c.Request())
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err

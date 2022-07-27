@@ -1,10 +1,31 @@
 package user
 
 import (
-	"fmt"
+	"reflect"
+	"runtime"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+// We litterally made our own mock lol.
+// Convert this to mocketio.
+// An error that
+type blockingFunc struct {
+	Func any
+}
+
+func functionName(fn any) string {
+	longName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
+	// Converts the name from this long version to the more readable version of.
+	// github.com/determined-ai/determined/master/internal/user.UserAuthZ.CanGetMe-fm
+	// .CanGetMe-fm
+	return longName[strings.LastIndex(longName, "."):]
+}
+
+func (f blockingFunc) Error() string {
+	return functionName(f.Func)
+}
 
 // UserAuthZUnrestricted is unrestricted.
 // TODO XXX: this is for demo purposes only. Remove before merging to master branch.
@@ -14,126 +35,84 @@ type UserAuthZUnrestricted struct {
 
 // CanGetUser for unresticted authz.
 func (a *UserAuthZUnrestricted) CanGetUser(currentUser, targetUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanGetUser DENY")
-	}
-	return nil
+	return blockingFunc{a.CanGetUser}
 }
 
 // FilterUseList for unresticted authz.
 func (a *UserAuthZUnrestricted) FilterUserList(
 	curUser model.User, users []model.FullUser,
 ) ([]model.FullUser, error) {
-	if !a.AlwaysAllow {
-		return nil, fmt.Errorf("FilterUserList DENY")
-	}
-	return users, nil
+	return nil, blockingFunc{a.FilterUserList}
 }
 
 // CanCreateUser for unresticted authz.
 func (a *UserAuthZUnrestricted) CanCreateUser(
 	curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
 ) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanCreateUser DENY")
-	}
-	return nil
+	return blockingFunc{a.CanCreateUser}
 }
 
 // CanGetMe for unresticted authz.
 func (a *UserAuthZUnrestricted) CanGetMe(curUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanGetMe DENY")
-	}
-	return nil
+	return blockingFunc{a.CanGetMe}
 }
 
 // CanSetUserPassword for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersPassword(currentUser, targetUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUserPassword DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersPassword}
 }
 
 // CanSetUsersActive for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersActive(
 	curUser, userToAdd model.User, toActiveVal bool,
 ) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUsersActive DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersActive}
 }
 
 // CanSetUsersAdmin for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersAdmin(
 	curUser, userToAdd model.User, toAdminVal bool,
 ) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUsersAdmin DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersAdmin}
 }
 
 // CanSetUsersAgentUserGroup for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersAgentUserGroup(
 	curUser, userToAdd model.User, agentUserGroup model.AgentUserGroup,
 ) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUsersAgentUserGroup DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersAgentUserGroup}
 }
 
 // CanSetUsersUsername for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersUsername(curUser, targetUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUsersUsername DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersUsername}
 }
 
 // CanSetUsersDisplayName for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUsersDisplayName(curUser, targetUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanSetUsersDisplayName DENY")
-	}
-	return nil
+	return blockingFunc{a.CanSetUsersDisplayName}
 }
 
 // CanGetUsersImage for unresticted authz.
 func (a *UserAuthZUnrestricted) CanGetUsersImage(curUser model.User, targetUsername string) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanGetUsersImage DENY")
-	}
-	return nil
+	return blockingFunc{a.CanGetUsersImage}
 }
 
 // CanGetUsersOwnSettings for unresticted authz.
 func (a *UserAuthZUnrestricted) CanGetUsersOwnSettings(curUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanGetUsersOwnSettings DENY")
-	}
-	return nil
+	return blockingFunc{a.CanGetUsersOwnSettings}
 }
 
 // CanCreateUsersOwnSetting for unresticted authz.
 func (a *UserAuthZUnrestricted) CanCreateUsersOwnSetting(
 	curUser model.User, setting model.UserWebSetting,
 ) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanCreateUsersOwnSetting DENY")
-	}
-	return nil
+	return blockingFunc{a.CanCreateUsersOwnSetting}
 }
 
 // CanResetUsersOwnSettings for unresticted authz.
 func (a *UserAuthZUnrestricted) CanResetUsersOwnSettings(curUser model.User) error {
-	if !a.AlwaysAllow {
-		return fmt.Errorf("CanResetUsersOwnSettings DENY")
-	}
-	return nil
+	return blockingFunc{a.CanResetUsersOwnSettings}
 }
 
 func init() {
