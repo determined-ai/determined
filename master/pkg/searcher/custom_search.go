@@ -37,6 +37,7 @@ func newCustomSearch(config expconf.CustomConfig) SearchMethod {
 func createSearcherEventQueue() *SearcherEventQueue {
 	return newSearcherEventQueue()
 }
+
 func (s *customSearch) initialOperations(ctx context) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_InitialOperations{
 		InitialOperations: &experimentv1.InitialOperations{},
@@ -59,7 +60,8 @@ func (s *customSearch) setCustomSearcherProgress(progress float64) {
 }
 
 func (s *customSearch) trialProgress(ctx context, requestID model.RequestID,
-	progress PartialUnits) {
+	progress PartialUnits,
+) {
 	event := experimentv1.SearcherEvent_TrialProgress{
 		TrialProgress: &experimentv1.TrialProgress{
 			RequestId:    requestID.String(),
@@ -90,7 +92,8 @@ func (s *customSearch) trialCreated(ctx context, requestID model.RequestID) ([]O
 
 func (s *customSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
-	trialsClosed map[model.RequestID]bool) float64 {
+	trialsClosed map[model.RequestID]bool,
+) float64 {
 	return s.customSearchState.customSearchProgress
 }
 

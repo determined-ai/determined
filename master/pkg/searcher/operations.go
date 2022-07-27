@@ -238,7 +238,8 @@ func NewSearcherProgress(progress float64) SearcherProgress {
 
 // SearcherProgressFromProto creates the SearcherProgress from protobud representation.
 func SearcherProgressFromProto(
-	op *experimentv1.SearcherOperation_SearcherProgress) SearcherProgress {
+	op *experimentv1.SearcherOperation_SearcherProgress,
+) SearcherProgress {
 	return SearcherProgress{Progress: op.SearcherProgress.Progress}
 }
 

@@ -53,7 +53,8 @@ func TestCustomSearchMethod(t *testing.T) {
 		TrialExitedEarly: &experimentv1.TrialExitedEarly{
 			RequestId:    requestID.String(),
 			ExitedReason: experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED,
-		}}
+		},
+	}
 	expEventCount++
 	searcherEvent2 := experimentv1.SearcherEvent{
 		Event: &trialExitedEarlyEvent,
@@ -82,18 +83,15 @@ func TestCustomSearchMethod(t *testing.T) {
 	expEvents = append(expEvents, &searcherEvent3)
 	require.Equal(t, expEvents, queue.GetEvents())
 
-	// Check removeUpto
-	err = queue.RemoveUpTo(2)
-	require.NoError(t, err)
-	require.Equal(t, expEvents[2:], queue.events)
-
 	// Add trialProgress.
 	trialProgress := 0.02
 	customSearchMethod.(CustomSearchMethod).trialProgress(ctx, requestID, PartialUnits(trialProgress))
 	require.NoError(t, err)
 	trialProgressEvent := experimentv1.SearcherEvent_TrialProgress{
-		TrialProgress: &experimentv1.TrialProgress{RequestId: requestID.String(),
-			PartialUnits: trialProgress},
+		TrialProgress: &experimentv1.TrialProgress{
+			RequestId:    requestID.String(),
+			PartialUnits: trialProgress,
+		},
 	}
 	expEventCount++
 	searcherEvent4 := experimentv1.SearcherEvent{
@@ -107,4 +105,9 @@ func TestCustomSearchMethod(t *testing.T) {
 	searcherProgress := 0.4
 	customSearchMethod.(CustomSearchMethod).setCustomSearcherProgress(searcherProgress)
 	require.Equal(t, searcherProgress, customSearchMethod.progress(nil, nil))
+
+	// Check removeUpto
+	err = queue.RemoveUpTo(2)
+	require.NoError(t, err)
+	require.Equal(t, expEvents[2:], queue.events)
 }
