@@ -6,7 +6,8 @@ import { DarkLight } from 'shared/themes';
 import AvatarCard, { Props } from './AvatarCard';
 
 const setup = (props: Props) => {
-  return render(<AvatarCard {...props} />);
+  const view = render(<AvatarCard {...props} />);
+  return { view };
 };
 
 describe('AvatarCard', () => {
@@ -46,15 +47,17 @@ describe('AvatarCard', () => {
 
   describe('class name', () => {
     it('should not have a base class name', () => {
-      const { container } = setup({ darkLight: DarkLight.Light, displayName: 'test' });
+      const { view } = setup({ darkLight: DarkLight.Light, displayName: 'test' });
+      const { container } = view;
       expect(container.children[0]).toHaveAttribute('class');
       expect(container.children[0]).toHaveClass('base');
     });
 
     it('should have a class name', () => {
-      const { container } = setup(
+      const { view } = setup(
         { className: 'test-class', darkLight: DarkLight.Light, displayName: 'test' },
       );
+      const { container } = view;
       expect(container.children[0]).toHaveAttribute('class');
       expect(container.children[0]).toHaveClass('base');
       expect(container.children[0]).toHaveClass('test-class');
