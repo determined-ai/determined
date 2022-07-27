@@ -400,7 +400,7 @@ class DeepSpeedTrialController(det.TrialController):
 
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
-    ) -> workload.Response:
+    ) -> workload.Metrics:
         """
         DeepSpeed allows specifying train_batch_size, train_micro_batch_size_per_gpu, and
         gradient_accumulation_steps. The three are related as follows:
