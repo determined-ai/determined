@@ -77,7 +77,7 @@ func (a *apiServer) CurrentUser(
 	if err != nil {
 		return nil, err
 	}
-	if user.AuthZProvider.Get().CanGetMe(*curUser); err != nil {
+	if err := user.AuthZProvider.Get().CanGetMe(*curUser); err != nil {
 		return nil, err
 	}
 
