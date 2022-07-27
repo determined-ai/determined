@@ -1042,9 +1042,26 @@ workloads for this experiment. For more information on customizing the trial env
    -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
    -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
 
+   When the cluster is configured with :ref:`resource_manager.type: slurm
+   <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
+   the Singularity container runtime which provides additional options for specifying the container
+   image. The image may be:
+
+      -  A full path to a local Singulary image (beginning with a / character).
+
+      -  Any of the other supported Singularity container formats identified by prefix (e.g.
+         ``instance://``, ``library://``, ``shub://``, ``oci://``, or ``docker://``). See the
+         `Singularity run <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__
+         command documentation for a full description of the capabilities.
+
+      -  A Singularity image provided via the `singularity_image_root` configured for the cluster as
+         described in :ref:`slurm-image-config`.
+
+      -  If none of the above applies, Determined will apply the ``docker://`` prefix to the image.
+
 ``force_pull_image``
-   Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to
-   ``false``.
+   Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity cache.
+   Defaults to ``false``.
 
 ``registry_auth``
    The `Docker registry credentials
@@ -1080,6 +1097,20 @@ workloads for this experiment. For more information on customizing the trial env
 ``drop_capabilities``
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
+
+.. _exp-environment-slurm:
+
+``slurm``
+   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
+   control of Slurm options not otherwise managed by Determined. For example, to specify required
+   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+
+   .. code:: yaml
+
+      environment:
+         slurm:
+            - --mem-per-cpu=10
+            - --exclusive
 
 ***************
  Optimizations
