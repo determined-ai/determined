@@ -9,6 +9,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -16,16 +17,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const workDir = "/workdir"
 
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 	type args struct {
-		slotType         device.Type
-		workDir          string
-		slurmPartition   string
-		containerRunType string
+		slotType          device.Type
+		workDir           string
+		slurmPartition    string
+		containerRunType  string
+		disableImageCache bool
+		addCaps           []string
+		dropCaps          []string
 	}
 	tests := []struct {
 		name string
@@ -75,10 +80,44 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"networkMode":         "host",
 			},
 		},
+		{
+			name: "Verify behavior when image cache disabled & capabilities are being manipulated",
+			args: args{
+				slotType:          device.CUDA,
+				workDir:           workDir,
+				slurmPartition:    "",
+				containerRunType:  "podman",
+				disableImageCache: true,
+				addCaps:           []string{"add1", "add2"},
+				dropCaps:          []string{"drop1", "drop2"},
+			},
+			want: &map[string]string{
+				"workingDir":          workDir,
+				"enableNvidia":        trueValue,
+				"enableWritableTmpFs": trueValue,
+				"networkMode":         "host",
+				"disableImageCache":   trueValue,
+				"addCapabilities":     "add1,add2",
+				"dropCapabilities":    "drop1,drop2",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tr := &TaskSpec{}
+			environment := expconf.EnvironmentConfigV0{
+				RawImage:                &expconf.EnvironmentImageMapV0{},
+				RawEnvironmentVariables: &expconf.EnvironmentVariablesMapV0{},
+				RawPorts:                map[string]int{},
+				RawRegistryAuth:         &types.AuthConfig{},
+				RawForcePullImage:       &tt.args.disableImageCache,
+				RawPodSpec:              &expconf.PodSpec{},
+				RawSlurm:                []string{},
+				RawAddCapabilities:      tt.args.addCaps,
+				RawDropCapabilities:     tt.args.dropCaps,
+			}
+			tr := &TaskSpec{
+				Environment: environment,
+			}
 			if got := tr.computeLaunchConfig(
 				tt.args.slotType,
 				tt.args.workDir,

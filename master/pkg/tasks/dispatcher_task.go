@@ -255,6 +255,21 @@ func (t *TaskSpec) computeLaunchConfig(
 	if containerRunType == podman {
 		launchConfig["networkMode"] = "host"
 	}
+	// From launcher 3.0.16, disableImageCache & add/dropCapabilities are supported, but
+	// implemented for podman only. For Singularity we control these features using environment
+	// variables (see getEnvVarsForLauncherManifest)
+	if t.Environment.ForcePullImage() {
+		launchConfig["disableImageCache"] = trueValue
+	}
+	if len(t.Environment.AddCapabilities()) > 0 {
+		launchConfig["addCapabilities"] = strings.Join(t.Environment.AddCapabilities(), ",")
+	}
+	if len(t.Environment.DropCapabilities()) > 0 {
+		launchConfig["dropCapabilities"] = strings.Join(t.Environment.DropCapabilities(), ",")
+	}
+	if containerRunType == podman && t.Environment.RegistryAuth() != nil {
+		logrus.Warningf("NOT SUPPORTED: podman && environment.registry_auth -- use podman login")
+	}
 	return &launchConfig
 }
 
