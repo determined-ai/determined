@@ -4,9 +4,9 @@
  Installation Requirements
 ###########################
 
-******************
-Basic Requirements
-******************
+********************
+ Basic Requirements
+********************
 
 Deploying Determined with Slurm has the following requirements.
 
@@ -25,9 +25,9 @@ Deploying Determined with Slurm has the following requirements.
 
 -  Determined supports the `active Python versions <https://endoflife.date/python>`__.
 
-*********************
-Launcher Requirements
-*********************
+***********************
+ Launcher Requirements
+***********************
 
 The launcher has the following additional requirements on the installation node:
 

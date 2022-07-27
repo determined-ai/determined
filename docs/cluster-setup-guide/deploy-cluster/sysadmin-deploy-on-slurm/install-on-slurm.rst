@@ -133,9 +133,9 @@ configure the Determined master:
    configuration. For more complete validation, ensure that the ``slots_per_trial`` is at least
    twice the number of GPUs available on a single node.
 
-***************
-Configure Slurm
-***************
+*****************
+ Configure Slurm
+*****************
 
 Determined should function with your existing Slurm configuration. The following steps are
 recommended to optimize how Determined interacts with Slurm:

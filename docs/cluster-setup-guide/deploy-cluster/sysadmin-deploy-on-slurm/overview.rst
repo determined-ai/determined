@@ -26,9 +26,9 @@ Determined workloads to access all of the advanced capabilities of the Slurm wor
 
 This section describes how to install Determined on a Slurm cluster.
 
-*********
-Reference
-*********
+***********
+ Reference
+***********
 
 -  :ref:`Determined Installation Requirements <system-requirements>`
 -  `Slurm <https://slurm.schedmd.com/documentation.html>`__

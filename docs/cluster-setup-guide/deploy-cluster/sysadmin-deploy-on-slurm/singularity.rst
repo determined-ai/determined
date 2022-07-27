@@ -13,9 +13,9 @@ need for Singularity to download and convert the image.
 Each version of Determined utilizes specifically-tagged Docker containers. The image tags referenced
 by default in this version of Determined are described below.
 
-*********************
-Default Docker Images
-*********************
+***********************
+ Default Docker Images
+***********************
 
 +-------------+---------------------------------------------------------------------------------------+
 | Environment | File Name                                                                             |
@@ -29,11 +29,12 @@ Default Docker Images
 
 See :doc:`/training/setup-guide/overview` for the Docker Hub location of these images.
 
-**********
-Add Images
-**********
+************
+ Add Images
+************
 
-Add each tagged image requried by your environment and the needs of your experiments to the image cache:
+Add each tagged image requried by your environment and the needs of your experiments to the image
+cache:
 
 #. Create a directory path using the same prefix as the image name referenced in the
    ``singularity_image_root`` directory. For example, the image
