@@ -56,6 +56,7 @@ describe('AvatarCard', () => {
         { className: 'test-class', darkLight: DarkLight.Light, displayName: 'test' },
       );
       expect(container.children[0]).toHaveAttribute('class');
+      expect(container.children[0]).toHaveClass('base');
       expect(container.children[0]).toHaveClass('test-class');
     });
 
