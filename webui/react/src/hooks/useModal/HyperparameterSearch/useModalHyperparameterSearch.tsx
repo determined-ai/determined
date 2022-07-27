@@ -248,8 +248,9 @@ const useModalHyperparameterSearch = ({
       const hyperparameters = formValues as Record<string, HyperparameterRowValues>;
       setValidationError(!Object.values(hyperparameters).every((hp) => {
         switch (hp.type) {
-          case HyperparameterType.Constant:
           case HyperparameterType.Categorical:
+            return true;
+          case HyperparameterType.Constant:
             return hp.value != null;
           default:
             return hp.min != null && hp.max != null && hp.max >= hp.min &&
