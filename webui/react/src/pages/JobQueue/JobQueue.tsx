@@ -11,19 +11,19 @@ import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
-import { cancelExperiment, getJobQ, getJobQStats, killCommand, killExperiment,
-  killJupyterLab, killShell, killTensorBoard } from 'services/api';
+import { paths } from 'routes/utils';
+import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
-import {
-  canManageJob, moveJobToPosition, orderedSchedulers, unsupportedQPosSchedulers,
-} from 'utils/job';
+import { canManageJob, jobTypeToCommandType, moveJobToPosition,
+  orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { numericSorter } from 'utils/sort';
 
 import css from './JobQueue.module.scss';
@@ -96,29 +96,18 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const dropDownOnTrigger = useCallback((job: Job) => {
-    const triggers: Triggers<JobAction> = {
-      [JobAction.Cancel]: async () => {
-        switch (job.type) {
-          case JobType.EXPERIMENT:
-            await cancelExperiment({ experimentId: parseInt(job.entityId, 10) });
-            break;
-          case JobType.COMMAND:
-            await killCommand({ commandId: job.entityId });
-            break;
-          case JobType.TENSORBOARD:
-            await killTensorBoard({ commandId: job.entityId });
-            break;
-          case JobType.SHELL:
-            await killShell({ commandId: job.entityId });
-            break;
-          case JobType.NOTEBOOK:
-            await killJupyterLab({ commandId: job.entityId });
-            break;
-          default:
-            return Promise.resolve();
-        }
-      },
-    };
+    const triggers: Triggers<JobAction> = {};
+    const commandType = jobTypeToCommandType(job.type);
+
+    if (commandType) {
+      triggers[JobAction.Kill] = () => {
+        killTask({ id: job.entityId, type: commandType });
+      };
+      triggers[JobAction.ViewLog] = () => {
+        routeToReactUrl(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
+      };
+    }
+
     if (selectedRp && isJobOrderAvailable &&
         job.summary.jobsAhead > 0 && canManageJob(job, selectedRp) &&
         !unsupportedQPosSchedulers.has(selectedRp.schedulerType)) {
@@ -127,6 +116,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
     // if job is an experiment type add action to kill it
     if (job.type === JobType.EXPERIMENT) {
+      triggers[JobAction.Cancel] = async () => {
+        await cancelExperiment({ experimentId: parseInt(job.entityId, 10) });
+      };
       triggers[JobAction.Kill] = async () => {
         await killExperiment({ experimentId: parseInt(job.entityId, 10) });
       };
@@ -146,7 +138,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     });
     return triggers;
-  }, [ isJobOrderAvailable, jobs, selectedRp, fetchAll ]);
+  }, [ selectedRp, isJobOrderAvailable, jobs, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
@@ -164,6 +156,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                   actionOrder={[
                     JobAction.ManageJob,
                     JobAction.MoveToTop,
+                    JobAction.ViewLog,
                     JobAction.Cancel,
                     JobAction.Kill,
                   ]}
