@@ -1,7 +1,8 @@
 import logging
+import random
 import uuid
 from typing import List
-import random
+
 import pytest
 
 from determined.searcher.search_method import (
@@ -53,7 +54,7 @@ class SingleSearchMethod(SearchMethod):
         return 0.99  # TODO change signature
 
     def on_trial_exited_early(
-            self, request_id: uuid.UUID, exit_reason: ExitedReason
+        self, request_id: uuid.UUID, exit_reason: ExitedReason
     ) -> List[Operation]:
         logging.warning(f"Trial {request_id} exited early: {exit_reason}")
         return [Shutdown()]
@@ -124,7 +125,7 @@ class RandomSearcherMethod(SearchMethod):
 
     def progress(self) -> float:
         if 0 < self.max_concurrent_trials < self.pending_trials:
-            logging.error('pending trials is greater than max_concurrent_trial')
+            logging.error("pending trials is greater than max_concurrent_trial")
         progress = self.closed_trials / self.max_trials
 
         logging.info(f"progress = {progress}")
@@ -132,7 +133,7 @@ class RandomSearcherMethod(SearchMethod):
         return progress
 
     def on_trial_exited_early(
-            self, request_id: uuid.UUID, exit_reason: ExitedReason
+        self, request_id: uuid.UUID, exit_reason: ExitedReason
     ) -> List[Operation]:
         self.pending_trials -= 1
         ops = []
@@ -178,6 +179,6 @@ class RandomSearcherMethod(SearchMethod):
         logging.info(f"closed trials={self.closed_trials}")
 
     def sample_params(self):
-        hparams = {'global_batch_size': random.randint(10, 100)}
+        hparams = {"global_batch_size": random.randint(10, 100)}
         logging.info(f"hparams={hparams}")
         return hparams
