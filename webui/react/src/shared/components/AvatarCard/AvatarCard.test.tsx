@@ -33,14 +33,14 @@ describe('AvatarCard', () => {
 
   describe('Light Dark Mode', () => {
     it('should be light mode color', () => {
-      setup({ darkLight: DarkLight.Light, displayName: 'Admin' });
-      expect(screen.getByTestId('avatar-element'))
+      const { view } = setup({ darkLight: DarkLight.Light, displayName: 'Admin' });
+      expect(view.container.querySelector('#avatar'))
         .toHaveStyle('background-color: hsl(290, 63%, 60%)');
     });
 
     it('should be dark mode color', () => {
-      setup({ darkLight: DarkLight.Dark, displayName: 'Admin' });
-      expect(screen.getByTestId('avatar-element'))
+      const { view } = setup({ darkLight: DarkLight.Dark, displayName: 'Admin' });
+      expect(view.container.querySelector('#avatar'))
         .toHaveStyle('background-color: hsl(290, 63%, 38%)');
     });
   });
