@@ -44,11 +44,11 @@ func setup() (*Service, *mocks.DB, *mocks.UserAuthZ, echo.Context) {
 func TestAuthzGetMe(t *testing.T) {
 	svc, _, authzUser, ctx := setup()
 
-	authzUser.On("CanGetMe", model.User{}).Return(fmt.Errorf("CanGetMeError"))
+	authzUser.On("CanGetMe", model.User{}).Return(fmt.Errorf("canGetMeError"))
 
 	_, err := svc.getMe(ctx)
 	authzUser.AssertCalled(t, "CanGetMe", model.User{})
-	require.Contains(t, err.Error(), "CanGetMeError")
+	require.Contains(t, err.Error(), "canGetMeError")
 }
 
 func TestAuthzUserList(t *testing.T) {
@@ -56,11 +56,11 @@ func TestAuthzUserList(t *testing.T) {
 
 	db.On("UserList").Return([]model.FullUser{}, nil)
 	authzUser.On("FilterUserList", model.User{}, []model.FullUser{}).
-		Return(nil, fmt.Errorf("FilterUserListError"))
+		Return(nil, fmt.Errorf("filterUserListError"))
 
 	_, err := svc.getUsers(ctx)
 	authzUser.AssertCalled(t, "FilterUserList", model.User{}, []model.FullUser{})
-	require.Contains(t, err.Error(), "FilterUserListError")
+	require.Contains(t, err.Error(), "filterUserListError")
 }
 
 func TestAuthzPatchUser(t *testing.T) {
@@ -112,11 +112,11 @@ func TestAuthzPatchUsername(t *testing.T) {
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	db.On("UserByUsername", "admin").Return(&model.User{}, nil)
 	authzUser.On("CanSetUsersUsername", model.User{}, model.User{}).
-		Return(fmt.Errorf("CanSetUsersUsernameError"))
+		Return(fmt.Errorf("canSetUsersUsernameError"))
 
 	_, err := svc.patchUsername(ctx)
 	authzUser.AssertCalled(t, "CanSetUsersUsername", model.User{}, model.User{})
-	require.Contains(t, err.Error(), "CanSetUsersUsernameError")
+	require.Contains(t, err.Error(), "canSetUsersUsernameError")
 }
 
 func TestAuthzPostUsername(t *testing.T) {
@@ -130,11 +130,11 @@ func TestAuthzPostUsername(t *testing.T) {
 	var agentGroup *model.AgentUserGroup
 	db.On("UserByUsername", "admin").Return(&model.User{}, nil)
 	authzUser.On("CanCreateUser", model.User{}, model.User{Username: "x"}, agentGroup).
-		Return(fmt.Errorf("CanCreateUserError"))
+		Return(fmt.Errorf("canCreateUserError"))
 
 	_, err := svc.postUser(ctx)
 	authzUser.AssertCalled(t, "CanCreateUser", model.User{}, model.User{Username: "x"}, agentGroup)
-	require.Contains(t, err.Error(), "CanCreateUserError")
+	require.Contains(t, err.Error(), "canCreateUserError")
 }
 
 func TestAuthzGetUserImage(t *testing.T) {
@@ -143,9 +143,9 @@ func TestAuthzGetUserImage(t *testing.T) {
 	ctx.SetParamValues("admin")
 
 	authzUser.On("CanGetUsersImage", model.User{}, "admin").
-		Return(fmt.Errorf("CanGetUsersImageError"))
+		Return(fmt.Errorf("canGetUsersImageError"))
 
 	_, err := svc.getUserImage(ctx)
 	authzUser.AssertCalled(t, "CanGetUsersImage", model.User{}, "admin")
-	require.Contains(t, err.Error(), "CanGetUsersImageError")
+	require.Contains(t, err.Error(), "canGetUsersImageError")
 }
