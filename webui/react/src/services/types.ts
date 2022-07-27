@@ -240,6 +240,12 @@ export interface GetUsersParams extends PaginationParams {
   | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' |'SORT_BY_MODIFIED_TIME';
 }
 
+export interface PostUserParams {
+  username: string,
+  displayName?: string,
+  admin: boolean
+}
+
 export interface SetUserPasswordParams {
   password: string;
   userId: number;

@@ -9,6 +9,7 @@ import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
 
+
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
 ): Api.ConfigurationParameters => {
@@ -119,6 +120,18 @@ export const getUsers: DetApi<
     params.limit,
   ),
 };
+
+export const postUser: DetApi<
+  Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
+> = {
+  name: 'postUser',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUser(
+    {user: {username: params.username,
+      displayName: params.displayName,
+      admin: params.admin, active: true}}, 
+  )
+}
 
 export const setUserPassword: DetApi<
   Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
