@@ -282,6 +282,7 @@ export interface ExperimentConfig {
     maxSlots?: number;
   };
   searcher: {
+    max_length?: Record<'batches' | 'records' | 'epochs', number>,
     max_trials?: number;
     metric: string;
     name: ExperimentSearcherName;

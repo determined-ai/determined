@@ -232,10 +232,10 @@ const useModalHyperparameterSearch = ({
   );
 
   const [ maxLengthUnit, maxLength ] = useMemo(() => {
-    return Object.entries(
-      experiment.configRaw.searcher.max_length,
-    )[0] as ['batches' | 'records' | 'epochs', number];
-  }, [ experiment.configRaw.searcher.max_length ]);
+    return (Object.entries(
+      experiment.config.searcher.max_length ?? { batches: 1 },
+    )[0] ?? [ 'batches', 1 ]) as ['batches' | 'records' | 'epochs', number];
+  }, [ experiment.config.searcher.max_length ]);
 
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
