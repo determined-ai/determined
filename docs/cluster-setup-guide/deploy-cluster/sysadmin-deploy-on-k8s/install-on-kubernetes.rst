@@ -414,3 +414,19 @@ To uninstall Determined run:
 
 :doc:`custom-pod-specs` :doc:`k8s-dev-guide` :doc:`setup-aks-cluster` :doc:`setup-eks-cluster`
 :doc:`setup-gke-cluster`
+************
+Debugging Tips
+************
+
+Here is a command to debug/verify your helm chart without installing:
+
+.. code::
+
+   helm install --dry-run --debug <name for your deployment> determined-helm-chart
+
+If you are unable to access the determined UI, you can use `kubectl get pods` and the following
+commands to inspect if your k8s pods passed or failed deployment
+.. code::
+
+   kubectl logs -f <pod-name>
+   kubectl describe pod <pod-name>
