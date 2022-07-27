@@ -49,6 +49,19 @@ type FullUser struct {
 	AgentGroup null.String `db:"agent_group" json:"agent_group"`
 }
 
+// ToUser converts a FullUser model to just a User model.
+func (u FullUser) ToUser() User {
+	return User{
+		ID:           u.ID,
+		Username:     u.Username,
+		PasswordHash: null.String{},
+		DisplayName:  u.DisplayName,
+		Admin:        u.Admin,
+		Active:       u.Active,
+		ModifiedAt:   u.ModifiedAt,
+	}
+}
+
 // ValidatePassword checks that the supplied password is correct.
 func (user User) ValidatePassword(password string) bool {
 	// If an empty password was posted, we need to check that the

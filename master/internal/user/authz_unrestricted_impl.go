@@ -12,6 +12,14 @@ type UserAuthZUnrestricted struct {
 	AlwaysAllow bool
 }
 
+// CanGetUser for unresticted authz.
+func (a *UserAuthZUnrestricted) CanGetUser(currentUser, targetUser model.User) error {
+	if !a.AlwaysAllow {
+		return fmt.Errorf("CanGetUser DENY")
+	}
+	return nil
+}
+
 // FilterUseList for unresticted authz.
 func (a *UserAuthZUnrestricted) FilterUserList(
 	curUser model.User, users []model.FullUser,
@@ -24,7 +32,7 @@ func (a *UserAuthZUnrestricted) FilterUserList(
 
 // CanCreateUser for unresticted authz.
 func (a *UserAuthZUnrestricted) CanCreateUser(
-	curUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
+	curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
 ) error {
 	if !a.AlwaysAllow {
 		return fmt.Errorf("CanCreateUser DENY")
@@ -41,9 +49,7 @@ func (a *UserAuthZUnrestricted) CanGetMe(curUser model.User) error {
 }
 
 // CanSetUserPassword for unresticted authz.
-func (a *UserAuthZUnrestricted) CanSetUsersPassword(
-	currentUser model.User, targetUser model.User,
-) error {
+func (a *UserAuthZUnrestricted) CanSetUsersPassword(currentUser, targetUser model.User) error {
 	if !a.AlwaysAllow {
 		return fmt.Errorf("CanSetUserPassword DENY")
 	}
@@ -81,11 +87,17 @@ func (a *UserAuthZUnrestricted) CanSetUsersAgentUserGroup(
 }
 
 // CanSetUsersUsername for unresticted authz.
-func (a *UserAuthZUnrestricted) CanSetUsersUsername(
-	curUser, targetUser model.User,
-) error {
+func (a *UserAuthZUnrestricted) CanSetUsersUsername(curUser, targetUser model.User) error {
 	if !a.AlwaysAllow {
 		return fmt.Errorf("CanSetUsersUsername DENY")
+	}
+	return nil
+}
+
+// CanSetUsersDisplayName for unresticted authz.
+func (a *UserAuthZUnrestricted) CanSetUsersDisplayName(curUser, targetUser model.User) error {
+	if !a.AlwaysAllow {
+		return fmt.Errorf("CanSetUsersDisplayName DENY")
 	}
 	return nil
 }
@@ -94,6 +106,32 @@ func (a *UserAuthZUnrestricted) CanSetUsersUsername(
 func (a *UserAuthZUnrestricted) CanGetUsersImage(curUser model.User, targetUsername string) error {
 	if !a.AlwaysAllow {
 		return fmt.Errorf("CanGetUsersImage DENY")
+	}
+	return nil
+}
+
+// CanGetUsersOwnSettings for unresticted authz.
+func (a *UserAuthZUnrestricted) CanGetUsersOwnSettings(curUser model.User) error {
+	if !a.AlwaysAllow {
+		return fmt.Errorf("CanGetUsersOwnSettings DENY")
+	}
+	return nil
+}
+
+// CanCreateUsersOwnSetting for unresticted authz.
+func (a *UserAuthZUnrestricted) CanCreateUsersOwnSetting(
+	curUser model.User, setting model.UserWebSetting,
+) error {
+	if !a.AlwaysAllow {
+		return fmt.Errorf("CanCreateUsersOwnSetting DENY")
+	}
+	return nil
+}
+
+// CanResetUsersOwnSettings for unresticted authz.
+func (a *UserAuthZUnrestricted) CanResetUsersOwnSettings(curUser model.User) error {
+	if !a.AlwaysAllow {
+		return fmt.Errorf("CanResetUsersOwnSettings DENY")
 	}
 	return nil
 }

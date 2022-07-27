@@ -379,7 +379,6 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
-	fmt.Println("PATCH REQ")
 	type (
 		request struct {
 			NewUsername *string `json:"username,omitempty"`
@@ -414,8 +413,6 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err := AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
-		fmt.Println("HERE?!@?!?")
-		fmt.Println("ERR")
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 	return nil, nil
