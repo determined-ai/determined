@@ -20,59 +20,71 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-var dbSingleton *mocks.DB
+// Mocks don't like being initialized more than once?
+var (
+	dbSingleton        *mocks.DB        = &mocks.DB{}
+	userAuthzSingleton *mocks.UserAuthZ = &mocks.UserAuthZ{}
+)
 
-func mustErrorFromAuthz(t *testing.T, expected any, actualError error) {
-	require.Contains(t, actualError.Error(), functionName(expected))
+func init() {
+	AuthZProvider.Register("mock", userAuthzSingleton)
+	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 }
 
-func setup() (*Service, *mocks.DB, echo.Context) {
-	// Make mock database (which for some reason can't be initialized each test?)
-	if dbSingleton == nil {
-		dbSingleton = &mocks.DB{}
-	}
-
-	// Set master config to use our mock AuthZ interface.
-	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "restricted"}
-
+func setup() (*Service, *mocks.DB, *mocks.UserAuthZ, echo.Context) {
 	e := echo.New()
 	c := e.NewContext(nil, nil)
 	ctx := &context.DetContext{Context: c}
 	ctx.SetUser(model.User{})
 
 	InitService(dbSingleton, nil, nil)
-	return GetService(), dbSingleton, ctx
+	return GetService(), dbSingleton, userAuthzSingleton, ctx
 }
 
 func TestAuthzGetMe(t *testing.T) {
-	svc, _, ctx := setup()
+	svc, _, authzUser, ctx := setup()
+
+	authzUser.On("CanGetMe", model.User{}).Return(fmt.Errorf("CanGetMeError"))
+
 	_, err := svc.getMe(ctx)
-	mustErrorFromAuthz(t, AuthZProvider.Get().CanGetMe, err)
+	authzUser.AssertCalled(t, "CanGetMe", model.User{})
+	require.Contains(t, err.Error(), "CanGetMeError")
 }
 
 func TestAuthzUserList(t *testing.T) {
-	svc, db, ctx := setup()
-	db.On("UserList").Return(nil, nil)
+	svc, db, authzUser, ctx := setup()
+
+	db.On("UserList").Return([]model.FullUser{}, nil)
+	authzUser.On("FilterUserList", model.User{}, []model.FullUser{}).
+		Return(nil, fmt.Errorf("FilterUserListError"))
+
 	_, err := svc.getUsers(ctx)
-	mustErrorFromAuthz(t, AuthZProvider.Get().FilterUserList, err)
+	authzUser.AssertCalled(t, "FilterUserList", model.User{}, []model.FullUser{})
+	require.Contains(t, err.Error(), "FilterUserListError")
 }
 
 func TestAuthzPatchUser(t *testing.T) {
 	// TODO test for leaking information here!
 	// Specifically we can leak the existance of a user here.
-	svc, db, ctx := setup()
+	svc, db, authzUser, ctx := setup()
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
 
 	cases := []struct {
-		expected any
-		body     string
+		expectedCall string
+		args         []any
+		body         string
 	}{
-		{AuthZProvider.Get().CanSetUsersPassword, `{"password":"new"}`},
-		{AuthZProvider.Get().CanSetUsersActive, `{"active":false}`},
-		{AuthZProvider.Get().CanSetUsersAdmin, `{"admin":true}`},
+		{"CanSetUsersPassword", []any{model.User{}, model.User{}}, `{"password":"new"}`},
+		{"CanSetUsersActive", []any{model.User{}, model.User{}, false}, `{"active":false}`},
+		{"CanSetUsersAdmin", []any{model.User{}, model.User{}, true}, `{"admin":true}`},
 		{
-			AuthZProvider.Get().CanSetUsersAgentUserGroup,
+			"CanSetUsersAgentUserGroup",
+			[]any{
+				model.User{},
+				model.User{},
+				model.AgentUserGroup{GID: 3, UID: 3, User: "uname", Group: "gname"},
+			},
 			`{"agent_user_group":{"gid":3,"uid":3,"user":"uname","group":"gname"}}`,
 		},
 	}
@@ -81,45 +93,59 @@ func TestAuthzPatchUser(t *testing.T) {
 			strings.NewReader(testCase.body)))
 
 		db.On("UserByUsername", "admin").Return(&model.User{}, nil)
+		authzUser.On(testCase.expectedCall, testCase.args...).
+			Return(fmt.Errorf(testCase.expectedCall + "Error"))
+
 		_, err := svc.patchUser(ctx)
-
-		fmt.Println(ctx.ParamValues(), ctx.ParamNames())
-
-		mustErrorFromAuthz(t, testCase.expected, err)
+		authzUser.AssertCalled(t, testCase.expectedCall, testCase.args...)
+		require.Contains(t, err.Error(), testCase.expectedCall+"Error")
 	}
 }
 
 func TestAuthzPatchUsername(t *testing.T) {
 	// TODO test for leaking information here!
 	// Specifically we can leak the existance of a user here.
-	svc, db, ctx := setup()
+	svc, db, authzUser, ctx := setup()
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
 
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	db.On("UserByUsername", "admin").Return(&model.User{}, nil)
+	authzUser.On("CanSetUsersUsername", model.User{}, model.User{}).
+		Return(fmt.Errorf("CanSetUsersUsernameError"))
+
 	_, err := svc.patchUsername(ctx)
-	mustErrorFromAuthz(t, AuthZProvider.Get().CanSetUsersUsername, err)
+	authzUser.AssertCalled(t, "CanSetUsersUsername", model.User{}, model.User{})
+	require.Contains(t, err.Error(), "CanSetUsersUsernameError")
 }
 
 func TestAuthzPostUsername(t *testing.T) {
 	// TODO test for leaking information here!
 	// Specifically we can leak the existance of a user here.
-	svc, db, ctx := setup()
+	svc, db, authzUser, ctx := setup()
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
-
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
+
+	var agentGroup *model.AgentUserGroup
 	db.On("UserByUsername", "admin").Return(&model.User{}, nil)
+	authzUser.On("CanCreateUser", model.User{}, model.User{Username: "x"}, agentGroup).
+		Return(fmt.Errorf("CanCreateUserError"))
+
 	_, err := svc.postUser(ctx)
-	mustErrorFromAuthz(t, AuthZProvider.Get().CanCreateUser, err)
+	authzUser.AssertCalled(t, "CanCreateUser", model.User{}, model.User{Username: "x"}, agentGroup)
+	require.Contains(t, err.Error(), "CanCreateUserError")
 }
 
 func TestAuthzGetUserImage(t *testing.T) {
-	svc, _, ctx := setup()
+	svc, _, authzUser, ctx := setup()
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
 
+	authzUser.On("CanGetUsersImage", model.User{}, "admin").
+		Return(fmt.Errorf("CanGetUsersImageError"))
+
 	_, err := svc.getUserImage(ctx)
-	mustErrorFromAuthz(t, AuthZProvider.Get().CanGetUsersImage, err)
+	authzUser.AssertCalled(t, "CanGetUsersImage", model.User{}, "admin")
+	require.Contains(t, err.Error(), "CanGetUsersImageError")
 }

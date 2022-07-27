@@ -1,5 +1,6 @@
 package user
 
+/*
 import (
 	"reflect"
 	"runtime"
@@ -119,3 +120,4 @@ func init() {
 	AuthZProvider.Register("unrestricted", &UserAuthZUnrestricted{AlwaysAllow: true})
 	AuthZProvider.Register("restricted", &UserAuthZUnrestricted{AlwaysAllow: false})
 }
+*/
