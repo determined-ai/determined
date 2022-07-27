@@ -30,3 +30,11 @@ message GroupDetails {
     // The members of the group
     repeated determined.user.v1.User users = 3;
 }
+
+message GroupSearchResult {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: ["group","num_members"] }
+    };
+    Group group = 1;
+    int32 num_members = 2;
+}

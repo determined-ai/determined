@@ -36,7 +36,7 @@ message GroupSearchRequest {
 }
 
 message GroupSearchResponse {
-    repeated determined.group.v1.Group groups = 1;
+    repeated determined.group.v1.GroupSearchResult groups = 1;
     // Pagination information of the full dataset.
     Pagination pagination = 2;
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
 // addGroup adds a group to the database. Returns ErrDuplicateRow if a
@@ -87,9 +88,11 @@ func SearchGroups(ctx context.Context,
 	name string,
 	userBelongsTo model.UserID,
 	offset, limit int,
-) ([]Group, int, error) {
+) ([]*groupv1.GroupSearchResult, int, error) {
 	var groups []Group
-	query := db.Bun().NewSelect().Model(&groups)
+	query := db.Bun().NewSelect().Model(&groups).
+		Column("id", "group_name", "user_id").
+		ColumnExpr("(SELECT COUNT(*) FROM user_group_membership AS ugm_count WHERE ugm_count.group_id=groups.id) AS member_count")
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)
@@ -111,7 +114,14 @@ func SearchGroups(ctx context.Context,
 		return nil, 0, err
 	}
 
-	return groups, count, err
+	var searchResults = make([]*groupv1.GroupSearchResult, 0, len(groups))
+	for _, g := range groups {
+		searchResults = append(searchResults, &groupv1.GroupSearchResult{
+			Group: g.Proto(),
+		})
+	}
+
+	return searchResults, count, err
 }
 
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the

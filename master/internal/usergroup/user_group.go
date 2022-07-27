@@ -11,9 +11,10 @@ import (
 type Group struct {
 	bun.BaseModel `bun:"table:groups,alias:groups"`
 
-	ID      int          `bun:"id,pk,autoincrement" json:"id"`
-	Name    string       `bun:"group_name,notnull"  json:"name"`
-	OwnerID model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
+	ID          int          `bun:"id,pk,autoincrement" json:"id"`
+	Name        string       `bun:"group_name,notnull"  json:"name"`
+	OwnerID     model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
+	MemberCount int          `bun:"member_count"        json:"memberCount"`
 }
 
 // Proto converts a group to its protobuf representation.

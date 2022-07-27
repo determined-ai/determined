@@ -62,7 +62,7 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 	}
 
 	return &apiv1.GroupSearchResponse{
-		Groups: Groups(groups).Proto(),
+		Groups: groups,
 		Pagination: &apiv1.Pagination{
 			Offset:     req.Offset,
 			Limit:      req.Limit,
@@ -175,6 +175,7 @@ var (
 	errPassthroughMap  = map[error]bool{
 		nil:                true,
 		errBadRequest:      true,
+		errInvalidLimit:    true,
 		errNotFound:        true,
 		errDuplicateRecord: true,
 		errInternal:        true,
