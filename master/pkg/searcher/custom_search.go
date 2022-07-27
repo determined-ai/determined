@@ -12,8 +12,9 @@ type (
 	customSearchState struct {
 		// store the operations
 		// store the events
-		SearchMethodType   SearchMethodType `json:"search_method_type"`
-		SearcherEventQueue *SearcherEventQueue
+		SearchMethodType     SearchMethodType `json:"search_method_type"`
+		SearcherEventQueue   *SearcherEventQueue
+		customSearchProgress float64
 	}
 
 	customSearch struct {
@@ -53,6 +54,26 @@ func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
 	return s.SearcherEventQueue
 }
 
+func (s *customSearch) setCustomSearcherProgress(progress float64) {
+	s.customSearchState.customSearchProgress = progress
+}
+
+func (s *customSearch) trialProgress(ctx context, requestID model.RequestID,
+	progress PartialUnits) {
+	event := experimentv1.SearcherEvent_TrialProgress{
+		TrialProgress: &experimentv1.TrialProgress{
+			RequestId:    requestID.String(),
+			PartialUnits: float64(progress),
+		},
+	}
+
+	searcherEvent := experimentv1.SearcherEvent{
+		Event: &event,
+	}
+
+	s.SearcherEventQueue.Enqueue(&searcherEvent)
+}
+
 func (s *customSearch) trialCreated(ctx context, requestID model.RequestID) ([]Operation, error) {
 	event := experimentv1.SearcherEvent_TrialCreated{
 		TrialCreated: &experimentv1.TrialCreated{
@@ -70,8 +91,7 @@ func (s *customSearch) trialCreated(ctx context, requestID model.RequestID) ([]O
 func (s *customSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
 	trialsClosed map[model.RequestID]bool) float64 {
-	// TODO we need progress event
-	return 0.99
+	return s.customSearchState.customSearchProgress
 }
 
 func (s *customSearch) validationCompleted(

@@ -62,7 +62,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	expEvents = append(expEvents, &searcherEvent2)
 	require.Equal(t, expEvents, queue.GetEvents())
 
-	// Add validationAfter operation.
+	// Add validationAfter.
 	validateAfterOp := ValidateAfter{requestID, uint64(200)}
 	metric := float64(10.3)
 	_, err = customSearchMethod.validationCompleted(ctx, requestID, metric, validateAfterOp)
@@ -86,4 +86,23 @@ func TestCustomSearchMethod(t *testing.T) {
 	err = queue.RemoveUpTo(2)
 	require.NoError(t, err)
 	require.Equal(t, expEvents[2:], queue.events)
+
+	// Add trialProgress.
+	progress := 0.02
+	customSearchMethod.(CustomSearchMethod).trialProgress(ctx, requestID, PartialUnits(progress))
+	require.NoError(t, err)
+	trialProgressEvent := experimentv1.SearcherEvent_TrialProgress{
+		TrialProgress: &experimentv1.TrialProgress{},
+	}
+	expEventCount++
+	searcherEvent4 := experimentv1.SearcherEvent{
+		Event: &trialProgressEvent,
+		Id:    expEventCount,
+	}
+	expEvents = append(expEvents, &searcherEvent4)
+	require.Equal(t, expEvents, queue.GetEvents())
+
+	// Set customSearcherProgress.
+	customSearchMethod.(CustomSearchMethod).setCustomSearcherProgress(progress)
+	require.Equal(t, progress, customSearchMethod.progress(nil, nil))
 }
