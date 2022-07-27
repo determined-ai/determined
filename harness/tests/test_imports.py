@@ -5,7 +5,7 @@ import textwrap
 
 def test_imports() -> None:
     # In a separate python process from pytest, import some common parts of
-    # determined and ensure that no expensive imports are imported as side-effects.
+    # determined and ensure that no expensive imports are imported as side effects.
     script = """
         import sys
         import re

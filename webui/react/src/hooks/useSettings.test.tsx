@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import queryString from 'query-string';
 import React from 'react';
@@ -217,8 +218,8 @@ describe('useSettings', () => {
     expect(history.location.search).toBe('');
   });
 
-  it('should update settings', () => {
-    act(() => result.current.updateSettings(newSettings));
+  it('should update settings', async () => {
+    await act(() => result.current.updateSettings(newSettings));
 
     config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
@@ -226,22 +227,24 @@ describe('useSettings', () => {
         .toStrictEqual(newSettings[settingsKey]);
     });
 
-    expect(history.location.search).toContain([
-      'boolean=false',
-      'booleanArray=false&booleanArray=true',
-      'number=3.14e-12',
-      'numberArray=0&numberArray=100&numberArray=-5280',
-      'string=Hello%20World',
-      'stringArray=abc&stringArray=def&stringArray=ghi',
-    ].join('&'));
+    await waitFor(() => {
+      expect(history.location.search).toContain([
+        'boolean=false',
+        'booleanArray=false&booleanArray=true',
+        'number=3.14e-12',
+        'numberArray=0&numberArray=100&numberArray=-5280',
+        'string=Hello%20World',
+        'stringArray=abc&stringArray=def&stringArray=ghi',
+      ].join('&'));
+    });
   });
 
   it('should keep track of active settings', () => {
     expect(result.current.activeSettings()).toStrictEqual(Object.keys(newSettings));
   });
 
-  it('should have default settings after reset', () => {
-    act(() => result.current.resetSettings());
+  it('should have default settings after reset', async () => {
+    await act(() => result.current.resetSettings());
 
     config.settings.forEach((configProp) => {
       const settingsKey = configProp.key as keyof Settings;
