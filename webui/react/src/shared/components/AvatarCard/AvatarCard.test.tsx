@@ -43,4 +43,21 @@ describe('AvatarCard', () => {
         .toHaveStyle('background-color: hsl(290, 63%, 38%)');
     });
   });
+
+  describe('class name', () => {
+    it('should not have a base class name', () => {
+      const { container } = setup({ darkLight: DarkLight.Light, displayName: 'test' });
+      expect(container.children[0]).toHaveAttribute('class');
+      expect(container.children[0]).toHaveClass('base');
+    });
+
+    it('should have a class name', () => {
+      const { container } = setup(
+        { className: 'test-class', darkLight: DarkLight.Light, displayName: 'test' },
+      );
+      expect(container.children[0]).toHaveAttribute('class');
+      expect(container.children[0]).toHaveClass('test-class');
+    });
+
+  });
 });
