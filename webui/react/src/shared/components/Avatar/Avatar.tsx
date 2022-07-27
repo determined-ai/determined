@@ -50,7 +50,7 @@ const Avatar: React.FC<Props> = (
   if (large) classes.push(css.large);
   if (className) classes.push(className);
   const avatar = (
-    <div className={classes.join(' ')} id="avatar" style={style}>
+    <div className={classes.join(' ')} data-testid="avatar-element" id="avatar" style={style}>
       {getInitials(displayName)}
     </div>
   );
