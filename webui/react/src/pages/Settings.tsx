@@ -27,7 +27,7 @@ const SettingsContent: React.FC = () => {
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const history = useHistory();
 
-  const rbacEnabled = location.pathname.search('rbac-enable') > 0;
+  const rbacEnabled = location.pathname.search('rbac-enabled') > 0;
 
   const showTabs = useMemo(() => {
     // TODO: Enable tabs for admin once user management finishes.
@@ -38,8 +38,7 @@ const SettingsContent: React.FC = () => {
     setTabKey(key);
 
     const basePath = paths.settings(key);
-    const query = rbacEnabled ? 'rbac-enable' : '';
-    history.replace(`${basePath}/${query}`);
+    history.replace(`${basePath}/${rbacEnabled ? 'rbac-enabled' : ''}`);
   }, [ history, rbacEnabled ]);
 
   return showTabs ? (

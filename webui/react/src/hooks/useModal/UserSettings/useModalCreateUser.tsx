@@ -60,6 +60,7 @@ const ModalForm: React.FC<Props> = ({ form, branding }) => (
 interface ModalProps {
   onClose?: () => void;
 }
+
 const useModalCreateUser = ({ onClose }: ModalProps): ModalHooks => {
   const [ form ] = Form.useForm();
   const { info } = useStore();

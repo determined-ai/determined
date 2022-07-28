@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
-import { DetailedUser } from 'types';
 
 import useModalCreateUser, { ADMIN_LABEL, API_SUCCESS_MESSAGE, DISPLAY_NAME_LABEL,
   MODAL_HEADER_LABEL, USER_NAME_LABEL } from './useModalCreateUser';
@@ -20,30 +19,11 @@ jest.mock('services/api', () => ({
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
-const USER_ID = 1;
-
-const CURRENT_USER: DetailedUser = {
-  displayName: 'Test Name',
-  id: USER_ID,
-  isActive: true,
-  isAdmin: false,
-  username: USERNAME,
-};
-
-const USERS: Array<DetailedUser> = [ CURRENT_USER ];
 
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalCreateUser({});
-  const storeDispatch = useStoreDispatch();
-
-  const loadUsers = useCallback(() => {
-    storeDispatch({ type: StoreAction.SetUsers, value: USERS });
-    storeDispatch({ type: StoreAction.SetCurrentUser, value: CURRENT_USER });
-  }, [ storeDispatch ]);
-
-  useEffect(() => loadUsers(), [ loadUsers ]);
 
   return (
     <div>
@@ -66,7 +46,7 @@ const setup = async () => {
   return view;
 };
 
-describe('useModalPasswordChange', () => {
+describe('useModalCreateUser', () => {
   it('should open modal with correct values', async () => {
     await setup();
 
