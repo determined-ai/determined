@@ -217,9 +217,14 @@ html {
     opacity: 1;
     user-select: auto;
   }
-  .ant-table .ant-table-tbody > tr > td[class*=ant-table-cell-fix-] {
-    background-color: var(--theme-stage-weak);
+  .ant-table .ant-table-tbody > tr > td.ant-table-cell {
+    background-color:  var(--theme-stage-weak);
   }
+
+  .ant-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-column-sort {
+    filter: invert(2%);  
+  }
+
   .ant-table .ant-table-tbody > tr.ant-table-row-selected > td {
     background-color: var(--theme-stage);
   }
