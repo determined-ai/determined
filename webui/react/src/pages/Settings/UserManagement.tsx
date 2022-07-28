@@ -33,8 +33,6 @@ const UserManagement: React.FC = () => {
     updateSettings,
   } = useSettings<UserManagementSettings>(settingsConfig);
 
-
-
   const fetchUsers = useCallback(async (): Promise<void> => {
     try {
       const response = await getUsers(
@@ -73,11 +71,14 @@ const UserManagement: React.FC = () => {
     settings.tableOffset,
     fetchUsers ]);
 
-    const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } = useModalCreateUser({onClose: fetchUsers});
+  const {
+    modalOpen: openCreateUserModal,
+    contextHolder: modalCreateUserContextHolder,
+  } = useModalCreateUser({ onClose: fetchUsers });
 
-    const onClickCreateUser = useCallback(() => {
-      openCreateUserModal();
-    }, [ openCreateUserModal ]);
+  const onClickCreateUser = useCallback(() => {
+    openCreateUserModal();
+  }, [ openCreateUserModal ]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {

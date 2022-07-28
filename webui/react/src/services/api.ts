@@ -38,7 +38,7 @@ export const getCurrentUser = generateDetApi<
 
 export const postUser = generateDetApi<
   Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
-  >(Config.postUser)
+  >(Config.postUser);
 
 export const getUsers = generateDetApi<
   Service.GetUsersParams,

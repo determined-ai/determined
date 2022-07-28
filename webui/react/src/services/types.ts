@@ -241,9 +241,9 @@ export interface GetUsersParams extends PaginationParams {
 }
 
 export interface PostUserParams {
-  username: string,
+  admin: boolean,
   displayName?: string,
-  admin: boolean
+  username: string,
 }
 
 export interface SetUserPasswordParams {

@@ -127,11 +127,16 @@ export const postUser: DetApi<
   name: 'postUser',
   postProcess: (response) => response,
   request: (params) => detApi.Users.postUser(
-    {user: {username: params.username,
-      displayName: params.displayName,
-      admin: params.admin, active: true}}, 
-  )
-}
+    {
+      user: {
+        active: true,
+        admin: params.admin,
+        displayName: params.displayName,
+        username: params.username,
+      },
+    },
+  ),
+};
 
 export const setUserPassword: DetApi<
   Service.SetUserPasswordParams, Api.V1SetUserPasswordResponse, Api.V1SetUserPasswordResponse
