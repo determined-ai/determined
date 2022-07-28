@@ -21,12 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-const (
-	AuthNone     int = 0
-	AuthStandard     = 1
-	AuthAdmin        = 2
-)
-
 var (
 	once        sync.Once
 	userService *Service
@@ -36,24 +30,30 @@ var forbiddenError = echo.NewHTTPError(
 	http.StatusForbidden,
 	"user not authorized")
 
-// unauthenticatedPathsMap contains the paths and URIs that are exempted from authentication.
-var unauthenticatedPathsMap = map[string]bool{
-	"/":                   true,
-	"/det/":               true,
-	"/info":               true,
-	"/task-logs":          true,
-	"/ws/data-layer/*":    true,
-	"/agents":             true,
-	"/det/*":              true,
-	"/login":              true,
-	"/api/v1/master":      true,
-	"/api/v1/auth/login":  true,
-	"/api/v1/auth/logout": true,
-	"/proxy/:service/*":   true,
-}
+const (
+	// AuthNone indicates a request needs no authentication.
+	AuthNone int = 0
+	// AuthStandard indicates a request needs authentication.
+	AuthStandard = 1
+	// AuthAdmin indicates a request needs admin authentication.
+	AuthAdmin = 2
+)
 
 // unauthenticatedPointsList contains URIs that are exempted from authentication.
 var unauthenticatedPointsList = []string{
+	"/",
+	"/det/",
+	"/info",
+	"/task-logs",
+	"/ws/data-layer/\\*",
+	"/agents",
+	"/det/\\*",
+	"/login",
+	"/api/v1/master",
+	"/api/v1/auth/login",
+	"/api/v1/auth/logout",
+	"/proxy/:service/\\*",
+	"/api/v1/projects/.*",
 	"/api/v1/notebooks/.*",
 	"/api/v1/tasks/.*",
 	"/api/v1/allocations/.*",
@@ -62,7 +62,7 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/experiments/.*",
 	"/api/v1/trials/.*",
 	"/api/v1/checkpoints",
-	"/agents\\\\?id=.*",
+	"/agents\\?id=.*",
 }
 
 // adminAuthPointsList contains the paths that require admin authentication.
@@ -72,8 +72,10 @@ var adminAuthPointsList = []string{
 	"/api/v1/agents/.*",
 }
 
-var unauthenticatedPointsPattern = regexp.MustCompile("^" + strings.Join(unauthenticatedPointsList, "$|^") + "$")
-var adminAuthPointsPattern = regexp.MustCompile("^" + strings.Join(adminAuthPointsList, "$|^") + "$")
+var unauthenticatedPointsPattern = regexp.MustCompile("^" +
+	strings.Join(unauthenticatedPointsList, "$|^") + "$")
+var adminAuthPointsPattern = regexp.MustCompile("^" +
+	strings.Join(adminAuthPointsList, "$|^") + "$")
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -160,19 +162,26 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 	return s.processAuthentication(next)
 }
 
-// getAuthLevel returns what level of authentication a request needs
+// getAuthLevel returns what level of authentication a request needs.
 func (s *Service) getAuthLevel(c echo.Context) int {
-	_, noAuthPath := unauthenticatedPathsMap[c.Path()]
-	_, noAuthURI := unauthenticatedPathsMap[c.Request().RequestURI]
-
 	switch {
 	case adminAuthPointsPattern.MatchString(c.Request().RequestURI):
+		fmt.Println()
+		fmt.Println("ADMIN AUTH")
+		fmt.Println("REQUEST URI:", c.Request().RequestURI)
+		fmt.Println("PATH:", c.Path())
+		fmt.Println()
 		return AuthAdmin
-	case noAuthPath || noAuthURI:
+	case unauthenticatedPointsPattern.MatchString(c.Path()):
 		return AuthNone
 	case unauthenticatedPointsPattern.MatchString(c.Request().RequestURI):
 		return AuthNone
 	default:
+		fmt.Println()
+		fmt.Println("STANDARD AUTH")
+		fmt.Println("REQUEST URI:", c.Request().RequestURI)
+		fmt.Println("PATH:", c.Path())
+		fmt.Println()
 		return AuthStandard
 	}
 }
@@ -188,7 +197,7 @@ func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 		case AuthAdmin:
 			adminOnly = true
 		}
-		
+
 		user, session, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
