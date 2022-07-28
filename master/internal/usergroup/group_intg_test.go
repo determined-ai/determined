@@ -28,7 +28,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups", func(t *testing.T) {
-		groups, count, err := SearchGroups(ctx, "", 0, 0, 0)
+		groups, _, count, err := SearchGroups(ctx, "", 0, 0, 0)
 		require.NoError(t, err, "failed to search for groups")
 		require.GreaterOrEqual(t, count, len(testGroups), "search returned the wrong count")
 
@@ -37,7 +37,7 @@ func TestUserGroups(t *testing.T) {
 		foundGroup := groups[index]
 		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 
-		groups, count, err = SearchGroups(ctx, testGroup.Name, 0, 0, 0)
+		groups, _, count, err = SearchGroups(ctx, testGroup.Name, 0, 0, 0)
 		require.NoError(t, err, "failed to search for groups")
 		require.Equal(t, 1, count, "search returned the wrong count")
 		require.NotEmpty(t, groups, "failed to find group by name")
@@ -82,7 +82,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, count, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
+		groups, _, count, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
 		require.NoError(t, err, "failed to search for groups that user blongs to")
 
 		index := groupsContain(groups, testGroup.ID)
@@ -168,12 +168,12 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search group with offsets and limits", func(t *testing.T) {
-		answerGroups, count, err := SearchGroups(ctx, "", 0, 0, 3)
+		answerGroups, _, count, err := SearchGroups(ctx, "", 0, 0, 3)
 		require.NoError(t, err, "failed to search for groups")
 		require.LessOrEqual(t, len(answerGroups), 3, "limit was not respected")
 		require.GreaterOrEqual(t, count, len(testGroups), "returned wrong count of groups")
 
-		groups, count, err := SearchGroups(ctx, "", 0, 0, 1)
+		groups, _, count, err := SearchGroups(ctx, "", 0, 0, 1)
 		require.NoError(t, err, "failed to search for groups")
 		require.GreaterOrEqual(t, count, len(testGroups), "returned wrong count of groups")
 		require.Len(t, groups, 1, "limit was not respected")
@@ -183,7 +183,7 @@ func TestUserGroups(t *testing.T) {
 		require.Equal(t, answerGroups[0].Name, foundGroup.Name, "Expected found group to have the same name as the first answerGroup")
 		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
 
-		groups, count, err = SearchGroups(ctx, "", 0, 1, 2)
+		groups, _, count, err = SearchGroups(ctx, "", 0, 1, 2)
 		require.NoError(t, err, "failed to search for groups")
 		require.GreaterOrEqual(t, count, len(testGroups), "search returned the wrong count")
 		require.LessOrEqual(t, len(groups), 2, "Expected no more than two groups to have been returned")
@@ -204,7 +204,7 @@ func TestUserGroups(t *testing.T) {
 		}(g)
 		require.Equal(t, db.ErrNotFound, err, "error")
 
-		groups, count, err := SearchGroups(ctx, tempGroupName, 0, 0, 0)
+		groups, _, count, err := SearchGroups(ctx, tempGroupName, 0, 0, 0)
 		require.NoError(t, err, "error searching for groups to verify rollback")
 		require.Equal(t, 0, count, "should be zero matching groups in the DB")
 		require.Equal(t, 0, len(groups), "should be zero matching groups returned")

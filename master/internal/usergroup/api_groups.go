@@ -55,20 +55,28 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		return nil, errInvalidLimit
 	}
 
-	groups, count, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
+	groups, memberCounts, tableCount, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
 		int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
 
+	var searchResults = make([]*groupv1.GroupSearchResult, len(groups))
+	for i, g := range groups {
+		searchResults[i] = &groupv1.GroupSearchResult{
+			Group:      g.Proto(),
+			NumMembers: memberCounts[i],
+		}
+	}
+
 	return &apiv1.GroupSearchResponse{
-		Groups: groups,
+		Groups: searchResults,
 		Pagination: &apiv1.Pagination{
 			Offset:     req.Offset,
 			Limit:      req.Limit,
 			StartIndex: req.Offset,
 			EndIndex:   req.Offset + int32(len(groups)),
-			Total:      int32(count),
+			Total:      int32(tableCount),
 		},
 	}, nil
 }
@@ -124,6 +132,9 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 
 	users, newName, err := UpdateGroupAndMembers(ctx,
 		int(req.GroupId), req.Name, addUsers, removeUsers)
+	if err != nil {
+		return nil, err
+	}
 
 	resp = &apiv1.GroupWriteResponse{
 		Group: &groupv1.GroupDetails{

@@ -88,11 +88,8 @@ func SearchGroups(ctx context.Context,
 	name string,
 	userBelongsTo model.UserID,
 	offset, limit int,
-) ([]*groupv1.GroupSearchResult, int, error) {
-	var groups []Group
-	query := db.Bun().NewSelect().Model(&groups).
-		Column("id", "group_name", "user_id").
-		ColumnExpr("(SELECT COUNT(*) FROM user_group_membership AS ugm_count WHERE ugm_count.group_id=groups.id) AS member_count")
+) (groups []Group, memberCounts []int32, tableRows int, err error) {
+	query := db.Bun().NewSelect().Model(&groups)
 
 	if len(name) > 0 {
 		query = query.Where("group_name = ?", name)
@@ -100,28 +97,40 @@ func SearchGroups(ctx context.Context,
 
 	if userBelongsTo > 0 {
 		query = query.
-			Join("INNER JOIN user_group_membership AS ugm ON ugm.group_id=groups.id").
-			Where("ugm.user_id = ?", userBelongsTo)
+			Where("EXISTS(SELECT 1 FROM user_group_membership AS m WHERE m.group_id=groups.id AND m.user_id = ?)", userBelongsTo)
 	}
 
-	err := db.PaginateBun(query, "", "", offset, limit).Scan(ctx)
+	paginatedQuery := db.PaginateBun(query, "id", db.SortDirectionAsc, offset, limit)
+
+	err = paginatedQuery.Scan(ctx, &groups)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
 	count, err := query.Count(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
-	var searchResults = make([]*groupv1.GroupSearchResult, 0, len(groups))
-	for _, g := range groups {
-		searchResults = append(searchResults, &groupv1.GroupSearchResult{
-			Group: g.Proto(),
-		})
+	var counts []int32
+	err = paginatedQuery.Model(&counts).
+		ColumnExpr("COUNT(ugm.user_id) AS num_members").
+		Join("LEFT JOIN user_group_membership AS ugm ON groups.id=ugm.group_id").
+		Group("id").
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, 0, err
 	}
 
-	return searchResults, count, err
+	var searchResults = make([]*groupv1.GroupSearchResult, len(groups))
+	for i, g := range groups {
+		searchResults[i] = &groupv1.GroupSearchResult{
+			Group:      g.Proto(),
+			NumMembers: counts[i],
+		}
+	}
+
+	return groups, counts, count, err
 }
 
 // DeleteGroup deletes a group from the database. Returns ErrNotFound if the
