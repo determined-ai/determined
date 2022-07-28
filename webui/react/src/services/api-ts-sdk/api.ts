@@ -2078,6 +2078,38 @@ export enum V1FittingPolicy {
 }
 
 /**
+ * Response to GetActiveTasksCountRequest.
+ * @export
+ * @interface V1GetActiveTasksCountResponse
+ */
+export interface V1GetActiveTasksCountResponse {
+    /**
+     * The count of commands.
+     * @type {number}
+     * @memberof V1GetActiveTasksCountResponse
+     */
+    commands: number;
+    /**
+     * The count of notebooks.
+     * @type {number}
+     * @memberof V1GetActiveTasksCountResponse
+     */
+    notebooks: number;
+    /**
+     * The count of shells.
+     * @type {number}
+     * @memberof V1GetActiveTasksCountResponse
+     */
+    shells: number;
+    /**
+     * The count of TensorBoards.
+     * @type {number}
+     * @memberof V1GetActiveTasksCountResponse
+     */
+    tensorboards: number;
+}
+
+/**
  * Response to GetAgentRequest.
  * @export
  * @interface V1GetAgentResponse
@@ -2867,38 +2899,6 @@ export interface V1GetTaskResponse {
      * @memberof V1GetTaskResponse
      */
     task?: V1Task;
-}
-
-/**
- * Response to GetTasksCountRequest.
- * @export
- * @interface V1GetTasksCountResponse
- */
-export interface V1GetTasksCountResponse {
-    /**
-     * The count of commands.
-     * @type {number}
-     * @memberof V1GetTasksCountResponse
-     */
-    commands: number;
-    /**
-     * The count of notebooks.
-     * @type {number}
-     * @memberof V1GetTasksCountResponse
-     */
-    notebooks: number;
-    /**
-     * The count of shells.
-     * @type {number}
-     * @memberof V1GetTasksCountResponse
-     */
-    shells: number;
-    /**
-     * The count of TensorBoards.
-     * @type {number}
-     * @memberof V1GetTasksCountResponse
-     */
-    tensorboards: number;
 }
 
 /**
@@ -18782,18 +18782,12 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Check the status of a requested task.
-         * @param {string} taskId The requested task id.
+         * @summary Get a count of active tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTask(taskId: string, options: any = {}): FetchArgs {
-            // verify required parameter 'taskId' is not null or undefined
-            if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
-            }
-            const localVarPath = `/api/v1/tasks/{taskId}`
-                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+        getActiveTasksCount(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/tasks/count`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -18819,12 +18813,18 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Get a count of active tasks.
+         * @summary Check the status of a requested task.
+         * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTasksCount(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/tasks/count`;
+        getTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19003,13 +19003,12 @@ export const TasksApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Check the status of a requested task.
-         * @param {string} taskId The requested task id.
+         * @summary Get a count of active tasks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
+        getActiveTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getActiveTasksCount(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19022,12 +19021,13 @@ export const TasksApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a count of active tasks.
+         * @summary Check the status of a requested task.
+         * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTasksCountResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTasksCount(options);
+        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19101,6 +19101,15 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
+         * @summary Get a count of active tasks.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActiveTasksCount(options?: any) {
+            return TasksApiFp(configuration).getActiveTasksCount(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Check the status of a requested task.
          * @param {string} taskId The requested task id.
          * @param {*} [options] Override http request option.
@@ -19108,15 +19117,6 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getTask(taskId: string, options?: any) {
             return TasksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a count of active tasks.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getTasksCount(options?: any) {
-            return TasksApiFp(configuration).getTasksCount(options)(fetch, basePath);
         },
         /**
          * 
@@ -19164,6 +19164,17 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
 export class TasksApi extends BaseAPI {
     /**
      * 
+     * @summary Get a count of active tasks.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TasksApi
+     */
+    public getActiveTasksCount(options?: any) {
+        return TasksApiFp(this.configuration).getActiveTasksCount(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Check the status of a requested task.
      * @param {string} taskId The requested task id.
      * @param {*} [options] Override http request option.
@@ -19172,17 +19183,6 @@ export class TasksApi extends BaseAPI {
      */
     public getTask(taskId: string, options?: any) {
         return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get a count of active tasks.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TasksApi
-     */
-    public getTasksCount(options?: any) {
-        return TasksApiFp(this.configuration).getTasksCount(options)(this.fetch, this.basePath);
     }
 
     /**
