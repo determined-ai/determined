@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/guregu/null.v3"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -147,6 +149,9 @@ func (a *apiServer) PostUser(
 		Username: req.User.Username,
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
+	}
+	if req.User.DisplayName != "" {
+		user.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
 	if err := user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
