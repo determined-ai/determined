@@ -417,7 +417,6 @@ To uninstall Determined run:
 ************
 Debugging Tips
 ************
-
 Here is a command to debug/verify your helm chart without installing:
 
 .. code::
