@@ -955,10 +955,10 @@ export const patchProject: DetApi<
 };
 
 export const deleteProject: DetApi<
-  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, Type.DeletionStatus
 > = {
   name: 'deleteProject',
-  postProcess: noOp,
+  postProcess: decoder.mapDeletionStatus,
   request: (params) => detApi.Projects.deleteProject(params.id),
 };
 

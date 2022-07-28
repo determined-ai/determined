@@ -1098,6 +1098,42 @@ class v1DeleteCheckpointsRequest:
             "checkpointUuids": self.checkpointUuids,
         }
 
+class v1DeleteProjectResponse:
+    def __init__(
+        self,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteProjectResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
+class v1DeleteWorkspaceResponse:
+    def __init__(
+        self,
+        completed: bool,
+    ):
+        self.completed = completed
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteWorkspaceResponse":
+        return cls(
+            completed=obj["completed"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "completed": self.completed,
+        }
+
 class v1Device:
     def __init__(
         self,
@@ -6833,7 +6869,7 @@ def delete_DeleteProject(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteProjectResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6845,7 +6881,7 @@ def delete_DeleteProject(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteProjectResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteProject", _resp)
 
 def delete_DeleteTemplate(
@@ -6871,7 +6907,7 @@ def delete_DeleteWorkspace(
     session: "client.Session",
     *,
     id: int,
-) -> None:
+) -> "v1DeleteWorkspaceResponse":
     _params = None
     _resp = session._do_request(
         method="DELETE",
@@ -6883,7 +6919,7 @@ def delete_DeleteWorkspace(
         timeout=None,
     )
     if _resp.status_code == 200:
-        return
+        return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
 def post_DisableAgent(

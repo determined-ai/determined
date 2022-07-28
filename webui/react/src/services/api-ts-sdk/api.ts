@@ -1626,6 +1626,12 @@ export interface V1DeleteModelVersionResponse {
  * @interface V1DeleteProjectResponse
  */
 export interface V1DeleteProjectResponse {
+    /**
+     * Status of deletion.
+     * @type {boolean}
+     * @memberof V1DeleteProjectResponse
+     */
+    completed: boolean;
 }
 
 /**
@@ -1642,6 +1648,12 @@ export interface V1DeleteTemplateResponse {
  * @interface V1DeleteWorkspaceResponse
  */
 export interface V1DeleteWorkspaceResponse {
+    /**
+     * Status of deletion.
+     * @type {boolean}
+     * @memberof V1DeleteWorkspaceResponse
+     */
+    completed: boolean;
 }
 
 /**

@@ -320,7 +320,7 @@ export const createProject = generateDetApi<
 >(Config.createProject);
 
 export const deleteProject = generateDetApi<
-  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, void
+  Service.DeleteProjectParams, Api.V1DeleteProjectResponse, Type.DeletionStatus
 >(Config.deleteProject);
 
 export const patchProject = generateDetApi<

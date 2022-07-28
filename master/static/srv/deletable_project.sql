@@ -11,6 +11,5 @@ proj AS (
     OR workspace_id IN (SELECT id FROM owned_workspaces)
   )
 )
-DELETE FROM projects
-WHERE id IN (SELECT id FROM proj)
-RETURNING projects.id;
+SELECT id FROM projects
+WHERE id IN (SELECT id FROM proj);

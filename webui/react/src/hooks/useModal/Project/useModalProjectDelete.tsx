@@ -30,17 +30,35 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
     return (
       <div className={css.base}>
         <p>Are you sure you want to delete <strong>&quot;{project.name}&quot;</strong>?</p>
-        <p>All notes within it will also be deleted. This cannot be undone.</p>
+        <p>All experiments and notes within it will also be deleted. This cannot be undone.</p>
         <label className={css.label} htmlFor="name">Enter project name to confirm deletion</label>
         <Input id="name" value={name} onChange={handleNameInput} />
       </div>
     );
   }, [ handleNameInput, name, project.name ]);
 
+  const fetchProjectDeleteStatus = useCallback(async () => {
+    try {
+      const response = await deleteProject({ id: project.id });
+      if (response.completed) {
+        routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+      }
+    } catch (e) {
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to delete project.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+      return false;
+    }
+  }, [ project.id,
+    project.workspaceId ]);
+
   const handleOk = useCallback(async () => {
     try {
-      await deleteProject({ id: project.id });
-      routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+      await fetchProjectDeleteStatus();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -50,7 +68,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [ project.id, project.workspaceId ]);
+  }, [ fetchProjectDeleteStatus ]);
 
   const getModalProps = useCallback((name = ''): ModalFuncProps => {
     return {

@@ -748,6 +748,10 @@ export interface WorkspacePagination extends WithPagination {
   workspaces: Workspace[];
 }
 
+export interface DeletionStatus {
+  completed: boolean;
+}
+
 export interface Note {
   contents: string;
   name: string;

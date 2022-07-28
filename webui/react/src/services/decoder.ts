@@ -673,6 +673,11 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   };
 };
 
+export const mapDeletionStatus = (response: Sdk.V1DeleteProjectResponse
+| Sdk.V1DeleteWorkspaceResponse): types.DeletionStatus => {
+  return { completed: response.completed };
+};
+
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
     archived: data.archived,
