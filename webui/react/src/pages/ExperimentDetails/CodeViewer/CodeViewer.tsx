@@ -31,16 +31,19 @@ type FileInfo = {
   path: string;
 };
 
+/**
+ * A component responsible to enable the user to view the code for a experiment.
+ *
+ * It renders a file tree and a selected file in the MonacoEditor
+ *
+ * Props:
+ *
+ * experimentID: the experiment ID;
+ *
+ * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
+ */
 const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
-  /**
-   * A component responsible to enable the user to view the code for a experiment.
-   * It renders a file tree and a selected file in the MonacoEditor
-   * Props:
-   * experimentID: the experiment ID;
-   * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
-   *
-   * Original ticket DET-7466
-   */
+
   const { width: documentWidth } = useRecize();
 
   const [ config ] = useState(() => {
@@ -91,11 +94,6 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         path: 'Configuration',
       });
 
-      // if it's in mobile view and we have a config file available, render it as default
-      if (documentWidth <= 1024) {
-        setViewMode('editor');
-      }
-
       return [
         {
           className: 'treeNode',
@@ -108,7 +106,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     }
 
     return files.map<DataNode>((node) => navigateTree(node, node.path || ''));
-  }, [ files, config, documentWidth ]);
+  }, [ files, config ]);
   const fetchFiles = useCallback(
     async () => {
       const newFiles = await getExperimentFileTree({ experimentId });
@@ -134,6 +132,12 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     fetchFiles();
     // TODO: have error handling added.
   }, [ fetchFiles ]);
+
+  useEffect(() => { // when a file is picked, if on mobile, change the view
+    if (documentWidth <= 1024) {
+      setViewMode('editor');
+    }
+  }, [ fileInfo, documentWidth ]);
 
   const onSelectFile = async (
     keys: React.Key[],
@@ -166,10 +170,6 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
           name: info.node.title as string,
           path: filePath,
         });
-
-        if (documentWidth <= 1024) {
-          setViewMode('editor');
-        }
       } catch (error) {
         setIsFetching(false);
         // TODO: have error handling added.
