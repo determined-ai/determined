@@ -36,10 +36,10 @@ def test_run_custom_searcher_experiment() -> None:
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
-    if client._determined is not None:
-        session = client._determined._session
-        response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-        assert response.experiment.numTrials == 1
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    assert response.experiment.numTrials == 1
 
 
 class SingleSearchMethod(SearchMethod):
@@ -98,13 +98,13 @@ def test_run_random_searcher_exp() -> None:
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
-    if client._determined is not None:
-        session = client._determined._session
-        response = bindings.get_GetExperiment(session, experimentId=experiment_id)
-        assert response.experiment.numTrials == 5
-        assert search_method.created_trials == 5
-        assert search_method.pending_trials == 0
-        assert search_method.closed_trials == 5
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    assert response.experiment.numTrials == 5
+    assert search_method.created_trials == 5
+    assert search_method.pending_trials == 0
+    assert search_method.closed_trials == 5
 
 
 class RandomSearcherMethod(SearchMethod):
