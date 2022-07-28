@@ -74,7 +74,8 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 }
 
 func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherEventsRequest) (
-	resp *apiv1.GetSearcherEventsResponse, err error) {
+	resp *apiv1.GetSearcherEventsResponse, err error,
+) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
 	if err != nil {
 		return nil, err
@@ -107,7 +108,8 @@ func (a *apiServer) GetSearcherEvents(_ context.Context, req *apiv1.GetSearcherE
 
 func (a *apiServer) PostSearcherOperations(_ context.Context,
 	req *apiv1.PostSearcherOperationsRequest) (
-	resp *apiv1.PostSearcherOperationsResponse, err error) {
+	resp *apiv1.PostSearcherOperationsResponse, err error,
+) {
 	if err = a.checkExperimentExists(int(req.ExperimentId)); err != nil {
 		return nil, err
 	}

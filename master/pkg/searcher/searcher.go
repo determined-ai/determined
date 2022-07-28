@@ -115,6 +115,9 @@ func (s *Searcher) TrialExitedEarly(
 
 // SetTrialProgress informs the searcher of the progress of a given trial.
 func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialUnits) {
+	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+		sMethod.trialProgress(s.context(), requestID, progress)
+	}
 	s.TrialProgress[requestID] = progress
 }
 
@@ -168,6 +171,13 @@ func (s *Searcher) GetCustomSearcherEventQueue() *SearcherEventQueue {
 		return sMethod.getSearcherEventQueue()
 	}
 	return nil
+}
+
+// SetCustomSearcherProgress sets the custom searcher progress.
+func (s *Searcher) SetCustomSearcherProgress(progress float64) {
+	if sMethod, ok := s.method.(CustomSearchMethod); ok {
+		sMethod.setCustomSearcherProgress(progress)
+	}
 }
 
 // Record records operations that were requested by the searcher for a specific trial.

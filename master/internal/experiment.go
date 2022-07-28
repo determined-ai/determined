@@ -433,6 +433,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ops = append(ops, searcher.ValidateAfterFromProto(concreteOperation))
 			case *experimentv1.SearcherOperation_CloseTrial:
 				ops = append(ops, searcher.CloseFromProto(concreteOperation))
+			case *experimentv1.SearcherOperation_SearcherProgress:
+				ops = append(ops, searcher.SearcherProgressFromProto(concreteOperation))
 			default:
 				ctx.Respond(status.Errorf(codes.Internal, "Unimplemented op %+v", concreteOperation))
 			}
@@ -596,6 +598,8 @@ func (e *experiment) processOperations(
 			state.Complete = false
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
+		case searcher.SearcherProgress:
+			e.searcher.SetCustomSearcherProgress(op.Progress)
 		case searcher.Close:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Closed = true
