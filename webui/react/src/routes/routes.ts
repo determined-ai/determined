@@ -101,6 +101,12 @@ const routes: RouteConfig[] = [
     title: 'Version Details',
   },
   {
+    id: 'modelVersionDetails',
+    needAuth: true,
+    path: '/models/:modelId/versions/:versionId/:tab',
+    title: 'Version Details',
+  },
+  {
     id: 'modelDetails',
     needAuth: true,
     path: '/models/:modelId',
@@ -202,7 +208,13 @@ const routes: RouteConfig[] = [
   {
     id: 'settings',
     needAuth: true,
-    path: '/settings/:tab?',
+    path: '/settings',
+    title: 'Settings',
+  },
+  {
+    id: 'settings',
+    needAuth: true,
+    path: '/settings/:tab',
     title: 'Settings',
   },
 ];
