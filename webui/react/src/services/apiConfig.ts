@@ -495,11 +495,11 @@ export const getTask: DetApi<
 };
 
 export const getActiveTasks: DetApi<
-  Record<string, never>, Api.V1GetTasksCountResponse, Type.TaskCounts
+  Record<string, never>, Api.V1GetActiveTasksCountResponse, Type.TaskCounts
 > = {
-  name: 'getTasksCount',
+  name: 'getActiveTasksCount',
   postProcess: (response) => response,
-  request: () => detApi.Tasks.getTasksCount(),
+  request: () => detApi.Tasks.getActiveTasksCount(),
 };
 
 /* Models */

@@ -1109,7 +1109,8 @@ service Determined {
   }
 
   // Get a count of active tasks.
-  rpc GetTasksCount(GetTasksCountRequest) returns (GetTasksCountResponse) {
+  rpc GetActiveTasksCount(GetActiveTasksCountRequest)
+      returns (GetActiveTasksCountResponse) {
     option (google.api.http) = {
       get: "/api/v1/tasks/count"
     };

@@ -1459,6 +1459,36 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
     FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
 
+class v1GetActiveTasksCountResponse:
+    def __init__(
+        self,
+        commands: int,
+        notebooks: int,
+        shells: int,
+        tensorboards: int,
+    ):
+        self.commands = commands
+        self.notebooks = notebooks
+        self.shells = shells
+        self.tensorboards = tensorboards
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetActiveTasksCountResponse":
+        return cls(
+            commands=obj["commands"],
+            notebooks=obj["notebooks"],
+            shells=obj["shells"],
+            tensorboards=obj["tensorboards"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "commands": self.commands,
+            "notebooks": self.notebooks,
+            "shells": self.shells,
+            "tensorboards": self.tensorboards,
+        }
+
 class v1GetAgentResponse:
     def __init__(
         self,
@@ -2285,36 +2315,6 @@ class v1GetTaskResponse:
     def to_json(self) -> typing.Any:
         return {
             "task": self.task.to_json() if self.task is not None else None,
-        }
-
-class v1GetTasksCountResponse:
-    def __init__(
-        self,
-        commands: int,
-        notebooks: int,
-        shells: int,
-        tensorboards: int,
-    ):
-        self.commands = commands
-        self.notebooks = notebooks
-        self.shells = shells
-        self.tensorboards = tensorboards
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetTasksCountResponse":
-        return cls(
-            commands=obj["commands"],
-            notebooks=obj["notebooks"],
-            shells=obj["shells"],
-            tensorboards=obj["tensorboards"],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "commands": self.commands,
-            "notebooks": self.notebooks,
-            "shells": self.shells,
-            "tensorboards": self.tensorboards,
         }
 
 class v1GetTelemetryResponse:
@@ -6739,6 +6739,23 @@ def post_EnableSlot(
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
+def get_GetActiveTasksCount(
+    session: "client.Session",
+) -> "v1GetActiveTasksCountResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/tasks/count",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetActiveTasksCountResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetActiveTasksCount", _resp)
+
 def get_GetAgent(
     session: "client.Session",
     *,
@@ -7520,23 +7537,6 @@ def get_GetTask(
     if _resp.status_code == 200:
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
-
-def get_GetTasksCount(
-    session: "client.Session",
-) -> "v1GetTasksCountResponse":
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/tasks/count",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1GetTasksCountResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetTasksCount", _resp)
 
 def get_GetTelemetry(
     session: "client.Session",
