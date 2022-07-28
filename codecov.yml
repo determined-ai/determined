@@ -15,3 +15,7 @@ github_checks:
   annotations: false
 
 comment: false
+
+ignore:
+  - "webui/react/.storybook"
+  - "webui/react/src/shared/configs"
