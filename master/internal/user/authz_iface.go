@@ -8,6 +8,7 @@ import (
 // UserAuthZ describes authz methods for `user` package.
 type UserAuthZ interface {
 	CanSetUserPassword(currentUser model.User, targetUser model.User) error
+	CanSetUserDisplayName(currentUser model.User, targetUser model.User) error
 	CanSetUserActive(currentUser model.User, targetUser model.User) error
 	CanSetUserAdmin(currentUser model.User, targetUser model.User) error
 	CanSetUserAgentGroup(currentUser model.User, targetUser model.User) error

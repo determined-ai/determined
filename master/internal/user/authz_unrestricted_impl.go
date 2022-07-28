@@ -15,6 +15,13 @@ func (a *UserAuthZUnrestricted) CanSetUserPassword(
 	return nil
 }
 
+// CanSetUserDisplayName for unresticted authz.
+func (a *UserAuthZUnrestricted) CanSetUserDisplayName(
+	currentUser model.User, targetUser model.User,
+) error {
+	return nil
+}
+
 // CanSetUserActive for unresticted authz.
 func (a *UserAuthZUnrestricted) CanSetUserActive(
 	currentUser model.User, targetUser model.User,
