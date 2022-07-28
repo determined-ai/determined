@@ -11381,7 +11381,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
-    };
+    }
 };
 
 /**

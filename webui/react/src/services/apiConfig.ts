@@ -526,7 +526,7 @@ export const getTrialWorkloads: DetApi<
 export const getExperimentFileFromTree: DetApi<
   Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
 > = {
-  name: 'getExperimentFileFromTree',
+  name: 'getModelDefFile',
   postProcess: (response) => response.file || '',
   request: (params) => {
     return detApi.Experiments.getModelDefFile(

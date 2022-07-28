@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
@@ -31,16 +30,16 @@ type FileInfo = {
   path: string;
 };
 
-/**
- * A component responsible to enable the user to view the code for a experiment.
- * It renders a file tree and a selected file in the MonacoEditor
- * Props:
- * experimentID: the experiment ID;
- * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
- *
- * Original ticket DET-7466
- */
 const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
+  /**
+   * A component responsible to enable the user to view the code for a experiment.
+   * It renders a file tree and a selected file in the MonacoEditor
+   * Props:
+   * experimentID: the experiment ID;
+   * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
+   *
+   * Original ticket DET-7466
+   */
   const { width: documentWidth } = useRecize();
 
   const [ config ] = useState(() => {
@@ -58,7 +57,8 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       return { environment: restEnvironment, ...restConfig };
     }
   });
-  const [ fileTree, setFileTree ] = useState<DataNode[]>([]); // Data structure to be used by the Tree
+  // Data structure to be used by the Tree
+  const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
   const [ treeMap ] = useState(() => new Map<string, string>()); // Map structure from the API
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileInfo, setFileInfo ] = useState<FileInfo>();
@@ -92,7 +92,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
           };
 
           if (node.files?.length) {
-            newNode.children = node.files.map((chNode, idx) => navigateTree(chNode, `${key}-${idx}`));
+            newNode.children = node.files.map(
+              (chNode, idx) => navigateTree(chNode, `${key}-${idx}`),
+            );
             newNode.isLeaf = false;
           }
 
@@ -116,7 +118,8 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
             path: 'Configuration',
           });
 
-          if (documentWidth <= 1024) { // if it's in mobile view and we have a config file available, render it as default
+          // if it's in mobile view and we have a config file available, render it as default
+          if (documentWidth <= 1024) {
             setViewMode('editor');
           }
         } else {
