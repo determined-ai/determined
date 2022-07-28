@@ -141,15 +141,10 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
-func (a *apiServer) GetTasksCount(
-	_ context.Context, req *apiv1.GetTasksCountRequest,
-) (resp *apiv1.GetTasksCountResponse, err error) {
-	finalResp := &apiv1.GetTasksCountResponse{
-		Commands:     0,
-		Notebooks:    0,
-		Shells:       0,
-		Tensorboards: 0,
-	}
+func (a *apiServer) GetActiveTasksCount(
+	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
+) (resp *apiv1.GetActiveTasksCountResponse, err error) {
+	finalResp := &apiv1.GetActiveTasksCountResponse{}
 
 	req1 := &apiv1.GetNotebooksRequest{}
 	resp1 := &apiv1.GetNotebooksResponse{}

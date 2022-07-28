@@ -25,10 +25,10 @@ message GetTaskResponse {
 }
 
 // Request a count of active tasks by type.
-message GetTasksCountRequest {}
+message GetActiveTasksCountRequest {}
 
-// Response to GetTasksCountRequest.
-message GetTasksCountResponse {
+// Response to GetActiveTasksCountRequest.
+message GetActiveTasksCountResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [ "commands", "notebooks", "shells", "tensorboards" ]
