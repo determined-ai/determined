@@ -3,7 +3,7 @@ import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
 import classNames from 'classnames';
 import yaml from 'js-yaml';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
@@ -13,6 +13,7 @@ import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode as FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { RawJson } from 'shared/types';
+import { isEqual } from 'shared/utils/data';
 
 const { DirectoryTree } = Tree;
 
@@ -58,13 +59,66 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     }
   });
   // Data structure to be used by the Tree
-  const [ fileTree, setFileTree ] = useState<DataNode[]>([]);
-  const [ treeMap ] = useState(() => new Map<string, string>()); // Map structure from the API
+  const [ files, setFiles ] = useState<FileNode[]>([]);
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileInfo, setFileInfo ] = useState<FileInfo>();
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | undefined>(
     () => documentWidth <= 1024 ? 'tree' : undefined,
   ); // To be used in the mobile view, switches the UI
+  const fileTree = useMemo(() => {
+    const navigateTree = (node: FileNode, key: string): DataNode => {
+      const newNode: DataNode = {
+        className: 'treeNode',
+        isLeaf: true,
+        key,
+        title: node.name,
+      };
+
+      if (node.files?.length) {
+        newNode.children = node.files.map(
+          (chNode) => navigateTree(chNode, chNode.path || ''),
+        );
+        newNode.isLeaf = false;
+      }
+
+      return newNode;
+    };
+
+    if (config) {
+      setFileInfo({
+        data: yaml.dump(config),
+        name: 'Configuration',
+        path: 'Configuration',
+      });
+
+      // if it's in mobile view and we have a config file available, render it as default
+      if (documentWidth <= 1024) {
+        setViewMode('editor');
+      }
+
+      return [
+        {
+          className: 'treeNode',
+          isLeaf: true,
+          key: 'configuration',
+          title: 'Configuration',
+        },
+        ...files.map<DataNode>((node) => navigateTree(node, node.path || '')),
+      ];
+    }
+
+    return files.map<DataNode>((node) => navigateTree(node, node.path || ''));
+  }, [ files, config, documentWidth ]);
+  const fetchFiles = useCallback(
+    async () => {
+      const newFiles = await getExperimentFileTree({ experimentId });
+
+      if (isEqual(newFiles, files)) return;
+
+      setFiles(newFiles);
+    },
+    [ experimentId, files ],
+  );
 
   const treeClasses = classNames({
     [ css.hideElement ]:
@@ -77,64 +131,16 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
 
   // map the file tree
   useEffect(() => {
-    try {
-      (async () => {
-        const files = await getExperimentFileTree({ experimentId });
-
-        const navigateTree = (node: FileNode, key: string): DataNode => {
-          treeMap.set(key, node.path || '');
-
-          const newNode: DataNode = {
-            className: 'treeNode',
-            isLeaf: true,
-            key,
-            title: node.name,
-          };
-
-          if (node.files?.length) {
-            newNode.children = node.files.map(
-              (chNode, idx) => navigateTree(chNode, `${key}-${idx}`),
-            );
-            newNode.isLeaf = false;
-          }
-
-          return newNode;
-        };
-
-        if (config) {
-          setFileTree([
-            {
-              className: 'treeNode',
-              isLeaf: true,
-              key: '0-0',
-              title: 'Configuration',
-            },
-            ...files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx + 1}`)),
-          ]);
-
-          setFileInfo({
-            data: yaml.dump(config),
-            name: 'Configuration',
-            path: 'Configuration',
-          });
-
-          // if it's in mobile view and we have a config file available, render it as default
-          if (documentWidth <= 1024) {
-            setViewMode('editor');
-          }
-        } else {
-          setFileTree(files.map<DataNode>((node, idx) => navigateTree(node, `0-${idx}`)));
-        }
-      })();
-    } catch (error) {
-      throw new Error(error as string);
-    }
-  }, [ treeMap, config, documentWidth, experimentId ]);
+    fetchFiles();
+    // TODO: have error handling added.
+  }, [ fetchFiles ]);
 
   const onSelectFile = async (
     keys: React.Key[],
     info: { [key:string]: unknown, node: DataNode },
   ) => {
+    if (info.node.title === fileInfo?.name) return; // avoid making unecessary processing.
+
     if (info.node.title === 'Configuration') {
       setFileInfo({
         data: yaml.dump(config),
@@ -145,9 +151,10 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       return;
     }
 
-    const filePath = treeMap.get(String(keys[0])) as string;
+    const filePath = String(info.node.key);
 
-    if (filePath.includes('.')) { // check if the selected node is a file
+    // check if the selected node is a file
+    if (!files.find((file) => file.path === filePath)?.isDir) {
       setIsFetching(true);
 
       try {
@@ -165,13 +172,12 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         }
       } catch (error) {
         setIsFetching(false);
-
-        throw new Error(error as string);
+        // TODO: have error handling added.
       }
     }
   };
 
-  const setEditorLanguageSyntax = () => {
+  const editorLanguageSyntax = useMemo(() => {
     const fileExt = (fileInfo?.path || '').split('.')[1];
 
     if (fileExt === 'md') {
@@ -182,8 +188,12 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       return 'typescript';
     }
 
-    return fileExt;
-  };
+    if (fileExt === 'py') {
+      return 'python';
+    }
+
+    return fileExt || 'yaml'; // returns yaml as default, in case that it's a checkpoint file
+  }, [ fileInfo ]);
 
   return (
     <section className={css.base}>
@@ -249,7 +259,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
               : (
                 <MonacoEditor
                   height="100%"
-                  language={setEditorLanguageSyntax()}
+                  language={editorLanguageSyntax}
                   options={{
                     minimap: {
                       enabled: !!fileInfo?.data.length,
