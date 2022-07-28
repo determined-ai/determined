@@ -21,6 +21,6 @@ func AddProviderInfoToMasterInfo(config *config.Config, masterInfo *aproto.Maste
 
 // RegisterAPIHandlers registers needed API handlers
 // determined by master config. In OSS this is just a no-op.
-func RegisterAPIHandlers(config *config.Config, db *db.PgDB, echo *echo.Echo) error {
+func RegisterAPIHandlers(config *config.Config, db db.DB, echo *echo.Echo) error {
 	return nil
 }

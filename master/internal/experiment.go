@@ -92,7 +92,7 @@ type (
 		rm                  *actor.Ref
 		taskLogger          *task.Logger
 		hpImportance        *actor.Ref
-		db                  *db.PgDB
+		db                  db.DB
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 
@@ -627,7 +627,7 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 }
 
 func checkpointFromTrialIDOrUUID(
-	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
+	db db.DB, trialID *int, checkpointUUIDStr *string,
 ) (*model.Checkpoint, error) {
 	var checkpoint *model.Checkpoint
 	var err error

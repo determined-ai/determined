@@ -30,12 +30,12 @@ type agentResourceManager struct {
 	config      *config.AgentResourceManagerConfig
 	poolsConfig []config.ResourcePoolConfig
 	cert        *tls.Certificate
-	db          *db.PgDB
+	db          db.DB
 
 	pools map[string]*actor.Ref
 }
 
-func newAgentResourceManager(db *db.PgDB, config *config.ResourceConfig,
+func newAgentResourceManager(db db.DB, config *config.ResourceConfig,
 	cert *tls.Certificate,
 ) *agentResourceManager {
 	return &agentResourceManager{

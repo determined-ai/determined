@@ -54,7 +54,7 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 // Setup sets up the actor and endpoints for resource managers.
 func Setup(
 	system *actor.System,
-	db *db.PgDB,
+	db db.DB,
 	echo *echo.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
@@ -85,7 +85,7 @@ func Setup(
 
 func setupAgentResourceManager(
 	system *actor.System,
-	db *db.PgDB,
+	db db.DB,
 	echo *echo.Echo,
 	config *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,

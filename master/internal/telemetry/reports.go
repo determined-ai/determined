@@ -129,7 +129,7 @@ func ReportAllocationTerminal(
 	)
 }
 
-func fetchNumTrials(db *db.PgDB, experimentID int) *int64 {
+func fetchNumTrials(db db.DB, experimentID int) *int64 {
 	result, err := db.ExperimentNumTrials(experimentID)
 	if err != nil {
 		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
@@ -138,7 +138,7 @@ func fetchNumTrials(db *db.PgDB, experimentID int) *int64 {
 	return &result
 }
 
-func fetchNumSteps(db *db.PgDB, experimentID int) *int64 {
+func fetchNumSteps(db db.DB, experimentID int) *int64 {
 	result, err := db.ExperimentNumSteps(experimentID)
 	if err != nil {
 		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
@@ -147,7 +147,7 @@ func fetchNumSteps(db *db.PgDB, experimentID int) *int64 {
 	return &result
 }
 
-func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
+func fetchTotalStepTime(db db.DB, experimentID int) *float64 {
 	result, err := db.ExperimentTotalStepTime(experimentID)
 	if err != nil {
 		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
@@ -157,7 +157,7 @@ func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
-func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Experiment) {
+func ReportExperimentStateChanged(system *actor.System, db db.DB, e model.Experiment) {
 	var numTrials *int64
 	var numSteps *int64
 	var totalStepTime *float64

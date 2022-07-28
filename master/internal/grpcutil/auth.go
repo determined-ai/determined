@@ -41,7 +41,7 @@ var (
 )
 
 // GetAllocationSession returns the currently running task.
-func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSession, error) {
+func GetAllocationSession(ctx context.Context, d db.DB) (*model.AllocationSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, ErrTokenMissing
@@ -68,7 +68,7 @@ func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSes
 }
 
 // GetUser returns the currently logged in user.
-func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions) (*model.User,
+func GetUser(ctx context.Context, d db.DB, extConfig *model.ExternalSessions) (*model.User,
 	*model.UserSession, error,
 ) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -107,7 +107,7 @@ func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions)
 }
 
 // Return error if user cannot be authenticated or lacks authorization.
-func auth(ctx context.Context, db *db.PgDB, fullMethod string,
+func auth(ctx context.Context, db db.DB, fullMethod string,
 	extConfig *model.ExternalSessions,
 ) error {
 	if unauthenticatedMethods[fullMethod] {
@@ -129,7 +129,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 	return nil
 }
 
-func streamAuthInterceptor(db *db.PgDB,
+func streamAuthInterceptor(db db.DB,
 	extConfig *model.ExternalSessions,
 ) grpc.StreamServerInterceptor {
 	return func(
@@ -144,7 +144,7 @@ func streamAuthInterceptor(db *db.PgDB,
 	}
 }
 
-func unaryAuthInterceptor(db *db.PgDB,
+func unaryAuthInterceptor(db db.DB,
 	extConfig *model.ExternalSessions,
 ) grpc.UnaryServerInterceptor {
 	return func(

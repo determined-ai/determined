@@ -27,7 +27,7 @@ import (
 const jsonPretty = "application/json+pretty"
 
 // NewGRPCServer creates a Determined gRPC service.
-func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus bool,
+func NewGRPCServer(db db.DB, srv proto.DeterminedServer, enablePrometheus bool,
 	extConfig *model.ExternalSessions,
 ) *grpc.Server {
 	// In go-grpc, the INFO log level is used primarily for debugging

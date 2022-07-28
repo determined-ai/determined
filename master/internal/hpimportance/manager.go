@@ -68,14 +68,14 @@ type stateRecord struct {
 
 type manager struct {
 	config   config.HPImportanceConfig
-	db       *db.PgDB
+	db       db.DB
 	state    map[int]stateRecord
 	pool     pool.ActorPool
 	disabled bool
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System,
+func NewManager(db db.DB, system *actor.System,
 	config config.HPImportanceConfig, masterRoot string,
 ) (actor.Actor, error) {
 	// growforest should either be installed in PATH (when running from source) or package with the

@@ -42,7 +42,7 @@ type (
 	}
 )
 
-func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, workingDir string,
+func taskHandlerFactory(db db.DB, system *actor.System, growforest string, workingDir string,
 ) func(uint64, interface{}, *actor.Context) interface{} {
 	getManager := func() *actor.Ref {
 		return system.Get(actor.Addr(RootAddr))

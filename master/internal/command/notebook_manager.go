@@ -18,7 +18,7 @@ import (
 )
 
 type notebookManager struct {
-	db         *db.PgDB
+	db         db.DB
 	taskLogger *task.Logger
 }
 

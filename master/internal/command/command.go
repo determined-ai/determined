@@ -43,7 +43,7 @@ type terminateForGC struct{}
 
 func createGenericCommandActor(
 	ctx *actor.Context,
-	db *db.PgDB,
+	db db.DB,
 	taskLogger *task.Logger,
 	taskID model.TaskID,
 	taskType model.TaskType,
@@ -84,7 +84,7 @@ func createGenericCommandActor(
 
 func commandFromSnapshot(
 	ctx *actor.Context,
-	db *db.PgDB,
+	db db.DB,
 	taskLogger *task.Logger,
 	snapshot *CommandSnapshot,
 ) *command {
@@ -116,7 +116,7 @@ func commandFromSnapshot(
 
 func remakeCommandsByType(
 	ctx *actor.Context,
-	pgDB *db.PgDB,
+	d db.DB,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) ([]*command, error) {
@@ -136,7 +136,7 @@ func remakeCommandsByType(
 
 	results := []*command{}
 	for i := range snapshots {
-		cmd := commandFromSnapshot(ctx, pgDB, taskLogger, &snapshots[i])
+		cmd := commandFromSnapshot(ctx, d, taskLogger, &snapshots[i])
 		results = append(results, cmd)
 	}
 
@@ -145,11 +145,11 @@ func remakeCommandsByType(
 
 func restoreCommandsByType(
 	ctx *actor.Context,
-	pgDB *db.PgDB,
+	db db.DB,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) error {
-	commands, err := remakeCommandsByType(ctx, pgDB, taskLogger, taskType)
+	commands, err := remakeCommandsByType(ctx, db, taskLogger, taskType)
 	if err != nil {
 		return err
 	}
@@ -169,12 +169,12 @@ func restoreCommandsByType(
 
 func tryRestoreCommandsByType(
 	ctx *actor.Context,
-	pgDB *db.PgDB,
+	db db.DB,
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
 	if config.IsReattachEnabled() {
-		err := restoreCommandsByType(ctx, pgDB, taskLogger, taskType)
+		err := restoreCommandsByType(ctx, db, taskLogger, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
 		}
@@ -183,7 +183,7 @@ func tryRestoreCommandsByType(
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	db          *db.PgDB
+	db          db.DB
 	eventStream *actor.Ref
 	taskLogger  *task.Logger
 

@@ -99,7 +99,7 @@ type Master struct {
 	echo          *echo.Echo
 	rm            *actor.Ref
 	rwCoordinator *actor.Ref
-	db            *db.PgDB
+	db            db.DB //*db.PgDB
 	proxy         *actor.Ref
 	taskLogger    *task.Logger
 	hpImportance  *actor.Ref
@@ -702,7 +702,7 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
+func updateClusterHeartbeat(ctx context.Context, db db.DB) {
 	t := time.NewTicker(10 * time.Minute)
 	defer t.Stop()
 	for {

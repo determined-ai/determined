@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -65,6 +67,9 @@ type DB interface {
 		experimentBest, trialBest, trialLatest int,
 	) ([]uuid.UUID, error)
 	AddTask(t *model.Task) error
+	TaskByID(tID model.TaskID) (*model.Task, error)
+	CheckTaskExists(id model.TaskID) (bool, error)
+	CompleteTask(id model.TaskID, endTime time.Time) error
 	AddTrial(trial *model.Trial) error
 	TrialByID(id int) (*model.Trial, error)
 	TrialByExperimentAndRequestID(
@@ -89,6 +94,7 @@ type DB interface {
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
+	MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error
 	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
 	PeriodicTelemetryInfo() ([]byte, error)
 	AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error
@@ -176,6 +182,25 @@ type DB interface {
 	EndAllTaskStats() error
 	RecordTaskEndStats(stats *model.TaskStats) error
 	RecordTaskStats(stats *model.TaskStats) error
+	AddJob(j *model.Job) error
+	JobByID(jID model.JobID) (*model.Job, error)
+	UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error
+	GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID]bool, error)
+	GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
+		[]*ExperimentCheckpointGrouping, error,
+	)
+	TrySaveExperimentState(experiment *model.Experiment) error
+	CloseOpenAllocations(exclude []model.AllocationID) error
+	UpdateClusterHeartBeat(currentClusterHeartbeat time.Time) error
+	FailDeletingExperiment() error
+	TaskLogs(
+		taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+	) ([]*model.TaskLog, interface{}, error)
+	TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error)
+	AddTaskLogs([]*model.TaskLog) error
+	TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error)
+	DeleteTaskLogs(taskIDs []model.TaskID) error
+	MaxTerminationDelay() time.Duration
 }
 
 // ErrNotFound is returned if nothing is found.

@@ -19,7 +19,7 @@ import (
 )
 
 type shellManager struct {
-	db         *db.PgDB
+	db         db.DB
 	taskLogger *task.Logger
 }
 

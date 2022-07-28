@@ -19,7 +19,7 @@ func nextAllocationTime(now time.Time) time.Time {
 }
 
 type allocationAggregator struct {
-	db *db.PgDB
+	db db.DB
 }
 
 func (a *allocationAggregator) schedule(ctx *actor.Context) {

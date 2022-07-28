@@ -13,7 +13,7 @@ import (
 )
 
 // RegisterAPIHandler initializes and registers the API handlers for all template related features.
-func RegisterAPIHandler(echo *echo.Echo, db *db.PgDB, middleware ...echo.MiddlewareFunc) {
+func RegisterAPIHandler(echo *echo.Echo, db db.DB, middleware ...echo.MiddlewareFunc) {
 	m := &manager{db: db}
 	apiGroup := echo.Group("/templates", middleware...)
 	apiGroup.GET("", api.Route(m.list))
@@ -22,7 +22,7 @@ func RegisterAPIHandler(echo *echo.Echo, db *db.PgDB, middleware ...echo.Middlew
 	apiGroup.DELETE("/:template_name", api.Route(m.delete))
 }
 
-type manager struct{ db *db.PgDB }
+type manager struct{ db db.DB }
 
 func (m *manager) list(c echo.Context) (interface{}, error) {
 	return m.db.TemplateList()

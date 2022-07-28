@@ -18,7 +18,7 @@ please ensure the client consuming the API is up to date and report a bug if the
 func RegisterAPIHandler(
 	system *actor.System,
 	echo *echo.Echo,
-	db *db.PgDB,
+	db db.DB,
 	taskLogger *task.Logger,
 	middleware ...echo.MiddlewareFunc,
 ) {

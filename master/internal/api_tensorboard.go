@@ -329,7 +329,7 @@ type tensorboardConfig struct {
 }
 
 func getTensorBoardConfigsFromReq(
-	db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
+	db db.DB, req *apiv1.LaunchTensorboardRequest,
 ) ([]*tensorboardConfig, error) {
 	confByID := map[int32]*tensorboardConfig{}
 

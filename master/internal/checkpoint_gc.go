@@ -23,7 +23,7 @@ import (
 
 type checkpointGCTask struct {
 	rm *actor.Ref
-	db *db.PgDB
+	db db.DB
 
 	taskID       model.TaskID
 	allocationID model.AllocationID
@@ -38,7 +38,7 @@ type checkpointGCTask struct {
 	logCtx logger.Context
 }
 
-func newCheckpointGCTask(rm *actor.Ref, db *db.PgDB, taskLogger *task.Logger, taskID model.TaskID,
+func newCheckpointGCTask(rm *actor.Ref, db db.DB, taskLogger *task.Logger, taskID model.TaskID,
 	jobID model.JobID, jobSubmissionTime time.Time, taskSpec tasks.TaskSpec, expID int,
 	legacyConfig expconf.LegacyConfig, toDeleteCheckpoints []uuid.UUID, deleteTensorboards bool,
 	agentUserGroup *model.AgentUserGroup, owner *model.User, logCtx logger.Context,
