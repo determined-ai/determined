@@ -32,11 +32,12 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation        OperationType = 0
-	TrainOperation         OperationType = 1
-	ValidateOperation      OperationType = 2
-	CloseOperation         OperationType = 4
-	ValidateAfterOperation OperationType = 5
+	CreateOperation           OperationType = 0
+	TrainOperation            OperationType = 1
+	ValidateOperation         OperationType = 2
+	CloseOperation            OperationType = 4
+	ValidateAfterOperation    OperationType = 5
+	SearcherProgressOperation OperationType = 6
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -51,6 +52,8 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 			typedOp.OperationType = ValidateAfterOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
+		case SearcherProgress:
+			typedOp.OperationType = SearcherProgressOperation
 		default:
 			return nil, fmt.Errorf("unable to serialize %T as operation", op)
 		}
@@ -221,6 +224,23 @@ func (t ValidateAfter) GetRequestID() model.RequestID { return t.RequestID }
 // ToProto converts a searcher.ValidateAfter to its protobuf representation.
 func (t ValidateAfter) ToProto() *experimentv1.ValidateAfterOperation {
 	return &experimentv1.ValidateAfterOperation{Length: t.Length}
+}
+
+// SearcherProgress contains the progress of the custom searcher.
+type SearcherProgress struct {
+	Progress float64
+}
+
+// NewSearcherProgress creates a SearcherProgress op.
+func NewSearcherProgress(progress float64) SearcherProgress {
+	return SearcherProgress{progress}
+}
+
+// SearcherProgressFromProto creates the SearcherProgress from protobud representation.
+func SearcherProgressFromProto(
+	op *experimentv1.SearcherOperation_SearcherProgress,
+) SearcherProgress {
+	return SearcherProgress{Progress: op.SearcherProgress.Progress}
 }
 
 // Close the trial with the given trial id.

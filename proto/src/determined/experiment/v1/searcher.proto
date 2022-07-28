@@ -18,6 +18,16 @@ message TrialCreated {
   string request_id = 1;
 }
 
+// TrialProgress is a searcher event that tells you the
+// number of batches completed in the trial.
+message TrialProgress {
+  // uuid identifying the trial to the searcher
+  string request_id = 1;
+  // partial_units represent partial epochs, batches or records where the Unit
+  // is implied.
+  double partial_units = 2;
+}
+
 // ValidationCompleted is a searcher event triggered when a validation has been
 // completed.
 message ValidationCompleted {
@@ -82,8 +92,10 @@ message SearcherEvent {
     TrialClosed trial_closed = 6;
     // trial exited early
     TrialExitedEarly trial_exited_early = 7;
+    // trial progress
+    TrialProgress trial_progress = 8;
     // experiment is inactive
-    ExperimentInactive experiment_inactive = 8;
+    ExperimentInactive experiment_inactive = 9;
   }
 }
 
@@ -94,6 +106,13 @@ message ValidateAfterOperation {
   string request_id = 1;
   // The length to train before reporting a validation.
   uint64 length = 2;
+}
+
+// SearcherProgressOperation informs the master of the progress of the custom
+// searcher.
+message SearcherProgressOperation {
+  // progress is experiment progress as a float between 0.0 and 1.0.
+  double progress = 1;
 }
 
 // Used to complete a ValidateAfterOperation.
@@ -138,6 +157,9 @@ message SearcherOperation {
     CloseTrialOperation close_trial = 3;
     // ShutdownOperation is issued to shutdown the custom searcher method.
     ShutdownOperation shutdown = 4;
+    // SearcherProgressOperation is issued to get the progress of custom
+    // searcher method.
+    SearcherProgressOperation searcher_progress = 5;
   }
 }
 

@@ -119,7 +119,8 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 }
 
 func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearcherEventsRequest) (
-	resp *apiv1.GetSearcherEventsResponse, err error) {
+	resp *apiv1.GetSearcherEventsResponse, err error,
+) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,8 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 
 func (a *apiServer) PostSearcherOperations(ctx context.Context,
 	req *apiv1.PostSearcherOperationsRequest) (
-	resp *apiv1.PostSearcherOperationsResponse, err error) {
+	resp *apiv1.PostSearcherOperationsResponse, err error,
+) {
 
 	_, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanRunCustomSearch)

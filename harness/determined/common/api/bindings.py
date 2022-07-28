@@ -5657,6 +5657,7 @@ class v1SearcherEvent:
         trialClosed: "typing.Optional[v1TrialClosed]" = None,
         trialCreated: "typing.Optional[v1TrialCreated]" = None,
         trialExitedEarly: "typing.Optional[v1TrialExitedEarly]" = None,
+        trialProgress: "typing.Optional[v1TrialProgress]" = None,
         validationCompleted: "typing.Optional[v1ValidationCompleted]" = None,
     ):
         self.id = id
@@ -5665,6 +5666,7 @@ class v1SearcherEvent:
         self.validationCompleted = validationCompleted
         self.trialClosed = trialClosed
         self.trialExitedEarly = trialExitedEarly
+        self.trialProgress = trialProgress
         self.experimentInactive = experimentInactive
 
     @classmethod
@@ -5676,6 +5678,7 @@ class v1SearcherEvent:
             validationCompleted=v1ValidationCompleted.from_json(obj["validationCompleted"]) if obj.get("validationCompleted", None) is not None else None,
             trialClosed=v1TrialClosed.from_json(obj["trialClosed"]) if obj.get("trialClosed", None) is not None else None,
             trialExitedEarly=v1TrialExitedEarly.from_json(obj["trialExitedEarly"]) if obj.get("trialExitedEarly", None) is not None else None,
+            trialProgress=v1TrialProgress.from_json(obj["trialProgress"]) if obj.get("trialProgress", None) is not None else None,
             experimentInactive=v1ExperimentInactive.from_json(obj["experimentInactive"]) if obj.get("experimentInactive", None) is not None else None,
         )
 
@@ -5687,6 +5690,7 @@ class v1SearcherEvent:
             "validationCompleted": self.validationCompleted.to_json() if self.validationCompleted is not None else None,
             "trialClosed": self.trialClosed.to_json() if self.trialClosed is not None else None,
             "trialExitedEarly": self.trialExitedEarly.to_json() if self.trialExitedEarly is not None else None,
+            "trialProgress": self.trialProgress.to_json() if self.trialProgress is not None else None,
             "experimentInactive": self.experimentInactive.to_json() if self.experimentInactive is not None else None,
         }
 
@@ -5696,6 +5700,7 @@ class v1SearcherOperation:
         *,
         closeTrial: "typing.Optional[v1CloseTrialOperation]" = None,
         createTrial: "typing.Optional[v1CreateTrialOperation]" = None,
+        searcherProgress: "typing.Optional[v1SearcherProgressOperation]" = None,
         shutdown: "typing.Optional[v1ShutdownOperation]" = None,
         validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None,
     ):
@@ -5703,6 +5708,7 @@ class v1SearcherOperation:
         self.createTrial = createTrial
         self.closeTrial = closeTrial
         self.shutdown = shutdown
+        self.searcherProgress = searcherProgress
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SearcherOperation":
@@ -5711,6 +5717,7 @@ class v1SearcherOperation:
             createTrial=v1CreateTrialOperation.from_json(obj["createTrial"]) if obj.get("createTrial", None) is not None else None,
             closeTrial=v1CloseTrialOperation.from_json(obj["closeTrial"]) if obj.get("closeTrial", None) is not None else None,
             shutdown=v1ShutdownOperation.from_json(obj["shutdown"]) if obj.get("shutdown", None) is not None else None,
+            searcherProgress=v1SearcherProgressOperation.from_json(obj["searcherProgress"]) if obj.get("searcherProgress", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
@@ -5719,6 +5726,26 @@ class v1SearcherOperation:
             "createTrial": self.createTrial.to_json() if self.createTrial is not None else None,
             "closeTrial": self.closeTrial.to_json() if self.closeTrial is not None else None,
             "shutdown": self.shutdown.to_json() if self.shutdown is not None else None,
+            "searcherProgress": self.searcherProgress.to_json() if self.searcherProgress is not None else None,
+        }
+
+class v1SearcherProgressOperation:
+    def __init__(
+        self,
+        *,
+        progress: "typing.Optional[float]" = None,
+    ):
+        self.progress = progress
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearcherProgressOperation":
+        return cls(
+            progress=float(obj["progress"]) if obj.get("progress", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "progress": dump_float(self.progress) if self.progress is not None else None,
         }
 
 class v1SetCommandPriorityRequest:
@@ -6526,6 +6553,29 @@ class v1TrialProfilerMetricsBatch:
             "batches": self.batches,
             "timestamps": self.timestamps,
             "labels": self.labels.to_json(),
+        }
+
+class v1TrialProgress:
+    def __init__(
+        self,
+        *,
+        partialUnits: "typing.Optional[float]" = None,
+        requestId: "typing.Optional[str]" = None,
+    ):
+        self.requestId = requestId
+        self.partialUnits = partialUnits
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1TrialProgress":
+        return cls(
+            requestId=obj.get("requestId", None),
+            partialUnits=float(obj["partialUnits"]) if obj.get("partialUnits", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "requestId": self.requestId if self.requestId is not None else None,
+            "partialUnits": dump_float(self.partialUnits) if self.partialUnits is not None else None,
         }
 
 class v1TrialRunnerMetadata:
