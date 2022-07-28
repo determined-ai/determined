@@ -3,7 +3,7 @@ debug: false
 #profiling:
 #    enabled: true
 #    begin_on_batch: 1
-#    end_after_batch: 10
+#    end_after_batch: 1000
 #    sync_timings: false
 hyperparameters:
   deepspeed_config: ds_config_no_offload.json
@@ -19,7 +19,7 @@ bind_mounts:
       container_path: /root/.cache
 resources:
   slots_per_trial: 2
-records_per_epoch: 50000
+records_per_epoch: 5000
 searcher:
   name: single
   metric: accuracy

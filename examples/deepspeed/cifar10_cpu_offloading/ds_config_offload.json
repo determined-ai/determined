@@ -13,7 +13,7 @@
       "weight_decay": 3e-7
     }
   },
-    "scheduler": {
+  "scheduler": {
     "type": "WarmupLR",
     "params": {
       "warmup_min_lr": 0,
@@ -21,7 +21,7 @@
       "warmup_num_steps": 1000
     }
   },
-   "zero_optimization": {
+  "zero_optimization": {
     "stage": 3,
     "offload_optimizer": {
       "device": "cpu",
