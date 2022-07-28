@@ -95,7 +95,9 @@ describe('useModalCreateUser', () => {
 
     // Check for successful toast message.
     await waitFor(() => {
-      expect(screen.getByText(API_SUCCESS_MESSAGE)).toBeInTheDocument();
+      expect(
+        screen.getByText(API_SUCCESS_MESSAGE, { collapseWhitespace: false }),
+      ).toBeInTheDocument();
     });
 
     // Check for the modal to be dismissed.
