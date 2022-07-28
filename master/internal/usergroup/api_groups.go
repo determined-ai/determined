@@ -13,11 +13,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
-// ApiServer is an embedded api server struct.
-type ApiServer struct{}
+// APIServer is an embedded api server struct.
+type APIServer struct{}
 
 // CreateGroup creates a group and adds members to it, if any.
-func (a *ApiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
+func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.GroupWriteResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -44,8 +44,8 @@ func (a *ApiServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 }
 
 // GetGroups searches for groups that fulfills the criteria given by the user.
-func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest,
-) (resp *apiv1.GroupSearchResponse, err error) {
+func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
+) (resp *apiv1.GetGroupsResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = mapAndFilterErrors(err)
@@ -55,8 +55,8 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		return nil, errInvalidLimit
 	}
 
-	groups, memberCounts, tableCount, err := SearchGroups(ctx, req.Name, model.UserID(req.UserId), int(req.Offset),
-		int(req.Limit))
+	groups, memberCounts, tableCount, err := SearchGroups(ctx,
+		req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 		}
 	}
 
-	return &apiv1.GroupSearchResponse{
+	return &apiv1.GetGroupsResponse{
 		Groups: searchResults,
 		Pagination: &apiv1.Pagination{
 			Offset:     req.Offset,
@@ -82,7 +82,7 @@ func (a *ApiServer) GetGroups(ctx context.Context, req *apiv1.GroupSearchRequest
 }
 
 // GetGroup finds and returns details of the group specified.
-func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
+func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 ) (resp *apiv1.GetGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -112,7 +112,7 @@ func (a *ApiServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 }
 
 // UpdateGroup updates the group and returns the newly updated group details.
-func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
+func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
 ) (resp *apiv1.GroupWriteResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -148,7 +148,7 @@ func (a *ApiServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 }
 
 // DeleteGroup deletes the database entry for the group.
-func (a *ApiServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
+func (a *APIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {

@@ -40,9 +40,9 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 		return Group{}, nil, err
 	}
 	defer func() {
-		err := tx.Rollback()
-		if err != nil && err != sql.ErrTxDone {
-			logrus.WithError(err).Error("error rolling back transaction in AddGroupWithMembers")
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			logrus.WithError(txErr).Error("error rolling back transaction in AddGroupWithMembers")
 		}
 	}()
 
@@ -96,8 +96,11 @@ func SearchGroups(ctx context.Context,
 	}
 
 	if userBelongsTo > 0 {
-		query = query.
-			Where("EXISTS(SELECT 1 FROM user_group_membership AS m WHERE m.group_id=groups.id AND m.user_id = ?)", userBelongsTo)
+		query = query.Where(
+			`EXISTS(SELECT 1
+			FROM user_group_membership AS m
+			WHERE m.group_id=groups.id AND m.user_id = ?)`,
+			userBelongsTo)
 	}
 
 	paginatedQuery := db.PaginateBun(query, "id", db.SortDirectionAsc, offset, limit)
@@ -219,9 +222,9 @@ func UpdateGroupAndMembers(
 		return nil, "", err
 	}
 	defer func() {
-		err := tx.Rollback()
-		if err != nil && err != sql.ErrTxDone {
-			logrus.WithError(err).Error("error rolling back transaction in UpdateGroupAndMembers")
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			logrus.WithError(txErr).Error("error rolling back transaction in UpdateGroupAndMembers")
 		}
 	}()
 

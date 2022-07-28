@@ -1626,7 +1626,7 @@ service Determined {
   }
 
   // Search for groups with optional filters
-  rpc GetGroups(GroupSearchRequest) returns (GroupSearchResponse) {
+  rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/search"
       body: "*"
