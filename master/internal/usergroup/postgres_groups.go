@@ -125,7 +125,7 @@ func SearchGroups(ctx context.Context,
 		return nil, nil, 0, err
 	}
 
-	var searchResults = make([]*groupv1.GroupSearchResult, len(groups))
+	searchResults := make([]*groupv1.GroupSearchResult, len(groups))
 	for i, g := range groups {
 		searchResults[i] = &groupv1.GroupSearchResult{
 			Group:      g.Proto(),

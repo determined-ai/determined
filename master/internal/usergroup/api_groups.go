@@ -61,7 +61,7 @@ func (a *APIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 		return nil, err
 	}
 
-	var searchResults = make([]*groupv1.GroupSearchResult, len(groups))
+	searchResults := make([]*groupv1.GroupSearchResult, len(groups))
 	for i, g := range groups {
 		searchResults[i] = &groupv1.GroupSearchResult{
 			Group:      g.Proto(),
