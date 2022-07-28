@@ -9,12 +9,11 @@ import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } from 'services/api';
+import { getModelVersion, isNotFound, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { routeToReactUrl } from 'shared/utils/routes';
 import { isAborted } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ModelVersion } from 'types';
@@ -162,14 +161,6 @@ const ModelVersionDetails: React.FC = () => {
     }
   }, [ fetchModelVersion, modelId, versionId ]);
 
-  const deleteVersion = useCallback(() => {
-    deleteModelVersion({
-      modelName: modelVersion?.model.name ?? '',
-      versionId: modelVersion?.id ?? 0,
-    });
-    routeToReactUrl(paths.modelDetails(modelId));
-  }, [ modelId, modelVersion?.id, modelVersion?.model.name ]);
-
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
       <div className={css.resource} key={resource}>
@@ -260,7 +251,6 @@ const ModelVersionDetails: React.FC = () => {
       headerComponent={(
         <ModelVersionHeader
           modelVersion={modelVersion}
-          onDeregisterVersion={deleteVersion}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onUpdateTags={saveVersionTags}
