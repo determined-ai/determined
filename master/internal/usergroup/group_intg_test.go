@@ -46,7 +46,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("find group by id", func(t *testing.T) {
-		foundGroup, err := GroupByID(ctx, nil, testGroup.ID)
+		foundGroup, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to find group by id")
 		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
 	})
@@ -55,16 +55,16 @@ func TestUserGroups(t *testing.T) {
 		// Put it back the way it was when we're done
 		defer func(name string) {
 			testGroup.Name = name
-			err := UpdateGroup(ctx, nil, testGroup)
+			err := UpdateGroupTx(ctx, nil, testGroup)
 			require.NoError(t, err, "failed to put things back how they were after testing UpdateGroup")
 		}(testGroup.Name)
 
 		newName := "kljhadsflkgjhjklsfhgasdhj"
 		testGroup.Name = newName
-		err := UpdateGroup(ctx, nil, testGroup)
+		err := UpdateGroupTx(ctx, nil, testGroup)
 		require.NoError(t, err, "failed to update group")
 
-		foundGroup, err := GroupByID(ctx, nil, testGroup.ID)
+		foundGroup, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to find group by id")
 		require.Equal(t, newName, foundGroup.Name, "Expected found group to have the new name")
 	})
@@ -91,10 +91,10 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
-		err := RemoveUsersFromGroup(ctx, nil, testGroup.ID, -500)
+		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
 		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when removing non-existent users from group")
 
-		err = RemoveUsersFromGroup(ctx, nil, testGroup.ID, testUser.ID, -500)
+		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID, -500)
 		require.NoError(t, err, "erroneously returned error when trying to remove a mix of users in a group and not")
 
 		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
@@ -103,7 +103,7 @@ func TestUserGroups(t *testing.T) {
 		i := usersContain(users, testUser.ID)
 		require.Equal(t, -1, i, "User found in group after removing them from it")
 
-		err = RemoveUsersFromGroup(ctx, nil, testGroup.ID, testUser.ID)
+		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when trying to remove users from group they're not in")
 	})
 
@@ -142,7 +142,7 @@ func TestUserGroups(t *testing.T) {
 		err = DeleteGroup(ctx, tmpGroup.ID)
 		require.NoError(t, err, "errored when deleting group")
 
-		_, err = GroupByID(ctx, nil, tmpGroup.ID)
+		_, err = GroupByIDTx(ctx, nil, tmpGroup.ID)
 		require.Equal(t, db.ErrNotFound, err, "deleted group should not be found, and ErrNotFound returned")
 	})
 
@@ -157,7 +157,7 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("Static test group should exist at the end and test user should be in it", func(t *testing.T) {
-		_, err := GroupByID(ctx, nil, testGroupStatic.ID)
+		_, err := GroupByIDTx(ctx, nil, testGroupStatic.ID)
 		require.NoError(t, err, "errored while getting static test group")
 
 		users, err := UsersInGroupTx(ctx, nil, testGroupStatic.ID)
@@ -250,13 +250,13 @@ func TestUserGroups(t *testing.T) {
 
 		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil, []model.UserID{-500})
 		require.Error(t, err, "succeeded when update should have failed")
-		group, err := GroupByID(ctx, nil, testGroup.ID)
+		group, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
 		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
 
 		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", []model.UserID{-500}, nil)
 		require.Error(t, err, "succeeded when update should have failed")
-		group, err = GroupByID(ctx, nil, testGroup.ID)
+		group, err = GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
 		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
 
@@ -302,7 +302,7 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 }
 
 func cleanUp(ctx context.Context, t *testing.T) {
-	err := RemoveUsersFromGroup(ctx, nil, testGroup.ID, testUser.ID)
+	err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
 	if err != nil {
 		t.Logf("Error cleaning up group membership: %v", err)
 	}

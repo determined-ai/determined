@@ -90,7 +90,7 @@ func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 	}()
 
 	gid := int(req.GroupId)
-	g, err := GroupByID(ctx, nil, gid)
+	g, err := GroupByIDTx(ctx, nil, gid)
 	if err != nil {
 		return nil, err
 	}

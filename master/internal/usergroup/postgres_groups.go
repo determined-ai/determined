@@ -3,9 +3,9 @@ package usergroup
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/jackc/pgconn"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -69,8 +69,8 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	return group, users, nil
 }
 
-// GroupByID looks for a group by id. Returns ErrNotFound if the group isn't found.
-func GroupByID(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
+// GroupByIDTx looks for a group by id. Returns ErrNotFound if the group isn't found.
+func GroupByIDTx(ctx context.Context, idb bun.IDB, gid int) (Group, error) {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -147,9 +147,9 @@ func DeleteGroup(ctx context.Context, gid int) error {
 	return nil
 }
 
-// UpdateGroup updates a group in the database. Returns ErrNotFound if the
+// UpdateGroupTx updates a group in the database. Returns ErrNotFound if the
 // group isn't found.
-func UpdateGroup(ctx context.Context, idb bun.IDB, group Group) error {
+func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 	if idb == nil {
 		idb = db.Bun()
 	}
@@ -187,10 +187,10 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 	return nil
 }
 
-// RemoveUsersFromGroup removes users from a group. Removes nothing and
+// RemoveUsersFromGroupTx removes users from a group. Removes nothing and
 // returns ErrNotFound if the group or one of the users' membership rows
 // aren't found.
-func RemoveUsersFromGroup(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
+func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.UserID) error {
 	if len(uids) < 1 {
 		return nil
 	}
@@ -228,7 +228,7 @@ func UpdateGroupAndMembers(
 		}
 	}()
 
-	oldGroup, err := GroupByID(ctx, tx, gid)
+	oldGroup, err := GroupByIDTx(ctx, tx, gid)
 	if err != nil {
 		return nil, "", err
 	}
@@ -237,7 +237,7 @@ func UpdateGroupAndMembers(
 	if name != "" {
 		newName = name
 	}
-	err = UpdateGroup(ctx, tx, Group{
+	err = UpdateGroupTx(ctx, tx, Group{
 		ID:      gid,
 		Name:    newName,
 		OwnerID: oldGroup.OwnerID,
@@ -254,7 +254,7 @@ func UpdateGroupAndMembers(
 	}
 
 	if len(removeUsers) > 0 {
-		err = RemoveUsersFromGroup(ctx, tx, gid, removeUsers...)
+		err = RemoveUsersFromGroupTx(ctx, tx, gid, removeUsers...)
 		if err != nil {
 			return nil, "", err
 		}
