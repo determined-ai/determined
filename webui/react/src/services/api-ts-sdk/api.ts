@@ -9854,12 +9854,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options: any = {}): FetchArgs {
+        getExperimentModelFile(experimentId: number, path: string, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentModelFile.');
@@ -9868,7 +9868,8 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             if (path === null || path === undefined) {
                 throw new RequiredError('path','Required parameter path was null or undefined when calling getExperimentModelFile.');
             }
-            const localVarPath = `/experiment_id/file/download`;
+            const localVarPath = `/experiments/{experiment_id}/file/download`
+                .replace(`{${"experiment_id"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -9880,10 +9881,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (experimentId !== undefined) {
-                localVarQueryParameter['experiment_id'] = experimentId;
             }
 
             if (path !== undefined) {
@@ -10970,12 +10967,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+        getExperimentModelFile(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile(experimentId, path, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -11475,12 +11472,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Get individual file from modal definitions for download.
-         * @param {string} experimentId Id of the experiment
+         * @param {number} experimentId Experiment ID
          * @param {string} path Path to the target file
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: string, path: string, options?: any) {
+        getExperimentModelFile(experimentId: number, path: string, options?: any) {
             return ExperimentsApiFp(configuration).getExperimentModelFile(experimentId, path, options)(fetch, basePath);
         },
         /**
@@ -11826,13 +11823,13 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Get individual file from modal definitions for download.
-     * @param {string} experimentId Id of the experiment
+     * @param {number} experimentId Experiment ID
      * @param {string} path Path to the target file
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentModelFile(experimentId: string, path: string, options?: any) {
+    public getExperimentModelFile(experimentId: number, path: string, options?: any) {
         return ExperimentsApiFp(this.configuration).getExperimentModelFile(experimentId, path, options)(this.fetch, this.basePath);
     }
 
