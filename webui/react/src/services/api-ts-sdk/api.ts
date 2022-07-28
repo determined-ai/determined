@@ -6170,6 +6170,12 @@ export interface V1SearcherEvent {
     trialExitedEarly?: V1TrialExitedEarly;
     /**
      * 
+     * @type {V1TrialProgress}
+     * @memberof V1SearcherEvent
+     */
+    trialProgress?: V1TrialProgress;
+    /**
+     * 
      * @type {V1ExperimentInactive}
      * @memberof V1SearcherEvent
      */
@@ -6206,6 +6212,26 @@ export interface V1SearcherOperation {
      * @memberof V1SearcherOperation
      */
     shutdown?: V1ShutdownOperation;
+    /**
+     * SearcherProgressOperation is issued to get the progress of custom searcher method.
+     * @type {V1SearcherProgressOperation}
+     * @memberof V1SearcherOperation
+     */
+    searcherProgress?: V1SearcherProgressOperation;
+}
+
+/**
+ * SearcherProgressOperation informs the master of the progress of the custom searcher.
+ * @export
+ * @interface V1SearcherProgressOperation
+ */
+export interface V1SearcherProgressOperation {
+    /**
+     * progress is experiment progress as a float between 0.0 and 1.0.
+     * @type {number}
+     * @memberof V1SearcherProgressOperation
+     */
+    progress?: number;
 }
 
 /**
@@ -7024,6 +7050,26 @@ export interface V1TrialProfilerMetricsBatch {
      * @memberof V1TrialProfilerMetricsBatch
      */
     labels: V1TrialProfilerMetricLabels;
+}
+
+/**
+ * TrialProgress is a searcher event that tells you the number of batches completed in the trial.
+ * @export
+ * @interface V1TrialProgress
+ */
+export interface V1TrialProgress {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1TrialProgress
+     */
+    requestId?: string;
+    /**
+     * partial_units represent partial epochs, batches or records where the Unit is implied.
+     * @type {number}
+     * @memberof V1TrialProgress
+     */
+    partialUnits?: number;
 }
 
 /**
