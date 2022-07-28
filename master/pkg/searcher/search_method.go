@@ -48,6 +48,8 @@ type CustomSearchMethod interface {
 	// All the other methods will not implement this which is okay
 	// if defaultSearchMethod is a part of that method's struct.
 	getSearcherEventQueue() *SearcherEventQueue
+	setCustomSearcherProgress(progress float64)
+	trialProgress(ctx context, requestID model.RequestID, progress PartialUnits)
 }
 
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
