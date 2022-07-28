@@ -70,9 +70,9 @@
       display: grid;
       gap: 8px;
 
-      
-      .hyperparameterName * {
-        overflow: hidden;
+      .hyperparameterName {
+        display: flex;
+        gap: 8px;
       }
       h2 {
         border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
@@ -87,7 +87,7 @@
       }
     }
     p { margin: 0; }
-    label {
+    label:not(.ant-checkbox-wrapper) {
       width: 100%;
     }
     .labelWithTooltip {

@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import { useStore } from 'contexts/Store';
+import { useFetchResourcePools } from 'hooks/useFetch';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -87,14 +88,21 @@ const useModalHyperparameterSearch = ({
     SEARCH_METHODS.ASHA,
   );
   const { resourcePools } = useStore();
+  const [ canceler ] = useState(new AbortController());
+  const fetchResourcePools = useFetchResourcePools(canceler);
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
   const [ form ] = Form.useForm();
   const [ currentPage, setCurrentPage ] = useState(0);
-  const [ canceler ] = useState(new AbortController());
   const [ validationError, setValidationError ] = useState(false);
   const formValues = Form.useWatch([], form);
+
+  useEffect(() => {
+    if (resourcePools == null) {
+      fetchResourcePools();
+    }
+  }, [ fetchResourcePools, resourcePools ]);
 
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
@@ -125,8 +133,9 @@ const useModalHyperparameterSearch = ({
       undefined : fields.max_trials;
     baseConfig.searcher.max_length = {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
-    baseConfig.resources.resource_pool = fields.pool;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
+    baseConfig.resources.resource_pool = fields.pool;
+    baseConfig.resources.slots_per_trial = fields.slots_per_trial;
 
     if (fields.searcher === SEARCH_METHODS.ASHA.name) {
       baseConfig.searcher.bracket_rungs = baseConfig.searcher.bracket_rungs ?? [];
@@ -652,7 +661,7 @@ const HyperparameterRow: React.FC<RowProps> = (
 
   return (
     <>
-      <Space className={css.hyperparameterName}>
+      <div className={css.hyperparameterName}>
         <Form.Item
           initialValue={hyperparameter.type !== HyperparameterType.Constant}
           name={[ name, 'active' ]}
@@ -661,7 +670,7 @@ const HyperparameterRow: React.FC<RowProps> = (
           <Checkbox onChange={handleCheck} />
         </Form.Item>
         <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
-      </Space>
+      </div>
       <Form.Item
         initialValue={hyperparameter.type}
         name={[ name, 'type' ]}
@@ -746,6 +755,7 @@ const HyperparameterRow: React.FC<RowProps> = (
           </Form.Item>
           <Form.Item
             hidden={searcher !== SEARCH_METHODS.Grid}
+            initialValue={hyperparameter.count}
             name={[ name, 'count' ]}
             rules={[ {
               min: 0,
