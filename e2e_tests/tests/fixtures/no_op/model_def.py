@@ -145,7 +145,7 @@ class NoOpTrialController(det.TrialController):
         return sum(self.trained_steps.values())
 
     def current_metric(self) -> float:
-        noise = np.random.normal(loc=0.0, scale=self.metrics_sigma ** 2)
+        noise = np.random.normal(loc=0.0, scale=self.metrics_sigma**2)
         if self.metrics_progression == "constant":
             return self.metrics_base + noise
         elif self.metrics_progression == "decreasing":
