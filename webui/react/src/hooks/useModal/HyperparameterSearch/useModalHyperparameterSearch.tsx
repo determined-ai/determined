@@ -1,7 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Alert, Button, Checkbox, Form, Input, InputNumber, ModalFuncProps,
   Radio, RadioChangeEvent, Select, Space, Tooltip, Typography } from 'antd';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -322,7 +321,7 @@ const useModalHyperparameterSearch = ({
             gridTemplateColumns: `180px minmax(0, 1.4fr) 
               repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(0, 1fr))`,
           }}>
-          <h2 className={css.hyperparameterName}>Hyperparameter</h2>
+          <h2>Hyperparameter</h2>
           <h2>Type</h2>
           <h2>Current</h2>
           <h2>Min value</h2>
@@ -587,10 +586,9 @@ interface RowProps {
 const HyperparameterRow: React.FC<RowProps> = (
   { hyperparameter, name, searcher }: RowProps,
 ) => {
-  const form = Form.useFormInstance();
   const type: HyperparameterType | undefined = Form.useWatch([ name, 'type' ]);
   const typeRef = useRef<RefSelectProps>(null);
-  const checked: boolean | undefined = Form.useWatch([ name, 'active' ]);
+  const [ active, setActive ] = useState(hyperparameter.type !== HyperparameterType.Constant);
   const min: number | undefined = Form.useWatch([ name, 'min' ]);
   const max: number | undefined = Form.useWatch([ name, 'max' ]);
   const [ valError, setValError ] = useState<string>();
@@ -599,21 +597,9 @@ const HyperparameterRow: React.FC<RowProps> = (
   const [ rangeError, setRangeError ] = useState<string>();
   const [ countError, setCountError ] = useState<string>();
 
-  const handleCheck = useCallback((e: CheckboxChangeEvent) => {
-    const { checked } = e.target;
-    form.setFields([ {
-      name: [ name, 'type' ],
-      value: checked ? HyperparameterType.Double : HyperparameterType.Constant,
-    } ]);
-    if (checked) typeRef.current?.focus();
-  }, [ form, name ]);
-
   const handleTypeChange = useCallback((value: HyperparameterType) => {
-    form.setFields([ {
-      name: [ name, 'active' ],
-      value: value !== HyperparameterType.Constant,
-    } ]);
-  }, [ form, name ]);
+    setActive(value !== HyperparameterType.Constant);
+  }, []);
 
   const validateValue = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -662,13 +648,6 @@ const HyperparameterRow: React.FC<RowProps> = (
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Form.Item
-          initialValue={hyperparameter.type !== HyperparameterType.Constant}
-          name={[ name, 'active' ]}
-          noStyle
-          valuePropName="checked">
-          <Checkbox onChange={handleCheck} />
-        </Form.Item>
         <Typography.Title ellipsis={{ rows: 1, tooltip: true }} level={3}>{name}</Typography.Title>
       </div>
       <Form.Item
@@ -691,11 +670,11 @@ const HyperparameterRow: React.FC<RowProps> = (
       <Form.Item
         initialValue={hyperparameter.val}
         name={[ name, 'value' ]}
-        rules={[ { required: !checked } ]}
+        rules={[ { required: !active } ]}
         validateStatus={valError ? 'error' : 'success'}>
         <Input
-          disabled={checked}
-          placeholder={checked ? 'n/a' : ''}
+          disabled={active}
+          placeholder={active ? 'n/a' : ''}
           onChange={validateValue}
         />
       </Form.Item>
@@ -726,13 +705,13 @@ const HyperparameterRow: React.FC<RowProps> = (
             name={[ name, 'min' ]}
             rules={[ {
               max: max,
-              required: checked,
+              required: active,
               type: 'number',
             } ]}
-            validateStatus={((minError || rangeError) && checked) ? 'error' : undefined}>
+            validateStatus={((minError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
-              disabled={!checked}
-              placeholder={!checked ? 'n/a' : ''}
+              disabled={!active}
+              placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
               onChange={validateMin}
             />
@@ -742,13 +721,13 @@ const HyperparameterRow: React.FC<RowProps> = (
             name={[ name, 'max' ]}
             rules={[ {
               min: min,
-              required: checked,
+              required: active,
               type: 'number',
             } ]}
-            validateStatus={((maxError || rangeError) && checked) ? 'error' : undefined}>
+            validateStatus={((maxError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
-              disabled={!checked}
-              placeholder={!checked ? 'n/a' : ''}
+              disabled={!active}
+              placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
               onChange={validateMax}
             />
@@ -759,14 +738,14 @@ const HyperparameterRow: React.FC<RowProps> = (
             name={[ name, 'count' ]}
             rules={[ {
               min: 0,
-              required: checked && searcher === SEARCH_METHODS.Grid,
+              required: active && searcher === SEARCH_METHODS.Grid,
               type: 'number',
             } ]}
             validateStatus={(typeof countError === 'string' && searcher === SEARCH_METHODS.Grid
-                && checked) ? 'error' : undefined}>
+                && active) ? 'error' : undefined}>
             <InputNumber
-              disabled={!checked}
-              placeholder={!checked ? 'n/a' : ''}
+              disabled={!active}
+              placeholder={!active ? 'n/a' : ''}
               precision={0}
               onChange={validateCount}
             />
@@ -775,15 +754,15 @@ const HyperparameterRow: React.FC<RowProps> = (
       )}
       {type === HyperparameterType.Categorical &&
         <p className={css.warning}>Categorical hyperparameters are not currently supported.</p>}
-      {(!checked && valError) &&
+      {(!active && valError) &&
         <p className={css.error}>{valError}</p>}
-      {(checked && minError) &&
+      {(active && minError) &&
         <p className={css.error}>{minError}</p>}
-      {(checked && maxError) &&
+      {(active && maxError) &&
         <p className={css.error}>{maxError}</p>}
-      {(checked && rangeError) &&
+      {(active && rangeError) &&
         <p className={css.error}>{rangeError}</p>}
-      {(checked && countError && searcher === SEARCH_METHODS.Grid) &&
+      {(active && countError && searcher === SEARCH_METHODS.Grid) &&
         <p className={css.error}>{countError}</p>}
     </>
   );

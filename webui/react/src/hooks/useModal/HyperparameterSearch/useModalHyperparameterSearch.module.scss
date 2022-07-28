@@ -71,8 +71,8 @@
       gap: 8px;
 
       .hyperparameterName {
+        align-items: center;
         display: flex;
-        gap: 8px;
       }
       h2 {
         border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
