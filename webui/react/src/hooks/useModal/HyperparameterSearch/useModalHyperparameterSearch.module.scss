@@ -87,7 +87,7 @@
       }
     }
     p { margin: 0; }
-    label:not(.ant-checkbox-wrapper) {
+    label:not(:global(.ant-checkbox-wrapper)) {
       width: 100%;
     }
     .labelWithTooltip {
