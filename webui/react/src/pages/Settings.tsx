@@ -33,7 +33,9 @@ const SettingsContent: React.FC = () => {
   const rbacEnabled = queryString.parse(location.search).rbac !== undefined;
 
   const showTabs = useMemo(() => {
-    return user?.isAdmin || rbacEnabled;
+    // TODO: Enable tabs for admin once user management finishes.
+    // return user?.isAdmin || rbacEnabled;
+    return rbacEnabled;
   }, [ rbacEnabled, user?.isAdmin ]);
 
   const handleTabChange = useCallback((key) => {

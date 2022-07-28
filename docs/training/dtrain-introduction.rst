@@ -387,11 +387,11 @@ available in :ref:`experiment-config-reference` under ``optimizations``.
    during gradient transfers, reducing communication overhead.
 
 -  ``optimizations.average_training_metrics`` averages the training metrics across GPUs at the end
-   of every training workload, which requires communication. This typically does not have a major
-   impact on training performance, but if you have a very small ``scheduling_unit``, ensuring it is
-   disabled may improve performance. If this option is disabled, which is the default behavior, only
-   the training metrics from the chief GPU are used. This impacts results shown in the WebUI and
-   TensorBoard but does not influence model behavior or hyperparameter search.
+   of every training workload, which requires communication. ``average_training_metrics`` is set to
+   ``true`` by default. This typically does not have a major impact on training performance, but if
+   you have a very small ``scheduling_unit``, disabling this option may improve performance. When
+   disabled, only the training metrics from the chief GPU are reported. This impacts results shown
+   in the WebUI and TensorBoard but does not influence model behavior or hyperparameter search.
 
 If you do not see improved performance using distributed training, there might be a performance
 bottleneck in the model that cannot be directly alleviated by using multiple GPUs, such as with data

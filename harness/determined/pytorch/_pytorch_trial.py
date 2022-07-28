@@ -128,10 +128,6 @@ class PyTorchTrialController(det.TrialController):
     def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
-    @classmethod
-    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
-        return True
-
     def _check_evaluate_implementation(self) -> None:
         """
         Check if the user has implemented evaluate_batch
@@ -297,6 +293,15 @@ class PyTorchTrialController(det.TrialController):
                         callback.on_training_workload_end(
                             avg_metrics=metrics["avg_metrics"],
                             batch_metrics=metrics["batch_metrics"],
+                            )
+                    if (
+                        self.context.distributed.size > 1
+                        and not self.context._average_training_metrics
+                    ):
+                        warnings.warn(
+                            "Only the chief worker's training metrics are being reported, due "
+                            "to setting average_training_metrics to False.",
+                            UserWarning,
                         )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"

@@ -36,7 +36,7 @@ jobs:
           cd harness; python setup.py bdist_wheel -d ../build
       - name: Install determined
         run: |
-          pip install --find-links build determined==0.18.5.dev0
+          pip install --find-links build determined==0.19.0-dev0
           # Ensure Determined cli can run without installing cli test requirements
           det --help
           pip freeze --all

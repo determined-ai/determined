@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.18.5-dev0
+    default: 0.19.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -2053,6 +2053,40 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
+  test-stress:
+    parameters:
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      det-version:
+        type: string
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: large
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
+
+      - setup-python-venv:
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
+
+      - pull-task-images:
+          tf1: True
+
+      - run-det-deploy-tests:
+          mark: <<parameters.mark>>
+          det-version: <<parameters.det-version>>
+
   scan-docker-images:
     machine:
       image: <<pipeline.parameters.machine-image>>
@@ -2357,6 +2391,17 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+
+      - test-stress:
+          name: test-stress
+          filters: *any-upstream
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [1]
+              mark: ["stress_test"]
+              det-version: [$CIRCLE_SHA1]
 
       - test-det-deploy:
           name: test-det-deploy-local
