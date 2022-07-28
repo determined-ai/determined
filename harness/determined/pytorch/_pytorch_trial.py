@@ -293,7 +293,7 @@ class PyTorchTrialController(det.TrialController):
                         callback.on_training_workload_end(
                             avg_metrics=metrics["avg_metrics"],
                             batch_metrics=metrics["batch_metrics"],
-                            )
+                        )
                     if (
                         self.context.distributed.size > 1
                         and not self.context._average_training_metrics
