@@ -1,9 +1,10 @@
 .. _experiment-config-reference:
+
 .. _experiment-configuration:
 
-###################################
+####################################
  Experiment Configuration Reference
-###################################
+####################################
 
 The behavior of an experiment can be configured via a YAML file. A configuration file is typically
 passed as a command-line argument when an experiment is created with the Determined CLI. For
@@ -63,21 +64,29 @@ example:
 
 ``entrypoint``
 
-A model definition trial class specification or Python launcher script, which is the model processing entrypoint. This field can have the following formats.
+A model definition trial class specification or Python launcher script, which is the model
+processing entrypoint. This field can have the following formats.
 
 Formats that specify a trial class have the form ``<module>:<object_reference>``.
 
-The ``<module>`` field specifies the module containing the trial class in the model definition, relative to root.
+The ``<module>`` field specifies the module containing the trial class in the model definition,
+relative to root.
 
-The ``<object_reference>`` specifies the trial class name in the module, which can be a nested object delimited by a period (``.``).
+The ``<object_reference>`` specifies the trial class name in the module, which can be a nested
+object delimited by a period (``.``).
 
 Examples:
 
--  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level of the context directory.
--  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at the top level of the context directory.
--  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
+-  ``:MnistTrial`` expects an *MnistTrial* class exposed in a ``__init__.py`` file at the top level
+   of the context directory.
+-  ``model_def:CIFAR10Trial`` expects a *CIFAR10Trial* class defined in the ``model_def.py`` file at
+   the top level of the context directory.
+-  ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class, which is an
+   attirbute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
 
-These formats follow Python `Entry points <https://packaging.python.org/specifications/entry-points/>`_ specification except that the context directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
+These formats follow Python `Entry points
+<https://packaging.python.org/specifications/entry-points/>`_ specification except that the context
+directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
 
 Arbitrary Script
 ================
@@ -1029,10 +1038,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
-      NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
+   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
 
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker cache. Defaults to
@@ -1096,7 +1104,7 @@ experiment.
    For multi-GPU training, whether to average the training metrics across GPUs instead of only using
    metrics from the chief GPU. This impacts the metrics shown in the Determined UI and TensorBoard,
    but does not impact the outcome of training or hyperparameter search. This option is currently
-   only supported in PyTorch. Defaults to ``false``.
+   supported for ``PyTorchTrial`` and ``TFKerasTrial`` instances. Defaults to ``true``.
 
 ``gradient_compression``
    Whether to compress gradients when they are exchanged during :ref:`multi-gpu-training`.

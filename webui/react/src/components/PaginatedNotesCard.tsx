@@ -3,8 +3,8 @@ import { Button, Dropdown, Menu, Modal } from 'antd';
 import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import usePrevious from 'hooks/usePrevious';
 import Icon from 'shared/components/Icon/Icon';
+import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';
 
 import NotesCard from './NotesCard';

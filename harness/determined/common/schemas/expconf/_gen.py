@@ -1809,7 +1809,7 @@ schemas = {
                 "boolean",
                 "null"
             ],
-            "default": false
+            "default": true
         },
         "gradient_compression": {
             "type": [

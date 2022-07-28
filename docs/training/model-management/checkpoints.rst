@@ -1,8 +1,8 @@
 .. _use-trained-models:
 
-###################
+#############
  Checkpoints
-###################
+#############
 
 Determined provides APIs for downloading checkpoints and loading them into memory in a Python
 process.
@@ -17,9 +17,9 @@ This guide discusses:
 The Checkpoint Export API is a subset of the features found in the
 :mod:`~determined.experimental.client` module.
 
-**********************
+*******************
  Query Checkpoints
-**********************
+*******************
 
 The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
 experiment. The reference contains the

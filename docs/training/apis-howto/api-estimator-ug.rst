@@ -1,6 +1,6 @@
-##########################
+###############
  Estimator API
-##########################
+###############
 
 +-----------------------------------------------------------------------+
 | API reference                                                         |
@@ -10,19 +10,21 @@
 
 This document guides you through training a Estimator model in Determined. You need to implement a
 trial class that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the
-entrypoint in the :doc:`experiment configuration </reference/reference-training/experiment-config-reference>`.
+entrypoint in the :doc:`experiment configuration
+</reference/reference-training/experiment-config-reference>`.
 
 To learn about this API, you can start by reading the trial definitions from the following examples:
 
 -  :download:`MNIST example </examples/mnist_estimator.tgz>`
 
-*********************************
+*******************************
  Define Optimizer and Datasets
-*********************************
+*******************************
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with    different sources of data.
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
+   work with different sources of data.
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
 using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and
@@ -32,9 +34,9 @@ object where these functions will be found will be in
 
 .. _estimators-custom-reducers:
 
-******************
+****************
  Reduce Metrics
-******************
+****************
 
 Determined supports proper reduction of arbitrary validation metrics during distributed training by
 allowing users to define custom reducers for their metrics. Custom reducers can be either a function

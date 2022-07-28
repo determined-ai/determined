@@ -257,7 +257,7 @@ if __name__ == "__main__":
     cert = certs.default_load(info.master_url)
     sess = Session(
         info.master_url,
-        util.get_container_user_name(),
+        util.get_det_username_from_env(),
         None,
         cert,
         max_retries=get_max_retries_config(),

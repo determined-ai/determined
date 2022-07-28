@@ -22,19 +22,19 @@
    <https://hub.docker.com/_/postgres>`_ for more information.
 
 #. Pull the Docker image for the master or agent on each machine where these services will run.
-   There is a single master container running in a Determined cluster, and typically there is one agent container running on a given
-   machine. A single machine can host both the master container and an agent container. Run the
-   commands below, replacing ``VERSION`` with a valid Determined version, such as the current
-   version, |version|:
+   There is a single master container running in a Determined cluster, and typically there is one
+   agent container running on a given machine. A single machine can host both the master container
+   and an agent container. Run the commands below, replacing ``VERSION`` with a valid Determined
+   version, such as the current version, |version|:
 
    .. code::
 
       docker pull determinedai/determined-master:VERSION
       docker pull determinedai/determined-agent:VERSION
 
-**************************************
+*********************************
  Configure and Start the Cluster
-**************************************
+*********************************
 
 PostgreSQL
 ==========
@@ -58,8 +58,8 @@ pass ``--network host`` instead of ``-p 5432:5432``.
 Determined Master
 =================
 
-Determined master configuration values can come from a file,
-environment variables, or command-line arguments.
+Determined master configuration values can come from a file, environment variables, or command-line
+arguments.
 
 To start the master with a configuration file, we recommend starting from our `default master
 configuration file
@@ -99,7 +99,8 @@ machine, you may specify the loopback interface in the published port mapping, i
 Determined Agents
 =================
 
-As is the case for the master, Determined agent configuration values can come from a file, environment variables, or command-line arguments.
+As is the case for the master, Determined agent configuration values can come from a file,
+environment variables, or command-line arguments.
 
 To start the agent with a configuration file, we recommend starting from our `default agent
 configuration file
@@ -203,9 +204,9 @@ This will affect address resolution if you try to set the master hostname as the
 name, as the workload containers will not be in the correct docker network to reach the master by
 that name.
 
-**********************
+********************
  Manage the Cluster
-**********************
+********************
 
 By default, ``docker run`` will run in the foreground, so that a container can be stopped simply by
 pressing Control-C. If you wish to keep Determined running for the long term, consider running the

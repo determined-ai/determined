@@ -31,9 +31,9 @@ We will port each section following the same steps: First, we copy all the relev
 we will remove boilerplate code, and update all relevant objects to use the context object. Finally,
 we will replace all configurations or hyperparameters.
 
-***********************
-Preparation
-***********************
+*************
+ Preparation
+*************
 
 Before we begin, we need to create our core files. Determined requires two files to be defined: the
 model definition and the experiment configuration.
@@ -114,9 +114,9 @@ For now, we don’t have to worry much about the other fields; however, we sugge
 on experiment configuration, see the :ref:`experiment configuration reference
 <experiment-configuration>`.
 
-***********************
-Model
-***********************
+*******
+ Model
+*******
 
 Now that we’ve finished the prep work, we can begin porting by creating the model. Model code will
 be placed in the Trial’s ``__init__()`` function.
@@ -322,9 +322,9 @@ The init function should now look something like this.
 
 We have been able to remove over 80 lines of code by porting to Determined!
 
-***********************
-Data
-***********************
+******
+ Data
+******
 
 Now, we can fill out ``build_train_data_loader()`` and ``build_validation_data_loader()``. Both of
 these data loading functions return a ``determined.DataLoader``. A ``determined.DataLoader`` expects
@@ -414,9 +414,9 @@ CIFAR-10 dataset can be accessed with the code below:
        )
        return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
-************************
-Train / Validation Batch
-************************
+**************************
+ Train / Validation Batch
+**************************
 
 It’s time to set up the ``train_batch`` function. Typically in PyTorch, you loop through the
 DataLoader to access and train your model one batch at a time. You can usually identify this code by
@@ -493,17 +493,17 @@ The final ``train_batch`` will look like:
 
        return {"loss": loss.item(), 'top1': acc1[0], 'top5': acc5[0]}
 
-***********************
-Code Check Point
-***********************
+******************
+ Code Check Point
+******************
 
 At this point, you should be able to run your Determined model. Confirm that your model weights are
 loaded correctly, it can functionally run a batch, and all your hyperparameters are correctly
 accessing experiment configuration.
 
-***********************
-Learning Rate Scheduler
-***********************
+*************************
+ Learning Rate Scheduler
+*************************
 
 Determined has a few ways of managing the learning rate. Determined can automatically update every
 batch or epoch, or you can manage it yourself. In this case, we are doing the latter by using a
@@ -523,18 +523,18 @@ rate to use ``torch.optim.StepLR()`` and wrap it with ``self.context.wrap_lr_sch
        lr_sch = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=.1, step_size=2)
        self.lr_sch = self.context.wrap_lr_scheduler(lr_sch, step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH)
 
-***********************
-Other Functionality
-***********************
+*********************
+ Other Functionality
+*********************
 
 At this point, you can begin adding other features of your model. This may include using 16 FP
 (automatic mixed precision) or gradient clipping. It’s best to add one at a time to make it easier
 to check that each component is properly working. Determined has a wide range of examples to
 demonstrate several real-world use cases. Examples can be found on Determined’s github:
 
-***********************
-Helpful Hints
-***********************
+***************
+ Helpful Hints
+***************
 
 During porting, most of the time you can remove distributed training code.
 

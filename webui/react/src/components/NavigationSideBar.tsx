@@ -167,7 +167,7 @@ const NavigationSideBar: React.FC = () => {
                   <ThemeToggle />
                 </Menu.Item>
                 <Menu.Item key="settings">
-                  <Link path={paths.settings()}>Settings</Link>
+                  <Link path={paths.settings('account')}>Settings</Link>
                 </Menu.Item>
                 <Menu.Item key="sign-out">
                   <Link path={paths.logout()}>Sign Out</Link>

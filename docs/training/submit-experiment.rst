@@ -359,7 +359,7 @@ To modify the job queue in the Webui,
 #. Make the change you want on the pop-up page, and click **OK**.
 
 Modify the Job Queue using the CLI
-====================================
+==================================
 
 To modify the job queue in the CLI, use the ``det job update`` command. Run ``det job update
 --help`` for more information. Example operations:

@@ -14,9 +14,9 @@ import InteractiveTable, { ColumnDef,
 import Link from 'components/Link';
 import Page from 'components/Page';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
-import { checkmarkRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
-  ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, relativeTimeRenderer,
-  stateRenderer,
+import { checkmarkRenderer, defaultRowClassName, experimentDurationRenderer,
+  experimentNameRenderer, experimentProgressRenderer, ExperimentRenderer,
+  getFullPaginationConfig, relativeTimeRenderer, stateRenderer,
   userRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
@@ -37,7 +37,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, addProjectNote, archiveExperiment, cancelExperiment, deleteExperiment,
-  getExperimentLabels, getProject, getProjectExperiments, killExperiment, openOrCreateTensorBoard,
+  getExperimentLabels, getExperiments, getProject, killExperiment, openOrCreateTensorBoard,
   patchExperiment, pauseExperiment, setProjectNotes, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -159,15 +159,15 @@ const ProjectDetails: React.FC = () => {
       const states = (settings.state || []).map((state) => (
         encodeExperimentState(state as RunState)
       ));
-      const response = await getProjectExperiments(
+      const response = await getExperiments(
         {
           archived: settings.archived ? undefined : false,
-          id,
           labels: settings.label,
           limit: settings.tableLimit,
           name: settings.search,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          projectId: id,
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
           users: settings.user,
@@ -416,7 +416,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
         key: 'duration',
         onCell: onRightClickableCell,
-        render: expermentDurationRenderer,
+        render: experimentDurationRenderer,
         title: 'Duration',
       },
       {

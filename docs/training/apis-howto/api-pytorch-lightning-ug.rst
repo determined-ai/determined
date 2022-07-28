@@ -1,6 +1,6 @@
-##################################
+#######################
  PyTorch Lightning API
-##################################
+#######################
 
 +-------------------------------------------------------------------------------+
 | API reference                                                                 |
@@ -17,16 +17,17 @@ PyTorch Lightning Adapter, defined here as ``LightningAdapter``, provides a quic
 PyTorch Lightning models with all the Determined features, such as mid-epoch preemption, easy
 distributed training, simple job submission to the Determined cluster, and so on.
 
-LightningAdapter is built on top of our :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>`, which has a
-built-in training loop that integrates with the Determined features. However, it only supports
-`LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_
-(v1.2.0). To migrate your code from the `Trainer
+LightningAdapter is built on top of our :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>`,
+which has a built-in training loop that integrates with the Determined features. However, it only
+supports `LightningModule
+<https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_ (v1.2.0). To
+migrate your code from the `Trainer
 <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_, please read more about
 :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>` and :ref:`experiment-config-reference`.
 
-******************************
-Port PyTorch Lightning Code
-******************************
+*****************************
+ Port PyTorch Lightning Code
+*****************************
 
 Porting your ``PyTorchLightning`` code is often pretty simple:
 
@@ -104,24 +105,32 @@ In addition, we also patched some ``LightningModule`` methods to make porting yo
    Determined will automatically log the metrics you return from ``training_step`` and
    ``validation_step`` to Tensorboard.
 
-To learn about this API, you can start by reading the trial definitions from the following examples:
+.. note::
+
+   Determined environment images no longer contain PyTorch Lightning. To use PyTorch Lightning, add
+   a line similar to the following in the ``startup-hooks.sh`` script:
+
+.. code:: bash
+
+   pip install pytorch_lightning==1.5.10 torchmetrics==0.5.1
+
+To learn about this API, start by reading the trial definitions from the following examples:
 
 -  :download:`gan_mnist_pl.tgz </examples/gan_mnist_pl.tgz>`
 -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
 
-**************
+***********
  Load Data
-**************
+***********
 
 .. note::
 
-   Before loading data, read this document :doc:`/training/load-model-data` to understand how to work with
-   different sources of data.
+   Before loading data, read this document :doc:`/training/load-model-data` to understand how to
+   work with different sources of data.
 
-Loading your dataset when using PyTorch Lightning works the same way
-as it does with :doc:`PyTorch API </training/apis-howto/api-pytorch-ug>`.
+Loading your dataset when using PyTorch Lightning works the same way as it does with :doc:`PyTorch
+API </training/apis-howto/api-pytorch-ug>`.
 
 If you already have a ``LightningDataModule`` you can bring it in and use it to implement
 ``build_training_data_loader`` and ``build_validation_data_loader`` methods easily. For more
 information read PyTorchTrial's section on Data Loading.
-

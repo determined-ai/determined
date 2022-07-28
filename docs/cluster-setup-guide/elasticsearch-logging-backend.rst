@@ -52,7 +52,7 @@ on how the cluster will be used:
      "mappings": {
        "properties": {
            "task_id": {"type": "keyword", "index": true},
-           "allocation_id": {"type": "keyword": "index": true},
+           "allocation_id": {"type": "keyword", "index": true},
            "agent_id": {"type": "keyword", "index": true},
            "container_id": {"type": "keyword", "index": true},
            "level": {"type": "keyword", "index": true},

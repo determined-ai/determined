@@ -11,7 +11,7 @@ class ExperimentConfig(dict):
     def native_parallel_enabled(self) -> bool:
         return bool(self["resources"]["native_parallel"])
 
-    def averaging_training_metrics_enabled(self) -> bool:
+    def average_training_metrics_enabled(self) -> bool:
         return bool(self["optimizations"]["average_training_metrics"])
 
     def slots_per_trial(self) -> int:

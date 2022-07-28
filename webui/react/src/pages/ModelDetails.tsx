@@ -37,12 +37,12 @@ import ModelHeader from './ModelDetails/ModelHeader';
 import ModelVersionActionDropdown from './ModelDetails/ModelVersionActionDropdown';
 
 type Params = {
-  modelName: string;
+  modelId: string;
 }
 
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
-  const modelName = decodeURIComponent(useParams<Params>().modelName!);
+  const modelId = decodeURIComponent(useParams<Params>().modelId!);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);
@@ -58,7 +58,7 @@ const ModelDetails: React.FC = () => {
       const modelData = await getModelDetails(
         {
           limit: settings.tableLimit,
-          modelName,
+          modelName: modelId,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetModelVersionsRequestSortBy, settings.sortKey),
@@ -70,7 +70,7 @@ const ModelDetails: React.FC = () => {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
     setIsLoading(false);
-  }, [ modelName, pageError, settings ]);
+  }, [ modelId, pageError, settings ]);
 
   const {
     contextHolder: modalModelDownloadContextHolder,
@@ -117,11 +117,14 @@ const ModelDetails: React.FC = () => {
     versionId: number,
   ) => {
     try {
-      await patchModelVersion({
-        body: { comment: editedDescription, modelName },
-        modelName,
-        versionId,
-      });
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModelVersion({
+          body: { comment: editedDescription, modelName },
+          modelName,
+          versionId,
+        });
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save version description.',
@@ -129,7 +132,7 @@ const ModelDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName ]);
+  }, [ model?.model.name ]);
 
   const columns = useMemo(() => {
     const tagsRenderer = (value: string, record: ModelVersion) => (
@@ -231,10 +234,13 @@ const ModelDetails: React.FC = () => {
 
   const saveMetadata = useCallback(async (editedMetadata) => {
     try {
-      await patchModel({
-        body: { metadata: editedMetadata, name: modelName },
-        modelName,
-      });
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModel({
+          body: { metadata: editedMetadata, name: modelName },
+          modelName,
+        });
+      }
       await fetchModel();
     } catch (e) {
       handleError(e, {
@@ -244,14 +250,17 @@ const ModelDetails: React.FC = () => {
       });
     }
 
-  }, [ fetchModel, modelName ]);
+  }, [ fetchModel, model?.model.name ]);
 
   const saveDescription = useCallback(async (editedDescription: string) => {
     try {
-      await patchModel({
-        body: { description: editedDescription, name: modelName },
-        modelName,
-      });
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModel({
+          body: { description: editedDescription, name: modelName },
+          modelName,
+        });
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save description.',
@@ -260,14 +269,17 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ modelName ]);
+  }, [ model?.model.name ]);
 
   const saveName = useCallback(async (editedName: string) => {
     try {
-      await patchModel({
-        body: { name: editedName },
-        modelName,
-      });
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModel({
+          body: { name: editedName },
+          modelName,
+        });
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to save name.',
@@ -275,14 +287,17 @@ const ModelDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName ]);
+  }, [ model?.model.name ]);
 
   const saveNotes = useCallback(async (editedNotes: string) => {
     try {
-      await patchModel({
-        body: { name: modelName, notes: editedNotes },
-        modelName,
-      });
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModel({
+          body: { name: modelName, notes: editedNotes },
+          modelName,
+        });
+      }
       await fetchModel();
     } catch (e) {
       handleError(e, {
@@ -291,15 +306,18 @@ const ModelDetails: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ modelName, fetchModel ]);
+  }, [ model?.model.name, fetchModel ]);
 
   const saveModelTags = useCallback(async (editedTags) => {
     try {
-      await patchModel({
-        body: { labels: editedTags, name: modelName },
-        modelName,
-      });
-      fetchModel();
+      const modelName = model?.model.name;
+      if (modelName) {
+        await patchModel({
+          body: { labels: editedTags, name: modelName },
+          modelName,
+        });
+        fetchModel();
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to update model tags.',
@@ -308,15 +326,18 @@ const ModelDetails: React.FC = () => {
       });
       setIsLoading(false);
     }
-  }, [ fetchModel, modelName ]);
+  }, [ fetchModel, model?.model.name ]);
 
   const switchArchive = useCallback(() => {
-    if (model?.model.archived) {
-      unarchiveModel({ modelName });
-    } else {
-      archiveModel({ modelName });
+    const modelName = model?.model.name;
+    if (modelName) {
+      if (model?.model.archived) {
+        unarchiveModel({ modelName });
+      } else {
+        archiveModel({ modelName });
+      }
     }
-  }, [ model?.model.archived, modelName ]);
+  }, [ model?.model.archived, model?.model.name ]);
 
   const actionDropdown = useCallback(({ record, onVisibleChange, children }) => (
     <ModelVersionActionDropdown
@@ -328,15 +349,15 @@ const ModelDetails: React.FC = () => {
     </ModelVersionActionDropdown>
   ), [ deleteModelVersion, downloadModel ]);
 
-  if (!modelName) {
+  if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?
-      `Unable to find model ${modelName}` :
-      `Unable to fetch model ${modelName}`;
+      `Unable to find model ${modelId}` :
+      `Unable to fetch model ${modelId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!model) {
-    return <Spinner tip={`Loading model ${modelName} details...`} />;
+    return <Spinner tip={`Loading model ${modelId} details...`} />;
   }
 
   return (

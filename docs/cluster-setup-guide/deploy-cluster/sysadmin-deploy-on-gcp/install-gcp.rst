@@ -1,14 +1,14 @@
 .. _install-gcp:
 
-###########################
+####################
  Install Determined
-###########################
+####################
 
-This document describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The ``det deploy`` tool makes it easy to create and deploy these resources in GCP. The
-``det deploy`` tool uses `Terraform
-<https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and
-configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up
-infrastructure with Terraform, you can use our `Terraform modules
+This document describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The ``det
+deploy`` tool makes it easy to create and deploy these resources in GCP. The ``det deploy`` tool
+uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to
+automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a
+process for setting up infrastructure with Terraform, you can use our `Terraform modules
 <https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__
 rather than ``det deploy``.
 
@@ -75,9 +75,9 @@ relatively low; you may wish to request a quota increase.
 
       pip install determined
 
-*********************
+******************
  Deploy a Cluster
-*********************
+******************
 
 We recommend creating a new directory and running the commands below inside that directory.
 
@@ -244,9 +244,9 @@ availability in your desired region and zone:
    # List the valid gpu_type values for the configured zone.
    gcloud compute accelerator-types list --filter=zone:<zone>
 
-********************
+******************
  Update a Cluster
-********************
+******************
 
 If you need to make changes to your cluster, you can rerun ``det deploy gcp up [args]`` in the same
 directory and your cluster will be updated. The ``det deploy`` tool will only replace resources that
@@ -257,9 +257,9 @@ need to be replaced based on the changes you've made in the updated execution.
    If you'd like to change the ``region`` of a deployment after it has already been deployed, we
    recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
 
-**********************
+*******************
  Destroy a Cluster
-**********************
+*******************
 
 To bring down the cluster, run the following in the same directory where you ran ``det deploy gcp
 up``:
@@ -347,9 +347,9 @@ Example workflow:
 
 .. _gcp-service-account-credentials:
 
-***************************
-Service Account Credentials
-***************************
+*****************************
+ Service Account Credentials
+*****************************
 
 For more security controls, you can create a `service account
 <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing service
@@ -380,9 +380,9 @@ Once you have the ``keypath`` you can use it to deploy a GCP cluster by continui
 
 .. _gcp-det-deploy-a100:
 
-**********************************
-Run Determined on NVIDIA A100 GPUs
-**********************************
+************************************
+ Run Determined on NVIDIA A100 GPUs
+************************************
 
 Determined makes it possible to try out your models on latest NVIDIA A100 GPUs; however, there are a
 few considerations:
@@ -406,5 +406,5 @@ This command line will spin up a cluster of up to 2 A100s in the ``us-central1-c
       --compute-agent-instance-type a2-highgpu-1g --gpu-num 1 \
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
-      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4 \
-      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4
+      --gpu-env-image determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5 \
+      --cpu-env-image determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5

@@ -1,8 +1,8 @@
 .. _master-config-reference:
 
-###############################
+################################
  Master Configuration Reference
-###############################
+################################
 
 The Determined master supports a range of configuration settings that can be set via a :ref:`YAML
 configuration file <topic-guides_yaml>`, environment variables, or command-line options. The
@@ -55,10 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-0.18.4`` for
-         NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.4`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-0.18.4`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -101,6 +100,12 @@ The master supports the following configuration settings:
 
 -  ``root``: Specifies the root directory of the state files. Defaults to
    ``/usr/share/determined/master``.
+
+-  ``cache``: Configuration for file cache.
+
+   -  ``cache_dir``: Specifies the root directory for file cache. Defaults to
+      ``/var/cache/determined``. Note that the master would break on startup if it does not have
+      access to create this default directory.
 
 -  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 

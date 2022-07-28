@@ -1,8 +1,8 @@
 .. _troubleshooting:
 
-######################
+#################
  Troubleshooting
-######################
+#################
 
 ****************
  Error messages
@@ -56,9 +56,9 @@ And restart the master. Otherwise, please seek assistance in the community `Slac
 
 .. _validate-nvidia-container-toolkit:
 
-*************************************
+***********************************
  Validate Nvidia Container Toolkit
-*************************************
+***********************************
 
 To verify that a Determined agent instance can run containers that use GPUs, run:
 

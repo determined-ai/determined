@@ -1,8 +1,8 @@
 .. _scim:
 
-#######################################
+##################
  SCIM Integration
-#######################################
+##################
 
 SCIM integration applies to Determined Enterprise Edition.
 
@@ -12,16 +12,16 @@ provider (IdP). Currently, the only officially supported provider is Okta; howev
 implements a minimal working subset of the protocol as specified by :RFC:`7644` and is expected to
 work with most IdPs that adhere to this RFC.
 
-************************
+**********************
  Configure Determined
-************************
+**********************
 
 Determined only requires you to enable SCIM and set your authentication mode and any necessary
 credentials.
 
-**********************
+********************
  Configure Your IdP
-**********************
+********************
 
 When configuring your IdP to automatically push users and groups to Determined, you will need to
 enable SCIM for Determined in your IdP and provide it with some information about Determined's SCIM

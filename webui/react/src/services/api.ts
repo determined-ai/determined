@@ -37,7 +37,8 @@ export const getCurrentUser = generateDetApi<
 >(Config.getCurrentUser);
 
 export const getUsers = generateDetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams,
+   Api.V1GetUsersResponse, Type.DetailedUserList
 >(Config.getUsers);
 
 export const setUserPassword = generateDetApi<
@@ -186,6 +187,10 @@ export const getTask = generateDetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
 >(Config.getTask);
 
+export const getActiveTasks = generateDetApi<
+  Record<string, never>, Api.V1GetActiveTasksCountResponse, Type.TaskCounts
+>(Config.getActiveTasks);
+
 /* Models */
 
 export const getModels = generateDetApi<
@@ -288,12 +293,6 @@ export const getProject = generateDetApi<
   Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
 >(Config.getProject);
 
-export const getProjectExperiments = generateDetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
->(Config.getProjectExperiments);
-
 export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
@@ -387,7 +386,7 @@ export const openOrCreateTensorBoard = async (
   return launchTensorBoard(params);
 };
 
-export const killTask = async (task: Type.CommandTask): Promise<void> => {
+export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Promise<void> => {
   switch (task.type) {
     case Type.CommandType.Command:
       return await killCommand({ commandId: task.id });

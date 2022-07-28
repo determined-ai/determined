@@ -117,11 +117,12 @@ Set up Internet Access
    Hub for such tasks as building new images for user workloads.
 
 -  If packages, data, or other resources needed by user workloads are hosted on the public Internet,
-   Determined agents need to be able to access them. Note that agents can be :ref:`configured
-   to use proxies <agent-network-proxy>` when accessing network resources.
+   Determined agents need to be able to access them. Note that agents can be :ref:`configured to use
+   proxies <agent-network-proxy>` when accessing network resources.
 
--  For best performance, it is recommended that the Determined master and agents use the same physical
-   network or VPC. When using VPCs on a public cloud provider, additional steps might need to be taken to ensure that instances in the VPC can access the Internet:
+-  For best performance, it is recommended that the Determined master and agents use the same
+   physical network or VPC. When using VPCs on a public cloud provider, additional steps might need
+   to be taken to ensure that instances in the VPC can access the Internet:
 
    -  On GCP, the instances need to have an external IP address, or a `GCP Cloud NAT
       <https://cloud.google.com/nat/docs/overview>`_ should be configured for the VPC.
@@ -136,7 +137,7 @@ Set up Firewall Rules
 The firewall rules must satisfy the following network access requirements for the master and agents.
 
 Master
-^^^^^^
+------
 
 -  Inbound TCP to the master's network port from the Determined agent instances, as well as all
    machines where developers want to use the Determined CLI or WebUI. The default port is ``8443``
@@ -145,7 +146,7 @@ Master
 -  Outbound TCP to all ports on the Determined agents.
 
 Agents
-^^^^^^
+------
 
 -  Inbound TCP from all ports on the master to all ports on the agent.
 
@@ -223,8 +224,8 @@ follow the instructions below:
    volume as the previous installation. This volume will be used to store all your experiment
    metadata and checkpoints.
 
-#. Configure Security Group: choose or create a security group according to
-   `Set up Internet Access`_.
+#. Configure Security Group: choose or create a security group according to `Set up Internet
+   Access`_.
 
 #. Review and launch the instance.
 

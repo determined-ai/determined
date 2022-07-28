@@ -4,13 +4,15 @@
  Introduction to Distributed Training
 ######################################
 
-This document provides an overview of distributed training concepts followed by an overview of how to implement distributed training.
+This document provides an overview of distributed training concepts followed by an overview of how
+to implement distributed training.
 
-This document focuses on demonstrating how to perform optimized distributed training with Determined to speed up the training of a single trial.
+This document focuses on demonstrating how to perform optimized distributed training with Determined
+to speed up the training of a single trial.
 
-*****************************
-Distributed Training Overview
-*****************************
+*******************************
+ Distributed Training Overview
+*******************************
 
 How Determined Distributed Training Works
 =========================================
@@ -121,7 +123,7 @@ should produce an identical model. For example, this ensures that if the model p
 experiment is ever lost, it can be recovered by rerunning the experiment that produced it.
 
 Status
-^^^^^^
+------
 
 The current version of Determined provides limited support for reproducibility; unfortunately, the
 current state of the hardware and software stack typically used for deep learning makes perfect
@@ -134,10 +136,13 @@ Determined can control and reproduce the following sources of randomness:
 -  Shuffling of training data in a trial.
 -  Dropout or other random layers.
 
-Determined currently does not offer support for controlling non-determinism in floating-point operations. Modern deep learning frameworks    typically implement training using floating point operations that result in non-deterministic    results, particularly on GPUs. If only CPUs are used for training, reproducible results can be achieved, as described in the following sections.
+Determined currently does not offer support for controlling non-determinism in floating-point
+operations. Modern deep learning frameworks typically implement training using floating point
+operations that result in non-deterministic results, particularly on GPUs. If only CPUs are used for
+training, reproducible results can be achieved, as described in the following sections.
 
 Random Seeds
-^^^^^^^^^^^^
+------------
 
 Each Determined experiment is associated with an **experiment seed**: an integer ranging from 0 to
 2\ :sup:`31`--1. The experiment seed can be set using the ``reproducibility.experiment_seed`` field
@@ -152,7 +157,7 @@ In the ``Trial`` interface, the trial seed is accessible within the trial class 
 ``self.ctx.get_trial_seed()``.
 
 Coding Guidelines
-^^^^^^^^^^^^^^^^^
+-----------------
 
 To achieve reproducible initial conditions in an experiment, please follow these guidelines:
 
@@ -167,7 +172,7 @@ To achieve reproducible initial conditions in an experiment, please follow these
    TensorFlow's ``tf.set_random_seed``), as Determined manages this for you.
 
 Deterministic Floating Point on CPUs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 When doing CPU-only training with TensorFlow, it is possible to achieve floating-point
 reproducibility throughout optimization. If using the :class:`~determined.keras.TFKerasTrial` API,
@@ -187,7 +192,7 @@ default session configuration:
    understand and accept this trade-off.
 
 Pause Experiments
-^^^^^^^^^^^^^^^^^
+-----------------
 
 TensorFlow does not fully support the extraction or restoration of a single, global RNG state.
 Consequently, pausing experiments that use a TensorFlow-based framework may introduce an additional
@@ -215,11 +220,12 @@ particularly around GPU usage, dataloading, and network communication during dis
 Timings are useful for identifying the section of code to focus on for optimizations. Most commonly,
 Timings help answers the question of whether the dataloader is the main bottleneck in training.
 
-.. _how-to-profiling-system-metrics:
 .. _how-to-profiling:
 
+.. _how-to-profiling-system-metrics:
+
 System Metrics
-^^^^^^^^^^^^^^
+--------------
 
 System Metrics are statistics around hardware usage, such as GPU utilization and network throughput.
 These metrics are useful for seeing whether training is using the hardware effectively. When the
@@ -250,7 +256,7 @@ agent. GPU metrics can be further broken down by GPU.
 .. _how-to-profiling-timings:
 
 Timings
-^^^^^^^
+-------
 
 The other type of profiling metric that Determined tracks is Timings. Timings are measurements of
 how long specific training events take. Examples of training events include retrieving data from the
@@ -275,39 +281,43 @@ Specifically, Determined tracks:
 \* ``train_batch`` is typically the forward pass and the backwards pass, but it is a user-defined
 function so it could include other steps.
 
-*************************************************
-Introduction to Implementing Distributed Training
-*************************************************
+***************************************************
+ Introduction to Implementing Distributed Training
+***************************************************
 
 Connectivity
 ============
 
-Multi-machine training requires that all machines can connect directly. There
-may be firewall rules or network configuration that prevent machines in your cluster from
-communicating. Please check if agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
+Multi-machine training requires that all machines can connect directly. There may be firewall rules
+or network configuration that prevent machines in your cluster from communicating. Please check if
+agent machines can access each other outside of Determined by using ``ping`` or ``netcat`` tools.
 
 More rarely, if agents have multiple network interfaces and some of them are not routable,
 Determined may pick one of those interfaces rather than one that allows one agent to contact
-another. In this case, it is possible to explicitly set the network interface used for distributed training, as described in :ref:`cluster-configuration`.
+another. In this case, it is possible to explicitly set the network interface used for distributed
+training, as described in :ref:`cluster-configuration`.
 
 Configuration
 =============
 
 Set Slots Per Trial
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
-In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the number
-of GPUs used to train a single trial.
+In the :ref:`experiment-config-reference`, the ``resources.slots_per_trial`` field controls the
+number of GPUs used to train a single trial.
 
-The default value is ``1``, which disables distributed training. Setting ``slots_per_trial`` to a larger
-value enables multi-GPU training automatically. Note that these GPUs might be on a single machine or
-across multiple machines; the experiment configuration simply defines how many GPUs should be used
-for training, and the Determined job scheduler decides whether to schedule the task on a single
-agent or multiple agents, depending on the machines in the cluster and the other active workloads.
+The default value is ``1``, which disables distributed training. Setting ``slots_per_trial`` to a
+larger value enables multi-GPU training automatically. Note that these GPUs might be on a single
+machine or across multiple machines; the experiment configuration simply defines how many GPUs
+should be used for training, and the Determined job scheduler decides whether to schedule the task
+on a single agent or multiple agents, depending on the machines in the cluster and the other active
+workloads.
 
-Multi-machine parallelism offers the ability to further parallelize training across more GPUs. To use multi-machine parallelism, set ``slots_per_trial`` to be a multiple of the total number
-of GPUs on an agent machine. For example, if your resource pool consists of 8-GPU agent machines,
-valid values for M would be 16, 24, 32, etc. In this configuration, trials use all the resources of multiple machines to train a model.
+Multi-machine parallelism offers the ability to further parallelize training across more GPUs. To
+use multi-machine parallelism, set ``slots_per_trial`` to be a multiple of the total number of GPUs
+on an agent machine. For example, if your resource pool consists of 8-GPU agent machines, valid
+values for M would be 16, 24, 32, etc. In this configuration, trials use all the resources of
+multiple machines to train a model.
 
 Example configuration with distributed training:
 
@@ -316,23 +326,32 @@ Example configuration with distributed training:
    resources:
      slots_per_trial: N
 
-For distributed multi-machine training, Determined automatically detects a common network interface shared by the agent machines. If your cluster has multiple common network interfaces, please specify the fastest one in :ref:`cluster-configuration` under ``task_container_defaults.dtrain_network_interface``.
+For distributed multi-machine training, Determined automatically detects a common network interface
+shared by the agent machines. If your cluster has multiple common network interfaces, please specify
+the fastest one in :ref:`cluster-configuration` under
+``task_container_defaults.dtrain_network_interface``.
 
-When the ``slots_per_trial`` option is changed, the per-slot batch size is set to ``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be accessed via the context using :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not evenly divisible by ``slots_per_trial``, the remainder is dropped.
+When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
+``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be
+accessed via the context using :func:`context.get_per_slot_batch_size()
+<determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
+<determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
+evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
 If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than the number of slots
-on a single agent, Determined schedules it over multiple machines. When scheduling a
-multi-machine distributed training job, Determined requires that the job uses all of the slots
-(GPUs) on an agent. For example, in a cluster that consists of 8-GPU agents, an experiment with
-:ref:`slots_per_trial <exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled
-and, instead, waits indefinitely. The :ref:`distributed training documentation
-<dtrain-scheduling>` describes this scheduling behavior in more detail.
+on a single agent, Determined schedules it over multiple machines. When scheduling a multi-machine
+distributed training job, Determined requires that the job uses all of the slots (GPUs) on an agent.
+For example, in a cluster that consists of 8-GPU agents, an experiment with :ref:`slots_per_trial
+<exp-config-resources-slots-per-trial>` set to ``12`` is never scheduled and, instead, waits
+indefinitely. The :ref:`distributed training documentation <dtrain-scheduling>` describes this
+scheduling behavior in more detail.
 
 There might also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
-single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots in your cluster.
+single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free slots
+in your cluster.
 
 Set Global Batch Size
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 When doing distributed training, the ``global_batch_size`` specified in the
 :ref:`experiment-config-reference` is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch
@@ -341,24 +360,25 @@ the ``global_batch_size`` evenly, the batch size is rounded down. For convenienc
 size can be accessed via the Trial API, using :func:`context.get_per_slot_batch_size
 <determined.TrialContext.get_per_slot_batch_size>`.
 
-For improved performance, *weak-scaling* is recommended. That is, increasing your ``global_batch_size``
-proportionally with ``slots_per_trial``. For example, change ``global_batch_size`` of 32 for
-``slots_per_trial`` of 1 to ``global_batch_size`` of 128 for ``slots_per_trial`` of 4).
+For improved performance, *weak-scaling* is recommended. That is, increasing your
+``global_batch_size`` proportionally with ``slots_per_trial``. For example, change
+``global_batch_size`` of 32 for ``slots_per_trial`` of 1 to ``global_batch_size`` of 128 for
+``slots_per_trial`` of 4).
 
 Adjusting ``global_batch_size`` can affect your model convergence, which can affect your training
 and/or testing accuracy. You may need to adjust model hyperparameters like the learning rate and/or
 use a different optimizer when training with larger batch sizes.
 
 Advanced Optimizations
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 Determined supports several optimizations to further reduce training time. These optimizations are
 available in :ref:`experiment-config-reference` under ``optimizations``.
 
 -  ``optimizations.aggregation_frequency`` controls how many batches are evaluated before exchanging
    gradients. It is helpful in situations where it is not possible to increase the batch size
-   directly, for example, due to GPU memory limitations). This optimization increases your effective batch
-   size to ``aggregation_frequency`` * ``global_batch_size``.
+   directly, for example, due to GPU memory limitations). This optimization increases your effective
+   batch size to ``aggregation_frequency`` * ``global_batch_size``.
 
 -  ``optimizations.gradient_compression`` reduces the time it takes to transfer gradients between
    GPUs.
@@ -367,14 +387,16 @@ available in :ref:`experiment-config-reference` under ``optimizations``.
    during gradient transfers, reducing communication overhead.
 
 -  ``optimizations.average_training_metrics`` averages the training metrics across GPUs at the end
-   of every training workload, which requires communication. This typically does not have a major
-   impact on training performance, but if you have a very small ``scheduling_unit``, ensuring it is
-   disabled may improve performance. If this option is disabled, which is the default behavior, only the training metrics from the chief GPU are used. This impacts results shown in the WebUI and TensorBoard but does not influence model behavior or hyperparameter search.
+   of every training workload, which requires communication. ``average_training_metrics`` is set to
+   ``true`` by default. This typically does not have a major impact on training performance, but if
+   you have a very small ``scheduling_unit``, disabling this option may improve performance. When
+   disabled, only the training metrics from the chief GPU are reported. This impacts results shown
+   in the WebUI and TensorBoard but does not influence model behavior or hyperparameter search.
 
 If you do not see improved performance using distributed training, there might be a performance
 bottleneck in the model that cannot be directly alleviated by using multiple GPUs, such as with data
-loading. You are encouraged to experiment with a synthetic dataset to verify the performance of multi-GPU
-training.
+loading. You are encouraged to experiment with a synthetic dataset to verify the performance of
+multi-GPU training.
 
 .. warning::
 
@@ -392,10 +414,10 @@ Downloading Data
 ================
 
 When performing distributed training, Determined automatically creates one process for every GPU
-that is being used for training. Each process attempts to download training and/or validation
-data, so care should be taken to ensure that concurrent data downloads do not conflict with one
-another. One way to do this is to include a unique identifier in the local file system path where
-the downloaded data is stored. A convenient identifier is the ``rank`` of the current process: the
+that is being used for training. Each process attempts to download training and/or validation data,
+so care should be taken to ensure that concurrent data downloads do not conflict with one another.
+One way to do this is to include a unique identifier in the local file system path where the
+downloaded data is stored. A convenient identifier is the ``rank`` of the current process: the
 process ``rank`` is automatically assigned by Determined and is unique among all trial processes.
 
 You can do this by leveraging the :func:`self.context.distributed.get_rank()
@@ -438,18 +460,18 @@ distributed training:
 
 -  Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
    Determined schedules the distributed training job onto multiple agents. A multi-machine
-   distributed training job is only scheduled onto an agent if this results in utilizing
-   all of the agent GPUs. This is to ensure good performance and utilize the full network
-   bandwidth of each machine while minimizing inter-machine networking. For example, if all of the
-   agents in your cluster have eight GPUs each , you should submit jobs with ``slots_per_trial`` set to
-   a multiple of eight, such as 8, 16, or 24.
+   distributed training job is only scheduled onto an agent if this results in utilizing all of the
+   agent GPUs. This is to ensure good performance and utilize the full network bandwidth of each
+   machine while minimizing inter-machine networking. For example, if all of the agents in your
+   cluster have eight GPUs each , you should submit jobs with ``slots_per_trial`` set to a multiple
+   of eight, such as 8, 16, or 24.
 
 .. warning::
 
    If the scheduling constraints for multi-machine distributed training described above are not
-   satisfied, distributed training jobs are not scheduled and wait indefinitely. For
-   example, if every agent in the cluster has eight GPUs, a job with ``slots_per_trial`` set to ``12``
-   is never scheduled.
+   satisfied, distributed training jobs are not scheduled and wait indefinitely. For example, if
+   every agent in the cluster has eight GPUs, a job with ``slots_per_trial`` set to ``12`` is never
+   scheduled.
 
    If a multi-GPU experiment does not become active after a minute or so, please confirm that
    ``slots_per_trial`` is set so that it can be scheduled within these constraints. The CLI command
@@ -471,8 +493,9 @@ batch inference job, create a new PyTorchTrial and follow these steps:
 -  Specify a no-op ``train_batch()`` that returns an empty map of metrics.
 
 Once the new PyTorchTrial object is created, use the experiment configuration to distribute
-inference in the same way as training. `cifar10_pytorch_inference <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/cifar10_pytorch_inference/>`_ is an example of distributed batch
-inference.
+inference in the same way as training. `cifar10_pytorch_inference
+<https://github.com/determined-ai/determined/blob/master/examples/computer_vision/cifar10_pytorch_inference/>`_
+is an example of distributed batch inference.
 
 .. _config-template:
 
@@ -496,7 +519,7 @@ A single configuration file can use at most one configuration template. A config
 cannot itself use another configuration template.
 
 Using Templates to Simplify Experiment Configurations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------------
 
 An experiment can use a configuration template by using the ``--template`` command-line option to
 specify the name of the desired template.
@@ -575,7 +598,7 @@ To launch the experiment with the template:
    $ det experiment create --template template-tf-gpu mnist_tf_const.yaml <model_code>
 
 Use the CLI to Work with Templates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 The :ref:`Determined command-line interface <install-cli>` can be used to list, create, update, and
 delete configuration templates. This functionality can be accessed through the ``det template``
@@ -609,7 +632,7 @@ To create or update a template, use ``det tpl set template_name template_file``.
    Set template template-s3-keras-gpu
 
 Merge Behavior
-^^^^^^^^^^^^^^
+--------------
 
 Suppose we have a template that specifies top-level fields ``a`` and ``b`` and a configuration that
 specifies fields ``b`` and ``c``. The merged configuration will have fields ``a``, ``b``, and ``c``.

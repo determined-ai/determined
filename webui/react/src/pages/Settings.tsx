@@ -1,10 +1,11 @@
 import { Tabs } from 'antd';
 import queryString from 'query-string';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
+import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
@@ -24,26 +25,37 @@ const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
   const location = useLocation();
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const basePath = paths.settings();
   const navigate = useNavigate();
 
-  const { rbac } = queryString.parse(location.search);
+  const rbacEnabled = queryString.parse(location.search).rbac !== undefined;
+
+  const showTabs = useMemo(() => {
+    // TODO: Enable tabs for admin once user management finishes.
+    // return user?.isAdmin || rbacEnabled;
+    return rbacEnabled;
+  }, [ rbacEnabled ]);
 
   const handleTabChange = useCallback((key) => {
     setTabKey(key);
-    navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
-  }, [ basePath, navigate ]);
 
-  return rbac ? (
+    const basePath = paths.settings(key);
+    const query = rbacEnabled ? 'rbac' : '';
+    const newPath = key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`;
+    navigate(`${newPath}?${query}`, { replace: true });
+  }, [ navigate, rbacEnabled ]);
+
+  return showTabs ? (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="account" tab="Account">
         <SettingsAccount />
       </TabPane>
-      <TabPane key="userManagement" tab="User Management">
-        User Management
+      <TabPane key="user-management" tab="User Management">
+        <UserManagement />
       </TabPane>
     </Tabs>
-  ) : <SettingsAccount />;
+  ) : (
+    <SettingsAccount />
+  );
 };
 
 const Settings: React.FC = () => (

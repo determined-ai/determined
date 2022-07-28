@@ -3,9 +3,9 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import { useStore } from 'contexts/Store';
-import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import Message, { MessageType } from 'shared/components/Message';
+import usePrevious from 'shared/hooks/usePrevious';
 import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

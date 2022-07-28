@@ -1241,6 +1241,7 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         description: "typing.Optional[str]" = None,
         displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
@@ -1280,6 +1281,7 @@ class v1Experiment:
         self.workspaceId = workspaceId
         self.workspaceName = workspaceName
         self.parentArchived = parentArchived
+        self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1308,6 +1310,7 @@ class v1Experiment:
             workspaceId=obj.get("workspaceId", None),
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
+            config=obj.get("config", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -1336,6 +1339,7 @@ class v1Experiment:
             "workspaceId": self.workspaceId if self.workspaceId is not None else None,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
+            "config": self.config if self.config is not None else None,
         }
 
 class v1ExperimentSimulation:
@@ -1454,6 +1458,36 @@ class v1FittingPolicy(enum.Enum):
     FITTING_POLICY_WORST = "FITTING_POLICY_WORST"
     FITTING_POLICY_KUBERNETES = "FITTING_POLICY_KUBERNETES"
     FITTING_POLICY_SLURM = "FITTING_POLICY_SLURM"
+
+class v1GetActiveTasksCountResponse:
+    def __init__(
+        self,
+        commands: int,
+        notebooks: int,
+        shells: int,
+        tensorboards: int,
+    ):
+        self.commands = commands
+        self.notebooks = notebooks
+        self.shells = shells
+        self.tensorboards = tensorboards
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetActiveTasksCountResponse":
+        return cls(
+            commands=obj["commands"],
+            notebooks=obj["notebooks"],
+            shells=obj["shells"],
+            tensorboards=obj["tensorboards"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "commands": self.commands,
+            "notebooks": self.notebooks,
+            "shells": self.shells,
+            "tensorboards": self.tensorboards,
+        }
 
 class v1GetAgentResponse:
     def __init__(
@@ -1660,26 +1694,22 @@ class v1GetExperimentLabelsResponse:
 class v1GetExperimentResponse:
     def __init__(
         self,
-        config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
         jobSummary: "typing.Optional[v1JobSummary]" = None,
     ):
         self.experiment = experiment
-        self.config = config
         self.jobSummary = jobSummary
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentResponse":
         return cls(
             experiment=v1Experiment.from_json(obj["experiment"]),
-            config=obj["config"],
             jobSummary=v1JobSummary.from_json(obj["jobSummary"]) if obj.get("jobSummary", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
             "experiment": self.experiment.to_json(),
-            "config": self.config,
             "jobSummary": self.jobSummary.to_json() if self.jobSummary is not None else None,
         }
 
@@ -2141,28 +2171,6 @@ class v1GetNotebooksResponse:
         return {
             "notebooks": [x.to_json() for x in self.notebooks] if self.notebooks is not None else None,
             "pagination": self.pagination.to_json() if self.pagination is not None else None,
-        }
-
-class v1GetProjectExperimentsResponse:
-    def __init__(
-        self,
-        experiments: "typing.Sequence[v1Experiment]",
-        pagination: "v1Pagination",
-    ):
-        self.experiments = experiments
-        self.pagination = pagination
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetProjectExperimentsResponse":
-        return cls(
-            experiments=[v1Experiment.from_json(x) for x in obj["experiments"]],
-            pagination=v1Pagination.from_json(obj["pagination"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "experiments": [x.to_json() for x in self.experiments],
-            "pagination": self.pagination.to_json(),
         }
 
 class v1GetProjectResponse:
@@ -6731,6 +6739,23 @@ def post_EnableSlot(
         return v1EnableSlotResponse.from_json(_resp.json())
     raise APIHttpError("post_EnableSlot", _resp)
 
+def get_GetActiveTasksCount(
+    session: "client.Session",
+) -> "v1GetActiveTasksCountResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/tasks/count",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetActiveTasksCountResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetActiveTasksCount", _resp)
+
 def get_GetAgent(
     session: "client.Session",
     *,
@@ -7015,6 +7040,7 @@ def get_GetExperiments(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    projectId: "typing.Optional[int]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -7028,6 +7054,7 @@ def get_GetExperiments(
         "name": name,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "projectId": projectId,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
         "userIds": userIds,
@@ -7379,48 +7406,6 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
-
-def get_GetProjectExperiments(
-    session: "client.Session",
-    *,
-    id: int,
-    archived: "typing.Optional[bool]" = None,
-    description: "typing.Optional[str]" = None,
-    labels: "typing.Optional[typing.Sequence[str]]" = None,
-    limit: "typing.Optional[int]" = None,
-    name: "typing.Optional[str]" = None,
-    offset: "typing.Optional[int]" = None,
-    orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
-    userIds: "typing.Optional[typing.Sequence[int]]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
-) -> "v1GetProjectExperimentsResponse":
-    _params = {
-        "archived": str(archived).lower() if archived is not None else None,
-        "description": description,
-        "labels": labels,
-        "limit": limit,
-        "name": name,
-        "offset": offset,
-        "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
-        "states": [x.value for x in states] if states is not None else None,
-        "userIds": userIds,
-        "users": users,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/projects/{id}/experiments",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-    )
-    if _resp.status_code == 200:
-        return v1GetProjectExperimentsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetProjectExperiments", _resp)
 
 def get_GetResourcePools(
     session: "client.Session",

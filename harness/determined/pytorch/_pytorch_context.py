@@ -14,7 +14,7 @@ from determined.tensorboard import get_base_path
 # Apex is included only for GPU trials.
 try:
     import apex
-except ImportError:
+except ImportError:  # pragma: no cover
     if torch.cuda.is_available():
         logging.warning("Failed to import apex.")
     pass
@@ -23,9 +23,9 @@ except ImportError:
 try:
     import torch.cuda.amp as amp
 
-    amp_import_error = False
-except ImportError:
-    amp_import_error = True
+    HAVE_AMP = True
+except ImportError:  # pragma: no cover
+    HAVE_AMP = False
     if torch.cuda.is_available():
         logging.warning("PyTorch AMP is unavailable.")
     pass
@@ -76,9 +76,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # by torch DDP and apex to initialize in the correct order
         self._wrapped_models = {}  # type: Dict[nn.Module, nn.Module]
 
-        # Use a main model to contain all of the models because when using horovod
+        # Use a main model to contain all the models because when using horovod
         # to broadcast the states of models we want to avoid name conflicts for these
-        # states so we set all the models to be sub-module of the main model with
+        # states, so we set all the models to be submodule of the main model with
         # different names using __setattr__ and use the state_dict of the main model
         # for broadcasting. Note that broadcast_parameters only accepts state_dict()
         # although its doc says it also accepts named_parameters()
@@ -264,7 +264,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             if step_mode != pytorch.LRScheduler.StepMode.MANUAL_STEP:
                 raise det.errors.InvalidExperimentException(
                     "detected that context.wrap_lr_scheduler() was called with an instance of "
-                    "torch.optim.lr_scheduer.ReduceLROnPlateau as the lr_scheduler.  This lr "
+                    "torch.optim.lr_scheduler.ReduceLROnPlateau as the lr_scheduler.  This lr "
                     "scheduler class does not have the usual step() parameters, and so it can "
                     "only be used with step_mode=MANUAL_STEP.\n"
                     "\n"
@@ -318,7 +318,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
-        a ``torch.optim.Optimizer`` doesn't store parameter names and we need the names of
+        a ``torch.optim.Optimizer`` doesn't store parameter names, and we need the names of
         the parameters when mapping parameters to each ``horovod.DistributedOptimizer``.
         """
         opt_params = {p for group in optimizer.param_groups for p in group.get("params", [])}
@@ -368,7 +368,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             The scaler. It may be wrapped to add additional functionality for use in Determined.
         """
 
-        check.false(amp_import_error, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
+        check.true(HAVE_AMP, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
 
         check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
 
@@ -556,8 +556,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             When using distributed training, we don't support manual gradient accumulation.
             That means the gradient on each parameter can only be calculated once on each batch.
             If a parameter is associated with multiple losses, you can either choose to call
-            backward on only one of those losses or you could set ``require_grads`` flag of a
-            parameter or module to false to avoid manual gradient accumulation on that parameter.
+            ``backward'' on only one of those losses, or you can set the ``require_grads`` flag of
+            a parameter or module to false to avoid manual gradient accumulation on that parameter.
             However, you can do gradient accumulation across batches by setting
             :ref:`optimizations.aggregation_frequency <config-aggregation-frequency>` in the
             experiment configuration to be greater than 1.
@@ -639,7 +639,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
 
-    def _average_gradients(self, parameters: Any, divisor: int) -> None:
+    @staticmethod
+    def _average_gradients(parameters: Any, divisor: int) -> None:
         check.gt_eq(divisor, 1)
         if divisor == 1:
             return

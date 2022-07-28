@@ -1,8 +1,9 @@
-######################
+#################
  Troubleshooting
-######################
+#################
 
-If you cannot reach the Determined master after installing Determined on Kubernetes, follow these debugging steps:
+If you cannot reach the Determined master after installing Determined on Kubernetes, follow these
+debugging steps:
 
 .. code:: bash
 

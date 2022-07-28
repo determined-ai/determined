@@ -1,6 +1,6 @@
-###################
-Model Hub APIs
-###################
+################
+ Model Hub APIs
+################
 
 This section includes reference documentation for the model hub APIs:
 

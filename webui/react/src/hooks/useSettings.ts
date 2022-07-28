@@ -6,6 +6,7 @@ import { useStore } from 'contexts/Store';
 import { getUserSetting, updateUserSetting } from 'services/api';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { UpdateUserSettingParams } from 'services/types';
+import usePrevious from 'shared/hooks/usePrevious';
 import { Primitive, RecordKey } from 'shared/types';
 import { clone, hasObjectKeys, isBoolean, isEqual, isNumber,
   isString } from 'shared/utils/data';
@@ -13,7 +14,6 @@ import { ErrorType } from 'shared/utils/error';
 import { Storage } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
-import usePrevious from './usePrevious';
 import useStorage from './useStorage';
 
 export enum BaseType {
@@ -27,6 +27,10 @@ enum PathChangeType {
   None = 'none',
   Push = 'push',
   Replace = 'replace',
+}
+
+interface UserSettingUpdate extends UpdateUserSettingParams {
+  userId: number;
 }
 
 type GenericSettingsType = Primitive | Primitive[] | undefined;
@@ -227,9 +231,9 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     }, [] as string[]);
   }, [ config.settings, settings ]);
 
-  const updateSettings = useCallback((partialSettings: Partial<T>, push = false) => {
+  const updateSettings = useCallback(async (partialSettings: Partial<T>, push = false) => {
     const changes = Object.keys(partialSettings) as (keyof T)[];
-    const { internalSettings, querySettings } = changes.reduce((acc, key) => {
+    const { internalSettings, querySettings, updates } = changes.reduce((acc, key) => {
       // Check to make sure the settings key is defined in the config.
       const config = configMap[key];
       if (!config) return acc;
@@ -253,15 +257,12 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
           persistedSetting.value = JSON.stringify(value);
         }
         if (user?.id) {
-          // Persist storage to backend
-          updateUserSetting({
+          acc.updates.push({
             setting: persistedSetting,
             storagePath: storage.getStoragePath(),
             userId: user.id,
-          } as UpdateUserSettingParams);
-
+          });
         }
-
       }
 
       // Keep track of internal setting changes to update async from query settings.
@@ -274,7 +275,24 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     }, {
       internalSettings: {} as Partial<T>,
       querySettings: {} as Partial<T>,
+      updates: [] as UserSettingUpdate[],
     });
+
+    // Update user settings via API.
+    if (updates.length !== 0) {
+      try {
+        // Persist storage to backend.
+        await Promise.allSettled(updates.map((update) => updateUserSetting(update)));
+      } catch (e) {
+        handleError(e, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to update user settings.',
+          publicSubject: 'Some POST user settings failed.',
+          silent: true,
+          type: ErrorType.Api,
+        });
+      }
+    }
 
     // Update internal settings state for when skipping url encoding of settings.
     setSettings((prev) => ({ ...clone(prev), ...internalSettings }));
@@ -286,37 +304,50 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     });
   }, [ configMap, storage, user ]);
 
-  const resetSettings = useCallback((keys?: string[]) => {
+  const resetSettings = useCallback(async (keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
       const includesKey = !keys || keys.includes(prop.key);
       if (includesKey) acc[prop.key] = prop.defaultValue;
       return acc;
     }, {} as GenericSettings) as Partial<T>;
 
-    updateSettings(newSettings);
+    await updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
 
   const fetchUserSetting = useCallback(async () => {
-
     if (!user) return;
-    const userSettingResponse = await getUserSetting({ userId: user.id });
-    userSettingResponse.settings.forEach((setting) => {
-      const { key, value, storagePath } = setting;
-      const jsonValue = JSON.parse(value || '');
-      const config = configMap[key];
-      if (!config) return;
-      const isValid = validateSetting(config, jsonValue);
-      const isDefault = isEqual(config.defaultValue, jsonValue);
+    try {
+      const userSettingResponse = await getUserSetting({ userId: user.id });
+      userSettingResponse.settings.forEach((setting) => {
+        const {
+          key,
+          value,
+          storagePath,
+        } = setting;
+        const jsonValue = JSON.parse(value || '');
+        const config = configMap[key];
+        if (!config) return;
+        const isValid = validateSetting(config, jsonValue);
+        const isDefault = isEqual(config.defaultValue, jsonValue);
 
-      // Store or clear setting if `storageKey` is available.
-      if (config.storageKey && isValid) {
-        if (jsonValue === undefined || isDefault) {
-          storage.remove(config.storageKey, storagePath);
-        } else {
-          storage.set(config.storageKey, jsonValue, storagePath);
+        // Store or clear setting if `storageKey` is available.
+        if (config.storageKey && isValid) {
+          if (jsonValue === undefined || isDefault) {
+            storage.remove(config.storageKey, storagePath);
+          } else {
+            storage.set(config.storageKey, jsonValue, storagePath);
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      handleError(e, {
+        isUserTriggered: false,
+        publicMessage: 'Unable to fetch user settings.',
+        publicSubject: 'GET user settings failed',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
 
   }, [ configMap, storage, user ]);
 

@@ -1,7 +1,7 @@
 .. _deepspeed-reference:
 
 #########################
-DeepSpeed API Reference
+ DeepSpeed API Reference
 #########################
 
 +------------------------------------------------+
@@ -20,31 +20,32 @@ DeepSpeed API Reference
    :member-order: bysource
    :special-members: __init__
 
-*******************************************************
+********************************************************
  ``determined.pytorch.deepspeed.DeepSpeedTrialContext``
-*******************************************************
+********************************************************
 
 .. autoclass:: determined.pytorch.deepspeed.DeepSpeedTrialContext
    :members:
    :inherited-members:
    :show-inheritance:
 
-************************************************************
+*************************************************************
  ``determined.pytorch.deepspeed.overwrite_deepspeed_config``
-************************************************************
+*************************************************************
 
 .. autofunction:: determined.pytorch.deepspeed.overwrite_deepspeed_config
 
-************************************************************
+****************************************************
  ``determined.pytorch.deepspeed.ModelParallelUnit``
-************************************************************
+****************************************************
 
 .. autoclass:: determined.pytorch.deepspeed.ModelParallelUnit
 
-The following classes and methods overlap with PyTorchTrial (click to go to respective documentation):
+The following classes and methods overlap with PyTorchTrial (click to go to respective
+documentation):
 
-- :ref:`determined.pytorch.DataLoader <pytorch-dataloader>`
-- :ref:`determined.pytorch.samplers <pytorch-samplers>`
-- :ref:`determined.pytorch.MetricReducer <pytorch-metric-reducer>`
-- :ref:`determined.pytorch.PyTorchCallback <pytorch-callbacks>`
-- :ref:`determined.tensorboard.metric_writers.pytorch.TorchWriter <pytorch-writer>`
+-  :ref:`determined.pytorch.DataLoader <pytorch-dataloader>`
+-  :ref:`determined.pytorch.samplers <pytorch-samplers>`
+-  :ref:`determined.pytorch.MetricReducer <pytorch-metric-reducer>`
+-  :ref:`determined.pytorch.PyTorchCallback <pytorch-callbacks>`
+-  :ref:`determined.tensorboard.metric_writers.pytorch.TorchWriter <pytorch-writer>`

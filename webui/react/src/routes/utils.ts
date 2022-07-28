@@ -127,8 +127,8 @@ export const paths = {
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;
   },
-  settings: (): string => {
-    return '/settings';
+  settings: (tab = ''): string => {
+    return `/settings/${tab}`;
   },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined
@@ -138,7 +138,7 @@ export const paths = {
   taskList: (): string => {
     return '/tasks';
   },
-  taskLogs: (task: CommandTask): string => {
+  taskLogs: (task: Pick<CommandTask, 'id' | 'name' | 'type'>): string => {
     return `/${task.type}/${task.id}/logs?id=${task.name}`;
   },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {

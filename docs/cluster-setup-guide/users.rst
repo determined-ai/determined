@@ -1,8 +1,8 @@
 .. _users:
 
-################
+###############
  User Accounts
-################
+###############
 
 Initially, a Determined installation has two user accounts: ``admin`` and ``determined``. Both of
 these accounts have blank passwords by default.
@@ -66,9 +66,9 @@ using:
 
    det user logout
 
-************************
-Temporary authentication
-************************
+**************************
+ Temporary authentication
+**************************
 
 In some cases, it may be useful to execute a single command as a specific user without starting a
 persistent session for that user (think of the ``sudo`` command on a Unix-like system). In
@@ -87,9 +87,9 @@ be discarded using the ``user logout`` subcommand:
 
    det -u <username> user logout
 
-********************
+******************
  Change Passwords
-********************
+******************
 
 Users have blank passwords by default. This might be sufficient for low-security or experimental
 clusters, and it still provides the organizational benefits of associating each Determined object
@@ -113,9 +113,9 @@ An admin can also change another user's password:
    information on configuring secure connections over HTTPS. Users should not be assigned "valuable"
    passwords, and passwords used with Determined should not be reused for other purposes.
 
-****************
+*************
  List Assets
-****************
+*************
 
 WebUI
 =====
@@ -163,14 +163,14 @@ To reactivate a user, ``user activate`` can be used:
 
 .. _run-as-user:
 
-*****************************************
+***********************************
  Run Tasks as Specific Agent Users
-*****************************************
+***********************************
 
 If an experiment, notebook, or command task uses the ``bind_mount`` option in its
-:ref:`experiment-config-reference`, it is often useful to set the Unix user and group on the agent that
-the task runs as. This allows the file permissions on the agent to be reflected in the task and vice
-versa.
+:ref:`experiment-config-reference`, it is often useful to set the Unix user and group on the agent
+that the task runs as. This allows the file permissions on the agent to be reflected in the task and
+vice versa.
 
 This can be configured by linking a Determined user with the user and group configuration on an
 agent:
@@ -204,9 +204,9 @@ user and group on an agent can be configured in the ``master.yaml`` file located
        group: root
        gid: 0
 
-***************************************
+***********************************
  Run Unprivileged Tasks by Default
-***************************************
+***********************************
 
 Some administrators of Determined may wish to run tasks as unprivileged users by default. In Linux,
 unprivileged processes are sometimes run under the `nobody
