@@ -99,7 +99,7 @@ type Master struct {
 	echo          *echo.Echo
 	rm            *actor.Ref
 	rwCoordinator *actor.Ref
-	db            db.DB //*db.PgDB
+	db            db.DB
 	proxy         *actor.Ref
 	taskLogger    *task.Logger
 	hpImportance  *actor.Ref
