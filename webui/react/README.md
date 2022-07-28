@@ -1,4 +1,4 @@
-# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all>) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg)](https://codecov.io/gh/determined-ai/determined)
+# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all>) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg?flag=web)](https://codecov.io/gh/determined-ai/determined/tree/master/webui/react/)
 
 ## Brief Architecture
 
