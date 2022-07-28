@@ -14,6 +14,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isAborted } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ModelVersion } from 'types';
@@ -166,8 +167,8 @@ const ModelVersionDetails: React.FC = () => {
       modelName: modelVersion?.model.name ?? '',
       versionId: modelVersion?.id ?? 0,
     });
-    history.push(`/det/models/${modelVersion?.model.name}`);
-  }, [ history, modelVersion?.id, modelVersion?.model.name ]);
+    routeToReactUrl(paths.modelDetails(modelId));
+  }, [ modelId, modelVersion?.id, modelVersion?.model.name ]);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
