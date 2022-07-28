@@ -8,6 +8,10 @@ import (
 
 	context "context"
 
+	db "github.com/determined-ai/determined/master/internal/db"
+
+	decimal "github.com/shopspring/decimal"
+
 	expconf "github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	lttb "github.com/determined-ai/determined/master/internal/lttb"
@@ -84,6 +88,20 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	return r0
 }
 
+// AddJob provides a mock function with given fields: j
+func (_m *DB) AddJob(j *model.Job) error {
+	ret := _m.Called(j)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Job) error); ok {
+		r0 = rf(j)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddTask provides a mock function with given fields: t
 func (_m *DB) AddTask(t *model.Task) error {
 	ret := _m.Called(t)
@@ -91,6 +109,20 @@ func (_m *DB) AddTask(t *model.Task) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.Task) error); ok {
 		r0 = rf(t)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddTaskLogs provides a mock function with given fields: _a0
+func (_m *DB) AddTaskLogs(_a0 []*model.TaskLog) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]*model.TaskLog) error); ok {
+		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -251,6 +283,27 @@ func (_m *DB) CheckExperimentExists(id int) (bool, error) {
 	return r0, r1
 }
 
+// CheckTaskExists provides a mock function with given fields: id
+func (_m *DB) CheckTaskExists(id model.TaskID) (bool, error) {
+	ret := _m.Called(id)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(model.TaskID) bool); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.TaskID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CheckTrialExists provides a mock function with given fields: id
 func (_m *DB) CheckTrialExists(id int) (bool, error) {
 	ret := _m.Called(id)
@@ -332,6 +385,20 @@ func (_m *DB) Close() error {
 	return r0
 }
 
+// CloseOpenAllocations provides a mock function with given fields: exclude
+func (_m *DB) CloseOpenAllocations(exclude []model.AllocationID) error {
+	ret := _m.Called(exclude)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]model.AllocationID) error); ok {
+		r0 = rf(exclude)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CompleteAllocation provides a mock function with given fields: a
 func (_m *DB) CompleteAllocation(a *model.Allocation) error {
 	ret := _m.Called(a)
@@ -367,6 +434,20 @@ func (_m *DB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error
 	}
 
 	return r0, r1
+}
+
+// CompleteTask provides a mock function with given fields: id, endTime
+func (_m *DB) CompleteTask(id model.TaskID, endTime time.Time) error {
+	ret := _m.Called(id, endTime)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.TaskID, time.Time) error); ok {
+		r0 = rf(id, endTime)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // DeleteAllocationSession provides a mock function with given fields: allocationID
@@ -418,6 +499,20 @@ func (_m *DB) DeleteSnapshotsForTerminalExperiments() error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteTaskLogs provides a mock function with given fields: taskIDs
+func (_m *DB) DeleteTaskLogs(taskIDs []model.TaskID) error {
+	ret := _m.Called(taskIDs)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]model.TaskID) error); ok {
+		r0 = rf(taskIDs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -976,6 +1071,20 @@ func (_m *DB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 	return r0, r1
 }
 
+// FailDeletingExperiment provides a mock function with given fields:
+func (_m *DB) FailDeletingExperiment() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FetchHPImportanceTrainingData provides a mock function with given fields: experimentID, metric
 func (_m *DB) FetchHPImportanceTrainingData(experimentID int, metric string) (map[int][]model.HPImportanceTrialData, error) {
 	ret := _m.Called(experimentID, metric)
@@ -1124,6 +1233,29 @@ func (_m *DB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, e
 	return r0, r1, r2
 }
 
+// GetRegisteredCheckpoints provides a mock function with given fields: checkpoints
+func (_m *DB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID]bool, error) {
+	ret := _m.Called(checkpoints)
+
+	var r0 map[uuid.UUID]bool
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) map[uuid.UUID]bool); ok {
+		r0 = rf(checkpoints)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[uuid.UUID]bool)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]uuid.UUID) error); ok {
+		r1 = rf(checkpoints)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetTrialProfilerMetricsBatches provides a mock function with given fields: labelsJSON, offset, limit
 func (_m *DB) GetTrialProfilerMetricsBatches(labelsJSON []byte, offset int, limit int) (model.TrialProfilerMetricsBatchBatch, error) {
 	ret := _m.Called(labelsJSON, offset, limit)
@@ -1147,6 +1279,29 @@ func (_m *DB) GetTrialProfilerMetricsBatches(labelsJSON []byte, offset int, limi
 	return r0, r1
 }
 
+// GroupCheckpointUUIDsByExperimentID provides a mock function with given fields: checkpoints
+func (_m *DB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) ([]*db.ExperimentCheckpointGrouping, error) {
+	ret := _m.Called(checkpoints)
+
+	var r0 []*db.ExperimentCheckpointGrouping
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) []*db.ExperimentCheckpointGrouping); ok {
+		r0 = rf(checkpoints)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.ExperimentCheckpointGrouping)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]uuid.UUID) error); ok {
+		r1 = rf(checkpoints)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InsertTrialProfilerMetricsBatch provides a mock function with given fields: values, batches, timestamps, labels
 func (_m *DB) InsertTrialProfilerMetricsBatch(values []float32, batches []int32, timestamps []time.Time, labels []byte) error {
 	ret := _m.Called(values, batches, timestamps, labels)
@@ -1159,6 +1314,29 @@ func (_m *DB) InsertTrialProfilerMetricsBatch(values []float32, batches []int32,
 	}
 
 	return r0
+}
+
+// JobByID provides a mock function with given fields: jID
+func (_m *DB) JobByID(jID model.JobID) (*model.Job, error) {
+	ret := _m.Called(jID)
+
+	var r0 *model.Job
+	if rf, ok := ret.Get(0).(func(model.JobID) *model.Job); ok {
+		r0 = rf(jID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Job)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.JobID) error); ok {
+		r1 = rf(jID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // LatestCheckpointForTrial provides a mock function with given fields: trialID
@@ -1203,6 +1381,34 @@ func (_m *DB) LegacyExperimentConfigByID(id int) (expconf.LegacyConfig, error) {
 	}
 
 	return r0, r1
+}
+
+// MarkCheckpointsDeleted provides a mock function with given fields: deleteCheckpoints
+func (_m *DB) MarkCheckpointsDeleted(deleteCheckpoints []uuid.UUID) error {
+	ret := _m.Called(deleteCheckpoints)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) error); ok {
+		r0 = rf(deleteCheckpoints)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MaxTerminationDelay provides a mock function with given fields:
+func (_m *DB) MaxTerminationDelay() time.Duration {
+	ret := _m.Called()
+
+	var r0 time.Duration
+	if rf, ok := ret.Get(0).(func() time.Duration); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(time.Duration)
+	}
+
+	return r0
 }
 
 // MetricNames provides a mock function with given fields: experimentID, sStartTime, vStartTime
@@ -1601,6 +1807,105 @@ func (_m *DB) StartUserSession(user *model.User) (string, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(*model.User) error); ok {
 		r1 = rf(user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TaskByID provides a mock function with given fields: tID
+func (_m *DB) TaskByID(tID model.TaskID) (*model.Task, error) {
+	ret := _m.Called(tID)
+
+	var r0 *model.Task
+	if rf, ok := ret.Get(0).(func(model.TaskID) *model.Task); ok {
+		r0 = rf(tID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Task)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.TaskID) error); ok {
+		r1 = rf(tID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TaskLogs provides a mock function with given fields: taskID, limit, filters, order, state
+func (_m *DB) TaskLogs(taskID model.TaskID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{}) ([]*model.TaskLog, interface{}, error) {
+	ret := _m.Called(taskID, limit, filters, order, state)
+
+	var r0 []*model.TaskLog
+	if rf, ok := ret.Get(0).(func(model.TaskID, int, []api.Filter, apiv1.OrderBy, interface{}) []*model.TaskLog); ok {
+		r0 = rf(taskID, limit, filters, order, state)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.TaskLog)
+		}
+	}
+
+	var r1 interface{}
+	if rf, ok := ret.Get(1).(func(model.TaskID, int, []api.Filter, apiv1.OrderBy, interface{}) interface{}); ok {
+		r1 = rf(taskID, limit, filters, order, state)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(interface{})
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(model.TaskID, int, []api.Filter, apiv1.OrderBy, interface{}) error); ok {
+		r2 = rf(taskID, limit, filters, order, state)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// TaskLogsCount provides a mock function with given fields: taskID, filters
+func (_m *DB) TaskLogsCount(taskID model.TaskID, filters []api.Filter) (int, error) {
+	ret := _m.Called(taskID, filters)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(model.TaskID, []api.Filter) int); ok {
+		r0 = rf(taskID, filters)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.TaskID, []api.Filter) error); ok {
+		r1 = rf(taskID, filters)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TaskLogsFields provides a mock function with given fields: taskID
+func (_m *DB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error) {
+	ret := _m.Called(taskID)
+
+	var r0 *apiv1.TaskLogsFieldsResponse
+	if rf, ok := ret.Get(0).(func(model.TaskID) *apiv1.TaskLogsFieldsResponse); ok {
+		r0 = rf(taskID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*apiv1.TaskLogsFieldsResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.TaskID) error); ok {
+		r1 = rf(taskID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2033,6 +2338,20 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
+// TrySaveExperimentState provides a mock function with given fields: experiment
+func (_m *DB) TrySaveExperimentState(experiment *model.Experiment) error {
+	ret := _m.Called(experiment)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Experiment) error); ok {
+		r0 = rf(experiment)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateAllocationStartTime provides a mock function with given fields: allocation
 func (_m *DB) UpdateAllocationStartTime(allocation model.Allocation) error {
 	ret := _m.Called(allocation)
@@ -2054,6 +2373,34 @@ func (_m *DB) UpdateAllocationState(allocation model.Allocation) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.Allocation) error); ok {
 		r0 = rf(allocation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateClusterHeartBeat provides a mock function with given fields: currentClusterHeartbeat
+func (_m *DB) UpdateClusterHeartBeat(currentClusterHeartbeat time.Time) error {
+	ret := _m.Called(currentClusterHeartbeat)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(time.Time) error); ok {
+		r0 = rf(currentClusterHeartbeat)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateJobPosition provides a mock function with given fields: jobID, position
+func (_m *DB) UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error {
+	ret := _m.Called(jobID, position)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.JobID, decimal.Decimal) error); ok {
+		r0 = rf(jobID, position)
 	} else {
 		r0 = ret.Error(0)
 	}

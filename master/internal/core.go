@@ -810,7 +810,9 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	m.taskLogger = task.NewLogger(m.system, m.taskLogBackend)
 
-	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
+	// TODO remove this type assert after UserAuthZ lands which makes user service user
+	// the database interface.
+	user.InitService(m.db.(*db.PgDB), m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAdminAuthentication}
