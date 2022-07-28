@@ -158,7 +158,7 @@ func (a *apiServer) GetTasksCount(
 	}
 	for _, n := range resp1.Notebooks {
 		if n.State == taskv1.State_STATE_RUNNING {
-			finalResp.Notebooks += 1
+			finalResp.Notebooks++
 		}
 	}
 
@@ -169,7 +169,7 @@ func (a *apiServer) GetTasksCount(
 	}
 	for _, tb := range resp2.Tensorboards {
 		if tb.State == taskv1.State_STATE_RUNNING {
-			finalResp.Tensorboards += 1
+			finalResp.Tensorboards++
 		}
 	}
 
@@ -180,7 +180,7 @@ func (a *apiServer) GetTasksCount(
 	}
 	for _, c := range resp3.Commands {
 		if c.State == taskv1.State_STATE_RUNNING {
-			finalResp.Commands += 1
+			finalResp.Commands++
 		}
 	}
 
@@ -191,7 +191,7 @@ func (a *apiServer) GetTasksCount(
 	}
 	for _, s := range resp4.Shells {
 		if s.State == taskv1.State_STATE_RUNNING {
-			finalResp.Shells += 1
+			finalResp.Shells++
 		}
 	}
 
