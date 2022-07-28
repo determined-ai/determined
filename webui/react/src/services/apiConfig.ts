@@ -524,12 +524,16 @@ export const getTrialWorkloads: DetApi<
 };
 
 export const getExperimentFileFromTree: DetApi<
-  Service.GetExperimentFileFromTreeParams, Api.V1GetModelDefFileResponse, string
+  Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
 > = {
   name: 'getExperimentFileFromTree',
   postProcess: (response) => response.file || '',
   request: (params) => {
-    return detApi.Experiments.getExperimentFileFromTree(params.experimentId, params.filePath);
+    return detApi.Experiments.getModelDefFile(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      params.experimentId!,
+      { path: params.path },
+    );
   },
 };
 

@@ -192,7 +192,7 @@ export const getExperimentFileTree = generateDetApi<
 >(Config.getExperimentFileTree);
 
 export const getExperimentFileFromTree = generateDetApi<
-  Service.GetExperimentFileFromTreeParams, Api.V1GetModelDefFileResponse, string
+  Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
 >(Config.getExperimentFileFromTree);
 
 /* Tasks */

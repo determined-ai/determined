@@ -10804,85 +10804,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 options: localVarRequestOptions,
             };
         },
-
-      /**
-       * 
-       * @summary Get the requested experiment file tree.
-       * @param {number} experimentId The id of the experiment.
-       * @throws {RequiredError}
-       */
-      getExperimentFileTree(experimentId: number, options: any = {}): FetchArgs {
-        // verify required parameter 'experimentId' is not null or undefined
-        if (experimentId === null || experimentId === undefined) {
-          throw new RequiredError('experimentId', 'Required parameter experimentId was null or undefined when calling getExperimentFileTree.');
-        }
-        const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
-          .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-        const localVarUrlObj = url.parse(localVarPath, true);
-        const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-        const localVarHeaderParameter = {} as any;
-        const localVarQueryParameter = {} as any;
-
-        // authentication BearerToken required
-        if (configuration && configuration.apiKey) {
-          const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-            ? configuration.apiKey("Authorization")
-            : configuration.apiKey;
-          localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-        }
-
-        localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-        // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-        delete localVarUrlObj.search;
-        localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-        return {
-          url: url.format(localVarUrlObj),
-          options: localVarRequestOptions,
-        };
-      },
-      /**
-       * 
-       * @summary Get the requested experiment file tree.
-       * @param {number} experimentId The id of the experiment.
-       * @param {string} filePath The path of the file.
-       * @throws {RequiredError}
-       */
-      getExperimentFileFromTree(experimentId: number, filePath: string, options: any = {}): FetchArgs {
-        // verify required parameter 'experimentId' is not null or undefined
-        if (experimentId === null || experimentId === undefined) {
-          throw new RequiredError('experimentId', 'Required parameter experimentId was null or undefined when calling getExperimentFileFromTree.');
-        }
-        // verify required parameter 'filePath' is not null or undefined
-        if (filePath === null || filePath === undefined || filePath.length === 0) {
-          throw new RequiredError('filePath', 'Required parameter filePath was null, undefined or empty when calling getExperimentFileFromTree.');
-        }
-
-        const localVarPath = `/api/v1/experiments/{experimentId}/file`
-          .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-        const localVarUrlObj = url.parse(localVarPath, true);
-        const localVarRequestOptions = Object.assign({ method: 'POST', body: JSON.stringify({ path: filePath }) }, options);
-        const localVarHeaderParameter = {} as any;
-        const localVarQueryParameter = {} as any;
-
-        // authentication BearerToken required
-        if (configuration && configuration.apiKey) {
-          const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-            ? configuration.apiKey("Authorization")
-            : configuration.apiKey;
-          localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-        }
-
-        localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-        // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-        delete localVarUrlObj.search;
-        localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-        return {
-          url: url.format(localVarUrlObj),
-          options: localVarRequestOptions,
-        };
-      },
     }
 };
 
@@ -11459,42 +11380,6 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
                     }
                 });
             };
-        },
-        /**
-         * 
-         * @summary Get the requested experiment file tree.
-         * @param {number} experimentId The id of the experiment.
-         * @throws {RequiredError}
-         */
-      getExperimentFileTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
-          const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentFileTree(experimentId, options);
-          return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-            return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-              if (response.status >= 200 && response.status < 300) {
-                return response.json();
-              } else {
-                throw response;
-              }
-            });
-          };
-        },
-        /**
-         * 
-         * @summary Get the requested experiment file tree.
-         * @param {number} experimentId The id of the experiment.
-         * @throws {RequiredError}
-         */
-      getExperimentFileFromTree(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
-          const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentFileFromTree(experimentId, path, options);
-          return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-            return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-              if (response.status >= 200 && response.status < 300) {
-                return response.json();
-              } else {
-                throw response;
-              }
-            });
-          };
         },
     };
 };
@@ -12217,28 +12102,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public unarchiveExperiment(id: number, options?: any) {
         return ExperimentsApiFp(this.configuration).unarchiveExperiment(id, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get the file tree based on the experiment id.
-     * @param {number} id The experiment id.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getExperimentFileTree(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentFileTree(id, options)(this.fetch, this.basePath);
-    }
-    /**
-     * 
-     * @summary Get the file from tree based on the experiment id.
-     * @param {number} id The experiment id.
-     * @param {string} path The experiment id.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getExperimentFileFromTree(id: number, path: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentFileFromTree(id, path, options)(this.fetch, this.basePath);
     }
 
 }

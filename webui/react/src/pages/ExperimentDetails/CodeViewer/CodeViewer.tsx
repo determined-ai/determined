@@ -148,7 +148,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       setIsFetching(true);
 
       try {
-        const file = await getExperimentFileFromTree({ experimentId, filePath });
+        const file = await getExperimentFileFromTree({ experimentId, path: filePath });
 
         setIsFetching(false);
         setFileInfo({
