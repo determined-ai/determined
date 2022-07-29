@@ -186,7 +186,7 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := &model.User{ID: model.UserID(req.UserId)}
 	if err = user.AuthZProvider.Get().CanSetUserPassword(*curUser, *targetUser); err != nil {
-		return nil, grpcutil.ErrPermissionDenied
+		return nil, err
 	}
 
 	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
@@ -209,12 +209,13 @@ func (a *apiServer) PatchUser(
 	if err != nil {
 		return nil, err
 	}
+
 	uid := model.UserID(req.UserId)
-	if !curUser.Admin && curUser.ID != uid {
-		return nil, grpcutil.ErrPermissionDenied
-	}
-	// TODO: handle any field name:
+	targetUser := &model.User{ID: uid}
 	if req.User.DisplayName != nil {
+		if err = user.AuthZProvider.Get().CanSetUserDisplayName(*curUser, *targetUser); err != nil {
+			return nil, err
+		}
 		u := &userv1.User{}
 		if req.User.DisplayName.Value == "" {
 			// Disallow empty diaplay name for sorting purpose.
@@ -239,6 +240,42 @@ func (a *apiServer) PatchUser(
 		} else if err != nil {
 			return nil, err
 		}
+	}
+
+	var toUpdate []string
+	if req.User.Active != nil {
+		if err = user.AuthZProvider.Get().CanSetUserActive(*curUser, *targetUser); err != nil {
+			return nil, err
+		}
+		targetUser.Active = req.User.Active.Value
+		toUpdate = append(toUpdate, "active")
+	}
+
+	if req.User.Admin != nil {
+		if err = user.AuthZProvider.Get().CanSetUserAdmin(*curUser, *targetUser); err != nil {
+			return nil, err
+		}
+		targetUser.Admin = req.User.Admin.Value
+		toUpdate = append(toUpdate, "admin")
+	}
+
+	var ug *model.AgentUserGroup
+	if pug := req.User.AgentUserGroup; pug != nil {
+		if err = user.AuthZProvider.Get().CanSetUserAgentGroup(*curUser, *targetUser); err != nil {
+			return nil, err
+		}
+
+		ug = &model.AgentUserGroup{
+			UID: int(req.User.AgentUserGroup.AgentUid),
+			GID: int(req.User.AgentUserGroup.AgentGid),
+		}
+	}
+
+	switch err = a.m.db.UpdateUser(targetUser, toUpdate, ug); {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
+		return nil, err
 	}
 
 	fullUser, err := getUser(a.m.db, uid)
