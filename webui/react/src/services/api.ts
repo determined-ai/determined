@@ -278,7 +278,7 @@ export const createWorkspace = generateDetApi<
 >(Config.createWorkspace);
 
 export const deleteWorkspace = generateDetApi<
-  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, void
+  Service.DeleteWorkspaceParams, Api.V1DeleteWorkspaceResponse, Type.DeletionStatus
 >(Config.deleteWorkspace);
 
 export const patchWorkspace = generateDetApi<
