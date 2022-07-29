@@ -157,7 +157,7 @@ func (a *apiServer) PostUser(
 		Active:   req.User.Active,
 	}
 	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(req.User.DisplayName)
+		userToAdd.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
 
 	var agentUserGroup *model.AgentUserGroup
@@ -213,7 +213,7 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
-		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetUser) {
 			return nil, errUserNotFound
 		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
@@ -247,7 +247,7 @@ func (a *apiServer) PatchUser(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
-		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetUser) {
 			return nil, errUserNotFound
 		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
