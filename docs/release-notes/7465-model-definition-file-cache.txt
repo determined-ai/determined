@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Introduced a file system cache for model definition files. Default path for caching is
-   `/var/cache/determined`, and this can be changed in master configuration. Note that the master
-   would break on startup if it does not have access to create this default directory.
