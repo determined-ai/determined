@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -143,17 +144,44 @@ func (a *apiServer) PatchProject(
 		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
 }
 
+func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
+	expList []*model.Experiment,
+) (err error) {
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
+		return err
+	}
+
+	log.Errorf("deleting project %d experiments", projectID)
+	for _, exp := range expList {
+		if err := a.deleteExperiment(exp, user); err != nil {
+			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
+			return err
+		}
+	}
+	log.Errorf("project %d experiments deleted successfully", projectID)
+	holder := &projectv1.Project{}
+	err = a.m.db.QueryProto("delete_project", holder, projectID, user.ID, user.Admin)
+	if err != nil {
+		log.WithError(err).Errorf("failed to delete project %d", projectID)
+		return err
+	}
+	log.Errorf("project %d deleted successfully", projectID)
+	return nil
+}
+
 func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
 	error,
 ) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &projectv1.Project{}
-	err = a.m.db.QueryProto("deletable_project", holder, req.Id, user.ID, user.Admin)
+	err = a.m.db.QueryProto("deletable_project", holder, req.Id, user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
@@ -164,28 +192,15 @@ func (a *apiServer) DeleteProject(
 	if err != nil {
 		return nil, err
 	}
-	go func() {
-		log.WithError(err).Errorf("deleting project %d experiments", req.Id)
-		for _, exp := range expList {
-			if err := a.deleteExperiment(exp, user); err != nil {
-				log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
-				return
-			}
-		}
-		log.WithError(err).Errorf("project %d experiments deleted successfully", req.Id)
-		err = a.m.db.QueryProto("delete_project", holder, req.Id, user.ID, user.Admin)
-		if err != nil {
-			log.WithError(err).Errorf("failed to delete project %d", req.Id)
-			return
-		}
-		log.WithError(err).Errorf("project %d deleted successfully", req.Id)
-	}()
 
 	if len(expList) == 0 {
-		err = a.m.db.QueryProto("delete_project", holder, req.Id, user.ID, user.Admin)
+		err = a.m.db.QueryProto("delete_project", holder, req.Id, user.User.Id, user.User.Admin)
 		return &apiv1.DeleteProjectResponse{Completed: (err == nil)},
 			errors.Wrapf(err, "error deleting project (%d)", req.Id)
 	} else {
+		go func() {
+			a.deleteProject(ctx, req.Id, expList)
+		}()
 		return &apiv1.DeleteProjectResponse{Completed: false},
 			errors.Wrapf(err, "error deleting experiments on project (%d)", req.Id)
 	}
