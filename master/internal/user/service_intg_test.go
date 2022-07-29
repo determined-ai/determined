@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/pkg/errors"
-	//"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/context"
@@ -31,6 +30,7 @@ import (
 var (
 	pgDB               *db.PgDB
 	userAuthzSingleton *mocks.UserAuthZ = &mocks.UserAuthZ{}
+	notFoundUsername                    = "usernotfound99999"
 )
 
 func init() {
@@ -74,9 +74,6 @@ func TestAuthzUserList(t *testing.T) {
 
 func TestAuthzPatchUser(t *testing.T) {
 	svc, authzUser, ctx := setup(t)
-	ctx.SetParamNames("username")
-	ctx.SetParamValues("admin")
-
 	cases := []struct {
 		expectedCall string
 		args         []any
@@ -96,40 +93,71 @@ func TestAuthzPatchUser(t *testing.T) {
 		},
 	}
 	for _, testCase := range cases {
+		// If we can view the user we get the can set function error.
+		ctx.SetParamNames("username")
+		ctx.SetParamValues("admin")
 		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
 			strings.NewReader(testCase.body)))
-
 		expectedErr := errors.Wrap(forbiddenError, testCase.expectedCall+"Error")
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
+		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
 
 		_, err := svc.patchUser(ctx)
 		require.Equal(t, expectedErr.Error(), err.Error())
 
-		// TODO test for leaking information here!
-		// Specifically we can leak the existance of a user here.
-		// We need to ensure we get the same error as not found as found.
+		// If we can't view the user we get the same error as user not being found.
+		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
+			strings.NewReader(testCase.body)))
+		require.Equal(t, expectedErr.Error(), err.Error())
+		authzUser.On(testCase.expectedCall, testCase.args...).
+			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
+		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
 
+		_, err = svc.patchUser(ctx)
+		require.Equal(t,
+			echo.NewHTTPError(http.StatusBadRequest, "failed to get user 'admin'").Error(),
+			err.Error())
+
+		ctx.SetParamNames("username")
+		ctx.SetParamValues(notFoundUsername)
+		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
+			strings.NewReader(testCase.body)))
+		_, err = svc.patchUser(ctx)
+		require.Equal(t, echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("failed to get user '%s'", notFoundUsername)).Error(), err.Error())
 	}
 }
 
 func TestAuthzPatchUsername(t *testing.T) {
 	svc, authzUser, ctx := setup(t)
+
+	// If we can view the user we get canSetUsersUsername error.
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
-
 	expectedErr := errors.Wrap(forbiddenError, "canSetUsersUsernameError")
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	authzUser.On("CanSetUsersUsername", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
 
 	_, err := svc.patchUsername(ctx)
 	require.Equal(t, expectedErr.Error(), err.Error())
 
-	// TODO test for leaking information here!
-	// Specifically we can leak the existance of a user here.
-	// We can also leak if another username is taken but we are stuck here / / /.
-	// Like changing your own username is often something people can do.
+	// If we can't view the user we get the same error as the user not existing.
+	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
+	authzUser.On("CanSetUsersUsername", model.User{}, mock.Anything).
+		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
+
+	_, err = svc.patchUsername(ctx)
+	require.Equal(t, db.ErrNotFound.Error(), err.Error())
+
+	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
+	ctx.SetParamNames("username")
+	ctx.SetParamValues(notFoundUsername)
+	_, err = svc.patchUsername(ctx)
+	require.Equal(t, db.ErrNotFound.Error(), err.Error())
 }
 
 func TestAuthzPostUser(t *testing.T) {
@@ -150,27 +178,33 @@ func TestAuthzPostUser(t *testing.T) {
 		Return(fmt.Errorf("canCreateUserError")).Once()
 
 	_, err := svc.postUser(ctx)
-	authzUser.AssertCalled(t, "CanCreateUser", model.User{}, model.User{Username: "x"}, agentGroup)
-	require.Contains(t, expectedErr.Error(), err.Error())
-
-	// TODO test for leaking information here!
-	// Specifically we can leak the existance of a user here.
-	// Don't think we can get around this!? -- Like username is taken is a fact of life.
+	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthzGetUserImage(t *testing.T) {
 	svc, authzUser, ctx := setup(t)
+
+	// If we can get the user return the error from canGetUsersImageError.
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
-
 	expectedErr := errors.Wrap(forbiddenError, "canGetUsersImageError")
 	authzUser.On("CanGetUsersImage", model.User{}, "admin").
-		Return(fmt.Errorf("canGetUsersImageError"))
+		Return(fmt.Errorf("canGetUsersImageError")).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
 
 	_, err := svc.getUserImage(ctx)
-	authzUser.AssertCalled(t, "CanGetUsersImage", model.User{}, "admin")
-	require.Contains(t, expectedErr.Error(), err.Error())
+	require.Equal(t, expectedErr.Error(), err.Error())
 
-	// TODO test for the existance of a user here.
-	// Should return same for non existant user.
+	// If we can't view the user return the same error as the user not existing.
+	authzUser.On("CanGetUsersImage", model.User{}, "admin").
+		Return(fmt.Errorf("canGetUsersImageError"))
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
+
+	_, err = svc.getUserImage(ctx)
+	require.Equal(t, db.ErrNotFound.Error(), err.Error())
+
+	ctx.SetParamNames("username")
+	ctx.SetParamValues(notFoundUsername)
+	_, err = svc.getUserImage(ctx)
+	require.Equal(t, db.ErrNotFound.Error(), err.Error())
 }
