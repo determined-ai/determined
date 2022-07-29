@@ -72,12 +72,11 @@ func (a *apiServer) Login(
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest,
 ) (*apiv1.CurrentUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-
-	fullUser, err := getUser(a.m.db, curUser.ID)
+	fullUser, err := getUser(a.m.db, user.ID)
 	return &apiv1.CurrentUserResponse{User: fullUser}, err
 }
 
