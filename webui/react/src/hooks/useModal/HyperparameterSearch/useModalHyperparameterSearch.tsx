@@ -69,7 +69,7 @@ const DEFAULT_LOG_BASE = 10;
 interface HyperparameterRowValues {
   count?: number;
   max?: number,
-  min?:number
+  min?: number
   type: HyperparameterType,
   value?: number | string,
 }
@@ -79,7 +79,7 @@ const useModalHyperparameterSearch = ({
   onClose,
   trial: trialIn,
 }: Props): ModalHooks => {
-  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalFields } = useModal({ onClose });
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const [ trial, setTrial ] = useState(trialIn);
   const [ modalError, setModalError ] = useState<string>();
   const [ searcher, setSearcher ] = useState(
@@ -125,17 +125,21 @@ const useModalHyperparameterSearch = ({
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
+    // Deep cloning parent experiment's config
     const baseConfig = clone(experiment.configRaw, true);
+
+    // Replacing fields from orginial config with user-selected values
     baseConfig.name = (fields.name as string).trim();
     baseConfig.searcher.name = fields.searcher;
     baseConfig.searcher.max_trials = fields.searcher === SEARCH_METHODS.Grid.name ?
       undefined : fields.max_trials;
-    baseConfig.searcher.max_length = {};
+    baseConfig.searcher.max_length = baseConfig.searcher.max_length ?? {};
     baseConfig.searcher.max_length[fields.length_units as string] = fields.max_length;
     baseConfig.searcher.max_concurrent_trials = fields.max_concurrent_trials ?? 0;
     baseConfig.resources.resource_pool = fields.pool;
     baseConfig.resources.slots_per_trial = fields.slots_per_trial;
 
+    // Dealing with ASHA-specific settings
     if (fields.searcher === SEARCH_METHODS.ASHA.name) {
       baseConfig.searcher.bracket_rungs = baseConfig.searcher.bracket_rungs ?? [];
       baseConfig.searcher.stop_once = fields.stop_once ?? baseConfig.searcher.stop_once ?? false;
@@ -150,6 +154,7 @@ const useModalHyperparameterSearch = ({
       baseConfig.searcher.mode = undefined;
     }
 
+    // Parsing hyperparameters
     Object.entries(fields)
       .filter((field) => typeof field[1] === 'object')
       .forEach((hp) => {
@@ -161,6 +166,7 @@ const useModalHyperparameterSearch = ({
           let parsedVal;
           try {
             if (typeof hpInfo.value === 'string'){
+              // Parse hyperparameter value in case it's not a string or number
               parsedVal = JSON.parse(hpInfo.value);
             } else {
               parsedVal = hpInfo.value;
@@ -189,6 +195,7 @@ const useModalHyperparameterSearch = ({
         }
       });
 
+    // Unflatten hyperparameters to deal with nesting
     baseConfig.hyperparameters = unflattenObject(baseConfig.hyperparameters);
 
     const newConfig = yaml.dump(baseConfig);
@@ -256,6 +263,7 @@ const useModalHyperparameterSearch = ({
   const validateForm = useCallback(() => {
     if (!formValues) return;
     if (currentPage === 1) {
+      // Validating hyperparameters page
       const hyperparameters = formValues as Record<string, HyperparameterRowValues>;
       setValidationError(!Object.values(hyperparameters).every((hp) => {
         switch (hp.type) {
@@ -269,6 +277,7 @@ const useModalHyperparameterSearch = ({
         }
       }));
     } else if (currentPage === 0) {
+      // Validating searcher page
       const {
         searcher, name, pool, slots_per_trial, max_trials, max_length,
         length_units, mode, stop_once, max_concurrent_trials,
@@ -525,7 +534,7 @@ const useModalHyperparameterSearch = ({
     searcher ]);
 
   const pages = useMemo(
-    () => [ searcherPage, hyperparameterPage ],
+    () => ([ searcherPage, hyperparameterPage ]),
     [ hyperparameterPage, searcherPage ],
   );
 
@@ -554,6 +563,7 @@ const useModalHyperparameterSearch = ({
           {footer}
         </Form>),
       icon: null,
+      maskClosable: false,
       title: 'Hyperparameter Search',
       width: 700,
     };
@@ -574,7 +584,7 @@ const useModalHyperparameterSearch = ({
     if (modalRef.current) openOrUpdate(modalProps);
   }, [ modalProps, modalRef, openOrUpdate ]);
 
-  return { modalClose, modalOpen, modalRef, ...modalFields };
+  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 interface RowProps {
@@ -741,7 +751,7 @@ const HyperparameterRow: React.FC<RowProps> = (
               required: active && searcher === SEARCH_METHODS.Grid,
               type: 'number',
             } ]}
-            validateStatus={(typeof countError === 'string' && searcher === SEARCH_METHODS.Grid
+            validateStatus={(countError && searcher === SEARCH_METHODS.Grid
                 && active) ? 'error' : undefined}>
             <InputNumber
               disabled={!active}

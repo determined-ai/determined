@@ -1,5 +1,5 @@
-.modal:global(.ant-modal) :global(.ant-modal-body) {
-  padding: 0 !important;
+.modal:global(.ant-modal) > :global(.ant-modal-content) > :global(.ant-modal-body) {
+  padding: 0;
 
   :global(.ant-modal-confirm-title) {
     border-bottom: solid var(--theme-stroke-width) var(--theme-surface-border);
@@ -112,13 +112,13 @@
     }
   }
   .error {
-    color: #ff4d4f; //antd error color
+    color: var(--theme-status-critical);
     font-size: 12px;
     grid-column: 1 / -1;
     margin-block: -8px !important;
   }
   .warning {
-    color: #faad14; //antd warning color
+    color: var(--theme-status-warning);
     font-size: 12px;
     grid-column: 1 / -1;
     margin-block: -8px !important;

@@ -39,7 +39,10 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
-  const { contextHolder, modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
+  const {
+    contextHolder: modalExperimentCreateContextHolder,
+    modalOpen: openModalExperimentCreate,
+  } = useCreateExperimentModal({ onClose: handleModalClose });
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
@@ -47,8 +50,8 @@ const TrialDetailsHeader: React.FC<Props> = ({
   } = useModalHyperparameterSearch({ experiment, trial });
 
   const handleContinueTrial = useCallback(() => {
-    modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, modalOpen, trial ]);
+    openModalExperimentCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, openModalExperimentCreate, trial ]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
@@ -119,7 +122,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}
       />
-      {contextHolder}
+      {modalExperimentCreateContextHolder}
       {modalHyperparameterSearchContextHolder}
     </>
   );
