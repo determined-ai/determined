@@ -1,7 +1,6 @@
 import { DownloadOutlined, FileOutlined, LeftOutlined } from '@ant-design/icons';
 import { Tooltip, Tree } from 'antd';
 import { DataNode } from 'antd/lib/tree';
-import classNames from 'classnames';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -118,14 +117,18 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     [ experimentId, files ],
   );
 
-  const treeClasses = classNames({
-    [ css.hideElement ]:
-    (documentWidth <= 1024) && (viewMode === 'editor'),
-  });
-  const editorClasses = classNames({
-    [ css.hideElement ]:
-    (documentWidth <= 1024) && (viewMode === 'tree'),
-  });
+  const treeClasses: string[] = [];
+  const editorClasses: string[] = [];
+
+  if ((documentWidth <= 1024) && (viewMode === 'editor')) {
+    treeClasses.push(css.hideElement);
+    editorClasses.pop();
+  }
+
+  if ((documentWidth <= 1024) && (viewMode === 'tree')) {
+    treeClasses.pop();
+    editorClasses.push(css.hideElement);
+  }
 
   // map the file tree
   useEffect(() => {
@@ -197,7 +200,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
 
   return (
     <section className={css.base}>
-      <Section className={treeClasses} id="fileTree">
+      <Section className={treeClasses.join(' ')} id="fileTree">
         <DirectoryTree
           className={css.fileTree}
           data-testid="fileTree"
@@ -209,7 +212,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       </Section>
       {
         !!fileInfo?.path && (
-          <Spinner className={editorClasses} spinning={isFetching}>
+          <Spinner className={editorClasses.join(' ')} spinning={isFetching}>
             <section className={css.fileDir}>
               <div className={css.fileInfo}>
                 <div className={css.buttonContainer}>
@@ -249,7 +252,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
       <Section
         bodyNoPadding
         bodyScroll
-        className={editorClasses}
+        className={editorClasses.join(' ')}
         id="editor"
         maxHeight>
         <Spinner spinning={isFetching}>
