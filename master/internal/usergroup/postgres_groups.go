@@ -37,7 +37,10 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 	}
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(matchSentinelError(err), "Error starting transaction for group %d creation", group.ID)
+		return Group{}, nil, errors.Wrapf(
+			matchSentinelError(err),
+			"Error starting transaction for group %d creation",
+			group.ID)
 	}
 	defer func() {
 		txErr := tx.Rollback()
@@ -63,7 +66,10 @@ func AddGroupWithMembers(ctx context.Context, group Group, uids ...model.UserID)
 
 	err = tx.Commit()
 	if err != nil {
-		return Group{}, nil, errors.Wrapf(matchSentinelError(err), "Error commiting changes to group %d", group.ID)
+		return Group{}, nil, errors.Wrapf(
+			matchSentinelError(err),
+			"Error committing changes to group %d",
+			group.ID)
 	}
 
 	return group, users, nil
@@ -155,7 +161,10 @@ func UpdateGroupTx(ctx context.Context, idb bun.IDB, group Group) error {
 	}
 	res, err := idb.NewUpdate().Model(&group).WherePK().Exec(ctx)
 
-	return errors.Wrapf(matchSentinelError(mustHaveAffectedRows(res, err)), "Error updating group %d name", group.ID)
+	return errors.Wrapf(
+		matchSentinelError(mustHaveAffectedRows(res, err)),
+		"Error updating group %d name",
+		group.ID)
 }
 
 // AddUsersToGroupTx adds users to a group by creating GroupMembership rows.
@@ -233,7 +242,10 @@ func UpdateGroupAndMembers(
 ) ([]model.User, string, error) {
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
-		return nil, "", errors.Wrapf(matchSentinelError(err), "Error starting transaction for group %d update", gid)
+		return nil, "", errors.Wrapf(
+			matchSentinelError(err),
+			"Error starting transaction for group %d update",
+			gid)
 	}
 	defer func() {
 		txErr := tx.Rollback()
@@ -281,7 +293,7 @@ func UpdateGroupAndMembers(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, "", errors.Wrapf(matchSentinelError(err), "Error commiting changes to group %d", gid)
+		return nil, "", errors.Wrapf(matchSentinelError(err), "Error committing changes to group %d", gid)
 	}
 
 	return users, newName, nil
