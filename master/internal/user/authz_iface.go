@@ -9,8 +9,10 @@ import (
 type UserAuthZ interface {
 	// POST /logout
 	// POST /login
-	// No interface on login / logout since it doesn't make sense to control authentication
-	// since we are controling authorization.
+	// GET /users/me
+	// GET /api/v1/auth/user
+	// No interface on login / logout and get me since it doesn't make sense
+	// to control authentication since we are controling authorization.
 
 	// TODO still leaking not found information...
 	// Need /get/users in order to deny leaking information
@@ -28,10 +30,6 @@ type UserAuthZ interface {
 	CanCreateUser(
 		currentUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
 	) error
-
-	// GET /users/me
-	// GET /api/v1/auth/user
-	CanGetMe(currentUser model.User) error
 
 	// TODO admin / own password
 	// PATCH /users/:username

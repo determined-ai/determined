@@ -23,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	//"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -33,7 +32,7 @@ var (
 	authzUser *mocks.UserAuthZ = &mocks.UserAuthZ{}
 )
 
-func setup_user_authz(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
+func SetupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {
 	if pgDB == nil {
 		pgDB = db.MustResolveTestPostgres(t)
 		db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
@@ -61,7 +60,7 @@ func setup_user_authz(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, c
 }
 
 func TestAuthzGetUsers(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// TODO error here is fine to not wrap.
 	// Since we just want it to appear as a regular db error.
@@ -92,7 +91,7 @@ func TestAuthzGetUsers(t *testing.T) {
 }
 
 func TestAuthzGetUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// TODO information leakage here
 	// Permission denied should give 404 or exact error that getFullModelUser returns.
@@ -105,7 +104,7 @@ func TestAuthzGetUser(t *testing.T) {
 }
 
 func TestAuthzPostUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", curUser,
@@ -123,7 +122,7 @@ func TestAuthzPostUser(t *testing.T) {
 }
 
 func TestAuthzSetUserPassword(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// TODO first check that A we can view the user.
 	// If we can't we always return a 404. Right?
@@ -140,7 +139,7 @@ func TestAuthzSetUserPassword(t *testing.T) {
 }
 
 func TestAuthzPatchUser(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// TODO first check that A we can view the user.
 	// If we can't we always return a 404. Right?
@@ -160,7 +159,7 @@ func TestAuthzPatchUser(t *testing.T) {
 }
 
 func TestAuthzGetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canGetUsersOwnSettings")
 	authzUsers.On("CanGetUsersOwnSettings", curUser).
@@ -171,7 +170,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 }
 
 func TestAuthzPostUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", curUser,
@@ -185,7 +184,7 @@ func TestAuthzPostUserSetting(t *testing.T) {
 }
 
 func TestAuthzResetUserSetting(t *testing.T) {
-	api, authzUsers, curUser, ctx := setup_user_authz(t)
+	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canResetUsersOwnSettings")
 	authzUsers.On("CanResetUsersOwnSettings", curUser).

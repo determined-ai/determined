@@ -10,7 +10,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -75,9 +74,6 @@ func (a *apiServer) CurrentUser(
 ) (*apiv1.CurrentUserResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
-		return nil, err
-	}
-	if err := user.AuthZProvider.Get().CanGetMe(*curUser); err != nil {
 		return nil, err
 	}
 

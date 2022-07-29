@@ -41,20 +41,6 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(currentUser model.User, setting mo
 	return r0
 }
 
-// CanGetMe provides a mock function with given fields: currentUser
-func (_m *UserAuthZ) CanGetMe(currentUser model.User) error {
-	ret := _m.Called(currentUser)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User) error); ok {
-		r0 = rf(currentUser)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CanGetUser provides a mock function with given fields: currentUser, targetUser
 func (_m *UserAuthZ) CanGetUser(currentUser model.User, targetUser model.User) error {
 	ret := _m.Called(currentUser, targetUser)

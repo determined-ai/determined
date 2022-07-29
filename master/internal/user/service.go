@@ -58,13 +58,13 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 
 // Service describes a user manager.
 type Service struct {
-	db        db.DB
+	db        *db.PgDB
 	system    *actor.System
 	extConfig *model.ExternalSessions
 }
 
 // InitService creates the user service singleton.
-func InitService(db db.DB, system *actor.System, extConfig *model.ExternalSessions) {
+func InitService(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) {
 	once.Do(func() {
 		userService = &Service{db, system, extConfig}
 	})
@@ -266,10 +266,6 @@ func NewCookieFromToken(token string) *http.Cookie {
 // getMe returns information about the current authenticated user.
 func (s *Service) getMe(c echo.Context) (interface{}, error) {
 	me := c.(*context.DetContext).MustGetUser()
-	if err := AuthZProvider.Get().CanGetMe(me); err != nil {
-		return nil, errors.Wrap(forbiddenError, err.Error())
-	}
-
 	return s.db.UserByID(me.ID)
 }
 
@@ -482,10 +478,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 	}
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err := AuthZProvider.Get().CanCreateUser(currUser, userToAdd, ug); err != nil {
-		return nil, errors.Wrap(
-			echo.NewHTTPError(http.StatusForbidden, "insufficient permissions"),
-			err.Error(),
-		)
+		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 
 	_, err = s.db.AddUser(&userToAdd, ug)
@@ -512,7 +505,7 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	}
 	u := c.(*context.DetContext).MustGetUser()
 	if err := AuthZProvider.Get().CanGetUsersImage(u, args.Username); err != nil {
-		return nil, err
+		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 
 	c.Response().Header().Set("cache-control", "public, max-age=3600")
