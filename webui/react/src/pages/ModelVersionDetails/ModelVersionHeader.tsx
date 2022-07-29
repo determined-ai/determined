@@ -152,7 +152,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
       <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
           <Breadcrumb.Item>
-            <Link path={paths.modelDetails(modelVersion.model.name)}>
+            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
               <LeftOutlined style={{ marginRight: 10 }} />
             </Link>
           </Breadcrumb.Item>
@@ -163,7 +163,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link path={paths.modelDetails(modelVersion.model.name)}>
+            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
               {modelVersion.model.name} ({modelVersion.model.id})
             </Link>
           </Breadcrumb.Item>

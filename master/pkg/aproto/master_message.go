@@ -18,8 +18,10 @@ import (
 
 // TelemetryInfo contains the telemetry settings for the master.
 type TelemetryInfo struct {
-	Enabled    bool   `json:"enabled"`
-	SegmentKey string `json:"segment_key,omitempty"`
+	Enabled                  bool   `json:"enabled"`
+	SegmentKey               string `json:"segment_key,omitempty"`
+	OtelEnabled              bool   `json:"otel_enabled"`
+	OtelExportedOtlpEndpoint string `json:"otel_endpoint"`
 }
 
 // MasterInfo contains the master information that the agent has connected to.

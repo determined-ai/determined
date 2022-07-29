@@ -23,6 +23,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -30,6 +32,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
 )
 
 const (
@@ -83,6 +86,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			}
 
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
+			if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled {
+				opentelemetry.ConfigureOtel(
+					a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
+			}
 			return a.setup(ctx)
 		case msg.StartContainer != nil:
 			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)
@@ -92,6 +99,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Tell(a.cm, *msg.StartContainer)
 		case msg.SignalContainer != nil:
 			ctx.Tell(a.cm, *msg.SignalContainer)
+		case msg.AgentShutdown != nil:
+			ctx.Log().Infof("shutting down agent due to master message: %s", msg.AgentShutdown.ErrMsg)
+			ctx.Self().Stop()
 		default:
 			panic(fmt.Sprintf("unknown message received: %+v", msg))
 		}
@@ -525,6 +535,7 @@ func runAPIServer(options Options, system *actor.System) error {
 	server.HideBanner = true
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
+	server.Use(otelecho.Middleware("determined-agent"))
 
 	server.Any("/*", api.Route(system, nil))
 	server.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
@@ -550,7 +561,8 @@ func Run(version string, options Options) error {
 	logrus.Infof("agent configuration: %s", printableConfig)
 
 	system := actor.NewSystem(options.AgentID)
-	ref, _ := system.ActorOf(actor.Addr("agent"), newAgent(version, options))
+	a := newAgent(version, options)
+	ref, _ := system.ActorOf(actor.Addr("agent"), a)
 
 	errs := make(chan error)
 	if options.APIEnabled {

@@ -120,6 +120,7 @@ func (a *apiServer) TrialLogs(
 			TimestampBefore: req.TimestampBefore,
 			TimestampAfter:  req.TimestampAfter,
 			OrderBy:         req.OrderBy,
+			SearchText:      req.SearchText,
 		}, res)
 		return processBatches(res, func(b api.Batch) error {
 			return b.ForEach(func(i interface{}) error {

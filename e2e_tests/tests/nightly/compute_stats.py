@@ -123,7 +123,8 @@ def compare_stats() -> None:
             instance_from_api_map[r["username"]] += r["seconds"]
     for ins in instance_from_api_map:
         # make sure instance initialization time is less than 5 mins
-        assert instance_from_api_map[ins] - gpu_from_api_map[ins] < 60 * 5
+        if ins in gpu_from_api_map:
+            assert instance_from_api_map[ins] - gpu_from_api_map[ins] < 60 * 5
 
     print(f"Agent time: logs={gpu_from_log}, api={gpu_from_api}")
     # make sure agent stats get from script is less than 5% difference with those get from api

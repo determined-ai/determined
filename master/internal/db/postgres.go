@@ -52,6 +52,47 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+// SortDirection represents the order by in a query.
+type SortDirection string
+
+const (
+	// SortDirectionAsc represents ordering by ascending.
+	SortDirectionAsc SortDirection = "ASC"
+	// SortDirectionDesc represents ordering by descending.
+	SortDirectionDesc SortDirection = "DESC"
+	// SortDirectionAscNullsFirst represents ordering by ascending with nulls first.
+	SortDirectionAscNullsFirst SortDirection = "ASC NULLS FIRST"
+	// SortDirectionDescNullsLast represents ordering by descending with nulls last.
+	SortDirectionDescNullsLast SortDirection = "DESC NULLS LAST"
+)
+
+// PaginateBun adds sorting and pagination to the provided bun query, defaulting to certain values
+// if they are not specified. By default, we order by ascending on the id column, with no limit.
+func PaginateBun(
+	query *bun.SelectQuery,
+	orderColumn string,
+	direction SortDirection,
+	offset,
+	limit int,
+) *bun.SelectQuery {
+	if orderColumn == "" {
+		orderColumn = "id"
+	}
+	if len(direction) == 0 {
+		direction = SortDirectionAsc
+	}
+	orderExp := fmt.Sprintf("%s %s", orderColumn, direction)
+	query = query.Order(orderExp)
+
+	query = query.Offset(offset)
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	return query
+}
+
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair

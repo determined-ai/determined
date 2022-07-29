@@ -36,10 +36,10 @@ build/examples.stamp: ../examples/build/stamp ../model_hub/build-examples/stamp
 	mkdir -p build
 	touch $@
 
-attributions.txt: $(shell find ../tools/scripts/licenses -type f)
+attributions.rst: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py sphinx $@
 
-build/sphinx.stamp: $(SPHINXWRAPPER) conf.py attributions.txt $(shell find . -name site -prune -o -type f -name '*.txt' -print)
+build/sphinx.stamp: $(SPHINXWRAPPER) conf.py attributions.rst $(shell find . -name site -prune -o -type f -name '*.rst' -print)
 	@$(SPHINXWRAPPER) $(SPHINXBUILD) -M html . site $(SPHINXOPTS)
 	mkdir -p build
 	touch $@
@@ -60,7 +60,7 @@ build: build/stamp
 
 .PHONY: clean
 clean:
-	rm -rf site build attributions.txt
+	rm -rf site build attributions.rst
 
 .PHONY: pre-publish
 pre-publish:
@@ -77,8 +77,8 @@ RSTFMT_WIDTH = 100
 
 .PHONY: fmt
 fmt:
-	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt -w $(RSTFMT_WIDTH)
+	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH)
 
 .PHONY: check
 check:
-	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
+	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check

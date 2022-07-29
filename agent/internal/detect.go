@@ -2,9 +2,12 @@ package internal
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/csv"
 	"fmt"
 	"io"
+	"math/rand"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -25,11 +28,35 @@ const (
 	osDarwin = "darwin"
 )
 
+// randFromString returns a random-number generated seeded from an input string.
+func randFromString(seed string) (*rand.Rand, error) {
+	h := sha256.New()
+	h.Write([]byte(seed))
+	rndSource, bytesRead := binary.Varint(h.Sum(nil)[:8])
+	if bytesRead <= 0 {
+		return nil, fmt.Errorf(
+			"failed to init random source for artificial slots ids. bytes read: %d", bytesRead)
+	}
+	rnd := rand.New(rand.NewSource(rndSource)) // nolint:gosec
+	return rnd, nil
+}
+
 func (a *agent) detect() error {
 	switch {
 	case a.ArtificialSlots > 0:
+		// Generate random UUIDs consistent across agent restarts as long as
+		// agentID is the same.
+		rnd, err := randFromString(a.AgentID)
+		if err != nil {
+			return err
+		}
+
 		for i := 0; i < a.ArtificialSlots; i++ {
-			id := uuid.New().String()
+			u, err := uuid.NewRandomFromReader(rnd)
+			if err != nil {
+				return err
+			}
+			id := u.String()
 			a.Devices = append(a.Devices, device.Device{
 				ID: device.ID(i), Brand: "Artificial", UUID: id, Type: device.CPU,
 			})

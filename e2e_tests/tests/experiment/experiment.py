@@ -207,7 +207,8 @@ def determined_test_session() -> session.Session:
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     r = bindings.get_GetExperiment(determined_test_session(), experimentId=experiment_id)
-    return r.config
+    assert r.experiment and r.experiment.config
+    return r.experiment.config
 
 
 def experiment_state(experiment_id: int) -> determinedexperimentv1State:

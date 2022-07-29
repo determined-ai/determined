@@ -1,12 +1,11 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
+import { Pagination, RawJson } from 'shared/types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject,
   isPrimitive } from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
-
-import { Pagination, RawJson } from '../shared/types';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
 
@@ -25,10 +24,11 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map((user) => mapV1User(user));
 };
 
-export const mapV1Pagination = (data: Sdk.V1Pagination): Pagination => {
+export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
   return {
-    limit: data.limit ?? 0,
-    offset: data.offset ?? 0,
+    limit: data?.limit ?? 0,
+    offset: data?.offset ?? 0,
+    total: data?.total ?? 0,
   };
 };
 
@@ -361,10 +361,10 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
 };
 
 export const mapV1GetExperimentDetailsResponse = (
-  { experiment: exp, config, jobSummary }: Sdk.V1GetExperimentResponse,
+  { experiment: exp, jobSummary }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
-    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, exp.config);
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(
     ioConfig.hyperparameters,
@@ -379,7 +379,7 @@ export const mapV1GetExperimentDetailsResponse = (
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: config,
+    configRaw: exp.config,
     hyperparameters,
     parentArchived: exp.parentArchived ?? false,
     projectName: exp.projectName ?? '',

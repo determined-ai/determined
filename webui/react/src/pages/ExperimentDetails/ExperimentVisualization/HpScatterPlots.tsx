@@ -14,13 +14,12 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive } from 'shared/types';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
 import {
   ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Scale,
 } from 'types';
 import { metricNameToStr } from 'utils/metric';
-
-import { Primitive } from '../../../shared/types';
 
 import css from './HpScatterPlots.module.scss';
 

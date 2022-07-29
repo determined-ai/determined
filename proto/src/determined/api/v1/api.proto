@@ -1108,6 +1108,17 @@ service Determined {
     };
   }
 
+  // Get a count of active tasks.
+  rpc GetActiveTasksCount(GetActiveTasksCountRequest)
+      returns (GetActiveTasksCountResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/count"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tasks"
+    };
+  }
+
   // Check the status of a requested task.
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
     option (google.api.http) = {
@@ -1509,16 +1520,6 @@ service Determined {
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {
       get: "/api/v1/projects/{id}"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Projects"
-    };
-  }
-  // Get experiments associated with a project.
-  rpc GetProjectExperiments(GetProjectExperimentsRequest)
-      returns (GetProjectExperimentsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/projects/{id}/experiments"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

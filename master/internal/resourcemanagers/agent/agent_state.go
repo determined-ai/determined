@@ -255,6 +255,35 @@ func (a *AgentState) agentStarted(ctx *actor.Context, agentStarted *aproto.Agent
 	}
 }
 
+func (a *AgentState) checkAgentStartedDevicesMatch(
+	ctx *actor.Context, agentStarted *aproto.AgentStarted,
+) error {
+	ourDevices := map[device.ID]device.Device{}
+	for did, slot := range a.slotStates {
+		ourDevices[did] = slot.device
+	}
+
+	theirDevices := map[device.ID]device.Device{}
+	for _, d := range agentStarted.Devices {
+		theirDevices[d.ID] = d
+	}
+
+	if len(ourDevices) != len(theirDevices) {
+		return fmt.Errorf("device count has changed: %d -> %d", len(ourDevices), len(theirDevices))
+	}
+
+	if !maps.Equal(ourDevices, theirDevices) {
+		for k := range ourDevices {
+			if ourDevices[k] != theirDevices[k] {
+				return fmt.Errorf("device properties have changed: %v -> %v", ourDevices[k], theirDevices[k])
+			}
+		}
+		return fmt.Errorf("devices has changed") // This should not happen!
+	}
+
+	return nil
+}
+
 func (a *AgentState) containerStateChanged(ctx *actor.Context, msg aproto.ContainerStateChanged) {
 	for _, d := range msg.Container.Devices {
 		s, ok := a.slotStates[d.ID]

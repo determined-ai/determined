@@ -143,8 +143,8 @@ describe('Data Utilities', () => {
       { input: [ Symbol('bit'), 123 ], output: false },
       {
         input: [
-          new Set([ 'abc', 123, Symbol('xyz') ]),
-          new Set([ 'abc', 123, Symbol('xyz') ]),
+          new Set([ 'abc', 123 ]),
+          new Set([ 'abc', 123 ]),
         ],
         output: true,
       },
@@ -161,6 +161,41 @@ describe('Data Utilities', () => {
         input: [
           new Map([ [ 'abc', 123 ] ]),
           new Map([ [ 'abc', 123 ], [ 'def', 456 ] ]),
+        ],
+        output: false,
+      },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 3, 2 ]),
+        ],
+        output: true,
+      },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 2, 3, 4 ]),
+        ],
+        output: false,
+      },
+      {
+        input: [
+          new Set([ 1, 2, 3 ]),
+          new Set([ 1, 2, 5 ]),
+        ],
+        output: false,
+      },
+      /**
+       * for now isEquals for set elements respects how the set views
+       * equality of its members, as opposed to how isEquals views them
+       * otherwise you would have the following:
+       * > a.forEach(x => b.delete(x)); isEquals(a, b)
+       * true
+       */
+      {
+        input: [
+          new Set([ [ 1 ] ]),
+          new Set([ [ 1 ] ]),
         ],
         output: false,
       },

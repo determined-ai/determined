@@ -3,7 +3,6 @@ import { ColumnType } from 'antd/es/table';
 import React from 'react';
 
 import { useStore } from 'contexts/Store';
-import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask } from 'types';
 import { alphaNumericSorter, commandStateSorter, dateTimeStringSorter } from 'utils/sort';
 import { generateCommandTask } from 'utils/task';
@@ -17,7 +16,6 @@ import css from './Table.module.scss';
 
 export default {
   component: Table,
-  decorators: [ RouterDecorator ],
   parameters: { layout: 'padded' },
   title: 'Table',
 };

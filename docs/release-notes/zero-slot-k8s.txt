@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where zero slot tasks would use the GPU image instead of the CPU image.
+-  Kubernetes: Fix an issue where zero slot tasks would incorrectly be exposed to all GPUs.

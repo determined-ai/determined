@@ -271,7 +271,7 @@ def test_agent_up_down() -> None:
 @pytest.mark.parametrize("steps", [10])
 @pytest.mark.parametrize("num_agents", [3, 5])
 @pytest.mark.parametrize("should_disconnect", [False, True])
-@pytest.mark.det_deploy_local
+@pytest.mark.stress_test
 def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
     random.seed(42)
     master_host = "localhost"

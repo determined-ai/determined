@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import DraggableListItem from 'components/DraggableListItem';
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 

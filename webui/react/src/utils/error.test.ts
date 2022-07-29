@@ -1,4 +1,4 @@
-import { DetError, isDetError, isError } from '../shared/utils/error';
+import { DetError, isDetError, isError } from 'shared/utils/error';
 
 describe('Error Handling Utilities', () => {
   describe('isError', () => {

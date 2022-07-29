@@ -1,7 +1,4 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState } from 'types';
-
 import {
   DarkLight,
   getCssVar,
@@ -9,7 +6,9 @@ import {
   themeDarkHpe,
   themeLightDetermined,
   themeLightHpe,
-} from './shared/themes';
+} from 'shared/themes';
+import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
+  SlotState } from 'types';
 
 /*
  * Where did we get our sizes from?
