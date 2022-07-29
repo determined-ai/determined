@@ -1,6 +1,6 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
@@ -33,14 +33,15 @@ type Params = {
 }
 
 enum TabType {
-  CheckpointDetails = 'checkpoint-details',
-  Overview = 'overview',
+  Notes = 'notes',
+  Model = 'model',
 }
 
 const TAB_KEYS = Object.values(TabType);
-const DEFAULT_TAB_KEY = TabType.Overview;
+const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
+  const location = useLocation();
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId, tab } = useParams<Params>();
   assertIsDefined(modelId);
@@ -70,9 +71,12 @@ const ModelVersionDetails: React.FC = () => {
   usePolling(fetchModelVersion);
 
   const handleTabChange = useCallback((key) => {
-    setTabKey(key);
     navigate(`${basePath}/${key}`, { replace: true });
   }, [ basePath, navigate ]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [ location.pathname, tab ]);
 
   // Sets the default sub route.
   useEffect(() => {
@@ -261,11 +265,11 @@ const ModelVersionDetails: React.FC = () => {
       )}
       id="modelDetails">
       <Tabs
-        defaultActiveKey="overview"
+        activeKey={tabKey}
         style={{ height: 'auto' }}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
         onChange={handleTabChange}>
-        <TabPane key="model" tab="Model">
+        <TabPane key={TabType.Model} tab="Model">
           <div className={css.base}>
             <Card title="Model Checkpoint">
               <InfoBox rows={checkpointInfo} separator />
@@ -280,7 +284,7 @@ const ModelVersionDetails: React.FC = () => {
             />
           </div>
         </TabPane>
-        <TabPane key="notes" tab="Notes">
+        <TabPane key={TabType.Notes} tab="Notes">
           <div className={css.base}>
             <NotesCard
               disabled={modelVersion.model.archived}

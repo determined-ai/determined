@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -27,7 +27,6 @@ enum TabType {
   Logs = 'logs',
   Overview = 'overview',
   Profiler = 'profiler',
-  Workloads = 'workloads',
   Notes = 'notes'
 }
 
@@ -37,6 +36,10 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const ExperimentConfiguration = React.lazy(() => {
   return import('./ExperimentConfiguration');
 });
+
+type Params = {
+  tab: TabType
+}
 
 export interface Props {
   experiment: ExperimentBase;
@@ -49,10 +52,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   { experiment, fetchExperimentDetails, onTrialUpdate, pageRef }: Props,
 ) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
-  const { tab } = useParams<'tab'>();
+  const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
@@ -107,9 +111,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   );
 
   const handleTabChange = useCallback((key) => {
-    setTabKey(key);
     navigate(`${basePath}/${key}`, { replace: true });
   }, [ basePath, navigate ]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [ location.pathname, tab ]);
 
   const handleViewLogs = useCallback(() => {
     setTabKey(TabType.Logs);
@@ -173,28 +180,28 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         <TabPane key="overview" tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="hyperparameters" tab="Hyperparameters">
+        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
           <TrialDetailsHyperparameters
             pageRef={pageRef}
             trial={trialDetails as TrialDetails}
           />
         </TabPane>
-        <TabPane key="configuration" tab="Configuration">
+        <TabPane key={TabType.Configuration} tab="Configuration">
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
             <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
         </TabPane>
-        <TabPane key="notes" tab="Notes">
+        <TabPane key={TabType.Notes} tab="Notes">
           <NotesCard
             notes={experiment.notes ?? ''}
             style={{ border: 0, height: '100%' }}
             onSave={handleNotesUpdate}
           />
         </TabPane>
-        <TabPane key="profiler" tab="Profiler">
+        <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
-        <TabPane key="logs" tab="Logs">
+        <TabPane key={TabType.Logs} tab="Logs">
           <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
       </Tabs>

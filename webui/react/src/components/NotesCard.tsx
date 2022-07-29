@@ -1,8 +1,10 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import Spinner from 'shared/components/Spinner/Spinner';
+import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -38,12 +40,36 @@ const NotesCard: React.FC<Props> = (
   const [ isEditing, setIsEditing ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
+  const location = useLocation();
 
   const existingNotes = useRef(notes);
 
   useEffect(() => {
     existingNotes.current = notes;
   }, [ notes ]);
+
+  useEffect(() => {
+    // TODO: This is an alternative of Prompt from react-router-dom
+    // As soon as react-router-dom supports Prompt, replace this with Promt
+    const unblock = history.block((tx) => {
+      const pathnames = [ 'notes', 'models', 'projects' ];
+      let isAllowedNavigation = true;
+
+      // check pathname if one of these names is included
+      if ((pathnames.some((name) => location.pathname.includes(name))) && notes !== editedNotes) {
+        isAllowedNavigation = window.confirm(
+          'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
+        );
+      }
+      if (isAllowedNavigation) {
+        unblock();
+        tx.retry();
+      }
+      return isAllowedNavigation;
+    });
+
+    return () => unblock();
+  }, [ editedNotes, location.pathname, notes ]);
 
   useEffect(() => {
     setIsEditing(false);

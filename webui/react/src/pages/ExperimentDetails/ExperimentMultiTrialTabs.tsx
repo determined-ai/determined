@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
@@ -46,15 +46,19 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
 ) => {
   const { tab, viz } = useParams<Params>();
   const navigate = useNavigate();
+  const location = useLocation();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
 
   const basePath = paths.experimentDetails(experiment.id);
 
   const handleTabChange = useCallback((key) => {
-    setTabKey(key);
     navigate(`${basePath}/${key}`, { replace: true });
   }, [ basePath, navigate ]);
+
+  useEffect(() => {
+    setTabKey(tab ?? DEFAULT_TAB_KEY);
+  }, [ location.pathname, tab ]);
 
   // Sets the default sub route.
   useEffect(() => {
@@ -79,8 +83,8 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
   }, [ experiment.id, fetchExperimentDetails ]);
 
   return (
-    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="visualization" tab="Visualization">
+    <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+      <TabPane key={TabType.Visualization} tab="Visualization">
         <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
@@ -89,15 +93,15 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
           />
         </React.Suspense>
       </TabPane>
-      <TabPane key="trials" tab="Trials">
+      <TabPane key={TabType.Trials} tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key="configuration" tab="Configuration">
+      <TabPane key={TabType.Configuration} tab="Configuration">
         <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
           <ExperimentConfiguration experiment={experiment} />
         </React.Suspense>
       </TabPane>
-      <TabPane key="notes" tab="Notes">
+      <TabPane key={TabType.Notes} tab="Notes">
         <NotesCard
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
