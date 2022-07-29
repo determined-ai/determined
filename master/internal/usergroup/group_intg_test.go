@@ -5,6 +5,7 @@ package usergroup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -92,7 +93,7 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("remove users from group", func(t *testing.T) {
 		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
-		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when removing non-existent users from group")
+		require.True(t, errors.Is(err, db.ErrNotFound), "failed to return ErrNotFound when removing non-existent users from group")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID, -500)
 		require.NoError(t, err, "erroneously returned error when trying to remove a mix of users in a group and not")
@@ -104,12 +105,12 @@ func TestUserGroups(t *testing.T) {
 		require.Equal(t, -1, i, "User found in group after removing them from it")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
-		require.Equal(t, db.ErrNotFound, err, "failed to return ErrNotFound when trying to remove users from group they're not in")
+		require.True(t, errors.Is(err, db.ErrNotFound), "failed to return ErrNotFound when trying to remove users from group they're not in")
 	})
 
 	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound", func(t *testing.T) {
 		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
-		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when adding non-existent users to a group")
+		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when adding non-existent users to a group")
 
 		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to search for users that belong to group")
@@ -120,12 +121,12 @@ func TestUserGroups(t *testing.T) {
 
 	t.Run("AddUsersToGroup fails with ErrNotFound when attempting to add users to a non-existent group", func(t *testing.T) {
 		err := AddUsersToGroupTx(ctx, nil, -500, testUser.ID)
-		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when trying to add users to a non-existent group")
+		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when trying to add users to a non-existent group")
 	})
 
 	t.Run("Deleting a group that doesn't exist results in ErrNotFound", func(t *testing.T) {
 		err := DeleteGroup(ctx, -500)
-		require.Equal(t, db.ErrNotFound, err, "didn't return ErrNotFound when trying to delete a non-existent group")
+		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when trying to delete a non-existent group")
 	})
 
 	t.Run("Deleting a group that has users should work", func(t *testing.T) {
@@ -143,17 +144,17 @@ func TestUserGroups(t *testing.T) {
 		require.NoError(t, err, "errored when deleting group")
 
 		_, err = GroupByIDTx(ctx, nil, tmpGroup.ID)
-		require.Equal(t, db.ErrNotFound, err, "deleted group should not be found, and ErrNotFound returned")
+		require.True(t, errors.Is(err, db.ErrNotFound), "deleted group should not be found, and ErrNotFound returned")
 	})
 
 	t.Run("AddGroup returns ErrDuplicateRecord when creating a group that already exists", func(t *testing.T) {
 		_, _, err := AddGroupWithMembers(ctx, testGroupStatic)
-		require.Equal(t, db.ErrDuplicateRecord, err, "didn't return ErrDuplicateRecord")
+		require.True(t, errors.Is(err, db.ErrDuplicateRecord), "didn't return ErrDuplicateRecord")
 	})
 
 	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a group they're already in", func(t *testing.T) {
 		err := AddUsersToGroupTx(ctx, nil, testGroupStatic.ID, testUser.ID)
-		require.Equal(t, db.ErrDuplicateRecord, err, "should have returned ErrDuplicateRecord")
+		require.True(t, errors.Is(err, db.ErrDuplicateRecord), "should have returned ErrDuplicateRecord")
 	})
 
 	t.Run("Static test group should exist at the end and test user should be in it", func(t *testing.T) {
@@ -202,7 +203,7 @@ func TestUserGroups(t *testing.T) {
 				DeleteGroup(ctx, g.ID)
 			}
 		}(g)
-		require.Equal(t, db.ErrNotFound, err, "error")
+		require.True(t, errors.Is(err, db.ErrNotFound), "error")
 
 		groups, _, count, err := SearchGroups(ctx, tempGroupName, 0, 0, 0)
 		require.NoError(t, err, "error searching for groups to verify rollback")

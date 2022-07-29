@@ -3,9 +3,9 @@ package usergroup
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/jackc/pgconn"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -141,7 +141,7 @@ func SearchGroups(ctx context.Context,
 func DeleteGroup(ctx context.Context, gid int) error {
 	res, err := db.Bun().NewDelete().Model(&Group{ID: gid}).WherePK().Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		return errors.Wrapf(matchSentinelError(err), "Error deleting group %d", gid)
+		return errors.Wrapf(matchSentinelError(foundErr), "Error deleting group %d", gid)
 	}
 
 	return nil
@@ -181,10 +181,10 @@ func AddUsersToGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...model.
 
 	res, err := idb.NewInsert().Model(&groupMem).Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		sError := matchSentinelError(err)
+		sError := matchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
-				"Error adding %d user(s) to group %d because" +
+				"Error adding %d user(s) to group %d because"+
 					" one or more of them were not found", len(uids), gid)
 		}
 		return errors.Wrapf(sError, "Error when adding %d user(s) to group %d",
@@ -211,10 +211,10 @@ func RemoveUsersFromGroupTx(ctx context.Context, idb bun.IDB, gid int, uids ...m
 		Where("user_id IN (?)", bun.In(uids)).
 		Exec(ctx)
 	if foundErr := mustHaveAffectedRows(res, err); foundErr != nil {
-		sError := matchSentinelError(err)
+		sError := matchSentinelError(foundErr)
 		if errors.Is(sError, db.ErrNotFound) {
 			return errors.Wrapf(sError,
-				"Error removing %d user(s) from group %d because" +
+				"Error removing %d user(s) from group %d because"+
 					" one or more of them were not found", len(uids), gid)
 		}
 		return errors.Wrapf(sError, "Error when removing %d user(s) from group %d",
