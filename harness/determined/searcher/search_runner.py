@@ -19,7 +19,7 @@ class SearchRunner:
         exp_config: Dict[str, Any],
         context_dir: Optional[str] = None,
         resume_exp_id: Optional[int] = None,
-    ) -> None:
+    ) -> int:
         logging.info("SearchRunner.run")
 
         if context_dir is None:
@@ -37,7 +37,7 @@ class SearchRunner:
         # searcher_state = exp.get
         assert client._determined is not None
         session = client._determined._session
-        experiment_id = exp._id
+        experiment_id: int = exp.id
         logging.debug(f"Running experiment {experiment_id}")
 
         experiment_is_active = True
@@ -111,3 +111,5 @@ class SearchRunner:
                     )
         except KeyboardInterrupt:
             print("Runner interrupted")
+
+        return experiment_id
