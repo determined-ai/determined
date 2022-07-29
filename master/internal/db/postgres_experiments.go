@@ -69,7 +69,6 @@ WHERE e.project_id = $1`, id)
 		var exp model.Experiment
 		if err = rows.StructScan(&exp); err != nil {
 			return nil, errors.Wrap(err, "unable to read experiment from db")
-			continue
 		}
 		experiments = append(experiments, &exp)
 	}
