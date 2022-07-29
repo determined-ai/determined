@@ -420,14 +420,13 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 	}
 
 	currUser := c.(*context.DetContext).MustGetUser()
-	if err := AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
+	if err = AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
 		if !AuthZProvider.Get().CanGetUser(currUser, *user) {
 			return nil, db.ErrNotFound
 		}
 
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
-	return nil, nil
 
 	if params.NewUsername == nil {
 		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "username is required")
@@ -492,7 +491,7 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		Active:   params.Active,
 	}
 	currUser := c.(*context.DetContext).MustGetUser()
-	if err := AuthZProvider.Get().CanCreateUser(currUser, userToAdd, ug); err != nil {
+	if err = AuthZProvider.Get().CanCreateUser(currUser, userToAdd, ug); err != nil {
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 

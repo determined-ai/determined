@@ -22,7 +22,7 @@ type UserAuthZ interface {
 	// GET /api/v1/users
 	// FilterUserList normally shouldn't return an error. It should just remove
 	// users that the requesting user shouldn't see. It returns an error directly without
-	// indication it occured during a filtering stage to bubble up a failure to the user.
+	// indication it occurred during a filtering stage to bubble up a failure to the user.
 	FilterUserList(curUser model.User, users []model.FullUser) ([]model.FullUser, error)
 
 	// POST /user

@@ -149,7 +149,7 @@ func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
 	if req.User == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specifiy user to create")
+		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
 	}
 	userToAdd := &model.User{
 		Username: req.User.Username,
@@ -172,18 +172,18 @@ func (a *apiServer) PostUser(
 	if err != nil {
 		return nil, err
 	}
-	if err := user.AuthZProvider.Get().
+	if err = user.AuthZProvider.Get().
 		CanCreateUser(*curUser, *userToAdd, agentUserGroup); err != nil {
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 
-	if err := grpcutil.ValidateRequest(
+	if err = grpcutil.ValidateRequest(
 		func() (bool, string) { return req.User != nil, "no user specified" },
 		func() (bool, string) { return req.User.Username != "", "no username specified" },
 	); err != nil {
 		return nil, err
 	}
-	if err := userToAdd.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+	if err = userToAdd.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
 
@@ -292,7 +292,7 @@ func (a *apiServer) GetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err := user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 
@@ -304,7 +304,7 @@ func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
 	if req.Setting == nil {
-		return nil, status.Error(codes.InvalidArgument, "must specifiy setting")
+		return nil, status.Error(codes.InvalidArgument, "must specify setting")
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
@@ -317,7 +317,7 @@ func (a *apiServer) PostUserSetting(
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
 	}
-	if err := user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 
@@ -332,7 +332,7 @@ func (a *apiServer) ResetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err := user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 

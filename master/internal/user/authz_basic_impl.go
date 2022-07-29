@@ -6,19 +6,22 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// UserAuthZBasic is basic.
+// UserAuthZBasic is basic OSS controls.
 type UserAuthZBasic struct{}
 
+// CanGetUser always returns true.
 func (a *UserAuthZBasic) CanGetUser(curUser, targetUser model.User) bool {
 	return true
 }
 
+// FilterUserList always returns the input user list and does not filtering.
 func (a *UserAuthZBasic) FilterUserList(
 	curUser model.User, users []model.FullUser,
 ) ([]model.FullUser, error) {
 	return users, nil
 }
 
+// CanCreateUser returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanCreateUser(
 	curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
 ) error {
@@ -28,6 +31,8 @@ func (a *UserAuthZBasic) CanCreateUser(
 	return nil
 }
 
+// CanSetUsersPassword returns an error if the user is not an admin
+// when trying to set another user's password.
 func (a *UserAuthZBasic) CanSetUsersPassword(curUser, targetUser model.User) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
 		return fmt.Errorf("only admin privileged users can change other user's passwords")
@@ -35,6 +40,7 @@ func (a *UserAuthZBasic) CanSetUsersPassword(curUser, targetUser model.User) err
 	return nil
 }
 
+// CanSetUsersActive returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersActive(curUser, targetUser model.User, toActiveVal bool) error {
 	if !curUser.Admin {
 		return fmt.Errorf("only admin privileged users can update users")
@@ -42,6 +48,7 @@ func (a *UserAuthZBasic) CanSetUsersActive(curUser, targetUser model.User, toAct
 	return nil
 }
 
+// CanSetUsersAdmin returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersAdmin(curUser, targetUser model.User, toAdminVal bool) error {
 	if !curUser.Admin {
 		return fmt.Errorf("only admin privileged users can update users")
@@ -49,6 +56,7 @@ func (a *UserAuthZBasic) CanSetUsersAdmin(curUser, targetUser model.User, toAdmi
 	return nil
 }
 
+// CanSetUsersAgentUserGroup returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersAgentUserGroup(
 	curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,
 ) error {
@@ -58,6 +66,7 @@ func (a *UserAuthZBasic) CanSetUsersAgentUserGroup(
 	return nil
 }
 
+// CanSetUsersUsername returns an error if the user is not an admin.
 func (a *UserAuthZBasic) CanSetUsersUsername(curUser, targetUser model.User) error {
 	if !curUser.Admin {
 		return fmt.Errorf("only admin privileged users can update users")
@@ -65,6 +74,8 @@ func (a *UserAuthZBasic) CanSetUsersUsername(curUser, targetUser model.User) err
 	return nil
 }
 
+// CanSetUsersDisplayName returns an error if the user is not an admin
+// when trying to set another user's display name.
 func (a *UserAuthZBasic) CanSetUsersDisplayName(curUser, targetUser model.User) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
 		return fmt.Errorf("only admin privileged users can set another user's display name")
@@ -72,20 +83,24 @@ func (a *UserAuthZBasic) CanSetUsersDisplayName(curUser, targetUser model.User) 
 	return nil
 }
 
+// CanGetUsersImage always returns nil.
 func (a *UserAuthZBasic) CanGetUsersImage(curUser, targetUser model.User) error {
 	return nil
 }
 
+// CanGetUsersOwnSettings always returns nil.
 func (a *UserAuthZBasic) CanGetUsersOwnSettings(curUser model.User) error {
 	return nil
 }
 
+// CanCreateUsersOwnSetting always returns nil.
 func (a *UserAuthZBasic) CanCreateUsersOwnSetting(
 	curUser model.User, setting model.UserWebSetting,
 ) error {
 	return nil
 }
 
+// CanResetUsersOwnSettings always returns nil.
 func (a *UserAuthZBasic) CanResetUsersOwnSettings(curUser model.User) error {
 	return nil
 }
