@@ -78,11 +78,11 @@ export const useFetchUsers = (canceler: AbortController): () => Promise<void> =>
   }, [ canceler, storeDispatch ]);
 };
 
-export const useFetchResourcePools = (canceler: AbortController): () => Promise<void> => {
+export const useFetchResourcePools = (canceler?: AbortController): () => Promise<void> => {
   const storeDispatch = useStoreDispatch();
   return useCallback(async (): Promise<void> => {
     try {
-      const resourcePools = await getResourcePools({}, { signal: canceler.signal });
+      const resourcePools = await getResourcePools({}, { signal: canceler?.signal });
       storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
     } catch (e) { handleError(e); }
   }, [ canceler, storeDispatch ]);

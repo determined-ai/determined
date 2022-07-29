@@ -87,8 +87,8 @@ const useModalHyperparameterSearch = ({
     SEARCH_METHODS.ASHA,
   );
   const { resourcePools } = useStore();
-  const [ canceler ] = useState(new AbortController());
-  const fetchResourcePools = useFetchResourcePools(canceler);
+  const canceler = useRef<AbortController>();
+  const fetchResourcePools = useFetchResourcePools(canceler.current);
   const [ resourcePool, setResourcePool ] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
@@ -102,6 +102,14 @@ const useModalHyperparameterSearch = ({
       fetchResourcePools();
     }
   }, [ fetchResourcePools, resourcePools ]);
+
+  useEffect(() => {
+    canceler.current = new AbortController();
+    return () => {
+      canceler.current?.abort();
+      canceler.current = undefined;
+    };
+  }, []);
 
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
@@ -206,7 +214,7 @@ const useModalHyperparameterSearch = ({
         experimentConfig: newConfig,
         parentId: experiment.id,
         projectId: experiment.projectId,
-      }, { signal: canceler.signal });
+      }, { signal: canceler.current?.signal });
 
       // Route to reload path to forcibly remount experiment page.
       const newPath = paths.experimentDetails(newExperimentId);
@@ -222,7 +230,7 @@ const useModalHyperparameterSearch = ({
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [ canceler.signal, experiment.configRaw, experiment.id, experiment.projectId, form ]);
+  }, [ experiment.configRaw, experiment.id, experiment.projectId, form ]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
