@@ -40,6 +40,13 @@ class PyTorchTrialController(det.TrialController):
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
+        for callback in self.callbacks.values():
+            if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
+                warnings.warn(
+                    "The on_checkpoint_end callback is deprecated, please use "
+                    "on_checkpoint_write_end instead",
+                    FutureWarning,
+                )
 
         check.gt_eq(
             len(self.context.models),
@@ -272,14 +279,21 @@ class PyTorchTrialController(det.TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
+                    metrics = self._train_for_step(
+                        w.step_id,
+                        w.num_batches,
+                        w.total_batches_processed,
+                    )
                     response = {
-                        "metrics": self._train_for_step(
-                            w.step_id,
-                            w.num_batches,
-                            w.total_batches_processed,
-                        ),
+                        "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
+                    metrics = self.context.distributed.broadcast(metrics)
+                    for callback in self.callbacks.values():
+                        callback.on_training_workload_end(
+                            avg_metrics=metrics["avg_metrics"],
+                            batch_metrics=metrics["batch_metrics"],
+                        )
                     if (
                         self.context.distributed.size > 1
                         and not self.context._average_training_metrics
@@ -297,6 +311,7 @@ class PyTorchTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
+                    uuid = ""
                     if self.is_chief:
                         metadata = {
                             "determined_version": det.__version__,
@@ -309,9 +324,13 @@ class PyTorchTrialController(det.TrialController):
                             storage_id,
                         ):
                             self._save(path)
+                            uuid = storage_id
                         response = {"uuid": storage_id}
                     else:
                         response = {}
+                    uuid = self.context.distributed.broadcast(uuid)
+                    for callback in self.callbacks.values():
+                        callback.on_checkpoint_upload_end(uuid=uuid)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
@@ -801,9 +820,6 @@ class PyTorchTrialController(det.TrialController):
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
-        for callback in self.callbacks.values():
-            callback.on_checkpoint_end(str(path))
-
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
@@ -819,6 +835,11 @@ class PyTorchTrialController(det.TrialController):
                 },
                 f2,
             )
+
+        for callback in self.callbacks.values():
+            # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
+            callback.on_checkpoint_end(str(path))
+            callback.on_checkpoint_write_end(str(path))
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
