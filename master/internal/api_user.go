@@ -45,7 +45,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 
 func getFullModelUser(d *db.PgDB, userID model.UserID) (*model.FullUser, error) {
 	user, err := d.UserByID(userID)
-	if err == db.ErrNotFound {
+	if errors.Is(err, db.ErrNotFound) {
 		return nil, errUserNotFound
 	}
 	return user, err
@@ -59,6 +59,8 @@ func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
 	return toProtoUserFromFullUser(*user), nil
 }
 
+// TODO remove this eventually since authz replaces this
+// We can't yet since we use it else where.
 func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
 	u, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
@@ -136,8 +138,8 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	if err := user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
-		return nil, err // TODO wrap forbidden error
+	if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+		return nil, errUserNotFound
 	}
 
 	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
@@ -211,6 +213,9 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
+		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+			return nil, errUserNotFound
+		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 
@@ -242,6 +247,9 @@ func (a *apiServer) PatchUser(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+			return nil, errUserNotFound
+		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
 	}
 
