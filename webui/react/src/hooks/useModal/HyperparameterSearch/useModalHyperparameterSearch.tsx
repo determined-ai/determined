@@ -339,11 +339,11 @@ const useModalHyperparameterSearch = ({
               repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(0, 1fr))`,
           }}>
           <h2>Hyperparameter</h2>
-          <h2>Type</h2>
-          <h2>Current</h2>
-          <h2>Min value</h2>
-          <h2>Max value</h2>
-          {searcher === SEARCH_METHODS.Grid && <h2>Grid Count</h2>}
+          <label id="type"><h2>Type</h2></label>
+          <label id="current-value"><h2>Current</h2></label>
+          <label id="min-value"><h2>Min value</h2></label>
+          <label id="max-value"><h2>Max value</h2></label>
+          {searcher === SEARCH_METHODS.Grid && <label id="count"><h2>Grid Count</h2></label>}
           {hyperparameters.map((hp) => (
             <HyperparameterRow
               key={hp.name}
@@ -672,7 +672,11 @@ const HyperparameterRow: React.FC<RowProps> = (
         initialValue={hyperparameter.type}
         name={[ name, 'type' ]}
         noStyle>
-        <Select ref={typeRef} onChange={handleTypeChange}>
+        <Select
+          aria-labelledby="type"
+          getPopupContainer={(triggerNode) => triggerNode}
+          ref={typeRef}
+          onChange={handleTypeChange}>
           {(Object.keys(HyperparameterType) as Array<keyof typeof HyperparameterType>)
             .map((type) => (
               <Select.Option
@@ -691,6 +695,7 @@ const HyperparameterRow: React.FC<RowProps> = (
         rules={[ { required: !active } ]}
         validateStatus={valError ? 'error' : 'success'}>
         <Input
+          aria-labelledby="current-value"
           disabled={active}
           placeholder={active ? 'n/a' : ''}
           onChange={validateValue}
@@ -702,18 +707,18 @@ const HyperparameterRow: React.FC<RowProps> = (
             initialValue={hyperparameter.minval}
             name={[ name, 'min' ]}
             noStyle>
-            <Input disabled />
+            <Input aria-labelledby="min-value" disabled />
           </Form.Item>
           <Form.Item
             initialValue={hyperparameter.maxval}
             name={[ name, 'max' ]}
             noStyle>
-            <Input disabled />
+            <Input aria-labelledby="max-value" disabled />
           </Form.Item>
           <Form.Item
             hidden={searcher !== SEARCH_METHODS.Grid}
             name={[ name, 'count' ]}>
-            <InputNumber disabled />
+            <InputNumber aria-labelledby="count" disabled />
           </Form.Item>
         </>
       ) : (
@@ -728,6 +733,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             } ]}
             validateStatus={((minError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
+              aria-labelledby="min-value"
               disabled={!active}
               placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
@@ -744,6 +750,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             } ]}
             validateStatus={((maxError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
+              aria-labelledby="max-value"
               disabled={!active}
               placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
@@ -762,6 +769,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             validateStatus={(countError && searcher === SEARCH_METHODS.Grid
                 && active) ? 'error' : undefined}>
             <InputNumber
+              aria-labelledby="count"
               disabled={!active}
               placeholder={!active ? 'n/a' : ''}
               precision={0}

@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
@@ -90,7 +90,7 @@ const Container: React.FC = () => {
   );
 };
 
-const user = userEvent.setup();
+const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
 
 const setup = async () => {
   const view = render(<Container />);
@@ -123,5 +123,48 @@ describe('useModalHyperparameterSearch', () => {
     await user.click(view.getByRole('button', { name: 'Run Experiment' }));
 
     expect(mockCreateExperiment).toHaveBeenCalled();
+  });
+  it('should only allow current on constant hyperparameter', async () => {
+    const { view } = await setup();
+
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+
+    await user.click(view.getAllByRole('combobox')[0]);
+    await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Constant'));
+
+    expect(view.getAllByLabelText('Current')[0]).not.toBeDisabled();
+    expect(view.getAllByLabelText('Min value')[0]).toBeDisabled();
+    expect(view.getAllByLabelText('Max value')[0]).toBeDisabled();
+  });
+  it('should only allow min and max on int hyperparameter', async () => {
+    const { view } = await setup();
+
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+
+    await user.click(view.getAllByRole('combobox')[0]);
+    await user.click(within(view.getAllByLabelText('Type')[0]).getByText('Int'));
+
+    expect(view.getAllByLabelText('Current')[0]).toBeDisabled();
+    expect(view.getAllByLabelText('Min value')[0]).not.toBeDisabled();
+    expect(view.getAllByLabelText('Max value')[0]).not.toBeDisabled();
+  });
+  it('should show count fields when using grid searcher', async () => {
+    const { view } = await setup();
+
+    await user.click(view.getByRole('radio', { name: 'Grid' }));
+    await user.click(view.getByRole('button', { name: 'Select Hyperparameters' }));
+
+    expect(view.getByText('Grid Count')).toBeInTheDocument();
+  });
+  it('should remove adaptive fields when not using adaptive searcher', async () => {
+    const { view } = await setup();
+
+    await user.click(view.getByRole('radio', { name: /adaptive/i }));
+    expect(view.getByText(/Early stopping mode/i)).toBeInTheDocument();
+
+    await user.click(view.getByRole('radio', { name: 'Grid' }));
+    await waitFor(() => {
+      expect(view.queryByText(/Early stopping mode/i)).not.toBeInTheDocument();
+    });
   });
 });
