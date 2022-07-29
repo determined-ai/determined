@@ -9,7 +9,7 @@ import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { deleteModelVersion, getModelVersion, isNotFound, patchModelVersion } from 'services/api';
+import { getModelVersion, isNotFound, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
@@ -161,14 +161,6 @@ const ModelVersionDetails: React.FC = () => {
     }
   }, [ fetchModelVersion, modelId, versionId ]);
 
-  const deleteVersion = useCallback(() => {
-    deleteModelVersion({
-      modelName: modelVersion?.model.name ?? '',
-      versionId: modelVersion?.id ?? 0,
-    });
-    navigate(`/det/models/${modelVersion?.model.name}`);
-  }, [ navigate, modelVersion?.id, modelVersion?.model.name ]);
-
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
       <div className={css.resource} key={resource}>
@@ -259,7 +251,6 @@ const ModelVersionDetails: React.FC = () => {
       headerComponent={(
         <ModelVersionHeader
           modelVersion={modelVersion}
-          onDeregisterVersion={deleteVersion}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onUpdateTags={saveVersionTags}

@@ -6,6 +6,7 @@ import InteractiveTable, { InteractiveTableSettings,
 import Page from 'components/Page';
 import { checkmarkRenderer, defaultRowClassName,
   getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
+import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
@@ -69,6 +70,15 @@ const UserManagement: React.FC = () => {
     settings.tableLimit,
     settings.tableOffset,
     fetchUsers ]);
+
+  const {
+    modalOpen: openCreateUserModal,
+    contextHolder: modalCreateUserContextHolder,
+  } = useModalCreateUser({ onClose: fetchUsers });
+
+  const onClickCreateUser = useCallback(() => {
+    openCreateUserModal();
+  }, [ openCreateUserModal ]);
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {
@@ -180,11 +190,12 @@ const UserManagement: React.FC = () => {
       containerRef={pageRef}
       options={(
         <Space>
-          <Button>New User</Button>
+          <Button onClick={onClickCreateUser}>New User</Button>
         </Space>
       )}
       title="Users">
       <div className={css.usersTable}>{table}</div>
+      {modalCreateUserContextHolder}
     </Page>
   );
 };

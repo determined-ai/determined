@@ -1,5 +1,4 @@
 import { Tabs } from 'antd';
-import queryString from 'query-string';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -27,11 +26,10 @@ const SettingsContent: React.FC = () => {
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
   const navigate = useNavigate();
 
-  const rbacEnabled = queryString.parse(location.search).rbac !== undefined;
+  const rbacEnabled = location.pathname.search('rbac-enabled') > 0;
 
   const showTabs = useMemo(() => {
     // TODO: Enable tabs for admin once user management finishes.
-    // return user?.isAdmin || rbacEnabled;
     return rbacEnabled;
   }, [ rbacEnabled ]);
 
@@ -39,9 +37,7 @@ const SettingsContent: React.FC = () => {
     setTabKey(key);
 
     const basePath = paths.settings(key);
-    const query = rbacEnabled ? 'rbac' : '';
-    const newPath = key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`;
-    navigate(`${newPath}?${query}`, { replace: true });
+    navigate(`${basePath}/${rbacEnabled ? 'rbac-enabled' : ''}`, { replace: true });
   }, [ navigate, rbacEnabled ]);
 
   return showTabs ? (
