@@ -49,6 +49,7 @@ describe('Error Handling Utilities', () => {
     it('should not report non-DetError items', () => {
       const error = new Error('This is a normal error.');
       expect(isDetError(error)).toBe(false);
+      expect(isDetError(true)).toBe(false);
       expect(isDetError(123)).toBe(false);
       expect(isDetError('hello')).toBe(false);
       expect(isDetError(new Date())).toBe(false);
@@ -68,8 +69,6 @@ describe('Error Handling Utilities', () => {
       const error = new Error(DEFAULT_ERROR_MESSAGE);
       const detError = new DetError(error);
 
-      expect(isError(error)).toBe(true);
-      expect(isDetError(error)).toBe(false);
       expect(isError(detError)).toBe(true);
       expect(isDetError(detError)).toBe(true);
       expect(detError.message).toBe(DEFAULT_ERROR_MESSAGE);
@@ -79,9 +78,6 @@ describe('Error Handling Utilities', () => {
       const oldDetError = new DetError(DEFAULT_ERROR_MESSAGE);
       const newDetError = new DetError(oldDetError);
 
-      expect(isError(oldDetError)).toBe(true);
-      expect(isDetError(oldDetError)).toBe(true);
-      expect(oldDetError.message).toBe(DEFAULT_ERROR_MESSAGE);
       expect(isError(newDetError)).toBe(true);
       expect(isDetError(newDetError)).toBe(true);
       expect(newDetError.message).toBe(DEFAULT_ERROR_MESSAGE);
@@ -95,7 +91,7 @@ describe('Error Handling Utilities', () => {
 
       // Expect each error option value to be preserved in the new DetError.
       for (const [ key, value ] of Object.entries(DEFAULT_DET_ERROR_OPTIONS)) {
-        expect(value).toStrictEqual(DEFAULT_DET_ERROR_OPTIONS[key as keyof DetErrorOptions]);
+        expect(value).toStrictEqual(newDetError[key as keyof DetErrorOptions]);
       }
     });
   });
