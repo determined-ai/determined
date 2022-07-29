@@ -19,7 +19,7 @@ type APIServer struct{}
 
 // CreateGroup creates a group and adds members to it, if any.
 func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
-) (resp *apiv1.GroupWriteResponse, err error) {
+) (resp *apiv1.CreateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = mapAndFilterErrors(err)
@@ -35,7 +35,7 @@ func (a *APIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupReque
 		return nil, err
 	}
 
-	return &apiv1.GroupWriteResponse{
+	return &apiv1.CreateGroupResponse{
 		Group: &groupv1.GroupDetails{
 			GroupId: int32(createdGroup.ID),
 			Name:    createdGroup.Name,
@@ -114,7 +114,7 @@ func (a *APIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 
 // UpdateGroup updates the group and returns the newly updated group details.
 func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
-) (resp *apiv1.GroupWriteResponse, err error) {
+) (resp *apiv1.UpdateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = mapAndFilterErrors(err)
@@ -137,7 +137,7 @@ func (a *APIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupReque
 		return nil, err
 	}
 
-	resp = &apiv1.GroupWriteResponse{
+	resp = &apiv1.UpdateGroupResponse{
 		Group: &groupv1.GroupDetails{
 			GroupId: req.GroupId,
 			Name:    newName,

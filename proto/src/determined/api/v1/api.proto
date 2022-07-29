@@ -1638,7 +1638,7 @@ service Determined {
   }
 
   // Create a group with optional members on creation
-  rpc CreateGroup(CreateGroupRequest) returns (GroupWriteResponse) {
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"
       body: "*"
@@ -1649,7 +1649,7 @@ service Determined {
   }
 
   // Update group info
-  rpc UpdateGroup(UpdateGroupRequest) returns (GroupWriteResponse) {
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
     option (google.api.http) = {
       put: "/api/v1/groups/{group_id}"
       body: "*"
