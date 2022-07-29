@@ -21,7 +21,7 @@ from determined.searcher.search_runner import SearchRunner
 from tests import config as conf
 
 
-@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_2a
 def test_run_custom_searcher_experiment() -> None:
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
