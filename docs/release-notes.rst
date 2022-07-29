@@ -7,6 +7,77 @@
 ###############
 
 **************
+ Version 0.19
+**************
+
+Version 0.19.0
+==============
+
+**Release Date:** July 29, 2022
+
+**New Features**
+
+-  Introduce a file system cache for model definition files, configured via ``cache.cache_dir`` in
+   the master configuration. The default path is ``/var/cache/determined``. Note that the master
+   will crash on startup if the directory does not exist and cannot be created.
+
+**Improvements**
+
+-  Security: Setting ``registry_auth.serveraddress`` will now only send credentials to the server
+   configured. Not setting ``registry_auth.serveraddress`` is now deprecated when ``registry_auth``
+   is set. In the future, ``serveraddress`` will be required whenever ``registry_auth`` is set.
+
+-  Agent: Users may now run ``docker login`` on agent host machines to authenticate with Docker
+   registries. Note that if the agent is running inside a Docker container then
+   ``~/.docker/config.json`` will need to be mounted to ``$HOME/.docker/config.json`` (by default
+   ``/root/.docker/config.json``) inside the container.
+
+-  CLI: The Determined CLI now supports reading a username and password from the ``DET_USER`` and
+   ``DET_PASS`` environment variables to avoid the need to run ``det user login``, allowing for
+   easier use of the CLI in scripts. ``det user login`` is still the preferred mechanism for most
+   use cases of the CLI.
+
+**Breaking Changes**
+
+-  Experiment: The default value for the ``average_training_metrics`` experiment configuration
+   option has been changed to ``true``. This change only affects distributed training. The previous
+   default of ``false`` leads to only the chief worker's training metrics being reported. Setting
+   this configuration to ``true`` instead reports the true average of all workers' training metrics
+   at the cost of increased communication overhead. Users who do not require accurate training
+   metrics may explicitly set the value to ``false`` as an optimization.
+
+-  API: The ``/projects/:id/experiments`` endpoint has been removed and replaced with a
+   ``project_id`` parameter on the ``/experiments`` endpoint.
+
+-  API: The ``config`` attribute in the response of the ``/experiments/:id`` endpoint has been moved
+   into the ``experiment`` object. The ``config`` attribute is now also available for experiments
+   returned from the ``/experiments`` endpoint.
+
+**Bug Fixes**
+
+-  When creating a test experiment, the container storage path was not being set correctly.
+
+-  Notebooks: Fix a bug where notebooks would ignore the ``--template`` CLI argument.
+
+-  Notebooks: Fix a bug where running ``det notebook start --preview`` would launch a notebook
+   instead of just displaying the configuration.
+
+-  Kubernetes: Fix an issue where zero-slot tasks would use the GPU image instead of the CPU image.
+
+-  Kubernetes: Fix an issue where zero-slot tasks would incorrectly be exposed to all GPUs.
+
+-  Kubernetes: Fix an issue where the Helm option ``defaultPassword`` caused the deployment to hang.
+
+-  Ensure an allocation's recorded end time is always valid, even on restoration failures. Invalid
+   end times could cause historical reporting rollups to fail. If there were any failures, they will
+   be fixed by database migrations this update.
+
+**Security Fixes**
+
+-  **Breaking Change** PyTorch Lightning is no longer a part of Determined environments. When
+   needed, it should be installed as part of startup hooks.
+
+**************
  Version 0.18
 **************
 
@@ -86,7 +157,7 @@ Version 0.18.3
 
 **Improvements**
 
--  CLI: Add new flag ``--agent-config-path`` to ``det deploy local agent-up``` allowing custom agent
+-  CLI: Add new flag ``--agent-config-path`` to ``det deploy local agent-up`` allowing custom agent
    configs to be used.
 -  CLI: Add ``det (notebook|shell|tensorboard) list --json`` option, allowing user to get
    JSON-formatted notebook, shell or tensorboard task list.
@@ -129,29 +200,29 @@ Version 0.18.2
 -  CLI: ``det deploy aws up``, ``det deploy aws down``, and ``det deploy gcp down`` now take
    ``--yes`` to skip prompts asking for confirmation. ``--no-prompt`` is still usable.
 -  Experiments: When attempting to delete an experiment, if the delete fails it is now retryable.
--  Agents: Improve behavior and observability when agents lose websocket messages due to network
+-  Agents: Improve behavior and observability when agents lose WebSocket messages due to network
    failures.
 -  Trials: Trial logs will report some system events such as when a trial gets canceled, paused,
    killed, or preempted.
 
 **New Features**
 
--  Kubernetes: Specifying `observability.enable_prometheus` in helm will now correctly enable
+-  Kubernetes: Specifying ``observability.enable_prometheus`` in Helm will now correctly enable
    Prometheus monitoring routes.
 
--  Kubernetes: Users may now specify a ``checkpointStorage.prefix`` in the Determined helm chart if
-   using s3 buckets for checkpoint storage. Checkpoints will now be uploaded with the path prefix
+-  Kubernetes: Users may now specify a ``checkpointStorage.prefix`` in the Determined Helm chart if
+   using S3 buckets for checkpoint storage. Checkpoints will now be uploaded with the path prefix
    whereas before it was ignored.
 
 -  CLI: Add new command ``det experiment logs <experiment-id>`` to get logs of the first trial of an
    experiment. Flags from ``det trial logs`` are supported.
 
 -  Configuration: Add support for ``checkpointStorage.prefix`` in master and experiment
-   configuration for Google Cloud Storage (gcs).
+   configuration for Google Cloud Storage (``gcs``).
 
 **Security Fixes**
 
--  API: Endpoints under `/debug/pprof` now require authentication.
+-  API: Endpoints under ``/debug/pprof`` now require authentication.
 
 Version 0.18.1
 ==============
@@ -200,7 +271,7 @@ Version 0.18.1
    -  ``/agents/:agent_id/slots/:slot_id``
    -  ``/api/v1/agents/:agent_id/slots/:slot_id/enable``
    -  ``/api/v1/agents/:agent_id/slots/:slot_id/disable``
-   -  ``det master config```
+   -  ``det master config``
    -  ``det agent enable``
    -  ``det agent disable``
    -  ``det slot enable``
@@ -268,7 +339,7 @@ Version 0.18.0
 
 -  Python API: Remove the remaining parts of the Native API, which was deprecated in version 0.13.5
    (September 2020). The only Native API functions that still remained were
-   ``det.experimental.create()`` and ``det.expeimental.create_trial_instance()``.
+   ``det.experimental.create()`` and ``det.experimental.create_trial_instance()``.
 
 -  Python API: Remove the ``det.pytorch.reset_parameters()`` function, which was deprecated in
    0.12.13 (August 2020).
@@ -1697,7 +1768,7 @@ Version 0.13.8
    can now be passed to ``configure_fit()`` and will be honored by ``TFKerasTrial``.
 
 -  Kubernetes: Add option to configure the service type of the Determined deployed database in the
-   Determined Helm Chart. This is useful if your cluster does not support ClusterIP, which is the
+   Determined Helm chart. This is useful if your cluster does not support ClusterIP, which is the
    service type that is used by default.
 
 -  WebUI: Make the page/tab title more descriptive.
@@ -1835,11 +1906,11 @@ Version 0.13.6
 -  Documentation: Add a :ref:`guide on configuring TLS <tls>` in Determined.
 
 -  Kubernetes: Add support for configuring memory and CPU requirements for the Determined database
-   when installing via the Determined Helm Chart.
+   when installing via the Determined Helm chart.
 
 -  Kubernetes: Add support for configuring the `storageClass
    <https://kubernetes.io/docs/concepts/storage/storage-classes/>`__ that is used when deploying a
-   database using the Determined Helm Chart.
+   database using the Determined Helm chart.
 
 **Bug Fixes**
 
@@ -2728,7 +2799,7 @@ Version 0.12.2
 -  PyTorch trial checkpoints no longer save in MLflow's MLmodel format.
 
 -  The ``det trial download`` command now accepts ``-o`` to save a checkpoint to a specific path.
-   PyTorch checkpoints can then be loaded from a specified local filesystem path.
+   PyTorch checkpoints can then be loaded from a specified local file system path.
 
 -  Allow the agent to read configuration values from a YAML file.
 
