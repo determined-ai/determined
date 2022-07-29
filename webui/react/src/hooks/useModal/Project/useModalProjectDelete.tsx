@@ -37,7 +37,7 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
     );
   }, [ handleNameInput, name, project.name ]);
 
-  const fetchProjectDeleteStatus = useCallback(async () => {
+  const handleOk = useCallback(async () => {
     try {
       const response = await deleteProject({ id: project.id });
       if (response.completed) {
@@ -51,24 +51,8 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
         silent: false,
         type: ErrorType.Server,
       });
-      return false;
     }
-  }, [ project.id,
-    project.workspaceId ]);
-
-  const handleOk = useCallback(async () => {
-    try {
-      await fetchProjectDeleteStatus();
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to delete project.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ fetchProjectDeleteStatus ]);
+  }, [ project.id, project.workspaceId ]);
 
   const getModalProps = useCallback((name = ''): ModalFuncProps => {
     return {
