@@ -14,6 +14,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
+import { assertIsDefined } from 'utils/assertion';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
@@ -35,7 +36,8 @@ const ExperimentDetails: React.FC = () => {
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
 
-  const id = parseInt(experimentId!);
+  assertIsDefined(experimentId);
+  const id = parseInt(experimentId);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {

@@ -6,6 +6,7 @@ import TaskBar from 'components/TaskBar';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { CommandState, CommandType } from 'types';
+import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
@@ -50,6 +51,11 @@ const getTitleState = (commandState?: CommandState): string => {
 export const InteractiveTask: React.FC = () => {
   const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
   const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
+  assertIsDefined(taskId);
+  assertIsDefined(taskName);
+  assertIsDefined(taskResourcePool);
+  assertIsDefined(taskUrl);
+  assertIsDefined(taskType);
   const [ taskState, setTaskState ] = useState<CommandState>();
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();
@@ -95,25 +101,25 @@ export const InteractiveTask: React.FC = () => {
         <div className={css.barContainer}>
           <TaskBar
             handleViewLogsClick={() => setPageView(PageView.TASK_LOGS)}
-            id={taskId!}
-            name={taskName!}
-            resourcePool={taskResourcePool!}
-            type={taskType!}
+            id={taskId}
+            name={taskName}
+            resourcePool={taskResourcePool}
+            type={taskType}
           />
         </div>
         <div className={css.contentContainer}>
           {pageView === PageView.IFRAME && (
             <iframe
               allowFullScreen
-              src={decodeURIComponent(taskUrl!)}
+              src={decodeURIComponent(taskUrl)}
               title="Interactive Task"
             />
           )}
           {pageView === PageView.TASK_LOGS && (
             <TaskLogs
               headerComponent={<div />}
-              taskId={taskId!}
-              taskType={taskType!}
+              taskId={taskId}
+              taskType={taskType}
               onCloseLogs={() => setPageView(PageView.IFRAME)}
             />
           )}

@@ -13,6 +13,7 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { CommandType } from 'types';
+import { assertIsDefined } from 'utils/assertion';
 
 import css from './TaskLogs.module.scss';
 
@@ -31,7 +32,9 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 export const TaskLogsWrapper: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
-  return <TaskLogs taskId={taskId!} taskType={taskType!} />;
+  assertIsDefined(taskId);
+  assertIsDefined(taskType);
+  return <TaskLogs taskId={taskId} taskType={taskType} />;
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [ filterOptions, setFilterOptions ] = useState<Filters>({});
