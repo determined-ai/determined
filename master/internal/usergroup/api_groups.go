@@ -2,6 +2,7 @@ package usergroup
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -194,18 +195,19 @@ var (
 )
 
 func mapAndFilterErrors(err error) error {
+	// FIXME: whitelist might not work.
 	if whitelisted := errPassthroughMap[err]; whitelisted {
 		return err
 	}
 
-	switch err {
-	case db.ErrNotFound:
-		return errNotFound
-	case db.ErrDuplicateRecord:
-		return errDuplicateRecord
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, db.ErrDuplicateRecord):
+		return status.Error(codes.AlreadyExists, err.Error())
 	}
 
 	logrus.WithError(err).Debug("suppressing error at API boundary")
 
-	return errInternal
+	return errInternal // TODO: delete comment: deliberately don't wrap this error
 }
