@@ -11,65 +11,49 @@ type UserAuthZ interface {
 	// POST /login
 	// GET /users/me
 	// GET /api/v1/auth/user
-	// No interface on login / logout and get me since it doesn't make sense
-	// to control authentication since we are controling authorization.
-
-	// TODO still leaking not found information...
-	// Need /get/users in order to deny leaking information
+	// No interface on login / logout and getting currently logged in user
+	// since it doesn't make sense to control these routes.
 
 	// GET /api/v1/users/:user_id
 	// CanGetUser doesn't return an error for information leakage purposes.
-	CanGetUser(currentUser model.User, targetUser model.User) bool
+	CanGetUser(curUser, targetUser model.User) bool
 
 	// GET /users
 	// GET /api/v1/users
 	// FilterUserList normally shouldn't return an error. It should just remove
 	// users that the requesting user shouldn't see. It returns an error directly without
 	// indication it occured during a filtering stage to bubble up a failure to the user.
-	FilterUserList(currentUser model.User, users []model.FullUser) ([]model.FullUser, error)
+	FilterUserList(curUser model.User, users []model.FullUser) ([]model.FullUser, error)
 
 	// POST /user
 	// POST /api/v1/users
-	CanCreateUser(
-		currentUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
-	) error
+	CanCreateUser(curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup) error
 
-	// TODO admin / own password
 	// PATCH /users/:username
 	// POST /api/v1/users/:user_id/password
-	CanSetUsersPassword(currentUser model.User, targetUser model.User) error
-
+	CanSetUsersPassword(curUser, targetUser model.User) error
 	// PATCH /users/:username
-	CanSetUsersActive(currentUser model.User, targetUser model.User, toActiveVal bool) error
-
+	CanSetUsersActive(curUser, targetUser model.User, toActiveVal bool) error
 	// PATCH /users/:username
-	CanSetUsersAdmin(currentUser model.User, targetUser model.User, toAdminVal bool) error
-
+	CanSetUsersAdmin(curUser, targetUser model.User, toAdminVal bool) error
 	// PATCH /users/:username
 	CanSetUsersAgentUserGroup(
-		currentUser model.User, targetUser model.User, agentUserGroup model.AgentUserGroup,
+		curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,
 	) error
-
 	// PATCH /users/:username/username
-	// TODO admin right? Not own username I think? YEP JUST need admin.
-	CanSetUsersUsername(currentUser model.User, targetUser model.User) error
-
+	CanSetUsersUsername(curUser, targetUser model.User) error
 	// PATCH /api/v1/users/:user_id
-	// TODO admin + yourself
-	CanSetUsersDisplayName(currentUser model.User, targetUser model.User) error
+	CanSetUsersDisplayName(curUser, targetUser model.User) error
 
 	// GET /users/:username/image
-	// TODO should be username? I mean ideally not right but who knows.
-	CanGetUsersImage(currentUser model.User, targetUsername string) error
+	CanGetUsersImage(curUser, targetUsername model.User) error
 
 	// GET /api/v1/users/setting
-	CanGetUsersOwnSettings(currentUser model.User) error
-
+	CanGetUsersOwnSettings(curUser model.User) error
 	// POST /api/v1/users/setting/reset
-	CanCreateUsersOwnSetting(currentUser model.User, setting model.UserWebSetting) error
-
+	CanCreateUsersOwnSetting(curUser model.User, setting model.UserWebSetting) error
 	// POST /api/v1/users/setting
-	CanResetUsersOwnSettings(currentUser model.User) error
+	CanResetUsersOwnSettings(curUser model.User) error
 }
 
 // AuthZProvider is the authz registry for `user` package.

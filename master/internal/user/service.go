@@ -524,7 +524,7 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 	currUser := c.(*context.DetContext).MustGetUser()
-	if err := AuthZProvider.Get().CanGetUsersImage(currUser, args.Username); err != nil {
+	if err := AuthZProvider.Get().CanGetUsersImage(currUser, *user); err != nil {
 		if !AuthZProvider.Get().CanGetUser(currUser, *user) {
 			return nil, db.ErrNotFound
 		}

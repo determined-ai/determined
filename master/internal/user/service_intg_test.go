@@ -188,7 +188,7 @@ func TestAuthzGetUserImage(t *testing.T) {
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
 	expectedErr := errors.Wrap(forbiddenError, "canGetUsersImageError")
-	authzUser.On("CanGetUsersImage", model.User{}, "admin").
+	authzUser.On("CanGetUsersImage", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError")).Once()
 	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
 
@@ -196,7 +196,7 @@ func TestAuthzGetUserImage(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// If we can't view the user return the same error as the user not existing.
-	authzUser.On("CanGetUsersImage", model.User{}, "admin").
+	authzUser.On("CanGetUsersImage", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError"))
 	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
 

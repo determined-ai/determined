@@ -13,13 +13,13 @@ type UserAuthZ struct {
 	mock.Mock
 }
 
-// CanCreateUser provides a mock function with given fields: currentUser, userToAdd, agentUserGroup
-func (_m *UserAuthZ) CanCreateUser(currentUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup) error {
-	ret := _m.Called(currentUser, userToAdd, agentUserGroup)
+// CanCreateUser provides a mock function with given fields: curUser, userToAdd, agentUserGroup
+func (_m *UserAuthZ) CanCreateUser(curUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup) error {
+	ret := _m.Called(curUser, userToAdd, agentUserGroup)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User, *model.AgentUserGroup) error); ok {
-		r0 = rf(currentUser, userToAdd, agentUserGroup)
+		r0 = rf(curUser, userToAdd, agentUserGroup)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -27,13 +27,13 @@ func (_m *UserAuthZ) CanCreateUser(currentUser model.User, userToAdd model.User,
 	return r0
 }
 
-// CanCreateUsersOwnSetting provides a mock function with given fields: currentUser, setting
-func (_m *UserAuthZ) CanCreateUsersOwnSetting(currentUser model.User, setting model.UserWebSetting) error {
-	ret := _m.Called(currentUser, setting)
+// CanCreateUsersOwnSetting provides a mock function with given fields: curUser, setting
+func (_m *UserAuthZ) CanCreateUsersOwnSetting(curUser model.User, setting model.UserWebSetting) error {
+	ret := _m.Called(curUser, setting)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.UserWebSetting) error); ok {
-		r0 = rf(currentUser, setting)
+		r0 = rf(curUser, setting)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -41,13 +41,13 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(currentUser model.User, setting mo
 	return r0
 }
 
-// CanGetUser provides a mock function with given fields: currentUser, targetUser
-func (_m *UserAuthZ) CanGetUser(currentUser model.User, targetUser model.User) bool {
-	ret := _m.Called(currentUser, targetUser)
+// CanGetUser provides a mock function with given fields: curUser, targetUser
+func (_m *UserAuthZ) CanGetUser(curUser model.User, targetUser model.User) bool {
+	ret := _m.Called(curUser, targetUser)
 
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(model.User, model.User) bool); ok {
-		r0 = rf(currentUser, targetUser)
+		r0 = rf(curUser, targetUser)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -55,13 +55,13 @@ func (_m *UserAuthZ) CanGetUser(currentUser model.User, targetUser model.User) b
 	return r0
 }
 
-// CanGetUsersImage provides a mock function with given fields: currentUser, targetUsername
-func (_m *UserAuthZ) CanGetUsersImage(currentUser model.User, targetUsername string) error {
-	ret := _m.Called(currentUser, targetUsername)
+// CanGetUsersImage provides a mock function with given fields: curUser, targetUsername
+func (_m *UserAuthZ) CanGetUsersImage(curUser model.User, targetUsername model.User) error {
+	ret := _m.Called(curUser, targetUsername)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, string) error); ok {
-		r0 = rf(currentUser, targetUsername)
+	if rf, ok := ret.Get(0).(func(model.User, model.User) error); ok {
+		r0 = rf(curUser, targetUsername)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -69,27 +69,13 @@ func (_m *UserAuthZ) CanGetUsersImage(currentUser model.User, targetUsername str
 	return r0
 }
 
-// CanGetUsersOwnSettings provides a mock function with given fields: currentUser
-func (_m *UserAuthZ) CanGetUsersOwnSettings(currentUser model.User) error {
-	ret := _m.Called(currentUser)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User) error); ok {
-		r0 = rf(currentUser)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// CanResetUsersOwnSettings provides a mock function with given fields: currentUser
-func (_m *UserAuthZ) CanResetUsersOwnSettings(currentUser model.User) error {
-	ret := _m.Called(currentUser)
+// CanGetUsersOwnSettings provides a mock function with given fields: curUser
+func (_m *UserAuthZ) CanGetUsersOwnSettings(curUser model.User) error {
+	ret := _m.Called(curUser)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User) error); ok {
-		r0 = rf(currentUser)
+		r0 = rf(curUser)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -97,13 +83,27 @@ func (_m *UserAuthZ) CanResetUsersOwnSettings(currentUser model.User) error {
 	return r0
 }
 
-// CanSetUsersActive provides a mock function with given fields: currentUser, targetUser, toActiveVal
-func (_m *UserAuthZ) CanSetUsersActive(currentUser model.User, targetUser model.User, toActiveVal bool) error {
-	ret := _m.Called(currentUser, targetUser, toActiveVal)
+// CanResetUsersOwnSettings provides a mock function with given fields: curUser
+func (_m *UserAuthZ) CanResetUsersOwnSettings(curUser model.User) error {
+	ret := _m.Called(curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(model.User) error); ok {
+		r0 = rf(curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanSetUsersActive provides a mock function with given fields: curUser, targetUser, toActiveVal
+func (_m *UserAuthZ) CanSetUsersActive(curUser model.User, targetUser model.User, toActiveVal bool) error {
+	ret := _m.Called(curUser, targetUser, toActiveVal)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User, bool) error); ok {
-		r0 = rf(currentUser, targetUser, toActiveVal)
+		r0 = rf(curUser, targetUser, toActiveVal)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -111,13 +111,13 @@ func (_m *UserAuthZ) CanSetUsersActive(currentUser model.User, targetUser model.
 	return r0
 }
 
-// CanSetUsersAdmin provides a mock function with given fields: currentUser, targetUser, toAdminVal
-func (_m *UserAuthZ) CanSetUsersAdmin(currentUser model.User, targetUser model.User, toAdminVal bool) error {
-	ret := _m.Called(currentUser, targetUser, toAdminVal)
+// CanSetUsersAdmin provides a mock function with given fields: curUser, targetUser, toAdminVal
+func (_m *UserAuthZ) CanSetUsersAdmin(curUser model.User, targetUser model.User, toAdminVal bool) error {
+	ret := _m.Called(curUser, targetUser, toAdminVal)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User, bool) error); ok {
-		r0 = rf(currentUser, targetUser, toAdminVal)
+		r0 = rf(curUser, targetUser, toAdminVal)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -125,13 +125,13 @@ func (_m *UserAuthZ) CanSetUsersAdmin(currentUser model.User, targetUser model.U
 	return r0
 }
 
-// CanSetUsersAgentUserGroup provides a mock function with given fields: currentUser, targetUser, agentUserGroup
-func (_m *UserAuthZ) CanSetUsersAgentUserGroup(currentUser model.User, targetUser model.User, agentUserGroup model.AgentUserGroup) error {
-	ret := _m.Called(currentUser, targetUser, agentUserGroup)
+// CanSetUsersAgentUserGroup provides a mock function with given fields: curUser, targetUser, agentUserGroup
+func (_m *UserAuthZ) CanSetUsersAgentUserGroup(curUser model.User, targetUser model.User, agentUserGroup model.AgentUserGroup) error {
+	ret := _m.Called(curUser, targetUser, agentUserGroup)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User, model.AgentUserGroup) error); ok {
-		r0 = rf(currentUser, targetUser, agentUserGroup)
+		r0 = rf(curUser, targetUser, agentUserGroup)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -139,13 +139,13 @@ func (_m *UserAuthZ) CanSetUsersAgentUserGroup(currentUser model.User, targetUse
 	return r0
 }
 
-// CanSetUsersDisplayName provides a mock function with given fields: currentUser, targetUser
-func (_m *UserAuthZ) CanSetUsersDisplayName(currentUser model.User, targetUser model.User) error {
-	ret := _m.Called(currentUser, targetUser)
+// CanSetUsersDisplayName provides a mock function with given fields: curUser, targetUser
+func (_m *UserAuthZ) CanSetUsersDisplayName(curUser model.User, targetUser model.User) error {
+	ret := _m.Called(curUser, targetUser)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User) error); ok {
-		r0 = rf(currentUser, targetUser)
+		r0 = rf(curUser, targetUser)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -153,13 +153,13 @@ func (_m *UserAuthZ) CanSetUsersDisplayName(currentUser model.User, targetUser m
 	return r0
 }
 
-// CanSetUsersPassword provides a mock function with given fields: currentUser, targetUser
-func (_m *UserAuthZ) CanSetUsersPassword(currentUser model.User, targetUser model.User) error {
-	ret := _m.Called(currentUser, targetUser)
+// CanSetUsersPassword provides a mock function with given fields: curUser, targetUser
+func (_m *UserAuthZ) CanSetUsersPassword(curUser model.User, targetUser model.User) error {
+	ret := _m.Called(curUser, targetUser)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User) error); ok {
-		r0 = rf(currentUser, targetUser)
+		r0 = rf(curUser, targetUser)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -167,13 +167,13 @@ func (_m *UserAuthZ) CanSetUsersPassword(currentUser model.User, targetUser mode
 	return r0
 }
 
-// CanSetUsersUsername provides a mock function with given fields: currentUser, targetUser
-func (_m *UserAuthZ) CanSetUsersUsername(currentUser model.User, targetUser model.User) error {
-	ret := _m.Called(currentUser, targetUser)
+// CanSetUsersUsername provides a mock function with given fields: curUser, targetUser
+func (_m *UserAuthZ) CanSetUsersUsername(curUser model.User, targetUser model.User) error {
+	ret := _m.Called(curUser, targetUser)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, model.User) error); ok {
-		r0 = rf(currentUser, targetUser)
+		r0 = rf(curUser, targetUser)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -181,13 +181,13 @@ func (_m *UserAuthZ) CanSetUsersUsername(currentUser model.User, targetUser mode
 	return r0
 }
 
-// FilterUserList provides a mock function with given fields: currentUser, users
-func (_m *UserAuthZ) FilterUserList(currentUser model.User, users []model.FullUser) ([]model.FullUser, error) {
-	ret := _m.Called(currentUser, users)
+// FilterUserList provides a mock function with given fields: curUser, users
+func (_m *UserAuthZ) FilterUserList(curUser model.User, users []model.FullUser) ([]model.FullUser, error) {
+	ret := _m.Called(curUser, users)
 
 	var r0 []model.FullUser
 	if rf, ok := ret.Get(0).(func(model.User, []model.FullUser) []model.FullUser); ok {
-		r0 = rf(currentUser, users)
+		r0 = rf(curUser, users)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.FullUser)
@@ -196,7 +196,7 @@ func (_m *UserAuthZ) FilterUserList(currentUser model.User, users []model.FullUs
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(model.User, []model.FullUser) error); ok {
-		r1 = rf(currentUser, users)
+		r1 = rf(curUser, users)
 	} else {
 		r1 = ret.Error(1)
 	}
