@@ -23,7 +23,6 @@ import css from './ModelVersionHeader.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;
-  onDeregisterVersion: () => void;
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;

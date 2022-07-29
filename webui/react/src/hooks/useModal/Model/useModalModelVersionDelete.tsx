@@ -44,7 +44,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
         modelName: modelVersion.model.name ?? '',
         versionId: modelVersion.id ?? 0,
       });
-      routeToReactUrl(paths.modelList());
+      routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
