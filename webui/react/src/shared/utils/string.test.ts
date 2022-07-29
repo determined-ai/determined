@@ -1,6 +1,17 @@
 import * as utils from './string';
 
 describe('String Utilities', () => {
+  describe('snakeCaseToTitleCase', () => {
+    it('should convert snake case to title case', () => {
+      expect(utils.snakeCaseToTitleCase('hello')).toBe('Hello');
+      expect(utils.snakeCaseToTitleCase('hello_world')).toBe('Hello World');
+      expect(utils.snakeCaseToTitleCase('hello_new_world')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('Hello_New_World')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hello_New_world')).toBe('Hello New World');
+      expect(utils.snakeCaseToTitleCase('hello__New_world')).toBe('Hello  New World');
+    });
+  });
+
   describe('camelCaseToKebab', () => {
     it('should convert camel case to a kebab', () => {
       expect(utils.camelCaseToKebab('hello')).toBe('hello');
@@ -227,6 +238,33 @@ describe('String Utilities', () => {
       const testStr = 'adoptacat';
       const size = 4;
       expect(utils.truncate(testStr, size, '')).toBe(testStr.substring(0, size));
+    });
+  });
+
+  describe('validateLength', () => {
+    const sShort = 'Hello';
+    const s80 = 'jfdjsakljfdsalkjflksadjflksajflkasjflksajflkdsjfkljdsafjsklfdsjkaljfdslasdfsdfdd';
+    const space5 = '     ';
+
+    it('should validate length with default params', () => {
+      expect(utils.validateLength('')).toBeFalsy();
+      expect(utils.validateLength('a')).toBeTruthy();
+      expect(utils.validateLength(sShort)).toBeTruthy();
+      expect(utils.validateLength(s80)).toBeTruthy();
+      expect(utils.validateLength(s80 + 'a')).toBeFalsy();
+      expect(utils.validateLength(s80 + '        ')).toBeTruthy();
+    });
+
+    it('should validate length with custom params', () => {
+      expect(utils.validateLength('', 0)).toBeTruthy();
+      expect(utils.validateLength('1234567890', 1, 10)).toBeTruthy();
+      expect(utils.validateLength('12345678901', 1, 10)).toBeFalsy();
+      expect(utils.validateLength('12345678901', 10, 1)).toBeFalsy();
+      expect(utils.validateLength(space5, 1, 5, false)).toBeTruthy();
+      expect(utils.validateLength(space5 + ' ', 1, 5, false)).toBeFalsy();
+      expect(utils.validateLength(space5 + '  ', 1, 5, true)).toBeFalsy();
+      expect(utils.validateLength('abcde' + space5, 1, 5, true)).toBeTruthy();
+      expect(utils.validateLength(s80)).toBeTruthy();
     });
   });
 });
