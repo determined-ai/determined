@@ -3,10 +3,9 @@ import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Prompt, useLocation } from 'react-router-dom';
 
+import Spinner from 'shared/components/Spinner/Spinner';
+import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
-
-import Spinner from '../shared/components/Spinner/Spinner';
-import { ErrorType } from '../shared/utils/error';
 
 import InlineEditor from './InlineEditor';
 import Markdown from './Markdown';

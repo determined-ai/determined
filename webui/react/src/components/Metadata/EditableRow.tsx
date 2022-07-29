@@ -41,7 +41,7 @@ const EditableRow: React.FC<Props> = (
               </Menu>
             )}
             trigger={[ 'click' ]}>
-            <Button type="text">
+            <Button aria-label="action" type="text">
               <Icon name="overflow-vertical" size="tiny" />
             </Button>
           </Dropdown>

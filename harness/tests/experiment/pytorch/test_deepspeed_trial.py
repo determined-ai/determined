@@ -39,7 +39,7 @@ def manual_init_distributed() -> Iterator[None]:
 @pytest.mark.gpu
 class TestDeepSpeedTrial:
     def setup_method(self) -> None:
-        # These environment variables are usually set by the launcher but we set them manually here
+        # These environment variables are usually set by the launcher, but we set them manually here
         # since they are required internally by the deepspeed model engine.
         os.environ["RANK"] = "0"
         os.environ["LOCAL_RANK"] = "0"
@@ -557,10 +557,12 @@ class TestDeepSpeedTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 0,
                 "validation_steps_ended": 0,
-                "checkpoints_ended": 0,
+                "checkpoints_written": 0,
+                "checkpoints_uploaded": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_workloads_ended": 1,
                 "trial_shutdowns": 0,
             }
 
@@ -569,10 +571,12 @@ class TestDeepSpeedTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
-                "checkpoints_ended": 0,
+                "checkpoints_written": 0,
+                "checkpoints_uploaded": 0,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_workloads_ended": 1,
                 "trial_shutdowns": 0,
             }
 
@@ -585,10 +589,12 @@ class TestDeepSpeedTrial:
                 "trial_startups": 1,
                 "validation_steps_started": 1,
                 "validation_steps_ended": 1,
-                "checkpoints_ended": 1,
+                "checkpoints_written": 1,
+                "checkpoints_uploaded": 1,
                 "training_started_times": 1,
                 "training_epochs_started": 2,
                 "training_epochs_ended": 2,
+                "training_workloads_ended": 1,
                 "trial_shutdowns": 0,
             }
 
@@ -618,13 +624,18 @@ class TestDeepSpeedTrial:
         )
         controller.run()
         assert controller.trial.counter.__dict__ == {
+            # Note: trial_startups will get reset by the loading logic.
             "trial_startups": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
-            "checkpoints_ended": 0,
+            # Note: checkpoints_written, checkpoints_uploaded, and trial_shutdowns, cannot be
+            # persisted, as they are all updated after checkpointing.
+            "checkpoints_written": 0,
+            "checkpoints_uploaded": 0,
             "training_started_times": 2,
             "training_epochs_started": 3,
             "training_epochs_ended": 3,
+            "training_workloads_ended": 2,
             "trial_shutdowns": 1,
         }
 

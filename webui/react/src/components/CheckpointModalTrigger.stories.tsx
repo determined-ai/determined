@@ -3,11 +3,9 @@ import React, { useEffect } from 'react';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
-import StoreDecorator from 'storybook/StoreDecorator';
 
 export default {
   component: CheckpointModalTrigger,
-  decorators: [ StoreDecorator ],
   title: 'CheckpointModalTrigger',
 };
 

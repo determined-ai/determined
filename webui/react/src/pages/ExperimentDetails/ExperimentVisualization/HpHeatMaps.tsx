@@ -16,6 +16,7 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import { Primitive, Range } from 'shared/types';
 import { rgba2str, str2rgba } from 'shared/utils/color';
 import { clone, flattenObject, isBoolean, isObject, isString } from 'shared/utils/data';
 import {
@@ -24,8 +25,6 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { metricNameToStr } from 'utils/metric';
-
-import { Primitive, Range } from '../../../shared/types';
 
 import css from './HpHeatMaps.module.scss';
 

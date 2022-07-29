@@ -1,6 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-
-import { Primitive, RawJson, RecordKey } from './shared/types';
+import { Primitive, RawJson, RecordKey } from 'shared/types';
 
 interface WithPagination {
   pagination: Api.V1Pagination; // probably should use this or Pagination
@@ -19,6 +18,10 @@ export interface DetailedUser extends User {
   id: number;
   isActive: boolean;
   isAdmin: boolean;
+}
+
+export interface DetailedUserList extends WithPagination {
+  users: DetailedUser[],
 }
 
 export interface Auth {
@@ -521,6 +524,13 @@ export interface TaskItem {
   taskId: string;
 }
 
+export interface TaskCounts {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
+}
+
 export interface ModelItem {
   archived?: boolean;
   creationTime: string;
@@ -698,6 +708,7 @@ export enum JobAction {
   Kill = 'Kill',
   ManageJob = 'Manage Job',
   MoveToTop = 'Move To Top',
+  ViewLog = 'View Logs',
 }
 
 /* End of Jobs */

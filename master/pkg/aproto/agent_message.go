@@ -10,11 +10,17 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 )
 
+// AgentShutdown is an explicit message from master to agent it should shutdown itself.
+type AgentShutdown struct {
+	ErrMsg string
+}
+
 // AgentMessage is a union type for all messages sent to agents.
 type AgentMessage struct {
 	MasterSetAgentOptions *MasterSetAgentOptions
 	StartContainer        *StartContainer
 	SignalContainer       *SignalContainer
+	AgentShutdown         *AgentShutdown
 }
 
 // MasterSetAgentOptions is the first message sent to an agent by the master. It lets

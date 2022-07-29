@@ -44,6 +44,8 @@ stages:
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp/determined-cp
+        cache:
+          cache_dir: /tmp/determined-cache
         log:
           level: debug
         enable_cors: true

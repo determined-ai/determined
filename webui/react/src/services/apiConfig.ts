@@ -5,10 +5,9 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
+import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
-
-import { DetApi, EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { identity, noOp } from '../shared/utils/service';
 
 const updatedApiConfigParams = (
   apiConfig?: Api.ConfigurationParameters,
@@ -106,11 +105,36 @@ export const getCurrentUser: DetApi<
 };
 
 export const getUsers: DetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams, Api.V1GetUsersResponse, Type.DetailedUserList
 > = {
   name: 'getUsers',
-  postProcess: (response) => decoder.mapV1UserList(response),
-  request: (options) => detApi.Users.getUsers(options),
+  postProcess: (response) => ({
+    pagination: decoder.mapV1Pagination(response.pagination),
+    users: decoder.mapV1UserList(response),
+  }),
+  request: (params) => detApi.Users.getUsers(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
+};
+
+export const postUser: DetApi<
+  Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
+> = {
+  name: 'postUser',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUser(
+    {
+      user: {
+        active: true,
+        admin: params.admin,
+        displayName: params.displayName,
+        username: params.username,
+      },
+    },
+  ),
 };
 
 export const setUserPassword: DetApi<
@@ -246,6 +270,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
+      params.projectId || 0,
       options,
     );
   },
@@ -484,6 +509,14 @@ export const getTask: DetApi<
   request: (params: Service.GetTaskParams) => detApi.Tasks.getTask(
     params.taskId,
   ),
+};
+
+export const getActiveTasks: DetApi<
+  Record<string, never>, Api.V1GetActiveTasksCountResponse, Type.TaskCounts
+> = {
+  name: 'getActiveTasksCount',
+  postProcess: (response) => response,
+  request: () => detApi.Tasks.getActiveTasksCount(),
 };
 
 /* Models */
@@ -804,37 +837,6 @@ export const getProject: DetApi<
   request: (params) => detApi.Projects.getProject(
     params.id,
   ),
-};
-
-export const getProjectExperiments: DetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
-> = {
-  name: 'getProjectExperiments',
-  postProcess: (response: Api.V1GetExperimentsResponse) => {
-    return {
-      experiments: decoder.mapV1ExperimentList(response.experiments),
-      pagination: response.pagination,
-    };
-  },
-  request: (params: Service.GetProjectExperimentsParams, options) => {
-    return detApi.Projects.getProjectExperiments(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.description,
-      params.labels,
-      params.archived,
-      params.states,
-      params.users,
-      params.userIds,
-      options,
-    );
-  },
 };
 
 export const addProjectNote: DetApi<

@@ -4,7 +4,7 @@ import { DarkLight } from 'shared/themes';
 
 import css from './Image.module.scss';
 
-interface Props {
+export interface Props {
   darkLight?: DarkLight;
 }
 

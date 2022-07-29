@@ -164,10 +164,6 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
 
 class TFKerasTrialController(det.TrialController):
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["TFKerasTrialController"]) -> bool:
-        return True
-
-    @classmethod
     def create_metric_writer(
         cls: Type["TFKerasTrialController"],
     ) -> tensorboard.BatchMetricWriter:
@@ -921,7 +917,7 @@ class TFKerasTrialController(det.TrialController):
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
         final_metrics = self.train_workload_metrics[-1]
-        if self.env.experiment_config.averaging_training_metrics_enabled():
+        if self.env.experiment_config.average_training_metrics_enabled():
             final_metrics = self._allreduce_logs(final_metrics)
 
         self.multiplexer._train_workload_end(final_metrics)
@@ -1025,7 +1021,7 @@ class TFKerasTrial(det.Trial):
     legacy TensorFlow 1.x, specify a TensorFlow 1.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.18.4``).
+    ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.18.5``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

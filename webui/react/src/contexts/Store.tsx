@@ -30,6 +30,13 @@ interface UI {
 }
 
 export interface State {
+  activeExperiments: number;
+  activeTasks: {
+    commands: number;
+    notebooks: number;
+    shells: number;
+    tensorboards: number;
+  },
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
@@ -79,6 +86,12 @@ export enum StoreAction {
 
   // PinnedWorkspaces
   SetPinnedWorkspaces,
+
+  // Tasks
+  SetActiveTasks,
+
+  // Active Experiments
+  SetActiveExperiments,
 }
 
 export type Action =
@@ -103,6 +116,13 @@ export type Action =
 | { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
 | { type: StoreAction.HideOmnibar }
 | { type: StoreAction.ShowOmnibar }
+| { type: StoreAction.SetActiveTasks, value: {
+  commands: number;
+  notebooks: number;
+  shells: number;
+  tensorboards: number;
+}}
+| { type: StoreAction.SetActiveExperiments, value: number }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -138,6 +158,13 @@ const initUI = {
   theme: themes[BrandingType.Determined][DarkLight.Light],
 };
 const initState: State = {
+  activeExperiments: 0,
+  activeTasks: {
+    commands: 0,
+    notebooks: 0,
+    shells: 0,
+    tensorboards: 0,
+  },
   agents: [],
   auth: initAuth,
   cluster: initClusterOverview,
@@ -282,6 +309,12 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
+    case StoreAction.SetActiveExperiments:
+      if (isEqual(state.activeExperiments, action.value)) return state;
+      return { ...state, activeExperiments: action.value };
+    case StoreAction.SetActiveTasks:
+      if (isEqual(state.activeTasks, action.value)) return state;
+      return { ...state, activeTasks: action.value };
     default:
       return state;
   }

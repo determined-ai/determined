@@ -98,6 +98,12 @@ func (p *pod) configureEnvVars(
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
 
+	// Without this zero slot tasks will have access to all GPUs.
+	// https://github.com/NVIDIA/k8s-device-plugin/issues/61
+	if deviceType == device.CPU || deviceType == device.ZeroSlot {
+		envVarsMap["NVIDIA_VISIBLE_DEVICES"] = "void"
+	}
+
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
@@ -245,7 +251,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	resources := p.taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.slotType == device.CUDA {
+	if p.slotType == device.CUDA && p.slots > 0 {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
@@ -352,7 +358,9 @@ func (p *pod) configurePodSpec(
 
 func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	deviceType := p.slotType
-	if deviceType == device.ZeroSlot {
+	// Device type is currently configured globally on KubernetesResourceManagerConfig.
+	// So we special case certain functionality to use device.CPU.
+	if deviceType == device.ZeroSlot || p.slots == 0 {
 		deviceType = device.CPU
 	}
 

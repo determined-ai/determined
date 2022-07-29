@@ -7,6 +7,7 @@ export interface Settings {
   containerId?: string[];
   level?: LogLevelFromApi[];
   rankId?: number[];
+  searchText?: string;
 }
 
 const config: SettingsConfig = {
@@ -45,6 +46,10 @@ const config: SettingsConfig = {
         baseType: BaseType.String,
         isArray: true,
       },
+    },
+    {
+      key: 'searchText',
+      type: { baseType: BaseType.String },
     },
   ],
   storagePath: 'log-viewer-filters',

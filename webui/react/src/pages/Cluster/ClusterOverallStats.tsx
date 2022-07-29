@@ -10,7 +10,13 @@ import { ResourceType } from 'types';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const {
+    activeExperiments,
+    activeTasks,
+    agents,
+    cluster: overview,
+    resourcePools,
+  } = useStore();
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -48,6 +54,31 @@ export const ClusterOverallStats: React.FC = () => {
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
             {auxContainers.running} <small>/ {auxContainers.total}</small>
+          </OverviewStats>
+        ) : null}
+        {activeExperiments ? (
+          <OverviewStats title="Active Experiments">
+            {activeExperiments}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.notebooks ? (
+          <OverviewStats title="Active JupyterLabs">
+            {activeTasks.notebooks}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.tensorboards ? (
+          <OverviewStats title="Active TensorBoards">
+            {activeTasks.tensorboards}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.shells ? (
+          <OverviewStats title="Active Shells">
+            {activeTasks.shells}
+          </OverviewStats>
+        ) : null}
+        {activeTasks.commands ? (
+          <OverviewStats title="Active Commands">
+            {activeTasks.commands}
           </OverviewStats>
         ) : null}
       </Grid>

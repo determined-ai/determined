@@ -3,8 +3,8 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useModal, { ModalCloseReason, ModalHooks } from 'hooks/useModal/useModal';
 import { cancelExperiment, killExperiment } from 'services/api';
+import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 

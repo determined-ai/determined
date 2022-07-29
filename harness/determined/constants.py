@@ -15,7 +15,7 @@ DEFAULT_SCHEDULING_UNIT = 100
 DEFAULT_OPTIMIZATIONS = {
     "aggregation_frequency": 1,
     "average_aggregated_gradients": True,
-    "average_training_metrics": False,
+    "average_training_metrics": True,
     "gradient_compression": False,
     "mixed_precision": "O0",
 }

@@ -21,7 +21,7 @@ const locations: TreeNode[] = [
           await getExperimentDetails({ id });
           visitAction(paths.experimentDetails(id))();
         } catch {
-          alertAction(`Invalid experiment ID ${id}`);
+          alertAction(`Invalid experiment ID ${id}`)();
         }
       };
 
@@ -42,7 +42,7 @@ const locations: TreeNode[] = [
           const trial = await getTrialDetails({ id });
           visitAction(paths.trialDetails(trial.id, trial.experimentId))();
         } catch {
-          alertAction(`Invalid trial ID ${id}`);
+          alertAction(`Invalid trial ID ${id}`)();
         }
       };
 

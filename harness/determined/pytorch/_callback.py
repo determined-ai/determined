@@ -15,8 +15,9 @@ class PyTorchCallback:
     .. warning::
         If distributed training is enabled, every GPU will execute a copy of this callback
         (except for :meth:`on_validation_end`, :meth:`on_validation_step_end` and
-        :meth:`on_checkpoint_end`). To configure a callback implementation to execute on a subset of
-        GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
+        :meth:`on_checkpoint_write_end`). To configure a callback implementation to execute on a
+        subset of GPUs, please condition your implementation on
+        ``trial.context.distributed.get_rank()``.
     """
 
     def on_trial_startup(self, first_batch_idx: int, checkpoint_uuid: Optional[str]) -> None:
@@ -88,10 +89,26 @@ class PyTorchCallback:
 
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         """
-        Run after every checkpoint.
+        Deprecated. Please use :meth:`on_checkpoint_write_end` instead.
 
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.
+        """
+        # TODO(DET-7912): remove this once it has been deprecated long enough.
+        pass
+
+    def on_checkpoint_write_end(self, checkpoint_dir: str) -> None:
+        """
+        Run after every checkpoint finishes writing to checkpoint_dir.
+
+        .. warning::
+            This callback only executes on the chief GPU when doing distributed training.
+        """
+        pass
+
+    def on_checkpoint_upload_end(self, uuid: str) -> None:
+        """
+        Run after every checkpoint finishes uploading.
         """
         pass
 
@@ -123,6 +140,16 @@ class PyTorchCallback:
     def on_training_epoch_end(self, epoch_idx: int) -> None:
         """
         Run on end of a training epoch
+        """
+        pass
+
+    def on_training_workload_end(
+        self, avg_metrics: Dict[str, Any], batch_metrics: Dict[str, Any]
+    ) -> None:
+        """
+        Run on end of a training workload. Workloads can contain varying numbers of batches. In the
+        current implementation of PyTorchTrial, the maximum number of batches in a workload is equal
+        to the ``scheduling_unit`` field defined in the experiment config.
         """
         pass
 

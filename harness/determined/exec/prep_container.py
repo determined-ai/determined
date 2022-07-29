@@ -88,16 +88,13 @@ def do_rendezvous_slurm(
     assert num_peers_str, "Unable to complete rendezvous without SLURM_NPROCS"
     num_peers = int(num_peers_str)
 
-    rendezvous_ip, resolution_error = None, None
+    rendezvous_ip = socket.gethostbyname(socket.gethostname())
     for rendezvous_iface in rendezvous_ifaces():
         try:
             rendezvous_ip = get_ip_from_interface(rendezvous_iface)
             break
         except ValueError as e:
-            resolution_error = e
-    else:
-        logging.warning(f"falling back to naive ip resolution after:\n\t{resolution_error}")
-        rendezvous_ip = socket.gethostbyname(socket.gethostname())
+            logging.warning(f"Unable to resolve ip for {rendezvous_iface}: {str(e)}")
 
     # Note, rendezvous must be sorted in rank order.
     resp = bindings.post_AllocationAllGather(
@@ -260,7 +257,7 @@ if __name__ == "__main__":
     cert = certs.default_load(info.master_url)
     sess = Session(
         info.master_url,
-        util.get_container_user_name(),
+        util.get_det_username_from_env(),
         None,
         cert,
         max_retries=get_max_retries_config(),

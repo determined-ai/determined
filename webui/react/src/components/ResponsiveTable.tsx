@@ -5,8 +5,9 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
-
-import Spinner from '../shared/components/Spinner/Spinner';
+import Spinner from 'shared/components/Spinner/Spinner';
+import { hasObjectKeys } from 'shared/utils/data';
+import { TrialItem } from 'types';
 
 import SkeletonTable from './Skeleton/SkeletonTable';
 
@@ -23,25 +24,28 @@ interface Settings {
 type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
 
 export const handleTableChange = (
-  columns: {key?: Comparable}[],
+  columns: { key?: Comparable }[],
   settings: Settings,
   updateSettings: (s: Settings, b: boolean) => void,
 ) => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return (tablePagination: any, tableFilters: any, tableSorter: any): void => {
-    if (Array.isArray(tableSorter)) return;
-
-    const { columnKey, order } = tableSorter as SorterResult<unknown>;
-    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
-
-    const newSettings = {
-      sortDesc: order === 'descend',
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortKey: columnKey as any,
+    const newSettings: Settings = {
+      ...settings,
       tableLimit: tablePagination.pageSize,
       tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
     };
     const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+
+    // Sorting may be conditional.
+    if (tableSorter && hasObjectKeys(tableSorter)) {
+      const { columnKey, order } = tableSorter as SorterResult<TrialItem>;
+      if (columnKey && columns.find((column) => column.key === columnKey)) {
+        newSettings.sortKey = columnKey;
+        newSettings.sortDesc = order === 'descend';
+      }
+    }
+
     updateSettings(newSettings, shouldPush);
   };
 };
