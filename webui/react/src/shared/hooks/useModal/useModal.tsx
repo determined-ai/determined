@@ -97,9 +97,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
   }, []);
 
   const modalClose = useCallback((reason?: ModalCloseReason) => {
-    if (!modalRef.current) return;
-    modalRef.current.destroy();
-    modalRef.current = undefined;
+    internalClose();
     if (reason) {
       /**
        * We need to unpack onClose from config in order to please lint.
@@ -111,7 +109,7 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
       const onClose = config.onClose;
       onClose?.(reason);
     }
-  }, [ config.onClose ]);
+  }, [ config.onClose, internalClose ]);
 
   /**
    * Adds `modalClose` to event handlers `onOk` and `onCancel`.

@@ -105,6 +105,7 @@ describe('useModalHyperparameterSearch', () => {
 
     expect(await view.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
+
   it('should cancel modal', async () => {
     const { view } = await setup();
 
@@ -115,6 +116,7 @@ describe('useModalHyperparameterSearch', () => {
       expect(view.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
+
   it('should submit experiment', async () => {
     const { view } = await setup();
 
@@ -124,6 +126,7 @@ describe('useModalHyperparameterSearch', () => {
 
     expect(mockCreateExperiment).toHaveBeenCalled();
   });
+
   it('should only allow current on constant hyperparameter', async () => {
     const { view } = await setup();
 
@@ -136,6 +139,7 @@ describe('useModalHyperparameterSearch', () => {
     expect(view.getAllByLabelText('Min value')[0]).toBeDisabled();
     expect(view.getAllByLabelText('Max value')[0]).toBeDisabled();
   });
+
   it('should only allow min and max on int hyperparameter', async () => {
     const { view } = await setup();
 
@@ -148,6 +152,7 @@ describe('useModalHyperparameterSearch', () => {
     expect(view.getAllByLabelText('Min value')[0]).not.toBeDisabled();
     expect(view.getAllByLabelText('Max value')[0]).not.toBeDisabled();
   });
+
   it('should show count fields when using grid searcher', async () => {
     const { view } = await setup();
 
@@ -156,6 +161,7 @@ describe('useModalHyperparameterSearch', () => {
 
     expect(view.getByText('Grid Count')).toBeInTheDocument();
   });
+
   it('should remove adaptive fields when not using adaptive searcher', async () => {
     const { view } = await setup();
 
