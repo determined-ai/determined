@@ -89,3 +89,7 @@ push-shared: test-shared
 	# fail if there are uncommitted changes.
 	git diff --exit-code || (echo "uncommitted changes, please commit or stash" ; false)
 	cd $(shell git rev-parse --show-toplevel) && git subtree push --prefix=webui/react/src/shared https://github.com/determined-ai/shared-web main
+
+test-dir-change:
+	cd $(shell git rev-parse --show-toplevel) && pwd && ls
+	pwd
