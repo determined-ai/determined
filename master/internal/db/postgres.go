@@ -121,8 +121,8 @@ func ConnectPostgres(url string) (*PgDB, error) {
 }
 
 const (
-	// CodeUniqueViolation is the error code that Postgres uses to indicate that an attempted insert/update
-	// violates a uniqueness constraint.  Obtained from:
+	// CodeUniqueViolation is the error code that Postgres uses to indicate that an attempted
+	// insert/update violates a uniqueness constraint.  Obtained from:
 	// https://www.postgresql.org/docs/10/errcodes-appendix.html
 	CodeUniqueViolation = "23505"
 	// CodeForeignKeyViolation is the error code that Postgres uses to indicate that an attempted

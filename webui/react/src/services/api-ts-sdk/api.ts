@@ -4557,11 +4557,29 @@ export interface V1PatchProjectResponse {
  */
 export interface V1PatchUser {
     /**
+     * Bool denoting whether the account is an admin account.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    admin?: boolean;
+    /**
+     * Bool denoting whether the account is active.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    active?: boolean;
+    /**
      * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
     displayName?: string;
+    /**
+     * The user and group on the agent host machine.
+     * @type {V1AgentUserGroup}
+     * @memberof V1PatchUser
+     */
+    agentUserGroup?: V1AgentUserGroup;
 }
 
 /**
