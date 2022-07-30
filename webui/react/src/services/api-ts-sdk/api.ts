@@ -3129,7 +3129,7 @@ export interface V1GetUserResponse {
      * @type {V1User}
      * @memberof V1GetUserResponse
      */
-    user?: V1User;
+    user: V1User;
 }
 
 /**
