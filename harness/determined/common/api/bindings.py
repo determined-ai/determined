@@ -4039,19 +4039,31 @@ class v1PatchProjectResponse:
 class v1PatchUser:
     def __init__(
         self,
+        active: "typing.Optional[bool]" = None,
+        admin: "typing.Optional[bool]" = None,
+        agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None,
         displayName: "typing.Optional[str]" = None,
     ):
+        self.admin = admin
+        self.active = active
         self.displayName = displayName
+        self.agentUserGroup = agentUserGroup
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUser":
         return cls(
+            admin=obj.get("admin", None),
+            active=obj.get("active", None),
             displayName=obj.get("displayName", None),
+            agentUserGroup=v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj.get("agentUserGroup", None) is not None else None,
         )
 
     def to_json(self) -> typing.Any:
         return {
+            "admin": self.admin if self.admin is not None else None,
+            "active": self.active if self.active is not None else None,
             "displayName": self.displayName if self.displayName is not None else None,
+            "agentUserGroup": self.agentUserGroup.to_json() if self.agentUserGroup is not None else None,
         }
 
 class v1PatchUserResponse:
