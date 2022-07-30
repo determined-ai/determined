@@ -4,15 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
+import useModal, {
+  CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
+} from 'shared/hooks/useModal/useModal';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
 import handleError from 'utils/error';
-
-import useModal, {
-  CANNOT_DELETE_MODAL_PROPS, ModalHooks as Hooks, ModalCloseReason,
-} from '../useModal';
 
 interface Props {
   onClose?: (reason?: ModalCloseReason) => void;
@@ -45,7 +44,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
         modelName: modelVersion.model.name ?? '',
         versionId: modelVersion.id ?? 0,
       });
-      routeToReactUrl(paths.modelList());
+      routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,

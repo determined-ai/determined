@@ -3,14 +3,16 @@
 # explicit default to no owner (this should be the first line)
 *
 
-# Notify eng-infra team of .github changes
+# team-specific repo segments
 /.github  @determined-ai/infrastructure
+/docs     @determined-ai/docs
 
+### individuals
 # Ilia cares about agent RM.
 /master/internal/resourcemanagers/ @ioga
 /master/internal/sproto/ @ioga
 /proto/src/determined/ @ioga
-/agent/ @ioga
+/agent/internal/ @ioga
 
 # Hamid and Trent care about shared code
-/webui/react/src/shared/ @hamidzr @trentwatt
+/webui/react/src/shared/ @trentwatt

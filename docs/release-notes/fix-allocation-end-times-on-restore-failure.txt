@@ -1,7 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Ensure an allocation's recorded end time is always valid, even on restoration failures. Invalid
-   end times could cause historical reporting rollups to fail. If there were any failures, they will
-   be fixed by database migrations this update.

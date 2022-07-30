@@ -5,7 +5,6 @@ from typing import Any, Optional, Type
 
 import determined as det
 from determined import profiler, tensorboard, workload
-from determined.common import check
 from determined.tensorboard.util import get_rank_aware_path
 
 
@@ -55,7 +54,6 @@ class TrialController(metaclass=abc.ABCMeta):
         distributed_backend = _DistributedBackend()
         self.use_horovod = distributed_backend.use_horovod()
         self.use_torch = distributed_backend.use_torch()
-        self._check_if_trial_supports_configurations(env)
 
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
@@ -75,7 +73,7 @@ class TrialController(metaclass=abc.ABCMeta):
     ) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
-        or intializing user code (in the Trial API case).
+        or initializing user code (in the Trial API case).
         """
         pass
 
@@ -105,20 +103,12 @@ class TrialController(metaclass=abc.ABCMeta):
         return False
 
     @classmethod
-    def supports_averaging_training_metrics(cls: Type["TrialController"]) -> bool:
-        return False
-
-    @classmethod
     @abc.abstractmethod
     def create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
         pass
 
     def initialize_wrapper(self) -> None:
         pass
-
-    def _check_if_trial_supports_configurations(self, env: det.EnvContext) -> None:
-        if env.experiment_config.averaging_training_metrics_enabled():
-            check.true(self.supports_averaging_training_metrics())
 
     def close(self) -> None:
         self.context.close()

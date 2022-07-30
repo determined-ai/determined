@@ -19,7 +19,7 @@ export type IconSize = (
   'mega'
 );
 
-interface Props extends CommonProps {
+export interface Props extends CommonProps {
   name?: string;
   size?: IconSize;
   title?: string;

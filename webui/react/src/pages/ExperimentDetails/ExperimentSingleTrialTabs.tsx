@@ -6,14 +6,14 @@ import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
 import usePolling from 'hooks/usePolling';
-import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import usePrevious from 'shared/hooks/usePrevious';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 
-import { ErrorLevel, ErrorType } from '../../shared/utils/error';
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';

@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 const (
@@ -140,6 +141,58 @@ func (a *apiServer) TaskLogs(
 	})
 }
 
+func (a *apiServer) GetActiveTasksCount(
+	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
+) (resp *apiv1.GetActiveTasksCountResponse, err error) {
+	finalResp := &apiv1.GetActiveTasksCountResponse{}
+
+	req1 := &apiv1.GetNotebooksRequest{}
+	resp1 := &apiv1.GetNotebooksResponse{}
+	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
+		return nil, err
+	}
+	for _, n := range resp1.Notebooks {
+		if n.State == taskv1.State_STATE_RUNNING {
+			finalResp.Notebooks++
+		}
+	}
+
+	req2 := &apiv1.GetTensorboardsRequest{}
+	resp2 := &apiv1.GetTensorboardsResponse{}
+	if err = a.ask(tensorboardsAddr, req2, &resp2); err != nil {
+		return nil, err
+	}
+	for _, tb := range resp2.Tensorboards {
+		if tb.State == taskv1.State_STATE_RUNNING {
+			finalResp.Tensorboards++
+		}
+	}
+
+	req3 := &apiv1.GetCommandsRequest{}
+	resp3 := &apiv1.GetCommandsResponse{}
+	if err = a.ask(commandsAddr, req3, &resp3); err != nil {
+		return nil, err
+	}
+	for _, c := range resp3.Commands {
+		if c.State == taskv1.State_STATE_RUNNING {
+			finalResp.Commands++
+		}
+	}
+
+	req4 := &apiv1.GetShellsRequest{}
+	resp4 := &apiv1.GetShellsResponse{}
+	if err = a.ask(shellsAddr, req4, &resp4); err != nil {
+		return nil, err
+	}
+	for _, s := range resp4.Shells {
+		if s.State == taskv1.State_STATE_RUNNING {
+			finalResp.Shells++
+		}
+	}
+
+	return finalResp, err
+}
+
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan api.BatchResult,
 ) {
@@ -234,6 +287,14 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 			Field:     "timestamp",
 			Operation: api.FilterOperationGreaterThan,
 			Values:    req.TimestampAfter.AsTime(),
+		})
+	}
+
+	if req.SearchText != "" {
+		filters = append(filters, api.Filter{
+			Field:     "log",
+			Operation: api.FilterOperationStringContainment,
+			Values:    req.SearchText,
 		})
 	}
 	return filters, nil

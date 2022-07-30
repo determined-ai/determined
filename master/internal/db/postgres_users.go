@@ -189,8 +189,8 @@ func (db *PgDB) UserByUsername(username string) (*model.User, error) {
 func addUser(tx *sqlx.Tx, user *model.User) (model.UserID, error) {
 	stmt, err := tx.PrepareNamed(`
 INSERT INTO users
-(username, admin, active, password_hash)
-VALUES (:username, :admin, :active, :password_hash)
+(username, admin, active, password_hash, display_name)
+VALUES (:username, :admin, :active, :password_hash, :display_name)
 RETURNING id`)
 	if err != nil {
 		return 0, errors.WithStack(err)

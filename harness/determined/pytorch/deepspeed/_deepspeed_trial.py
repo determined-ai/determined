@@ -7,6 +7,7 @@ import pickle
 import random
 import time
 import uuid
+import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
 
 import deepspeed
@@ -46,6 +47,13 @@ class DeepSpeedTrialController(det.TrialController):
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
+        for callback in self.callbacks.values():
+            if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
+                warnings.warn(
+                    "The on_checkpoint_end callback is deprecated, please use "
+                    "on_checkpoint_write_end instead",
+                    FutureWarning,
+                )
 
         if len(self.context.models) == 0:
             raise det.errors.InvalidExperimentException(
@@ -97,10 +105,6 @@ class DeepSpeedTrialController(det.TrialController):
         cls: Type["DeepSpeedTrialController"], *args: Any, **kwargs: Any
     ) -> det.TrialController:
         return cls(*args, **kwargs)
-
-    @classmethod
-    def supports_averaging_training_metrics(cls: Type["DeepSpeedTrialController"]) -> bool:
-        return True
 
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.steps_completed
@@ -301,14 +305,21 @@ class DeepSpeedTrialController(det.TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
+                    metrics = self._train_for_step(
+                        w.step_id,
+                        w.num_batches,
+                        w.total_batches_processed,
+                    )
                     response = {
-                        "metrics": self._train_for_step(
-                            w.step_id,
-                            w.num_batches,
-                            w.total_batches_processed,
-                        ),
+                        "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
+                    metrics = self.context.distributed.broadcast(metrics)
+                    for callback in self.callbacks.values():
+                        callback.on_training_workload_end(
+                            avg_metrics=metrics["avg_metrics"],
+                            batch_metrics=metrics["batch_metrics"],
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
@@ -317,6 +328,7 @@ class DeepSpeedTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
+                    storage_id = ""
                     # The checkpointing api would have been sufficient if the base_path for the
                     # storage manager is guaranteed to be a shared file system.
                     #
@@ -366,6 +378,9 @@ class DeepSpeedTrialController(det.TrialController):
                         if self.context.distributed.local_rank == 0:
                             storage_manager.post_store_path(str(path), storage_id)
                         response = {}
+                    storage_id = self.context.distributed.broadcast(storage_id)
+                    for callback in self.callbacks.values():
+                        callback.on_checkpoint_upload_end(uuid=storage_id)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
@@ -381,7 +396,7 @@ class DeepSpeedTrialController(det.TrialController):
 
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
-    ) -> workload.Response:
+    ) -> workload.Metrics:
         """
         DeepSpeed allows specifying train_batch_size, train_micro_batch_size_per_gpu, and
         gradient_accumulation_steps. The three are related as follows:
@@ -742,7 +757,9 @@ class DeepSpeedTrialController(det.TrialController):
         self.trial.save(self.context, path)
 
         for callback in self.callbacks.values():
+            # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
             callback.on_checkpoint_end(str(path))
+            callback.on_checkpoint_write_end(str(path))
 
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)

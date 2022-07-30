@@ -5,6 +5,7 @@ WITH trial_ids AS (
 )
 SELECT
     e.id AS id,
+    e.config AS config,
     e.config->>'name' AS name,
     e.config->>'description' AS description,
     e.config->'labels' AS labels,

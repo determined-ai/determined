@@ -4,7 +4,9 @@ import { useParams } from 'react-router-dom';
 
 import TaskBar from 'components/TaskBar';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { getTask } from 'services/api';
 import { CommandState, CommandType } from 'types';
+import handleError from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
@@ -53,26 +55,35 @@ export const InteractiveTask: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();
 
-  const handleMessage = (event: MessageEvent) => {
-    const messageFromSameOrigin = window.location.origin === event.origin;
-    if (event?.data?.commandState && messageFromSameOrigin) {
-      const commandState = event.data.commandState as CommandState;
-      setTaskState(commandState);
-    }
-  };
-
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
     return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
   useEffect(() => {
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [ storeDispatch ]);
+    const queryTask = setInterval(async () => {
+      try {
+        const response = await getTask({ taskId });
+        if (response?.allocations?.length) {
+          const lastRunState = response.allocations[0]?.state;
+          setTaskState(lastRunState);
+          if (lastRunState === CommandState.Terminated){
+            clearInterval(queryTask);
+          }
+        }
+      } catch (e) {
+        handleError(
+          {
+            error: e,
+            message: 'failed querying for command state',
+            silent: true,
+          },
+        );
+        clearInterval(queryTask);
+      }
+    }, 2000);
+    return () => clearInterval(queryTask);
+  }, [ taskId ]);
 
   const title = ui.isPageHidden ? getTitleState(taskState) : DEFAULT_PAGE_TITLE;
 

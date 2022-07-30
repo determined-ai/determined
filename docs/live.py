@@ -243,7 +243,7 @@ class FSHandler(watchdog.events.FileSystemEventHandler):
             if path.endswith(".html"):
                 self.long_poller.update(path)
                 return
-        elif path.endswith(".txt"):
+        elif path.endswith(".rst"):
             self.rebuilder.handle_input_update()
 
 

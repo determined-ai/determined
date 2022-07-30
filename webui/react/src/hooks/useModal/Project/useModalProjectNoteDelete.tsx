@@ -1,8 +1,8 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useModal, { ModalHooks as Hooks } from 'hooks/useModal/useModal';
 import { setProjectNotes } from 'services/api';
+import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
 import handleError from 'utils/error';

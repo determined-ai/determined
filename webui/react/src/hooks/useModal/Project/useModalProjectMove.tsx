@@ -4,10 +4,10 @@ import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useModal, { ModalHooks } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { getWorkspaces, moveProject } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project, Workspace } from 'types';

@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import time
+import warnings
 from abc import abstractmethod
 from inspect import signature
 from typing import Any, Callable, Dict, Iterator, List, Optional, Type, Union, cast
@@ -23,7 +24,8 @@ from determined.util import has_param
 # Apex is included only for GPU trials.
 try:
     import apex
-except ImportError:
+except ImportError:  # pragma: no cover
+    apex = None
     pass
 
 
@@ -38,6 +40,13 @@ class PyTorchTrialController(det.TrialController):
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
+        for callback in self.callbacks.values():
+            if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
+                warnings.warn(
+                    "The on_checkpoint_end callback is deprecated, please use "
+                    "on_checkpoint_write_end instead",
+                    FutureWarning,
+                )
 
         check.gt_eq(
             len(self.context.models),
@@ -100,7 +109,7 @@ class PyTorchTrialController(det.TrialController):
     def _set_random_seeds(cls: Type["PyTorchTrialController"], seed: int) -> None:
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will start at a unique
-        # offset in the dataset, ensuring it's processing a unique
+        # offset in the dataset, ensuring that it is processing a unique
         # training batch.
         random.seed(seed)
         np.random.seed(seed)
@@ -117,10 +126,6 @@ class PyTorchTrialController(det.TrialController):
 
     @classmethod
     def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
-        return True
-
-    @classmethod
-    def supports_averaging_training_metrics(cls: Type["PyTorchTrialController"]) -> bool:
         return True
 
     def _check_evaluate_implementation(self) -> None:
@@ -214,7 +219,7 @@ class PyTorchTrialController(det.TrialController):
                 fn(*args)
 
         # We define on_shutdown here instead of inside the `for callback in...` loop to ensure we
-        # don't bind a the loop iteration variable `callback`, which would likely cause us to call
+        # don't bind the loop iteration variable `callback`, which would likely cause us to call
         # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
         def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
             with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
@@ -274,14 +279,30 @@ class PyTorchTrialController(det.TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
+                    metrics = self._train_for_step(
+                        w.step_id,
+                        w.num_batches,
+                        w.total_batches_processed,
+                    )
                     response = {
-                        "metrics": self._train_for_step(
-                            w.step_id,
-                            w.num_batches,
-                            w.total_batches_processed,
-                        ),
+                        "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
                     }  # type: workload.Response
+                    metrics = self.context.distributed.broadcast(metrics)
+                    for callback in self.callbacks.values():
+                        callback.on_training_workload_end(
+                            avg_metrics=metrics["avg_metrics"],
+                            batch_metrics=metrics["batch_metrics"],
+                        )
+                    if (
+                        self.context.distributed.size > 1
+                        and not self.context._average_training_metrics
+                    ):
+                        warnings.warn(
+                            "Only the chief worker's training metrics are being reported, due "
+                            "to setting average_training_metrics to False.",
+                            UserWarning,
+                        )
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     action = "validation"
                     response = {
@@ -290,6 +311,7 @@ class PyTorchTrialController(det.TrialController):
                     }
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
+                    uuid = ""
                     if self.is_chief:
                         metadata = {
                             "determined_version": det.__version__,
@@ -302,9 +324,13 @@ class PyTorchTrialController(det.TrialController):
                             storage_id,
                         ):
                             self._save(path)
+                            uuid = storage_id
                         response = {"uuid": storage_id}
                     else:
                         response = {}
+                    uuid = self.context.distributed.broadcast(uuid)
+                    for callback in self.callbacks.values():
+                        callback.on_checkpoint_upload_end(uuid=uuid)
 
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
@@ -322,9 +348,8 @@ class PyTorchTrialController(det.TrialController):
         self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
     ) -> None:
         """
-        This function aims at automatically step a LR scheduler. It should be called per batch.
+        This function automatically steps an LR scheduler. It should be called per batch.
         """
-
         # Never step lr when we do not step optimizer.
         if not self.context._should_communicate_and_update():
             return
@@ -795,9 +820,6 @@ class PyTorchTrialController(det.TrialController):
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
-        for callback in self.callbacks.values():
-            callback.on_checkpoint_end(str(path))
-
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
@@ -814,12 +836,17 @@ class PyTorchTrialController(det.TrialController):
                 f2,
             )
 
+        for callback in self.callbacks.values():
+            # TODO(DET-7912): remove on_checkpoint_end once it has been deprecated long enough.
+            callback.on_checkpoint_end(str(path))
+            callback.on_checkpoint_write_end(str(path))
+
     def _sync_device(self) -> None:
         torch.cuda.synchronize(self.context.device)
 
     @staticmethod
     def _add_prefix_in_state_dict_if_not_present(state_dict: Dict[str, Any], prefix: str) -> None:
-        """Adds the prefix in state_dict in place, if does not exist.
+        """Adds the prefix in state_dict in place, if it does not exist.
         ..note::
             Given a `state_dict` from a non-DDP model, a DDP model can load it by applying
             `_add_prefix_in_state_dict_if_present(state_dict, "module.")` before calling
@@ -974,7 +1001,7 @@ class PyTorchTrial(det.Trial):
                 batch of data for training.
             epoch_idx (integer): index of the current epoch among all the batches processed
                 per device (slot) since the start of training.
-            batch_idx (integer): index of the current batch among all the epoches processed
+            batch_idx (integer): index of the current batch among all the epochs processed
                 per device (slot) since the start of training.
         Returns:
             torch.Tensor or Dict[str, Any]:
@@ -1031,6 +1058,8 @@ class PyTorchTrial(det.Trial):
         Arguments:
             batch (Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor):
                 batch of data for evaluating.
+            batch_idx (integer): index of the current batch among all the epochs processed
+                per device (slot) since the start of training.
         """
         pass
 

@@ -1,10 +1,9 @@
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'shared/utils/data';
+import { DetError } from 'shared/utils/error';
+import { getResponseStatus, processApiError } from 'shared/utils/service';
 import handleError from 'utils/error';
-
-import { DetError } from '../shared/utils/error';
-import { getResponseStatus, processApiError } from '../shared/utils/service';
 
 /* Response Helpers */
 

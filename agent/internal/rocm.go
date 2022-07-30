@@ -106,9 +106,26 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		log.WithError(err).WithField("output", string(out)).Warnf(
-			"error while executing rocm-smi to detect GPUs")
-		return nil, nil
+		// An rocm-smi bug causes --showproductname to throw up if the info does not exist
+		// As a workaround, try again without --showproductname
+		for i, arg := range args {
+			if arg == "--showproductname" {
+				args = append(args[:i], args[i+1:]...)
+				break
+			}
+		}
+
+		cmd := exec.Command("rocm-smi", args...)
+
+		out, err = cmd.Output()
+		if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
+			return nil, nil
+		} else if err != nil {
+			log.WithError(err).WithField("output", string(out)).Warnf(
+				"error while executing rocm-smi to detect GPUs")
+			return nil, nil
+		}
+		log.Warn("rocm-smi detected a card without a product name, firmware issue possible")
 	}
 
 	discoveredRocmDevices, err = parseRocmSmi(out)

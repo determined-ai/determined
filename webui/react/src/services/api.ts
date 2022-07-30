@@ -2,11 +2,10 @@ import { terminalCommandStates } from 'constants/states';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
+import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
+import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
-
-import { EmptyParams, RawJson, SingleEntityParams } from '../shared/types';
-import { generateDetApi } from '../shared/utils/service';
 
 export { isLoginFailure } from './utils';
 
@@ -37,8 +36,13 @@ export const getCurrentUser = generateDetApi<
   EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 >(Config.getCurrentUser);
 
+export const postUser = generateDetApi<
+  Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
+>(Config.postUser);
+
 export const getUsers = generateDetApi<
-  EmptyParams, Api.V1GetUsersResponse, Type.DetailedUser[]
+  Service.GetUsersParams,
+   Api.V1GetUsersResponse, Type.DetailedUserList
 >(Config.getUsers);
 
 export const setUserPassword = generateDetApi<
@@ -187,6 +191,10 @@ export const getTask = generateDetApi<
   Service.GetTaskParams, Api.V1GetTaskResponse, Type.TaskItem | undefined
 >(Config.getTask);
 
+export const getActiveTasks = generateDetApi<
+  Record<string, never>, Api.V1GetActiveTasksCountResponse, Type.TaskCounts
+>(Config.getActiveTasks);
+
 /* Models */
 
 export const getModels = generateDetApi<
@@ -289,12 +297,6 @@ export const getProject = generateDetApi<
   Service.GetProjectParams, Api.V1GetProjectResponse, Type.Project
 >(Config.getProject);
 
-export const getProjectExperiments = generateDetApi<
-  Service.GetProjectExperimentsParams,
-  Api.V1GetProjectExperimentsResponse,
-  Type.ExperimentPagination
->(Config.getProjectExperiments);
-
 export const addProjectNote = generateDetApi<
   Service.AddProjectNoteParams, Api.V1AddProjectNoteResponse, Type.Note[]
 >(Config.addProjectNote);
@@ -388,7 +390,7 @@ export const openOrCreateTensorBoard = async (
   return launchTensorBoard(params);
 };
 
-export const killTask = async (task: Type.CommandTask): Promise<void> => {
+export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Promise<void> => {
   switch (task.type) {
     case Type.CommandType.Command:
       return await killCommand({ commandId: task.id });
@@ -400,5 +402,5 @@ export const killTask = async (task: Type.CommandTask): Promise<void> => {
       return await killTensorBoard({ commandId: task.id });
   }
 };
-export { isNotFound } from '../shared/utils/service';
-export { isAuthFailure } from '../shared/utils/service';
+export { isNotFound } from 'shared/utils/service';
+export { isAuthFailure } from 'shared/utils/service';
