@@ -13,11 +13,12 @@ login or administrator Slurm cluster node.
  Install Determined Master
 ***************************
 
-After the node has been selected and the prerequisites installed and configured, install and
-configure the Determined master:
+After the node has been selected and the
+:doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-slurm/slurm-requirements` have been
+fulfilled and configured, install and configure the Determined master:
 
-#. Install the on-premises Determined master component as described in the :ref:`Install Determined
-   Using Linux Packages <install-using-linux-packages>` document.
+#. Install the on-premises Determined master component as described in the
+   :doc:`/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/linux-packages` document.
 
 #. Install the launcher.
 
@@ -57,6 +58,7 @@ configure the Determined master:
           host: localhost
           port: 8181
           protocol: http
+          container_run_type: singularity
           auth_file: /root/.launcher.token
           job_storage_root:
           path:
@@ -75,7 +77,11 @@ configure the Determined master:
    |                            | directory must be visible to the launcher and from the compute |
    |                            | nodes.                                                         |
    +----------------------------+----------------------------------------------------------------+
-   | ``singularity_image_root`` | Shared directory where Singularity images are hosted. See      |
+   | ``container_run_type``     | The container type to be launched on Slurm (``singularity`` or |
+   |                            | ``podman``). The default type is ``singularity``.              |
+   +----------------------------+----------------------------------------------------------------+
+   | ``singularity_image_root`` | Shared directory where Singularity images are hosted. Unused   |
+   |                            | unless ``container_run_type`` is ``singularity``. See          |
    |                            | :ref:`slurm-image-config` for details on how this option is    |
    |                            | used.                                                          |
    +----------------------------+----------------------------------------------------------------+

@@ -15,7 +15,7 @@ Deploying Determined with Slurm has the following requirements.
 
 -  Slurm 19.05 or greater.
 
--  Singularity 3.7 or greater.
+-  Singularity 3.7 or greater or PodMan 3.3.1 or greater.
 
 -  A cluster-wide shared filesystem.
 

@@ -247,7 +247,7 @@ The master supports the following configuration settings:
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
          in terms of ``slots``. Available values are ``cuda`` and ``cpu``, where 1 ``cuda`` slot is
-         1 GPU and 1 ``cpu`` slot is 1 node. Defaults per-partition to ``cuda`` if GPU resources are
+         1 GPU and 1 ``cpu`` slot is 1 node. Defaults per partition to ``cuda`` if GPU resources are
          found within the partition, else ``cpu``.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between

@@ -1045,7 +1045,7 @@ workloads for this experiment. For more information on customizing the trial env
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
    the Singularity container runtime which provides additional options for specifying the container
-   image. The image may be:
+   image. The image can be:
 
       -  A full path to a local Singulary image (beginning with a / character).
 

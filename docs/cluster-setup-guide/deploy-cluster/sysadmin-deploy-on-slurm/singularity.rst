@@ -17,17 +17,18 @@ by default in this version of Determined are described below.
  Default Docker Images
 ***********************
 
-+-------------+---------------------------------------------------------------------------------------+
-| Environment | File Name                                                                             |
-+=============+=======================================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea``    |
-+-------------+---------------------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea`` |
-+-------------+---------------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-3e933ea``                |
-+-------------+---------------------------------------------------------------------------------------+
++-------------+-------------------------------------------------------------------------+
+| Environment | File Name                                                               |
++=============+=========================================================================+
+| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1``    |
++-------------+-------------------------------------------------------------------------+
+| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1`` |
++-------------+-------------------------------------------------------------------------+
+| AMD GPUs    | ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-ecee7c1``  |
++-------------+-------------------------------------------------------------------------+
 
-See :doc:`/training/setup-guide/overview` for the Docker Hub location of these images.
+See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location and add
+each tagged image required by your environment and experiments to the image cache.
 
 ************
  Add Images
