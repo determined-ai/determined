@@ -6,8 +6,8 @@ import React from 'react';
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
 
-import useModalCreateUser, { ADMIN_LABEL, API_SUCCESS_MESSAGE, DISPLAY_NAME_LABEL,
-  MODAL_HEADER_LABEL, USER_NAME_LABEL } from './useModalCreateUser';
+import useModalCreateUser, { ADMIN_LABEL, API_SUCCESS_MESSAGE_CREATE, DISPLAY_NAME_LABEL,
+  MODAL_HEADER_LABEL_CREATE, USER_NAME_LABEL } from './useModalCreateUser';
 
 const mockCreateUser = jest.fn();
 
@@ -41,7 +41,7 @@ const setup = async () => {
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole('heading', { name: MODAL_HEADER_LABEL });
+  await view.findByRole('heading', { name: MODAL_HEADER_LABEL_CREATE });
 
   return view;
 };
@@ -62,7 +62,9 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -73,7 +75,9 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -96,13 +100,15 @@ describe('useModalCreateUser', () => {
     // Check for successful toast message.
     await waitFor(() => {
       expect(
-        screen.getByText(API_SUCCESS_MESSAGE, { collapseWhitespace: false }),
+        screen.getByText(API_SUCCESS_MESSAGE_CREATE, { collapseWhitespace: false }),
       ).toBeInTheDocument();
     });
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.
