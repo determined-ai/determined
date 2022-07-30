@@ -83,8 +83,13 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
 
   const fetchUser = useCallback(async () => {
     if (!user) return;
-    const res = await getUser({ userId: user.id });
-    setUpdatedUser(res);
+    try {
+      const res = await getUser({ userId: user.id });
+      setUpdatedUser(res);
+    } catch (e) {
+      message.error('error retrieving user');
+      handleError(e, { silent: true, type: ErrorType.Api });
+    }
   }, [ user ]);
 
   const handleCancel = useCallback(() => {
