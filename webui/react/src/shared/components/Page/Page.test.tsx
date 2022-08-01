@@ -24,7 +24,7 @@ describe('page functions', () => {
     setup({ children: CHILDREN });
     expect(screen.getByText(CHILDREN)).toBeInTheDocument();
   });
-  it('should user correct class name', () => {
+  it('should use correct class name', () => {
     const container = setup({ bodyNoPadding: true, stickyHeader: true });
     expect(container.getElementsByClassName('base bodyNoPadding stickyHeader')).toHaveLength(1);
 
