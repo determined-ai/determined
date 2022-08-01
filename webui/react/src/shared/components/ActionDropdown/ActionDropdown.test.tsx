@@ -74,10 +74,8 @@ describe('ActionDropdown', () => {
 
   it('should call dropdown option one function', async () => {
     setup();
-
     await user.click(screen.getByRole('button'));
     await user.click(screen.getByText(ACTION_ONE_TEXT));
-
     expect(handleActionOne).toHaveBeenCalled();
 
   });
