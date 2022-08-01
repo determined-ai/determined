@@ -13,11 +13,11 @@ class Trial(metaclass=abc.ABCMeta):
     """
 
     # trial_controller_class specifies the subclass of TrialController that is
-    # used in training for a given sublcass of Trial.
+    # used in training for a given subclass of Trial.
     trial_controller_class = None  # type: Optional[Type['det.TrialController']]
 
     # trial_context_class specifies the subclass of TrialContext that is used in
-    # training for a given sublcass of Trial.
+    # training for a given subclass of Trial.
     trial_context_class = det.TrialContext  # type: Type[det.TrialContext]
 
     @abc.abstractmethod
