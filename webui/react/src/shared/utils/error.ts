@@ -4,8 +4,8 @@ import { isString } from './data';
 import { LoggerInterface } from './Logger';
 
 export const ERROR_NAMESPACE = 'EH';
-const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';
-const DEFAULT_LOGGER = new Logger(ERROR_NAMESPACE);
+export const DEFAULT_ERROR_MESSAGE = 'Unknown error encountered.';
+export const DEFAULT_LOGGER = new Logger(ERROR_NAMESPACE);
 
 export interface DetErrorOptions {
   id?: string; // slug unique to each place in the codebase that we will use this.
@@ -46,11 +46,14 @@ const defaultErrOptions: DetErrorOptions = {
 export const isError = (error: unknown): error is Error => {
   return error instanceof Error;
 };
+
 export const isDetError = (error: unknown): error is DetError => {
   return error instanceof DetError;
 };
-// An expected Error with supplemental information on
-// how it should be handled.
+
+/**
+ * An expected Error with supplemental information on how it should be handled.
+ */
 export class DetError extends Error implements DetErrorOptions {
   id?: string;
   isUserTriggered: boolean;
