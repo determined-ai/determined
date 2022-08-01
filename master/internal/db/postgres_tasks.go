@@ -65,6 +65,25 @@ job_id=EXCLUDED.job_id, log_version=EXCLUDED.log_version
 	return nil
 }
 
+// TaskRuns counts the number of runs for a given task.
+// TODO(DET-7957): Bun-ify task persistence.
+func (db *PgDB) TaskRuns(id model.TaskID) (int, error) {
+	return taskRuns(db.sql, id)
+}
+
+// taskRuns is TaskRuns but accepting of transactions.
+func taskRuns(tx queryHandler, id model.TaskID) (int, error) {
+	var count int
+	if err := tx.QueryRowx(`
+SELECT count(*)
+FROM allocations a
+WHERE a.task_id = $1
+`, id).Scan(&count); err != nil {
+		return 0, fmt.Errorf("retreiving task run count: %w", err)
+	}
+	return count, nil
+}
+
 // TaskByID returns a task by its ID.
 func (db *PgDB) TaskByID(tID model.TaskID) (*model.Task, error) {
 	var t model.Task

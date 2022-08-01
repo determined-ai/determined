@@ -76,8 +76,8 @@ type DB interface {
 	AddAllocation(a *model.Allocation) error
 	CompleteAllocation(a *model.Allocation) error
 	CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error)
-	TrialRunIDAndRestarts(trialID int) (int, int, error)
-	UpdateTrialRunID(id, runID int) error
+	TrialRestarts(trialID int) (int, error)
+	TaskRuns(model.TaskID) (int, error)
 	UpdateTrialRestarts(id, restarts int) error
 	AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error
 	AddValidationMetrics(

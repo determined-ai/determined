@@ -38,13 +38,20 @@ RETURNING id`, trial); err != nil {
 
 // TrialByID looks up a trial by ID, returning an error if none exists.
 func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
+	return trialByID(db.sql, id)
+}
+
+// trialByIDx is TrialByID but accepting of transactions.
+func trialByID(tx queryHandler, id int) (*model.Trial, error) {
 	var trial model.Trial
-	err := db.query(`
+	if err := tx.QueryRowx(`
 SELECT id, COALESCE(task_id, '') AS task_id, request_id, experiment_id, state, start_time,
 	end_time, hparams, warm_start_checkpoint_id, seed
 FROM trials
-WHERE id = $1`, &trial, id)
-	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
+WHERE id = $1`, &trial, id).StructScan(&trial); err != nil {
+		return nil, fmt.Errorf("error querying for trial %v: %w", id, err)
+	}
+	return &trial, nil
 }
 
 // TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
@@ -119,27 +126,17 @@ WHERE id = $1`, id, md.State); err != nil {
 	return nil
 }
 
-// TrialRunIDAndRestarts returns the run id and restart count for a trial.
-func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
-	var runID, restart int
+// TrialRestarts returns the run id and restart count for a trial.
+func (db *PgDB) TrialRestarts(trialID int) (int, error) {
+	var restarts int
 	if err := db.sql.QueryRowx(`
-SELECT run_id, restarts
+SELECT restarts
 FROM trials
-WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
-		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
+WHERE id = $1
+`, trialID).Scan(&restarts); err != nil {
+		return 0, errors.Wrap(err, "failed to scan trial restart count")
 	}
-	return runID, restart, nil
-}
-
-// UpdateTrialRunID sets the trial's run ID.
-func (db *PgDB) UpdateTrialRunID(id, runID int) error {
-	if _, err := db.sql.Exec(`
-UPDATE trials
-SET run_id = $2
-WHERE id = $1`, id, runID); err != nil {
-		return errors.Wrap(err, "updating trial run id")
-	}
-	return nil
+	return restarts, nil
 }
 
 // UpdateTrialRestarts sets the trial's restart count.
@@ -158,7 +155,7 @@ WHERE id = $1`, id, restartCount); err != nil {
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+		if err := checkTrialRunID(ctx, tx, int(m.TrialId), int(m.TrialRunId)); err != nil {
 			return err
 		}
 
@@ -210,7 +207,7 @@ func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.TrialMetrics,
 ) error {
 	return db.withTransaction("add validation metrics", func(tx *sqlx.Tx) error {
-		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+		if err := checkTrialRunID(ctx, tx, int(m.TrialId), int(m.TrialRunId)); err != nil {
 			return err
 		}
 
@@ -223,7 +220,7 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving validations")
 		}
 
-		if err := db.ensureStep(
+		if err := ensureStep(
 			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.StepsCompleted),
 		); err != nil {
 			return err
@@ -259,7 +256,7 @@ VALUES
 // ensureStep inserts a noop step if no step exists at the batch index of the validation.
 // This is used to make sure there is at least a dummy step for each validation or checkpoint,
 // in the event one comes without (e.g. perform_initial_validation).
-func (db *PgDB) ensureStep(
+func ensureStep(
 	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
 ) error {
 	if _, err := tx.NamedExecContext(ctx, `
@@ -304,20 +301,22 @@ VALUES
 	return nil
 }
 
-func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
-	var cRunID int
-	switch err := tx.QueryRowxContext(ctx, `
-SELECT run_id
-FROM trials
-WHERE id = $1
-`, trialID).Scan(&cRunID); {
-	case err != nil:
-		return errors.Wrap(err, "querying current run")
-	case int(runID) != cRunID:
-		return api.AsValidationError("invalid run id, %d (reported) != %d (expected)", runID, cRunID)
-	default:
-		return nil
+func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, trialRunID int) error {
+	tr, err := trialByID(tx, int(trialID))
+	if err != nil {
+		return fmt.Errorf("checking trial run id: %w", err)
 	}
+
+	switch runs, err := taskRuns(tx, tr.TaskID); {
+	case err != nil:
+		return err
+	case runs != trialRunID:
+		return api.AsValidationError(
+			"invalid run id, %d (reported) != %d (expected)",
+			runs, trialRunID,
+		)
+	}
+	return nil
 }
 
 // ValidationByTotalBatches looks up a validation by trial and step ID,

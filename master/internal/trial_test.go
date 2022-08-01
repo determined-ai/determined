@@ -50,7 +50,6 @@ func TestTrial(t *testing.T) {
 
 	// Pre-allocated stage.
 	db.On("AddTrial", mock.Anything).Return(nil)
-	db.On("UpdateTrialRunID", 0, 1).Return(nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
 		To:  self,
@@ -107,7 +106,6 @@ func TestTrialRestarts(t *testing.T) {
 		if i == 0 {
 			db.On("AddTrial", mock.Anything).Return(nil)
 		}
-		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
 		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 		require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
 			To:  self,

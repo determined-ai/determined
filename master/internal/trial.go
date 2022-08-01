@@ -140,15 +140,15 @@ func isNonRetryableError(err error) bool {
 func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		if t.idSet {
+		if t.restored {
 			if err := t.recover(); err != nil {
 				return err
 			}
-			t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
-				"trial-id":     t.id,
-				"trial-run-id": t.runID,
-			})
 		}
+		t.logCtx = logger.MergeContexts(t.logCtx, logger.Context{
+			"trial-id":     t.id,
+			"trial-run-id": t.runID,
+		})
 		ctx.AddLabels(t.logCtx)
 
 		return t.maybeAllocateTask(ctx)
@@ -239,12 +239,26 @@ func (t *trial) Receive(ctx *actor.Context) error {
 // recover recovers the trial minimal (hopefully to stay) state for a trial actor.
 // Separately, the experiment stores and recovers our searcher state.
 func (t *trial) recover() error {
-	runID, restarts, err := t.db.TrialRunIDAndRestarts(t.id)
+	// Since allocations write their rows out on init and trials right their row the first time
+	// they are scheduled, we have to recover trial run ID from the count of allocations for our
+	// task, even if we have no trial ID. Otherwise allocation IDs will clash between master
+	// restarts.
+	runs, err := t.db.TaskRuns(t.taskID)
 	if err != nil {
-		return errors.Wrap(err, "restoring old trial state")
+		return errors.Wrap(err, "restoring trial run ID state")
 	}
-	t.runID = runID
-	t.restarts = restarts
+	t.runID = runs
+
+	// But, restarts only exist once our row in the trials table is written, which is OK since the
+	// only meaningful restarts are caused by user code failures (so the row necessarily has been
+	// written).
+	if t.idSet {
+		restarts, err := t.db.TrialRestarts(t.id)
+		if err != nil {
+			return errors.Wrap(err, "restoring trial restarts state")
+		}
+		t.restarts = restarts
+	}
 	return nil
 }
 
@@ -410,10 +424,6 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 			TaskHandler: t.allocation,
 		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
-	}
-
-	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
 	}
 
 	var stepsCompleted int

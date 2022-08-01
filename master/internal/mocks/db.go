@@ -1608,6 +1608,27 @@ func (_m *DB) StartUserSession(user *model.User) (string, error) {
 	return r0, r1
 }
 
+// TaskRuns provides a mock function with given fields: _a0
+func (_m *DB) TaskRuns(_a0 model.TaskID) (int, error) {
+	ret := _m.Called(_a0)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(model.TaskID) int); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.TaskID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // TemplateByName provides a mock function with given fields: name
 func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	ret := _m.Called(name)
@@ -1954,8 +1975,8 @@ func (_m *DB) TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, erro
 	return r0, r1
 }
 
-// TrialRunIDAndRestarts provides a mock function with given fields: trialID
-func (_m *DB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
+// TrialRestarts provides a mock function with given fields: trialID
+func (_m *DB) TrialRestarts(trialID int) (int, error) {
 	ret := _m.Called(trialID)
 
 	var r0 int
@@ -1965,21 +1986,14 @@ func (_m *DB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
 		r0 = ret.Get(0).(int)
 	}
 
-	var r1 int
-	if rf, ok := ret.Get(1).(func(int) int); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(trialID)
 	} else {
-		r1 = ret.Get(1).(int)
+		r1 = ret.Error(1)
 	}
 
-	var r2 error
-	if rf, ok := ret.Get(2).(func(int) error); ok {
-		r2 = rf(trialID)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // TrialState provides a mock function with given fields: trialID
@@ -2096,20 +2110,6 @@ func (_m *DB) UpdateTrialRestarts(id int, restarts int) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(int, int) error); ok {
 		r0 = rf(id, restarts)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateTrialRunID provides a mock function with given fields: id, runID
-func (_m *DB) UpdateTrialRunID(id int, runID int) error {
-	ret := _m.Called(id, runID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, int) error); ok {
-		r0 = rf(id, runID)
 	} else {
 		r0 = ret.Error(0)
 	}
