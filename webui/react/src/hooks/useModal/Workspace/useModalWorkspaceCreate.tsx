@@ -1,6 +1,7 @@
 import { Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { paths } from 'routes/utils';
 import { createWorkspace } from 'services/api';
@@ -12,12 +13,17 @@ import handleError from 'utils/error';
 
 import css from './useModalWorkspaceCreate.module.scss';
 
+type WorkspaceInputs = {
+  workspaceName: string,
+};
+
 interface Props {
   onClose?: () => void;
 }
 
 const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [ name, setName ] = useState('');
+  const { register } = useForm<WorkspaceInputs>();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -29,10 +35,17 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
     return (
       <div className={css.base}>
         <label className={css.label} htmlFor="name">Name</label>
-        <Input id="name" maxLength={80} value={name} onChange={handleNameInput} />
+        <Input
+          id="name"
+          {...register(
+            'workspaceName',
+            { maxLength: 80, onChange: handleNameInput, required: true },
+          )}
+          maxLength={80}
+        />
       </div>
     );
-  }, [ handleNameInput, name ]);
+  }, [ handleNameInput, register ]);
 
   const handleOk = useCallback(async () => {
     try {
