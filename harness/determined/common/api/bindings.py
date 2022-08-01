@@ -1863,7 +1863,7 @@ class v1GetGroupResponse:
 class v1GetGroupsRequest:
     def __init__(
         self,
-        limit: "typing.Optional[int]" = None,
+        limit: int,
         name: "typing.Optional[str]" = None,
         offset: "typing.Optional[int]" = None,
         userId: "typing.Optional[int]" = None,
@@ -1879,7 +1879,7 @@ class v1GetGroupsRequest:
             userId=obj.get("userId", None),
             name=obj.get("name", None),
             offset=obj.get("offset", None),
-            limit=obj.get("limit", None),
+            limit=obj["limit"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1887,7 +1887,7 @@ class v1GetGroupsRequest:
             "userId": self.userId if self.userId is not None else None,
             "name": self.name if self.name is not None else None,
             "offset": self.offset if self.offset is not None else None,
-            "limit": self.limit if self.limit is not None else None,
+            "limit": self.limit,
         }
 
 class v1GetGroupsResponse:

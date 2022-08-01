@@ -2497,11 +2497,11 @@ export interface V1GetGroupsRequest {
      */
     offset?: number;
     /**
-     * Limit the number of groups. A value of 0 denotes no limit.
+     * Limit the number of groups. Required and must be must be <= 500.
      * @type {number}
      * @memberof V1GetGroupsRequest
      */
-    limit?: number;
+    limit: number;
 }
 
 /**
