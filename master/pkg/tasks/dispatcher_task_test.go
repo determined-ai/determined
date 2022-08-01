@@ -34,6 +34,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 		hostPaths         []string
 		containerPaths    []string
 		modes             []string
+		launchingUser     string
 	}
 	tests := []struct {
 		name string
@@ -69,18 +70,20 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "Verify behavior when no partition specified, but using podman",
+			name: "Verify behavior when no partition specified, but using podman with a specified user",
 			args: args{
 				slotType:         device.CUDA,
 				workDir:          workDir,
 				slurmPartition:   "",
 				containerRunType: "podman",
+				launchingUser:    "ted",
 			},
 			want: &map[string]string{
 				"workingDir":          workDir,
 				"enableNvidia":        trueValue,
 				"enableWritableTmpFs": trueValue,
 				"networkMode":         "host",
+				"hostuser":            "ted",
 			},
 		},
 		{
@@ -167,7 +170,9 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				tt.args.slotType,
 				tt.args.workDir,
 				tt.args.slurmPartition,
-				tt.args.containerRunType); !reflect.DeepEqual(got, tt.want) {
+				tt.args.containerRunType,
+				tt.args.launchingUser,
+			); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TaskSpec.computeLaunchConfig() = %v, want %v", got, tt.want)
 			}
 		})

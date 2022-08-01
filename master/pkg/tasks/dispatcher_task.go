@@ -137,7 +137,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 		workDir = "/var/tmp"
 	}
 
-	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition, containerRunType)
+	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition,
+		containerRunType, impersonatedUser)
 	launchParameters.SetConfiguration(*launchConfig)
 
 	// Determined generates tar archives including initialization, garbage collection,
@@ -238,6 +239,7 @@ func getAllArchives(t *TaskSpec) *[]cproto.RunArchive {
 func (t *TaskSpec) computeLaunchConfig(
 	slotType device.Type, workDir string,
 	slurmPartition string, containerRunType string,
+	launchingUser string,
 ) *map[string]string {
 	launchConfig := map[string]string{
 		"workingDir":          workDir,
@@ -254,6 +256,9 @@ func (t *TaskSpec) computeLaunchConfig(
 	}
 	if containerRunType == podman {
 		launchConfig["networkMode"] = "host"
+		if launchingUser != "" {
+			launchConfig["hostuser"] = launchingUser
+		}
 	}
 	// From launcher 3.0.16, disableImageCache & add/dropCapabilities are supported, but
 	// implemented for podman only. For Singularity we control these features using environment
