@@ -181,12 +181,6 @@ export const isMonochrome = (rgba: RgbaColor, tolerance = 0): boolean => {
   return (Math.abs(rgba.r - rgba.g) < tolerance && Math.abs(rgba.g - rgba.b) < tolerance);
 };
 
-/** check if two rgba colors are distinguishable next to each other */
-export const isDistinguishable = (rgba0: RgbaColor, rgba1: RgbaColor, tolerance = 30): boolean => {
-  return (Math.abs(rgba0.r - rgba1.r) > tolerance || Math.abs(rgba0.g - rgba1.g) > tolerance ||
-    Math.abs(rgba0.b - rgba1.b) > tolerance);
-};
-
 /** calculate max color distance between two rgba colors */
 export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
   return Math.max(
