@@ -31,6 +31,9 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 		disableImageCache bool
 		addCaps           []string
 		dropCaps          []string
+		hostPaths         []string
+		containerPaths    []string
+		modes             []string
 	}
 	tests := []struct {
 		name string
@@ -101,6 +104,22 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"dropCapabilities":    "drop1,drop2",
 			},
 		},
+		{
+			name: "Verify behavior when devices are specified",
+			args: args{
+				workDir:          workDir,
+				containerRunType: "podman",
+				hostPaths:        []string{"/dev/one", "/dev/two"},
+				containerPaths:   []string{"/dev/tr/1", "/dev/ctr/2"},
+				modes:            []string{"", "abc"},
+			},
+			want: &map[string]string{
+				"workingDir":          workDir,
+				"enableWritableTmpFs": trueValue,
+				"networkMode":         "host",
+				"devices":             "/dev/one:/dev/tr/1:,/dev/two:/dev/ctr/2:abc",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -115,9 +134,35 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				RawAddCapabilities:      tt.args.addCaps,
 				RawDropCapabilities:     tt.args.dropCaps,
 			}
+
 			tr := &TaskSpec{
 				Environment: environment,
 			}
+
+			if len(tt.args.hostPaths) > 0 {
+				devices := []expconf.DeviceV0{}
+				for i, hostPath := range tt.args.hostPaths {
+					device := expconf.DeviceV0{
+						RawHostPath:      hostPath,
+						RawContainerPath: tt.args.containerPaths[i],
+						RawMode:          &tt.args.modes[i],
+					}
+					devices = append(devices, device)
+				}
+				tr.ResourcesConfig = expconf.ResourcesConfigV0{
+					RawSlots:          new(int),
+					RawMaxSlots:       new(int),
+					RawSlotsPerTrial:  new(int),
+					RawWeight:         new(float64),
+					RawNativeParallel: new(bool),
+					RawShmSize:        new(int),
+					RawAgentLabel:     new(string),
+					RawResourcePool:   new(string),
+					RawPriority:       new(int),
+					RawDevices:        devices,
+				}
+			}
+
 			if got := tr.computeLaunchConfig(
 				tt.args.slotType,
 				tt.args.workDir,
