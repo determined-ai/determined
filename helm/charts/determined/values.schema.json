@@ -28,7 +28,7 @@
             "render":"slider",
             "sliderMin": 1,
             "sliderMax": 128,
-            "sliderUnit": "vCPUs"
+            "sliderUnit": ""
           },
           "memory": {
               "type": "string",
