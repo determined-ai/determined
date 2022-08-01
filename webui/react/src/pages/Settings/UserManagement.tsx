@@ -34,7 +34,7 @@ const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
   const onClickEditUser = () => {
     openEditUserModal();
   };
-  const onClickState = async () => {
+  const onToggleActive = async () => {
     await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
     fetchUsers();
@@ -44,7 +44,7 @@ const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
       <Menu.Item key="edit" onClick={onClickEditUser}>
         Edit
       </Menu.Item>
-      <Menu.Item key="state" onClick={onClickState}>
+      <Menu.Item key="state" onClick={onToggleActive}>
         {`${user.isActive ? 'Deactivate' : 'Activate'}`}
       </Menu.Item>
     </Menu>
