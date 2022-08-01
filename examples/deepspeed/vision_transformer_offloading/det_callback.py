@@ -3,21 +3,40 @@ from transformers import (
     TrainerState,
     TrainerControl,
     TrainingArguments,
+
 )
 
-import determined as det
+from transformers.integrations import MLflowCallback, WandbCallback
+
+import importlib.util
 import os
 
 
 class DetCallback(TrainerCallback):
 
-    def __init__(self, core_context, tokenizer, metrics_names=['loss', 'accuracy']) -> None:
+    def __init__(self, tokenizer, metrics_names=['loss', 'accuracy']) -> None:
         super().__init__()
-        self.core_context = core_context
+
+        assert is_determined_available(), "DetCallback requires determined to be installed. Run `pip install determined`."
+        import determined
+        self._det = determined
+        self._initialized = False
+
         self.metrics_names = metrics_names
-        # self.tokenizer_options = tokenizer_options
+        #self.tokenizer_options = tokenizer_options
         self.tokenizer = tokenizer
+
         self.load_last_checkpoint()
+
+    def setup(self, args, state, control, model=None, **kwargs):
+        distributed = self._det.core.DistributedContext.from_torch_distributed()
+        self.core_context = self._det.core.init(distributed=distributed)
+        print('determined context initialized.')
+
+    def on_train_begin(self, args, state, control, model=None, **kwargs):
+        if not self._initialized:
+            self.setup(args, state, control, model, **kwargs)
+            self._initialized = True
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
@@ -52,7 +71,7 @@ class DetCallback(TrainerCallback):
 
     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         print('Saving checkpoint')
-        info = det.get_cluster_info()
+        info = self._det.get_cluster_info()
         assert info is not None
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
@@ -65,12 +84,9 @@ class DetCallback(TrainerCallback):
             self.tokenizer.save_pretrained(os.path.join(save_path, "tokenizer"))
             self.core_context.checkpoint.upload(save_path, checkpoint_metadata)
 
-    # def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-    #     print('on epoch end')
-    #     print('should be saving checkpoint now!')
-    #
+
     def load_last_checkpoint(self):
-        info = det.get_cluster_info()
+        info = self._det.get_cluster_info()
         assert info is not None
         latest_checkpoint = info.latest_checkpoint
 
@@ -86,3 +102,7 @@ class DetCallback(TrainerCallback):
             self.core_context.checkpoint.download(
                 latest_checkpoint, os.path.join(self.checkpoint_dir, f"checkpoint-{resume_step}")
             )
+
+
+def is_determined_available():
+    return importlib.util.find_spec("determined") is not None

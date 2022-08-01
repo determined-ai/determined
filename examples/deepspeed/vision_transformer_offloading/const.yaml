@@ -1,4 +1,4 @@
-name: testing checkpoints
+name: testing determined import
 workspace: Deepspeed
 project: VisionTransformer
 debug: false
