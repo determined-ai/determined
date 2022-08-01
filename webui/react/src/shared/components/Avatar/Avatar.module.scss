@@ -10,7 +10,12 @@
   line-height: 1;
   width: 24px;
 }
-.large {
+.base.large {
+  font-size: 24px;
+  height: 64px;
+  width: 64px;
+}
+.base.extra-large {
   font-size: 96px;
   height: 192px;
   width: 192px;
