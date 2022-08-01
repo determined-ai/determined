@@ -33,7 +33,7 @@ const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 const hslRegex = /^hsl\(\d+,\s*\d+%,\s*\d+%\)$/i;
 const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
 
-export const isColor = (color: string): boolean => {
+export const isColor = (color: string): color is RgbaColor => {
   return hexRegex.test(color) || hslRegex.test(color) || rgbaRegex.test(color);
 };
 
@@ -174,4 +174,24 @@ export const str2rgba = (str: string): RgbaColor => {
   }
 
   return { a: 0.0, b: 0, g: 0, r: 0 };
+};
+
+/** check if r g b for a single color are equal within a tolerance. color is almost monochrome */
+export const isMonochrome = (rgba: RgbaColor, tolerance = 0): boolean => {
+  return (Math.abs(rgba.r - rgba.g) < tolerance && Math.abs(rgba.g - rgba.b) < tolerance);
+};
+
+/** check if two rgba colors are distinguishable next to each other */
+export const isDistinguishable = (rgba0: RgbaColor, rgba1: RgbaColor, tolerance = 30): boolean => {
+  return (Math.abs(rgba0.r - rgba1.r) > tolerance || Math.abs(rgba0.g - rgba1.g) > tolerance ||
+    Math.abs(rgba0.b - rgba1.b) > tolerance);
+};
+
+/** calculate max color distance between two rgba colors */
+export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
+  return Math.max(
+    Math.abs(rgba0.r - rgba1.r),
+    Math.abs(rgba0.g - rgba1.g),
+    Math.abs(rgba0.b - rgba1.b),
+  );
 };
