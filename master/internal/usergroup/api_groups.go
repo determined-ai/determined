@@ -178,12 +178,12 @@ const (
 )
 
 var (
-	errBadRequest   = status.Error(codes.InvalidArgument, "Bad request")
+	errBadRequest   = status.Error(codes.InvalidArgument, "bad request")
 	errInvalidLimit = status.Errorf(codes.InvalidArgument,
 		"Bad request: limit is required and must be <= %d", maxLimit)
-	errNotFound        = status.Error(codes.NotFound, "Not found")
-	errDuplicateRecord = status.Error(codes.AlreadyExists, "Duplicate record")
-	errInternal        = status.Error(codes.Internal, "Internal server error")
+	errNotFound        = status.Error(codes.NotFound, "not found")
+	errDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
+	errInternal        = status.Error(codes.Internal, "internal server error")
 	errPassthroughMap  = map[error]bool{
 		nil:                true,
 		errBadRequest:      true,

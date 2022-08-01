@@ -23,7 +23,7 @@ func addGroup(ctx context.Context, idb bun.IDB, group Group) (Group, error) {
 	}
 
 	_, err := idb.NewInsert().Model(&group).Exec(ctx)
-	return group, errors.Wrapf(matchSentinelError(err), "Error creating group %d", group.ID)
+	return group, errors.Wrapf(matchSentinelError(err), "Error creating group %s", group.Name)
 }
 
 // AddGroupWithMembers creates a group and adds members to it all in one transaction.

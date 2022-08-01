@@ -32,7 +32,7 @@ message GetGroupResponse {
 // to search for groups.
 message GetGroupsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [] }
+    json_schema: { required: [ "limit" ] }
   };
   // The id of the user to use to find groups to which the user belongs.
   int32 user_id = 1;
@@ -41,7 +41,7 @@ message GetGroupsRequest {
   // Skip the number of groups before returning results. Negative values
   // denote number of groups to skip from the end before returning results.
   int32 offset = 3;
-  // Limit the number of groups. A value of 0 denotes no limit.
+  // Limit the number of groups. Required and must be must be <= 500.
   int32 limit = 4;
 }
 
