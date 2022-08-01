@@ -2,9 +2,10 @@ import { Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { debounce } from 'throttle-debounce';
 
 import { paths } from 'routes/utils';
-import { createProject } from 'services/api';
+import { createProject, getWorkspaceProjects } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -26,13 +27,23 @@ interface Props {
 const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   const [ name, setName ] = useState('');
   const [ description, setDescription ] = useState('');
+  const [ isNameUnique, setIsNameUnique ] = useState<boolean>(true);
   const { register } = useForm<WorkspaceInputs>();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
+  const findIsNameUnique = useCallback(async (name: string) => {
+    const projectList = await getWorkspaceProjects({ id: workspaceId });
+    const duplicateNames = projectList.projects
+      .map((project) => project.name)
+      .filter((projectName) => name === projectName);
+    setIsNameUnique(duplicateNames.length === 0 || name === '');
+  }, [ workspaceId ]);
+
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
-  }, []);
+    debounce(250, () => findIsNameUnique(e.target.value))();
+  }, [ findIsNameUnique ]);
 
   const handleDescriptionInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setDescription(e.target.value);
@@ -51,6 +62,9 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
               { maxLength: 80, onChange: handleNameInput, required: true },
             )}
           />
+          {!isNameUnique &&
+            <p className={css.uniqueWarning}>A project with this name already exists</p>
+          }
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
@@ -61,7 +75,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         </div>
       </div>
     );
-  }, [ handleDescriptionInput, handleNameInput, register ]);
+  }, [ handleDescriptionInput, handleNameInput, isNameUnique, register ]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -83,12 +97,12 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { disabled: !validateLength(name) },
+      okButtonProps: { disabled: !validateLength(name) || !isNameUnique },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
     };
-  }, [ handleOk, modalContent ]);
+  }, [ handleOk, isNameUnique, modalContent ]);
 
   const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
     setName('');
