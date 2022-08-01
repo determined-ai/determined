@@ -143,9 +143,9 @@ const InlineEditor: React.FC<Props> = ({
       <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
         <textarea
           cols={1}
+          disabled={disabled}
           maxLength={maxLength}
           placeholder={placeholder}
-          disabled={disabled} 
           ref={textareaRef}
           rows={1}
           onBlur={handleTextareaBlur}
