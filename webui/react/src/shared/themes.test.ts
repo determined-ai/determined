@@ -18,6 +18,8 @@ const pairs: (keyof themes.Theme)[][] = [
 
 describe('themes', () => {
   it('should have sufficient distance between adjacent colors', () => {
+    /** defines the required minimum distance between at least one of the rgba values. */
+    const TOLERANCE = 25;
     const violators: string[] = [];
     Object.entries(supportedThemes).forEach(([ name, theme ]) => {
       pairs.forEach(([ k1, k2 ]) => {
@@ -27,8 +29,9 @@ describe('themes', () => {
         expect(isColor(theme[k2])).toBe(true);
         const c1 = str2rgba(theme[k1] as string);
         const c2 = str2rgba(theme[k2] as string);
-        if (maxColorDistance(c1, c2) < 30) {
-          violators.push(`${name} ${k1} ${k2}`);
+        const distance = maxColorDistance(c1, c2);
+        if (distance < TOLERANCE) {
+          violators.push(`Theme: ${name} - ${k1} ${k2}. Distance: ${distance}`);
         }
       });
     });
