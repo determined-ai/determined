@@ -134,16 +134,10 @@ def describe_project(args: Namespace) -> None:
 def delete_project(args: Namespace) -> None:
     sess = setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    if p.numExperiments > 0:
-        raise errors.ForbiddenException(
-            authentication.must_cli_auth().get_session_user(),
-            "Projects with associated experiments currently cannot be deleted. "
-            "Use archive to hide projects.",
-        )
     if args.yes or render.yes_or_no(
         'Deleting project "' + args.project_name + '" will result in the \n'
-        "unrecoverable deletion of this project and notes. For a recoverable \n"
-        "alternative, see the 'archive' command. Do you still \n"
+        "unrecoverable deletion of this project and all of its experiments and notes.\n"
+        "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
         bindings.delete_DeleteProject(sess, id=p.id)

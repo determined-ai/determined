@@ -128,16 +128,10 @@ def describe_workspace(args: Namespace) -> None:
 def delete_workspace(args: Namespace) -> None:
     sess = setup_session(args)
     w = workspace_by_name(sess, args.workspace_name)
-    if w.numExperiments > 0:
-        raise errors.ForbiddenException(
-            authentication.must_cli_auth().get_session_user(),
-            "Workspaces with associated experiments currently cannot be deleted. "
-            "Use archive to hide workspaces.",
-        )
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
-        "in the unrecoverable deletion of all associated projects. For a \n"
-        "recoverable alternative, see the 'archive' command. Do you still \n"
+        "in the unrecoverable deletion of all associated projects and experiments.\n"
+        "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
         bindings.delete_DeleteWorkspace(sess, id=w.id)
