@@ -1,6 +1,6 @@
-name: logging metrics
-workspace: DeepSpeed
-project: Vision Transformer
+name: testing checkpoints
+workspace: Deepspeed
+project: VisionTransformer
 debug: false
 #hyperparameters:
 #  deepspeed_config: ds_config_cpu.json
@@ -33,4 +33,5 @@ entrypoint: >-
   --eval_steps 20
   --save_total_limit 3 
   --seed 1337
+  --save_strategy epoch
 max_restarts: 0

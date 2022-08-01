@@ -35,7 +35,7 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-
+from det_callback import DetCallback
 import transformers
 from transformers import (
     MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
@@ -44,9 +44,6 @@ from transformers import (
     AutoModelForImageClassification,
     HfArgumentParser,
     Trainer,
-    TrainerCallback,
-    TrainerState,
-    TrainerControl,
     TrainingArguments,
 )
 from transformers.trainer_utils import get_last_checkpoint
@@ -64,47 +61,6 @@ require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/imag
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
-
-
-class CustomCallback(TrainerCallback):
-
-    def __init__(self, trainer, core_context, metrics=['loss', 'accuracy']) -> None:
-        super().__init__()
-        self._trainer = trainer
-        self.core_context = core_context
-        self.metrics = metrics
-
-    def on_log(self, args, state, control, model=None, logs=None, **kwargs):
-        print(logs)
-        if state.is_world_process_zero:
-            metric_type, metrics = self.get_metrics(logs)
-            if metric_type == 'train':
-                self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
-            elif metric_type == 'eval':
-                self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
-            else:
-                raise RuntimeError('Panic')
-
-    def get_metrics(self, log):
-        metric_type = _log_type(log)
-        metrics = {}
-        for k, v in log.items():
-            if any(m in k for m in self.metrics) is True:
-                metrics[k] = v
-        return metric_type, metrics
-
-
-# borrowed from https://github.com/huggingface/transformers/blob/v4.20.1/src/transformers/integrations.py#L654
-def _log_type(d):
-    eval_prefix = "eval"
-    test_prefix = "test"
-    for k, v in d.items():
-        if k.startswith(eval_prefix):
-            return 'eval'
-        elif k.startswith(test_prefix):
-            return 'test'
-        else:
-            return 'train'
 
 
 def pil_loader(path: str):
@@ -222,7 +178,7 @@ def main(core_context):
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
-    send_example_telemetry("run_image_classification", model_args, data_args)
+    # send_example_telemetry("run_image_classification", model_args, data_args)
 
     # Setup logging
     logging.basicConfig(
@@ -396,7 +352,7 @@ def main(core_context):
         data_collator=collate_fn,
     )
 
-    trainer.add_callback(CustomCallback(trainer, core_context))
+    trainer.add_callback(DetCallback(core_context, feature_extractor))
 
     # Training
     if training_args.do_train:
