@@ -270,6 +270,16 @@ func (t *TaskSpec) computeLaunchConfig(
 	if containerRunType == podman && t.Environment.RegistryAuth() != nil {
 		logrus.Warningf("NOT SUPPORTED: podman && environment.registry_auth -- use podman login")
 	}
+	// Launcher 3.0.17 added support for devices. This is specific to docker/podman carriers.
+	if len(t.ResourcesConfig.Devices()) > 0 {
+		elements := []string{}
+		for _, d := range t.ResourcesConfig.Devices() {
+			deviceString := fmt.Sprintf("%s:%s:%s", d.RawHostPath, d.RawContainerPath, *d.RawMode)
+			elements = append(elements, deviceString)
+		}
+		launchConfig["devices"] = strings.Join(elements, ",")
+	}
+
 	return &launchConfig
 }
 
