@@ -610,17 +610,34 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.skipif(not HAVE_APEX or not torch.cuda.is_available(), reason="no gpu available")
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
-    def test_apex_amp(self) -> None:
-        apex.amp.register_float_function(torch, "sigmoid")
+    @pytest.mark.parametrize(
+        "trial_class",
+        [
+            pytorch_onevar_model.OneVarApexAMPTrial,
+            pytorch_onevar_model.OneVarAutoAMPTrial,
+            pytorch_onevar_model.OneVarManualAMPTrial,
+        ],
+        ids=[
+            "apex",
+            "autocast",
+            "manual",
+        ],
+    )
+    def test_amp(self, trial_class) -> None:
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial:
+            if not HAVE_APEX:
+                pytest.skip("Apex not available")
+            else:
+                apex.amp.register_float_function(torch, "sigmoid")
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_onevar_model.OneVarTrialWithApexAmp,
+            trial_class=trial_class,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,

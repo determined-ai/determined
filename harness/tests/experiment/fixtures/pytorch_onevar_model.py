@@ -1,6 +1,6 @@
 # type: ignore
 """
-A one-variable linear model with no bias. The datset emits only pairs of (data, label) = (1, 1),
+A one-variable linear model with no bias. The dataset emits only pairs of (data, label) = (1, 1),
 meaning that the one weight in the model should approach 1 as gradient descent continues.
 
 We will use the mean squared error as the loss.  Since each record is the same, the "mean" part of
@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import yaml
+from torch.cuda.amp import GradScaler, autocast
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
@@ -133,7 +134,8 @@ class OneVarTrial(pytorch.PyTorchTrial):
         loss_exp = (label[0] - data[0] * w_before) ** 2
         w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
 
-        loss = self.loss_fn(self.model(data), label)
+        output = self.model(data)
+        loss = self.loss_fn(output, label)
 
         self.context.backward(loss)
         self.context.step_optimizer(self.opt)
@@ -166,13 +168,14 @@ class OneVarTrial(pytorch.PyTorchTrial):
             metrics["w_after"], metrics["w_exp"]
         ), f'{metrics["w_after"]} does not match {metrics["w_exp"]} at batch {batch_idx}'
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, _: int) -> Dict[str, Any]:
         data, label = batch
 
         self.cls_reducer.update(sum(label), None)
         self.fn_reducer.update((sum(label), None))
 
-        loss = self.loss_fn(self.model(data), label)
+        output = self.model(data)
+        loss = self.loss_fn(output, label)
         return {"val_loss": loss}
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
@@ -221,12 +224,69 @@ class OneVarTrial(pytorch.PyTorchTrial):
             raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
 
-class OneVarTrialWithApexAmp(OneVarTrial):
+class OneVarApexAMPTrial(OneVarTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
             models=self.model, optimizers=self.opt
         )
+
+
+class OneVarAutoAMPTrial(OneVarTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        context.experimental.use_amp()
+        super().__init__(context)
+
+
+class OneVarManualAMPTrial(OneVarTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+        self.scaler = context.wrap_scaler(GradScaler())
+        super().__init__(context)
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        data, label = batch
+
+        self.cls_reducer.update(sum(label), batch_idx)
+        self.fn_reducer.update((sum(label), batch_idx))
+
+        # Measure the weight right now.
+        w_before = self.model.weight.data.item()
+
+        # Calculate expected values for loss (eq 1) and weight (eq 4).
+        loss_exp = (label[0] - data[0] * w_before) ** 2
+        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
+
+        with autocast():
+            output = self.model(data)
+            loss = self.loss_fn(output, label)
+
+        self.context.backward(loss)
+        self.context.step_optimizer(self.opt)
+
+        # Measure the weight after the update.
+        w_after = self.model.weight.data.item()
+
+        # Return values that we can compare as part of the tests.
+        return {
+            "loss": loss,
+            "loss_exp": loss_exp,
+            "w_before": w_before,
+            "w_after": w_after,
+            "w_exp": w_exp,
+        }
+
+    def evaluate_batch(self, batch: pytorch.TorchData, _: int) -> Dict[str, Any]:
+        data, label = batch
+
+        self.cls_reducer.update(sum(label), None)
+        self.fn_reducer.update((sum(label), None))
+
+        with autocast():
+            output = self.model(data)
+            loss = self.loss_fn(output, label)
+        return {"val_loss": loss}
 
 
 if __name__ == "__main__":
