@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -11,16 +11,20 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
+import usePolling from 'hooks/usePolling';
+import { getTrialWorkloads } from 'services/api';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import {
   CommandTask, ExperimentBase, MetricName,
-  Step, TrialDetails,
+  Step, TrialDetails, TrialWorkloadFilter, WorkloadGroup,
 } from 'types';
+import handleError from 'utils/error';
 import { extractMetricValue } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
-import { Settings, TrialWorkloadFilter } from './TrialDetailsOverview.settings';
+import { Settings } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 const { Option } = Select;
@@ -89,10 +93,16 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           (smallerIsBetter ? 'ascend' : 'descend') : undefined,
         key: metricName.name,
         render: metricRenderer(metricName),
-        sorter: (a, b) => numericSorter(
-          extractMetricValue(a, metricName),
-          extractMetricValue(b, metricName),
-        ),
+        sorter: (a, b) => {
+          const aVal = extractMetricValue(a, metricName),
+            bVal = extractMetricValue(b, metricName);
+          if (aVal === undefined && bVal !== undefined) {
+            return settings.sortDesc ? -1 : 1;
+          } else if (aVal !== undefined && bVal === undefined){
+            return settings.sortDesc ? 1 : -1;
+          }
+          return numericSorter(aVal, bVal);
+        },
         title: <MetricBadgeTag metric={metricName} />,
       });
     });
@@ -106,8 +116,47 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     });
   }, [ metrics, settings, trial, experiment ]);
 
+  const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
+  const [ workloadCount, setWorkloadCount ] = useState<number>(0);
+
+  const fetchWorkloads = useCallback(async () => {
+    try {
+      if (trial?.id) {
+        const wl = await getTrialWorkloads({
+          filter: settings.filter,
+          id: trial.id,
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortKey: settings.sortKey,
+        });
+        setWorkloads(wl.workloads);
+        setWorkloadCount(wl.pagination.total || 0);
+      } else {
+        setWorkloads([]);
+        setWorkloadCount(0);
+      }
+    } catch (e) {
+      handleError(e, {
+        publicMessage: 'Failed to load recent trial workloads.',
+        publicSubject: 'Unable to fetch Trial Workloads.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [
+    trial?.id,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.filter,
+  ]);
+
+  usePolling(fetchWorkloads, { rerunOnNewFn: true });
+
   const workloadSteps = useMemo(() => {
-    const data = trial?.workloads || [];
+    const data = workloads ?? [];
     const workloadSteps = workloadsToSteps(data);
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
@@ -121,7 +170,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         }
         return false;
       });
-  }, [ settings.filter, trial?.workloads ]);
+  }, [ settings.filter, workloads ]);
 
   const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
     const newFilter = value as TrialWorkloadFilter;
@@ -168,7 +217,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           pagination={getFullPaginationConfig({
             limit: settings.tableLimit,
             offset: settings.tableOffset,
-          }, workloadSteps.length)}
+          }, workloadCount)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="batchNum"
           scroll={{ x: 1000 }}

@@ -383,10 +383,18 @@ export interface WorkloadGroup {
   validation?: MetricsWorkload;
 }
 
+export enum TrialWorkloadFilter {
+  All = 'All',
+  Checkpoint = 'Has Checkpoint',
+  Validation = 'Has Validation',
+  CheckpointOrValidation = 'Has Checkpoint or Validation',
+}
+
 // This is to support the steps table in trial details and shouldn't be used
 // elsewhere so we can remove it with a redesign.
 export interface Step extends WorkloadGroup, StartEndTimes {
   batchNum: number;
+  key: string;
   training: MetricsWorkload;
 }
 
@@ -440,6 +448,10 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
+  workloads: WorkloadGroup[];
+}
+
+export interface TrialWorkloads extends WithPagination {
   workloads: WorkloadGroup[];
 }
 
