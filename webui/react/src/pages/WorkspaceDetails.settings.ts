@@ -10,6 +10,7 @@ export type ProjectColumnName =
   | 'lastUpdated'
   | 'name'
   | 'numExperiments'
+  | 'state'
   | 'userId';
 
 export const DEFAULT_COLUMNS: ProjectColumnName[] = [
@@ -27,6 +28,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ProjectColumnName, number> = {
   lastUpdated: 120,
   name: 150,
   numExperiments: 74,
+  state: 74,
   userId: 85,
 };
 

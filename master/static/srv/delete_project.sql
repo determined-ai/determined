@@ -2,7 +2,7 @@ WITH owned_workspaces AS (
   SELECT id
   FROM workspaces
   WHERE user_id = $2
-),
+)
 DELETE FROM projects
   WHERE id = $1
   AND NOT immutable

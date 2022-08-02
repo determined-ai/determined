@@ -147,9 +147,11 @@ func (a *apiServer) PatchProject(
 func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	expList []*model.Experiment,
 ) (err error) {
+	holder := &projectv1.Project{}
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
+		a.m.db.QueryProto("delete_fail_project", holder, projectID)
 		return err
 	}
 
@@ -157,14 +159,15 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	for _, exp := range expList {
 		if err = a.deleteExperiment(exp, user); err != nil {
 			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
+			a.m.db.QueryProto("delete_fail_project", holder, projectID)
 			return err
 		}
 	}
 	log.Errorf("project %d experiments deleted successfully", projectID)
-	holder := &projectv1.Project{}
 	err = a.m.db.QueryProto("delete_project", holder, projectID, user.ID, user.Admin)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete project %d", projectID)
+		a.m.db.QueryProto("delete_fail_project", holder, projectID)
 		return err
 	}
 	log.Errorf("project %d deleted successfully", projectID)
@@ -202,7 +205,7 @@ func (a *apiServer) DeleteProject(
 		_ = a.deleteProject(ctx, req.Id, expList)
 	}()
 	return &apiv1.DeleteProjectResponse{Completed: false},
-		errors.Wrapf(err, "error deleting experiments on project (%d)", req.Id)
+		errors.Wrapf(err, "error deleting project (%d)", req.Id)
 }
 
 func (a *apiServer) MoveProject(

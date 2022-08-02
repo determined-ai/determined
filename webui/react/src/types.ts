@@ -741,6 +741,7 @@ export interface Workspace {
   numExperiments: number;
   numProjects: number;
   pinned: boolean;
+  state: WorkspaceState;
   userId: number;
 }
 
@@ -750,6 +751,13 @@ export interface WorkspacePagination extends WithPagination {
 
 export interface DeletionStatus {
   completed: boolean;
+}
+
+export enum WorkspaceState {
+  Deleted = 'DELETED',
+  DeleteFailed = 'DELETE_FAILED',
+  Deleting = 'DELETING',
+  Unspecified = 'UNSPECIFIED',
 }
 
 export interface Note {
@@ -766,6 +774,7 @@ export interface Project {
   notes: Note[];
   numActiveExperiments: number;
   numExperiments: number;
+  state: WorkspaceState;
   userId: number;
   workspaceId: number;
   workspaceName: string;

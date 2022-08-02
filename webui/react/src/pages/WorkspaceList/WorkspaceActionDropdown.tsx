@@ -135,6 +135,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     handlePinClick,
     workspace.pinned,
     workspace.archived,
+    workspace.numExperiments,
     userHasPermissions,
     handleEditClick,
     handleArchiveClick,

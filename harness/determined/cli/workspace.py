@@ -134,8 +134,11 @@ def delete_workspace(args: Namespace) -> None:
         "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        bindings.delete_DeleteWorkspace(sess, id=w.id)
-        print(f"Successfully deleted workspace {args.workspace_name}.")
+        resp = bindings.delete_DeleteWorkspace(sess, id=w.id)
+        if resp.completed:
+            print(f"Successfully deleted workspace {args.workspace_name}.")
+        else:
+            print(f"Started deletion of workspace {args.workspace_name}...")
     else:
         print("Aborting workspace deletion.")
 

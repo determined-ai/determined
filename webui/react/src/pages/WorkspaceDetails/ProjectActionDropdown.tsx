@@ -113,6 +113,7 @@ const ProjectActionDropdown: React.FC<Props> = (
     handleEditClick,
     handleMoveClick,
     project.archived,
+    project.numExperiments,
     userHasPermissions,
     workspaceArchived,
   ]);

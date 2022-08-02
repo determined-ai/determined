@@ -1,6 +1,6 @@
-SELECT id
-  FROM workspaces
+UPDATE workspaces
+  SET state = 'DELETING'
   WHERE id = $1
   AND NOT immutable
   AND (user_id = $2 OR $3 IS TRUE)
-;
+RETURNING id;

@@ -140,8 +140,11 @@ def delete_project(args: Namespace) -> None:
         "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        bindings.delete_DeleteProject(sess, id=p.id)
-        print(f"Successfully deleted project {args.project_name}.")
+        resp = bindings.delete_DeleteProject(sess, id=p.id)
+        if resp.completed:
+            print(f"Successfully deleted project {args.project_name}.")
+        else:
+            print(f"Started deletion of project {args.project_name}...")
     else:
         print("Aborting project deletion.")
 

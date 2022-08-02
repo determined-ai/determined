@@ -3,10 +3,11 @@ WITH owned_workspaces AS (
   FROM workspaces
   WHERE user_id = $2
 )
-SELECT id FROM projects
+UPDATE projects
+  SET state = 'DELETING'
   WHERE id = $1
   AND NOT immutable
   AND (user_id = $2 OR $3 IS TRUE
     OR workspace_id IN (SELECT id FROM owned_workspaces)
   )
-;
+RETURNING id;

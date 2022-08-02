@@ -5102,6 +5102,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     workspaceName?: string;
+    /**
+     * State of project during deletion.
+     * @type {V1WorkspaceState}
+     * @memberof V1Project
+     */
+    state: V1WorkspaceState;
 }
 
 /**
@@ -7182,6 +7188,24 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     numExperiments: number;
+    /**
+     * State of workspace during deletion.
+     * @type {V1WorkspaceState}
+     * @memberof V1Workspace
+     */
+    state: V1WorkspaceState;
+}
+
+/**
+ * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
+ * @export
+ * @enum {string}
+ */
+export enum V1WorkspaceState {
+    UNSPECIFIED = <any> 'WORKSPACE_STATE_UNSPECIFIED',
+    DELETING = <any> 'WORKSPACE_STATE_DELETING',
+    DELETEFAILED = <any> 'WORKSPACE_STATE_DELETE_FAILED',
+    DELETED = <any> 'WORKSPACE_STATE_DELETED'
 }
 
 

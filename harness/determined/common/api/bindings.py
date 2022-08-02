@@ -4514,6 +4514,7 @@ class v1Project:
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
         workspaceId: int,
@@ -4534,6 +4535,7 @@ class v1Project:
         self.immutable = immutable
         self.userId = userId
         self.workspaceName = workspaceName
+        self.state = state
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4551,6 +4553,7 @@ class v1Project:
             immutable=obj["immutable"],
             userId=obj["userId"],
             workspaceName=obj.get("workspaceName", None),
+            state=v1WorkspaceState(obj["state"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -4568,6 +4571,7 @@ class v1Project:
             "immutable": self.immutable,
             "userId": self.userId,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
+            "state": self.state.value,
         }
 
 class v1PutProjectNotesRequest:
@@ -6384,6 +6388,7 @@ class v1Workspace:
         numExperiments: int,
         numProjects: int,
         pinned: bool,
+        state: "v1WorkspaceState",
         userId: int,
         username: str,
     ):
@@ -6396,6 +6401,7 @@ class v1Workspace:
         self.pinned = pinned
         self.userId = userId
         self.numExperiments = numExperiments
+        self.state = state
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -6409,6 +6415,7 @@ class v1Workspace:
             pinned=obj["pinned"],
             userId=obj["userId"],
             numExperiments=obj["numExperiments"],
+            state=v1WorkspaceState(obj["state"]),
         )
 
     def to_json(self) -> typing.Any:
@@ -6422,7 +6429,14 @@ class v1Workspace:
             "pinned": self.pinned,
             "userId": self.userId,
             "numExperiments": self.numExperiments,
+            "state": self.state.value,
         }
+
+class v1WorkspaceState(enum.Enum):
+    WORKSPACE_STATE_UNSPECIFIED = "WORKSPACE_STATE_UNSPECIFIED"
+    WORKSPACE_STATE_DELETING = "WORKSPACE_STATE_DELETING"
+    WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
+    WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
 def post_AckAllocationPreemptionSignal(
     session: "client.Session",

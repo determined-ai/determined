@@ -222,29 +222,33 @@ func (a *apiServer) deleteWorkspace(
 	ctx context.Context, workspaceID int32, projects []*projectv1.Project,
 ) {
 	log.Errorf("deleting workspace %d projects", workspaceID)
+	holder := &workspacev1.Workspace{}
 	for _, pj := range projects {
 		expList, err := a.m.db.ProjectExperiments(int(pj.Id))
 		if err != nil {
 			log.WithError(err).Errorf("error fetching experiments on project %d while deleting workspace %d",
 				pj.Id, workspaceID)
+			a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID)
 			return
 		}
 		err = a.deleteProject(ctx, pj.Id, expList)
 		if err != nil {
 			log.WithError(err).Errorf("error deleting project %d while deleting workspace %d", pj.Id,
 				workspaceID)
+			a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID)
 			return
 		}
 	}
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		log.WithError(err).Errorf("failed to access user and delete workspace %d", workspaceID)
+		a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID)
 		return
 	}
-	holder := &workspacev1.Workspace{}
 	err = a.m.db.QueryProto("delete_workspace", holder, workspaceID, user.ID, user.Admin)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete workspace %d", workspaceID)
+		a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID)
 		return
 	}
 	log.Errorf("workspace %d deleted successfully", workspaceID)
@@ -272,7 +276,7 @@ func (a *apiServer) DeleteWorkspace(
 	err = a.m.db.QueryProtof(
 		"get_workspace_projects",
 		[]interface{}{"id ASC"},
-		projects,
+		&projects,
 		req.Id,
 		"",
 		"",
@@ -290,7 +294,7 @@ func (a *apiServer) DeleteWorkspace(
 	go func() {
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
-	return &apiv1.DeleteWorkspaceResponse{},
+	return &apiv1.DeleteWorkspaceResponse{Completed: false},
 		errors.Wrapf(err, "error deleting workspace (%d)", req.Id)
 }
 
