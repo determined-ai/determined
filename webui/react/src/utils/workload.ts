@@ -29,7 +29,7 @@ export const isMetricsWorkload = (
 };
 
 export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
-  return workloads.map(workload => {
+  return workloads.map((workload) => {
     let wltype = 't';
     if (workload.validation) {
       wltype = 'v';
