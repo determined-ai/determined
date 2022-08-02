@@ -278,6 +278,15 @@ func (s *Service) getUsers(c echo.Context) (interface{}, error) {
 	return AuthZProvider.Get().FilterUserList(c.(*context.DetContext).MustGetUser(), userList)
 }
 
+func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr error) error {
+	if ok, err := AuthZProvider.Get().CanGetUser(currUser, user); err != nil {
+		return err
+	} else if !ok {
+		return notFoundErr
+	}
+	return actionErr
+}
+
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	type (
 		request struct {
@@ -325,13 +334,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	var toUpdate []string
 	if params.Password != nil {
 		if err = AuthZProvider.Get().CanSetUsersPassword(currUser, *user); err != nil {
-			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-				fmt.Println("ERROR", err)
-				return nil, err
-			} else if !ok {
-				return nil, userNotFoundErr
-			}
-			return nil, errors.Wrap(forbiddenError, err.Error())
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
 
 		if err = user.UpdatePasswordHash(*params.Password); err != nil {
@@ -342,12 +346,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 	if params.Active != nil {
 		if err = AuthZProvider.Get().CanSetUsersActive(currUser, *user, *params.Active); err != nil {
-			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-				return nil, err
-			} else if !ok {
-				return nil, userNotFoundErr
-			}
-			return nil, errors.Wrap(forbiddenError, err.Error())
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
 
 		user.Active = *params.Active
@@ -356,12 +356,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 	if params.Admin != nil {
 		if err = AuthZProvider.Get().CanSetUsersAdmin(currUser, *user, *params.Admin); err != nil {
-			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-				return nil, err
-			} else if !ok {
-				return nil, userNotFoundErr
-			}
-			return nil, errors.Wrap(forbiddenError, err.Error())
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
 
 		user.Admin = *params.Admin
@@ -377,12 +373,8 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		ug = u
 
 		if err := AuthZProvider.Get().CanSetUsersAgentUserGroup(currUser, *user, *ug); err != nil {
-			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-				return nil, err
-			} else if !ok {
-				return nil, userNotFoundErr
-			}
-			return nil, errors.Wrap(forbiddenError, err.Error())
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
 	}
 
@@ -430,12 +422,8 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err = AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
-		if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, db.ErrNotFound
-		}
-		return nil, errors.Wrap(forbiddenError, err.Error())
+		return nil, canViewUserErrorHandle(currUser, *user,
+			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
 	}
 
 	if params.NewUsername == nil {
@@ -534,12 +522,8 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	}
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err := AuthZProvider.Get().CanGetUsersImage(currUser, *user); err != nil {
-		if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, db.ErrNotFound
-		}
-		return nil, errors.Wrap(forbiddenError, err.Error())
+		return nil, canViewUserErrorHandle(currUser, *user,
+			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
 	}
 
 	c.Response().Header().Set("cache-control", "public, max-age=3600")

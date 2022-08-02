@@ -139,7 +139,8 @@ func (a *apiServer) GetUser(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+	var ok bool
+	if ok, err = user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errUserNotFound
@@ -215,9 +216,9 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
-		if ok, err := user.AuthZProvider.
-			Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
-			return nil, err
+		if ok, canGetErr := user.AuthZProvider.
+			Get().CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
 		}
@@ -252,9 +253,9 @@ func (a *apiServer) PatchUser(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
-		if ok, err := user.AuthZProvider.Get().
-			CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
-			return nil, err
+		if ok, canGetErr := user.AuthZProvider.Get().
+			CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
 		}
