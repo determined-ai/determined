@@ -1039,6 +1039,7 @@ class v1CreateExperimentResponse:
 class v1CreateGroupRequest:
     def __init__(
         self,
+        *,
         name: str,
         addUsers: "typing.Optional[typing.Sequence[int]]" = None,
     ):
@@ -1061,6 +1062,7 @@ class v1CreateGroupRequest:
 class v1CreateGroupResponse:
     def __init__(
         self,
+        *,
         group: "v1GroupDetails",
     ):
         self.group = group
@@ -1959,6 +1961,7 @@ class v1GetExperimentsResponse:
 class v1GetGroupResponse:
     def __init__(
         self,
+        *,
         group: "v1GroupDetails",
     ):
         self.group = group
@@ -1977,6 +1980,7 @@ class v1GetGroupResponse:
 class v1GetGroupsRequest:
     def __init__(
         self,
+        *,
         limit: int,
         name: "typing.Optional[str]" = None,
         offset: "typing.Optional[int]" = None,
@@ -2007,6 +2011,7 @@ class v1GetGroupsRequest:
 class v1GetGroupsResponse:
     def __init__(
         self,
+        *,
         groups: "typing.Optional[typing.Sequence[v1GroupSearchResult]]" = None,
         pagination: "typing.Optional[v1Pagination]" = None,
     ):
@@ -2799,19 +2804,19 @@ class v1GetUserResponse:
     def __init__(
         self,
         *,
-        user: "typing.Optional[v1User]" = None,
+        user: "v1User",
     ):
         self.user = user
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUserResponse":
         return cls(
-            user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
+            user=v1User.from_json(obj["user"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "user": self.user.to_json() if self.user is not None else None,
+            "user": self.user.to_json(),
         }
 
 class v1GetUserSettingResponse:
@@ -2945,6 +2950,7 @@ class v1GetWorkspacesResponse:
 class v1Group:
     def __init__(
         self,
+        *,
         groupId: "typing.Optional[int]" = None,
         name: "typing.Optional[str]" = None,
     ):
@@ -2967,6 +2973,7 @@ class v1Group:
 class v1GroupDetails:
     def __init__(
         self,
+        *,
         groupId: "typing.Optional[int]" = None,
         name: "typing.Optional[str]" = None,
         users: "typing.Optional[typing.Sequence[v1User]]" = None,
@@ -2993,6 +3000,7 @@ class v1GroupDetails:
 class v1GroupSearchResult:
     def __init__(
         self,
+        *,
         group: "v1Group",
         numMembers: int,
     ):
@@ -6394,6 +6402,7 @@ class v1TrialsSnapshotResponseTrial:
 class v1UpdateGroupRequest:
     def __init__(
         self,
+        *,
         groupId: int,
         addUsers: "typing.Optional[typing.Sequence[int]]" = None,
         name: "typing.Optional[str]" = None,
@@ -6424,6 +6433,7 @@ class v1UpdateGroupRequest:
 class v1UpdateGroupResponse:
     def __init__(
         self,
+        *,
         group: "v1GroupDetails",
     ):
         self.group = group
@@ -7014,7 +7024,7 @@ def post_CreateExperiment(
     raise APIHttpError("post_CreateExperiment", _resp)
 
 def post_CreateGroup(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1CreateGroupRequest",
 ) -> "v1CreateGroupResponse":
@@ -7088,7 +7098,7 @@ def delete_DeleteExperiment(
     raise APIHttpError("delete_DeleteExperiment", _resp)
 
 def delete_DeleteGroup(
-    session: "client.Session",
+    session: "api.Session",
     *,
     groupId: int,
 ) -> None:
@@ -7616,7 +7626,7 @@ def get_GetExperiments(
     raise APIHttpError("get_GetExperiments", _resp)
 
 def get_GetGroup(
-    session: "client.Session",
+    session: "api.Session",
     *,
     groupId: int,
 ) -> "v1GetGroupResponse":
@@ -7635,7 +7645,7 @@ def get_GetGroup(
     raise APIHttpError("get_GetGroup", _resp)
 
 def post_GetGroups(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1GetGroupsRequest",
 ) -> "v1GetGroupsResponse":
@@ -9579,7 +9589,7 @@ def post_UnpinWorkspace(
     raise APIHttpError("post_UnpinWorkspace", _resp)
 
 def put_UpdateGroup(
-    session: "client.Session",
+    session: "api.Session",
     *,
     body: "v1UpdateGroupRequest",
     groupId: int,
@@ -9625,6 +9635,7 @@ Paginated = typing.Union[
     v1GetExperimentCheckpointsResponse,
     v1GetExperimentTrialsResponse,
     v1GetExperimentsResponse,
+    v1GetGroupsResponse,
     v1GetJobsResponse,
     v1GetModelVersionsResponse,
     v1GetModelsResponse,

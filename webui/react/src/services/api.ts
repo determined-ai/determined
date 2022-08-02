@@ -34,6 +34,10 @@ export const getCurrentUser = generateDetApi<
   EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser
 >(Config.getCurrentUser);
 
+export const getUser = generateDetApi<
+  Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser
+>(Config.getUser);
+
 export const postUser = generateDetApi<
   Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
 >(Config.postUser);

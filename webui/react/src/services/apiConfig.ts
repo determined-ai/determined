@@ -120,6 +120,16 @@ export const getUsers: DetApi<
   ),
 };
 
+export const getUser: DetApi<
+  Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser
+> = {
+  name: 'getUser',
+  postProcess: (response) => decoder.mapV1User(response.user),
+  request: (params) => detApi.Users.getUser(
+    params.userId,
+  ),
+};
+
 export const postUser: DetApi<
   Service.PostUserParams, Api.V1PostUserResponse, Api.V1PostUserResponse
 > = {
