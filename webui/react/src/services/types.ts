@@ -239,7 +239,9 @@ export interface GetUsersParams extends PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_USER_NAME'
   | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' |'SORT_BY_MODIFIED_TIME';
 }
-
+export interface GetUserParams {
+  userId: number;
+}
 export interface PostUserParams {
   admin: boolean,
   displayName?: string,
@@ -254,7 +256,9 @@ export interface SetUserPasswordParams {
 export interface PatchUserParams {
   userId: number;
   userParams: {
-    displayName: string;
+    active?: boolean;
+    admin?: boolean;
+    displayName?: string;
   };
 }
 

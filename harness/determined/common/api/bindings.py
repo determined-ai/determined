@@ -2655,19 +2655,19 @@ class v1GetTrialWorkloadsResponse:
 class v1GetUserResponse:
     def __init__(
         self,
-        user: "typing.Optional[v1User]" = None,
+        user: "v1User",
     ):
         self.user = user
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUserResponse":
         return cls(
-            user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
+            user=v1User.from_json(obj["user"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "user": self.user.to_json() if self.user is not None else None,
+            "user": self.user.to_json(),
         }
 
 class v1GetUserSettingResponse:

@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
+import { Button, Dropdown, Menu, message, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InteractiveTable, { InteractiveTableSettings,
@@ -8,7 +8,7 @@ import { checkmarkRenderer, defaultRowClassName,
   getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getUsers } from 'services/api';
+import { getUsers, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
@@ -20,6 +20,50 @@ import handleError from 'utils/error';
 import css from './UserManagement.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS,
   UserManagementSettings } from './UserManagement.settings';
+
+interface DropdownProps {
+  fetchUsers: () => void;
+  user: DetailedUser
+}
+
+const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
+  const {
+    modalOpen: openEditUserModal,
+    contextHolder: modalEditUserContextHolder,
+  } = useModalCreateUser({ onClose: fetchUsers, user: user });
+  const onClickEditUser = () => {
+    openEditUserModal();
+  };
+  const onToggleActive = async () => {
+    await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
+    message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
+    fetchUsers();
+  };
+  const menuItems = (
+    <Menu>
+      <Menu.Item key="edit" onClick={onClickEditUser}>
+        Edit
+      </Menu.Item>
+      <Menu.Item key="state" onClick={onToggleActive}>
+        {`${user.isActive ? 'Deactivate' : 'Activate'}`}
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <div className={dropdownCss.base}>
+      <Dropdown
+        overlay={menuItems}
+        placement="bottomRight"
+        trigger={[ 'click' ]}>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
+        </Button>
+      </Dropdown>
+      {modalEditUserContextHolder}
+    </div>
+  );
+};
 
 const UserManagement: React.FC = () => {
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
@@ -44,7 +88,6 @@ const UserManagement: React.FC = () => {
         },
         { signal: canceler.signal },
       );
-
       setTotal(response.pagination.total ?? 0);
       setUsers((prev) => {
         if (isEqual(prev, response.users)) return prev;
@@ -82,30 +125,7 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {
-      const menuItems = (
-        <Menu>
-          <Menu.Item key="edit">
-            Edit
-          </Menu.Item>
-          <Menu.Item key="state">
-            {`${record.isActive ? 'Deactive' : 'Active'}`}
-          </Menu.Item>
-        </Menu>
-      );
-
-      return (
-        <div className={dropdownCss.base}>
-          <Dropdown
-            overlay={menuItems}
-            placement="bottomRight"
-            trigger={[ 'click' ]}>
-            <Button className={css.overflow} type="text">
-              <Icon name="overflow-vertical" />
-            </Button>
-          </Dropdown>
-        </div>
-
-      );
+      return <UserActionDropdown fetchUsers={fetchUsers} user={record} />;
     };
     return [
       {
@@ -163,7 +183,7 @@ const UserManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, []);
+  }, [ fetchUsers ]);
 
   const table = useMemo(() => {
     return (
