@@ -998,6 +998,46 @@ class v1CreateExperimentResponse:
             "config": self.config,
         }
 
+class v1CreateGroupRequest:
+    def __init__(
+        self,
+        name: str,
+        addUsers: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.name = name
+        self.addUsers = addUsers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGroupRequest":
+        return cls(
+            name=obj["name"],
+            addUsers=obj.get("addUsers", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "name": self.name,
+            "addUsers": self.addUsers if self.addUsers is not None else None,
+        }
+
+class v1CreateGroupResponse:
+    def __init__(
+        self,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1CurrentUserResponse:
     def __init__(
         self,
@@ -1800,6 +1840,76 @@ class v1GetExperimentsResponse:
         return {
             "experiments": [x.to_json() for x in self.experiments],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1GetGroupResponse:
+    def __init__(
+        self,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
+class v1GetGroupsRequest:
+    def __init__(
+        self,
+        limit: int,
+        name: "typing.Optional[str]" = None,
+        offset: "typing.Optional[int]" = None,
+        userId: "typing.Optional[int]" = None,
+    ):
+        self.userId = userId
+        self.name = name
+        self.offset = offset
+        self.limit = limit
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsRequest":
+        return cls(
+            userId=obj.get("userId", None),
+            name=obj.get("name", None),
+            offset=obj.get("offset", None),
+            limit=obj["limit"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "userId": self.userId if self.userId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "offset": self.offset if self.offset is not None else None,
+            "limit": self.limit,
+        }
+
+class v1GetGroupsResponse:
+    def __init__(
+        self,
+        groups: "typing.Optional[typing.Sequence[v1GroupSearchResult]]" = None,
+        pagination: "typing.Optional[v1Pagination]" = None,
+    ):
+        self.groups = groups
+        self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGroupsResponse":
+        return cls(
+            groups=[v1GroupSearchResult.from_json(x) for x in obj["groups"]] if obj.get("groups", None) is not None else None,
+            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groups": [x.to_json() for x in self.groups] if self.groups is not None else None,
+            "pagination": self.pagination.to_json() if self.pagination is not None else None,
         }
 
 class v1GetHPImportanceResponse:
@@ -2681,6 +2791,76 @@ class v1GetWorkspacesResponse:
         return {
             "workspaces": [x.to_json() for x in self.workspaces],
             "pagination": self.pagination.to_json(),
+        }
+
+class v1Group:
+    def __init__(
+        self,
+        groupId: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Group":
+        return cls(
+            groupId=obj.get("groupId", None),
+            name=obj.get("name", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId if self.groupId is not None else None,
+            "name": self.name if self.name is not None else None,
+        }
+
+class v1GroupDetails:
+    def __init__(
+        self,
+        groupId: "typing.Optional[int]" = None,
+        name: "typing.Optional[str]" = None,
+        users: "typing.Optional[typing.Sequence[v1User]]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+        self.users = users
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GroupDetails":
+        return cls(
+            groupId=obj.get("groupId", None),
+            name=obj.get("name", None),
+            users=[v1User.from_json(x) for x in obj["users"]] if obj.get("users", None) is not None else None,
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId if self.groupId is not None else None,
+            "name": self.name if self.name is not None else None,
+            "users": [x.to_json() for x in self.users] if self.users is not None else None,
+        }
+
+class v1GroupSearchResult:
+    def __init__(
+        self,
+        group: "v1Group",
+        numMembers: int,
+    ):
+        self.group = group
+        self.numMembers = numMembers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GroupSearchResult":
+        return cls(
+            group=v1Group.from_json(obj["group"]),
+            numMembers=obj["numMembers"],
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+            "numMembers": self.numMembers,
         }
 
 class v1IdleNotebookRequest:
@@ -5968,6 +6148,54 @@ class v1TrialsSnapshotResponseTrial:
             "batchesProcessed": self.batchesProcessed,
         }
 
+class v1UpdateGroupRequest:
+    def __init__(
+        self,
+        groupId: int,
+        addUsers: "typing.Optional[typing.Sequence[int]]" = None,
+        name: "typing.Optional[str]" = None,
+        removeUsers: "typing.Optional[typing.Sequence[int]]" = None,
+    ):
+        self.groupId = groupId
+        self.name = name
+        self.addUsers = addUsers
+        self.removeUsers = removeUsers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UpdateGroupRequest":
+        return cls(
+            groupId=obj["groupId"],
+            name=obj.get("name", None),
+            addUsers=obj.get("addUsers", None),
+            removeUsers=obj.get("removeUsers", None),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "groupId": self.groupId,
+            "name": self.name if self.name is not None else None,
+            "addUsers": self.addUsers if self.addUsers is not None else None,
+            "removeUsers": self.removeUsers if self.removeUsers is not None else None,
+        }
+
+class v1UpdateGroupResponse:
+    def __init__(
+        self,
+        group: "v1GroupDetails",
+    ):
+        self.group = group
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UpdateGroupResponse":
+        return cls(
+            group=v1GroupDetails.from_json(obj["group"]),
+        )
+
+    def to_json(self) -> typing.Any:
+        return {
+            "group": self.group.to_json(),
+        }
+
 class v1UpdateJobQueueRequest:
     def __init__(
         self,
@@ -6521,6 +6749,25 @@ def post_CreateExperiment(
         return v1CreateExperimentResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateExperiment", _resp)
 
+def post_CreateGroup(
+    session: "client.Session",
+    *,
+    body: "v1CreateGroupRequest",
+) -> "v1CreateGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/groups",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1CreateGroupResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateGroup", _resp)
+
 def get_CurrentUser(
     session: "client.Session",
 ) -> "v1CurrentUserResponse":
@@ -6575,6 +6822,25 @@ def delete_DeleteExperiment(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteExperiment", _resp)
+
+def delete_DeleteGroup(
+    session: "client.Session",
+    *,
+    groupId: int,
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteGroup", _resp)
 
 def delete_DeleteModel(
     session: "client.Session",
@@ -7084,6 +7350,44 @@ def get_GetExperiments(
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiments", _resp)
+
+def get_GetGroup(
+    session: "client.Session",
+    *,
+    groupId: int,
+) -> "v1GetGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGroup", _resp)
+
+def post_GetGroups(
+    session: "client.Session",
+    *,
+    body: "v1GetGroupsRequest",
+) -> "v1GetGroupsResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/groups/search",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1GetGroupsResponse.from_json(_resp.json())
+    raise APIHttpError("post_GetGroups", _resp)
 
 def get_GetJobQueueStats(
     session: "client.Session",
@@ -9001,6 +9305,26 @@ def post_UnpinWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnpinWorkspace", _resp)
+
+def put_UpdateGroup(
+    session: "client.Session",
+    *,
+    body: "v1UpdateGroupRequest",
+    groupId: int,
+) -> "v1UpdateGroupResponse":
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/groups/{groupId}",
+        params=_params,
+        json=body.to_json(),
+        data=None,
+        headers=None,
+        timeout=None,
+    )
+    if _resp.status_code == 200:
+        return v1UpdateGroupResponse.from_json(_resp.json())
+    raise APIHttpError("put_UpdateGroup", _resp)
 
 def post_UpdateJobQueue(
     session: "client.Session",

@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/api/v1/pagination.proto";
+import "determined/group/v1/group.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// GetGroupRequest is the body of the request for the call
+// to get a group by id.
+message GetGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group_id" ] }
+  };
+  // The id of the group to return.
+  int32 group_id = 1;
+}
+
+// GetGroupResponse is the body of the response for the call
+// to get a group by id.
+message GetGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group" ] }
+  };
+  // The group info
+  determined.group.v1.GroupDetails group = 1;
+}
+
+// GetGroupsRequest is the body of the request for the call
+// to search for groups.
+message GetGroupsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "limit" ] }
+  };
+  // The id of the user to use to find groups to which the user belongs.
+  int32 user_id = 1;
+  // The group name to use when searching.
+  string name = 2;
+  // Skip the number of groups before returning results. Negative values
+  // denote number of groups to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of groups. Required and must be must be <= 500.
+  int32 limit = 4;
+}
+
+// GetGroupsResponse is the body of the response for the call
+// to search for groups.
+message GetGroupsResponse {
+  // The found groups
+  repeated determined.group.v1.GroupSearchResult groups = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+
+// UpdateGroupRequest is the body of the request for the call
+// to update a group and its members.
+message UpdateGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group_id" ] }
+  };
+  // The id of the group
+  int32 group_id = 1;
+  // The name of the group
+  string name = 2;
+  // The user ids of users to add to the group
+  repeated int32 add_users = 3;
+  // The user ids of users to delete from the group
+  repeated int32 remove_users = 4;
+}
+
+// CreateGroupResponse is the body of the response for the call
+// to update a group and its members.
+message CreateGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group" ] }
+  };
+  // Info about the group after the update succeeded.
+  determined.group.v1.GroupDetails group = 1;
+}
+
+// UpdateGroupResponse is the body of the response for the call
+// to update a group and its members.
+message UpdateGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group" ] }
+  };
+  // Info about the group after the update succeeded.
+  determined.group.v1.GroupDetails group = 1;
+}
+
+// CreateGroupRequest is the body of the request for the call
+// to create a group.
+message CreateGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+  // The name the new group should have
+  string name = 1;
+  // The ids of users that should be added to the new group
+  repeated int32 add_users = 2;
+}  // returns GroupWriteResponse
+
+// DeleteGroupRequest is the body of the request for the call
+// to delete a group.
+message DeleteGroupRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "group_id" ] }
+  };
+  // The id of the group that should be deleted.
+  int32 group_id = 1;
+}
+
+// DeleteGroupResponse is the body of the response for the call
+// to delete a group.
+message DeleteGroupResponse {}
