@@ -87,16 +87,22 @@ func TestAuthzGetUsers(t *testing.T) {
 func TestAuthzGetUser(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
+	// Error passes through when CanGetUser returns non nil error.
+	expectedErr := fmt.Errorf("canGetUserError")
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, expectedErr).Once()
+	_, err := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
+	require.Equal(t, expectedErr, err)
+
 	// Ensure when CanGetUser returns false we get the same error as the user not being found.
 	_, notFoundError := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: -999})
 	require.Equal(t, errUserNotFound.Error(), notFoundError.Error())
 
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false).Once()
-	_, err := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, nil).Once()
+	_, err = api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
 	require.Equal(t, notFoundError.Error(), err.Error())
 
 	// As a spot check just make sure we can still get users with no error.
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true, nil).Once()
 	user, err := api.GetUser(ctx, &apiv1.GetUserRequest{UserId: 1})
 	require.NoError(t, err)
 	require.NotNil(t, user)
@@ -127,7 +133,7 @@ func TestAuthzSetUserPassword(t *testing.T) {
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canSetUsersPassword")
 	authzUsers.On("CanSetUsersPassword", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersPassword")).Once()
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true, nil).Once()
 
 	_, err := api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: int32(curUser.ID)})
 	require.Equal(t, expectedErr.Error(), err.Error())
@@ -138,9 +144,17 @@ func TestAuthzSetUserPassword(t *testing.T) {
 
 	authzUsers.On("CanSetUsersPassword", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersPassword")).Once()
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: int32(curUser.ID)})
 	require.Equal(t, errUserNotFound.Error(), err.Error())
+
+	// If CanGetUser returns an error we also return that error.
+	cantViewUserError := fmt.Errorf("cantViewUserError")
+	authzUsers.On("CanSetUsersPassword", curUser, mock.Anything).
+		Return(fmt.Errorf("canSetUsersPassword")).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, cantViewUserError).Once()
+	_, err = api.SetUserPassword(ctx, &apiv1.SetUserPasswordRequest{UserId: int32(curUser.ID)})
+	require.Equal(t, err, cantViewUserError)
 }
 
 func TestAuthzPatchUser(t *testing.T) {
@@ -150,7 +164,7 @@ func TestAuthzPatchUser(t *testing.T) {
 	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canSetUsersDisplayName")
 	authzUsers.On("CanSetUsersDisplayName", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersDisplayName")).Once()
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true, nil).Once()
 
 	req := &apiv1.PatchUserRequest{
 		UserId: int32(curUser.ID),
@@ -161,10 +175,18 @@ func TestAuthzPatchUser(t *testing.T) {
 	_, err := api.PatchUser(ctx, req)
 	require.Equal(t, expectedErr.Error(), err.Error())
 
+	// If CanGetUser returns an error we also return the error.
+	cantViewUserError := fmt.Errorf("cantViewUserError")
+	authzUsers.On("CanSetUsersDisplayName", curUser, mock.Anything).
+		Return(fmt.Errorf("canSetUsersDisplayName")).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, cantViewUserError).Once()
+	_, err = api.PatchUser(ctx, req)
+	require.Equal(t, cantViewUserError.Error(), err.Error())
+
 	// If we can't view the user get the same as passing in user not found.
 	authzUsers.On("CanSetUsersDisplayName", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersDisplayName")).Once()
-	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false).Once()
+	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.PatchUser(ctx, req)
 	require.Equal(t, errUserNotFound.Error(), err.Error())
 

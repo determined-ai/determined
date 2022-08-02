@@ -138,10 +138,12 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-	if !user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()) {
+
+	if ok, err := user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+		return nil, err
+	} else if !ok {
 		return nil, errUserNotFound
 	}
-
 	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
 }
 
@@ -213,7 +215,10 @@ func (a *apiServer) SetUserPassword(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
-		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetUser) {
+		if ok, err := user.AuthZProvider.
+			Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+			return nil, err
+		} else if !ok {
 			return nil, errUserNotFound
 		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
@@ -247,7 +252,10 @@ func (a *apiServer) PatchUser(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
-		if !user.AuthZProvider.Get().CanGetUser(*curUser, targetUser) {
+		if ok, err := user.AuthZProvider.Get().
+			CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+			return nil, err
+		} else if !ok {
 			return nil, errUserNotFound
 		}
 		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())

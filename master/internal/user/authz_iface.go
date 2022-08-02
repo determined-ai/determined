@@ -15,8 +15,9 @@ type UserAuthZ interface {
 	// since it doesn't make sense to control these routes.
 
 	// GET /api/v1/users/:user_id
-	// CanGetUser doesn't return an error for information leakage purposes.
-	CanGetUser(curUser, targetUser model.User) bool
+	// Denying a user shouldn't return an error. Only a server error that needs to be
+	// reported to the user should return an errr.
+	CanGetUser(curUser, targetUser model.User) (canGetUser bool, serverError error)
 
 	// GET /users
 	// GET /api/v1/users

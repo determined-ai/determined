@@ -101,18 +101,30 @@ func TestAuthzPatchUser(t *testing.T) {
 		expectedErr := errors.Wrap(forbiddenError, testCase.expectedCall+"Error")
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
-		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
+		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true, nil).Once()
 
 		_, err := svc.patchUser(ctx)
 		require.Equal(t, expectedErr.Error(), err.Error())
 
+		// If CanGetUser returns an error we get that error.
+		ctx.SetParamNames("username")
+		ctx.SetParamValues("admin")
+		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
+			strings.NewReader(testCase.body)))
+		authzUser.On(testCase.expectedCall, testCase.args...).
+			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
+		cantGetUserError := fmt.Errorf("cantGetUserError")
+		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, cantGetUserError).Once()
+
+		_, err = svc.patchUser(ctx)
+		require.Equal(t, cantGetUserError, err)
+
 		// If we can't view the user we get the same error as user not being found.
 		ctx.SetRequest(httptest.NewRequest(http.MethodPatch, "/",
 			strings.NewReader(testCase.body)))
-		require.Equal(t, expectedErr.Error(), err.Error())
 		authzUser.On(testCase.expectedCall, testCase.args...).
 			Return(fmt.Errorf(testCase.expectedCall + "Error")).Once()
-		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
+		authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, nil).Once()
 
 		_, err = svc.patchUser(ctx)
 		require.Equal(t,
@@ -139,16 +151,26 @@ func TestAuthzPatchUsername(t *testing.T) {
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	authzUser.On("CanSetUsersUsername", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
-	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true, nil).Once()
 
 	_, err := svc.patchUsername(ctx)
 	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// If we get an error from canGetUser we return that error.
+	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
+	authzUser.On("CanSetUsersUsername", model.User{}, mock.Anything).
+		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
+	cantGetUserError := fmt.Errorf("cantGetUserError")
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, cantGetUserError).Once()
+
+	_, err = svc.patchUsername(ctx)
+	require.Equal(t, cantGetUserError, err)
 
 	// If we can't view the user we get the same error as the user not existing.
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(`{"username":"x"}`)))
 	authzUser.On("CanSetUsersUsername", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canSetUsersUsernameError")).Once()
-	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, nil).Once()
 
 	_, err = svc.patchUsername(ctx)
 	require.Equal(t, db.ErrNotFound.Error(), err.Error())
@@ -190,15 +212,24 @@ func TestAuthzGetUserImage(t *testing.T) {
 	expectedErr := errors.Wrap(forbiddenError, "canGetUsersImageError")
 	authzUser.On("CanGetUsersImage", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError")).Once()
-	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true, nil).Once()
 
 	_, err := svc.getUserImage(ctx)
 	require.Equal(t, expectedErr.Error(), err.Error())
 
+	// If we get an error from canGetUser we return that error.
+	authzUser.On("CanGetUsersImage", model.User{}, mock.Anything).
+		Return(fmt.Errorf("canGetUsersImageError")).Once()
+	cantGetUserError := fmt.Errorf("cantGetUserError")
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(true, cantGetUserError).Once()
+
+	_, err = svc.getUserImage(ctx)
+	require.Equal(t, cantGetUserError, err)
+
 	// If we can't view the user return the same error as the user not existing.
 	authzUser.On("CanGetUsersImage", model.User{}, mock.Anything).
 		Return(fmt.Errorf("canGetUsersImageError"))
-	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false).Once()
+	authzUser.On("CanGetUser", model.User{}, mock.Anything).Return(false, nil).Once()
 
 	_, err = svc.getUserImage(ctx)
 	require.Equal(t, db.ErrNotFound.Error(), err.Error())

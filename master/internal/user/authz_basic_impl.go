@@ -10,8 +10,10 @@ import (
 type UserAuthZBasic struct{}
 
 // CanGetUser always returns true.
-func (a *UserAuthZBasic) CanGetUser(curUser, targetUser model.User) bool {
-	return true
+func (a *UserAuthZBasic) CanGetUser(
+	curUser, targetUser model.User,
+) (canGetUser bool, serverError error) {
+	return true, nil
 }
 
 // FilterUserList always returns the input user list and does not filtering.

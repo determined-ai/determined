@@ -325,7 +325,10 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	var toUpdate []string
 	if params.Password != nil {
 		if err = AuthZProvider.Get().CanSetUsersPassword(currUser, *user); err != nil {
-			if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+				fmt.Println("ERROR", err)
+				return nil, err
+			} else if !ok {
 				return nil, userNotFoundErr
 			}
 			return nil, errors.Wrap(forbiddenError, err.Error())
@@ -339,7 +342,9 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 	if params.Active != nil {
 		if err = AuthZProvider.Get().CanSetUsersActive(currUser, *user, *params.Active); err != nil {
-			if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+				return nil, err
+			} else if !ok {
 				return nil, userNotFoundErr
 			}
 			return nil, errors.Wrap(forbiddenError, err.Error())
@@ -351,7 +356,9 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 
 	if params.Admin != nil {
 		if err = AuthZProvider.Get().CanSetUsersAdmin(currUser, *user, *params.Admin); err != nil {
-			if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+				return nil, err
+			} else if !ok {
 				return nil, userNotFoundErr
 			}
 			return nil, errors.Wrap(forbiddenError, err.Error())
@@ -370,7 +377,9 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		ug = u
 
 		if err := AuthZProvider.Get().CanSetUsersAgentUserGroup(currUser, *user, *ug); err != nil {
-			if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+			if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+				return nil, err
+			} else if !ok {
 				return nil, userNotFoundErr
 			}
 			return nil, errors.Wrap(forbiddenError, err.Error())
@@ -421,10 +430,11 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err = AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
-		if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+		if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+			return nil, err
+		} else if !ok {
 			return nil, db.ErrNotFound
 		}
-
 		return nil, errors.Wrap(forbiddenError, err.Error())
 	}
 
@@ -524,7 +534,9 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	}
 	currUser := c.(*context.DetContext).MustGetUser()
 	if err := AuthZProvider.Get().CanGetUsersImage(currUser, *user); err != nil {
-		if !AuthZProvider.Get().CanGetUser(currUser, *user) {
+		if ok, err := AuthZProvider.Get().CanGetUser(currUser, *user); err != nil {
+			return nil, err
+		} else if !ok {
 			return nil, db.ErrNotFound
 		}
 		return nil, errors.Wrap(forbiddenError, err.Error())

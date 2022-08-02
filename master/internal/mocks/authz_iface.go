@@ -42,7 +42,7 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(curUser model.User, setting model.
 }
 
 // CanGetUser provides a mock function with given fields: curUser, targetUser
-func (_m *UserAuthZ) CanGetUser(curUser model.User, targetUser model.User) bool {
+func (_m *UserAuthZ) CanGetUser(curUser model.User, targetUser model.User) (bool, error) {
 	ret := _m.Called(curUser, targetUser)
 
 	var r0 bool
@@ -52,7 +52,14 @@ func (_m *UserAuthZ) CanGetUser(curUser model.User, targetUser model.User) bool 
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(model.User, model.User) error); ok {
+		r1 = rf(curUser, targetUser)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // CanGetUsersImage provides a mock function with given fields: curUser, targetUsername
