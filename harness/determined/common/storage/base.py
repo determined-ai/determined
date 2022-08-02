@@ -2,7 +2,17 @@ import abc
 import contextlib
 import os
 import pathlib
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+
+# Paths should be a sorted list of paths relative to the checkpoint root that indicate what paths
+# should be uploaded.  A directory should always appear in Paths if any subpath under that directory
+# appears in Paths.
+Paths = List[str]
+
+# Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
+# path should be downloaded.  For every path selected, all parent directories are also selected
+# (even if the selector returns False for them).
+Selector = Callable[[str], bool]
 
 
 class StorageManager(metaclass=abc.ABCMeta):
@@ -60,7 +70,9 @@ class StorageManager(metaclass=abc.ABCMeta):
         return pathlib.Path(storage_dir)
 
     @abc.abstractmethod
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Paths] = None
+    ) -> None:
         """
         Subclasses typically push to persistent storage if necessary, then delete the src directory,
         if necessary.
@@ -68,18 +80,18 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @contextlib.contextmanager
-    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+    def store_path(self, dst: str, paths: Optional[Paths] = None) -> Iterator[pathlib.Path]:
         """
         Prepare a local directory to be written to the storage backend.
         """
 
         path = self.pre_store_path(dst)
         yield path
-        self.post_store_path(path, dst)
+        self.post_store_path(path, dst, paths)
 
     @abc.abstractmethod
     @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[pathlib.Path]:
+    def restore_path(self, src: str, selector: Optional[Selector] = None) -> Iterator[pathlib.Path]:
         """
         restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
         necessary cleanup afterwards. Subclasess of StorageManager must implement this.
@@ -87,11 +99,24 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(self, src: Union[str, os.PathLike], dst: str, paths: Optional[Paths] = None) -> None:
+        """
+        `paths` is assumed to be a list of paths relative to the root of the storage directory, if
+        it is defined.
+        """
         pass
 
     @abc.abstractmethod
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[Selector] = None,
+    ) -> None:
+        """
+        `selector` should be a callable accepting a string parameter, ending in an os.sep if it is a
+        directory, and should return
+        """
         pass
 
     @abc.abstractmethod

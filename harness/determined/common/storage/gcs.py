@@ -49,11 +49,13 @@ class GCSStorageManager(storage.CloudStorageManager):
 
     @no_type_check
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
         logging.info(f"Uploading to GCS: {prefix}")
-        for rel_path in sorted(self._list_directory(src)):
+        for rel_path in sorted(paths or self._list_directory(src)):
             blob_name = f"{prefix}/{rel_path}"
             blob = self.bucket.blob(blob_name)
 
@@ -79,7 +81,12 @@ class GCSStorageManager(storage.CloudStorageManager):
                 retry_network_errors(blob.upload_from_filename)(abs_path)
 
     @util.preserve_random_state
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[storage.Selector] = None,
+    ) -> None:
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
         logging.info(f"Downloading {path} from GCS")
@@ -89,7 +96,10 @@ class GCSStorageManager(storage.CloudStorageManager):
         # directory-like blob.
         for blob in self.bucket.list_blobs(prefix=path):
             found = True
-            _dst = os.path.join(dst, os.path.relpath(blob.name, path))
+            relname = os.path.relpath(blob.name, path)
+            if selector is not None and not selector(relname):
+                continue
+            _dst = os.path.join(dst, relname)
             dst_dir = os.path.dirname(_dst)
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir, exist_ok=True)

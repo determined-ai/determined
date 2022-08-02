@@ -34,10 +34,12 @@ class AzureStorageManager(storage.CloudStorageManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to Azure Blob Storage: {dst}")
-        for rel_path in sorted(self._list_directory(src)):
+        for rel_path in sorted(paths or self._list_directory(src)):
             # Use posixpath so that we always use forward slashes, even on Windows.
             container_blob = posixpath.join(self.container, dst, rel_path)
 
@@ -54,13 +56,21 @@ class AzureStorageManager(storage.CloudStorageManager):
             self.client.put(blob_dir, blob_base, abs_path)
 
     @util.preserve_random_state
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[storage.Selector] = None,
+    ) -> None:
         dst = os.fspath(dst)
         logging.info(f"Downloading {src} from Azure Blob Storage")
         found = False
         for blob in self.client.list_files(self.container, file_prefix=src):
             found = True
-            _dst = os.path.join(dst, os.path.relpath(blob, src))
+            relname = os.path.relpath(blob, src)
+            if selector is not None and not selector(relname):
+                continue
+            _dst = os.path.join(dst, relname)
             dst_dir = os.path.dirname(_dst)
             os.makedirs(dst_dir, exist_ok=True)
 
