@@ -327,7 +327,7 @@ def describe(args: Namespace) -> None:
         for exp in exps:
             sample_trial = trials_for_experiment[exp.id][0]
             sample_workloads = bindings.get_GetTrialWorkloads(
-                session, trialId=sample_trial.id
+                session, trialId=sample_trial.id, limit=1000
             ).workloads
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
@@ -351,7 +351,9 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrialWorkloads(session, trialId=trial.id).workloads
+            workloads = bindings.get_GetTrialWorkloads(
+                session, trialId=trial.id, limit=500
+            ).workloads
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
