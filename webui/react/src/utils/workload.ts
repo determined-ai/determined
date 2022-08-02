@@ -11,6 +11,12 @@ export const checkpointSize = (
   return 0;
 };
 
+export const getWorkload = (
+  workload: Type.WorkloadGroup,
+): Type.MetricsWorkload | Type.CheckpointWorkload => {
+  return Object.values(workload).find((val) => !!val);
+};
+
 export const hasCheckpoint = (workload: Type.WorkloadGroup): boolean => {
   return !!workload.checkpoint && workload.checkpoint.state !== Type.CheckpointState.Deleted;
 };
@@ -29,23 +35,22 @@ export const isMetricsWorkload = (
 };
 
 export const workloadsToSteps = (workloads: Type.WorkloadGroup[]): Type.Step[] => {
-  return workloads.map((workload) => {
-    let wltype = 't';
-    if (workload.validation) {
-      wltype = 'v';
-    } else if (workload.checkpoint) {
-      wltype = 'c';
+  const stepsDict: Record<number, Partial<Type.Step>> = {};
+
+  workloads.forEach((workload) => {
+    const wl = getWorkload(workload);
+    const batchNum = wl.totalBatches;
+    if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
+    stepsDict[batchNum].batchNum = batchNum;
+
+    if (workload.checkpoint) {
+      stepsDict[batchNum].checkpoint = workload.checkpoint;
+    } else if (workload.validation) {
+      stepsDict[batchNum].validation = workload.validation;
+    } else if (workload.training) {
+      stepsDict[batchNum].training = workload.training;
     }
-    const batchNum = (
-      workload?.checkpoint || workload?.validation || workload?.training
-    )?.totalBatches;
-    return {
-      batchNum: batchNum,
-      checkpoint: workload.checkpoint,
-      key: wltype + batchNum,
-      startTime: '',
-      training: workload.training,
-      validation: workload.validation,
-    } as Type.Step;
   });
+
+  return Object.values(stepsDict) as Type.Step[];
 };

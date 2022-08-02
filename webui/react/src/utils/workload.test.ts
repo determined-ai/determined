@@ -59,6 +59,20 @@ describe('Workload Utilities', () => {
     });
   });
 
+  describe('getWorkload', () => {
+    it('should extract first available training workload', () => {
+      expect(utils.getWorkload(WORKLOADS[0])).toStrictEqual(WORKLOADS[0].training);
+    });
+
+    it('should extract first available validation workload', () => {
+      expect(utils.getWorkload(WORKLOADS[2])).toStrictEqual(WORKLOADS[2].validation);
+    });
+
+    it('should extract first available checkpoint workload', () => {
+      expect(utils.getWorkload(WORKLOADS[3])).toStrictEqual(WORKLOADS[3].checkpoint);
+    });
+  });
+
   describe('hasCheckpoint', () => {
     it('should detect checkpoint from workload', () => {
       const workload = {
@@ -123,59 +137,32 @@ describe('Workload Utilities', () => {
   describe('workloadsToStep', () => {
     it('should convert workloads to steps', () => {
       const results = utils.workloadsToSteps(WORKLOADS);
-      const undefStep = {
-        checkpoint: undefined,
-        startTime: '',
-        training: undefined,
-        validation: undefined,
-      };
       const expected = [
         {
-          ...undefStep,
           batchNum: 100,
-          key: 't100',
           training: {
             metrics: { accuracy: 0.9, loss: 0.1 },
             totalBatches: 100,
           },
         },
         {
-          ...undefStep,
           batchNum: 200,
-          key: 't200',
           training: {
             metrics: { accuracy: 0.91, loss: 0.09 },
             totalBatches: 200,
           },
-        },
-        {
-          ...undefStep,
-          batchNum: 200,
-          key: 'v200',
           validation: {
             metrics: { accuracy: 0.81, loss: 0.19 },
             totalBatches: 200,
           },
         },
         {
-          ...undefStep,
           batchNum: 300,
           checkpoint: { state: 'ACTIVE', totalBatches: 300 },
-          key: 'c300',
-        },
-        {
-          ...undefStep,
-          batchNum: 300,
-          key: 't300',
           training: {
             metrics: { accuracy: 0.91, loss: 0.09 },
             totalBatches: 300,
           },
-        },
-        {
-          ...undefStep,
-          batchNum: 300,
-          key: 'v300',
           validation: {
             metrics: { accuracy: 0.81, loss: 0.19 },
             totalBatches: 300,

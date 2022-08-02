@@ -219,7 +219,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
             offset: settings.tableOffset,
           }, workloadCount)}
           rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="key"
+          rowKey="batchNum"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"
