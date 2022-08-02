@@ -17,14 +17,7 @@ jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
-}
-));
-
-jest.mock('wait', () => ({
-  openCommand: () => null,
-  waitPageUrl: () => '',
-}
-));
+}));
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
