@@ -24,6 +24,14 @@ interface RgbaColor {
   r: number;
 }
 
+/** CIELAB color space */
+interface CIELAB {
+  a: number;
+  b: number;
+  /** perceptual lightness */
+  l: number;
+}
+
 export interface ColorScale {
   color: string;    // rgb(a) or hex color
   scale: number;    // scale between 0.0 and 1.0
@@ -181,6 +189,39 @@ export const isMonochrome = (rgba: RgbaColor, tolerance = 0): boolean => {
   return (Math.abs(rgba.r - rgba.g) < tolerance && Math.abs(rgba.g - rgba.b) < tolerance);
 };
 
+/** convert rgb to CIELAB color. ignores alpha values */
+export const rgb2lab = (rgb: RgbaColor): CIELAB => {
+  const [ r, g, b ] = [ rgb.r / 255, rgb.g / 255, rgb.b / 255 ];
+  const [ x, y, z ] = [
+    r * 0.4124 + g * 0.3576 + b * 0.1805,
+    r * 0.2126 + g * 0.7152 + b * 0.0722,
+    r * 0.0193 + g * 0.1192 + b * 0.9505,
+  ];
+  const [ l, a, bb ] = [
+    116 * y ** 2 - 16,
+    500 * (x - y),
+    200 * (y - z),
+  ];
+  return { a, b: bb, l };
+};
+
+/** calculate euclidean distance between two n dimentional points */
+const pointDistance = (p0: number[], p1: number[]): number => {
+  let sum = 0;
+  if (p0.length !== p1.length) {
+    throw new Error('points must be of same dimension');
+  }
+  for (let i = 0; i < p0.length; i++) {
+    sum += (p1[i] - p0[i]) ** 2;
+  }
+  return Math.sqrt(sum);
+};
+
+/** calculate euclidean distance between two CIELAB colors */
+export const labDistance = (lab0: CIELAB, lab1: CIELAB): number => {
+  return pointDistance([ lab0.l, lab0.a, lab0.b ], [ lab1.l, lab1.a, lab1.b ]);
+};
+
 /** calculate max color distance between two rgba colors */
 export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
   return Math.max(
@@ -188,4 +229,8 @@ export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => 
     Math.abs(rgba0.g - rgba1.g),
     Math.abs(rgba0.b - rgba1.b),
   );
+};
+
+export const rgbDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
+  return pointDistance([ rgba0.r, rgba0.g, rgba0.b ], [ rgba1.r, rgba1.g, rgba1.b ]);
 };
