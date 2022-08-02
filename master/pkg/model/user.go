@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
+
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // BCryptCost is a stopgap until we implement sane master-configuration.
@@ -98,6 +101,29 @@ func (user *User) UpdatePasswordHash(password string) error {
 		user.PasswordHash = null.StringFrom(string(passwordHash))
 	}
 	return nil
+}
+
+// Proto converts a user to its protobuf representation.
+func (user *User) Proto() *userv1.User {
+	return &userv1.User{
+		Id:         int32(user.ID),
+		Username:   user.Username,
+		Admin:      user.Admin,
+		Active:     user.Active,
+		ModifiedAt: timestamppb.New(user.ModifiedAt),
+	}
+}
+
+// Users is a slice of User objects—primarily useful for its methods.
+type Users []User
+
+// Proto converts a slice of users to its protobuf representation.
+func (users Users) Proto() []*userv1.User {
+	out := make([]*userv1.User, len(users))
+	for i, u := range users {
+		out[i] = u.Proto()
+	}
+	return out
 }
 
 // ExternalSessions provides an integration point for an external service to issue JWTs to control
