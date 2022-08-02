@@ -19,7 +19,7 @@ const pairs: (keyof themes.Theme)[][] = [
 describe('themes', () => {
   it('should have sufficient distance between adjacent colors', () => {
     /** defines the required minimum distance between at least one of the rgba values. */
-    const TOLERANCE = 20;
+    const TOLERANCE = 8;
     const violators: string[] = [];
     Object.entries(supportedThemes).forEach(([ name, theme ]) => {
       pairs.forEach(([ k1, k2 ]) => {
