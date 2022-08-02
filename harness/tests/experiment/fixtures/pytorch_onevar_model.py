@@ -262,7 +262,7 @@ class OneVarManualAMPTrial(OneVarTrial):
             output = self.model(data)
             loss = self.loss_fn(output, label)
 
-        self.context.backward(loss)
+        self.context.backward(self.scaler.scale(loss))
         self.context.step_optimizer(self.opt, scaler=self.scaler)
         self.scaler.update()
 
