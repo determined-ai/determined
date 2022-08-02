@@ -4,6 +4,7 @@ import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { debounce } from 'throttle-debounce';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -765,8 +766,10 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
-    setIsLoading(true);
+    debounce(250, () => {
+      fetchExperiments();
+      setIsLoading(true);
+    })();
   }, [
     fetchExperiments,
     settings.archived,
