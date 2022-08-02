@@ -113,8 +113,6 @@ describe('useModalCreateUser', () => {
 
     // Check that the API method was called with the correct parameters.
     expect(mockCreateUser).toHaveBeenCalledWith({
-      admin: false,
-      displayName: undefined,
       username: USERNAME,
     });
   });
