@@ -31,7 +31,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';

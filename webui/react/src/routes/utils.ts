@@ -16,7 +16,7 @@ import {
   routeToReactUrl,
 } from 'shared/utils/routes';
 import { BrandingType, CommandTask } from 'types';
-import { waitPageUrl } from 'wait';
+import { waitPageUrl } from 'utils/wait';
 
 import routes from './routes';
 

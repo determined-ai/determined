@@ -4,7 +4,7 @@ import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 const locations: TreeNode[] = [
   {

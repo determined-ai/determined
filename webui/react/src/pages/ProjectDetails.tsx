@@ -68,7 +68,7 @@ import {
 } from 'utils/experiment';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
