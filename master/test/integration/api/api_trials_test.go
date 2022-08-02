@@ -123,7 +123,7 @@ func trialDetailAPITests(
 
 			tlCl, err := cl.GetTrial(ctx, &req)
 			assert.NilError(t, err, "failed to fetch api details")
-			assert.Equal(t, len(tlCl.Workloads), 1, "mismatching workload length")
+			assert.Equal(t, tlCl.Trial.WorkloadCount, 1, "mismatching workload length")
 		})
 	}
 

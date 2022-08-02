@@ -326,7 +326,9 @@ def describe(args: Namespace) -> None:
         # Accumulate the scalar training and validation metric names from all provided experiments.
         for exp in exps:
             sample_trial = trials_for_experiment[exp.id][0]
-            sample_workloads = bindings.get_GetTrial(session, trialId=sample_trial.id).workloads
+            sample_workloads = bindings.get_GetTrialWorkloads(
+                session, trialId=sample_trial.id
+            ).workloads
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
         t_metrics_names = sorted(set(t_metrics_names))
@@ -349,7 +351,7 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrial(session, trialId=trial.id).workloads
+            workloads = bindings.get_GetTrialWorkloads(session, trialId=trial.id).workloads
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
