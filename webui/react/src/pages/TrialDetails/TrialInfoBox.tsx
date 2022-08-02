@@ -8,9 +8,8 @@ import TimeAgo from 'components/TimeAgo';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
+  CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
 } from 'types';
-import { checkpointSize } from 'utils/workload';
 
 interface Props {
   experiment: ExperimentBase;

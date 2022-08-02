@@ -5,10 +5,10 @@ import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { ErrorType } from 'shared/utils/error';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
@@ -41,20 +41,20 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
-          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetricNames(newMetrics);
       },
@@ -70,7 +70,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const defaultValidationMetric = metricNames.find(metricName => (
+    const defaultValidationMetric = metricNames.find((metricName) => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
     const fallbackMetric = metricNames[0];

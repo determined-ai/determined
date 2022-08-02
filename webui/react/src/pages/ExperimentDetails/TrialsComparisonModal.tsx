@@ -16,15 +16,14 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricType,
-  MetricsWorkload, TrialDetails, TrialWorkloadFilter,
+  ExperimentBase, MetricName, MetricsWorkload,
+  MetricType, TrialDetails, TrialWorkloadFilter,
 } from 'types';
 import handleError from 'utils/error';
 import { alphaNumericSorter } from 'utils/sort';
-import { checkpointSize } from 'utils/workload';
-import { ErrorType } from 'shared/utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -121,20 +120,20 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         undefined,
         { signal: canceler.signal },
       ),
-      event => {
+      (event) => {
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
          * so we keep track of what we have seen on our end and
          * only add new metrics we have not seen to the list.
          */
-        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
-          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
         ];
         setMetricNames(newMetrics);
       },
@@ -190,7 +189,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         orderBy: 'ORDER_BY_DESC',
       });
       const latestWorkloads = data.workloads;
-      latestWorkloads.forEach(workload => {
+      latestWorkloads.forEach((workload) => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -295,7 +294,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 {trials.map((trialId) => (
                   <div className={css.cell} key={trialId}>
                     {latestMetrics[trialId]
-                      ? <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0}/>
+                      ? <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0} />
                       : ''}
                   </div>
                 ))}

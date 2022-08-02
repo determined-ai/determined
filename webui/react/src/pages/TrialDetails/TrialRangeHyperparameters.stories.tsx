@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+import { CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
   HyperparameterType,
   RunState, TrialDetails } from 'types';
 import { generateExperiments } from 'utils/task';

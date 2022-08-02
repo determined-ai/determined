@@ -775,7 +775,7 @@ export interface Trialv1Trial {
      */
     totalCheckpointSize?: string;
     /**
-     * Number of workloads with metrics.
+     * Number of training and validation workloads.
      * @type {number}
      * @memberof Trialv1Trial
      */
