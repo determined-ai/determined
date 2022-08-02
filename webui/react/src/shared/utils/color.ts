@@ -33,7 +33,7 @@ const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 const hslRegex = /^hsl\(\d+,\s*\d+%,\s*\d+%\)$/i;
 const rgbaRegex = /^rgba?\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?(,\s*?([\d.]+)\s*?)?\)$/i;
 
-export const isColor = (color: string): color is RgbaColor => {
+export const isColor = (color: string): boolean => {
   return hexRegex.test(color) || hslRegex.test(color) || rgbaRegex.test(color);
 };
 
