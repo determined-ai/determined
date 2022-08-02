@@ -55,8 +55,8 @@ describe('Routes Utilities', () => {
       expect(routes.isFullPath('abs_https://localhost:3000/det')).toBeFalsy();
       expect(routes.isFullPath('ahttp')).toBeFalsy();
       expect(routes.isFullPath('git+ssh://example.con/item')).toBeFalsy();
-      // expect(routes.isFullPath('https')).toBeFalsy(); // TODO
-      // expect(routes.isFullPath('http')).toBeFalsy(); // TODO
+      expect(routes.isFullPath('https')).toBeFalsy();
+      expect(routes.isFullPath('http')).toBeFalsy();
     });
   });
 
@@ -65,16 +65,16 @@ describe('Routes Utilities', () => {
       expect(routes.isAbsolutePath('/')).toBeTruthy();
       expect(routes.isAbsolutePath('/det')).toBeTruthy();
       expect(routes.isAbsolutePath('/det/projects')).toBeTruthy();
-      expect(routes.isAbsolutePath('//det/projects')).toBeTruthy();
     });
 
     it('should invalidate absolute path', () => {
-      expect(routes.isFullPath('')).toBeFalsy();
+      expect(routes.isAbsolutePath('')).toBeFalsy();
       expect(routes.isAbsolutePath('https://localhost:3000/det')).toBeFalsy();
-      expect(routes.isFullPath('git+ssh://example.con/item')).toBeFalsy();
-      expect(routes.isFullPath('asdf/')).toBeFalsy();
-      expect(routes.isFullPath('a')).toBeFalsy();
-      // expect(routes.isAbsolutePath('///')).toBeFalsy(); // TODO
+      expect(routes.isAbsolutePath('git+ssh://example.con/item')).toBeFalsy();
+      expect(routes.isAbsolutePath('asdf/')).toBeFalsy();
+      expect(routes.isAbsolutePath('a')).toBeFalsy();
+      // expect(routes.isAbsolutePath('///')).toBeFalsy();
+      // expect(routes.isAbsolutePath('//det/projects')).toBeFalsy();
     });
   });
 

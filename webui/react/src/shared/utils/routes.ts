@@ -4,7 +4,13 @@ import history from '../routes/history';
 
 import { clone } from './data';
 
-export const isFullPath = (url: string): boolean => url.startsWith('http');
+export const isFullPath = (url: string): boolean => {
+  try {
+    return url.startsWith('http') && Boolean(new URL(url));
+  } catch (e){
+    return false;
+  }
+};
 // whether the input is pathed from / or not.
 export const isAbsolutePath = (url: string): boolean => url.startsWith('/');
 export const locationToPath = (location?: Location): string | null => {
