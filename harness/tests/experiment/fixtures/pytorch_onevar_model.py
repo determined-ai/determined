@@ -263,7 +263,8 @@ class OneVarManualAMPTrial(OneVarTrial):
             loss = self.loss_fn(output, label)
 
         self.context.backward(loss)
-        self.context.step_optimizer(self.opt)
+        self.context.step_optimizer(self.opt, scaler=self.scaler)
+        self.scaler.update()
 
         # Measure the weight after the update.
         w_after = self.model.weight.data.item()
