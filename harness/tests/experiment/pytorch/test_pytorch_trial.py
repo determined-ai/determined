@@ -626,11 +626,8 @@ class TestPyTorchTrial:
         ],
     )
     def test_amp(self, trial_class) -> None:
-        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial:
-            if not HAVE_APEX:
-                pytest.skip("Apex not available")
-            else:
-                apex.amp.register_float_function(torch, "sigmoid")
+        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
+            pytest.skip("Apex not available")
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
