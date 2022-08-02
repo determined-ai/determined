@@ -760,6 +760,26 @@ const ProjectDetails: React.FC = () => {
     }
   }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
+  /*
+   * Get new experiments based on changes to the
+   * filters, pagination, search and sorter.
+   */
+  useEffect(() => {
+    fetchExperiments();
+    setIsLoading(true);
+  }, [
+    fetchExperiments,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user,
+  ]);
+
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
