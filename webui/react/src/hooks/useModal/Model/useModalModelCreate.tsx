@@ -1,6 +1,5 @@
 import { Input, ModalFuncProps, notification } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { debounce } from 'throttle-debounce';
 
 import Link from 'components/Link';
@@ -17,11 +16,6 @@ import { Metadata } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
-
-type ModalInputs = {
-  modelDescription: string,
-  modelName: string,
-};
 
 interface OpenProps {
   checkpointUuid?: string;
@@ -55,8 +49,6 @@ const DEFAULT_MODAL_STATE = {
 const useModalModelCreate = (): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
-
-  const { register } = useForm<ModalInputs>();
 
   const handleOnCancel = useCallback(() => {
     setModalState(DEFAULT_MODAL_STATE);
@@ -163,18 +155,14 @@ const useModalModelCreate = (): ModalHooks => {
         </p>
         <div>
           <h2>Model name</h2>
-          <Input
-            {...register('modelName', { onChange: updateModelName, required: true })}
-          />
+          <Input onChange={updateModelName} />
           {!isNameUnique && (
             <p className={css.uniqueWarning}>A model with this name already exists</p>
           )}
         </div>
         <div>
           <h2>Description <span>(optional)</span></h2>
-          <Input.TextArea
-            {...register('modelDescription', { onChange: updateModelDescription, required: true })}
-          />
+          <Input.TextArea onChange={updateModelDescription} />
         </div>
         {expandDetails ? (
           <>
@@ -195,14 +183,7 @@ const useModalModelCreate = (): ModalHooks => {
           <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
       </div>
     );
-  }, [
-    register,
-    updateModelName,
-    updateModelDescription,
-    updateMetadata,
-    updateTags,
-    openDetails,
-  ]);
+  }, [ updateModelName, updateModelDescription, updateMetadata, updateTags, openDetails ]);
 
   const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
 

@@ -1,7 +1,6 @@
 import { Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { debounce } from 'throttle-debounce';
 
 import { paths } from 'routes/utils';
@@ -14,11 +13,6 @@ import handleError from 'utils/error';
 
 import css from './useModalProjectCreate.module.scss';
 
-type WorkspaceInputs = {
-  projectDescription: string,
-  projectName: string,
-}
-
 interface Props {
   onClose?: () => void;
   workspaceId: number;
@@ -28,7 +22,6 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   const [ name, setName ] = useState('');
   const [ description, setDescription ] = useState('');
   const [ isNameUnique, setIsNameUnique ] = useState<boolean>(true);
-  const { register } = useForm<WorkspaceInputs>();
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -54,28 +47,18 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       <div className={css.base}>
         <div>
           <label className={css.label} htmlFor="name">Name</label>
-          <Input
-            id="name"
-            maxLength={80}
-            {...register(
-              'projectName',
-              { maxLength: 80, onChange: handleNameInput, required: true },
-            )}
-          />
+          <Input id="name" maxLength={80} onChange={handleNameInput} />
           {!isNameUnique &&
             <p className={css.uniqueWarning}>A project with this name already exists</p>
           }
         </div>
         <div>
           <label className={css.label} htmlFor="description">Description</label>
-          <Input
-            id="description"
-            {...register('projectDescription', { onChange: handleDescriptionInput })}
-          />
+          <Input id="description" onChange={handleDescriptionInput} />
         </div>
       </div>
     );
-  }, [ handleDescriptionInput, handleNameInput, isNameUnique, register ]);
+  }, [ handleDescriptionInput, handleNameInput, isNameUnique ]);
 
   const handleOk = useCallback(async () => {
     try {
