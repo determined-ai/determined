@@ -49,12 +49,8 @@ const setup = () => {
 describe('ActionDropdown', () => {
   setup();
 
-  it('should display trigger button', async () => {
-
-    await waitFor(() => {
-      expect(screen.getByRole('button')).toBeInTheDocument();
-    });
-
+  it('should display trigger button', () => {
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
   it('should display actions', async () => {
@@ -64,27 +60,23 @@ describe('ActionDropdown', () => {
 
     await waitFor(() => {
       expect(screen.getByText(ACTION_ONE_TEXT)).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
       expect(screen.getByText(ACTION_TWO_TEXT)).toBeInTheDocument();
     });
-
   });
 
   it('should call dropdown option one function', async () => {
     setup();
     await user.click(screen.getByRole('button'));
+    expect(handleActionOne).not.toHaveBeenCalled();
     await user.click(screen.getByText(ACTION_ONE_TEXT));
     expect(handleActionOne).toHaveBeenCalled();
-
   });
 
   it('should call dropdown option two function', async () => {
     setup();
     await user.click(screen.getByRole('button'));
+    expect(handleActionTwo).not.toHaveBeenCalled();
     await user.click(screen.getByText(ACTION_TWO_TEXT));
     expect(handleActionTwo).toHaveBeenCalled();
   });
-
 });
