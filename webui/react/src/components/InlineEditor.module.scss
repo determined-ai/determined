@@ -13,6 +13,7 @@
      */
     display: grid;
     position: relative;
+    word-break: break-word;
   }
   .growWrap::after {
     /* Extra space needed to prevent jumpy behavior. */
