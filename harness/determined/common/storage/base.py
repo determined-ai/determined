@@ -37,16 +37,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         """from_config() just calls __init__() unless it is overridden in a subclass."""
         return cls(**config)
 
-    @abc.abstractmethod
-    def post_store_path(self, src: str, dst: str) -> None:
-        """
-        post_store_path is a hook that will be called after store_path(). Subclasess of
-        StorageManager should override this in order to customize the behavior of store_path().
-        """
-        pass
-
-    @contextlib.contextmanager
-    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+    def pre_store_path(self, dst: str) -> pathlib.Path:
         """
         Prepare a local directory to be written to the storage backend.
 
@@ -66,12 +57,25 @@ class StorageManager(metaclass=abc.ABCMeta):
         storage_dir = os.path.join(self._base_path, dst)
         os.makedirs(storage_dir, exist_ok=True)
 
-        yield pathlib.Path(storage_dir)
+        return pathlib.Path(storage_dir)
 
-        if not os.listdir(storage_dir):
-            raise RuntimeError("no checkpoint files were written")
+    @abc.abstractmethod
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+        """
+        Subclasses typically push to persistent storage if necessary, then delete the src directory,
+        if necessary.
+        """
+        pass
 
-        self.post_store_path(storage_dir, dst)
+    @contextlib.contextmanager
+    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+        """
+        Prepare a local directory to be written to the storage backend.
+        """
+
+        path = self.pre_store_path(dst)
+        yield path
+        self.post_store_path(path, dst)
 
     @abc.abstractmethod
     @contextlib.contextmanager

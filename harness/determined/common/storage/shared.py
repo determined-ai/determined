@@ -51,7 +51,7 @@ class SharedFSStorageManager(StorageManager):
         )
         return cls(base_path)
 
-    def post_store_path(self, src: str, dst: str) -> None:
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
         """
         Nothing to clean up after writing directly to shared_fs.
         """

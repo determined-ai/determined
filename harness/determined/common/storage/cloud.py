@@ -2,7 +2,7 @@ import contextlib
 import os
 import pathlib
 import shutil
-from typing import Iterator
+from typing import Iterator, Union
 
 from determined.common import storage
 
@@ -20,7 +20,7 @@ class CloudStorageManager(storage.StorageManager):
         finally:
             shutil.rmtree(dst, ignore_errors=True)
 
-    def post_store_path(self, src: str, dst: str) -> None:
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
         """
         post_store_path uploads the checkpoint to cloud storage and deletes the original files.
         """
