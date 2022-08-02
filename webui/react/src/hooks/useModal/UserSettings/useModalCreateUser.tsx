@@ -1,9 +1,9 @@
 import { Form, Input, message, Switch } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useStore } from 'contexts/Store';
-import { getUser, patchUser, postUser } from 'services/api';
+import { patchUser, postUser } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { BrandingType, DetailedUser } from 'types';
@@ -57,7 +57,7 @@ const ModalForm: React.FC<Props> = ({ form, branding, user }) => {
           },
         ]}
         validateTrigger={[ 'onSubmit' ]}>
-        <Input autoFocus disabled={!!user} maxLength={128} placeholder="user name" />
+        <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
       </Form.Item>
       <Form.Item
         label={DISPLAY_NAME_LABEL}
@@ -84,24 +84,11 @@ interface ModalProps {
 const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   const [ form ] = Form.useForm();
   const { info } = useStore();
-  const [ updatedUser, setUpdatedUser ] = useState<DetailedUser>();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
-
-  const fetchUser = useCallback(async () => {
-    if (!user) return;
-    try {
-      const res = await getUser({ userId: user.id });
-      setUpdatedUser(res);
-    } catch (e) {
-      message.error('Error retrieving user');
-      handleError(e, { silent: true, type: ErrorType.Api });
-    }
-  }, [ user ]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-    fetchUser();
-  }, [ form, fetchUser ]);
+  }, [ form ]);
 
   const handleOk = useCallback(async () => {
     await form.validateFields();
@@ -118,7 +105,6 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
 
       form.resetFields();
       onClose?.();
-      fetchUser();
     } catch (e) {
       message.error(user ? 'Error updating user' : 'Error creating new user');
       handleError(e, { silent: true, type: ErrorType.Input });
@@ -126,19 +112,19 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [ form, onClose, fetchUser, user ]);
+  }, [ form, onClose, user ]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       closable: true,
-      content: <ModalForm branding={info.branding} form={form} user={updatedUser || user} />,
+      content: <ModalForm branding={info.branding} form={form} user={user} />,
       icon: null,
       okText: user ? 'Update' : 'Create User',
       onCancel: handleCancel,
       onOk: handleOk,
       title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
-  }, [ form, handleCancel, handleOk, openOrUpdate, info, updatedUser, user ]);
+  }, [ form, handleCancel, handleOk, openOrUpdate, info, user ]);
 
   return { modalOpen, ...modalHook };
 };
