@@ -101,12 +101,7 @@ describe('InlineEditor', () => {
     await user.click(textbox);
     await user.clear(textbox);
     await user.type(textbox, 'こんにちは');
-    fireEvent.keyDown(textbox, {
-      charCode: 229,
-      code: 'Enter',
-      key: 'Enter',
-      keyCode: 229,
-    });
+    fireEvent.keyDown(textbox, { code: 'Enter', key: 'Enter', keyCode: 229 });
     expect(textbox).toHaveFocus();
     await user.keyboard('{enter}');
     await waitForSpinnerToDisappear();
