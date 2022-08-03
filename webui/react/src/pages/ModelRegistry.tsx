@@ -28,9 +28,9 @@ import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';

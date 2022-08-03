@@ -28,15 +28,15 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ShirtSize } from 'themes';
-import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
-import handleError from 'utils/error';
 import {
   alphaNumericSorter, dateTimeStringSorter, numericSorter,
 } from 'shared/utils/sort';
+import { ShirtSize } from 'themes';
+import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
+import handleError from 'utils/error';
+import { commandStateSorter } from 'utils/sort';
 import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
-import { commandStateSorter } from 'utils/sort';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';

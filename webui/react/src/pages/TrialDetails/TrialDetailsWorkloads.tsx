@@ -15,13 +15,13 @@ import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { numericSorter } from 'shared/utils/sort';
 import {
   CommandTask, ExperimentBase, MetricName,
   Step, TrialDetails, TrialWorkloadFilter, WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
 import { extractMetricValue } from 'utils/metric';
-import { numericSorter } from 'shared/utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';

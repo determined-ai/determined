@@ -1,5 +1,6 @@
 import { RecordKey } from 'shared/types';
 import { MetricName, MetricType, WorkloadGroup } from 'types';
+
 import { metricNameSorter } from './sort';
 
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {

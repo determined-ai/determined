@@ -3,8 +3,8 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
-import { LogLevelFromApi } from 'types';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { LogLevelFromApi } from 'types';
 
 const { Option } = Select;
 

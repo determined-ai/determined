@@ -74,4 +74,3 @@ export const primitiveSorter = (
   if (typeof a === 'string' && typeof b === 'string') return alphaNumericSorter(a, b);
   return 0;
 };
-

@@ -51,6 +51,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
   CommandTask,
@@ -66,7 +67,6 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
