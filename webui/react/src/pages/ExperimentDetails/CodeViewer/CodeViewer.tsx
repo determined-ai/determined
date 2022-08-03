@@ -6,13 +6,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import MonacoEditor from 'components/MonacoEditor';
 import Section from 'components/Section';
-import useRecize from 'hooks/useResize';
+import useResize from 'hooks/useResize';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode as FileNode } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import { RawJson } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
+import handleError from 'utils/error';
 
 const { DirectoryTree } = Tree;
 
@@ -42,8 +44,7 @@ type FileInfo = {
  * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
  */
 const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
-
-  const { width: documentWidth } = useRecize();
+  const resize = useResize();
 
   const [ config ] = useState(() => {
     /**
@@ -65,86 +66,28 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   const [ isFetching, setIsFetching ] = useState(false);
   const [ fileInfo, setFileInfo ] = useState<FileInfo>();
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | undefined>(
-    () => documentWidth <= 1024 ? 'tree' : undefined,
+    () => resize.width <= 1024 ? 'tree' : undefined,
   ); // To be used in the mobile view, switches the UI
-  const fileTree = useMemo(() => {
-    const navigateTree = (node: FileNode, key: string): DataNode => {
-      const newNode: DataNode = {
-        className: 'treeNode',
-        isLeaf: true,
-        key,
-        title: node.name,
-      };
-
-      if (node.files?.length) {
-        newNode.children = node.files.map(
-          (chNode) => navigateTree(chNode, chNode.path || ''),
-        );
-        newNode.isLeaf = false;
-      }
-
-      return newNode;
+  const navigateTree = useCallback((node: FileNode, key: string): DataNode => {
+    const newNode: DataNode = {
+      className: 'treeNode',
+      isLeaf: true,
+      key,
+      title: node.name,
     };
 
-    if (config) {
-      setFileInfo({
-        data: yaml.dump(config),
-        name: 'Configuration',
-        path: 'Configuration',
-      });
-
-      return [
-        {
-          className: 'treeNode',
-          isLeaf: true,
-          key: 'configuration',
-          title: 'Configuration',
-        },
-        ...files.map<DataNode>((node) => navigateTree(node, node.path || '')),
-      ];
+    if (node.files?.length) {
+      newNode.children = node.files.map(
+        (chNode) => navigateTree(chNode, chNode.path || ''),
+      );
+      newNode.isLeaf = false;
     }
 
-    return files.map<DataNode>((node) => navigateTree(node, node.path || ''));
-  }, [ files, config ]);
-  const fetchFiles = useCallback(
-    async () => {
-      const newFiles = await getExperimentFileTree({ experimentId });
-
-      if (isEqual(newFiles, files)) return;
-
-      setFiles(newFiles);
-    },
-    [ experimentId, files ],
-  );
-
-  const treeClasses: string[] = [];
-  const editorClasses: string[] = [];
-
-  if ((documentWidth <= 1024) && (viewMode === 'editor')) {
-    treeClasses.push(css.hideElement);
-    editorClasses.pop();
-  }
-
-  if ((documentWidth <= 1024) && (viewMode === 'tree')) {
-    treeClasses.pop();
-    editorClasses.push(css.hideElement);
-  }
-
-  // map the file tree
-  useEffect(() => {
-    fetchFiles();
-    // TODO: have error handling added.
-  }, [ fetchFiles ]);
-
-  useEffect(() => { // when a file is picked, if on mobile, change the view
-    if (documentWidth <= 1024) {
-      setViewMode('editor');
-    }
-  }, [ fileInfo, documentWidth ]);
-
-  const onSelectFile = async (
+    return newNode;
+  }, []);
+  const onSelectFile = useCallback(async (
     keys: React.Key[],
-    info: { [key:string]: unknown, node: DataNode },
+    info: { [key: string]: unknown, node: DataNode },
   ) => {
     if (info.node.title === fileInfo?.name) return; // avoid making unecessary processing.
 
@@ -173,30 +116,82 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
           name: info.node.title as string,
           path: filePath,
         });
+
+        if (resize.width <= 1024) {
+          setViewMode('editor');
+        }
+
       } catch (error) {
         setIsFetching(false);
-        // TODO: have error handling added.
+
+        handleError(error, {
+          publicMessage: 'Failed to load selected file.',
+          publicSubject: 'Unable to fetch the selected file.',
+          silent: false,
+          type: ErrorType.Api,
+        });
       }
     }
-  };
+  }, [ resize.width, setViewMode, config, experimentId, fileInfo?.name, files ]);
+  const fetchFiles = useCallback(
+    async () => {
+      try {
+        const newFiles = await getExperimentFileTree({ experimentId });
 
-  const editorLanguageSyntax = useMemo(() => {
-    const fileExt = (fileInfo?.path || '').split('.')[1];
+        if (isEqual(newFiles, files)) return;
 
-    if (fileExt === 'md') {
-      return 'markdown';
+        setFiles(newFiles);
+      } catch (error) {
+        handleError(error, {
+          publicMessage: 'Failed to load file tree.',
+          publicSubject: 'Unable to fetch the model file tree.',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    },
+    [ experimentId, files ],
+  );
+  const fileTree = useMemo(() => {
+    if (config) {
+      setFileInfo({
+        data: yaml.dump(config),
+        name: 'Configuration',
+        path: 'Configuration',
+      });
+
+      return [
+        {
+          className: 'treeNode',
+          isLeaf: true,
+          key: 'configuration',
+          title: 'Configuration',
+        },
+        ...files.map<DataNode>((node) => navigateTree(node, node.path || '')),
+      ];
     }
 
-    if (fileExt === 'ts') {
-      return 'typescript';
-    }
+    return files.map<DataNode>((node) => navigateTree(node, node.path || ''));
+  }, [ files, config, navigateTree ]);
 
-    if (fileExt === 'py') {
-      return 'python';
-    }
+  const treeClasses: string[] = [];
+  const editorClasses: string[] = [];
 
-    return fileExt || 'yaml'; // returns yaml as default, in case that it's a checkpoint file
-  }, [ fileInfo ]);
+  if ((resize.width <= 1024) && (viewMode === 'editor')) {
+    treeClasses.push(css.hideElement);
+    editorClasses.pop();
+  }
+
+  if ((resize.width <= 1024) && (viewMode === 'tree')) {
+    treeClasses.pop();
+    editorClasses.push(css.hideElement);
+  }
+
+  // map the file tree
+  useEffect(() => {
+    fetchFiles();
+    // TODO: have error handling added.
+  }, [ fetchFiles ]);
 
   return (
     <section className={css.base}>
@@ -205,7 +200,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
           className={css.fileTree}
           data-testid="fileTree"
           defaultExpandAll
-          defaultSelectedKeys={(config && documentWidth > 1024) ? [ '0-0' ] : undefined}
+          defaultSelectedKeys={(config && resize.width > 1024) ? [ '0-0' ] : undefined}
           treeData={fileTree}
           onSelect={onSelectFile}
         />
@@ -217,7 +212,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
               <div className={css.fileInfo}>
                 <div className={css.buttonContainer}>
                   {
-                    documentWidth <= 1024 && (
+                    resize.width <= 1024 && (
                       <LeftOutlined
                         className={css.leftChevron}
                         onClick={() => setViewMode('tree')}
@@ -262,7 +257,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
               : (
                 <MonacoEditor
                   height="100%"
-                  language={editorLanguageSyntax}
+                  language="yaml"
                   options={{
                     minimap: {
                       enabled: !!fileInfo?.data.length,

@@ -92,7 +92,7 @@ module.exports = {
           'suggest',
           'wordHighlighter',
         ],
-        languages: [ 'markdown', 'yaml', 'python' ],
+        languages: [ 'markdown', 'yaml' ],
       }),
     ],
   },
