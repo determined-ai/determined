@@ -242,8 +242,10 @@ display: none;
 .tile {
     /* looks */
     /* border-top: 8px solid #343537; */
-    background-color: #fff;
-    box-shadow: .5px 2px 4px 0 #bdbdbd;
+    background-color: var(--color-background-secondary);
+    border: 1px solid var(--color-background-border);
+    border-radius: 5px;
+    box-shadow: .5px 2px 4px 0 var(--sd-color-shadow);
     /* sizing/boxing */
     width: 25%;
     height: 200px;
@@ -261,18 +263,8 @@ display: none;
     display: flex;
     -webkit-box-orient: horizontal;
     -webkit-box-direction: normal;
-    -ms-flex-direction: row;
-    flex-direction: row;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -ms-flex-line-pack: stretch;
-    align-content: stretch;
-    -webkit-box-align: stretch;
-    -ms-flex-align: stretch;
-    align-items: stretch;
+    -ms-flex-direction: column;
+    flex-direction: column;
 }
 
 .tile:hover {
@@ -282,14 +274,13 @@ display: none;
 
 .tile .tile-title {
     /* looks */
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: .4px;
-    color: #676363;
+    color: var(--color-foreground-primary);
     /* sizing/boxing */
     height: 30%;
     width: 100%;
     margin: 0px;
-    padding: 0px 20px;
     /* layout */
     display:-webkit-box;
     display:-ms-flexbox;
@@ -308,35 +299,16 @@ display: none;
     height:2px;
     width: 100%;
     margin: 0 5px;
-    border: .5px solid #343537;
-    background-color: #343537;
+    border: .5px solid var(--color-background-border);
+    background-color: var(--color-background-border);
     -ms-flex-item-align: auto;
     align-self: auto;
 }
 
 .tile .tile-description {
     /* looks */
-/*    font-size: 14px; */
-    font-size: 100%;
-    letter-spacing: .2px;
-    line-height: 1.25;
-    color: #757575;
-    /* sizing/boxing */
-    height: 120px;
-    width: 100%;
-    margin: 0px;
-    /* layout */    
-    display:-webkit-box;
-    display:-ms-flexbox;
-    display:flex;
-    -ms-flex-item-align: auto;
-    align-self: auto;
-    -webkit-box-orient:vertical;
-    -webkit-box-direction:normal;
-    -ms-flex-direction:column;
-    flex-direction:column;
-    -ms-flex-pack:distribute;
-    /* justify-content:space-around; */
+    font-size: 14px;
+    color: var(--color-foreground-secondary);
 }
 
 .landing-text {
