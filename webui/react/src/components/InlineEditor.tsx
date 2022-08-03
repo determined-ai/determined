@@ -114,12 +114,13 @@ const InlineEditor: React.FC<Props> = ({
       e.preventDefault();
       return;
     }
-    if (e.code === CODE_ENTER) {
-      if (!allowNewline || !e.shiftKey) e.preventDefault();
+    if (e.which === 229) {
+      // Ignore keydown event until IME is confirmed like Japanese and Chinese
+      return;
     }
-  }, [ allowNewline, isEditable ]);
-
-  const handleTextareaKeyUp = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.code === CODE_ENTER && (!allowNewline || !e.shiftKey)) {
+      e.preventDefault();
+    }
     if (e.code === CODE_ESCAPE) {
       // Restore the original value upon escape key.
       updateEditorValue(value);
@@ -127,7 +128,7 @@ const InlineEditor: React.FC<Props> = ({
     } else if (!e.shiftKey && e.code === CODE_ENTER) {
       setIsEditable(false);
     }
-  }, [ updateEditorValue, value ]);
+  }, [ allowNewline, isEditable, updateEditorValue, value ]);
 
   useEffect(() => {
     updateEditorValue(value);
@@ -150,8 +151,7 @@ const InlineEditor: React.FC<Props> = ({
           rows={1}
           onBlur={handleTextareaBlur}
           onChange={handleTextareaChange}
-          onKeyPress={handleTextareaKeyPress}
-          onKeyUp={handleTextareaKeyUp}
+          onKeyDown={handleTextareaKeyPress}
         />
         <div className={css.backdrop} />
         <div className={css.spinner}>
