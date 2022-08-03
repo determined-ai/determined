@@ -5,7 +5,7 @@ import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
 import {
-  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
+  Agent, Auth, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 
@@ -138,7 +138,7 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
 const initInfo = {
-  branding: '' as BrandingType,
+  branding: undefined,
   checked: false,
   clusterId: '',
   clusterName: '',

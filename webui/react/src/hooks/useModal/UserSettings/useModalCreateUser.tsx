@@ -94,7 +94,7 @@ const useModalCreateUser = ({ onClose }: ModalProps): ModalHooks => {
     openOrUpdate({
       closable: true,
       // passing a default brandind due to changes on the initial state
-      content: <ModalForm branding={info.branding || 'determined'} form={form} />,
+      content: <ModalForm branding={info.branding || BrandingType.Determined} form={form} />,
       icon: null,
       okText: 'Create User',
       onCancel: handleCancel,
