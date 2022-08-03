@@ -348,7 +348,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <InlineEditor
                 allowNewline
                 disabled={disabled}
-                isOnDark
                 maxLength={500}
                 placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
@@ -419,7 +418,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.name}>
               <InlineEditor
                 disabled={disabled}
-                isOnDark
                 maxLength={128}
                 placeholder="experiment name"
                 value={experiment.name}

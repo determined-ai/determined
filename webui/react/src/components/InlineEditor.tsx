@@ -11,7 +11,6 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   allowNewline?: boolean;
   disabled?: boolean;
   focusSignal?: number;
-  isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
@@ -26,7 +25,6 @@ const InlineEditor: React.FC<Props> = ({
   allowClear = true,
   allowNewline = false,
   disabled = false,
-  isOnDark = false,
   maxLength,
   placeholder,
   value,
@@ -42,7 +40,6 @@ const InlineEditor: React.FC<Props> = ({
   const [ isSaving, setIsSaving ] = useState(false);
   const classes = [ css.base ];
 
-  if (isOnDark) classes.push(css.onDark);
   if (isEditable) classes.push(css.editable);
   if (isSaving) classes.push(css.loading);
   if (maxLength && currentValue && currentValue.length === maxLength) {
