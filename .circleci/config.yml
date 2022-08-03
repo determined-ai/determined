@@ -1000,7 +1000,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.10.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1473,7 +1473,7 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0"
+          extras-requires: "torch==1.10.0"
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C cli check
@@ -1495,7 +1495,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.10.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
@@ -1515,7 +1515,7 @@ jobs:
       - skip-if-docs-only
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.10.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
@@ -1535,7 +1535,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
@@ -1555,7 +1555,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
@@ -1576,7 +1576,7 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "torch==1.10.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test

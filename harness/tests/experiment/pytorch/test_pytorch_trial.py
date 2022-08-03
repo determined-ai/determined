@@ -642,6 +642,20 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_amp_cpu(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarManualAMPCPUTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+            expose_gpus=True,
+        )
+        controller.run()
+
 
 @pytest.mark.parametrize(
     "ckpt,istrial",
