@@ -4,7 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import MultiSelect from 'components/MultiSelect';
 import { LogLevelFromApi } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 
 const { Option } = Select;
 

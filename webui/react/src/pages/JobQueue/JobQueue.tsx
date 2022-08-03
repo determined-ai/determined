@@ -24,7 +24,7 @@ import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types'
 import handleError from 'utils/error';
 import { canManageJob, jobTypeToCommandType, moveJobToPosition,
   orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
-import { numericSorter } from 'utils/sort';
+import { numericSorter } from 'shared/utils/sort';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

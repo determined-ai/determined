@@ -21,7 +21,8 @@ import {
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
   Scale,
 } from 'types';
-import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
+import { alphaNumericSorter} from 'shared/utils/sort';
+import { hpImportanceSorter } from '../../utils/sort';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {

@@ -30,7 +30,7 @@ import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
-import { alphaNumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';

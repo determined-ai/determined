@@ -21,7 +21,7 @@ import {
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 
 import css from './CompareVisualization.module.scss';
 import CompareCurve from './CompareVisualization/CompareCurve';

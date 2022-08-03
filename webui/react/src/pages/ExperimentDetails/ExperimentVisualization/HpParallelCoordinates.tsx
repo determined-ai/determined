@@ -1,6 +1,7 @@
 import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { openCommand } from 'wait';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
@@ -16,6 +17,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive, Range } from 'shared/types';
 import { clone, flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap, Scale,
@@ -23,8 +25,6 @@ import {
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
-import { numericSorter } from 'utils/sort';
-import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 

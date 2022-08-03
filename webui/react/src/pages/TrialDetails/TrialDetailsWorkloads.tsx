@@ -21,7 +21,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { extractMetricValue } from 'utils/metric';
-import { numericSorter } from 'utils/sort';
+import { numericSorter } from 'shared/utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';

@@ -66,7 +66,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { alphaNumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 

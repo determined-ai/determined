@@ -7,7 +7,7 @@ import React from 'react';
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { Pagination, RecordKey, UnknownRecord } from 'shared/types';
 import { generateAlphaNumeric } from 'shared/utils/string';
-import { alphaNumericSorter, numericSorter } from 'utils/sort';
+import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
 
 import ResponsiveTable from './ResponsiveTable';
 import TableFilterDropdown, {

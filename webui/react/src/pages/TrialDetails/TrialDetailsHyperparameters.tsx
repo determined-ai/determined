@@ -7,7 +7,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner';
 import { isObject } from 'shared/utils/data';
 import { TrialDetails } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 
 import css from './TrialDetailsHyperparameters.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';

@@ -13,7 +13,7 @@ import { isNumber } from 'shared/utils/data';
 import {
   HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
-import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
+import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
 
 import { HpValsMap } from '../CompareVisualization';
 
