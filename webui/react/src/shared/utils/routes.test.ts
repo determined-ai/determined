@@ -65,6 +65,7 @@ describe('Routes Utilities', () => {
       expect(routes.isAbsolutePath('/')).toBeTruthy();
       expect(routes.isAbsolutePath('/det')).toBeTruthy();
       expect(routes.isAbsolutePath('/det/projects')).toBeTruthy();
+      expect(routes.isAbsolutePath('/det/projects/')).toBeTruthy();
     });
 
     it('should invalidate absolute path', () => {
@@ -73,8 +74,10 @@ describe('Routes Utilities', () => {
       expect(routes.isAbsolutePath('git+ssh://example.con/item')).toBeFalsy();
       expect(routes.isAbsolutePath('asdf/')).toBeFalsy();
       expect(routes.isAbsolutePath('a')).toBeFalsy();
-      // expect(routes.isAbsolutePath('///')).toBeFalsy();
-      // expect(routes.isAbsolutePath('//det/projects')).toBeFalsy();
+      expect(routes.isAbsolutePath('///')).toBeFalsy();
+      expect(routes.isAbsolutePath('//')).toBeFalsy();
+      expect(routes.isAbsolutePath('/asdf//')).toBeFalsy();
+      expect(routes.isAbsolutePath('//det/projects')).toBeFalsy();
     });
   });
 
