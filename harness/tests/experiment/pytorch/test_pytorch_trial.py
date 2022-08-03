@@ -534,7 +534,7 @@ class TestPyTorchTrial:
             return 1.0
 
         # Inject an unnamed metric which returns a non-dict (which is not allowed).
-        controller.context.wrap_reducer(reducer_fn)
+        controller.context.wrap_reducer(reducer_fn, name=None)
 
         with pytest.raises(AssertionError, match="name=None but it did not return a dict"):
             controller.run()
