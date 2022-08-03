@@ -53,7 +53,6 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw, originalConfig }
    * as well as workspace/project names
    */
     if (originalConfig) return originalConfig;
-
     if (configRaw) {
       const {
         environment: { registry_auth, ...restEnvironment },
