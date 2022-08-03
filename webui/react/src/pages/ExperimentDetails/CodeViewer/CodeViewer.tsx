@@ -90,7 +90,13 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
     keys: React.Key[],
     info: { [key: string]: unknown, node: DataNode },
   ) => {
-    if (info.node.title === fileInfo?.name) return; // avoid making unecessary processing.
+    if (info.node.title === fileInfo?.name) {
+      if (resize.width <= 1024) {
+        setViewMode('editor');
+      }
+
+      return; // avoid making unecessary processing.
+    }
 
     if (info.node.title === 'Configuration') {
       setFileInfo({
