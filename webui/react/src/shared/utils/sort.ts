@@ -1,4 +1,4 @@
-import { NullOrUndefined, Primitive } from 'shared/types';
+import { NullOrUndefined, Primitive, SemanticVersion } from 'shared/types';
 
 /*
  * Sort numbers and strings with the following properties.
@@ -73,4 +73,18 @@ export const primitiveSorter = (
   if (typeof a === 'number' && typeof b === 'number') return numericSorter(a, b);
   if (typeof a === 'string' && typeof b === 'string') return alphaNumericSorter(a, b);
   return 0;
+};
+
+/** return true if a semantic version a is older than b */
+export const semVerIsOlder = (a: SemanticVersion, b: SemanticVersion): boolean => {
+  return a.major < b.major ||
+        (a.major === b.major && a.minor < b.minor) ||
+        (a.major === b.major
+          && a.minor === b.minor && a.patch < b.patch);
+};
+
+/** sort a list of versions from latest to oldest. */
+export const sortVersions = (versions: SemanticVersion[]): SemanticVersion[] => {
+  return versions
+    .sort((a, b) => semVerIsOlder(a, b) ? 1 : -1);
 };
