@@ -10,7 +10,7 @@ from determined.common.experimental import Checkpoint
 
 
 @dataclasses.dataclass
-class SearchState:
+class SearcherState:
     checkpoint_id: Optional[str]
 
 
@@ -74,6 +74,17 @@ class Close(Operation):
         )
 
 
+class Progress(Operation):
+    def __init__(self, progress: float):
+        super().__init__()
+        self.progress = progress
+
+    def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
+        return bindings.v1SearcherOperation(
+            searcherProgress=bindings.v1SearcherProgressOperation(progress=self.progress)
+        )
+
+
 class Shutdown(Operation):
     def __init__(self) -> None:
         super().__init__()
@@ -103,11 +114,11 @@ class Create(Operation):
 
 
 class SearchMethod:
-    def __init__(self, search_state: SearchState) -> None:
-        self._search_state = search_state
+    def __init__(self, searcher_state: SearcherState) -> None:
+        self._search_state = searcher_state
 
     @property
-    def searcher_state(self) -> SearchState:
+    def searcher_state(self) -> SearcherState:
         return self._search_state
 
     @abstractmethod

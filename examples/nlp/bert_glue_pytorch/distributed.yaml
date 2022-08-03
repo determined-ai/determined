@@ -1,3 +1,5 @@
+environment:
+  image: determinedai/environments-dev:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3b3545d
 name: bert_glue_pytorch_distributed 
 hyperparameters:
   global_batch_size: 192 # per gpu batch size of 24

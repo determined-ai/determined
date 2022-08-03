@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from determined.common.api import bindings
 from determined.experimental import client
-from determined.searcher.search_method import ExitedReason, SearchMethod
+from determined.searcher.search_method import ExitedReason, Progress, SearchMethod
 
 
 class SearchRunner:
@@ -98,6 +98,13 @@ class SearchRunner:
                         )
                         experiment_is_active = False
                         break
+                    elif e.trialProgress:
+                        logging.debug(
+                            f"trialProgress({e.trialProgress.requestId}, "
+                            f"{e.trialProgress.partialUnits})"
+                        )
+                        progress = self.search_method.progress()
+                        operations = [Progress(progress)]
                     else:
                         raise RuntimeError(f"Unsupported event {e}")
                     bindings.post_PostSearcherOperations(
