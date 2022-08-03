@@ -57,6 +57,7 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Display Name</label>
         <InlineEditor
+          maxLength={32}
           placeholder="Add display name"
           value={auth.user?.displayName || ''}
           onSave={handleSave}
