@@ -177,7 +177,7 @@ func (a *apiServer) PostUser(
 	}
 	if err = user.AuthZProvider.Get().
 		CanCreateUser(*curUser, *userToAdd, agentUserGroup); err != nil {
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	if err = grpcutil.ValidateRequest(
@@ -222,7 +222,7 @@ func (a *apiServer) SetUserPassword(
 		} else if !ok {
 			return nil, errUserNotFound
 		}
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
@@ -259,7 +259,7 @@ func (a *apiServer) PatchUser(
 		} else if !ok {
 			return nil, errUserNotFound
 		}
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	// TODO: handle any field name:
@@ -302,7 +302,7 @@ func (a *apiServer) GetUserSetting(
 		return nil, err
 	}
 	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	settings, err := db.GetUserSetting(curUser.ID)
@@ -327,7 +327,7 @@ func (a *apiServer) PostUserSetting(
 		StoragePath: req.StoragePath,
 	}
 	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	err = db.UpdateUserSetting(&settingModel)
@@ -342,7 +342,7 @@ func (a *apiServer) ResetUserSetting(
 		return nil, err
 	}
 	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
-		return nil, errors.Wrap(grpcutil.ErrPermissionDenied, err.Error())
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	err = db.ResetUserSetting(curUser.ID)

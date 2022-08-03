@@ -8,17 +8,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -111,7 +110,7 @@ func TestAuthzGetUser(t *testing.T) {
 func TestAuthzPostUser(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canCreateUserError")
+	expectedErr := status.Error(codes.PermissionDenied, "canCreateUserError")
 	authzUsers.On("CanCreateUser", curUser,
 		model.User{Username: "admin", Admin: true},
 		&model.AgentUserGroup{UID: 5, GID: 6}).Return(fmt.Errorf("canCreateUserError")).Once()
@@ -130,7 +129,7 @@ func TestAuthzSetUserPassword(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// If we can view the user we can get the error message from CanSetUsersPassword.
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canSetUsersPassword")
+	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersPassword")
 	authzUsers.On("CanSetUsersPassword", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersPassword")).Once()
 	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true, nil).Once()
@@ -161,7 +160,7 @@ func TestAuthzPatchUser(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
 	// If we can view the user we get the error from canSetUsersDisplayName.
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canSetUsersDisplayName")
+	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersDisplayName")
 	authzUsers.On("CanSetUsersDisplayName", curUser, mock.Anything).
 		Return(fmt.Errorf("canSetUsersDisplayName")).Once()
 	authzUsers.On("CanGetUser", curUser, mock.Anything).Return(true, nil).Once()
@@ -198,7 +197,7 @@ func TestAuthzPatchUser(t *testing.T) {
 func TestAuthzGetUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canGetUsersOwnSettings")
+	expectedErr := status.Error(codes.PermissionDenied, "canGetUsersOwnSettings")
 	authzUsers.On("CanGetUsersOwnSettings", curUser).
 		Return(fmt.Errorf("canGetUsersOwnSettings")).Once()
 
@@ -209,7 +208,7 @@ func TestAuthzGetUserSetting(t *testing.T) {
 func TestAuthzPostUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canCreateUsersOwnSetting")
+	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnSetting")
 	authzUsers.On("CanCreateUsersOwnSetting", curUser,
 		model.UserWebSetting{UserID: curUser.ID, Key: "k", Value: "v"}).
 		Return(fmt.Errorf("canCreateUsersOwnSetting")).Once()
@@ -223,7 +222,7 @@ func TestAuthzPostUserSetting(t *testing.T) {
 func TestAuthzResetUserSetting(t *testing.T) {
 	api, authzUsers, curUser, ctx := SetupUserAuthzTest(t)
 
-	expectedErr := errors.Wrap(grpcutil.ErrPermissionDenied, "canResetUsersOwnSettings")
+	expectedErr := status.Error(codes.PermissionDenied, "canResetUsersOwnSettings")
 	authzUsers.On("CanResetUsersOwnSettings", curUser).
 		Return(fmt.Errorf("canResetUsersOwnSettings")).Once()
 
