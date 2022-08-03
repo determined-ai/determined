@@ -357,7 +357,6 @@ const useModalHyperparameterSearch = ({
   }, [ hyperparameters, modalError, searcher ]);
 
   const searcherPage = useMemo((): React.ReactNode => {
-    console.log('spt', experiment.configRaw?.resources?.slots_per_trial);
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
