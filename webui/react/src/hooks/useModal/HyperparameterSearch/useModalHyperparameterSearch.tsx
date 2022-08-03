@@ -357,6 +357,7 @@ const useModalHyperparameterSearch = ({
   }, [ hyperparameters, modalError, searcher ]);
 
   const searcherPage = useMemo((): React.ReactNode => {
+    console.log('spt', experiment.configRaw?.resources?.slots_per_trial);
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
@@ -446,13 +447,12 @@ const useModalHyperparameterSearch = ({
             </SelectFilter>
           </Form.Item>
           <Form.Item
-            initialValue={experiment.configRaw?.resources?.slots_per_trial ??
-              maxSlots === 0 ? 0 : 1}
+            initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
             label="Slots per trial"
             name="slots_per_trial"
-            rules={[ { max: maxSlots, min: 0, required: true, type: 'number' } ]}
+            rules={[ { max: maxSlots, min: 1, required: true, type: 'number' } ]}
             validateStatus={
-              (formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 0) ?
+              (formValues?.slots_per_trial > maxSlots || formValues?.slots_per_trial < 1) ?
                 'error' : 'success'}>
             <InputNumber max={maxSlots} min={0} precision={0} />
           </Form.Item>
@@ -766,8 +766,9 @@ const HyperparameterRow: React.FC<RowProps> = (
               required: active && searcher === SEARCH_METHODS.Grid,
               type: 'number',
             } ]}
-            validateStatus={(countError && searcher === SEARCH_METHODS.Grid
-                && active) ? 'error' : undefined}>
+            validateStatus={
+              (countError && searcher === SEARCH_METHODS.Grid && active) ? 'error' : undefined
+            }>
             <InputNumber
               aria-labelledby="count"
               disabled={!active}
