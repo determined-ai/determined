@@ -381,6 +381,7 @@ export const mapV1GetExperimentDetailsResponse = (
     config: ioToExperimentConfig(ioConfig),
     configRaw: exp.config,
     hyperparameters,
+    originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
     projectName: exp.projectName ?? '',
     workspaceId: exp.workspaceId ?? 0,

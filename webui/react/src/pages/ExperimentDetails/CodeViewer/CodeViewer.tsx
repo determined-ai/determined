@@ -24,6 +24,7 @@ import './index.scss';
 export type Props = {
   configRaw?: RawJson;
   experimentId: number;
+  originalConfig?: string;
 }
 
 type FileInfo = {
@@ -43,7 +44,7 @@ type FileInfo = {
  *
  * configRaw: the experiment.configRaw property to be used to render a Config yaml file;
  */
-const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
+const CodeViewer: React.FC<Props> = ({ experimentId, configRaw, originalConfig }) => {
   const resize = useResize();
 
   const [ config ] = useState(() => {
@@ -51,6 +52,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
    * strip registry_auth from config for display
    * as well as workspace/project names
    */
+    if (originalConfig) return originalConfig;
     if (configRaw) {
       const {
         environment: { registry_auth, ...restEnvironment },
