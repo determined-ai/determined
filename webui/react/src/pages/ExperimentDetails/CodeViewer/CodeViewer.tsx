@@ -63,7 +63,8 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   });
   // Data structure to be used by the Tree
   const [ files, setFiles ] = useState<FileNode[]>([]);
-  const [ isFetching, setIsFetching ] = useState(false);
+  const [ isFetchingFile, setIsFetchingFile ] = useState(false);
+  const [ isFetchingTree, setIsFetchingTree ] = useState(false);
   const [ fileInfo, setFileInfo ] = useState<FileInfo>();
   const [ viewMode, setViewMode ] = useState<'tree' | 'editor' | undefined>(
     () => resize.width <= 1024 ? 'tree' : undefined,
@@ -105,12 +106,12 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
 
     // check if the selected node is a file
     if (!files.find((file) => file.path === filePath)?.isDir) {
-      setIsFetching(true);
+      setIsFetchingFile(true);
 
       try {
         const file = await getExperimentFileFromTree({ experimentId, path: filePath });
 
-        setIsFetching(false);
+        setIsFetchingFile(false);
         setFileInfo({
           data: decodeURIComponent(escape(window.atob(file))),
           name: info.node.title as string,
@@ -122,7 +123,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         }
 
       } catch (error) {
-        setIsFetching(false);
+        setIsFetchingFile(false);
 
         handleError(error, {
           publicMessage: 'Failed to load selected file.',
@@ -135,13 +136,16 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   }, [ resize.width, setViewMode, config, experimentId, fileInfo?.name, files ]);
   const fetchFiles = useCallback(
     async () => {
+      setIsFetchingTree(true);
       try {
         const newFiles = await getExperimentFileTree({ experimentId });
+        setIsFetchingTree(false);
 
         if (isEqual(newFiles, files)) return;
 
         setFiles(newFiles);
       } catch (error) {
+        setIsFetchingTree(false);
         handleError(error, {
           publicMessage: 'Failed to load file tree.',
           publicSubject: 'Unable to fetch the model file tree.',
@@ -190,24 +194,25 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
   // map the file tree
   useEffect(() => {
     fetchFiles();
-    // TODO: have error handling added.
   }, [ fetchFiles ]);
 
   return (
     <section className={css.base}>
       <Section className={treeClasses.join(' ')} id="fileTree">
-        <DirectoryTree
-          className={css.fileTree}
-          data-testid="fileTree"
-          defaultExpandAll
-          defaultSelectedKeys={(config && resize.width > 1024) ? [ '0-0' ] : undefined}
-          treeData={fileTree}
-          onSelect={onSelectFile}
-        />
+        <Spinner spinning={isFetchingTree}>
+          <DirectoryTree
+            className={css.fileTree}
+            data-testid="fileTree"
+            defaultExpandAll
+            defaultSelectedKeys={(config && resize.width > 1024) ? [ '0-0' ] : undefined}
+            treeData={fileTree}
+            onSelect={onSelectFile}
+          />
+        </Spinner>
       </Section>
       {
         !!fileInfo?.path && (
-          <Spinner className={editorClasses.join(' ')} spinning={isFetching}>
+          <Spinner className={editorClasses.join(' ')} spinning={isFetchingFile}>
             <section className={css.fileDir}>
               <div className={css.fileInfo}>
                 <div className={css.buttonContainer}>
@@ -250,9 +255,9 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw }) => {
         className={editorClasses.join(' ')}
         id="editor"
         maxHeight>
-        <Spinner spinning={isFetching}>
+        <Spinner spinning={isFetchingFile}>
           {
-            !isFetching && !fileInfo?.data
+            !isFetchingFile && !fileInfo?.data
               ? <h5>Please, choose a file to preview.</h5>
               : (
                 <MonacoEditor
