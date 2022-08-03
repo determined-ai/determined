@@ -24,6 +24,9 @@
     :global(.ant-input-number) {
       width: 100%;
     }
+    .disableArrows :global(.ant-input-number-handler-wrap) {
+      display: none;
+    }
     .fullWidth {
       width: 100%;
     }

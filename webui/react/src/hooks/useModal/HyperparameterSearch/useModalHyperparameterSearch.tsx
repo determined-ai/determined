@@ -733,6 +733,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             validateStatus={((minError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
               aria-labelledby="min-value"
+              className={type === HyperparameterType.Int ? undefined : css.disableArrows}
               disabled={!active}
               placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
@@ -750,6 +751,7 @@ const HyperparameterRow: React.FC<RowProps> = (
             validateStatus={((maxError || rangeError) && active) ? 'error' : undefined}>
             <InputNumber
               aria-labelledby="max-value"
+              className={type === HyperparameterType.Int ? undefined : css.disableArrows}
               disabled={!active}
               placeholder={!active ? 'n/a' : ''}
               precision={type === HyperparameterType.Int ? 0 : undefined}
