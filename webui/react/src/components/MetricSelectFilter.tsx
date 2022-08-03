@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameToValue, valueToMetricName } from 'utils/metric';
-import { metricNameSorter } from '../utils/sort';
+import { metricNameSorter } from 'utils/sort';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';

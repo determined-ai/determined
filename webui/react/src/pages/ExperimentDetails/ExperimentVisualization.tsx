@@ -22,7 +22,7 @@ import {
   Scale,
 } from 'types';
 import { alphaNumericSorter} from 'shared/utils/sort';
-import { hpImportanceSorter } from '../../utils/sort';
+import { hpImportanceSorter } from 'utils/sort';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {

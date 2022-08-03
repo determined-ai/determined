@@ -1,4 +1,4 @@
-import { alphaNumericSorter } from '../shared/utils/sort';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { CommandState, HpImportance, MetricName, MetricType, RunState, State } from '../types';
 
 const runStateSortValues: Record<RunState, number> = {

@@ -7,7 +7,7 @@ import { CommandTask } from 'types';
 import { alphaNumericSorter, dateTimeStringSorter } from 'shared/utils/sort';
 import { generateCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
-import { commandStateSorter } from '../utils/sort';
+import { commandStateSorter } from 'utils/sort';
 
 import {
   defaultRowClassName, relativeTimeRenderer, stateRenderer,
