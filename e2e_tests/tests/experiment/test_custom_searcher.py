@@ -12,7 +12,6 @@ from determined.searcher.search_method import (
     Create,
     ExitedReason,
     Operation,
-    SearcherState,
     SearchMethod,
     Shutdown,
     ValidateAfter,
@@ -44,7 +43,7 @@ def test_run_custom_searcher_experiment() -> None:
 
 class SingleSearchMethod(SearchMethod):
     def __init__(self, experiment_config: dict) -> None:
-        super().__init__(SearcherState(None))
+        super().__init__()
         # since this is a single trial the hyperparameter space comprises a single point
         self.hyperparameters = experiment_config["hyperparameters"]
 
@@ -109,7 +108,7 @@ def test_run_random_searcher_exp() -> None:
 
 class RandomSearcherMethod(SearchMethod):
     def __init__(self, max_trials: int, max_concurrent_trials: int) -> None:
-        super().__init__(SearcherState(None))
+        super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
 

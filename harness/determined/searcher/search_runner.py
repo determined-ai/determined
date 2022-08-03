@@ -6,6 +6,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 from determined.common.api import bindings
+from determined.common.api.bindings import v1TrialExitedEarlyExitedReason
 from determined.experimental import client
 from determined.searcher.search_method import ExitedReason, Progress, SearchMethod
 
@@ -55,15 +56,17 @@ class SearchRunner:
                         operations = self.search_method.initial_operations()
                     elif e.trialCreated:
                         logging.info(f"trialCreated({e.trialCreated.requestId})")
-                        operations = self.search_method.on_trial_created(
-                            uuid.UUID(e.trialCreated.requestId)
-                        )
+                        request_id = uuid.UUID(e.trialCreated.requestId)
+                        self.search_method.searcher_state.trials_created.add(request_id)
+                        self.search_method.searcher_state.trial_progress[request_id] = 0.0
+                        operations = self.search_method.on_trial_created(request_id)
                     elif e.trialClosed:
                         logging.info(f"trialClosed({e.trialClosed.requestId})")
-                        operations = self.search_method.on_trial_closed(
-                            uuid.UUID(e.trialClosed.requestId)
-                        )
+                        request_id = uuid.UUID(e.trialClosed.requestId)
+                        self.search_method.searcher_state.trials_closed.add(request_id)
+                        operations = self.search_method.on_trial_closed(request_id)
                     elif e.trialExitedEarly:
+                        # duplicate exit accounting already performed by master
                         logging.info(
                             f"trialExitedEarly({e.trialExitedEarly.requestId},"
                             f" {e.trialExitedEarly.exitedReason})"
@@ -72,23 +75,36 @@ class SearchRunner:
                             raise RuntimeError(
                                 "trialExitedEarly event is invalid without exitedReason"
                             )
+                        request_id = uuid.UUID(e.trialExitedEarly.requestId)
+                        if e.trialExitedEarly.exitedReason in (
+                            v1TrialExitedEarlyExitedReason.EXITED_REASON_INVALID_HP,
+                            v1TrialExitedEarlyExitedReason.EXITED_REASON_INIT_INVALID_HP,
+                        ):
+                            self.search_method.searcher_state.trial_progress.pop(request_id, None)
+                        elif (
+                            e.trialExitedEarly.exitedReason
+                            == v1TrialExitedEarlyExitedReason.EXITED_REASON_UNSPECIFIED
+                        ):
+                            self.search_method.searcher_state.failures.add(request_id)
                         operations = self.search_method.on_trial_exited_early(
-                            uuid.UUID(e.trialExitedEarly.requestId),
+                            request_id,
                             exited_reason=ExitedReason._from_bindings(
                                 e.trialExitedEarly.exitedReason
                             ),
                         )
                     elif e.validationCompleted:
+                        # duplicate completion accounting already performed by master
                         logging.info(
                             f"validationCompleted({e.validationCompleted.requestId},"
                             f" {e.validationCompleted.metric})"
                         )
+                        request_id = uuid.UUID(e.validationCompleted.requestId)
                         if e.validationCompleted.metric is None:
                             raise RuntimeError(
                                 "validationCompleted event is invalid without a metric"
                             )
                         operations = self.search_method.on_validation_completed(
-                            uuid.UUID(e.validationCompleted.requestId),
+                            request_id,
                             e.validationCompleted.metric,
                         )
                     elif e.experimentInactive:

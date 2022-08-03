@@ -3,7 +3,7 @@ import json
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from determined.common.api import bindings
 from determined.common.experimental import Checkpoint
@@ -11,7 +11,17 @@ from determined.common.experimental import Checkpoint
 
 @dataclasses.dataclass
 class SearcherState:
-    checkpoint_id: Optional[str]
+    failures: Set[uuid.UUID]
+    trial_progress: Dict[uuid.UUID, float]
+    trials_closed: Set[uuid.UUID]
+    trials_created: Set[uuid.UUID]
+    checkpoint_id: Optional[str] = None
+
+    def __init__(self) -> None:
+        self.failures = set()
+        self.trial_progress = {}
+        self.trials_closed = set()
+        self.trials_created = set()
 
 
 class ExitedReason(Enum):
@@ -114,12 +124,12 @@ class Create(Operation):
 
 
 class SearchMethod:
-    def __init__(self, searcher_state: SearcherState) -> None:
-        self._search_state = searcher_state
+    def __init__(self) -> None:
+        self._searcher_state = SearcherState()
 
     @property
     def searcher_state(self) -> SearcherState:
-        return self._search_state
+        return self._searcher_state
 
     @abstractmethod
     def initial_operations(self) -> List[Operation]:
