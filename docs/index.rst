@@ -107,29 +107,47 @@ so you can spend your time building models instead of managing infrastructure.
 
    <div class="landing">
       <div class="tiles-flex">
-          <a class="tile" href="quickstart-mdldev.html">
-              <h2 class="tile-title">Start here ...</h2>
-              <p class="tile-description">Learn the basics steps needed to set up a Determined environment and train models.</p>
-          </a>
-          <a class="tile" href="introduction.html">
-              <h2 class="tile-title">Introducing Determined</h2>
-              <p class="tile-description">Learn about core concepts and key features before diving into more detailed information.</p>
-          </a>
-          <a class="tile" href="cluster-setup-guide/basic.html">
-              <h2 class="tile-title">Administrator Guide</h2>
-              <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
-          </a>
-          <a class="tile" href="training/dtrain-introduction.html">
-              <h2 class="tile-title">Model Developer Guide</h2>
-              <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
-          </a>
-          <a class="tile" href="tutorials/index.html">
-              <h2 class="tile-title">Tutorials</h2>
-              <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
-          </a>
-          <a class="tile" href="reference/python-api.html">
-              <h2 class="tile-title">Reference</h2>
-              <p class="tile-description">Explore API libraries and configuration settings.</p>
-          </a>
+         <div class="tile-container">
+            <a class="tile" href="quickstart-mdldev.html">
+                <h2 class="tile-title">Start here ...</h2>
+                <p class="tile-description">Learn the basics steps needed to set up a Determined environment and train models.</p>
+            </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="introduction.html">
+                 <h2 class="tile-title">Introducing Determined</h2>
+                 <p class="tile-description">Learn about core concepts and key features before diving into more detailed information.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="cluster-setup-guide/basic.html">
+                 <h2 class="tile-title">Administrator Guide</h2>
+                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="cluster-setup-guide/basic.html">
+                 <h2 class="tile-title">Administrator Guide</h2>
+                 <p class="tile-description">Set up an on-premise or cloud-based cluster, including AWS, GCP, and Azure.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="training/dtrain-introduction.html">
+                 <h2 class="tile-title">Model Developer Guide</h2>
+                 <p class="tile-description">Learn how to work with Training APIs and configure your distributed training experiments.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="tutorials/index.html">
+                 <h2 class="tile-title">Tutorials</h2>
+                 <p class="tile-description">Step-by-step tutorials and deep dives give you practical, real-world experience using Determined.</p>
+             </a>
+         </div>
+         <div class="tile-container">
+             <a class="tile" href="reference/python-api.html">
+                 <h2 class="tile-title">Reference</h2>
+                 <p class="tile-description">Explore API libraries and configuration settings.</p>
+             </a>
+         </div>
       </div>
    </div>
