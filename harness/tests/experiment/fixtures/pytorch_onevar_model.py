@@ -168,7 +168,7 @@ class OneVarTrial(pytorch.PyTorchTrial):
             metrics["w_after"], metrics["w_exp"]
         ), f'{metrics["w_after"]} does not match {metrics["w_exp"]} at batch {batch_idx}'
 
-    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
 
         self.cls_reducer.update(sum(label), None)
@@ -278,7 +278,7 @@ class OneVarManualAMPTrial(OneVarTrial):
             "w_exp": w_exp,
         }
 
-    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
 
         self.cls_reducer.update(sum(label), None)
