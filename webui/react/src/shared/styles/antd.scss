@@ -4,11 +4,14 @@ html {
   .ant-breadcrumb {
     align-items: center;
     display: flex;
-  }
 
-  .ant-breadcrumb li:last-child {
-    a, span {
-      color: var(--theme-float-on);
+    li:last-child {
+      /* stylelint-disable no-descending-specificity */
+
+      a,
+      span {
+        color: var(--theme-float-on);
+      }
     }
   }
 
