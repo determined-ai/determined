@@ -33,7 +33,7 @@ message GetExperimentRequest {
 // Response to GetExperimentRequest.
 message GetExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "experiment", "config" ] }
+    json_schema: { required: [ "experiment" ] }
   };
   // The requested experiment.
   determined.experiment.v1.Experiment experiment = 1;
