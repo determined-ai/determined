@@ -253,31 +253,20 @@ class OneVarManualAMPTrial(OneVarTrial):
         self.cls_reducer.update(sum(label), batch_idx)
         self.fn_reducer.update((sum(label), batch_idx))
 
-        # Measure the weight right now.
-        w_before = self.model.weight.data.item()
-
-        # Calculate expected values for loss (eq 1) and weight (eq 4).
-        loss_exp = (label[0] - data[0] * w_before) ** 2
-        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
-
-        with autocast(device_type=self.device_type):
+        with autocast(device_type=self.device_type, dtype=torch.bfloat16):
             output = self.model(data)
             loss = self.loss_fn(output, label)
 
-        self.context.backward(self.scaler.scale(loss))
+        scaled_loss = self.scaler.scale(loss)
+        self.context.backward(scaled_loss)
         self.context.step_optimizer(self.opt, scaler=self.scaler)
         self.scaler.update()
 
-        # Measure the weight after the update.
-        w_after = self.model.weight.data.item()
-
         # Return values that we can compare as part of the tests.
         return {
+            "scale": None if not self.scaler._enabled else self.scaler._scale,
+            "scaled_loss": scaled_loss,
             "loss": loss,
-            "loss_exp": loss_exp,
-            "w_before": w_before,
-            "w_after": w_after,
-            "w_exp": w_exp,
         }
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:

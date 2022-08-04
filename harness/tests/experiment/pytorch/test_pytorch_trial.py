@@ -64,6 +64,7 @@ class TestPyTorchTrial:
         utils.ensure_requires_global_batch_size(pytorch_onevar_model.OneVarTrial, self.hparams)
 
     def test_onevar_single(self) -> None:
+        """Assert that the training loss and validation error decrease monotonically."""
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -148,7 +149,7 @@ class TestPyTorchTrial:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
-            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_checkpoint: typing.Optional[str] = None,
             steps_completed: int = 0,
         ) -> det.TrialController:
             updated_hparams = {
@@ -182,33 +183,33 @@ class TestPyTorchTrial:
             latest_checkpoint = interceptor.metrics_result()["uuid"]
             steps_completed = trainer.get_steps_completed()
 
-        controller1 = utils.make_trial_controller_from_trial_implementation(
+        controller_1 = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialMulti,
             hparams=self.hparams,
             workloads=make_workloads_1(),
             trial_seed=self.trial_seed,
             checkpoint_dir=checkpoint_dir,
         )
-        controller1.run()
+        controller_1.run()
 
         # Verify that an invalid architecture fails to load from the checkpoint.
         def make_workloads_2() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
 
-        hparams2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        hparams_2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
 
         with pytest.raises(RuntimeError):
-            controller2 = utils.make_trial_controller_from_trial_implementation(
+            controller_2 = utils.make_trial_controller_from_trial_implementation(
                 trial_class=pytorch_xor_model.XORTrialMulti,
-                hparams=hparams2,
+                hparams=hparams_2,
                 workloads=make_workloads_2(),
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
                 steps_completed=steps_completed,
             )
-            controller2.run()
+            controller_2.run()
 
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
@@ -219,7 +220,7 @@ class TestPyTorchTrial:
                 trial_seed=self.trial_seed,
             )
 
-        utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
+        _ = utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
 
     def test_custom_eval(self) -> None:
         training_metrics = {}
@@ -628,29 +629,20 @@ class TestPyTorchTrial:
     def test_amp(self, trial_class) -> None:
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
-
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=self.hparams,
-            workloads=make_workloads(),
+            workloads=make_amp_workloads(),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
         controller.run()
 
     def test_amp_cpu(self) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarManualAMPCPUTrial,
             hparams=self.hparams,
-            workloads=make_workloads(),
+            workloads=make_amp_workloads(),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
@@ -673,3 +665,12 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
         assert isinstance(trial, pytorch.PyTorchTrial), type(trial)
     else:
         assert isinstance(trial, torch.nn.Module), type(trial)
+
+
+def make_amp_workloads() -> workload.Stream:
+    trainer = utils.TrainAndValidate()
+    yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+    training_metrics, validation_metrics = trainer.result()
+    for older, newer in zip(training_metrics, training_metrics[1:]):
+        #TODO check for scaling
+        assert newer["loss"] <= older["loss"]
