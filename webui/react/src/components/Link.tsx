@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import React, { MouseEvent, PropsWithChildren, useCallback } from 'react';
 
 import { handlePath, linkPath } from 'routes/utils';
@@ -40,9 +41,15 @@ const Link: React.FC<Props> = ({
     handlePath(event, { external, onClick, path: props.path, popout });
   }, [ onClick, popout, props.path, external ]);
 
-  return props.disabled ? (
-    <span className={classes.join(' ')}>{props.children}</span>
-  ) : (
+  if (props.disabled) {
+    return props.isButton ? (
+      <Button className={classes.join(' ')} disabled>{props.children}</Button>
+    ) : (
+      <span className={classes.join(' ')}>{props.children}</span>
+    );
+  }
+
+  return (
     <a
       aria-label={props.label}
       className={classes.join(' ')}
