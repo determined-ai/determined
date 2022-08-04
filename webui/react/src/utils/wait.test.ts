@@ -73,11 +73,13 @@ describe('Wait Page Utilities', () => {
     const windowOpen = jest.fn();
 
     beforeAll(() => {
+      // Preserve the original `global.open`.
       globalOpen = global.open;
       global.open = windowOpen;
     });
 
     afterAll(() => {
+      // Restore `global.open` to original function.
       global.open = globalOpen;
     });
 
@@ -90,6 +92,7 @@ describe('Wait Page Utilities', () => {
     it('should open window for TensorBoard task', () => {
       expect(windowOpen).not.toHaveBeenCalled();
       utils.openCommand(COMMAND_TASK[CommandType.TensorBoard]);
+      // TODO: Expand this to use `toHaveBeenCalledWith`.
       expect(windowOpen).toHaveBeenCalled();
     });
 
