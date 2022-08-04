@@ -1,5 +1,4 @@
 import sys
-import urllib
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -58,7 +57,7 @@ def start_tensorboard(args: Namespace) -> None:
                             task_id=resp["id"],
                             service_address=resp["serviceAddress"],
                             resource_pool=resp["resourcePool"],
-                            description=urllib.parse.quote(resp["description"]),
+                            description=resp["description"],
                             task_type="tensorboard",
                         ),
                     )
