@@ -19,11 +19,11 @@ interface Params {
   tab?: TabType;
 }
 
-export const TAB_KEYS = {
+const TAB_KEYS = {
   [TabType.Account]: 'account',
   [TabType.UserManagement]: 'user-management',
 };
-export const DEFAULT_TAB_KEY = TabType.Account;
+const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
   const { tab } = useParams<Params>();
