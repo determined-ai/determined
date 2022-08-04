@@ -1,6 +1,0 @@
-stages:
-  - db:
-      name: db
-
-  - elastic:
-      name: elastic

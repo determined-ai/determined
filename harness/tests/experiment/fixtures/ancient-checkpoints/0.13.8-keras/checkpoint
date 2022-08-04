@@ -1,2 +1,0 @@
-model_checkpoint_path: "determined-keras-model-weights"
-all_model_checkpoint_paths: "determined-keras-model-weights"

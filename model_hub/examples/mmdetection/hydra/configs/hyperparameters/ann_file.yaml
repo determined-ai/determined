@@ -1,3 +1,0 @@
-override_mmdet_config:
-  data.train.ann_file: ???
-  data.val.ann_file: ???

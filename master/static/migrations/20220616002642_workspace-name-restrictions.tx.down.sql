@@ -1,4 +1,0 @@
-ALTER TABLE workspaces DROP CONSTRAINT namemin;
-ALTER TABLE workspaces DROP CONSTRAINT namemax;
-ALTER TABLE projects DROP CONSTRAINT namemin;
-ALTER TABLE projects DROP CONSTRAINT namemax;

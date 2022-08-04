@@ -1,3 +1,0 @@
-Host *
-    StrictHostKeyChecking no
-    IdentityFile /run/determined/ssh/id_rsa

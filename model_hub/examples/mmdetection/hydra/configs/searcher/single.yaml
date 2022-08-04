@@ -1,5 +1,0 @@
-name: single
-metric: bbox_mAP
-max_length:
-  batches: 87850
-smaller_is_better: false

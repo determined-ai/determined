@@ -1,8 +1,0 @@
-.base {
-  display: flex;
-  flex-direction: column;
-
-  & > *:not(:first-child) {
-    margin-top: 8px;
-  }
-}

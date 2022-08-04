@@ -1,5 +1,0 @@
-model_checkpoint_path: "/determined_shared_fs/d29e4324-1a0b-44d0-9cdf-7179f673b26a/model.ckpt-1"
-all_model_checkpoint_paths: "/determined_shared_fs/d29e4324-1a0b-44d0-9cdf-7179f673b26a/model.ckpt-0"
-all_model_checkpoint_paths: "/determined_shared_fs/d29e4324-1a0b-44d0-9cdf-7179f673b26a/model.ckpt-1"
-all_model_checkpoint_timestamps: 0.0
-all_model_checkpoint_timestamps: 0.0

@@ -1,4 +1,0 @@
-[tool.black]
-line-length = 100
-exclude = '(_gen.py|determined/_swagger/client/*)'
-
