@@ -198,7 +198,7 @@ func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
 	error,
 ) {
-	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
+	_, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanDeleteProject)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,8 @@ func (a *apiServer) ArchiveProject(
 		return nil, err
 	}
 
-	if err = a.m.db.QueryProto("archive_project", &projectv1.Project{}, req.Id, true); err != nil {
+	holder := &projectv1.Project{}
+	if err = a.m.db.QueryProto("archive_project", holder, req.Id, true); err != nil {
 		return nil, errors.Wrapf(err, "error archiving project (%d)", req.Id)
 	}
 	if holder.Id == 0 {
