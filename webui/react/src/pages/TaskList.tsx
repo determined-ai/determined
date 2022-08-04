@@ -111,9 +111,14 @@ const TaskList: React.FC = () => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
+  const clearSelected = useCallback(() => {
+    updateSettings({ row: undefined });
+  }, [ updateSettings ]);
+
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
-  }, [ resetSettings ]);
+    clearSelected();
+  }, [ clearSelected, resetSettings ]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -454,10 +459,6 @@ const TaskList: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
-
-  const clearSelected = useCallback(() => {
-    updateSettings({ row: undefined });
-  }, [ updateSettings ]);
 
   const TaskActionDropdownCM = useCallback(
     ({ record, onVisibleChange, children }) => (

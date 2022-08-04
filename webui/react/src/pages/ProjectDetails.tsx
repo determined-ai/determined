@@ -654,7 +654,8 @@ const ProjectDetails: React.FC = () => {
 
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
-  }, [ resetSettings ]);
+    clearSelected();
+  }, [ clearSelected, resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: ExperimentColumnName[]) => {
     if (columns.length === 0) {
