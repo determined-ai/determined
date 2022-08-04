@@ -33,6 +33,51 @@ class DownloadMode(enum.Enum):
     LocalWorkersShareDownload = "LOCAL_WORKERS_SHARE_DOWNLOAD"
     NoSharedDownload = "NO_SHARED_DOWNLOAD"
 
+def merge_resources(
+    all_resources: List[List[Tuple[str, int]]], rank: int
+) -> Tuple[List[Tuple[str, int]], Dict[str, List[int]]]:
+    """
+    Given a list of all resources, return:
+      - a merged list of resources
+      - a dict mapping conflicting files to ranks that would upload them
+
+    Note that we allow multiple ranks to upload directories, but only one rank may upload any
+    given file.
+    """
+    files = set()
+    uploaders = {}
+    merged = {}
+    for rank, rscs in enumerate(all_resources):
+        files_this_rank = []
+        for name, size in rscs:
+            if name.endswith(os.sep):
+                # Dir name.
+                stripped = name.rstrip("/")
+                uploaders.setdefault(stripped, []).append(rank)
+            else:
+                # File name.
+                files.add(name)
+                uploaders.setdefault(name, []).append(rank)
+
+            merged[name] = size
+
+    # Overlapping name situations:
+    #
+    #  A uploads |  B uploads | Conflict |  Detection
+    # -----------|------------|----------|-------------------------------
+    #  dir       |  dir       | no       |  n/a
+    #  dir       |  file      | yes      |  len(uploaders[name]) > 1
+    #  file      |  file      | yes      |  len(uploaders[name]) > 1
+    #
+    # Conclusion: all conflicts can be detected by checking the names in `files`.
+    conflicts = {}
+    for name in files:
+        uploading_ranks = uploaders[name]
+        if len(uploading_ranks) > 1:
+            conflicts[name] = uploading_ranks
+
+    return merged, conflicts
+
 
 class CheckpointContext:
     """
@@ -65,28 +110,98 @@ class CheckpointContext:
         checkpoint storage into a directory by the name of the ``storage_id``.  The name of the
         ``ckpt_dir`` is not preserved.
 
-        Note that with multiple workers, only the chief worker (``distributed.rank==0``) is allowed
-        to call ``upload()``.
+        When ``shard=False``, only the chief worker (``distributed.rank==0``) may call ``upload()``.
+
+        When ``shard=True``, ``upload()`` becomes a synchronization point between workers, so all
+        workers must call upload().  Those workers with nothing to upload may pass
+        ``ckpt_dir=None``.  The final checkpoint stored in checkpoint storage will contain a union
+        of the contents from each ckpt_dir.
 
         Returns:  The ``storage_id`` for this checkpoint.
         """
+        if ckpt_dir is not None:
+            ckpt_dir = os.fspath(ckpt_dir)
 
-        if self._dist.rank != 0:
+        if not shard and self._dist.rank != 0:
             raise RuntimeError(
-                "cannot call CheckpointContext.upload() from non-chief worker "
-                f"(rank={self._dist.rank})"
+                f"cannot call .upload(shard=False) from non-chief worker (rank={self._dist.rank})"
             )
 
-        ckpt_dir = os.fspath(ckpt_dir)
+        if ckpt_dir is None and not shard:
+            raise RuntimeError(
+                "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
+                "nothing at all"
+            )
 
-        storage_id = str(uuid.uuid4())
-        resources = self._storage_manager._list_directory(ckpt_dir)
+        if shard:
+            ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
+            if not any(ckpt_dir_mask):
+                raise RuntimeError(
+                    "cannot call .upload(ckpt_dir=None, shard=True), from all ranks; "
+                    "at least one rank must have a valid ckpt_dir"
+                )
+        else:
+            ckpt_dir_mask = [True]
 
-        # add metadata pre-upload but without counting it among resources
-        self._write_metadata_file(ckpt_dir, metadata or {})
+        if self._dist.rank == 0:
+            storage_id = str(uuid.uuid4())
 
-        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
-        self._report_checkpoint(storage_id, resources, metadata)
+        if shard:
+            storage_id = self._dist.broadcast(storage_id)
+
+        # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
+        # the lowest rank on each node will actually upload this directory.
+        if shard:
+            if ckpt_dir is None:
+                file_uid = None
+            else:
+                st = os.stat(ckpt_dir)
+                file_uid = (st.st_dev, st.st_ino)
+            all_file_uids = self._dist.allgather(file_uid)
+            # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
+            want_upload = all_file_uids.index(file_uid) == self._dist.rank
+        else:
+            want_upload = True
+
+        # Decide what we are going to upload.
+        if not want_upload or ckpt_dir is None:
+            resources = []
+        else:
+            resources = self._storage_manager._list_directory(ckpt_dir)
+
+        if shard:
+            all_resources = self._dist.allgather(resources)
+
+            merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
+            if conflicts:
+                # Try to keep the logs easier to read; print the whole failure only on the chief.
+                if self._dist.rank > 0:
+                    raise RuntimeError("refusing to upload with file conflicts")
+                msgs = [
+                    f"    {f} uploaded by ranks {ranks}"
+                    for f, ranks in sorted(conflicts.items())
+                ]
+                raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
+        else:
+            merged_resources = resources
+
+        # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
+        metadata_writer_rank = ckpt_dir_mask.index(True)
+        if self._dist.rank == metadata_writer_rank:
+            assert ckpt_dir is not None:
+            # Add metadata pre-upload but without counting it among resources
+            self._write_metadatanfile(ckpt_dir, metadata or {})
+            # XXX: merge metadata too
+
+        if ckpt_dir is not None:
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+
+        # synchronize workers
+        _ = self._dist.allgather(None)
+
+        if self._dist.rank == 0:
+            self._report_checkpoint(storage_id, merged_resources, metadata)
+
         return storage_id
 
     def download(
