@@ -53,11 +53,10 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/auth/login",
 	"/api/v1/auth/logout",
 	"/proxy/:service/\\*",
-	"/api/v1/projects/.*",
 	"/api/v1/notebooks/.*",
 	"/api/v1/tasks/.*",
 	"/api/v1/allocations/.*",
-	"/api/v1/tensorboards/",
+	"/api/v1/tensorboards/.*",
 	"/api/v1/shells/.*",
 	"/api/v1/experiments/.*",
 	"/api/v1/trials/.*",
@@ -74,6 +73,7 @@ var adminAuthPointsList = []string{
 
 var unauthenticatedPointsPattern = regexp.MustCompile("^" +
 	strings.Join(unauthenticatedPointsList, "$|^") + "$")
+
 var adminAuthPointsPattern = regexp.MustCompile("^" +
 	strings.Join(adminAuthPointsList, "$|^") + "$")
 
@@ -156,12 +156,6 @@ func (s *Service) UserAndSessionFromRequest(
 	return s.db.UserByToken(token, s.extConfig)
 }
 
-// ProcessAuthentication is a middleware processing function that attempts
-// to authenticate incoming HTTP requests.
-func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return s.processAuthentication(next)
-}
-
 // getAuthLevel returns what level of authentication a request needs.
 func (s *Service) getAuthLevel(c echo.Context) int {
 	switch {
@@ -186,7 +180,9 @@ func (s *Service) getAuthLevel(c echo.Context) int {
 	}
 }
 
-func (s *Service) processAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
+// ProcessAuthentication is a middleware processing function that attempts
+// to authenticate incoming HTTP requests.
+func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		adminOnly := false
 		doAuth := s.getAuthLevel(c)
