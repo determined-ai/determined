@@ -112,9 +112,21 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw, originalConfig }
     }
 
     const filePath = String(info.node.key);
+    const nodeAddress = filePath.split('/');
+    let fileObj: FileNode | undefined = undefined;
+
+    for (const node of nodeAddress) {
+      if (!fileObj) {
+        fileObj = files.find((file) => file.name === node);
+      } else {
+        if (fileObj?.isDir) {
+          fileObj = fileObj.files?.find((file) => file.name === node);
+        }
+      }
+    }
 
     // check if the selected node is a file
-    if (!files.find((file) => file.path === filePath)?.isDir) {
+    if (!fileObj?.isDir) {
       setIsFetchingFile(true);
 
       try {
