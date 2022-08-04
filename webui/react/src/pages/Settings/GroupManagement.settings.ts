@@ -1,7 +1,6 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
 export type UserColumnName =
 | 'id'

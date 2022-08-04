@@ -84,8 +84,8 @@ export const getGroups = generateDetApi<
    Api.V1GetGroupsResponse, Api.V1GetGroupsResponse
 >(Config.getGroups);
 
-export const updateGroups = generateDetApi<
-Service.UpdateGroupsParams,
+export const updateGroup = generateDetApi<
+Service.UpdateGroupParams,
  Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
 >(Config.updateGroup);
 

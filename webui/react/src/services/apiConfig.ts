@@ -238,7 +238,7 @@ export const getGroups: DetApi<
 };
 
 export const updateGroup: DetApi<
-Service.UpdateGroupsParams,
+Service.UpdateGroupParams,
  Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
 > = {
   name: 'updateGroup',

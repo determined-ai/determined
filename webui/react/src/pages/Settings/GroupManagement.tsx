@@ -4,16 +4,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import InteractiveTable, { InteractiveTableSettings,
   onRightClickableCell } from 'components/InteractiveTable';
 import Page from 'components/Page';
-import { checkmarkRenderer, defaultRowClassName,
-  getFullPaginationConfig, relativeTimeRenderer } from 'components/Table';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
+import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroups, getUsers } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
-import { validateDetApiEnum } from 'shared/utils/service';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
@@ -32,20 +31,22 @@ const GroupActionDropdown = ({ fetchGroups, group, users }: DropdownProps) => {
     modalOpen: openEditGroupModal,
     contextHolder: modalEditGroupContextHolder,
   } = useModalCreateGroup({ group: group, onClose: fetchGroups, users: users });
+  const {
+    modalOpen: openDeleteGroupModal,
+    contextHolder: modalDeleteGroupContextHolder,
+  } = useModalDeleteGroup({ group: group, onClose: fetchGroups });
   const onClickEditGroup = () => {
     openEditGroupModal();
   };
-    // const onToggleDelete = async () => {
-    //   await patchUser({ userId: user.id, userParams: { active: !user.isActive } });
-    //   message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
-    //   fetchUsers();
-    // };
+  const onToggleDelete = () => {
+    openDeleteGroupModal();
+  };
   const menuItems = (
     <Menu>
       <Menu.Item key="edit" onClick={onClickEditGroup}>
         Edit
       </Menu.Item>
-      <Menu.Item danger key="delete">
+      <Menu.Item danger key="delete" onClick={onToggleDelete}>
         Delete
       </Menu.Item>
     </Menu>
@@ -62,6 +63,7 @@ const GroupActionDropdown = ({ fetchGroups, group, users }: DropdownProps) => {
         </Button>
       </Dropdown>
       {modalEditGroupContextHolder}
+      {modalDeleteGroupContextHolder}
     </div>
   );
 };
@@ -126,7 +128,8 @@ const GroupManagement: React.FC = () => {
   }, [
     settings.tableLimit,
     settings.tableOffset,
-    fetchGroups ]);
+    fetchGroups,
+    fetchUsers ]);
 
   const {
     modalOpen: openCreateGroupModal,
@@ -178,7 +181,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [ users ]);
+  }, [ users, fetchGroups ]);
 
   const table = useMemo(() => {
     return (

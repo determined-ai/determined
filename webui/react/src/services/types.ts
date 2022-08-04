@@ -274,18 +274,18 @@ export interface PatchUserParams {
 }
 
 export interface CreateGroupsParams {
-  name: string;
   addUsers?: Array<number>;
+  name: string;
 }
 export interface UpdateUserSettingParams {
   setting: Api.V1UserWebSetting;
   storagePath: string;
 }
 
-export interface UpdateGroupsParams {
+export interface UpdateGroupParams {
+  addUsers?: Array<number>;
   groupId: number;
   name?: string;
-  addUsers?: Array<number>;
   removeUsers?: Array<number>;
 }
 
