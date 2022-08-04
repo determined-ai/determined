@@ -1,6 +1,5 @@
 WITH p AS (
   SELECT id, workspace_id FROM projects
-UPDATE projects SET archived = $2
   WHERE id = $1
   AND NOT immutable
 ),
