@@ -49,6 +49,19 @@ type FullUser struct {
 	AgentGroup null.String `db:"agent_group" json:"agent_group"`
 }
 
+// ToUser converts a FullUser model to just a User model.
+func (u FullUser) ToUser() User {
+	return User{
+		ID:           u.ID,
+		Username:     u.Username,
+		PasswordHash: null.String{},
+		DisplayName:  u.DisplayName,
+		Admin:        u.Admin,
+		Active:       u.Active,
+		ModifiedAt:   u.ModifiedAt,
+	}
+}
+
 // ValidatePassword checks that the supplied password is correct.
 func (user User) ValidatePassword(password string) bool {
 	// If an empty password was posted, we need to check that the
@@ -67,39 +80,6 @@ func (user User) ValidatePassword(password string) bool {
 		[]byte(password))
 
 	return err == nil
-}
-
-// PasswordCanBeModifiedBy checks whether "other" can change the password of "user".
-func (user User) PasswordCanBeModifiedBy(other User) bool {
-	if other.Username == "determined" {
-		return false
-	}
-
-	if other.Admin {
-		return true
-	}
-
-	if other.ID == user.ID {
-		return true
-	}
-
-	return false
-}
-
-// CanCreateUser checks whether the calling user
-// has the authority to create other users.
-func (user User) CanCreateUser() bool {
-	return user.Admin
-}
-
-// AdminCanBeModifiedBy checks whether "other" can enable or disable the admin status of "user".
-func (user User) AdminCanBeModifiedBy(other User) bool {
-	return other.Admin
-}
-
-// ActiveCanBeModifiedBy checks whether "other" can enable or disable the active status of "user".
-func (user User) ActiveCanBeModifiedBy(other User) bool {
-	return other.Admin
 }
 
 // UpdatePasswordHash updates the model's password hash employing necessary cryptographic
