@@ -119,6 +119,10 @@ class SearchRunner:
                             f"trialProgress({e.trialProgress.requestId}, "
                             f"{e.trialProgress.partialUnits})"
                         )
+                        request_id = uuid.UUID(e.trialProgress.requestId)
+                        self.search_method.searcher_state.trial_progress[request_id] = float(
+                            e.trialProgress.partialUnits
+                        )
                         progress = self.search_method.progress()
                         operations = [Progress(progress)]
                     else:
