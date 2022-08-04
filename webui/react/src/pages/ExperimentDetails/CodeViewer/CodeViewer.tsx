@@ -47,12 +47,13 @@ type FileInfo = {
 const CodeViewer: React.FC<Props> = ({ experimentId, configRaw, originalConfig }) => {
   const resize = useResize();
 
-  const [ config ] = useState(() => {
+  const config = useMemo(() => {
     /**
    * strip registry_auth from config for display
    * as well as workspace/project names
    */
     if (originalConfig) return originalConfig;
+
     if (configRaw) {
       const {
         environment: { registry_auth, ...restEnvironment },
@@ -62,7 +63,7 @@ const CodeViewer: React.FC<Props> = ({ experimentId, configRaw, originalConfig }
       } = configRaw;
       return { environment: restEnvironment, ...restConfig };
     }
-  });
+  }, [ configRaw, originalConfig ]);
   // Data structure to be used by the Tree
   const [ files, setFiles ] = useState<FileNode[]>([]);
   const [ isFetchingFile, setIsFetchingFile ] = useState(false);
