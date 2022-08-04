@@ -109,7 +109,16 @@ func (s *Searcher) TrialExitedEarly(
 		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", requestID)
 	}
 	s.Exits[requestID] = true
+
 	s.Record(operations)
+	_, isCustomSMethod := s.method.(CustomSearchMethod)
+	// for non custom-search methods you can make the assumption
+	// that trials will be created immediately.
+	if s.TrialsRequested == len(s.TrialsClosed) && !isCustomSMethod { // if not custom search method.
+		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
+		s.Record([]Operation{shutdown})
+		operations = append(operations, shutdown)
+	}
 	return operations, nil
 }
 
@@ -145,8 +154,12 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
+
 	s.Record(operations)
-	if s.TrialsRequested == len(s.TrialsClosed) {
+	_, isCustomSMethod := s.method.(CustomSearchMethod)
+	// for non custom-search methods you can make the assumption
+	// that trials will be created immediately.
+	if s.TrialsRequested == len(s.TrialsClosed) && !isCustomSMethod { // if not custom search method.
 		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
 		s.Record([]Operation{shutdown})
 		operations = append(operations, shutdown)
