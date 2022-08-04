@@ -1,3 +1,4 @@
+import urllib
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -59,7 +60,7 @@ def start_notebook(args: Namespace) -> None:
                     request.make_interactive_task_url(
                         task_id=nb.id,
                         service_address=nb.serviceAddress,
-                        description=nb.description,
+                        description=urllib.parse.quote(nb.description),
                         resource_pool=nb.resourcePool,
                         task_type="notebook",
                     ),
