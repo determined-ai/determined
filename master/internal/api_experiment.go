@@ -1576,9 +1576,13 @@ func (a *apiServer) GetModelDef(
 }
 
 func (a *apiServer) MoveExperiment(
-	_ context.Context, req *apiv1.MoveExperimentRequest,
+	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	p, err := a.GetProjectByID(req.DestinationProjectId)
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+	p, err := a.GetProjectByID(req.DestinationProjectId, model.UserFromProto(user.User))
 	if err != nil {
 		return nil, err
 	}

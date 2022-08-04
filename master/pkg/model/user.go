@@ -5,6 +5,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/guregu/null.v3"
+
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // BCryptCost is a stopgap until we implement sane master-configuration.
@@ -59,6 +61,19 @@ func (u FullUser) ToUser() User {
 		Admin:        u.Admin,
 		Active:       u.Active,
 		ModifiedAt:   u.ModifiedAt,
+	}
+}
+
+// UserFromProto converts a proto user to a model user.
+func UserFromProto(u *userv1.User) User {
+	return User{
+		ID:       UserID(u.Id),
+		Username: u.Username,
+		// PasswordHash: u,
+		DisplayName: null.StringFrom(u.DisplayName),
+		Admin:       u.Admin,
+		Active:      u.Active,
+		ModifiedAt:  u.ModifiedAt.AsTime(),
 	}
 }
 

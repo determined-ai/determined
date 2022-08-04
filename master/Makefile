@@ -32,7 +32,9 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
 	mockery --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
-	mockery --name=UserAuthZ --dir=internal/user --output internal/mocks --filename authz_iface.go
+	mockery --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
+	mockery --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
+	mockery --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks
 	mkdir -p build

@@ -142,8 +142,13 @@ def do_request(
 
     def _get_message(r: requests.models.Response) -> str:
         try:
-            return str(_json.loads(r.text).get("message"))
-        except Exception:
+            json_resp = _json.loads(r.text)
+            mes = json_resp.get("message")
+            if mes is not None:
+                return mes
+            # Try getting GRPC error description if message does not exist.
+            return str(json_resp.get("error").get("error"))
+        except:
             return ""
 
     if r.status_code == 403:
