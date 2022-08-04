@@ -67,6 +67,33 @@ export const resetUserSetting = generateDetApi<
   EmptyParams, Api.V1ResetUserSettingResponse, void
 >(Config.resetUserSetting);
 
+/* Groups */
+
+export const createGroup = generateDetApi<
+  Service.CreateGroupsParams,
+   Api.V1CreateGroupResponse, Api.V1CreateGroupResponse
+>(Config.createGroup);
+
+export const getGroup = generateDetApi<
+  Service.GetGroupParams,
+   Api.V1GetGroupResponse, Api.V1GetGroupResponse
+>(Config.getGroup);
+
+export const getGroups = generateDetApi<
+  Service.GetGroupsParams,
+   Api.V1GetGroupsResponse, Api.V1GetGroupsResponse
+>(Config.getGroups);
+
+export const updateGroups = generateDetApi<
+Service.UpdateGroupsParams,
+ Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
+>(Config.updateGroup);
+
+export const deleteGroup = generateDetApi<
+Service.DeleteGroupParams,
+ Api.V1DeleteGroupResponse, Api.V1DeleteGroupResponse
+>(Config.deleteGroup);
+
 /* Info */
 
 export const getInfo = generateDetApi<
