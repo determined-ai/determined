@@ -1,0 +1,2 @@
+# Empty checks to allow compatability with main repo using pre-commit :)
+repos: []
