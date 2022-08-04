@@ -67,8 +67,8 @@ Register Models
 ===============
 
 A model can be added to the registry via the WebUI, Python API, REST API, or CLI. This guide will
-cover the Python and CLI methods. For information on the REST API, see the `Swagger API
-documentation <../rest-api/index.html#/Models>`__.
+cover the Python and CLI methods. For information on the REST API, see the
+:doc:`/reference/rest-api` documentation.
 
 The following example demonstrates how to add a new model to the registry;
 :func:`~determined.experimental.Determined.create_model` returns an instance of the

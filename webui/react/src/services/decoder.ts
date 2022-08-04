@@ -543,6 +543,20 @@ export const decodeTrialSummary = (
   };
 };
 
+export const decodeTrialWorkloads = (
+  data: Sdk.V1GetTrialWorkloadsResponse,
+): types.TrialWorkloads => {
+  const workloads = data.workloads.map((ww) => ({
+    checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
+    training: ww.training && decodeMetricsWorkload(ww.training),
+    validation: ww.validation && decodeMetricsWorkload(ww.validation),
+  }));
+  return {
+    pagination: data.pagination,
+    workloads: workloads,
+  };
+};
+
 export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {

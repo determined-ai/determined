@@ -213,10 +213,10 @@ const themeDark = {
   ixInactive: 'rgba(49, 49, 49, 1.0)',
   ixOn: 'rgba(209, 209, 209, 1.0)',
   ixOnActive: 'rgba(23, 125, 220, 1.0)',
-  ixOnInactive: 'rgba(45, 45, 45, 1.0)',
+  ixOnInactive: 'rgba(80, 80, 80, 1.0)',
   ixBorder: 'rgba(67, 67, 67, 1.0)',
   ixBorderActive: 'rgba(23, 125, 220, 1.0)',
-  ixBorderInactive: 'rgba(45, 45, 45, 1.0)',
+  ixBorderInactive: 'rgba(80, 80, 80, 1.0)',
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',

@@ -24,7 +24,7 @@ import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from
 import handleError from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 

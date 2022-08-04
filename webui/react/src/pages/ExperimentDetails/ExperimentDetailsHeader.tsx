@@ -42,7 +42,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
 

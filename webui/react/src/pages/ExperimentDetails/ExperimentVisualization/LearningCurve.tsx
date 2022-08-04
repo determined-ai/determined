@@ -21,7 +21,7 @@ import {
   metricTypeParamMap, RunState, Scale,
 } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 

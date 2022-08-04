@@ -3,9 +3,8 @@ name: "Lint react"
 
 on:
   pull_request:
-    paths-ignore:
-      - '*.md'
-      - 'docs/*'
+    paths:
+      - 'webui/*'
   push:
     branches:
       - 'main'

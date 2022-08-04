@@ -13,7 +13,7 @@ import {
   MetricName,
 } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import { HpValsMap } from '../CompareVisualization';
 
