@@ -19,7 +19,7 @@ import handleError from 'utils/error';
 import {
   getActionsForExperiment,
 } from 'utils/experiment';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 interface Props {
   curUser?: DetailedUser;
