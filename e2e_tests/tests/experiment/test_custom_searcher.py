@@ -92,8 +92,9 @@ def test_run_random_searcher_exp() -> None:
 
     max_trials = 5
     max_concurrent_trials = 2
+    max_length = 3000
 
-    search_method = RandomSearcherMethod(max_trials, max_concurrent_trials)
+    search_method = RandomSearcherMethod(max_trials, max_concurrent_trials, max_length)
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
@@ -107,10 +108,11 @@ def test_run_random_searcher_exp() -> None:
 
 
 class RandomSearcherMethod(SearchMethod):
-    def __init__(self, max_trials: int, max_concurrent_trials: int) -> None:
+    def __init__(self, max_trials: int, max_concurrent_trials: int, max_length: int) -> None:
         super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
+        self.max_length = max_length
 
         self.created_trials = 0
         self.pending_trials = 0
@@ -130,7 +132,7 @@ class RandomSearcherMethod(SearchMethod):
         if self.created_trials < self.max_trials:
             request_id = uuid.uuid4()
             ops.append(Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
-            ops.append(ValidateAfter(request_id=request_id, length=3000))
+            ops.append(ValidateAfter(request_id=request_id, length=self.max_length))
             ops.append(Close(request_id=request_id))
             self.created_trials += 1
             self.pending_trials += 1
@@ -144,6 +146,12 @@ class RandomSearcherMethod(SearchMethod):
         if 0 < self.max_concurrent_trials < self.pending_trials:
             logging.error("pending trials is greater than max_concurrent_trial")
         progress = self.closed_trials / self.max_trials
+        units_completed = sum((
+            self.max_length if r in self.searcher_state.trials_closed else self.searcher_state.trial_progress[r]
+            for r in self.searcher_state.trial_progress
+        ))
+        units_expected = self.max_length * self.max_trials
+        progress = units_completed / units_expected
 
         logging.info(f"progress = {progress}")
 
@@ -158,7 +166,7 @@ class RandomSearcherMethod(SearchMethod):
         if exit_reason == ExitedReason.INVALID_HP or exit_reason == ExitedReason.INIT_INVALID_HP:
             request_id = uuid.uuid4()
             ops.append(Create(request_id=request_id, hparams=self.sample_params(), checkpoint=None))
-            ops.append(ValidateAfter(request_id=request_id, length=3000))
+            ops.append(ValidateAfter(request_id=request_id, length=self.max_length))
             ops.append(Close(request_id=request_id))
             self.pending_trials += 1
             return ops
@@ -182,7 +190,7 @@ class RandomSearcherMethod(SearchMethod):
                 checkpoint=None,
             )
             ops.append(create)
-            ops.append(ValidateAfter(request_id=create.request_id, length=3000))
+            ops.append(ValidateAfter(request_id=create.request_id, length=self.max_length))
             ops.append(Close(request_id=create.request_id))
 
             self.created_trials += 1
