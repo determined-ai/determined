@@ -6,6 +6,12 @@ html {
     display: flex;
   }
 
+  .ant-breadcrumb li:last-child {
+    a, span {
+      color: var(--theme-float-on);
+    }
+  }
+
   /* Button */
 
   .ant-btn { border-radius: var(--theme-border-radius); }
