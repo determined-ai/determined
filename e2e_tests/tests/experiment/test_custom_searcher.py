@@ -146,10 +146,14 @@ class RandomSearcherMethod(SearchMethod):
         if 0 < self.max_concurrent_trials < self.pending_trials:
             logging.error("pending trials is greater than max_concurrent_trial")
         progress = self.closed_trials / self.max_trials
-        units_completed = sum((
-            self.max_length if r in self.searcher_state.trials_closed else self.searcher_state.trial_progress[r]
-            for r in self.searcher_state.trial_progress
-        ))
+        units_completed = sum(
+            (
+                self.max_length
+                if r in self.searcher_state.trials_closed
+                else self.searcher_state.trial_progress[r]
+                for r in self.searcher_state.trial_progress
+            )
+        )
         units_expected = self.max_length * self.max_trials
         progress = units_completed / units_expected
 
