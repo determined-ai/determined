@@ -145,10 +145,10 @@ def do_request(
             json_resp = _json.loads(r.text)
             mes = json_resp.get("message")
             if mes is not None:
-                return mes
+                return str(mes)
             # Try getting GRPC error description if message does not exist.
             return str(json_resp.get("error").get("error"))
-        except:
+        except Exception:
             return ""
 
     if r.status_code == 403:

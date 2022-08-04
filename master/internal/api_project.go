@@ -203,15 +203,17 @@ func (a *apiServer) DeleteProject(
 	if err != nil {
 		return nil, err
 	}
-	if p.Immutable {
-		return nil, errors.Errorf("project (%d) is immutable so can't be deleted", req.Id)
-	}
 
 	holder := &projectv1.Project{}
 	err = a.m.db.QueryProto("delete_project", holder, req.Id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error deleting project (%d)", req.Id)
 	}
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) does not exist or not deletable by this user",
+			req.Id)
+	}
+
 	return &apiv1.DeleteProjectResponse{}, nil
 }
 
@@ -230,14 +232,13 @@ func (a *apiServer) MoveProject(
 	}
 	// Allow projects to be moved from immutable workspaces but not to immutable workspaces.
 	from, err := a.GetWorkspaceByID(p.WorkspaceId, curUser, false)
-	if err != nil { // Can view from workspace?
+	if err != nil {
 		return nil, err
 	}
 	to, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, curUser, true)
-	if err != nil { // Can view to workspace?
+	if err != nil {
 		return nil, err
 	}
-	// Can move project?
 	if err = project.AuthZProvider.Get().CanMoveProject(curUser, p, from, to); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -264,9 +265,6 @@ func (a *apiServer) ArchiveProject(
 	if err != nil {
 		return nil, err
 	}
-	if p.Immutable {
-		return nil, errors.Errorf("project (%d) is immutable so can't be archived", p.Id)
-	}
 	if err = a.CheckParentWorkspaceUnarchived(p); err != nil {
 		return nil, err
 	}
@@ -274,6 +272,11 @@ func (a *apiServer) ArchiveProject(
 	if err = a.m.db.QueryProto("archive_project", &projectv1.Project{}, req.Id, true); err != nil {
 		return nil, errors.Wrapf(err, "error archiving project (%d)", req.Id)
 	}
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) is not archive-able by this user",
+			req.Id)
+	}
+
 	return &apiv1.ArchiveProjectResponse{}, nil
 }
 
@@ -286,9 +289,6 @@ func (a *apiServer) UnarchiveProject(
 	if err != nil {
 		return nil, err
 	}
-	if p.Immutable {
-		return nil, errors.Errorf("project (%d) is immutable so can't be unarchived", p.Id)
-	}
 	if err = a.CheckParentWorkspaceUnarchived(p); err != nil {
 		return nil, err
 	}
@@ -296,6 +296,10 @@ func (a *apiServer) UnarchiveProject(
 	holder := &projectv1.Project{}
 	if err = a.m.db.QueryProto("archive_project", holder, req.Id, false); err != nil {
 		return nil, errors.Wrapf(err, "error unarchiving project (%d)", req.Id)
+	}
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "project (%d) is not unarchive-able by this user",
+			req.Id)
 	}
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }

@@ -67,9 +67,8 @@ func (u FullUser) ToUser() User {
 // UserFromProto converts a proto user to a model user.
 func UserFromProto(u *userv1.User) User {
 	return User{
-		ID:       UserID(u.Id),
-		Username: u.Username,
-		// PasswordHash: u,
+		ID:          UserID(u.Id),
+		Username:    u.Username,
 		DisplayName: null.StringFrom(u.DisplayName),
 		Admin:       u.Admin,
 		Active:      u.Active,

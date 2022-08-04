@@ -22,7 +22,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
-	//"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 var workspaceAuthZ *mocks.WorkspaceAuthZ
