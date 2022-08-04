@@ -1,4 +1,4 @@
-import { Button, Input } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
@@ -36,7 +36,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   visible,
   width = 160,
 }: Props) => {
-  const inputRef = useRef<Input>(null);
+  const inputRef = useRef<InputRef>(null);
   const [ search, setSearch ] = useState('');
   const [ selectedMap, setSelectedMap ] = useState<Record<string, boolean>>({});
   const prevVisible = usePrevious(visible, undefined);

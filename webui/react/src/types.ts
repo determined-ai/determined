@@ -259,6 +259,7 @@ export enum ExperimentSearcherName {
   AdaptiveAdvanced = 'adaptive',
   AdaptiveAsha = 'adaptive_asha',
   AdaptiveSimple = 'adaptive_simple',
+  AsyncHalving = 'async_halving',
   Grid = 'grid',
   Pbt = 'pbt',
   Random = 'random',
@@ -281,6 +282,7 @@ export interface ExperimentConfig {
     maxSlots?: number;
   };
   searcher: {
+    max_length?: Record<'batches' | 'records' | 'epochs', number>,
     max_trials?: number;
     metric: string;
     name: ExperimentSearcherName;
@@ -300,6 +302,7 @@ export enum ExperimentAction {
   Delete = 'Delete',
   DownloadCode = 'Download Experiment Code',
   Fork = 'Fork',
+  HyperparameterSearch = 'Hyperparameter Search',
   Kill = 'Kill',
   Move = 'Move',
   Pause = 'Pause',
@@ -477,9 +480,12 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
   endTime?: string;
   forkedFrom?: number;
+  hyperparameters: HyperparametersFlattened; // Nested HP keys are flattened, eg) foo.bar
   id: number;
   jobId: string;
   jobSummary?: JobSummary;
@@ -504,12 +510,9 @@ export interface ProjectExperiment extends ExperimentItem {
   workspaceName: string;
 }
 
-export interface ExperimentBase extends ProjectExperiment {
-  config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
-  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+// TODO remove ExperimentBase, the extra info that was in it got migrated to ExperimentItem
+export type ExperimentBase = ProjectExperiment;
 
-}
 // TODO we should be able to remove ExperimentOld but leaving this off.
 export interface ExperimentOld extends ExperimentItem {
   config: ExperimentConfig;

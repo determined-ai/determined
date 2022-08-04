@@ -270,7 +270,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
-      params.projectId || 0,
+      params.projectId ?? 0,
       options,
     );
   },

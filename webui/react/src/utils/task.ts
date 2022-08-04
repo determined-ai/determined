@@ -113,26 +113,52 @@ export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
     .map((_, idx) => generateOldExperiment(idx));
 };
 
+export const generateExperiment = (id = 1): Type.ExperimentItem => {
+  const experimentTask = generateExperimentTask(id);
+  const user = sampleUsers.random();
+  const config = {
+    name: experimentTask.name,
+    resources: {},
+    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+  };
+  return {
+    ...experimentTask,
+    config: {
+      checkpointPolicy: 'best',
+      checkpointStorage: {
+        hostPath: '/tmp',
+        saveExperimentBest: 0,
+        saveTrialBest: 1,
+        saveTrialLatest: 1,
+        storagePath: 'determined-integration-checkpoints',
+        type: 'shared_fs',
+      },
+      dataLayer: { type: 'shared_fs' },
+      hyperparameters: {},
+      maxRestarts: 5,
+      name: experimentTask.name,
+      resources: {},
+      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+    },
+    configRaw: config,
+    hyperparameters: {},
+    id: id,
+    jobId: id.toString(),
+    labels: [],
+    name: experimentTask.name,
+    numTrials: Math.round(Math.random() * 60000),
+    projectId: 1,
+    resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
+    searcherType: 'single',
+    userId: user.id,
+    username: user.username,
+  } as Type.ExperimentItem;
+};
+
 export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
   return new Array(Math.floor(count))
     .fill(null)
-    .map((_, idx) => {
-      const experimentTask = generateExperimentTask(idx);
-      const user = sampleUsers.random();
-      return {
-        ...experimentTask,
-        id: idx,
-        jobId: idx.toString(),
-        labels: [],
-        name: experimentTask.name,
-        numTrials: Math.round(Math.random() * 60000),
-        projectId: 1,
-        resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
-        searcherType: 'single',
-        userId: user.id,
-        username: user.username,
-      } as Type.ExperimentItem;
-    });
+    .map((_, idx) => generateExperiment(idx));
 };
 
 export const generateTasks = (count = 10): Type.RecentTask[] => {

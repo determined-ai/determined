@@ -13,6 +13,8 @@ import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -46,6 +48,7 @@ interface Props {
 enum TrialAction {
   OpenTensorBoard = 'Open Tensorboard',
   ViewLogs = 'View Logs',
+  HyperparameterSearch = 'Hyperparameter Search',
 }
 
 const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
@@ -55,6 +58,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ canceler ] = useState(new AbortController());
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment });
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -89,12 +97,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
   }, [ experiment.id ]);
 
+  const handleHyperparameterSearch = useCallback((trial: TrialItem) => {
+    openModalHyperparameterSearch({ trial });
+  }, [ openModalHyperparameterSearch ]);
+
   const dropDownOnTrigger = useCallback((trial: TrialItem) => {
     return {
       [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
       [TrialAction.ViewLogs]: () => handleViewLogs(trial),
+      [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
     };
-  }, [ handleOpenTensorBoard, handleViewLogs ]);
+  }, [ handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs ]);
 
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
@@ -143,6 +156,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       <ActionDropdown<TrialAction>
         actionOrder={[
           TrialAction.OpenTensorBoard,
+          TrialAction.HyperparameterSearch,
           TrialAction.ViewLogs,
         ]}
         id={experiment.id + ''}
@@ -316,6 +330,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
               {TrialAction.OpenTensorBoard}
             </Menu.Item>
             <Menu.Item
+              key="hyperparameter-search"
+              onClick={() => handleHyperparameterSearch(record)}>
+              {TrialAction.HyperparameterSearch}
+            </Menu.Item>
+            <Menu.Item
               key="view-logs"
               onClick={() => handleViewLogs(record)}>
               {TrialAction.ViewLogs}
@@ -327,7 +346,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         {children}
       </Dropdown>
     );
-  }, [ handleOpenTensorBoard, handleViewLogs ]);
+  }, [ handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs ]);
 
   return (
     <div className={css.base}>
@@ -374,6 +393,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onUnselect={handleTrialUnselect}
         />
       )}
+      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };
