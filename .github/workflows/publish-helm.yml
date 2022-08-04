@@ -1,0 +1,56 @@
+---
+name: publish-helm-chart
+
+on:  # yamllint disable-line rule:truthy
+  workflow-dispatch:
+    inputs:
+      tag:
+        description: "Release Tag"
+        required: "true"
+        default: "0.0.0"
+        type: string
+  release:
+    types:
+      - published
+
+  job:
+    publish:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
+      steps:
+        - if: ${{ github.event_name == "release" }}
+          run: |
+            # does github.event have the id in it already?  Hmm...
+            APISTR=repos/{{ github.repository }}/releases/latest
+            gh api $APISTR -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
+        - if: ${{ github.event_name == "workflow-dispatch" }}
+          run: |
+            APISTR=repos/{{ github.repository }}/releases/latest/{{ inputs.tag }}
+            gh api $APISTR -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
+        - uses: actions/checkout@v3.0.2
+          with:
+            ref: helm-chart-repository
+        - name: get chart artifact
+          run: |
+            ASSET_URL=$( \
+              gh api "${rel_id}/assets"
+              -q '.[] | select(.name|test("determined-helm-chart.*")) | .url' \
+              )
+            CHART_NAME=$( gh api $ASSET_URL -q '.name | sub("-helm-chart";"")' )
+            gh api -H "Accept: application/octet-stream" "$ASSET_URL" \
+              > "$CHART_NAME"
+            printf 'CHART_NAME=%s' "$CHART_NAME" >> $GITHUB_ENV
+            printf 'CHART_URL=%s' \
+              "$( gh api "$ASSET_URL" -q '.browser_download_url')" >> $GITHUB_ENV
+
+        - name: update index
+          # helm repo index . --merge index.yaml
+        - name: replace chart file with redirect
+          # https://stackoverflow.com/questions/39657226/jekyll-redirect-link
+        - name: commit back
+
+# if release
+#  get current release
+# else
+#  find release corresponding to tag?
