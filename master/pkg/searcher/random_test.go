@@ -103,3 +103,18 @@ func TestSingleSearchMethod(t *testing.T) {
 
 	runValueSimulationTestCases(t, testCases)
 }
+
+func TestRandomSearcherSingleConcurrent(t *testing.T) {
+	actual := expconf.RandomConfig{
+		RawMaxTrials:           ptrs.Ptr(2),
+		RawMaxLength:           ptrs.Ptr(expconf.NewLengthInRecords(100)),
+		RawMaxConcurrentTrials: ptrs.Ptr(1),
+	}
+	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
+	expected := [][]ValidateAfter{
+		toOps("100R"),
+		toOps("100R"),
+	}
+	search := newRandomSearch(actual)
+	checkSimulation(t, search, nil, ConstantValidation, expected)
+}
