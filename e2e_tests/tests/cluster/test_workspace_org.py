@@ -81,6 +81,14 @@ def test_workspace_org() -> None:
         with pytest.raises(errors.APIException):
             bindings.delete_DeleteWorkspace(admin_sess, id=default_workspace.id)
 
+        # A non admin user gets forbidden trying to modify the default workspace.
+        with pytest.raises(errors.ForbiddenException):
+            bindings.post_ArchiveWorkspace(sess, id=default_workspace.id)
+        with pytest.raises(errors.ForbiddenException):
+            bindings.post_UnarchiveWorkspace(sess, id=default_workspace.id)
+        with pytest.raises(errors.ForbiddenException):
+            bindings.delete_DeleteWorkspace(sess, id=default_workspace.id)
+
         # Sort test and default workspaces.
         workspace2 = bindings.post_PostWorkspace(
             sess, body=bindings.v1PostWorkspaceRequest(name="_TestWS")
@@ -188,13 +196,21 @@ def test_workspace_org() -> None:
 
         # Refuse to patch, archive, unarchive, or delete the default project
         with pytest.raises(errors.APIException):
-            bindings.patch_PatchProject(admin_sess, body=p_patch, id=default_project.id)
+            bindings.patch_PatchProject(sess, body=p_patch, id=default_project.id)
         with pytest.raises(errors.APIException):
             bindings.post_ArchiveProject(admin_sess, id=default_project.id)
         with pytest.raises(errors.APIException):
             bindings.post_UnarchiveProject(admin_sess, id=default_project.id)
         with pytest.raises(errors.APIException):
             bindings.delete_DeleteProject(admin_sess, id=default_project.id)
+
+        # A non admin user gets forbidden trying to modify the default project.
+        with pytest.raises(errors.ForbiddenException):
+            bindings.post_ArchiveProject(sess, id=default_project.id)
+        with pytest.raises(errors.ForbiddenException):
+            bindings.post_UnarchiveProject(sess, id=default_project.id)
+        with pytest.raises(errors.ForbiddenException):
+            bindings.delete_DeleteProject(sess, id=default_project.id)
 
         # Sort workspaces' projects.
         p1 = bindings.post_PostProject(

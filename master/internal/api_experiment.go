@@ -1578,11 +1578,11 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) MoveExperiment(
 	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	p, err := a.GetProjectByID(req.DestinationProjectId, model.UserFromProto(user.User))
+	p, err := a.GetProjectByID(req.DestinationProjectId, *curUser)
 	if err != nil {
 		return nil, err
 	}

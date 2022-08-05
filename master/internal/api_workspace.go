@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -48,39 +49,46 @@ func (a *apiServer) GetWorkspaceByID(
 func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, workspaceID int32,
 	rejectImmutable bool, canDoActions ...func(model.User, *workspacev1.Workspace) error,
 ) (*workspacev1.Workspace, model.User, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, model.User{}, err
 	}
-	curUser := model.UserFromProto(user.User)
-	w, err := a.GetWorkspaceByID(workspaceID, curUser, rejectImmutable)
+	w, err := a.GetWorkspaceByID(workspaceID, *curUser, rejectImmutable)
 	if err != nil {
 		return nil, model.User{}, err
 	}
 
 	for _, canDoAction := range canDoActions {
-		if err = canDoAction(curUser, w); err != nil {
+		if err = canDoAction(*curUser, w); err != nil {
 			return nil, model.User{}, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
-	return w, curUser, nil
+	return w, *curUser, nil
 }
 
 func (a *apiServer) GetWorkspace(
 	ctx context.Context, req *apiv1.GetWorkspaceRequest,
 ) (*apiv1.GetWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceByID(req.Id, model.UserFromProto(user.User), false)
+	w, err := a.GetWorkspaceByID(req.Id, *curUser, false)
 	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
 func (a *apiServer) GetWorkspaceProjects(
 	ctx context.Context, req *apiv1.GetWorkspaceProjectsRequest,
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = a.GetWorkspaceByID(req.Id, *curUser, false); err != nil {
+		return nil, err
+	}
+
 	nameFilter := req.Name
 	archFilterExpr := ""
 	if req.Archived != nil {
@@ -116,7 +124,7 @@ func (a *apiServer) GetWorkspaceProjects(
 	}
 
 	resp := &apiv1.GetWorkspaceProjectsResponse{}
-	err := a.m.db.QueryProtof(
+	err = a.m.db.QueryProtof(
 		"get_workspace_projects",
 		[]interface{}{orderExpr},
 		&resp.Projects,
@@ -129,12 +137,8 @@ func (a *apiServer) GetWorkspaceProjects(
 		return nil, err
 	}
 
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
-	if err != nil {
-		return nil, err
-	}
 	resp.Projects, err = workspace.AuthZProvider.Get().
-		FilterWorkspaceProjects(model.UserFromProto(user.User), resp.Projects)
+		FilterWorkspaceProjects(*curUser, resp.Projects)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +203,12 @@ func (a *apiServer) GetWorkspaces(
 		return nil, err
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
 	resp.Workspaces, err = workspace.AuthZProvider.Get().
-		FilterWorkspaces(model.UserFromProto(user.User), resp.Workspaces)
+		FilterWorkspaces(*curUser, resp.Workspaces)
 	if err != nil {
 		return nil, err
 	}
@@ -211,20 +219,19 @@ func (a *apiServer) GetWorkspaces(
 func (a *apiServer) PostWorkspace(
 	ctx context.Context, req *apiv1.PostWorkspaceRequest,
 ) (*apiv1.PostWorkspaceResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	if err = workspace.AuthZProvider.Get().
-		CanCreateWorkspace(model.UserFromProto(user.User)); err != nil {
+	if err = workspace.AuthZProvider.Get().CanCreateWorkspace(*curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	w := &workspacev1.Workspace{}
-	err = a.m.db.QueryProto("insert_workspace", w, req.Name, user.User.Id)
+	err = a.m.db.QueryProto("insert_workspace", w, req.Name, curUser.ID)
 	if err == nil && w.Id > 0 {
 		holder := &workspacev1.Workspace{}
-		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, user.User.Id)
+		err = a.m.db.QueryProto("pin_workspace", holder, w.Id, curUser.ID)
 		if err == nil {
 			w.Pinned = true
 		}
@@ -237,14 +244,18 @@ func (a *apiServer) PostWorkspace(
 func (a *apiServer) PatchWorkspace(
 	ctx context.Context, req *apiv1.PatchWorkspaceRequest,
 ) (*apiv1.PatchWorkspaceResponse, error) {
-	currWorkspace, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, true,
-		workspace.AuthZProvider.Get().CanSetWorkspacesName)
+	currWorkspace, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, true)
 	if err != nil {
 		return nil, err
 	}
 
 	madeChanges := false
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesName(currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
 		log.Infof("workspace (%d) name changing from \"%s\" to \"%s\"",
 			currWorkspace.Id, currWorkspace.Name, req.Workspace.Name.Value)
 		madeChanges = true

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -36,22 +37,21 @@ func (a *apiServer) GetProjectByID(id int32, curUser model.User) (*projectv1.Pro
 func (a *apiServer) getProjectAndCheckCanDoActions(
 	ctx context.Context, projectID int32, canDoActions ...func(model.User, *projectv1.Project) error,
 ) (*projectv1.Project, model.User, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, model.User{}, err
 	}
-	curUser := model.UserFromProto(user.User)
-	p, err := a.GetProjectByID(projectID, curUser)
+	p, err := a.GetProjectByID(projectID, *curUser)
 	if err != nil {
 		return nil, model.User{}, err
 	}
 
 	for _, canDoAction := range canDoActions {
-		if err = canDoAction(curUser, p); err != nil {
+		if err = canDoAction(*curUser, p); err != nil {
 			return nil, model.User{}, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
-	return p, curUser, nil
+	return p, *curUser, nil
 }
 
 func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) error {
@@ -72,35 +72,33 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) e
 func (a *apiServer) GetProject(
 	ctx context.Context, req *apiv1.GetProjectRequest,
 ) (*apiv1.GetProjectResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
 
-	p, err := a.GetProjectByID(req.Id, model.UserFromProto(user.User))
+	p, err := a.GetProjectByID(req.Id, *curUser)
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
 func (a *apiServer) PostProject(
 	ctx context.Context, req *apiv1.PostProjectRequest,
 ) (*apiv1.PostProjectResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-
-	curUser := model.UserFromProto(user.User)
-	w, err := a.GetWorkspaceByID(req.WorkspaceId, curUser, true)
+	w, err := a.GetWorkspaceByID(req.WorkspaceId, *curUser, true)
 	if err != nil {
 		return nil, err
 	}
-	if err = project.AuthZProvider.Get().CanCreateProject(curUser, w); err != nil {
+	if err = project.AuthZProvider.Get().CanCreateProject(*curUser, w); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
-		req.WorkspaceId, user.User.Id)
+		req.WorkspaceId, curUser.ID)
 
 	return &apiv1.PostProjectResponse{Project: p},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)
@@ -221,25 +219,24 @@ func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error,
 ) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	curUser := model.UserFromProto(user.User)
-	p, err := a.GetProjectByID(req.ProjectId, curUser)
+	p, err := a.GetProjectByID(req.ProjectId, *curUser)
 	if err != nil { // Can view project?
 		return nil, err
 	}
 	// Allow projects to be moved from immutable workspaces but not to immutable workspaces.
-	from, err := a.GetWorkspaceByID(p.WorkspaceId, curUser, false)
+	from, err := a.GetWorkspaceByID(p.WorkspaceId, *curUser, false)
 	if err != nil {
 		return nil, err
 	}
-	to, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, curUser, true)
+	to, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, *curUser, true)
 	if err != nil {
 		return nil, err
 	}
-	if err = project.AuthZProvider.Get().CanMoveProject(curUser, p, from, to); err != nil {
+	if err = project.AuthZProvider.Get().CanMoveProject(*curUser, p, from, to); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

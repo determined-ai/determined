@@ -65,16 +65,18 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
-	_, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{})
+	_, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the filtering returned.
 	expected := []*projectv1.Project{{Name: "test"}}
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
 	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything).
 		Return(expected, nil).Once()
-	resp, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{})
+	resp, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
 	require.NoError(t, err)
 	require.Equal(t, expected, resp.Projects)
 }
