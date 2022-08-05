@@ -5,8 +5,7 @@ import React from 'react';
 import { useStore } from 'contexts/Store';
 import { alphaNumericSorter, dateTimeStringSorter } from 'shared/utils/sort';
 import { CommandTask } from 'types';
-import { commandStateSorter } from 'utils/sort';
-import { generateCommandTask } from 'utils/task';
+import { commandStateSorter, generateCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
 import {

@@ -2,6 +2,8 @@ import { killableCommandStates, killableRunStates, terminalCommandStates } from 
 import { LaunchTensorBoardParams } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import * as Type from 'types';
+import { CommandState, RunState, State } from 'types';
+import { runStateSortValues } from './experiment';
 
 export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
@@ -264,4 +266,25 @@ export const tensorBoardMatchesSource = (
   }
 
   return false;
+};
+const commandStateSortValues: Record<CommandState, number> = {
+    [CommandState.Pending]: 0,
+    [CommandState.Assigned]: 1,
+    [CommandState.Pulling]: 2,
+    [CommandState.Starting]: 3,
+    [CommandState.Running]: 4,
+    [CommandState.Terminating]: 5,
+    [CommandState.Terminated]: 6,
+};
+export const commandStateSorter = (a: CommandState, b: CommandState): number => {
+    return commandStateSortValues[a] - commandStateSortValues[b];
+};
+export const taskStateSorter = (a: State, b: State): number => {
+    // FIXME this is O(n) we can do it in constant time.
+    // What is the right typescript way of doing it?
+    const aValue = Object.values(RunState).includes(a as RunState) ?
+        runStateSortValues[a as RunState] : commandStateSortValues[a as CommandState];
+    const bValue = Object.values(RunState).includes(b as RunState) ?
+        runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
+    return aValue - bValue;
 };

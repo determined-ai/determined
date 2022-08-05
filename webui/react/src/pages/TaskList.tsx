@@ -34,8 +34,7 @@ import {
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
-import { commandStateSorter } from 'utils/sort';
-import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
+import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
