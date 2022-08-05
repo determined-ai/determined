@@ -5,6 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import { clone, isObject } from 'shared/utils/data';
 import { ALL_VALUE, HpImportance } from 'types';
+
 import { hpImportanceSorter } from '../utils/experiment';
 
 import css from './HpSelectFilter.module.scss';

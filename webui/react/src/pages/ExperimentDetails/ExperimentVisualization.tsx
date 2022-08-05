@@ -22,6 +22,7 @@ import {
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
   Scale,
 } from 'types';
+
 import { hpImportanceSorter } from '../../utils/experiment';
 
 import css from './ExperimentVisualization.module.scss';

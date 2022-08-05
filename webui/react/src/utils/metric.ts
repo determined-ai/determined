@@ -1,5 +1,6 @@
 import { RecordKey } from 'shared/types';
 import { MetricName, MetricType, WorkloadGroup } from 'types';
+
 import { alphaNumericSorter } from '../shared/utils/sort';
 
 /*
@@ -8,11 +9,11 @@ import { alphaNumericSorter } from '../shared/utils/sort';
  * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
  */
 export const metricNameSorter = (a: MetricName, b: MetricName): number => {
-    const isAValidation = a.type === MetricType.Validation;
-    const isBValidation = b.type === MetricType.Validation;
-    if (isAValidation && !isBValidation) return -1;
-    if (isBValidation && !isAValidation) return 1;
-    return alphaNumericSorter(a.name, b.name);
+  const isAValidation = a.type === MetricType.Validation;
+  const isBValidation = b.type === MetricType.Validation;
+  if (isAValidation && !isBValidation) return -1;
+  if (isBValidation && !isAValidation) return 1;
+  return alphaNumericSorter(a.name, b.name);
 };
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads
