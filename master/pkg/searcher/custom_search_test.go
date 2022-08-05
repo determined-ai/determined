@@ -8,7 +8,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
@@ -18,7 +17,7 @@ import (
 // and the queue is working well.
 func TestCustomSearchMethod(t *testing.T) {
 	config := expconf.SearcherConfig{
-		RawCustomConfig: &expconf.CustomConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(500))},
+		RawCustomConfig: &expconf.CustomConfig{},
 	}
 
 	customSearchMethod := NewSearchMethod(config)

@@ -494,14 +494,12 @@ class SingleConfigV0(schemas.SchemaBase):
 @SearcherConfigV0.member("custom")
 class CustomConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
-    max_length: Union[int, LengthV0]
     metric: str
     smaller_is_better: Optional[bool] = None
 
     @schemas.auto_init
     def __init__(
         self,
-        max_length: Union[int, LengthV0],
         metric: str,
         smaller_is_better: Optional[bool] = None,
     ) -> None:
