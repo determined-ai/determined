@@ -1,7 +1,6 @@
 import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { openCommand } from 'wait';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
@@ -25,6 +24,7 @@ import {
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
 import { metricNameToStr } from 'utils/metric';
+import { openCommand } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
