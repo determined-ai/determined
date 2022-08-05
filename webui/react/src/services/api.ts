@@ -7,8 +7,6 @@ import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-export { isLoginFailure } from './utils';
-
 /* Authentication */
 
 export const login = generateDetApi<
