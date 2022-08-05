@@ -18,39 +18,74 @@ on:  # yamllint disable-line rule:truthy
       runs-on: ubuntu-latest
       permissions:
         contents: write
+      env:
+        NEW_CHART_DIR: /tmp/newchart
       steps:
+        # figure out release ID based on how we were run
         - if: ${{ github.event_name == "release" }}
           run: |
             # does github.event have the id in it already?  Hmm...
-            APISTR=repos/{{ github.repository }}/releases/latest
-            gh api $APISTR -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
+            #APISTR=repos/{{ github.repository }}/releases/latest
+            #gh api $APISTR -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
+            printf 'rel_id={{ github.event.release.id }}\n' >> $GITHUB_ENV
         - if: ${{ github.event_name == "workflow-dispatch" }}
           run: |
             APISTR=repos/{{ github.repository }}/releases/latest/{{ inputs.tag }}
             gh api $APISTR -q -q '"rel_id=" + (.id|tostring)' >> $GITHUB_ENV
-        - uses: actions/checkout@v3.0.2
+
+        # get the artifact for the chart and the branch for pages (the chart repo)
+        - name: check out chart repo branch
+          uses: actions/checkout@v3.0.2
           with:
             ref: helm-chart-repository
         - name: get chart artifact
           run: |
+            NEW_CHART_DIR=$( mktemp -d )
+            pushd "$NEW_CHART_DIR"
             ASSET_URL=$( \
               gh api "${rel_id}/assets"
               -q '.[] | select(.name|test("determined-helm-chart.*")) | .url' \
               )
-            CHART_NAME=$( gh api $ASSET_URL -q '.name | sub("-helm-chart";"")' )
+            #CHART_NAME=$( gh api $ASSET_URL -q '.name | sub("-helm-chart";"")' )
+            CHART_NAME=$( gh api $ASSET_URL -q .name )
             gh api -H "Accept: application/octet-stream" "$ASSET_URL" \
               > "$CHART_NAME"
-            printf 'CHART_NAME=%s' "$CHART_NAME" >> $GITHUB_ENV
-            printf 'CHART_URL=%s' \
+            popd
+            printf 'NEW_CHART_DIR=%s\n' "$NEW_CHART_DIR" >> $GITHUB_ENV
+            printf 'CHART_NAME=%s\n' "$CHART_NAME" >> $GITHUB_ENV
+            printf 'CHART_URL=%s\n' \
               "$( gh api "$ASSET_URL" -q '.browser_download_url')" >> $GITHUB_ENV
 
+        # publish to GH Pages repository
+        # TODO: consider also publishing to artifact hub
         - name: update index
-          # helm repo index . --merge index.yaml
+          run: |
+            helm repo index "$NEW_CHART_DIR" --merge index.yaml
+            diff {"$NEW_CHART_DIR",.}/index.yaml
+            cp -v "$NEW_CHART_DIR"/index.yaml .
         - name: replace chart file with redirect
-          # https://stackoverflow.com/questions/39657226/jekyll-redirect-link
-        - name: commit back
+          shell: python
+          run: |
+            from os import environ
+            from os.path import basename
+            from string import Template
 
-# if release
-#  get current release
-# else
-#  find release corresponding to tag?
+            chart_basename = basename( environ.get( 'CHART_NAME' )
+            environ['CHART_PERMALINK'] = '/' + chart_basename
+            with open('redirect_template.yaml', 'r') as src:
+              t = Template(src.read())
+
+            with open(chart_basename, 'w') as dst:
+              dst.write( t.safe_substitute(environ) )
+
+            with open( environ.get('GITHUB_ENV'), 'w+' ) as envfile:
+              envfile.write( f'CHART_REDIR_FILE={chart_basename}' )
+        - name: commit back
+          run: |
+            git add "$CHART_REDIR_FILE"
+            # extract version from Chart.yaml
+            v=$( tar xOzf $CHART_NAME --wildcards '*/Chart.yaml' \
+              | sed -n 's/^version: *//ip' )
+            msg="Add chart '$v' due to {{ github.event_name }}"
+            git commit index.yaml CHART_REDIR_FILE -m "$msg"
+            git push
