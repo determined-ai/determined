@@ -65,6 +65,7 @@ class TestPyTorchTrial:
 
     def test_onevar_single(self) -> None:
         """Assert that the training loss and validation error decrease monotonically."""
+
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -638,16 +639,6 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    def test_amp_cpu(self) -> None:
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_onevar_model.OneVarManualAMPCPUTrial,
-            hparams=self.hparams,
-            workloads=make_amp_workloads(),
-            trial_seed=self.trial_seed,
-            expose_gpus=True,
-        )
-        controller.run()
-
 
 @pytest.mark.parametrize(
     "ckpt,istrial",
@@ -672,5 +663,5 @@ def make_amp_workloads() -> workload.Stream:
     yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
     training_metrics, validation_metrics = trainer.result()
     for older, newer in zip(training_metrics, training_metrics[1:]):
-        #TODO check for scaling
+        # TODO check for scaling
         assert newer["loss"] <= older["loss"]

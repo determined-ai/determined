@@ -377,9 +377,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         check.true(len(self.models) == 0, "Please call wrap_scaler before wrap_model.")
 
         check.true(
-            torch.cuda.is_available() or int(torch.__version__.split(".")[1]) >= 10,
-            f"Mixed precision training (AMP) requires the use of GPU slots"
-            f" or PyTorch >= 1.10 ({torch.__version__=}.",
+            torch.cuda.is_available(),
+            "Mixed precision training (AMP) is supported only on GPU slots.",
         )
 
         self._scaler = scaler

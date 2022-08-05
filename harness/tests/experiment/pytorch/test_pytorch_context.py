@@ -51,6 +51,5 @@ class TestPyTorchContext:
             assert scaler == self.context.wrap_scaler(scaler)
             assert scaler == self.context._scaler
         else:
-            import contextlib  # FIXME: this is just a temporary "solution" to help a test pass
-            with contextlib.nullcontext():  # pytest.raises(check.CheckFailedError):
+            with pytest.raises(check.CheckFailedError):
                 self.context.wrap_scaler(None)

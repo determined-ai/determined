@@ -39,8 +39,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import yaml
-from torch import autocast
-from torch.cuda.amp import GradScaler
+from torch.cuda.amp import GradScaler, autocast
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
@@ -243,8 +242,6 @@ class OneVarManualAMPTrial(OneVarTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.scaler = context.wrap_scaler(GradScaler())
         super().__init__(context)
-        self.device_type = "cuda"
-        self.autocast_dtype = torch.float16
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
@@ -254,7 +251,7 @@ class OneVarManualAMPTrial(OneVarTrial):
         self.cls_reducer.update(sum(label), batch_idx)
         self.fn_reducer.update((sum(label), batch_idx))
 
-        with autocast(device_type=self.device_type, dtype=self.autocast_dtype):
+        with autocast():
             output = self.model(data)
             loss = self.loss_fn(output, label)
 
@@ -276,17 +273,10 @@ class OneVarManualAMPTrial(OneVarTrial):
         self.cls_reducer.update(sum(label), None)
         self.fn_reducer.update((sum(label), None))
 
-        with autocast(device_type=self.device_type, dtype=self.autocast_dtype):
+        with autocast():
             output = self.model(data)
             loss = self.loss_fn(output, label)
         return {"val_loss": loss}
-
-
-class OneVarManualAMPCPUTrial(OneVarManualAMPTrial):
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        super().__init__(context)
-        self.device_type = "cpu"
-        self.autocast_dtype = torch.bfloat16
 
 
 if __name__ == "__main__":
