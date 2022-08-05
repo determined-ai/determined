@@ -6,6 +6,8 @@ import history from 'shared/routes/history';
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
 
+const originWindow = window;
+
 const setup = (url = '/', base = 'http://www.example.com') => {
   const newUrl = new URL(url, base);
   Object.defineProperty(
@@ -34,6 +36,11 @@ const setup = (url = '/', base = 'http://www.example.com') => {
 
 beforeEach(() => {
   setup();
+});
+
+afterEach(() => {
+  // eslint-disable-next-line no-global-assign
+  window = originWindow;
 });
 
 describe('Routes Utilities', () => {
