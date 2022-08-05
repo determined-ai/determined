@@ -4,7 +4,6 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/struct.proto";
-import "protoc-gen-swagger/options/annotations.proto";
 
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.

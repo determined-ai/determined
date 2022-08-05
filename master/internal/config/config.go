@@ -90,6 +90,7 @@ func DefaultConfig() *Config {
 			SSH: SSHConfig{
 				RsaKeySize: 1024,
 			},
+			AuthZ: *DefaultAuthZConfig(),
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,
@@ -238,6 +239,7 @@ type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
+	AuthZ       AuthZConfig          `json:"authz"`
 }
 
 // SSHConfig is the configuration setting for SSH.

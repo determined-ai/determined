@@ -12,20 +12,18 @@ const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
-const MonacoEditorMock: React.FC = () => <></>;
+const MonacoEditorMock: React.FC = () => (<></>);
 
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
-}
-));
+}));
 
-jest.mock('wait', () => ({
+jest.mock('utils/wait', () => ({
   openCommand: () => null,
   waitPageUrl: () => '',
-}
-));
+}));
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,

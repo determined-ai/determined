@@ -363,17 +363,20 @@ const InteractiveTable: InteractiveTable = ({
 
   const handleChange = useCallback(
     (tablePagination, tableFilters, tableSorter): void => {
+
       if (Array.isArray(tableSorter)) return;
 
-      const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (!columnKey || !settings.columns.find((col) => columnDefs[col]?.key === columnKey)) return;
-
-      const newSettings = {
-        sortDesc: order === 'descend',
-        sortKey: columnKey,
+      const newSettings: Partial<InteractiveTableSettings> = {
         tableLimit: tablePagination.pageSize,
         tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       };
+
+      const { columnKey, order } = tableSorter as SorterResult<unknown>;
+      if (columnKey && settings.columns.find((col) => columnDefs[col]?.key === columnKey)) {
+        newSettings.sortDesc = order === 'descend';
+        newSettings.sortKey = columnKey;
+      }
+
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
     },

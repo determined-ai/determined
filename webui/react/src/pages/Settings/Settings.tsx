@@ -10,15 +10,19 @@ import { paths } from 'routes/utils';
 
 const { TabPane } = Tabs;
 
-enum TabType {
-  Account = 'account',
-  UserManagement = 'user-management',
+export enum TabType {
+  Account = 'Account',
+  UserManagement = 'User Management',
 }
 
 interface Params {
   tab?: TabType;
 }
 
+const TAB_KEYS = {
+  [TabType.Account]: 'account',
+  [TabType.UserManagement]: 'user-management',
+};
 const DEFAULT_TAB_KEY = TabType.Account;
 
 const SettingsContent: React.FC = () => {
@@ -43,10 +47,10 @@ const SettingsContent: React.FC = () => {
 
   return showTabs ? (
     <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="account" tab="Account">
+      <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      <TabPane key="user-management" tab="User Management">
+      <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
         <UserManagement />
       </TabPane>
     </Tabs>

@@ -262,7 +262,6 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     const { selectedModelName } = state;
 
     const modalProps = {
-      bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
       content: getModalContent(state),

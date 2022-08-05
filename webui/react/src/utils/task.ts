@@ -2,6 +2,9 @@ import { killableCommandStates, killableRunStates, terminalCommandStates } from 
 import { LaunchTensorBoardParams } from 'services/types';
 import { isEqual } from 'shared/utils/data';
 import * as Type from 'types';
+import { CommandState, RunState, State } from 'types';
+
+import { runStateSortValues } from './experiment';
 
 export const canBeOpened = (task: Type.AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
@@ -113,26 +116,52 @@ export const generateOldExperiments = (count = 10): Type.ExperimentOld[] => {
     .map((_, idx) => generateOldExperiment(idx));
 };
 
+export const generateExperiment = (id = 1): Type.ExperimentItem => {
+  const experimentTask = generateExperimentTask(id);
+  const user = sampleUsers.random();
+  const config = {
+    name: experimentTask.name,
+    resources: {},
+    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+  };
+  return {
+    ...experimentTask,
+    config: {
+      checkpointPolicy: 'best',
+      checkpointStorage: {
+        hostPath: '/tmp',
+        saveExperimentBest: 0,
+        saveTrialBest: 1,
+        saveTrialLatest: 1,
+        storagePath: 'determined-integration-checkpoints',
+        type: 'shared_fs',
+      },
+      dataLayer: { type: 'shared_fs' },
+      hyperparameters: {},
+      maxRestarts: 5,
+      name: experimentTask.name,
+      resources: {},
+      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
+    },
+    configRaw: config,
+    hyperparameters: {},
+    id: id,
+    jobId: id.toString(),
+    labels: [],
+    name: experimentTask.name,
+    numTrials: Math.round(Math.random() * 60000),
+    projectId: 1,
+    resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
+    searcherType: 'single',
+    userId: user.id,
+    username: user.username,
+  } as Type.ExperimentItem;
+};
+
 export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
   return new Array(Math.floor(count))
     .fill(null)
-    .map((_, idx) => {
-      const experimentTask = generateExperimentTask(idx);
-      const user = sampleUsers.random();
-      return {
-        ...experimentTask,
-        id: idx,
-        jobId: idx.toString(),
-        labels: [],
-        name: experimentTask.name,
-        numTrials: Math.round(Math.random() * 60000),
-        projectId: 1,
-        resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
-        searcherType: 'single',
-        userId: user.id,
-        username: user.username,
-      } as Type.ExperimentItem;
-    });
+    .map((_, idx) => generateExperiment(idx));
 };
 
 export const generateTasks = (count = 10): Type.RecentTask[] => {
@@ -238,4 +267,25 @@ export const tensorBoardMatchesSource = (
   }
 
   return false;
+};
+const commandStateSortValues: Record<CommandState, number> = {
+  [CommandState.Pending]: 0,
+  [CommandState.Assigned]: 1,
+  [CommandState.Pulling]: 2,
+  [CommandState.Starting]: 3,
+  [CommandState.Running]: 4,
+  [CommandState.Terminating]: 5,
+  [CommandState.Terminated]: 6,
+};
+export const commandStateSorter = (a: CommandState, b: CommandState): number => {
+  return commandStateSortValues[a] - commandStateSortValues[b];
+};
+export const taskStateSorter = (a: State, b: State): number => {
+  // FIXME this is O(n) we can do it in constant time.
+  // What is the right typescript way of doing it?
+  const aValue = Object.values(RunState).includes(a as RunState) ?
+    runStateSortValues[a as RunState] : commandStateSortValues[a as CommandState];
+  const bValue = Object.values(RunState).includes(b as RunState) ?
+    runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
+  return aValue - bValue;
 };

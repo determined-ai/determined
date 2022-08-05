@@ -19,12 +19,12 @@ import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import { canManageJob, jobTypeToCommandType, moveJobToPosition,
   orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
-import { numericSorter } from 'utils/sort';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';

@@ -28,13 +28,13 @@ import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } fro
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import {
+  alphaNumericSorter, dateTimeStringSorter, numericSorter,
+} from 'shared/utils/sort';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
-import {
-  alphaNumericSorter, commandStateSorter, dateTimeStringSorter, numericSorter,
-} from 'utils/sort';
-import { filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
+import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
@@ -111,9 +111,14 @@ const TaskList: React.FC = () => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
+  const clearSelected = useCallback(() => {
+    updateSettings({ row: undefined });
+  }, [ updateSettings ]);
+
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
-  }, [ resetSettings ]);
+    clearSelected();
+  }, [ clearSelected, resetSettings ]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -454,10 +459,6 @@ const TaskList: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
-
-  const clearSelected = useCallback(() => {
-    updateSettings({ row: undefined });
-  }, [ updateSettings ]);
 
   const TaskActionDropdownCM = useCallback(
     ({ record, onVisibleChange, children }) => (

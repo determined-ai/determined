@@ -1,5 +1,6 @@
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { TrialWorkloadFilter } from 'types';
 
 export interface Settings {
   filter: TrialWorkloadFilter;
@@ -8,13 +9,6 @@ export interface Settings {
   sortKey: string;
   tableLimit: number;
   tableOffset: number;
-}
-
-export enum TrialWorkloadFilter {
-  All = 'All',
-  Checkpoint = 'Has Checkpoint',
-  Validation = 'Has Validation',
-  CheckpointOrValidation = 'Has Checkpoint or Validation',
 }
 
 const config: SettingsConfig = {

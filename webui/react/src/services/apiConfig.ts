@@ -270,7 +270,7 @@ export const getExperiments: DetApi<
       params.states,
       undefined,
       getUserIds(params.users),
-      params.projectId || 0,
+      params.projectId ?? 0,
       options,
     );
   },
@@ -494,6 +494,35 @@ export const compareTrials: DetApi<
     params.endBatches,
     params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
     params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
+  ),
+};
+
+type TrialWorkloadFilterOption =
+  'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT'
+  | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION' | 'FILTER_OPTION_VALIDATION';
+
+export const WorkloadFilterParamMap: Record<string, TrialWorkloadFilterOption> = {
+  [Type.TrialWorkloadFilter.All]: 'FILTER_OPTION_UNSPECIFIED',
+  [Type.TrialWorkloadFilter.Checkpoint]: 'FILTER_OPTION_CHECKPOINT',
+  [Type.TrialWorkloadFilter.CheckpointOrValidation]: 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION',
+  [Type.TrialWorkloadFilter.Validation]: 'FILTER_OPTION_VALIDATION',
+};
+
+export const getTrialWorkloads: DetApi<
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
+> = {
+  name: 'getTrialWorkloads',
+  postProcess: (response: Api.V1GetTrialWorkloadsResponse) => {
+    return decoder.decodeTrialWorkloads(response);
+  },
+  request: (params: Service.TrialWorkloadsParams) => detApi.Internal.getTrialWorkloads(
+    params.id,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.sortKey || 'batches',
+    WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED']
+      || 'FILTER_OPTION_UNSPECIFIED',
   ),
 };
 
