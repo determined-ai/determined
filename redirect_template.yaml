@@ -1,0 +1,5 @@
+---
+permalink: $CHART_PERMALINK
+redirect_to:
+  - $CHART_URL
+---
