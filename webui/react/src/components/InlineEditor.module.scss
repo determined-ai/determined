@@ -90,6 +90,10 @@
 }
 .shakeAnimation {
   animation: shake 0.8s cubic-bezier(0.36, 0.07, 0.2, 0.95) both;
+
+  .growWrap > textarea {
+    animation: criticalBorder 0.8s;
+  }
 }
 
 @keyframes shake {
@@ -109,5 +113,14 @@
   40%,
   60% {
     transform: translate3d(4px, 0, 0);
+  }
+}
+
+@keyframes criticalBorder {
+  from {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
+  }
+  to {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
   }
 }
