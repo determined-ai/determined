@@ -11,7 +11,6 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   allowNewline?: boolean;
   disabled?: boolean;
   focusSignal?: number;
-  isOnDark?: boolean;
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
@@ -27,7 +26,6 @@ const InlineEditor: React.FC<Props> = ({
   allowClear = true,
   allowNewline = false,
   disabled = false,
-  isOnDark = false,
   pattern = new RegExp(''),
   maxLength,
   placeholder,
@@ -45,7 +43,6 @@ const InlineEditor: React.FC<Props> = ({
   const [ isInvalidValue, setIsInvalidValue ] = useState<boolean>(false);
   const classes: string = useMemo(() => {
     const classSet = new Set([ css.base ]);
-    if (isOnDark) classSet.add(css.onDark);
     if (isEditable) classSet.add(css.editable);
     if (isSaving) classSet.add(css.loading);
     if (maxLength && currentValue && currentValue.length === maxLength) {
@@ -54,7 +51,7 @@ const InlineEditor: React.FC<Props> = ({
     if (disabled) classSet.add(css.disabled);
 
     return `${Array.from(classSet).join(' ')} ${isInvalidValue ? css.shakeAnimation : ''}`;
-  }, [ currentValue, disabled, isEditable, isInvalidValue, isOnDark, isSaving, maxLength ]);
+  }, [ currentValue, disabled, isEditable, isInvalidValue, isSaving, maxLength ]);
 
   useEffect(() => {
     if (focusSignal != null && !disabled){
@@ -126,12 +123,13 @@ const InlineEditor: React.FC<Props> = ({
       e.preventDefault();
       return;
     }
-    if (e.code === CODE_ENTER) {
-      if (!allowNewline || !e.shiftKey) e.preventDefault();
+    if (e.which === 229) {
+      // Ignore keydown event until IME is confirmed like Japanese and Chinese
+      return;
     }
-  }, [ allowNewline, isEditable ]);
-
-  const handleTextareaKeyUp = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.code === CODE_ENTER && (!allowNewline || !e.shiftKey)) {
+      e.preventDefault();
+    }
     if (e.code === CODE_ESCAPE) {
       // Restore the original value upon escape key.
       updateEditorValue(value);
@@ -139,7 +137,7 @@ const InlineEditor: React.FC<Props> = ({
     } else if (!e.shiftKey && e.code === CODE_ENTER) {
       setIsEditable(false);
     }
-  }, [ updateEditorValue, value ]);
+  }, [ allowNewline, isEditable, updateEditorValue, value ]);
 
   useEffect(() => {
     updateEditorValue(value);
@@ -162,8 +160,7 @@ const InlineEditor: React.FC<Props> = ({
           rows={1}
           onBlur={handleTextareaBlur}
           onChange={handleTextareaChange}
-          onKeyPress={handleTextareaKeyPress}
-          onKeyUp={handleTextareaKeyUp}
+          onKeyDown={handleTextareaKeyPress}
         />
         <div className={css.backdrop} />
         <div className={css.spinner}>

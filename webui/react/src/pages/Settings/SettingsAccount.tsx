@@ -57,6 +57,7 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Display Name</label>
         <InlineEditor
+          maxLength={32}
           pattern={new RegExp('^[a-zA-Z]+[a-zA-Z0-9]*$')}
           placeholder="Add display name"
           value={auth.user?.displayName || ''}
