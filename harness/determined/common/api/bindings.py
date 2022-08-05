@@ -1437,19 +1437,19 @@ class v1ExperimentInactive:
     def __init__(
         self,
         *,
-        experimentState: "typing.Optional[str]" = None,
+        experimentState: "determinedexperimentv1State",
     ):
         self.experimentState = experimentState
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExperimentInactive":
         return cls(
-            experimentState=obj.get("experimentState", None),
+            experimentState=determinedexperimentv1State(obj["experimentState"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "experimentState": self.experimentState if self.experimentState is not None else None,
+            "experimentState": self.experimentState.value,
         }
 
 class v1ExperimentSimulation:
@@ -5499,6 +5499,7 @@ class v1SearcherOperation:
 class v1SearcherProgressOperation:
     def __init__(
         self,
+        *,
         progress: "typing.Optional[float]" = None,
     ):
         self.progress = progress
@@ -6071,38 +6072,38 @@ class v1TrialClosed:
     def __init__(
         self,
         *,
-        requestId: "typing.Optional[str]" = None,
+        requestId: str,
     ):
         self.requestId = requestId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialClosed":
         return cls(
-            requestId=obj.get("requestId", None),
+            requestId=obj["requestId"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "requestId": self.requestId if self.requestId is not None else None,
+            "requestId": self.requestId,
         }
 
 class v1TrialCreated:
     def __init__(
         self,
         *,
-        requestId: "typing.Optional[str]" = None,
+        requestId: str,
     ):
         self.requestId = requestId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialCreated":
         return cls(
-            requestId=obj.get("requestId", None),
+            requestId=obj["requestId"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "requestId": self.requestId if self.requestId is not None else None,
+            "requestId": self.requestId,
         }
 
 class v1TrialEarlyExit:
@@ -6134,8 +6135,8 @@ class v1TrialExitedEarly:
     def __init__(
         self,
         *,
-        exitedReason: "typing.Optional[v1TrialExitedEarlyExitedReason]" = None,
-        requestId: "typing.Optional[str]" = None,
+        exitedReason: "v1TrialExitedEarlyExitedReason",
+        requestId: str,
     ):
         self.requestId = requestId
         self.exitedReason = exitedReason
@@ -6143,14 +6144,14 @@ class v1TrialExitedEarly:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialExitedEarly":
         return cls(
-            requestId=obj.get("requestId", None),
-            exitedReason=v1TrialExitedEarlyExitedReason(obj["exitedReason"]) if obj.get("exitedReason", None) is not None else None,
+            requestId=obj["requestId"],
+            exitedReason=v1TrialExitedEarlyExitedReason(obj["exitedReason"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "requestId": self.requestId if self.requestId is not None else None,
-            "exitedReason": self.exitedReason.value if self.exitedReason is not None else None,
+            "requestId": self.requestId,
+            "exitedReason": self.exitedReason.value,
         }
 
 class v1TrialExitedEarlyExitedReason(enum.Enum):
@@ -6329,8 +6330,9 @@ class v1TrialProfilerMetricsBatch:
 class v1TrialProgress:
     def __init__(
         self,
-        partialUnits: "typing.Optional[float]" = None,
-        requestId: "typing.Optional[str]" = None,
+        *,
+        partialUnits: float,
+        requestId: str,
     ):
         self.requestId = requestId
         self.partialUnits = partialUnits
@@ -6338,14 +6340,14 @@ class v1TrialProgress:
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialProgress":
         return cls(
-            requestId=obj.get("requestId", None),
-            partialUnits=float(obj["partialUnits"]) if obj.get("partialUnits", None) is not None else None,
+            requestId=obj["requestId"],
+            partialUnits=float(obj["partialUnits"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "requestId": self.requestId if self.requestId is not None else None,
-            "partialUnits": dump_float(self.partialUnits) if self.partialUnits is not None else None,
+            "requestId": self.requestId,
+            "partialUnits": dump_float(self.partialUnits),
         }
 
 class v1TrialRunnerMetadata:
@@ -6610,9 +6612,9 @@ class v1ValidationCompleted:
     def __init__(
         self,
         *,
-        metric: "typing.Optional[float]" = None,
-        requestId: "typing.Optional[str]" = None,
-        validateAfterLength: "typing.Optional[str]" = None,
+        metric: float,
+        requestId: str,
+        validateAfterLength: str,
     ):
         self.requestId = requestId
         self.metric = metric
@@ -6621,16 +6623,16 @@ class v1ValidationCompleted:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         return cls(
-            requestId=obj.get("requestId", None),
-            metric=float(obj["metric"]) if obj.get("metric", None) is not None else None,
-            validateAfterLength=obj.get("validateAfterLength", None),
+            requestId=obj["requestId"],
+            metric=float(obj["metric"]),
+            validateAfterLength=obj["validateAfterLength"],
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "requestId": self.requestId if self.requestId is not None else None,
-            "metric": dump_float(self.metric) if self.metric is not None else None,
-            "validateAfterLength": self.validateAfterLength if self.validateAfterLength is not None else None,
+            "requestId": self.requestId,
+            "metric": dump_float(self.metric),
+            "validateAfterLength": self.validateAfterLength,
         }
 
 class v1ValidationHistoryEntry:
