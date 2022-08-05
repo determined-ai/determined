@@ -1,5 +1,5 @@
 import React, {
-  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useRef, useState,
+  ChangeEvent, HTMLAttributes, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -14,6 +14,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<Error|void>;
+  pattern?: RegExp;
   placeholder?: string;
   value: string;
 }
@@ -25,6 +26,7 @@ const InlineEditor: React.FC<Props> = ({
   allowClear = true,
   allowNewline = false,
   disabled = false,
+  pattern = new RegExp(''),
   maxLength,
   placeholder,
   value,
@@ -35,17 +37,21 @@ const InlineEditor: React.FC<Props> = ({
 }: Props) => {
   const growWrapRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [ currentValue, setCurrentValue ] = useState(value);
-  const [ isEditable, setIsEditable ] = useState(false);
-  const [ isSaving, setIsSaving ] = useState(false);
-  const classes = [ css.base ];
+  const [ currentValue, setCurrentValue ] = useState<string>(value);
+  const [ isEditable, setIsEditable ] = useState<boolean>(false);
+  const [ isSaving, setIsSaving ] = useState<boolean>(false);
+  const [ isInvalidValue, setIsInvalidValue ] = useState<boolean>(false);
+  const classes: string = useMemo(() => {
+    const classSet = new Set([ css.base ]);
+    if (isEditable) classSet.add(css.editable);
+    if (isSaving) classSet.add(css.loading);
+    if (maxLength && currentValue && currentValue.length === maxLength) {
+      classSet.add(css.maxLength);
+    }
+    if (disabled) classSet.add(css.disabled);
 
-  if (isEditable) classes.push(css.editable);
-  if (isSaving) classes.push(css.loading);
-  if (maxLength && currentValue && currentValue.length === maxLength) {
-    classes.push(css.maxLength);
-  }
-  if (disabled) classes.push(css.disabled);
+    return `${Array.from(classSet).join(' ')} ${isInvalidValue ? css.shakeAnimation : ''}`;
+  }, [ currentValue, disabled, isEditable, isInvalidValue, isSaving, maxLength ]);
 
   useEffect(() => {
     if (focusSignal != null && !disabled){
@@ -69,6 +75,11 @@ const InlineEditor: React.FC<Props> = ({
   }, [ onCancel, updateEditorValue, value ]);
 
   const save = useCallback(async (newValue: string) => {
+    if (!pattern.test(newValue)) {
+      setIsInvalidValue(true);
+      updateEditorValue(value);
+      return;
+    }
     if (onSave) {
       setIsSaving(true);
       const err = await onSave(newValue);
@@ -77,7 +88,7 @@ const InlineEditor: React.FC<Props> = ({
       }
       setIsSaving(false);
     }
-  }, [ onSave, updateEditorValue, value ]);
+  }, [ onSave, pattern, updateEditorValue, value ]);
 
   const handleWrapperClick = useCallback(() => {
     if (disabled) return;
@@ -100,6 +111,7 @@ const InlineEditor: React.FC<Props> = ({
   }, [ allowClear, cancel, save, value ]);
 
   const handleTextareaChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    setIsInvalidValue(false);
     const textarea = e.target as HTMLTextAreaElement;
     let newValue = textarea.value;
     if (!allowNewline) newValue = newValue.replace(/(\r?\n|\r\n?)/g, '');
@@ -137,7 +149,7 @@ const InlineEditor: React.FC<Props> = ({
   }, [ isEditable ]);
 
   return (
-    <div className={classes.join(' ')} {...props}>
+    <div className={classes} {...props}>
       <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
         <textarea
           cols={1}
