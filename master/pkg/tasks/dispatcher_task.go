@@ -147,23 +147,30 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// via the --custom Archive capsules argument.   Encode the archives
 	// into a format that can be set as custom launch arguments.
 	allArchives := *getAllArchives(t)
-	encodedArchiveParams, err := encodeArchiveParameters(
+	customParams, err := encodeArchiveParameters(
 		dispatcherArchive(t.AgentUserGroup,
 			generateRunDeterminedLinkNames(allArchives)), allArchives)
 	if err != nil {
 		return nil, "", "", err
 	}
+
 	var slurmArgs []string
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm...)
 	slurmArgs = append(slurmArgs, t.Environment.Slurm()...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
-	encodedArchiveParams["slurmArgs"] = slurmArgs
+	customParams["slurmArgs"] = slurmArgs
 	errList := model.ValidateSlurm(slurmArgs)
 	if len(errList) > 0 {
 		logrus.WithError(errList[0]).Error("Forbidden slurm option specified")
 		return nil, "", "", errList[0]
 	}
-	launchParameters.SetCustom(encodedArchiveParams)
+
+	var portMappings []string = *getPortMappings(t)
+	if len(portMappings) != 0 {
+		customParams["ports"] = portMappings
+	}
+
+	launchParameters.SetCustom(customParams)
 
 	// Add entrypoint command as argument
 	wrappedEntryPoint := append(
@@ -224,6 +231,22 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// manifest.SetManifestVersion("latest") //?
 
 	return &manifest, impersonatedUser, payloadName, err
+}
+
+// getPortMappings returns all mappings specified in environment.ports.
+func getPortMappings(t *TaskSpec) *[]string {
+	var portMappings []string
+	if len(t.Environment.Ports()) > 0 {
+		for k, v := range t.Environment.Ports() {
+			// TODO: remove this when ports["trial"] = 1734 is removed from task_trial.go
+			// trial port 1734 not a config for podman. Ignore it.
+			if k == "trial" {
+				continue
+			}
+			portMappings = append(portMappings, strconv.Itoa(v))
+		}
+	}
+	return &portMappings
 }
 
 // getAllArchives returns all the experiment archives.
