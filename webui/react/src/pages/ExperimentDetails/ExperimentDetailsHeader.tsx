@@ -20,6 +20,8 @@ import useModalExperimentCreate, {
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {
@@ -63,6 +65,7 @@ const headerActions = [
   Action.ContinueTrial,
   Action.Move,
   Action.OpenTensorBoard,
+  Action.HyperparameterSearch,
   Action.DownloadCode,
   Action.Archive,
   Action.Unarchive,
@@ -118,6 +121,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     contextHolder: modalExperimentCreateContextHolder,
     modalOpen: openModalCreate,
   } = useModalExperimentCreate();
+
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment });
 
   const stateStyle = useMemo(() => ({
     backgroundColor: getStateColorCssVar(experiment.state),
@@ -186,6 +194,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const handleForkClick = useCallback(() => {
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
   }, [ experiment, openModalCreate ]);
+
+  const handleHyperparameterSearch = useCallback(() => {
+    openModalHyperparameterSearch();
+  }, [ openModalHyperparameterSearch ]);
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -256,6 +268,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Delete',
         onClick: handleDeleteClick,
       },
+      [Action.HyperparameterSearch]: {
+        key: 'hyperparameter-search',
+        label: 'Hyperparameter Search',
+        onClick: handleHyperparameterSearch,
+      },
       [Action.DownloadCode]: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
@@ -310,19 +327,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const availableActions = getActionsForExperiment(experiment, headerActions, curUser);
 
     return availableActions.map((action) => options[action]) as Option[];
-  }, [
-    curUser,
-    isRunningDelete,
-    experiment,
-    fetchExperimentDetails,
+  }, [ isRunningArchive,
     handleContinueTrialClick,
+    isRunningDelete,
     handleDeleteClick,
+    handleHyperparameterSearch,
     handleForkClick,
     handleMoveClick,
-    isRunningArchive,
     isRunningTensorBoard,
     isRunningUnarchive,
-  ]);
+    experiment,
+    curUser,
+    fetchExperimentDetails ]);
 
   const jobInfoLinkText = useMemo(() => {
     if (!experiment.jobSummary) return 'Not available';
@@ -348,7 +364,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <InlineEditor
                 allowNewline
                 disabled={disabled}
-                isOnDark
                 maxLength={500}
                 placeholder={disabled ? 'Archived' : 'Add description...'}
                 style={{ minWidth: 120 }}
@@ -419,7 +434,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.name}>
               <InlineEditor
                 disabled={disabled}
-                isOnDark
                 maxLength={128}
                 placeholder="experiment name"
                 value={experiment.name}
@@ -441,6 +455,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       {modalExperimentDeleteContextHolder}
       {modalExperimentMoveContextHolder}
       {modalExperimentStopContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </>
   );
 };

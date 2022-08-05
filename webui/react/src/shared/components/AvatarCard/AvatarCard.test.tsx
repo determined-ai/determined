@@ -62,6 +62,5 @@ describe('AvatarCard', () => {
       expect(container.children[0]).toHaveClass('base');
       expect(container.children[0]).toHaveClass('test-class');
     });
-
   });
 });

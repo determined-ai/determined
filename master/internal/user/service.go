@@ -25,6 +25,10 @@ var (
 	userService *Service
 )
 
+var forbiddenError = echo.NewHTTPError(
+	http.StatusForbidden,
+	"user not authorized")
+
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
 	GID   *int   `json:"gid,omitempty"`
@@ -262,12 +266,25 @@ func NewCookieFromToken(token string) *http.Cookie {
 // getMe returns information about the current authenticated user.
 func (s *Service) getMe(c echo.Context) (interface{}, error) {
 	me := c.(*context.DetContext).MustGetUser()
-
 	return s.db.UserByID(me.ID)
 }
 
 func (s *Service) getUsers(c echo.Context) (interface{}, error) {
-	return s.db.UserList()
+	userList, err := s.db.UserList()
+	if err != nil {
+		return nil, err
+	}
+
+	return AuthZProvider.Get().FilterUserList(c.(*context.DetContext).MustGetUser(), userList)
+}
+
+func canViewUserErrorHandle(currUser, user model.User, actionErr, notFoundErr error) error {
+	if ok, err := AuthZProvider.Get().CanGetUser(currUser, user); err != nil {
+		return err
+	} else if !ok {
+		return notFoundErr
+	}
+	return actionErr
 }
 
 func (s *Service) patchUser(c echo.Context) (interface{}, error) {
@@ -302,31 +319,25 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	forbiddenError := echo.NewHTTPError(
-		http.StatusForbidden,
-		"user not authorized")
-
-	authenticatedUser := c.(*context.DetContext).MustGetUser()
+	userNotFoundErr := echo.NewHTTPError(http.StatusBadRequest,
+		fmt.Sprintf("failed to get user '%s'", args.Username))
+	currUser := c.(*context.DetContext).MustGetUser()
 	user, err := s.db.UserByUsername(args.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		if authenticatedUser.Admin {
-			return nil, echo.NewHTTPError(
-				http.StatusBadRequest,
-				fmt.Sprintf("failed to get user '%s'", args.Username))
-		}
-		return nil, echo.NewHTTPError(http.StatusForbidden, "user not found")
+		return nil, userNotFoundErr
 	default:
 		return nil, err
 	}
 
 	var toUpdate []string
-
 	if params.Password != nil {
-		if err = AuthZProvider.Get().CanSetUserPassword(authenticatedUser, *user); err != nil {
-			return nil, forbiddenError
+		if err = AuthZProvider.Get().CanSetUsersPassword(currUser, *user); err != nil {
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
+
 		if err = user.UpdatePasswordHash(*params.Password); err != nil {
 			return nil, err
 		}
@@ -334,35 +345,40 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	}
 
 	if params.Active != nil {
-		if !user.ActiveCanBeModifiedBy(authenticatedUser) {
-			return nil, forbiddenError
+		if err = AuthZProvider.Get().CanSetUsersActive(currUser, *user, *params.Active); err != nil {
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
+
 		user.Active = *params.Active
 		toUpdate = append(toUpdate, "active")
 	}
 
 	if params.Admin != nil {
-		if !user.AdminCanBeModifiedBy(authenticatedUser) {
-			return nil, forbiddenError
+		if err = AuthZProvider.Get().CanSetUsersAdmin(currUser, *user, *params.Admin); err != nil {
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
 		}
+
 		user.Admin = *params.Admin
 		toUpdate = append(toUpdate, "admin")
 	}
 
 	var ug *model.AgentUserGroup
 	if pug := params.AgentUserGroup; pug != nil {
-		if !user.AdminCanBeModifiedBy(authenticatedUser) {
-			return nil, forbiddenError
-		}
-
 		u, pErr := pug.Validate()
 		if pErr != nil {
 			return nil, echo.NewHTTPError(http.StatusBadRequest, pErr.Error())
 		}
 		ug = u
+
+		if err := AuthZProvider.Get().CanSetUsersAgentUserGroup(currUser, *user, *ug); err != nil {
+			return nil, canViewUserErrorHandle(currUser, *user,
+				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+		}
 	}
 
-	if err = s.db.UpdateUser(user, toUpdate, ug); err != nil {
+	if err := s.db.UpdateUser(user, toUpdate, ug); err != nil {
 		return nil, err
 	}
 
@@ -399,16 +415,15 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	forbiddenError := echo.NewHTTPError(http.StatusForbidden,
-		"user not authorized")
-	authenticatedUser := c.(*context.DetContext).MustGetUser()
-	if !authenticatedUser.Admin {
-		return nil, forbiddenError
-	}
-
 	user, err := s.db.UserByUsername(args.Username)
 	if err != nil {
 		return nil, err
+	}
+
+	currUser := c.(*context.DetContext).MustGetUser()
+	if err = AuthZProvider.Get().CanSetUsersUsername(currUser, *user); err != nil {
+		return nil, canViewUserErrorHandle(currUser, *user,
+			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
 	}
 
 	if params.NewUsername == nil {
@@ -458,14 +473,6 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	currUser := c.(*context.DetContext).MustGetUser()
-	if !currUser.CanCreateUser() {
-		insufficientPermissionsError := echo.NewHTTPError(
-			http.StatusForbidden,
-			"insufficient permissions")
-		return nil, insufficientPermissionsError
-	}
-
 	var ug *model.AgentUserGroup
 	if pug := params.AgentUserGroup; pug != nil {
 		u, pErr := pug.Validate()
@@ -474,14 +481,19 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		}
 		ug = u
 	}
-
 	params.Username = strings.ToLower(params.Username)
-	_, err = s.db.AddUser(&model.User{
+
+	userToAdd := model.User{
 		Username: params.Username,
 		Admin:    params.Admin,
 		Active:   params.Active,
-	}, ug)
+	}
+	currUser := c.(*context.DetContext).MustGetUser()
+	if err = AuthZProvider.Get().CanCreateUser(currUser, userToAdd, ug); err != nil {
+		return nil, errors.Wrap(forbiddenError, err.Error())
+	}
 
+	_, err = s.db.AddUser(&userToAdd, ug)
 	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "user already exists")
@@ -503,6 +515,17 @@ func (s *Service) getUserImage(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
+
+	user, err := s.db.UserByUsername(args.Username)
+	if err != nil {
+		return nil, err
+	}
+	currUser := c.(*context.DetContext).MustGetUser()
+	if err := AuthZProvider.Get().CanGetUsersImage(currUser, *user); err != nil {
+		return nil, canViewUserErrorHandle(currUser, *user,
+			errors.Wrap(forbiddenError, err.Error()), db.ErrNotFound)
+	}
+
 	c.Response().Header().Set("cache-control", "public, max-age=3600")
 
 	return s.db.UserImage(args.Username)

@@ -1,7 +1,20 @@
 import { RecordKey } from 'shared/types';
 import { MetricName, MetricType, WorkloadGroup } from 'types';
-import { metricNameSorter } from 'utils/sort';
 
+import { alphaNumericSorter } from '../shared/utils/sort';
+
+/*
+ * Sort the metric names by having the validation metrics come first followed by training metrics.
+ * Within each type of metric, sort in the order they appear in the `MetricNames` array.
+ * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
+ */
+export const metricNameSorter = (a: MetricName, b: MetricName): number => {
+  const isAValidation = a.type === MetricType.Validation;
+  const isBValidation = b.type === MetricType.Validation;
+  if (isAValidation && !isBValidation) return -1;
+  if (isBValidation && !isAValidation) return 1;
+  return alphaNumericSorter(a.name, b.name);
+};
 export const extractMetricNames = (workloads: WorkloadGroup[]): MetricName[] => {
   const trainingNames = workloads
     .filter((workload) => workload.training?.metrics)

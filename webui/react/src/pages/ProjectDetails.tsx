@@ -51,6 +51,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
   CommandTask,
@@ -66,7 +67,6 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
@@ -340,6 +340,7 @@ const ProjectDetails: React.FC = () => {
     const descriptionRenderer = (value:string, record: ExperimentItem) => (
       <InlineEditor
         disabled={record.archived}
+        maxLength={500}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
         value={value}
         onSave={(newDescription: string) => saveExperimentDescription(newDescription, record.id)}
@@ -654,7 +655,8 @@ const ProjectDetails: React.FC = () => {
 
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
-  }, [ resetSettings ]);
+    clearSelected();
+  }, [ clearSelected, resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: ExperimentColumnName[]) => {
     if (columns.length === 0) {

@@ -84,7 +84,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
     {
-      defaultValue: 100,
+      defaultValue: 10,
       key: 'tableLimit',
       storageKey: 'tableLimit',
       type: { baseType: BaseType.Integer },

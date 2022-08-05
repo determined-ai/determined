@@ -15,6 +15,7 @@ import {
   ExperimentBase,
   ExperimentItem,
   ExperimentSearcherName,
+  HpImportance,
   Hyperparameters,
   HyperparameterType,
   Project,
@@ -142,6 +143,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
 
+  [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
+
   [ExperimentAction.Fork]: isExperimentModifiable,
 
   [ExperimentAction.Kill]: (experiment, user) =>
@@ -215,3 +218,27 @@ export const getProjectExperimentForExperimentItem = (
     workspaceId: project?.workspaceId ?? 0,
     workspaceName: project?.workspaceName,
   } as ProjectExperiment);
+export const runStateSortValues: Record<RunState, number> = {
+  [RunState.Active]: 0,
+  [RunState.Paused]: 1,
+  [RunState.StoppingError]: 2,
+  [RunState.Errored]: 3,
+  [RunState.StoppingCompleted]: 4,
+  [RunState.Completed]: 5,
+  [RunState.StoppingCanceled]: 6,
+  [RunState.Canceled]: 7,
+  [RunState.Deleted]: 7,
+  [RunState.Deleting]: 7,
+  [RunState.DeleteFailed]: 7,
+  [RunState.Unspecified]: 8,
+};
+export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
+  const aValue = hpImportance[a];
+  const bValue = hpImportance[b];
+  if (aValue < bValue) return 1;
+  if (aValue > bValue) return -1;
+  return 0;
+};
+export const runStateSorter = (a: RunState, b: RunState): number => {
+  return runStateSortValues[a] - runStateSortValues[b];
+};

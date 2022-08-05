@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
 
 	"google.golang.org/grpc/codes"
@@ -42,33 +43,24 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 }
 
-func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
+func getFullModelUser(d *db.PgDB, userID model.UserID) (*model.FullUser, error) {
 	user, err := d.UserByID(userID)
-	switch {
-	case err == db.ErrNotFound:
+	if errors.Is(err, db.ErrNotFound) {
 		return nil, errUserNotFound
-	case err != nil:
-		return nil, err
 	}
-	var protoAug *userv1.AgentUserGroup
-	agentUserGroup, err := d.AgentUserGroup(user.ID)
-	if agentUserGroup != nil {
-		protoAug = &userv1.AgentUserGroup{
-			AgentUid: int32(agentUserGroup.UID),
-			AgentGid: int32(agentUserGroup.GID),
-		}
-	}
-	displayNameString := user.DisplayName.ValueOrZero()
-	return &userv1.User{
-		Id:             int32(user.ID),
-		Username:       user.Username,
-		Admin:          user.Admin,
-		Active:         user.Active,
-		AgentUserGroup: protoAug,
-		DisplayName:    displayNameString,
-	}, err
+	return user, err
 }
 
+func getUser(d *db.PgDB, userID model.UserID) (*userv1.User, error) {
+	user, err := getFullModelUser(d, userID)
+	if err != nil {
+		return nil, err
+	}
+	return toProtoUserFromFullUser(*user), nil
+}
+
+// TODO remove this eventually since authz replaces this
+// We can't yet since we use it else where.
 func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
 	u, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
@@ -118,6 +110,15 @@ func (a *apiServer) GetUsers(
 	if err != nil {
 		return nil, err
 	}
+
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if users, err = user.AuthZProvider.Get().FilterUserList(*curUser, users); err != nil {
+		return nil, err
+	}
+
 	resp := &apiv1.GetUsersResponse{}
 	for _, user := range users {
 		resp.Users = append(resp.Users, toProtoUserFromFullUser(user))
@@ -127,36 +128,41 @@ func (a *apiServer) GetUsers(
 }
 
 func (a *apiServer) GetUser(
-	_ context.Context, req *apiv1.GetUserRequest,
+	ctx context.Context, req *apiv1.GetUserRequest,
 ) (*apiv1.GetUserResponse, error) {
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
-	return &apiv1.GetUserResponse{User: fullUser}, err
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	targetFullUser, err := getFullModelUser(a.m.db, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+
+	var ok bool
+	if ok, err = user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errUserNotFound
+	}
+	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
 }
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
-	if err := userShouldBeAdmin(ctx, a); err != nil {
-		return nil, err
+	if req.User == nil {
+		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
 	}
-
-	if err := grpcutil.ValidateRequest(
-		func() (bool, string) { return req.User != nil, "no user specified" },
-		func() (bool, string) { return req.User.Username != "", "no username specified" },
-	); err != nil {
-		return nil, err
-	}
-	user := &model.User{
+	userToAdd := &model.User{
 		Username: req.User.Username,
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
 	if req.User.DisplayName != "" {
-		user.DisplayName = null.StringFrom(req.User.DisplayName)
+		userToAdd.DisplayName = null.StringFrom(req.User.DisplayName)
 	}
-	if err := user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
-		return nil, err
-	}
+
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
 		agentUserGroup = &model.AgentUserGroup{
@@ -165,7 +171,26 @@ func (a *apiServer) PostUser(
 		}
 	}
 
-	userID, err := a.m.db.AddUser(user, agentUserGroup)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().
+		CanCreateUser(*curUser, *userToAdd, agentUserGroup); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	if err = grpcutil.ValidateRequest(
+		func() (bool, string) { return req.User != nil, "no user specified" },
+		func() (bool, string) { return req.User.Username != "", "no username specified" },
+	); err != nil {
+		return nil, err
+	}
+	if err = userToAdd.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+		return nil, err
+	}
+
+	userID, err := a.m.db.AddUser(userToAdd, agentUserGroup)
 	switch {
 	case err == db.ErrDuplicateRecord:
 		return nil, status.Error(codes.InvalidArgument, "user already exists")
@@ -184,15 +209,26 @@ func (a *apiServer) SetUserPassword(
 	if err != nil {
 		return nil, err
 	}
-	targetUser := &model.User{ID: model.UserID(req.UserId)}
-	if err = user.AuthZProvider.Get().CanSetUserPassword(*curUser, *targetUser); err != nil {
+
+	targetFullUser, err := getFullModelUser(a.m.db, model.UserID(req.UserId))
+	if err != nil {
 		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
+		if ok, canGetErr := user.AuthZProvider.
+			Get().CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, canGetErr
+		} else if !ok {
+			return nil, errUserNotFound
+		}
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	if err = targetUser.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
-	switch err = a.m.db.UpdateUser(targetUser, []string{"password_hash"}, nil); {
+	switch err = a.m.db.UpdateUser(&targetUser, []string{"password_hash"}, nil); {
 	case err == db.ErrNotFound:
 		return nil, errUserNotFound
 	case err != nil:
@@ -211,7 +247,22 @@ func (a *apiServer) PatchUser(
 	}
 
 	uid := model.UserID(req.UserId)
-	targetUser := &model.User{ID: uid}
+	targetFullUser, err := getFullModelUser(a.m.db, uid)
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+		if ok, canGetErr := user.AuthZProvider.Get().
+			CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, canGetErr
+		} else if !ok {
+			return nil, errUserNotFound
+		}
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	// TODO: handle any field name:
 	if req.User.DisplayName != nil {
 		if err = user.AuthZProvider.Get().CanSetUserDisplayName(*curUser, *targetUser); err != nil {
 			return nil, err
@@ -285,27 +336,39 @@ func (a *apiServer) PatchUser(
 func (a *apiServer) GetUserSetting(
 	ctx context.Context, req *apiv1.GetUserSettingRequest,
 ) (*apiv1.GetUserSettingResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	settings, err := db.GetUserSetting(user.ID)
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	settings, err := db.GetUserSetting(curUser.ID)
 	return &apiv1.GetUserSettingResponse{Settings: settings}, err
 }
 
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if req.Setting == nil {
+		return nil, status.Error(codes.InvalidArgument, "must specify setting")
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
 	settingModel := model.UserWebSetting{
-		UserID:      user.ID,
+		UserID:      curUser.ID,
 		Key:         req.Setting.Key,
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
 	}
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
 	err = db.UpdateUserSetting(&settingModel)
 	return &apiv1.PostUserSettingResponse{}, err
 }
@@ -313,10 +376,14 @@ func (a *apiServer) PostUserSetting(
 func (a *apiServer) ResetUserSetting(
 	ctx context.Context, req *apiv1.ResetUserSettingRequest,
 ) (*apiv1.ResetUserSettingResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
-	err = db.ResetUserSetting(user.ID)
+	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = db.ResetUserSetting(curUser.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
 }

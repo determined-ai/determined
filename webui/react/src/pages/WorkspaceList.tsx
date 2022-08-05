@@ -64,7 +64,7 @@ const WorkspaceList: React.FC = () => {
         sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
         users: settings.user,
       }, { signal: canceler.signal });
-      setTotal(response.pagination.total ?? 0);
+      setTotal((response.pagination.total ?? 1) - 1); // -1 because we do not display immutable ws
       setWorkspaces((prev) => {
         const withoutDefault = response.workspaces.filter((w) => !w.immutable);
         if (isEqual(prev, withoutDefault)) return prev;
@@ -248,6 +248,7 @@ const WorkspaceList: React.FC = () => {
               limit: settings.tableLimit,
               offset: settings.tableOffset,
             }, total)}
+            rowKey="id"
             settings={settings}
             size="small"
             updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}

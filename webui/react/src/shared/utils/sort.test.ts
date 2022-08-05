@@ -1,3 +1,5 @@
+import { stringToVersion } from 'shared/utils/string';
+
 import * as sorters from './sort';
 
 interface SortTest {
@@ -138,6 +140,17 @@ describe('sort utility', () => {
     runSortTests(tests, sorters.nullSorter);
   });
 
+  describe('sortVersions', () => {
+    const tests = [
+      { input: [ '1.2.3', '1.2.4' ], output: [ '1.2.4', '1.2.3' ] },
+    ];
+    tests.forEach((t) => {
+      it('should sort latest first', () => {
+        expect(sorters.sortVersions(t.input.map(stringToVersion)))
+          .toStrictEqual(t.output.map(stringToVersion));
+      });
+    });
+  });
   describe('primitiveSorter', () => {
     const tests = [
       { input: [ 'abc', 'ABC' ], output: -1 },
