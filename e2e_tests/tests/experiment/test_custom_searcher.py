@@ -28,7 +28,6 @@ def test_run_custom_searcher_experiment() -> None:
         "name": "custom",
         "metric": "validation_error",
         "smaller_is_better": True,
-        "max_length": {"batches": 3000},
     }
     config["description"] = "custom searcher"
     search_method = SingleSearchMethod(config, 3000)
@@ -92,7 +91,6 @@ def test_run_random_searcher_exp() -> None:
         "name": "custom",
         "metric": "validation_error",
         "smaller_is_better": True,
-        "max_length": {"batches": 3000},
     }
     config["description"] = "custom searcher"
 
