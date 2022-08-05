@@ -139,6 +139,7 @@
     "coveragePathIgnorePatterns": [
       "/src/services/api-ts-sdk/",
       ".stories.tsx"
-    ]
+    ],
+    "resetMocks": false
   }
 }
