@@ -22,6 +22,87 @@ import (
 
 const workDir = "/workdir"
 
+func Test_getPortMappings(t *testing.T) {
+	type args struct {
+		ports map[string]int
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "Verify when ports are specified",
+			args: args{
+				ports: map[string]int{"port1": 8080, "port2": 443, "port3": 3000},
+			},
+			want: []string{
+				"8080", "443", "3000",
+			},
+		},
+		{
+			name: "Verify trial port is ignored",
+			args: args{
+				ports: map[string]int{"port1": 8080, "trial": 1734, "port2": 443, "port3": 3000},
+			},
+			want: []string{
+				"8080", "443", "3000",
+			},
+		},
+		{
+			name: "Verify ports are not specified except trial port",
+			args: args{
+				ports: map[string]int{"trial": 1734},
+			},
+			want: []string{},
+		},
+		{
+			name: "Verify no ports are specified",
+			args: args{
+				ports: map[string]int{},
+			},
+			want: []string{},
+		},
+	}
+	disableImageCache := true
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			environment := expconf.EnvironmentConfigV0{
+				RawImage:                &expconf.EnvironmentImageMapV0{},
+				RawEnvironmentVariables: &expconf.EnvironmentVariablesMapV0{},
+				RawRegistryAuth:         &types.AuthConfig{},
+				RawForcePullImage:       &disableImageCache,
+				RawPodSpec:              &expconf.PodSpec{},
+				RawSlurm:                []string{},
+				RawAddCapabilities:      []string{},
+				RawDropCapabilities:     []string{},
+				RawPorts:                tt.args.ports,
+			}
+
+			tr := &TaskSpec{
+				Environment: environment,
+			}
+
+			got := getPortMappings(tr)
+
+			assert.Equal(t, len(*got), len(tt.want))
+			if len(tt.want) != 0 {
+				gotCopy := make([]string, len(tt.want))
+				wantCopy := make([]string, len(tt.want))
+				copy(gotCopy, *got)
+				copy(wantCopy, tt.want)
+				sort.Strings(gotCopy)
+				sort.Strings(wantCopy)
+
+				if !reflect.DeepEqual(gotCopy, wantCopy) {
+					t.Errorf("getPortMappings() = %v, want %v", *got, tt.want)
+				}
+			}
+		})
+	}
+}
+
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 	type args struct {
 		slotType          device.Type
