@@ -2422,10 +2422,10 @@ export interface V1Experiment {
 export interface V1ExperimentInactive {
     /**
      * 
-     * @type {string}
+     * @type {Determinedexperimentv1State}
      * @memberof V1ExperimentInactive
      */
-    experimentState?: string;
+    experimentState: Determinedexperimentv1State;
 }
 
 /**
@@ -7973,7 +7973,7 @@ export interface V1TrialClosed {
      * @type {string}
      * @memberof V1TrialClosed
      */
-    requestId?: string;
+    requestId: string;
 }
 
 /**
@@ -7987,7 +7987,7 @@ export interface V1TrialCreated {
      * @type {string}
      * @memberof V1TrialCreated
      */
-    requestId?: string;
+    requestId: string;
 }
 
 /**
@@ -8026,13 +8026,13 @@ export interface V1TrialExitedEarly {
      * @type {string}
      * @memberof V1TrialExitedEarly
      */
-    requestId?: string;
+    requestId: string;
     /**
      * The reason for the exit.
      * @type {V1TrialExitedEarlyExitedReason}
      * @memberof V1TrialExitedEarly
      */
-    exitedReason?: V1TrialExitedEarlyExitedReason;
+    exitedReason: V1TrialExitedEarlyExitedReason;
 }
 
 /**
@@ -8354,13 +8354,13 @@ export interface V1TrialProgress {
      * @type {string}
      * @memberof V1TrialProgress
      */
-    requestId?: string;
+    requestId: string;
     /**
      * partial_units represent partial epochs, batches or records where the Unit is implied.
      * @type {number}
      * @memberof V1TrialProgress
      */
-    partialUnits?: number;
+    partialUnits: number;
 }
 
 /**
@@ -8854,19 +8854,19 @@ export interface V1ValidationCompleted {
      * @type {string}
      * @memberof V1ValidationCompleted
      */
-    requestId?: string;
+    requestId: string;
     /**
      * 
      * @type {number}
      * @memberof V1ValidationCompleted
      */
-    metric?: number;
+    metric: number;
     /**
      * length from ValidateAfterOperation.
      * @type {string}
      * @memberof V1ValidationCompleted
      */
-    validateAfterLength?: string;
+    validateAfterLength: string;
 }
 
 /**
