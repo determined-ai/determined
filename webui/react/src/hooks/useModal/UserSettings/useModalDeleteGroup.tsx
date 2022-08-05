@@ -8,6 +8,7 @@ import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
 export const API_SUCCESS_MESSAGE = 'Group deleted.';
+export const MODAL_HEADER = 'Delete Group';
 
 interface ModalProps {
   group: V1GroupSearchResult;
@@ -41,7 +42,7 @@ const useModalDeleteGroup = ({ onClose, group }: ModalProps): ModalHooks => {
       okButtonProps: { danger: true },
       okText: 'Delete',
       onOk: handleOkay,
-      title: <h5>Delete Group</h5>,
+      title: <h5>{MODAL_HEADER}</h5>,
     });
   }, [ handleOkay, openOrUpdate, group ]);
 

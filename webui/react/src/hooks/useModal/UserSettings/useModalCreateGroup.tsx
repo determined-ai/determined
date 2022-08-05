@@ -49,10 +49,6 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
     fetchGroup();
   }, [ fetchGroup ]);
 
-  // useEffect(() => {
-  //   form.setFieldsValue({ [GROUP_NAME_NAME]: groupDetail?.name });
-  //   group && fetchGroup();
-  // }, [ group, form, fetchGroup, groupDetail ]);
   return (
     <Form
       form={form}
@@ -168,7 +164,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       closable: true,
       content: <ModalForm form={form} group={group} users={users} />,
       icon: null,
-      okText: group ? 'Edit Group' : 'Create Group',
+      okText: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       onCancel: handleCancel,
       onOk: handleOkay,
       title: <h5>{group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
