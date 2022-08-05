@@ -3,15 +3,25 @@ import json
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from determined.common.api import bindings
 from determined.common.experimental import Checkpoint
 
 
 @dataclasses.dataclass
-class SearchState:
-    checkpoint_id: Optional[str]
+class SearcherState:
+    failures: Set[uuid.UUID]
+    trial_progress: Dict[uuid.UUID, float]
+    trials_closed: Set[uuid.UUID]
+    trials_created: Set[uuid.UUID]
+    checkpoint_id: Optional[str] = None
+
+    def __init__(self) -> None:
+        self.failures = set()
+        self.trial_progress = {}
+        self.trials_closed = set()
+        self.trials_created = set()
 
 
 class ExitedReason(Enum):
@@ -74,6 +84,17 @@ class Close(Operation):
         )
 
 
+class Progress(Operation):
+    def __init__(self, progress: float):
+        super().__init__()
+        self.progress = progress
+
+    def _to_searcher_operation(self) -> bindings.v1SearcherOperation:
+        return bindings.v1SearcherOperation(
+            searcherProgress=bindings.v1SearcherProgressOperation(progress=self.progress)
+        )
+
+
 class Shutdown(Operation):
     def __init__(self) -> None:
         super().__init__()
@@ -103,12 +124,12 @@ class Create(Operation):
 
 
 class SearchMethod:
-    def __init__(self, search_state: SearchState) -> None:
-        self._search_state = search_state
+    def __init__(self) -> None:
+        self._searcher_state = SearcherState()
 
     @property
-    def searcher_state(self) -> SearchState:
-        return self._search_state
+    def searcher_state(self) -> SearcherState:
+        return self._searcher_state
 
     @abstractmethod
     def initial_operations(self) -> List[Operation]:
