@@ -111,8 +111,8 @@ def test_run_random_searcher_exp() -> None:
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
     assert search_method.closed_trials == 5
-    assert search_method.searcher_state.trials_created == search_method.created_trials
-    assert search_method.searcher_state.trials_closed == search_method.closed_trials
+    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
+    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
 
 
 class RandomSearcherMethod(SearchMethod):
