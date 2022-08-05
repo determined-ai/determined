@@ -1,10 +1,12 @@
-import { Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
@@ -60,6 +62,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openHyperparameterSearchModal,
+  } = useModalHyperparameterSearch({ experiment });
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -168,12 +174,25 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
+  const handleHPSearch = useCallback(() => {
+    openHyperparameterSearchModal({});
+  }, [ openHyperparameterSearchModal ]);
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+      <Tabs
+        activeKey={tabKey}
+        tabBarExtraContent={tabKey === 'hyperparameters' ? (
+          <div style={{ padding: 8 }}>
+            <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+          </div>
+        ) :
+          undefined}
+        tabBarStyle={{ height: 48, paddingLeft: 16 }}
+        onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
@@ -202,6 +221,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
       </Tabs>
+      {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );
 };

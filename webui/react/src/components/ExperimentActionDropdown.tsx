@@ -4,6 +4,8 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { PropsWithChildren, useCallback } from 'react';
 
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
@@ -19,7 +21,7 @@ import handleError from 'utils/error';
 import {
   getActionsForExperiment,
 } from 'utils/experiment';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 interface Props {
   curUser?: DetailedUser;
@@ -36,9 +38,10 @@ const dropdownActions = [
   Action.Unarchive,
   Action.Cancel,
   Action.Kill,
-  Action.Delete,
   Action.Move,
   Action.OpenTensorBoard,
+  Action.HyperparameterSearch,
+  Action.Delete,
 ];
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
@@ -52,9 +55,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   const id = experiment.id;
   const {
-    contextHolder,
+    contextHolder: modalExperimentMoveContextHolder,
     modalOpen: openExperimentMove,
   } = useModalExperimentMove({ onClose: onComplete });
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment, onClose: onComplete });
 
   const handleExperimentMove = useCallback(() => {
     openExperimentMove({
@@ -63,6 +70,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       sourceWorkspaceId: experiment.workspaceId,
     });
   }, [ openExperimentMove, experiment.id, experiment.projectId, experiment.workspaceId ]);
+
+  const handleHyperparameterSearch = useCallback(() => {
+    openModalHyperparameterSearch();
+  }, [ openModalHyperparameterSearch ]);
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -127,6 +138,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         case Action.Move:
           handleExperimentMove();
           break;
+        case Action.HyperparameterSearch:
+          handleHyperparameterSearch();
+          break;
       }
     } catch (e) {
       handleError(e, {
@@ -169,7 +183,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
-      {contextHolder}
+      {modalExperimentMoveContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
@@ -178,7 +193,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           <Icon name="overflow-vertical" />
         </button>
       </Dropdown>
-      {contextHolder}
+      {modalExperimentMoveContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };

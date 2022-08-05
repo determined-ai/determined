@@ -68,7 +68,7 @@ import {
 } from 'utils/experiment';
 import { alphaNumericSorter } from 'utils/sort';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
@@ -654,7 +654,8 @@ const ProjectDetails: React.FC = () => {
 
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);
-  }, [ resetSettings ]);
+    clearSelected();
+  }, [ clearSelected, resetSettings ]);
 
   const handleUpdateColumns = useCallback((columns: ExperimentColumnName[]) => {
     if (columns.length === 0) {

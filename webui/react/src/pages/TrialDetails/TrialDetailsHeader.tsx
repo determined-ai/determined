@@ -6,13 +6,15 @@ import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { ExperimentAction as Action, ExperimentAction, ExperimentBase, TrialDetails } from 'types';
 import { canUserActionExperiment } from 'utils/experiment';
+import { openCommand } from 'utils/wait';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
-import { openCommand } from 'wait';
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
@@ -37,11 +39,23 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
 
-  const { contextHolder, modalOpen } = useCreateExperimentModal({ onClose: handleModalClose });
+  const {
+    contextHolder: modalExperimentCreateContextHolder,
+    modalOpen: openModalExperimentCreate,
+  } = useCreateExperimentModal({ onClose: handleModalClose });
+
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment, trial });
 
   const handleContinueTrial = useCallback(() => {
-    modalOpen({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, modalOpen, trial ]);
+    openModalExperimentCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
+  }, [ experiment, openModalExperimentCreate, trial ]);
+
+  const handleHyperparameterSearch = useCallback(() => {
+    openModalHyperparameterSearch();
+  }, [ openModalHyperparameterSearch ]);
 
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
@@ -80,14 +94,26 @@ const TrialDetailsHeader: React.FC<Props> = ({
       }
     }
 
+    if (canUserActionExperiment(
+      undefined,
+      ExperimentAction.HyperparameterSearch,
+      experiment,
+      trial,
+    )) {
+      options.push({
+        key: Action.HyperparameterSearch,
+        label: 'Hyperparameter Search',
+        onClick: handleHyperparameterSearch,
+      });
+    }
+
     return options;
-  }, [
-    experiment,
+  }, [ experiment,
     fetchTrialDetails,
     handleContinueTrial,
+    handleHyperparameterSearch,
     isRunningTensorBoard,
-    trial,
-  ]);
+    trial ]);
 
   return (
     <>
@@ -96,7 +122,8 @@ const TrialDetailsHeader: React.FC<Props> = ({
         leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
         options={headerOptions}
       />
-      {contextHolder}
+      {modalExperimentCreateContextHolder}
+      {modalHyperparameterSearchContextHolder}
     </>
   );
 };

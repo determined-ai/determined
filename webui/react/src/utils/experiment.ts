@@ -142,6 +142,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
 
   [ExperimentAction.DownloadCode]: alwaysTrueExperimentChecker,
 
+  [ExperimentAction.HyperparameterSearch]: alwaysTrueExperimentChecker,
+
   [ExperimentAction.Fork]: isExperimentModifiable,
 
   [ExperimentAction.Kill]: (experiment, user) =>
