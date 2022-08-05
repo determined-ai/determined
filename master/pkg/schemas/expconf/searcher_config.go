@@ -78,7 +78,6 @@ func (s SearcherConfigV0) Unit() Unit {
 //go:generate ../gen.sh
 // CustomConfigV0 configures a custom search.
 type CustomConfigV0 struct {
-	RawMaxLength *LengthV0 `json:"max_length"`
 }
 
 //go:generate ../gen.sh
