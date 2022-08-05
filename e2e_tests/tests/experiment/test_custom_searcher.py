@@ -122,6 +122,7 @@ class RandomSearcherMethod(SearchMethod):
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
 
+        # TODO remove created_trials and closed_trials before merging the feature branch
         self.created_trials = 0
         self.pending_trials = 0
         self.closed_trials = 0
