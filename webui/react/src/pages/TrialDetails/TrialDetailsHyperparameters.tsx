@@ -6,8 +6,8 @@ import { defaultRowClassName } from 'components/Table';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner';
 import { isObject } from 'shared/utils/data';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { TrialDetails } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
 
 import css from './TrialDetailsHyperparameters.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';

@@ -3,8 +3,7 @@ import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
-import { metricNameToValue, valueToMetricName } from 'utils/metric';
-import { metricNameSorter } from 'utils/sort';
+import { metricNameSorter, metricNameToValue, valueToMetricName } from 'utils/metric';
 
 import BadgeTag from './BadgeTag';
 import MetricBadgeTag from './MetricBadgeTag';

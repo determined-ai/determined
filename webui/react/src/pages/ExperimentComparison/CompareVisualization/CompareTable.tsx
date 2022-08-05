@@ -10,10 +10,10 @@ import { Primitive, RecordKey } from 'shared/types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient,
   str2rgba } from 'shared/utils/color';
 import { isNumber } from 'shared/utils/data';
+import { alphaNumericSorter, numericSorter, primitiveSorter } from 'shared/utils/sort';
 import {
   HyperparametersFlattened, HyperparameterType, MetricName,
 } from 'types';
-import { alphaNumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
 import { HpValsMap } from '../CompareVisualization';
 

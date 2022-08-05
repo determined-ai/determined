@@ -16,12 +16,14 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { hasObjectKeys } from 'shared/utils/data';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
   HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
   Scale,
 } from 'types';
-import { alphaNumericSorter, hpImportanceSorter } from 'utils/sort';
+
+import { hpImportanceSorter } from '../../utils/experiment';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
