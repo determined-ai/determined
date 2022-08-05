@@ -31,7 +31,7 @@ def test_run_custom_searcher_experiment() -> None:
         "max_length": {"batches": 3000},
     }
     config["description"] = "custom searcher"
-    search_method = SingleSearchMethod(config)
+    search_method = SingleSearchMethod(config, 3000)
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
@@ -42,10 +42,12 @@ def test_run_custom_searcher_experiment() -> None:
 
 
 class SingleSearchMethod(SearchMethod):
-    def __init__(self, experiment_config: dict) -> None:
+    def __init__(self, experiment_config: dict, max_length: int) -> None:
         super().__init__()
         # since this is a single trial the hyperparameter space comprises a single point
         self.hyperparameters = experiment_config["hyperparameters"]
+        self.max_length = max_length
+        self.trial_closed = False
 
     def on_trial_created(self, request_id: uuid.UUID) -> List[Operation]:
         return []
@@ -54,10 +56,14 @@ class SingleSearchMethod(SearchMethod):
         return []
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
+        self.trial_closed = True
         return [Shutdown()]
 
     def progress(self) -> float:
-        return 0.99  # TODO change signature
+        if self.trial_closed:
+            return 1.0
+        (the_trial,) = self.searcher_state.trials_created
+        return self.searcher_state.trial_progress[the_trial] / self.max_length
 
     def on_trial_exited_early(
         self, request_id: uuid.UUID, exit_reason: ExitedReason
@@ -73,7 +79,7 @@ class SingleSearchMethod(SearchMethod):
             hparams=self.hyperparameters,
             checkpoint=None,
         )
-        validate_after = ValidateAfter(request_id=create.request_id, length=3000)
+        validate_after = ValidateAfter(request_id=create.request_id, length=self.max_length)
         close = Close(request_id=create.request_id)
         logging.debug(f"Create({create.request_id}, {create.hparams})")
         return [create, validate_after, close]
@@ -145,7 +151,6 @@ class RandomSearcherMethod(SearchMethod):
     def progress(self) -> float:
         if 0 < self.max_concurrent_trials < self.pending_trials:
             logging.error("pending trials is greater than max_concurrent_trial")
-        progress = self.closed_trials / self.max_trials
         units_completed = sum(
             (
                 self.max_length
