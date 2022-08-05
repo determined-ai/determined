@@ -17,13 +17,13 @@ type ProjectAuthZ struct {
 	mock.Mock
 }
 
-// CanArchiveProject provides a mock function with given fields: curUSer, _a1
-func (_m *ProjectAuthZ) CanArchiveProject(curUSer model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUSer, _a1)
+// CanArchiveProject provides a mock function with given fields: curUser, _a1
+func (_m *ProjectAuthZ) CanArchiveProject(curUser model.User, _a1 *projectv1.Project) error {
+	ret := _m.Called(curUser, _a1)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUSer, _a1)
+		r0 = rf(curUser, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -136,13 +136,13 @@ func (_m *ProjectAuthZ) CanSetProjectNotes(curUser model.User, _a1 *projectv1.Pr
 	return r0
 }
 
-// CanUnarchiveProject provides a mock function with given fields: curUSer, _a1
-func (_m *ProjectAuthZ) CanUnarchiveProject(curUSer model.User, _a1 *projectv1.Project) error {
-	ret := _m.Called(curUSer, _a1)
+// CanUnarchiveProject provides a mock function with given fields: curUser, _a1
+func (_m *ProjectAuthZ) CanUnarchiveProject(curUser model.User, _a1 *projectv1.Project) error {
+	ret := _m.Called(curUser, _a1)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project) error); ok {
-		r0 = rf(curUSer, _a1)
+		r0 = rf(curUser, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
