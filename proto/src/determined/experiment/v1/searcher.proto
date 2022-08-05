@@ -4,6 +4,8 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "determined/experiment/v1/experiment.proto";
 
 // InitialOperations is a searcher event signaling the creation of an
 // experiment.
@@ -14,6 +16,9 @@ message InitialOperations {
 
 // TrialCreated is a searcher event singaling the creation of a trial.
 message TrialCreated {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id" ] }
+  };
   // uuid identifying the trial to the searcher
   string request_id = 1;
 }
@@ -21,6 +26,9 @@ message TrialCreated {
 // TrialProgress is a searcher event that tells you the
 // number of batches completed in the trial.
 message TrialProgress {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id", "partial_units" ] }
+  };
   // uuid identifying the trial to the searcher
   string request_id = 1;
   // partial_units represent partial epochs, batches or records where the Unit
@@ -31,6 +39,11 @@ message TrialProgress {
 // ValidationCompleted is a searcher event triggered when a validation has been
 // completed.
 message ValidationCompleted {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "request_id", "metric", "validate_after_length" ]
+    }
+  };
   // uuid identifying the trial to the searcher
   string request_id = 1;
   // value of the validation metric used to direct the search
@@ -42,6 +55,9 @@ message ValidationCompleted {
 // TrialClosed is a searcher event triggered when a trial has successfully
 // finished
 message TrialClosed {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id" ] }
+  };
   // uuid identifying the trial to the searcher
   string request_id = 1;
 }
@@ -49,6 +65,9 @@ message TrialClosed {
 // TrialExitedEarly is a searcher event triggered when a trial exited
 // prematurely
 message TrialExitedEarly {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "request_id", "exited_reason" ] }
+  };
   // uuid indentifying the trial to the searcher
   string request_id = 1;
   // The reason for an early exit.
@@ -70,8 +89,11 @@ message TrialExitedEarly {
 // ExperimentInactive is a searcher event triggered when an experiment
 // is no longer active
 message ExperimentInactive {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_state" ] }
+  };
   // experiment_state
-  string experiment_state = 1;
+  State experiment_state = 1;
 }
 
 // SearcherEvent is a message from master to a client-driven
