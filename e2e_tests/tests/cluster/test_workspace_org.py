@@ -17,7 +17,7 @@ def test_workspace_org() -> None:
     admin_auth = authentication.Authentication(
         master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
     )
-    admin_sess = session.Session(master_url, "admin", admin_auth, None)
+    admin_sess = session.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []
