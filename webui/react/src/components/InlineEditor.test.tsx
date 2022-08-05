@@ -2,6 +2,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   waitForElementToBeRemoved,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,9 +10,10 @@ import React from 'react';
 
 import InlineEditor from './InlineEditor';
 
-const setup = ({ disabled, onSaveReturnsError, value } = {
+const setup = ({ disabled, onSaveReturnsError, value, pattern } = {
   disabled: false,
   onSaveReturnsError: false,
+  pattern: new RegExp(''),
   value: 'before',
 }) => {
   const user = userEvent.setup();
@@ -22,6 +24,7 @@ const setup = ({ disabled, onSaveReturnsError, value } = {
   const { container } = render(
     <InlineEditor
       disabled={disabled}
+      pattern={pattern}
       value={value}
       onCancel={onCancel}
       onSave={onSave}
@@ -68,6 +71,7 @@ describe('InlineEditor', () => {
     const { onSave, waitForSpinnerToDisappear, user } = setup({
       disabled: false,
       onSaveReturnsError: true,
+      pattern: new RegExp(''),
       value: 'before',
     });
     await user.click(screen.getByRole('textbox'));
@@ -90,7 +94,12 @@ describe('InlineEditor', () => {
   });
 
   it('should not allow user input when disabled', async () => {
-    const { user } = setup({ disabled: true, onSaveReturnsError: true, value: 'before' });
+    const { user } = setup({
+      disabled: true,
+      onSaveReturnsError: true,
+      pattern: new RegExp(''),
+      value: 'before',
+    });
     await user.type(screen.getByRole('textbox'), 'after');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
   });
@@ -107,5 +116,24 @@ describe('InlineEditor', () => {
     await waitForSpinnerToDisappear();
     expect(textbox).not.toHaveFocus();
     expect(screen.getByDisplayValue('こんにちは')).toBeInTheDocument();
+  });
+
+  it('should RegExp validate input value', async () => {
+    const { user } = setup({
+      disabled: false,
+      onSaveReturnsError: false,
+      pattern: new RegExp('^[a-z][a-z0-9\\s]*$', 'i'),
+      value: 'Determined',
+    });
+    const textbox = screen.getByRole('textbox');
+    await user.click(textbox);
+    await user.type(textbox, '!!');
+    await user.keyboard('{enter}');
+    expect(screen.queryByDisplayValue('Determined!!')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('Determined')).toBeInTheDocument();
+    await user.click(textbox);
+    await user.type(textbox, ' 123');
+    await user.keyboard('{enter}');
+    expect(screen.getByDisplayValue('Determined 123')).toBeInTheDocument();
   });
 });
