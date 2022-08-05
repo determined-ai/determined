@@ -204,10 +204,10 @@ func (a *apiServer) GetSearcherEvents(ctx context.Context, req *apiv1.GetSearche
 	if err != nil {
 		return nil, err
 	}
-	if exp.State == experimentv1.State_STATE_COMPLETED {
+	if exp.State != experimentv1.State_STATE_ACTIVE {
 		event := experimentv1.SearcherEvent_ExperimentInactive{
 			ExperimentInactive: &experimentv1.ExperimentInactive{
-				ExperimentState: exp.State.Enum().String(),
+				ExperimentState: exp.State,
 			},
 		}
 		searcherEvent := experimentv1.SearcherEvent{
