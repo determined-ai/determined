@@ -6,7 +6,7 @@ import { clone } from './data';
 
 export const isFullPath = (url: string): boolean => {
   try {
-    return url.startsWith('http') && Boolean(new URL(url));
+    return url.startsWith('http') && !!(new URL(url));
   } catch (e){
     return false;
   }

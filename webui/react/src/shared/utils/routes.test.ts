@@ -1,8 +1,7 @@
 import React from 'react';
 
 import { paths } from 'routes/utils';
-
-import history from '../routes/history';
+import history from 'shared/routes/history';
 
 import type { AnyMouseEvent } from './routes';
 import * as routes from './routes';
