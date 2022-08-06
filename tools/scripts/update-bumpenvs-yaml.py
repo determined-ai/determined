@@ -56,13 +56,19 @@ JOB_SUFFIXES = [
 
 PACKER_JOBS = {"publish-cloud-images"}
 
-DOCKER_JOBS = {f"build-and-publish-docker-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])}
+DOCKER_JOBS = {
+    f"build-and-publish-docker-{suffix}-{mpi}"
+    for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
+}
 
 PACKER_ARTIFACTS = {
     "packer-log",
 }
 
-DOCKER_ARTIFACTS = {f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])}
+DOCKER_ARTIFACTS = {
+    f"publish-{suffix}-{mpi}"
+    for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
+}
 
 
 class Build:
