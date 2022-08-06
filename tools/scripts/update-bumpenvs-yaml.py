@@ -23,6 +23,7 @@ Usage: update-bumpenvs-yaml.py path/to/bumpenvs.yaml ENVIRONMENTS_COMMIT
 
 import argparse
 import collections
+import itertools
 import os
 import sys
 from pathlib import Path
@@ -55,13 +56,13 @@ JOB_SUFFIXES = [
 
 PACKER_JOBS = {"publish-cloud-images"}
 
-DOCKER_JOBS = {f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES}
+DOCKER_JOBS = {f"build-and-publish-docker-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])}
 
 PACKER_ARTIFACTS = {
     "packer-log",
 }
 
-DOCKER_ARTIFACTS = {f"publish-{suffix}" for suffix in JOB_SUFFIXES}
+DOCKER_ARTIFACTS = {f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])}
 
 
 class Build:
