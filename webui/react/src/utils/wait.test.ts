@@ -70,15 +70,18 @@ describe('Wait Page Utilities', () => {
 
   describe('openCommand', () => {
     let globalOpen: typeof global.open;
-    const windowOpen = jest.fn();
+    let windowOpen: jest.Mock;
 
-    beforeAll(() => {
+    beforeEach(() => {
+      // Make sure `windowOpen` is a new `jest.fn()` for each test.
+      windowOpen = jest.fn();
+
       // Preserve the original `global.open`.
       globalOpen = global.open;
       global.open = windowOpen;
     });
 
-    afterAll(() => {
+    afterEach(() => {
       // Restore `global.open` to original function.
       global.open = globalOpen;
     });
@@ -86,6 +89,7 @@ describe('Wait Page Utilities', () => {
     it('should open window for JupyterLab task', () => {
       expect(windowOpen).not.toHaveBeenCalled();
       utils.openCommand(COMMAND_TASK[CommandType.JupyterLab]);
+      // TODO: Expand this to use `toHaveBeenCalledWith`.
       expect(windowOpen).toHaveBeenCalled();
     });
 
