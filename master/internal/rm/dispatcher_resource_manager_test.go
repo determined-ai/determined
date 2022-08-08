@@ -75,11 +75,6 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		Nodes: nodes,
 	}
 
-	resourceDetails := &hpcResourceDetailsCache{
-		lastSample: *hpcResource,
-		sampleTime: time.Now(),
-	}
-
 	rocm := device.ROCM
 	cuda := device.CUDA
 	overrides := map[string]config.DispatcherPartitionOverrideConfigs{
@@ -96,8 +91,11 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	m := &dispatcherResourceManager{
-		config:          config,
-		resourceDetails: *resourceDetails,
+		config: config,
+		resourceDetails: hpcResourceDetailsCache{
+			lastSample: *hpcResource,
+			sampleTime: time.Now(),
+		},
 	}
 
 	want0 := map[string]*agentv1.Slot{
@@ -211,7 +209,9 @@ func Test_summarizeResourcePool(t *testing.T) {
 		{
 			name:       "One resource pool test",
 			partitions: []hpcPartitionDetails{p1},
-			args:       args{},
+			args: args{
+				ctx: &actor.Context{},
+			},
 			want: []resourcepoolv1.ResourcePool{
 				{
 					Name:           "partition 1",
@@ -225,7 +225,9 @@ func Test_summarizeResourcePool(t *testing.T) {
 		{
 			name:       "Two resource pool test",
 			partitions: []hpcPartitionDetails{p1, p2},
-			args:       args{},
+			args: args{
+				ctx: &actor.Context{},
+			},
 			want: []resourcepoolv1.ResourcePool{
 				{
 					Name:           "partition 1",
@@ -247,7 +249,9 @@ func Test_summarizeResourcePool(t *testing.T) {
 		{
 			name:       "Three resource pool test",
 			partitions: []hpcPartitionDetails{p1, p2, p3},
-			args:       args{},
+			args: args{
+				ctx: &actor.Context{},
+			},
 			want: []resourcepoolv1.ResourcePool{
 				{
 					Name:           "partition 1",
@@ -279,19 +283,17 @@ func Test_summarizeResourcePool(t *testing.T) {
 				Partitions: tt.partitions,
 			}
 
-			resourceDetails := &hpcResourceDetailsCache{
-				lastSample: *hpcResource,
-				sampleTime: time.Now(),
-			}
-
 			overrides := make(map[string]config.DispatcherPartitionOverrideConfigs)
 			config := &config.DispatcherResourceManagerConfig{
 				PartitionOverrides: overrides,
 			}
 
 			m := &dispatcherResourceManager{
-				config:          config,
-				resourceDetails: *resourceDetails,
+				config: config,
+				resourceDetails: hpcResourceDetailsCache{
+					lastSample: *hpcResource,
+					sampleTime: time.Now(),
+				},
 			}
 
 			res, _ := m.summarizeResourcePool(tt.args.ctx)
@@ -320,22 +322,19 @@ func Test_summarizeResourcePool(t *testing.T) {
 
 func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	type fields struct {
-		config                      *config.DispatcherResourceManagerConfig
-		apiClient                   *launcher.APIClient
-		hpcResourcesManifest        *launcher.Manifest
-		reqList                     *taskList
-		groups                      map[*actor.Ref]*group
-		addrToResourcesID           map[*actor.Ref]sproto.ResourcesID
-		resourcesIDToAddr           map[sproto.ResourcesID]*actor.Ref
-		slotsUsedPerGroup           map[*group]int
-		dispatchIDToAllocationID    map[string]model.AllocationID
-		masterTLSConfig             model.TLSClientConfig
-		loggingConfig               model.LoggingConfig
-		jobWatcher                  *launcherMonitor
-		authToken                   string
-		resourceDetails             hpcResourceDetailsCache
-		DefaultComputePoolPartition string
-		DefaultAuxPoolPartition     string
+		config                   *config.DispatcherResourceManagerConfig
+		apiClient                *launcher.APIClient
+		hpcResourcesManifest     *launcher.Manifest
+		reqList                  *taskList
+		groups                   map[*actor.Ref]*group
+		addrToResourcesID        map[*actor.Ref]sproto.ResourcesID
+		resourcesIDToAddr        map[sproto.ResourcesID]*actor.Ref
+		slotsUsedPerGroup        map[*group]int
+		dispatchIDToAllocationID map[string]model.AllocationID
+		masterTLSConfig          model.TLSClientConfig
+		loggingConfig            model.LoggingConfig
+		jobWatcher               *launcherMonitor
+		authToken                string
 	}
 	type args struct {
 		ctx                *actor.Context
@@ -422,22 +421,19 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &dispatcherResourceManager{
-				config:                      tt.fields.config,
-				apiClient:                   tt.fields.apiClient,
-				hpcResourcesManifest:        tt.fields.hpcResourcesManifest,
-				reqList:                     tt.fields.reqList,
-				groups:                      tt.fields.groups,
-				addrToResourcesID:           tt.fields.addrToResourcesID,
-				resourcesIDtoAddr:           tt.fields.resourcesIDToAddr,
-				slotsUsedPerGroup:           tt.fields.slotsUsedPerGroup,
-				dispatchIDToAllocationID:    tt.fields.dispatchIDToAllocationID,
-				masterTLSConfig:             tt.fields.masterTLSConfig,
-				loggingConfig:               tt.fields.loggingConfig,
-				jobWatcher:                  tt.fields.jobWatcher,
-				authToken:                   tt.fields.authToken,
-				resourceDetails:             tt.fields.resourceDetails,
-				defaultComputePoolPartition: tt.fields.DefaultComputePoolPartition,
-				defaultAuxPoolPartition:     tt.fields.DefaultAuxPoolPartition,
+				config:                   tt.fields.config,
+				apiClient:                tt.fields.apiClient,
+				hpcResourcesManifest:     tt.fields.hpcResourcesManifest,
+				reqList:                  tt.fields.reqList,
+				groups:                   tt.fields.groups,
+				addrToResourcesID:        tt.fields.addrToResourcesID,
+				resourcesIDtoAddr:        tt.fields.resourcesIDToAddr,
+				slotsUsedPerGroup:        tt.fields.slotsUsedPerGroup,
+				dispatchIDToAllocationID: tt.fields.dispatchIDToAllocationID,
+				masterTLSConfig:          tt.fields.masterTLSConfig,
+				loggingConfig:            tt.fields.loggingConfig,
+				jobWatcher:               tt.fields.jobWatcher,
+				authToken:                tt.fields.authToken,
 			}
 			compute, aux := m.selectDefaultPools(tt.args.ctx, tt.args.hpcResourceDetails)
 			if compute != tt.wantCompute {
