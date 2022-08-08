@@ -180,8 +180,7 @@ class OneVarTrial(pytorch.PyTorchTrial):
         self.cls_reducer.update(sum(label), None)
         self.fn_reducer.update((sum(label), None))
 
-        output = self.model(data)
-        loss = self.loss_fn(output, label)
+        loss = self.loss_fn(self.model(data), label)
         return {"val_loss": loss}
 
     def build_training_data_loader(self) -> torch.utils.data.DataLoader:
