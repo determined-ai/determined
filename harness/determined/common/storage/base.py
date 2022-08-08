@@ -60,9 +60,11 @@ class StorageManager(metaclass=abc.ABCMeta):
         # create new checkpoints. Administrators wishing to control the permissions more
         # specifically should just create the storage path themselves; this will not interfere.
         old_umask = os.umask(0)
-        os.makedirs(self._base_path, exist_ok=True, mode=0o777)
-        # Restore the original umask.
-        os.umask(old_umask)
+        try:
+            os.makedirs(self._base_path, exist_ok=True, mode=0o777)
+        finally:
+            # Restore the original umask.
+            os.umask(old_umask)
 
         storage_dir = os.path.join(self._base_path, dst)
         os.makedirs(storage_dir, exist_ok=True)
@@ -88,6 +90,15 @@ class StorageManager(metaclass=abc.ABCMeta):
         path = self.pre_store_path(dst)
         yield path
         self.post_store_path(path, dst, paths)
+
+    @abc.abstractmethod
+    def store_path_is_direct_access(self) -> bool:
+        """
+        Direct access means sharded uploads can't detect upload conflicts.
+
+        Presently only shared_fs has direct access.
+        """
+        pass
 
     @abc.abstractmethod
     @contextlib.contextmanager

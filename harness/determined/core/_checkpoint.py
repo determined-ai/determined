@@ -103,7 +103,11 @@ class CheckpointContext:
         self._tensorboard_manager = tensorboard_manager
 
     def upload(
-        self, ckpt_dir: Union[str, os.PathLike], metadata: Optional[Dict[str, Any]] = None
+        self,
+        ckpt_dir: Union[str, os.PathLike],
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        shard: bool,
     ) -> str:
         """
         ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
@@ -119,88 +123,104 @@ class CheckpointContext:
 
         Returns:  The ``storage_id`` for this checkpoint.
         """
+
         if ckpt_dir is not None:
             ckpt_dir = os.fspath(ckpt_dir)
 
-        if not shard and self._dist.rank != 0:
-            raise RuntimeError(
-                f"cannot call .upload(shard=False) from non-chief worker (rank={self._dist.rank})"
-            )
 
-        if ckpt_dir is None and not shard:
-            raise RuntimeError(
-                "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
-                "nothing at all"
-            )
 
-        if shard:
-            ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
-            if not any(ckpt_dir_mask):
+
+        # The simple and sharded cases can technically be written as one function but it becomes
+        # far more complicated than having two codepaths.
+        if not shard:
+            if self._dist.rank != 0:
                 raise RuntimeError(
-                    "cannot call .upload(ckpt_dir=None, shard=True), from all ranks; "
-                    "at least one rank must have a valid ckpt_dir"
+                    f"cannot call .upload(shard=False) from non-chief worker (rank={self._dist.rank})"
                 )
-        else:
-            ckpt_dir_mask = [True]
-
-        if self._dist.rank == 0:
+            if ckpt_dir is None:
+                raise RuntimeError(
+                    "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
+                    "nothing at all"
+                )
             storage_id = str(uuid.uuid4())
-
-        if shard:
+            return self._upload_single(ckpt_dir, storage_id, metadata)
+        else:
+            if self._dist.rank == 0:
+                storage_id = str(uuid.uuid4())
             storage_id = self._dist.broadcast(storage_id)
+            return self._upload_sharded(ckpt_dir, storage_id, metadata)
+
+    def _upload_single(
+        self, ckpt_dir: str, storage_id: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        storage_id = str(uuid.uuid4())
+        resources = self._storage_manager._list_directory(ckpt_dir)
+
+        # Add metadata pre-upload but without counting it among resources.
+        self._write_metadata_file(ckpt_dir, metadata or {})
+
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+        self._report_checkpoint(storage_id, resources, metadata)
+        return storage_id
+
+    def _upload_sharded(
+        self, ckpt_dir: Optional[str], metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
+        if not any(ckpt_dir_mask):
+            raise RuntimeError(
+                "cannot call .upload(ckpt_dir=None, shard=True), from all ranks; "
+                "at least one rank must have a valid ckpt_dir"
+            )
 
         # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
         # the lowest rank on each node will actually upload this directory.
-        if shard:
-            if ckpt_dir is None:
-                file_uid = None
-            else:
-                st = os.stat(ckpt_dir)
-                file_uid = (st.st_dev, st.st_ino)
-            all_file_uids = self._dist.allgather(file_uid)
-            # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
-            want_upload = all_file_uids.index(file_uid) == self._dist.rank
+        if ckpt_dir is None:
+            file_uid = None
         else:
-            want_upload = True
+            st = os.stat(ckpt_dir)
+            file_uid = (st.st_dev, st.st_ino)
+        all_file_uids = self._dist.allgather(file_uid)
+        # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
+        want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
         # Decide what we are going to upload.
-        if not want_upload or ckpt_dir is None:
-            resources = []
-        else:
+        if want_upload:
+            assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
-
-        if shard:
-            all_resources = self._dist.allgather(resources)
-
-            merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
-            if conflicts:
-                # Try to keep the logs easier to read; print the whole failure only on the chief.
-                if self._dist.rank > 0:
-                    raise RuntimeError("refusing to upload with file conflicts")
-                msgs = [
-                    f"    {f} uploaded by ranks {ranks}"
-                    for f, ranks in sorted(conflicts.items())
-                ]
-                raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
         else:
-            merged_resources = resources
+            resources = []
+
+        # Merge resources, detect conflicts
+        all_resources = self._dist.allgather(resources)
+
+        merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
+        if conflicts:
+            # Try to keep the logs easier to read; print the whole failure only on the chief.
+            if self._dist.rank > 0:
+                raise RuntimeError("refusing to upload with file conflicts")
+            msgs = [
+                f"    {f} uploaded by ranks {ranks}"
+                for f, ranks in sorted(conflicts.items())
+            ]
+            raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
 
         # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
         metadata_writer_rank = ckpt_dir_mask.index(True)
         if self._dist.rank == metadata_writer_rank:
             assert ckpt_dir is not None:
-            # Add metadata pre-upload but without counting it among resources
-            self._write_metadatanfile(ckpt_dir, metadata or {})
+            # Add metadata pre-upload but without counting it among resources.
+            self._write_metadata_file(ckpt_dir, metadata or {})
             # XXX: merge metadata too
 
         if ckpt_dir is not None:
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
 
-        # synchronize workers
-        _ = self._dist.allgather(None)
-
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, metadata)
+
+        # synchronize workers
+        _ = self._dist.allgather(None)
 
         return storage_id
 
@@ -248,39 +268,118 @@ class CheckpointContext:
 
     @contextlib.contextmanager
     def store_path(
-        self, metadata: Optional[Dict[str, Any]] = None
+        self, metadata: Optional[Dict[str, Any]] = None, *, shard: bool = False
     ) -> Iterator[Tuple[pathlib.Path, str]]:
         """
         ``store_path()`` is a context manager which chooses a random path and prepares a directory
         you should save your model to.  When the context manager exits, the model is automatically
         uploaded (at least, for cloud-backed checkpoint storage backends).
 
-        Note that with multiple workers, only the chief worker (``distributed.rank==0``) is allowed
-        to call ``store_path()``.
+        When ``shard=False``, only the chief worker (``distributed.rank==0``) may call
+        ``store_path()``.
+
+        When ``shard=True``, ``store_path()`` becomes a synchronization point between workers, so
+        all workers must call store_path(), even workers which will not write any checkpoint files.
 
         Example:
 
         .. code::
 
-           with core_context.checkpoint.store_path() as (path, storage_id):
-               my_save_model(my_model, path)
-               print(f"done saving checkpoint {storage_id}")
-           print(f"done uploading checkpoint {storage_id}")
+           if core_context.distributed.rank == 0:
+               with core_context.checkpoint.store_path() as (path, storage_id):
+                   my_save_model(my_model, path)
+                   print(f"done saving checkpoint {storage_id}")
+               print(f"done uploading checkpoint {storage_id}")
         """
 
+        if not shard:
+            return self._store_path_single(metadata)
+        else:
+            return self._store_path_sharded(metadata)
+
+    @contextlib.contextmanager
+    def _store_path_single(
+        self, metadata: Optional[Dict[str, Any]] = None
+    ) -> Iterator[Tuple[pathlib.Path, str]]:
         if self._dist.rank != 0:
             raise RuntimeError(
-                "cannot call CheckpointContext.store_path() from non-chief worker "
+                "cannot call CheckpointContext.store_path(shard=False) from non-chief worker "
                 f"(rank={self._dist.rank})"
             )
 
         storage_id = str(uuid.uuid4())
-        with self._storage_manager.store_path(storage_id) as path:
-            yield path, storage_id
-            resources = self._storage_manager._list_directory(path)
-            self._write_metadata_file(os.fspath(path), metadata or {})
+        path = self._storage_manager.pre_store_path(storage_id)
+        yield path, storage_id
+        resources = self._storage_manager._list_directory(path)
+        self._write_metadata_file(os.fspath(path), metadata or {})
+        self._storage_manager.post_store_path(path, dst)
 
         self._report_checkpoint(storage_id, resources, metadata)
+
+
+    @contextlib.contextmanager
+    def _store_path_sharded(
+        self, metadata: Optional[Dict[str, Any]] = None
+    ) -> Iterator[Tuple[pathlib.Path, str]]:
+        if self._dist.rank == 0:
+            storage_id = str(uuid.uuid4())
+        storage_id = self._dist.broadcast(storage_id)
+
+        path = self._storage_manager.pre_store_path(storage_id)
+        yield path, storage_id
+
+        if self._storage_manager.store_path_is_direct_access():
+            return
+
+        ckpt_dir = os.fspath(path)
+
+        # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
+        # the lowest rank on each node will actually upload this directory.
+        st = os.stat(ckpt_dir)
+        file_uid = (st.st_dev, st.st_ino)
+        all_file_uids = self._dist.allgather(file_uid)
+        # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
+        want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
+
+        # Decide what we are going to upload.
+        if want_upload:
+            assert ckpt_dir
+            resources = self._storage_manager._list_directory(ckpt_dir)
+        else:
+            resources = []
+
+        # Merge resources, detect conflicts
+        all_resources = self._dist.allgather(resources)
+
+        merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
+        if conflicts:
+            # Try to keep the logs easier to read; print the whole failure only on the chief.
+            if self._dist.rank > 0:
+                raise RuntimeError("refusing to upload with file conflicts")
+            msgs = [
+                f"    {f} uploaded by ranks {ranks}"
+                for f, ranks in sorted(conflicts.items())
+            ]
+            raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
+
+        # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
+        metadata_writer_rank = ckpt_dir_mask.index(True)
+        if self._dist.rank == metadata_writer_rank:
+            assert ckpt_dir is not None:
+            # Add metadata pre-upload but without counting it among resources.
+            self._write_metadata_file(ckpt_dir, metadata or {})
+            # XXX: merge metadata too
+
+        if ckpt_dir is not None:
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+
+        if self._dist.rank == 0:
+            self._report_checkpoint(storage_id, merged_resources, metadata)
+
+        # synchronize workers
+        _ = self._dist.allgather(None)
+
+        return storage_id
 
     @contextlib.contextmanager
     def restore_path(

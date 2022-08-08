@@ -65,6 +65,9 @@ class SharedFSStorageManager(storage.StorageManager):
                 "directly to shared_fs."
             )
 
+    def store_path_is_direct_access(self) -> bool:
+        return True
+
     @contextlib.contextmanager
     def restore_path(
         self, src: str, selector: Optional[storage.Selector] = None

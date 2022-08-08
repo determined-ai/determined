@@ -32,3 +32,6 @@ class CloudStorageManager(storage.StorageManager):
             self.upload(src, dst, paths)
         finally:
             shutil.rmtree(src, ignore_errors=True)
+
+    def store_path_is_direct_access(self) -> bool:
+        return False
