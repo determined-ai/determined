@@ -1043,7 +1043,7 @@ class PyTorchTrial(det.Trial):
         """
         return {}
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         """
         Calculate validation metrics for a batch and return them as a
         dictionary mapping metric names to metric values. Per-batch validation metrics
@@ -1064,6 +1064,8 @@ class PyTorchTrial(det.Trial):
         Arguments:
             batch (Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor):
                 batch of data for evaluating.
+            batch_idx (integer): index of the current batch among all the epochs processed
+                per device (slot) since the start of training.
         """
         pass
 
