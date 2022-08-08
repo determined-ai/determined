@@ -44,6 +44,7 @@ from torch.cuda.amp import GradScaler, autocast
 from determined import experimental, pytorch
 from determined.pytorch import samplers
 
+import apex
 
 class OnesDataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
@@ -229,8 +230,15 @@ class OneVarApexAMPTrial(OneVarTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         super().__init__(context)
         self.model, self.optimizer = self.context.configure_apex_amp(
-            models=self.model, optimizers=self.opt
+            models=self.model, optimizers=self.opt, opt_level="O2",
         )
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale"] = apex.amp.state_dict()["loss_scaler0"]["loss_scale"]
+        return metrics
 
 
 class OneVarAutoAMPTrial(OneVarTrial):
