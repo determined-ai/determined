@@ -116,6 +116,15 @@ func (k KubernetesResourceManager) GetDefaultAuxResourcePool(
 	}, nil
 }
 
+// GetAgents gets the state of connected agents. Go around the RM and directly to the pods actor
+// to avoid blocking through it.
+func (k KubernetesResourceManager) GetAgents(
+	ctx actor.Messenger,
+	msg *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	return resp, askAt(k.Ref().System(), sproto.PodsAddr, msg, &resp)
+}
+
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *config.KubernetesResourceManagerConfig

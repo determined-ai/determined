@@ -112,6 +112,15 @@ func (a AgentResourceManager) ResolveResourcePool(
 	return name, nil
 }
 
+// GetAgents gets the state of connected agents. Go around the RM and directly to the agents actor
+// to avoid blocking asks through it.
+func (a AgentResourceManager) GetAgents(
+	ctx actor.Messenger,
+	msg *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	return resp, askAt(a.Ref().System(), sproto.AgentsAddr, msg, &resp)
+}
+
 type agentResourceManager struct {
 	config      *config.AgentResourceManagerConfig
 	poolsConfig []config.ResourcePoolConfig

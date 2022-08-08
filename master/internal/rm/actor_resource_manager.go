@@ -231,3 +231,26 @@ func (r *ActorResourceManager) ask(ctx actor.Messenger, req interface{}, v inter
 		return nil
 	}
 }
+
+func askAt(sys *actor.System, addr actor.Address, req interface{}, v interface{}) error {
+	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
+		return fmt.Errorf("ask at %s has valid but unsettable resp %T", addr, v)
+	}
+	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
+	switch resp := sys.AskAt(addr, req); {
+	case resp.Source() == nil:
+		return fmt.Errorf("actor %s could not be found", addr)
+	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
+		return fmt.Errorf("actor %s did not response", addr)
+	case resp.Error() != nil:
+		return resp.Error()
+	default:
+		if expectingResponse {
+			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
+				return fmt.Errorf("%s returned unexpected resp (%T): %v", addr, resp, resp)
+			}
+			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
+		}
+		return nil
+	}
+}
