@@ -34,11 +34,10 @@ const EditableRow: React.FC<Props> = (
             className={css.overflow}
             getPopupContainer={(triggerNode) => triggerNode}
             overlay={(
-              <Menu>
-                <Menu.Item danger key="delete-metadata-row" onClick={onDelete}>
-                  Delete Row
-                </Menu.Item>
-              </Menu>
+              <Menu
+                items={[ { danger: true, key: 'delete-metadata-row', label: 'Delete Row' } ]}
+                onClick={onDelete}
+              />
             )}
             trigger={[ 'click' ]}>
             <Button aria-label="action" type="text">

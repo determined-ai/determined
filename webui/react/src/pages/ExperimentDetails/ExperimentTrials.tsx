@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -320,27 +321,31 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [ settings.row, updateSettings ]);
 
   const TrialActionDropdown = useCallback(({ record, onVisibleChange, children }) => {
+    enum MenuKey {
+      OPEN_TENSORBOARD = 'open-tensorboard',
+      HYPERPARAMETER_SEARCH = 'hyperparameter-search',
+      VIEW_LOGS = 'view-logs',
+    }
+
+    const funcs = {
+      [MenuKey.OPEN_TENSORBOARD]: () => { handleOpenTensorBoard(record); },
+      [MenuKey.HYPERPARAMETER_SEARCH]: () => { handleHyperparameterSearch(record); },
+      [MenuKey.VIEW_LOGS]: () => { handleViewLogs(record); },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as MenuKey]();
+    };
+
+    const menuItems = [
+      { key: MenuKey.OPEN_TENSORBOARD, label: TrialAction.OpenTensorBoard },
+      { key: MenuKey.HYPERPARAMETER_SEARCH, label: TrialAction.HyperparameterSearch },
+      { key: MenuKey.VIEW_LOGS, label: TrialAction.ViewLogs },
+    ];
+
     return (
       <Dropdown
-        overlay={(
-          <Menu>
-            <Menu.Item
-              key="open-tensorboard"
-              onClick={() => handleOpenTensorBoard(record)}>
-              {TrialAction.OpenTensorBoard}
-            </Menu.Item>
-            <Menu.Item
-              key="hyperparameter-search"
-              onClick={() => handleHyperparameterSearch(record)}>
-              {TrialAction.HyperparameterSearch}
-            </Menu.Item>
-            <Menu.Item
-              key="view-logs"
-              onClick={() => handleViewLogs(record)}>
-              {TrialAction.ViewLogs}
-            </Menu.Item>
-          </Menu>
-        )}
+        overlay={<Menu items={menuItems} onClick={onItemClick} />}
         trigger={[ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>
         {children}
