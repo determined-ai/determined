@@ -308,11 +308,12 @@ describe('Routes Utilities', () => {
     });
 
     it('should route to react URL', () => {
+      const path = '/clusters';
       expect(history.push).not.toHaveBeenCalled();
-      routes.routeToReactUrl('/clusters');
+      routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(
-        '/clusters',
+        path,
         {
           loginRedirect:
           {
@@ -334,11 +335,12 @@ describe('Routes Utilities', () => {
 
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
+      const path = '/dashboard';
       expect(history.push).not.toHaveBeenCalled();
-      routes.routeToReactUrl('/dashboard');
+      routes.routeToReactUrl(path);
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(
-        '/dashboard',
+        path,
         {
           loginRedirect:
           {
