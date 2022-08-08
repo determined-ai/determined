@@ -41,7 +41,7 @@ export enum BrandingType {
 }
 
 export interface DeterminedInfo {
-  branding: BrandingType;
+  branding?: BrandingType;
   checked: boolean,
   clusterId: string;
   clusterName: string;

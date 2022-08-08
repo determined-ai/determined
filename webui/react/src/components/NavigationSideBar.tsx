@@ -16,6 +16,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { BrandingType } from 'types';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -119,7 +120,7 @@ const NavigationSideBar: React.FC = () => {
         external: true,
         icon: 'pencil',
         label: 'Share Feedback',
-        path: paths.submitProductFeedback(info.branding),
+        path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
         popout: true,
       },
     ],

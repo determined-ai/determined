@@ -4,9 +4,8 @@ import { globalStorage } from 'globalStorage';
 import { DarkLight, Mode, Theme } from 'shared/themes';
 import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
-import themes from 'themes';
 import {
-  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
+  Agent, Auth, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType, Workspace,
 } from 'types';
 
@@ -139,7 +138,7 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
 const initInfo = {
-  branding: BrandingType.Determined,
+  branding: undefined,
   checked: false,
   clusterId: '',
   clusterName: '',
@@ -155,7 +154,7 @@ const initUI = {
   omnibar: { isShowing: false },
   showChrome: true,
   showSpinner: false,
-  theme: themes[BrandingType.Determined][DarkLight.Light],
+  theme: {} as Theme,
 };
 const initState: State = {
   activeExperiments: 0,

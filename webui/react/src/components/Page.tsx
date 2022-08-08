@@ -23,10 +23,11 @@ const getFullDocTitle = (branding: string, title?: string, clusterName?: string)
 
 const Page: React.FC<Props> = (props: Props) => {
   const { info } = useStore();
-  const brandingPath = `${process.env.PUBLIC_URL}/${info.branding}`;
+  const branding = info.branding || BrandingType.Determined;
+  const brandingPath = `${process.env.PUBLIC_URL}/${branding}`;
 
   const docTitle = getFullDocTitle(
-    info.branding,
+    branding,
     props.docTitle || props.title,
     info.clusterName,
   );
