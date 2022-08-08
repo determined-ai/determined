@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -54,8 +55,10 @@ const (
 // - totalAvailableNodes: 293
 // ...more partitions.
 type hpcResources struct {
-	Partitions []hpcPartitionDetails `json:"partitions,flow"`
-	Nodes      []hpcNodeDetails      `json:"nodes,flow"`
+	Partitions                  []hpcPartitionDetails `json:"partitions,flow"`
+	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`
+	DefaultComputePoolPartition string                `json:"defaultComputePoolPartition"`
+	DefaultAuxPoolPartition     string                `json:"defaultAuxPoolPartition"`
 }
 
 // hpcPartitionDetails holds HPC Slurm partition details.
@@ -86,6 +89,7 @@ type hpcNodeDetails struct {
 
 // hpcResourceDetailsCache stores details of the HPC resource information cache.
 type hpcResourceDetailsCache struct {
+	mu         sync.RWMutex
 	lastSample hpcResources
 	sampleTime time.Time
 }
@@ -94,22 +98,20 @@ type hpcResourceDetailsCache struct {
 type dispatcherResourceManager struct {
 	config *config.DispatcherResourceManagerConfig
 
-	apiClient                   *launcher.APIClient
-	hpcResourcesManifest        *launcher.Manifest
-	reqList                     *taskList
-	groups                      map[*actor.Ref]*group
-	addrToResourcesID           map[*actor.Ref]sproto.ResourcesID
-	resourcesIDtoAddr           map[sproto.ResourcesID]*actor.Ref
-	dispatchIDToAllocationID    map[string]model.AllocationID
-	allocationIDToDispatchID    map[model.AllocationID]string
-	slotsUsedPerGroup           map[*group]int
-	masterTLSConfig             model.TLSClientConfig
-	loggingConfig               model.LoggingConfig
-	jobWatcher                  *launcherMonitor
-	authToken                   string
-	resourceDetails             hpcResourceDetailsCache
-	defaultComputePoolPartition string
-	defaultAuxPoolPartition     string
+	apiClient                *launcher.APIClient
+	hpcResourcesManifest     *launcher.Manifest
+	reqList                  *taskList
+	groups                   map[*actor.Ref]*group
+	addrToResourcesID        map[*actor.Ref]sproto.ResourcesID
+	resourcesIDtoAddr        map[sproto.ResourcesID]*actor.Ref
+	dispatchIDToAllocationID map[string]model.AllocationID
+	allocationIDToDispatchID map[model.AllocationID]string
+	slotsUsedPerGroup        map[*group]int
+	masterTLSConfig          model.TLSClientConfig
+	loggingConfig            model.LoggingConfig
+	jobWatcher               *launcherMonitor
+	authToken                string
+	resourceDetails          hpcResourceDetailsCache
 }
 
 func newDispatcherResourceManager(
@@ -136,7 +138,7 @@ func newDispatcherResourceManager(
 	apiClient := launcher.NewAPIClient(clientConfiguration)
 
 	// One time activity to create a manifest using SlurmResources carrier.
-	// This manifiest is used on demand to retrieve details regarding HPC resources
+	// This manifest is used on demand to retrieve details regarding HPC resources
 	// e.g., nodes, GPUs etc
 	hpcResourcesManifest := createSlurmResourcesManifest()
 
@@ -174,6 +176,16 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		m.killAllActiveDispatches(ctx, ctx.Self())
 		go m.jobWatcher.watch(ctx)
+		// SLURM Resource Manager always fulfills requests for resource pool details using the
+		// value from the cache. This call will ensure there is an initial value in the cache at
+		// the start of the resource manager.
+		m.fetchHpcResourceDetails(ctx)
+		// If the value are not populated in the m.resourceDetails.lastSample variable then we
+		// failed to retrieve the resource pool details of the underlying system. In that case,
+		// we return an error.
+		if m.resourceDetails.lastSample.Partitions == nil || m.resourceDetails.lastSample.Nodes == nil {
+			return errors.New("unable to fetch resource pool details")
+		}
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case
@@ -224,15 +236,19 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetDefaultComputeResourcePoolRequest:
 		_, _ = m.fetchHpcResourceDetailsCached(ctx)
 		// Don't bother to check for errors, a response is required (may have no name)
+		m.resourceDetails.mu.RLock()
+		defer m.resourceDetails.mu.RUnlock()
 		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: m.defaultComputePoolPartition,
+			PoolName: m.resourceDetails.lastSample.DefaultComputePoolPartition,
 		})
 
 	case sproto.GetDefaultAuxResourcePoolRequest:
 		_, _ = m.fetchHpcResourceDetailsCached(ctx)
 		// Don't bother to check for errors, a response is required (may have no name)
+		m.resourceDetails.mu.RLock()
+		defer m.resourceDetails.mu.RUnlock()
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{
-			PoolName: m.defaultAuxPoolPartition,
+			PoolName: m.resourceDetails.lastSample.DefaultAuxPoolPartition,
 		})
 
 	case sproto.HasResourcePoolRequest:
@@ -277,6 +293,7 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 		Agents: []*agentv1.Agent{},
 	}
 	_, _ = m.fetchHpcResourceDetailsCached(ctx)
+	m.resourceDetails.mu.RLock()
 	for _, node := range m.resourceDetails.lastSample.Nodes {
 		agent := agentv1.Agent{
 			Id:             node.Name,
@@ -299,6 +316,7 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 			}
 		}
 	}
+	m.resourceDetails.mu.RUnlock()
 	return &response
 }
 
@@ -363,11 +381,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		// Make sure we explicitly choose a partition.  Use default if unspecified.
 		partition := req.ResourcePool
 		if partition == "" {
+			m.resourceDetails.mu.RLock()
 			if slotType == device.CPU {
-				partition = m.defaultAuxPoolPartition
+				partition = m.resourceDetails.lastSample.DefaultAuxPoolPartition
 			} else {
-				partition = m.defaultComputePoolPartition
+				partition = m.resourceDetails.lastSample.DefaultComputePoolPartition
 			}
+			m.resourceDetails.mu.RUnlock()
 		}
 
 		// Create the manifest that will be ultimately sent to the launcher.
@@ -688,14 +708,14 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 	ctx *actor.Context, hpcResourceDetails []hpcPartitionDetails,
 ) (string, string) {
 	// The default compute pool is the default partition if it has any GPUS,
-	// otherwise select any partion with GPUs.
+	// otherwise select any partition with GPUs.
 	// The AUX partition, use the default partition if available, otherwise any partition.
 
 	defaultComputePar := "" // Selected default Compute/GPU partition
-	defaultAuxPar := ""     // Selected default Aux parittion
+	defaultAuxPar := ""     // Selected default Aux partition
 
-	fallbackComputePar := "" // Fallback Compute/GPU partion (has GPUs)
-	fallbackAuxPar := ""     // Fallback parition if no default
+	fallbackComputePar := "" // Fallback Compute/GPU partition (has GPUs)
+	fallbackAuxPar := ""     // Fallback partition if no default
 
 	for _, v := range hpcResourceDetails {
 		if v.IsDefault {
@@ -727,6 +747,7 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 	return defaultComputePar, defaultAuxPar
 }
 
+// summarizeResourcePool retrieves details regarding hpc resources of the underlying system.
 func (m *dispatcherResourceManager) summarizeResourcePool(
 	ctx *actor.Context,
 ) ([]*resourcepoolv1.ResourcePool, error) {
@@ -748,18 +769,21 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			slotsUsed = int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots)
 		}
 
+		m.resourceDetails.mu.RLock()
 		pool := resourcepoolv1.ResourcePool{
-			Name:                         v.PartitionName,
-			Description:                  "Slurm-managed pool of resources",
-			Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
-			NumAgents:                    int32(v.TotalNodes),
-			SlotType:                     slotType.Proto(),
-			SlotsAvailable:               slotsAvailable,
-			SlotsUsed:                    slotsUsed,
-			AuxContainerCapacity:         int32(v.TotalCPUSlots),
-			AuxContainersRunning:         int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots),
-			DefaultComputePool:           v.PartitionName == m.defaultComputePoolPartition,
-			DefaultAuxPool:               v.PartitionName == m.defaultAuxPoolPartition,
+			Name:                 v.PartitionName,
+			Description:          "Slurm-managed pool of resources",
+			Type:                 resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
+			NumAgents:            int32(v.TotalNodes),
+			SlotType:             slotType.Proto(),
+			SlotsAvailable:       slotsAvailable,
+			SlotsUsed:            slotsUsed,
+			AuxContainerCapacity: int32(v.TotalCPUSlots),
+			AuxContainersRunning: int32(v.TotalCPUSlots - v.TotalAvailableCPUSlots),
+			DefaultComputePool: v.PartitionName ==
+				m.resourceDetails.lastSample.DefaultComputePoolPartition,
+			DefaultAuxPool: v.PartitionName ==
+				m.resourceDetails.lastSample.DefaultAuxPoolPartition,
 			Preemptible:                  true,
 			MinAgents:                    int32(v.TotalNodes),
 			MaxAgents:                    int32(v.TotalNodes),
@@ -772,6 +796,7 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			InstanceType:                 "Slurm",
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		}
+		m.resourceDetails.mu.RUnlock()
 		result = append(result, &pool)
 	}
 	return result, nil
@@ -786,18 +811,11 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetailsCached(ctx *actor.Con
 	// If anyone is viewing the 'Cluster' section of the DAI GUI then there is activity here
 	// about every 10s per user. To mitigate concerns of overloading slurmd with polling
 	// activity, we will return a cached result, updating the cache only every so often.
+	m.resourceDetails.mu.RLock()
 	if time.Since(m.resourceDetails.sampleTime).Seconds() > maxResourceDetailsSampleAgeSeconds {
-		newSample, err := m.fetchHpcResourceDetails(ctx)
-		if err != nil {
-			return hpcResources{}, err
-		}
-		m.resourceDetails.lastSample = newSample
-		m.resourceDetails.sampleTime = time.Now()
-		m.defaultComputePoolPartition, m.defaultAuxPoolPartition = m.selectDefaultPools(
-			ctx, m.resourceDetails.lastSample.Partitions)
-		ctx.Log().Infof("default resource pools are '%s', '%s'",
-			m.defaultComputePoolPartition, m.defaultAuxPoolPartition)
+		go m.fetchHpcResourceDetails(ctx)
 	}
+	defer m.resourceDetails.mu.RUnlock()
 	return m.resourceDetails.lastSample, nil
 }
 
@@ -833,10 +851,9 @@ func (m *dispatcherResourceManager) resolveSlotType(
 // 	3. Parse and load the details into a predefined struct - HpcResourceDetails
 // 	4. Terminate the manifest.
 // Returns struct with HPC resource details - HpcResourceDetails.
-func (m *dispatcherResourceManager) fetchHpcResourceDetails(
-	ctx *actor.Context,
-) (hpcResources, error) {
+func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) {
 	impersonatedUser := ""
+	newSample := hpcResources{}
 
 	// Launch the HPC Resources manifest. Launch() method will ensure
 	// the manifest is in the RUNNING state on successful completion.
@@ -847,7 +864,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(
 		Execute()
 	if err != nil {
 		ctx.Log().Errorf("Failed to launch Manifest.\n%v\n%v", response, err)
-		return hpcResources{}, err
+		return
 	}
 	ctx.Log().Debug(fmt.Sprintf("Launched Manifest with DispatchID %s", dispatchInfo.GetDispatchId()))
 
@@ -878,7 +895,7 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(
 		Execute()
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("failed to retrieve HPC Resource details")
-		return hpcResources{}, err
+		return
 	}
 
 	// Parse the HPC resources file and extract the details into a
@@ -886,15 +903,24 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(
 	resourcesBytes, err := io.ReadAll(resp)
 	if err != nil {
 		ctx.Log().WithError(err).Errorf("failed to read response")
-		return hpcResources{}, err
+		return
 	}
-	resources := hpcResources{}
-	if err = yaml.Unmarshal(resourcesBytes, &resources); err != nil {
+	if err = yaml.Unmarshal(resourcesBytes, &newSample); err != nil {
 		ctx.Log().WithError(err).Errorf("failed to parse HPC Resource details")
-		return hpcResources{}, err
+		return
 	}
-	m.hpcResourcesToDebugLog(ctx, resources)
-	return resources, nil
+	m.hpcResourcesToDebugLog(ctx, newSample)
+
+	m.resourceDetails.mu.Lock()
+	m.resourceDetails.lastSample = newSample
+	m.resourceDetails.sampleTime = time.Now()
+	m.resourceDetails.lastSample.DefaultComputePoolPartition,
+		m.resourceDetails.lastSample.DefaultAuxPoolPartition =
+		m.selectDefaultPools(ctx, m.resourceDetails.lastSample.Partitions)
+	ctx.Log().Infof("default resource pools are '%s', '%s'",
+		m.resourceDetails.lastSample.DefaultComputePoolPartition,
+		m.resourceDetails.lastSample.DefaultAuxPoolPartition)
+	m.resourceDetails.mu.Unlock()
 }
 
 // hpcResourcesToDebugLog puts a summary of the available HPC resources to the debug log.
