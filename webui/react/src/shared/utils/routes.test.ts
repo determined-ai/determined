@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
 
 import type { AnyMouseEvent } from './routes';
@@ -308,12 +309,11 @@ describe('Routes Utilities', () => {
     });
 
     it('should route to react URL', () => {
-      const path = '/clusters';
       expect(history.push).not.toHaveBeenCalled();
-      routes.routeToReactUrl(path);
+      routes.routeToReactUrl(paths.cluster());
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(
-        path,
+        '/clusters',
         {
           loginRedirect:
           {
@@ -335,12 +335,11 @@ describe('Routes Utilities', () => {
 
     it('should route to react URL with determined.ai base url', () => {
       setup('/', 'https://www.determined.ai');
-      const path = '/dashboard';
       expect(history.push).not.toHaveBeenCalled();
-      routes.routeToReactUrl(path);
+      routes.routeToReactUrl(paths.dashboard());
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(
-        path,
+        '/dashboard',
         {
           loginRedirect:
           {
