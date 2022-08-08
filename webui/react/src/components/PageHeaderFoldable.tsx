@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
+import { Button, Dropdown, Menu, Tooltip } from 'antd';
 import React, { useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
