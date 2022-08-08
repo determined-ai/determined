@@ -40,7 +40,7 @@ import {
   DetailedUser,
   ExperimentBase,
   RunState,
-  TrialDetails,
+  TrialItem,
 } from 'types';
 import handleError from 'utils/error';
 import { canUserActionExperiment, getActionsForExperiment } from 'utils/experiment';
@@ -53,7 +53,7 @@ interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
   name?: string;
-  trial?: TrialDetails;
+  trial?: TrialItem;
   // TODO: separate components for
   // 1) displaying an abbreviated string as an Avatar and
   // 2) finding user by userId in the store and displaying string Avatar or profile image

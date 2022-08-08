@@ -17,7 +17,7 @@ import { openCommand } from 'utils/wait';
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
-  return isTerminal && trial.workloadCount > 0;
+  return isTerminal && trial.workloadCount === 0;
 };
 
 interface Props {

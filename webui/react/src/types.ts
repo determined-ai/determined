@@ -431,7 +431,7 @@ export interface CoreApiGenericCheckpoint {
 }
 
 export interface TrialPagination extends WithPagination {
-  trials: TrialDetails[];
+  trials: TrialItem[];
 }
 
 type HpValue = Primitive | RawJson

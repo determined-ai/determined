@@ -428,11 +428,7 @@ export const getExpTrials: DetApi<
   postProcess: (response) => {
     return {
       pagination: response.pagination,
-      trials: response.trials.map((trial) => ({
-        totalCheckpointSize: 0,
-        workloadCount: 0,
-        ...decoder.decodeV1TrialToTrialItem(trial),
-      })),
+      trials: response.trials.map(decoder.decodeV1TrialToTrialItem),
     };
   },
   request: (params, options) => {

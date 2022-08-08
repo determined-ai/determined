@@ -14,8 +14,8 @@ import { DetError, isDetError, isError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentBase,
-  TrialDetails,
   TrialHyperparameters,
+  TrialItem,
 } from 'types';
 import handleError from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
@@ -34,7 +34,7 @@ interface Props {
 
 interface OpenProps {
   experiment: ExperimentBase;
-  trial?: TrialDetails;
+  trial?: TrialItem;
   type: CreateExperimentType;
 }
 
@@ -45,7 +45,7 @@ interface ModalState {
   error?: string;
   experiment?: ExperimentBase;
   isAdvancedMode: boolean;
-  trial?: TrialDetails;
+  trial?: TrialItem;
   type: CreateExperimentType;
   visible: boolean;
 }

@@ -53,10 +53,12 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
         const newMetrics = [
-          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
+          ...newValidationMetrics.map((name) => ({ name, type: MetricType.Validation })),
+          ...newTrainingMetrics.map((name) => ({ name, type: MetricType.Training })),
         ];
-        setMetricNames(newMetrics);
+        if (metricNames.length !== newMetrics.length) {
+          setMetricNames(newMetrics);
+        }
       },
     ).catch(() => {
       handleError({
@@ -66,7 +68,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       });
     });
     return () => canceler.abort();
-  }, [ experiment.id ]);
+  }, [ experiment.id, metricNames.length ]);
 
   const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
@@ -82,7 +84,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metrics };
-  }, [ experiment?.config?.searcher, settings.metric ]);
+  }, [ experiment?.config?.searcher, metricNames, settings.metric ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
