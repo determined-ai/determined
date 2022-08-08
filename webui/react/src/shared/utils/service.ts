@@ -8,10 +8,19 @@ import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './
 export const getResponseStatus = (e: any): number | undefined => {
   return e?.response?.status || e?.status;
 };
+/**
+ * Determines whether an exception is the result of a nework error
+ * due to the server not being able to authenticate the request/user.
+ * @param e
+ * @param supportExternalAuth
+ * @returns
+ */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
   const status = getResponseStatus(e) ?? 0;
-  const authFailureStatuses = [ 401 ];
+  const authFailureStatuses = [
+    401, // Unauthorized
+  ];
   if (supportExternalAuth) authFailureStatuses.push(500);
   return authFailureStatuses.includes(status);
 };
