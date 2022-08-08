@@ -17,13 +17,13 @@ import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentBase, MetricName, MetricsWorkload,
   MetricType, TrialDetails, TrialWorkloadFilter,
 } from 'types';
 import handleError from 'utils/error';
-import { alphaNumericSorter } from 'utils/sort';
 
 import css from './TrialsComparisonModal.module.scss';
 

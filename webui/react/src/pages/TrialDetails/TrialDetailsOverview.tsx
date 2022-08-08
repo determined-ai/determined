@@ -6,9 +6,9 @@ import { V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { ErrorType } from 'shared/utils/error';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
 import handleError from 'utils/error';
-import { alphaNumericSorter } from 'utils/sort';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
