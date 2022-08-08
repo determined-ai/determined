@@ -11,7 +11,9 @@ export const getResponseStatus = (e: any): number | undefined => {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
   const status = getResponseStatus(e) ?? 0;
-  return (supportExternalAuth && status === 500) || (status >= 400 && status < 500);
+  const authFailureStatuses = [ 401 ];
+  if (supportExternalAuth) authFailureStatuses.push(500);
+  return authFailureStatuses.includes(status);
 };
 const isApiResponse = (o: unknown): o is Response => {
   return o instanceof Response;
