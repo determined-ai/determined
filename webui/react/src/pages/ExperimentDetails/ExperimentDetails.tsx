@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import { terminalRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
+import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
+import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
 import {
   getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
@@ -16,17 +18,17 @@ import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
-import ExperimentSingleTrialTabs from './ExperimentDetails/ExperimentSingleTrialTabs';
-
 interface Params {
   experimentId: string;
 }
 
+export const INVALID_ID_MESSAGE = 'Invalid Experiment ID';
+export const MISSING_MESSAGE = 'Unable to find Experiment ';
+export const ERROR_MESSAGE = 'Unable to fetch Experiment';
+
 const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const { auth: { user } } = useStore();
-  const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trial, setTrial ] = useState<TrialDetails>();
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
@@ -34,14 +36,15 @@ const ExperimentDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
   const pageRef = useRef<HTMLElement>(null);
+  const canceler = useRef<AbortController>();
 
   const id = parseInt(experimentId);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
       const [ newExperiment, newValHistory ] = await Promise.all([
-        getExperimentDetails({ id }, { signal: canceler.signal }),
-        getExpValidationHistory({ id }, { signal: canceler.signal }),
+        getExperimentDetails({ id }, { signal: canceler.current?.signal }),
+        getExpValidationHistory({ id }, { signal: canceler.current?.signal }),
       ]);
       setExperiment((prevExperiment) =>
         isEqual(prevExperiment, newExperiment) ? prevExperiment : newExperiment);
@@ -53,11 +56,7 @@ const ExperimentDetails: React.FC = () => {
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [
-    id,
-    canceler.signal,
-    pageError,
-  ]);
+  }, [ id, pageError ]);
 
   const { stopPolling } = usePolling(fetchExperimentDetails, { rerunOnNewFn: true });
 
@@ -76,15 +75,19 @@ const ExperimentDetails: React.FC = () => {
   }, [ fetchExperimentDetails ]);
 
   useEffect(() => {
-    return () => canceler.abort();
-  }, [ canceler ]);
+    canceler.current = new AbortController();
+    return () => {
+      canceler.current?.abort();
+      canceler.current = undefined;
+    };
+  }, []);
 
   if (isNaN(id)) {
-    return <Message title={`Invalid Experiment ID ${experimentId}`} />;
+    return <Message title={`${INVALID_ID_MESSAGE} ${experimentId}`} />;
   } else if (pageError) {
     const message = isNotFound(pageError) ?
-      `Unable to find Experiment ${experimentId}` :
-      `Unable to fetch Experiment ${experimentId}`;
+      `${MISSING_MESSAGE} ${experimentId}` :
+      `${ERROR_MESSAGE} ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!experiment || isSingleTrial === undefined) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
