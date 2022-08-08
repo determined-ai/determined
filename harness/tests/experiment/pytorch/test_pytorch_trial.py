@@ -617,11 +617,11 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
-        "trial_class",
+        "trial_class,assert_output_float16,assert_scale_changed",
         [
-            pytorch_onevar_model.OneVarApexAMPTrial,
-            pytorch_onevar_model.OneVarAutoAMPTrial,
-            pytorch_onevar_model.OneVarManualAMPTrial,
+            (pytorch_onevar_model.OneVarApexAMPTrial, False, True),
+            (pytorch_onevar_model.OneVarAutoAMPTrial, False, False),
+            (pytorch_onevar_model.OneVarManualAMPTrial, True, True),
         ],
         ids=[
             "apex",
@@ -629,21 +629,19 @@ class TestPyTorchTrial:
             "manual",
         ],
     )
-    def test_amp(self, trial_class) -> None:
+    def test_amp(
+        self,
+        trial_class,
+        assert_output_float16,
+        assert_scale_changed,
+    ) -> None:
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
-
-        if trial_class is pytorch_onevar_model.OneVarApexAMPTrial:
-            workloads = make_amp_workloads(False, True)
-        elif trial_class is pytorch_onevar_model.OneVarAutoAMPTrial:
-            workloads = make_amp_workloads(False, False)
-        elif trial_class is pytorch_onevar_model.OneVarManualAMPTrial:
-            workloads = make_amp_workloads(True, True)
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=self.hparams,
-            workloads=workloads,
+            workloads=make_amp_workloads(assert_output_float16, assert_scale_changed),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
