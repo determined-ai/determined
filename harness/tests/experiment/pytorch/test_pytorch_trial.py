@@ -683,7 +683,8 @@ def make_amp_workloads(
             assert newer["output"].dtype is np.dtype("float16")
         else:
             # Automatic usages of Apex or native AMP cast the output back to float32
-            # For the latter case, see the hook end_f16 defined in PyTorchTrialContext.autocast_forward_pass
+            # For the latter case, see the hook end_f16
+            #   defined in PyTorchTrialContext.autocast_forward_pass
             assert newer["output"].dtype is np.dtype("float32")
         if assert_scale_changed:
             scale_ever_decreased = scale_ever_decreased or newer["scale"] < older["scale"]
