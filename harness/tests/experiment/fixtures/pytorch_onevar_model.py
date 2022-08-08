@@ -150,6 +150,7 @@ class OneVarTrial(pytorch.PyTorchTrial):
             "w_before": w_before,
             "w_after": w_after,
             "w_exp": w_exp,
+            "output": output,
         }
 
     @staticmethod
@@ -265,6 +266,7 @@ class OneVarManualAMPTrial(OneVarTrial):
             "scale": None if not self.scaler._enabled else self.scaler._scale,
             "scaled_loss": scaled_loss,
             "loss": loss,
+            "output": output,
         }
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:

@@ -3,6 +3,7 @@ import os
 import pathlib
 import typing
 
+import numpy as np
 import pytest
 import torch
 
@@ -617,13 +618,13 @@ class TestPyTorchTrial:
     @pytest.mark.parametrize(
         "trial_class",
         [
-            pytorch_onevar_model.OneVarApexAMPTrial,
-            pytorch_onevar_model.OneVarAutoAMPTrial,
+            # pytorch_onevar_model.OneVarApexAMPTrial,
+            # pytorch_onevar_model.OneVarAutoAMPTrial,
             pytorch_onevar_model.OneVarManualAMPTrial,
         ],
         ids=[
-            "apex",
-            "autocast",
+            # "apex",
+            # "autocast",
             "manual",
         ],
     )
@@ -660,8 +661,15 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
 
 def make_amp_workloads() -> workload.Stream:
     trainer = utils.TrainAndValidate()
-    yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-    training_metrics, validation_metrics = trainer.result()
+    yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=1)
+    training_metrics, _ = trainer.result()
+    scale_ever_decreased = False
+    scale_ever_increased = False
     for older, newer in zip(training_metrics, training_metrics[1:]):
-        # TODO check for scaling
         assert newer["loss"] <= older["loss"]
+        assert newer["output"].dtype is np.dtype("float16")
+        assert newer["loss"].dtype is np.dtype("float32")
+        scale_ever_decreased = scale_ever_decreased or newer["scale"] < older["scale"]
+        scale_ever_increased = scale_ever_increased or newer["scale"] > older["scale"]
+    # TODO: change test so that we can assert both these flags are True
+    assert scale_ever_decreased or scale_ever_increased
