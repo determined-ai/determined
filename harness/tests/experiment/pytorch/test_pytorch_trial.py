@@ -176,7 +176,7 @@ class TestPyTorchTrial:
         latest_checkpoint = None
         steps_completed = 0
 
-        def make_workloads_1() -> workload.Stream:
+        def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
             interceptor = workload.WorkloadResponseInterceptor()
@@ -185,33 +185,34 @@ class TestPyTorchTrial:
             latest_checkpoint = interceptor.metrics_result()["uuid"]
             steps_completed = trainer.get_steps_completed()
 
-        controller_1 = utils.make_trial_controller_from_trial_implementation(
+        controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialMulti,
             hparams=self.hparams,
-            workloads=make_workloads_1(),
+            workloads=make_workloads(),
             trial_seed=self.trial_seed,
             checkpoint_dir=checkpoint_dir,
         )
-        controller_1.run()
+        controller.run()
 
         # Verify that an invalid architecture fails to load from the checkpoint.
-        def make_workloads_2() -> workload.Stream:
+        def make_invalid_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
 
-        hparams_2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        invalid_hparams = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
+        assert invalid_hparams != self.hparams
 
         with pytest.raises(RuntimeError):
-            controller_2 = utils.make_trial_controller_from_trial_implementation(
+            invalid_controller = utils.make_trial_controller_from_trial_implementation(
                 trial_class=pytorch_xor_model.XORTrialMulti,
-                hparams=hparams_2,
-                workloads=make_workloads_2(),
+                hparams=invalid_hparams,
+                workloads=make_invalid_workloads(),
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
                 steps_completed=steps_completed,
             )
-            controller_2.run()
+            invalid_controller.run()
 
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
