@@ -50,34 +50,45 @@ jest.mock('./ExperimentVisualization', () => ({
   default: () => (<div>Experiment Visualization</div>),
 }));
 
-const setup = () => render(
-  <StoreProvider>
-    <HelmetProvider>
-      <Router history={history}>
-        <ExperimentDetails />
-      </Router>
-    </HelmetProvider>
-  </StoreProvider>,
-);
+const setup = () => {
+  const view = render(
+    <StoreProvider>
+      <HelmetProvider>
+        <Router history={history}>
+          <ExperimentDetails />
+        </Router>
+      </HelmetProvider>
+    </StoreProvider>,
+  );
+  return { view };
+};
 
-describe('Settings Page', () => {
+describe('Experment Details Page', () => {
   describe('Invalid Experiment ID', () => {
+    const INVALID_ID = 'beadbead';
+
+    beforeAll(() => {
+      (useParams as jest.Mock).mockReturnValue({ experimentId: INVALID_ID });
+    });
+
     it('should show invalid experiment page without id', async () => {
       setup();
-      const invalidMessage = await screen.findByText(INVALID_ID_MESSAGE, { exact: false });
+      const invalidMessage = await screen.findByText(`${INVALID_ID_MESSAGE} ${INVALID_ID}`);
       expect(invalidMessage).toBeInTheDocument();
     });
   });
 
   describe('Missing Experiment', () => {
+    const NON_EXISTING_ID = 9999;
+
     beforeAll(() => {
-      (useParams as jest.Mock).mockReturnValue({ experimentId: 9999 });
+      (useParams as jest.Mock).mockReturnValue({ experimentId: NON_EXISTING_ID });
       (getExperimentDetails as jest.Mock).mockRejectedValue(new Error('Fetch Error'));
     });
 
     it('should show experiment is unfetchable', async () => {
       setup();
-      const errorMessage = await screen.findByText(ERROR_MESSAGE, { exact: false });
+      const errorMessage = await screen.findByText(`${ERROR_MESSAGE} ${NON_EXISTING_ID}`);
       expect(errorMessage).toBeInTheDocument();
     });
   });
@@ -100,13 +111,12 @@ describe('Settings Page', () => {
     });
 
     it('should show single trial experiment page with id', async () => {
-      const { container } = setup();
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.singleTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.singleTrial.getExperimentsDetails.name;
-      const titleRegEx = new RegExp(`Experiment ${experimentId}`, 'i');
       await waitFor(() => {
-        expect(screen.getByText(titleRegEx)).toBeInTheDocument();
+        expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
         expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
       });
 
@@ -132,13 +142,12 @@ describe('Settings Page', () => {
     });
 
     it('should show multi-trial experiment page with id', async () => {
-      const { container } = setup();
+      const { container } = setup().view;
 
       const experimentId = RESPONSES.multiTrial.getExperimentsDetails.id;
       const experimentName = RESPONSES.multiTrial.getExperimentsDetails.name;
-      const titleRegEx = new RegExp(`Experiment ${experimentId}`, 'i');
       await waitFor(() => {
-        expect(screen.getByText(titleRegEx)).toBeInTheDocument();
+        expect(screen.getByText(`Experiment ${experimentId}`)).toBeInTheDocument();
         expect(container.querySelector(`[data-value="${experimentName}"]`)).toBeInTheDocument();
       });
 
