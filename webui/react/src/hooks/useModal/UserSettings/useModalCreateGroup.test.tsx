@@ -5,39 +5,46 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import { CreateGroupsParams } from 'services/types';
+import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { DetailedUser } from 'types';
 
 import useModalCreateGroup, { API_SUCCESS_MESSAGE_CREATE, GROUP_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE, MODAL_HEADER_LABEL_EDIT, USER_ADD_LABEL,
   USER_LABEL, USER_REMOVE_LABEL } from './useModalCreateGroup';
 
-const mockCreateGroup = jest.fn();
-
-jest.mock('services/api', () => ({
-  createGroup: (params: CreateGroupsParams) => {
-    return mockCreateGroup(params);
-  },
-}));
-
 const OPEN_MODAL_TEXT = 'Open Modal';
-const USERNAME = 'test_username0';
-const USERNAME_1 = 'test_username1';
 const GROUPNAME = 'test_groupname1';
 
 const user = userEvent.setup();
+
+const mockCreateGroup = jest.fn();
 
 const users: Array<DetailedUser> = [ {
   id: 1,
   isActive: true,
   isAdmin: false,
-  username: USERNAME,
+  username: 'test_username0',
 }, {
   id: 2,
   isActive: true,
   isAdmin: false,
-  username: USERNAME_1,
+  username: 'test_username1',
 } ];
+
+jest.mock('services/api', () => ({
+  createGroup: (params: CreateGroupsParams) => {
+    return mockCreateGroup(params);
+  },
+  getGroup: (params: GetGroupParams) => {
+    return Promise.resolve({
+      group: {
+        groupId: params.groupId,
+        name: GROUPNAME,
+        users: users,
+      },
+    });
+  },
+}));
 
 interface Props {
   group?:V1GroupSearchResult
