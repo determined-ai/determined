@@ -11,6 +11,8 @@ export const getResponseStatus = (e: any): number | undefined => {
 /**
  * Determines whether an exception is the result of a nework error
  * due to the server not being able to authenticate the request/user.
+ * If this is the case, this can lead to the client being logged out and
+ * redirected to the login page.
  * @param e
  * @param supportExternalAuth
  * @returns
