@@ -1,20 +1,25 @@
-name: testing determined import
+name: pausing
 workspace: Deepspeed
 project: VisionTransformer
 debug: false
-#hyperparameters:
-#  deepspeed_config: ds_config_cpu.json
 environment:
-    environment_variables:
-        - NCCL_DEBUG=INFO
-        # You may need to modify this to match your network configuration.
-        - NCCL_SOCKET_IFNAME=ens,eth,ib
+  environment_variables:
+    - NCCL_DEBUG=INFO
+    # You may need to modify this to match your network configuration.
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
 resources:
   slots_per_trial: 2
 searcher:
   name: single
   max_length: 1
   metric: val_loss
+hyperparameters:
+  lr:
+    type: log
+    base: 10
+    minval: -2
+    maxval: -1
+    count: 2
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 
@@ -24,13 +29,13 @@ entrypoint: >-
   --do_train  
   --do_eval 
   --learning_rate 2e-5 
-  --num_train_epochs 2 
+  --num_train_epochs 3 
   --per_device_train_batch_size 8 
   --per_device_eval_batch_size 8 
   --logging_strategy steps 
-  --logging_steps 20 
+  --logging_steps 10 
   --evaluation_strategy steps
-  --eval_steps 20
+  --eval_steps 10
   --save_total_limit 3 
   --seed 1337
   --save_strategy epoch

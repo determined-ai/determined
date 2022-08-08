@@ -18,8 +18,6 @@ import os
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
-from copy import deepcopy
-import determined as det
 
 import datasets
 import numpy as np
@@ -50,6 +48,8 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
+
+import determined as det
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
 logger = logging.getLogger(__name__)
@@ -163,7 +163,7 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values, "labels": labels}
 
 
-def main():
+def main(core_context):
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -352,7 +352,8 @@ def main():
         data_collator=collate_fn,
     )
 
-    trainer.add_callback(DetCallback(feature_extractor))
+    trainer.add_callback(DetCallback(core_context, training_args, filter_metrics=['loss', 'accuracy'],
+                                     checkpoint_metadata={'feature_extractor': feature_extractor}))
 
     # Training
     if training_args.do_train:
@@ -387,4 +388,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    distributed =det.core.DistributedContext.from_torch_distributed()
+    with  det.core.init(distributed=distributed) as core_context:
+        main(core_context)

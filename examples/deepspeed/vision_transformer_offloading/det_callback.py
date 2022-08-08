@@ -1,3 +1,5 @@
+import typing
+
 from transformers import (
     TrainerCallback,
     TrainerState,
@@ -11,32 +13,19 @@ from transformers.integrations import MLflowCallback, WandbCallback
 import importlib.util
 import os
 
+import determined as det
+
 
 class DetCallback(TrainerCallback):
 
-    def __init__(self, tokenizer, metrics_names=['loss', 'accuracy']) -> None:
+    def __init__(self, core_context: det.core.Context, args: typing.Dict, filter_metrics: typing.List,
+                 checkpoint_metadata: typing.Dict, tokenizer=None) -> None:
         super().__init__()
 
-        assert is_determined_available(), "DetCallback requires determined to be installed. Run `pip install determined`."
-        import determined
-        self._det = determined
-        self._initialized = False
-
-        self.metrics_names = metrics_names
-        #self.tokenizer_options = tokenizer_options
-        self.tokenizer = tokenizer
-
-        self.load_last_checkpoint()
-
-    def setup(self, args, state, control, model=None, **kwargs):
-        distributed = self._det.core.DistributedContext.from_torch_distributed()
-        self.core_context = self._det.core.init(distributed=distributed)
-        print('determined context initialized.')
-
-    def on_train_begin(self, args, state, control, model=None, **kwargs):
-        if not self._initialized:
-            self.setup(args, state, control, model, **kwargs)
-            self._initialized = True
+        self.core_context = core_context
+        self.filter_metrics = filter_metrics
+        self.checkpoint_metadata = checkpoint_metadata
+        self.load_last_checkpoint(args)
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
@@ -44,49 +33,45 @@ class DetCallback(TrainerCallback):
             metric_type, metrics = self.process_log(logs)
             if metric_type == 'train':
                 self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
-            elif metric_type == 'eval':
+            elif metric_type == 'eval' or metric_type == 'test':
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
             else:
-                # TODO: how to handle test metric?!
-                raise RuntimeError('Panic')
+                pass
 
     def process_log(self, log):
-        metric_type = self._log_type(log)
-        metrics = {}
-        for k, v in log.items():
-            if any(m in k for m in self.metrics_names) is True:
-                metrics[k] = v
+        metric_type = self._metric_type(log)
+        metrics = log
+
+        if self.filter_metrics is not None:
+            metrics = {}
+            for k, v in log.items():
+                if any(m in k for m in self.filter_metrics) is True:
+                    metrics[k] = v
+
         return metric_type, metrics
 
-    def _log_type(self, d):
-        eval_prefix = "eval"
-        test_prefix = "test"
+    def _metric_type(self, d):
         for k, v in d.items():
-            if k.startswith(eval_prefix):
+            if k.startswith("eval"):
                 return "eval"
-            elif k.startswith(test_prefix):
+            elif k.startswith("test"):
                 return "test"
             else:
                 return "train"
 
     def on_save(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        print('Saving checkpoint')
-        info = self._det.get_cluster_info()
+        info = det.get_cluster_info()
         assert info is not None
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
-            checkpoint_metadata = {
-                "steps_completed": state.global_step,
-                "trial_id": info.trial.trial_id,
-                # "tokenizer_options": self.tokenizer_options
-            }
+            ckpt_metadata = self.checkpoint_metadata
+            ckpt_metadata["steps_completed"] = state.global_step
+            ckpt_metadata["trial_id"] = info.trial.trial_id
 
-            self.tokenizer.save_pretrained(os.path.join(save_path, "tokenizer"))
-            self.core_context.checkpoint.upload(save_path, checkpoint_metadata)
+            self.core_context.checkpoint.upload(save_path, ckpt_metadata)
 
-
-    def load_last_checkpoint(self):
-        info = self._det.get_cluster_info()
+    def load_last_checkpoint(self, args):
+        info = det.get_cluster_info()
         assert info is not None
         latest_checkpoint = info.latest_checkpoint
 
@@ -98,10 +83,13 @@ class DetCallback(TrainerCallback):
                 resume_step = 0
             else:
                 resume_step = metadata['steps_completed']
+            checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
+            self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
 
-            self.core_context.checkpoint.download(
-                latest_checkpoint, os.path.join(self.checkpoint_dir, f"checkpoint-{resume_step}")
-            )
+    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.core_context.preempt.should_preempt():
+            # Terminate the process by returning from main.
+            return
 
 
 def is_determined_available():
