@@ -265,6 +265,13 @@ class OneVarManualAMPTrial(OneVarTrial):
         self.cls_reducer.update(sum(label), batch_idx)
         self.fn_reducer.update((sum(label), batch_idx))
 
+        # Measure the weight right now.
+        w_before = self.model.weight.data.item()
+
+        # Calculate expected values for loss (eq 1) and weight (eq 4).
+        loss_exp = (label[0] - data[0] * w_before) ** 2
+        w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
+
         with autocast():
             output = self.model(data)
             loss = self.loss_fn(output, label)
@@ -274,11 +281,18 @@ class OneVarManualAMPTrial(OneVarTrial):
         self.context.step_optimizer(self.opt, scaler=self.scaler)
         self.scaler.update()
 
+        # Measure the weight after the update.
+        w_after = self.model.weight.data.item()
+
         # Return values that we can compare as part of the tests.
         return {
-            "scale": None if not self.scaler._enabled else self.scaler._scale,
+            "scale": self.scaler.get_scale(),
             "scaled_loss": scaled_loss,
             "loss": loss,
+            "loss_exp": loss_exp,
+            "w_before": w_before,
+            "w_after": w_after,
+            "w_exp": w_exp,
             "output": output,
         }
 

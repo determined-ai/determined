@@ -673,6 +673,11 @@ def make_amp_workloads(
     trainer = utils.TrainAndValidate()
     yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
+
+    # Check the gradient update at every step.
+    for idx, batch_metrics in enumerate(training_metrics):
+        pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+
     scale_ever_decreased = False
     scale_ever_increased = False
     for older, newer in zip(training_metrics, training_metrics[1:]):
