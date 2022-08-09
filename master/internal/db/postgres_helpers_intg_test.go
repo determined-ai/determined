@@ -18,6 +18,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -81,16 +82,18 @@ func requireMockMetrics(
 	m := trialv1.TrialMetrics{
 		TrialId:        int32(tr.ID),
 		StepsCompleted: int32(stepsCompleted),
-		Metrics: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				defaultSearcherMetric: {
-					Kind: &structpb.Value_NumberValue{
-						NumberValue: metricValue,
+		Metrics: &checkpointv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					defaultSearcherMetric: {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: metricValue,
+						},
 					},
 				},
 			},
+			BatchMetrics: []*structpb.Struct{},
 		},
-		BatchMetrics: []*structpb.Struct{},
 	}
 	err := db.AddValidationMetrics(context.TODO(), &m)
 	require.NoError(t, err)

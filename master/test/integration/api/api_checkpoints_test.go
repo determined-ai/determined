@@ -84,11 +84,13 @@ func testGetCheckpoint(
 					TrialId:        int32(trial.ID),
 					TrialRunId:     int32(0),
 					StepsCompleted: stepsCompleted,
-					Metrics: &structpb.Struct{
-						Fields: map[string]*structpb.Value{
-							"okness": {
-								Kind: &structpb.Value_NumberValue{
-									NumberValue: float64(0.5),
+					Metrics: &checkpointv1.Metrics{
+						AvgMetrics: &structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"okness": {
+									Kind: &structpb.Value_NumberValue{
+										NumberValue: float64(0.5),
+									},
 								},
 							},
 						},
@@ -183,11 +185,13 @@ func testGetExperimentCheckpoints(
 			TrialId:        int32(trial.ID),
 			TrialRunId:     int32(0),
 			StepsCompleted: int32(stepsCompleted),
-			Metrics: &structpb.Struct{
-				Fields: map[string]*structpb.Value{
-					"loss": {
-						Kind: &structpb.Value_NumberValue{
-							NumberValue: float64(float64(i) * (4.5 - float64(i))),
+			Metrics: &checkpointv1.Metrics{
+				AvgMetrics: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"loss": {
+							Kind: &structpb.Value_NumberValue{
+								NumberValue: float64(float64(i) * (4.5 - float64(i))),
+							},
 						},
 					},
 				},

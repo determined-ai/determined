@@ -5,7 +5,7 @@ WITH validations_vt AS (
         v.end_time,
         v.total_batches,
         v.metrics->'num_inputs' as num_inputs,
-        v.metrics->'validation_metrics' as metrics
+        jsonb_build_object('avg_metrics', v.metrics->'validation_metrics') as metrics
       FROM validations v
       WHERE v.trial_id = $1
     ) AS r1
@@ -15,7 +15,12 @@ trainings_vt AS (
   FROM (
       SELECT s.end_time,
         'STATE_' || s.state as state,
-        s.metrics->'avg_metrics' as metrics,
+        CASE
+          WHEN $5 = true THEN
+            s.metrics
+          ELSE
+            jsonb_build_object('avg_metrics', s.metrics->'avg_metrics')
+        END as metrics,
         s.metrics->'num_inputs' as num_inputs,
         s.total_batches
       FROM steps s
@@ -31,7 +36,8 @@ checkpoints_vt AS (
         c.report_time as end_time,
         c.uuid,
         c.steps_completed as total_batches,
-        c.resources
+        c.resources,
+        c.metadata
       FROM checkpoints_view c
       WHERE c.trial_id = $1
       AND $4 != 'FILTER_OPTION_VALIDATION'

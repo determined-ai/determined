@@ -632,6 +632,7 @@ func (a *apiServer) GetTrialWorkloads(_ context.Context, req *apiv1.GetTrialWork
 		req.Offset,
 		limit,
 		req.Filter.String(),
+		req.IncludeBatchMetrics,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)

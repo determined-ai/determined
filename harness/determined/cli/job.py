@@ -8,7 +8,7 @@ import yaml
 
 from determined.cli import render
 from determined.cli.session import setup_session
-from determined.cli.util import format_args, pagination_args
+from determined.cli.util import format_args, pagination_args_fetchone
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Session
@@ -176,7 +176,7 @@ args_description = [
                         type=str,
                         help="The target resource pool, if any.",
                     ),
-                    *pagination_args,
+                    *pagination_args_fetchone,
                     Group(
                         format_args["json"],
                         format_args["yaml"],

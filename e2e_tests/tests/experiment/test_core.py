@@ -68,7 +68,7 @@ def test_metric_gathering() -> None:
     # Check validation metrics.
     validation_workloads = exp.workloads_with_validation(trials[0].workloads)
     for validation in validation_workloads:
-        actual = validation.metrics
+        actual = validation.metrics.avgMetrics
         batches_trained = validation.totalBatches
 
         value = base_value + batches_trained
@@ -113,7 +113,7 @@ def test_nan_metrics() -> None:
     # Check validation metrics.
     validation_workloads = exp.workloads_with_validation(trials[0].workloads)
     for validation in validation_workloads:
-        actual = validation.metrics
+        actual = validation.metrics.avgMetrics
         batches_trained = validation.totalBatches
         expected = structure_to_metrics(base_value, validation_structure)
         assert structure_equal(expected, actual)
@@ -255,7 +255,7 @@ def test_end_to_end_adaptive() -> None:
     for trial in trials:
         assert len(trial.workloads) > 0
         last_validation = exp.workloads_with_validation(trial.workloads)[-1]
-        accuracy = last_validation.metrics["accuracy"]
+        accuracy = last_validation.metrics.avgMetrics["accuracy"]
         if not best or accuracy > best:
             best = accuracy
 
