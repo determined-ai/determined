@@ -74,6 +74,7 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
+import { off } from 'process';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
@@ -753,9 +754,10 @@ const ProjectDetails: React.FC = () => {
   }, [ openNoteDelete, project?.id ]);
 
   useEffect(() => {
-    if (settings.tableOffset > total){
-      const offset = settings.tableLimit * Math.floor(total / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
+    if (settings.tableOffset >= total && total){
+    const newTotal = settings.tableOffset > total ? total : total-1
+    const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    updateSettings({ tableOffset: offset });
     }
   }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
