@@ -187,7 +187,7 @@ class DeepSpeedTrialController(det.TrialController):
             # like a DataLoader but is not.
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             self.num_validation_batches = len(self.validation_loader)
-            self.validation_batch_size = len(next(iter(self.validation_loader)))
+            self.validation_batch_size = pytorch.data_length(next(iter(self.validation_loader)))
 
             if self.context.use_pipeline_parallel:
                 self.num_validation_batches = (
