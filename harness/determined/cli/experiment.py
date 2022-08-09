@@ -318,6 +318,28 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
     # Display step-related information.
+    all_workloads: Dict[int, Dict[int, List[bindings.v1WorkloadContainer]]] = {}
+    for exp in exps:
+        if exp.id not in all_workloads:
+            all_workloads[exp.id] = {}
+        for trial in trials_for_experiment[exp.id]:
+            if trial.id not in all_workloads[exp.id]:
+                all_workloads[exp.id][trial.id] = []
+            # paginated read of all workloads in this trial
+            offset = 0
+            while True:
+                page = bindings.get_GetTrialWorkloads(
+                    session,
+                    trialId=trial.id,
+                    offset=offset,
+                    limit=500,
+                ).workloads
+                all_workloads[exp.id][trial.id] += page
+                if len(page) == 500:
+                    offset += 500
+                else:
+                    break
+
     t_metrics_headers: List[str] = []
     t_metrics_names: List[str] = []
     v_metrics_headers: List[str] = []
@@ -326,9 +348,7 @@ def describe(args: Namespace) -> None:
         # Accumulate the scalar training and validation metric names from all provided experiments.
         for exp in exps:
             sample_trial = trials_for_experiment[exp.id][0]
-            sample_workloads = bindings.get_GetTrialWorkloads(
-                session, trialId=sample_trial.id, limit=1000
-            ).workloads
+            sample_workloads = all_workloads[exp.id][sample_trial.id]
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
         t_metrics_names = sorted(set(t_metrics_names))
@@ -351,9 +371,7 @@ def describe(args: Namespace) -> None:
     wl_output: Dict[int, List[Any]] = {}
     for exp in exps:
         for trial in trials_for_experiment[exp.id]:
-            workloads = bindings.get_GetTrialWorkloads(
-                session, trialId=trial.id, limit=500
-            ).workloads
+            workloads = all_workloads[exp.id][trial.id]
             for workload in workloads:
                 t_metrics_fields = []
                 wl_detail: Optional[
