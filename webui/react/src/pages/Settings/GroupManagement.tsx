@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
+import { Button, Dropdown, Menu, message, Space, Table } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InteractiveTable, { InteractiveTableSettings,
@@ -8,11 +8,12 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { getGroups, getUsers } from 'services/api';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
+import { V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { isEqual } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
@@ -44,7 +45,7 @@ const GroupActionDropdown = ({ fetchGroups, group, users }: DropdownProps) => {
   const menuItems = (
     <Menu>
       <Menu.Item key="edit" onClick={onClickEditGroup}>
-        Edit
+        Edit/Add Users
       </Menu.Item>
       <Menu.Item danger key="delete" onClick={onToggleDelete}>
         Delete
@@ -68,8 +69,13 @@ const GroupActionDropdown = ({ fetchGroups, group, users }: DropdownProps) => {
   );
 };
 
+interface GroupWithUsers {
+  group: V1GroupSearchResult,
+  users?: V1User[]
+}
+
 const GroupManagement: React.FC = () => {
-  const [ groups, setGroups ] = useState<V1GroupSearchResult[]>([]);
+  const [ groups, setGroups ] = useState<GroupWithUsers[]>([]);
   const [ users, setUsers ] = useState<DetailedUser[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
@@ -92,10 +98,9 @@ const GroupManagement: React.FC = () => {
       );
 
       setTotal(response.pagination?.total ?? 0);
-      setGroups((prev) => {
-        if (isEqual(prev, response.groups)) return prev;
-        return response.groups || [];
-      });
+      setGroups(
+        (response.groups || []).map((group) => ({ group })),
+      );
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch groups.' });
     } finally {
@@ -140,20 +145,58 @@ const GroupManagement: React.FC = () => {
     openCreateGroupModal();
   }, [ openCreateGroupModal ]);
 
+  const onExpand = useCallback(async (expand:boolean, record:V1GroupSearchResult) => {
+    const { group: { groupId } } = record;
+    const g = groups.find((gr) => gr.group.group.groupId === groupId);
+    if (!groupId || !expand || !g) return;
+    const response = await getGroup({ groupId });
+    g.users = response.group.users || [];
+    setGroups(JSON.parse(JSON.stringify(groups)));
+  }, [ groups ]);
+
+  const onRemoveUser = useCallback(async (record: V1GroupSearchResult, userId) => {
+    const { group: { groupId } } = record;
+    if (!groupId) return;
+    try {
+      await updateGroup({ groupId, removeUsers: [ userId ] });
+      message.success('User has been deleted.');
+      onExpand(true, record);
+      fetchGroups();
+    } catch (e) {
+      message.error('error deleting group');
+      handleError(e, { silent: true, type: ErrorType.Input });
+    }
+  }, [ onExpand, fetchGroups ]);
+
+  const expandedUserRender = useCallback((record:V1GroupSearchResult) => {
+    const { group: { groupId } } = record;
+    const g = groups.find((gr) => gr.group.group.groupId === groupId);
+    const userColumn = [ {
+      dataIndex: 'displayName',
+      key: 'displayName',
+      title: 'Display Name',
+      width: '40%',
+    }, {
+      dataIndex: 'username',
+      key: 'username',
+      title: 'User Name',
+      width: '50%',
+    }, {
+      key: 'action',
+      render: (_:string, r: V1User) => (
+        <Button onClick={() => onRemoveUser(record, r.id)}>Remove</Button>),
+      title: '',
+    } ];
+
+    return <Table columns={userColumn} dataSource={g?.users} pagination={false} rowKey="id" />;
+  }, [ groups, onRemoveUser ]);
+
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: V1GroupSearchResult) => {
       return <GroupActionDropdown fetchGroups={fetchGroups} group={record} users={users} />;
     };
 
     return [
-      {
-        dataIndex: 'id',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
-        key: 'id',
-        onCell: onRightClickableCell,
-        render: (_:string, r: V1GroupSearchResult) => r.group.groupId,
-        title: 'Group ID',
-      },
       {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
@@ -188,7 +231,8 @@ const GroupManagement: React.FC = () => {
       <InteractiveTable
         columns={columns}
         containerRef={pageRef}
-        dataSource={groups}
+        dataSource={groups.map((gr) => gr.group)}
+        expandable={{ expandedRowRender: expandedUserRender, onExpand }}
         loading={isLoading}
         pagination={getFullPaginationConfig({
           limit: settings.tableLimit,
@@ -202,7 +246,8 @@ const GroupManagement: React.FC = () => {
         updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
       />
     );
-  }, [ groups, isLoading, settings, columns, total, updateSettings ]);
+  }, [ groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand ]);
+
   return (
     <Page
       containerRef={pageRef}

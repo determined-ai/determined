@@ -97,25 +97,6 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
           </Select>
         </Form.Item>
       )}
-      {group && (
-        <Form.Item
-          label={USER_REMOVE_LABEL}
-          name={USER_REMOVE_NAME}>
-          <Select
-            loading={isLoading}
-            mode="multiple"
-            optionFilterProp="children"
-            placeholder="Remove Users"
-            showSearch>{
-              groupDetail?.users?.map((u) => (
-                <Select.Option key={u.id} value={u.id||0}>
-                  {u.displayName || u.username}
-                </Select.Option>
-              ))
-            }
-          </Select>
-        </Form.Item>
-      )}
     </Form>
   );
 };

@@ -10,7 +10,7 @@ import { DetailedUser } from 'types';
 
 import useModalCreateGroup, { API_SUCCESS_MESSAGE_CREATE, GROUP_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE, MODAL_HEADER_LABEL_EDIT, USER_ADD_LABEL,
-  USER_LABEL, USER_REMOVE_LABEL } from './useModalCreateGroup';
+  USER_LABEL } from './useModalCreateGroup';
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const GROUPNAME = 'test_groupname1';
@@ -157,7 +157,6 @@ describe('useModalCreateGroup', () => {
 
     expect(screen.getByLabelText(GROUP_NAME_LABEL)).toBeInTheDocument();
     expect(screen.getByLabelText(USER_ADD_LABEL)).toBeInTheDocument();
-    expect(screen.getByLabelText(USER_REMOVE_LABEL)).toBeInTheDocument();
 
   });
 });
