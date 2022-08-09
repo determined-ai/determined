@@ -7,7 +7,7 @@ repository. It is intended to show how to configure
 Compared to the original example, MoE is removed due to `AssertionError: MoE not supported with Stage 3`.
 
 **IMPORTANT!** 
-ZeRO Stage 3 allows to train model exceeding GPU memory by offloading optimizer, parameters and gradients to CPU
+ZeRO Stage 3 enables training models that do not fit into GPU memory by offloading optimizer, parameters and gradients to CPU
 (RAM memory). The assumption is that RAM memory >> GPU memory, however when running on an instance with limited RAM 
 memory, it is possible to experience memory-related errors as there is not enough memory for offloading.
 Read more about memory requirements at https://deepspeed.readthedocs.io/en/latest/memory.html and take a look ath the 
@@ -24,6 +24,19 @@ The key difference is initializing DeepSpeed ZeRO in line 50:
 with deepspeed.zero.Init():
     model = Net(self.args)
 ```
+`deepspeed.zero.Init()` creates a context that accelerates model initialization and allows to allocate models that
+exceed the size of local CPU/GPU memory/NVMe, but fit within the aggregated CPU/GPU memory/NVMe across all nodes. 
+
+Initializing a model in the `deepspeed.zero.Init()` context has the following effects:
+* allocates tensors to CPU or GPU memory or NVMe,
+* converts floating points tensors to half precision,
+* **immediately** partitions tensors among the group of data-parallel devices,
+* _(optional)_ uses more memory-efficient Linear Layer implementation.
+
+Note that even if you provide ZeRO Stage 3 configuration, but the model is not initialized in the context, the model 
+will not be partitioned.
+
+
 
 ### Configuration Files
 * **zero_stages_3_no_offload.yaml**: Determined config to train the model with `ds_config_no_offload.json`.
