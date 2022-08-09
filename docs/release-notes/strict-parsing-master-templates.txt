@@ -3,4 +3,4 @@
 **Improvements**
 
 -  Configuration: Master configuration will give warnings for duplicate and extraneous fields.
--  Templates: New template creation will now give errors warnings for extraneous fields.
+-  Templates: New template creation will now give errors for extraneous fields.

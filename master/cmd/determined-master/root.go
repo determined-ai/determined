@@ -86,7 +86,7 @@ func initializeConfig() error {
 	// not_a_real_key: {}
 	var c *config.Config
 	if err = yaml.UnmarshalStrict(bs, &c, yaml.DisallowUnknownFields); err != nil {
-		log.Warnf("master configuration parsing warning (will soon be error) %s", err)
+		log.Warnf("master configuration parsing warning: %s", err.Error())
 		// TODO uncomment to turn strict parsing warnings into errors next breaking change.
 		// return err
 	}
