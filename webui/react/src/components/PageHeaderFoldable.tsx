@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Space, Tooltip } from 'antd';
+import { Button, Dropdown, Menu, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useState } from 'react';
 
@@ -64,16 +64,16 @@ const PageHeaderFoldable: React.FC<Props> = (
         <div className={css.left}>
           {leftContent}
         </div>
-        {foldableContent && (
-          <IconButton
-            icon={isExpanded ? 'arrow-up' : 'arrow-down'}
-            iconSize="tiny"
-            label="Toggle"
-            type="text"
-            onClick={() => setIsExpanded((prev) => !prev)}
-          />
-        )}
-        <Space className={css.options}>
+        <div className={css.options}>
+          {foldableContent && (
+            <IconButton
+              icon={isExpanded ? 'arrow-up' : 'arrow-down'}
+              iconSize="tiny"
+              label="Toggle"
+              type="text"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            />
+          )}
           {options?.slice(0, 3).map((option) => (
             <Button
               className={css.optionsMainButton}
@@ -94,7 +94,7 @@ const PageHeaderFoldable: React.FC<Props> = (
               />
             </Dropdown>
           )}
-        </Space>
+        </div>
       </div>
       {foldableContent && isExpanded && <div className={css.foldable}>{foldableContent}</div>}
     </div>

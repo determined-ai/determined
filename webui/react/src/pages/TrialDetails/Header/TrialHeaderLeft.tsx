@@ -21,7 +21,12 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       </Link>
       <Icon name="arrow-right" size="tiny" />
       <div className={css.trial}>
-        <div className={css.state} style={{ backgroundColor: getStateColorCssVar(trial.state) }}>
+        <div
+          className={css.state}
+          style={{
+            backgroundColor: getStateColorCssVar(trial.state),
+            color: getStateColorCssVar(trial.state, { isOn: true, strongWeak: 'strong' }),
+          }}>
           {trial.state}
         </div>
         Trial {trial.id}
