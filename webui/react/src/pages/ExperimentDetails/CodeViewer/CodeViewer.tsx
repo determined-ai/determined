@@ -59,6 +59,11 @@ enum Config {
   runtime = 'Runtime Configuration'
 }
 
+const descForConfig = {
+  [Config.submitted]: 'original submitted config',
+  [Config.runtime]: 'after merge with defaults and templates',
+};
+
 const configIcon = <Icon name="settings" />;
 
 const isConfig = (key: unknown): key is Config =>
@@ -308,6 +313,9 @@ const CodeViewer: React.FC<Props> = ({
                 }
                 {activeFile.icon ?? <FileOutlined />}
                 <span className={css.filePath}>{activeFile.title}</span>
+                {isConfig(activeFile.key) && (
+                  <span className={css.fileDesc}>  {descForConfig[activeFile.key]}</span>
+                )}
               </div>
               <div className={css.buttonsContainer}>
                 {

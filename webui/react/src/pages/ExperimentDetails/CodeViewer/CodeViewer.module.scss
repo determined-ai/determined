@@ -45,6 +45,10 @@
       .filePath {
         margin-left: 10px;
       }
+      .fileDesc {
+        color: var(--theme-stage-on-weak);
+        margin-left: 20px;
+      }
       .buttonsContainer {
         display: flex;
 
@@ -69,8 +73,6 @@
 .pageError {
   grid-row: 2/6;
 }
-
 .hideElement {
   display: none;
 }
-
