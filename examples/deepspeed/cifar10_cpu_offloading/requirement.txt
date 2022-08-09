@@ -1,5 +1,0 @@
-torch>=1.10 -f https://download.pytorch.org/whl/cu113/torch_stable.html
-torchvision -f https://download.pytorch.org/whl/cu113/torch_stable.html
-transformers
-datasets
-deepspeed==0.6.7
