@@ -347,7 +347,6 @@ const CodeViewer: React.FC<Props> = ({
         bodyNoPadding
         bodyScroll
         className={viewMode === 'tree' ? css.hideElement : pageError ? css.pageError : css.editor}
-        // id="editor"
         maxHeight>
         <Spinner spinning={isFetchingFile}>
           {
