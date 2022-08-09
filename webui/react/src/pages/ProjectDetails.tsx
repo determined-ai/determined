@@ -4,7 +4,6 @@ import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { debounce } from 'throttle-debounce';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -105,7 +104,7 @@ const ProjectDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ total, setTotal ] = useState(0);
-  const [ canceler ] = useState(new AbortController());
+  const canceler = useRef(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
   const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
@@ -144,7 +143,7 @@ const ProjectDetails: React.FC = () => {
 
   const fetchProject = useCallback(async () => {
     try {
-      const response = await getProject({ id }, { signal: canceler.signal });
+      const response = await getProject({ id }, { signal: canceler.current.signal });
       setProject((prev) => {
         if (isEqual(prev, response)) return prev;
         return response;
@@ -154,7 +153,7 @@ const ProjectDetails: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal, id, pageError ]);
+  }, [ id, pageError ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -174,7 +173,7 @@ const ProjectDetails: React.FC = () => {
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
           users: settings.user,
         },
-        { signal: canceler.signal },
+        { signal: canceler.current.signal },
       );
       setTotal(response.pagination.total ?? 0);
       setExperiments((prev) => {
@@ -186,8 +185,7 @@ const ProjectDetails: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [ canceler.signal,
-    id,
+  }, [ id,
     settings.archived,
     settings.label,
     settings.search,
@@ -200,13 +198,16 @@ const ProjectDetails: React.FC = () => {
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
+      const labels = await getExperimentLabels(
+        { project_id: id },
+        { signal: canceler.current.signal },
+      );
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) { handleError(e); }
-  }, [ canceler.signal, id ]);
+  }, [ id ]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useFetchUsers(canceler.current);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
@@ -766,10 +767,8 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    debounce(250, () => {
-      fetchExperiments();
-      setIsLoading(true);
-    })();
+    fetchExperiments();
+    setIsLoading(true);
   }, [
     fetchExperiments,
     settings.archived,
@@ -784,7 +783,8 @@ const ProjectDetails: React.FC = () => {
   ]);
 
   useEffect(() => {
-    return () => canceler.abort();
+    const cancelerRef = canceler.current;
+    return () => cancelerRef.abort();
   }, [ canceler ]);
 
   const ContextMenu = useCallback(
