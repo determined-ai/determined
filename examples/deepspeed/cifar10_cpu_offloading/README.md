@@ -33,8 +33,8 @@ Initializing a model in the `deepspeed.zero.Init()` context has the following ef
 * **immediately** partitions tensors among the group of data-parallel devices,
 * _(optional)_ uses more memory-efficient Linear Layer implementation.
 
-Note that even if you provide ZeRO Stage 3 configuration, but the model is not initialized in the context, the model 
-will not be partitioned.
+Note that even if you provide ZeRO Stage 3 configuration, but the model is not initialized in the context, the entire
+model has to fit into CPU memory in order to be initialized correctly.
 
 
 
