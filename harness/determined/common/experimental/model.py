@@ -2,7 +2,7 @@ import datetime
 import enum
 import json
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from determined.common.experimental import checkpoint, session
 
@@ -283,8 +283,13 @@ class Model:
         appear in the ``keys`` list are removed from the model.
 
         Arguments:
-            keys (List[string]): Top-level keys to remove from the model metadata.
+            keys (List[str]): Top-level keys to remove from the model metadata.
         """
+        if not isinstance(keys, Iterable) or not all(isinstance(k, str) for k in keys):
+            raise ValueError(
+                f"remove_metadata() requires a list of strings as input but got: {keys}"
+            )
+
         for key in keys:
             if key in self.metadata:
                 del self.metadata[key]
@@ -300,9 +305,12 @@ class Model:
         array of strings. If the model previously had labels, they are replaced.
 
         Arguments:
-            labels (List[string]): All labels to set on the model.
+            labels (List[str]): All labels to set on the model.
         """
-        self.labels = labels
+        if not isinstance(labels, Iterable):
+            raise ValueError(f"set_labels() requires a list of strings as input but got: {labels}")
+
+        self.labels = list(labels)
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
             json={"labels": self.labels},
