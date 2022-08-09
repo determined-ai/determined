@@ -149,7 +149,7 @@ func (a *apiServer) GetWorkspaceProjects(
 func (a *apiServer) GetWorkspaces(
 	ctx context.Context, req *apiv1.GetWorkspacesRequest,
 ) (*apiv1.GetWorkspacesResponse, error) {
-	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -197,16 +197,12 @@ func (a *apiServer) GetWorkspaces(
 		nameFilter,
 		archFilterExpr,
 		pinFilterExpr,
-		user.User.Id,
+		curUser.ID,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
-	if err != nil {
-		return nil, err
-	}
 	resp.Workspaces, err = workspace.AuthZProvider.Get().
 		FilterWorkspaces(*curUser, resp.Workspaces)
 	if err != nil {
