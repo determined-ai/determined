@@ -45,7 +45,9 @@ const PageHeaderFoldable: React.FC<Props> = (
 
     const onItemClick: MenuProps['onClick'] = (e) => {
       const opt = options.find((opt) => opt.key === e.key) as Option;
-      isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent);
+      if (isMouseEvent(e.domEvent)) {
+        opt.onClick?.(e.domEvent);
+      }
     };
 
     const menuItems: MenuProps['items'] = options.map((opt) => ({
