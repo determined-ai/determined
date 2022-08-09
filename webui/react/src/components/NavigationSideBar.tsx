@@ -163,17 +163,12 @@ const NavigationSideBar: React.FC = () => {
         <header>
           <Dropdown
             content={(
-              <Menu>
-                <Menu.Item key="theme-toggle">
-                  <ThemeToggle />
-                </Menu.Item>
-                <Menu.Item key="settings">
-                  <Link path={paths.settings('account')}>Settings</Link>
-                </Menu.Item>
-                <Menu.Item key="sign-out">
-                  <Link path={paths.logout()}>Sign Out</Link>
-                </Menu.Item>
-              </Menu>
+              <Menu items={[
+                { key: 'theme-toggle', label: <ThemeToggle /> },
+                { key: 'settings', label: <Link path={paths.settings('account')}>Settings</Link> },
+                { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+              ]}
+              />
             )}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
