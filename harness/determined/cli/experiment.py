@@ -323,22 +323,15 @@ def describe(args: Namespace) -> None:
         if exp.id not in all_workloads:
             all_workloads[exp.id] = {}
         for trial in trials_for_experiment[exp.id]:
-            if trial.id not in all_workloads[exp.id]:
-                all_workloads[exp.id][trial.id] = []
             # paginated read of all workloads in this trial
-            offset = 0
-            while True:
-                page = bindings.get_GetTrialWorkloads(
-                    session,
-                    trialId=trial.id,
-                    offset=offset,
-                    limit=500,
-                ).workloads
-                all_workloads[exp.id][trial.id] += page
-                if len(page) == 500:
-                    offset += 500
-                else:
-                    break
+            all_workloads[exp.id][trial.id] = limit_offset_paginator(
+                bindings.get_GetTrialWorkloads,
+                "workloads",
+                session,
+                limit=500,
+                offset=0,
+                trialId=trial.id,
+            )
 
     t_metrics_headers: List[str] = []
     t_metrics_names: List[str] = []
