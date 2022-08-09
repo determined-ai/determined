@@ -4,6 +4,7 @@ import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { debounce } from 'throttle-debounce';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -759,6 +760,28 @@ const ProjectDetails: React.FC = () => {
       updateSettings({ tableOffset: offset });
     }
   }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
+
+  /*
+   * Get new experiments based on changes to the
+   * filters, pagination, search and sorter.
+   */
+  useEffect(() => {
+    debounce(250, () => {
+      fetchExperiments();
+      setIsLoading(true);
+    })();
+  }, [
+    fetchExperiments,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user,
+  ]);
 
   useEffect(() => {
     return () => canceler.abort();
