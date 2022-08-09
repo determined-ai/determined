@@ -1287,6 +1287,7 @@ class v1Experiment:
         jobId: str,
         name: str,
         numTrials: int,
+        originalConfig: str,
         projectId: int,
         searcherType: str,
         startTime: str,
@@ -1299,7 +1300,6 @@ class v1Experiment:
         forkedFrom: "typing.Optional[int]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
-        originalConfig: "typing.Optional[str]" = None,
         parentArchived: "typing.Optional[bool]" = None,
         progress: "typing.Optional[float]" = None,
         projectName: "typing.Optional[str]" = None,
@@ -1364,7 +1364,7 @@ class v1Experiment:
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
             config=obj.get("config", None),
-            originalConfig=obj.get("originalConfig", None),
+            originalConfig=obj["originalConfig"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1394,7 +1394,7 @@ class v1Experiment:
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
             "config": self.config if self.config is not None else None,
-            "originalConfig": self.originalConfig if self.originalConfig is not None else None,
+            "originalConfig": self.originalConfig,
         }
 
 class v1ExperimentSimulation:

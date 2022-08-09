@@ -8,6 +8,11 @@
     background-color: transparent;
     color: var(--theme-background-on-strong);
     height: 100%;
+
+    span {
+      overflow-x: hidden;
+      white-space: nowrap;
+    }
   }
   h5 {
     color: var(--theme-background-on-strong);
@@ -61,6 +66,11 @@
     grid-template-columns: auto;
   }
 }
+.pageError {
+  grid-row: 2/6;
+}
+
 .hideElement {
   display: none;
 }
+

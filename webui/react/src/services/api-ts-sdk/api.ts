@@ -1959,7 +1959,7 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    originalConfig?: string;
+    originalConfig: string;
 }
 
 /**

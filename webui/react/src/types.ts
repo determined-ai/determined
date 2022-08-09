@@ -515,7 +515,7 @@ export interface ExperimentBase extends ProjectExperiment {
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
-  originalConfig?: string;
+  originalConfig: string;
 }
 
 // TODO we should be able to remove ExperimentOld but leaving this off.
