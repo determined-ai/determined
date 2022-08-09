@@ -8,20 +8,17 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
+import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails, getTrialWorkloads } from 'services/api';
-import { V1MetricNamesResponse } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
-import { readStream } from 'services/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { alphaNumericSorter } from 'shared/utils/sort';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentBase, MetricName, MetricsWorkload,
-  MetricType, TrialDetails, TrialWorkloadFilter,
+  TrialDetails, TrialWorkloadFilter,
 } from 'types';
 import handleError from 'utils/error';
 
@@ -108,44 +105,18 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   );
 
   const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
-
-  useEffect(() => {
-    const canceler = new AbortController();
-    const trainingMetricsMap: Record<string, boolean> = {};
-    const validationMetricsMap: Record<string, boolean> = {};
-
-    readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(
-        experiment.id,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        if (!event) return;
-        /*
-         * The metrics endpoint can intermittently send empty lists,
-         * so we keep track of what we have seen on our end and
-         * only add new metrics we have not seen to the list.
-         */
-        (event.trainingMetrics || []).forEach((metric) => trainingMetricsMap[metric] = true);
-        (event.validationMetrics || []).forEach((metric) => validationMetricsMap[metric] = true);
-        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphaNumericSorter);
-        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphaNumericSorter);
-        const newMetrics = [
-          ...(newValidationMetrics || []).map((name) => ({ name, type: MetricType.Validation })),
-          ...(newTrainingMetrics || []).map((name) => ({ name, type: MetricType.Training })),
-        ];
-        setMetricNames(newMetrics);
-      },
-    ).catch(() => {
+  useMetricNames({
+    errorHandler: () => {
       handleError({
         publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
-    });
-    return () => canceler.abort();
-  }, [ experiment.id ]);
+    },
+    experimentId: experiment.id,
+    metricNames,
+    setMetricNames,
+  });
 
   useEffect(() => {
     setSelectedMetrics(metricNames);
