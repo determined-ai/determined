@@ -8,9 +8,10 @@
     background-color: transparent;
     color: var(--theme-background-on-strong);
     height: 100%;
+    overflow: scroll;
+    padding: 0;
 
     span {
-      overflow-x: hidden;
       white-space: nowrap;
     }
   }
@@ -72,6 +73,14 @@
 }
 .pageError {
   grid-row: 2/6;
+}
+.editor {
+  grid-column: 2 / auto;
+  grid-row: 2 / 3;
+
+  @media screen and (max-width: 1024px) {
+    grid-column: 1 / 2;
+  }
 }
 .hideElement {
   display: none;

@@ -49,7 +49,7 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
 });
 
 enum PageError {
-  decode = 'Non-text file.',
+  decode = 'Could not decode file.',
   fetch = 'Unable to fetch file.',
   none = ''
 }
@@ -346,7 +346,7 @@ const CodeViewer: React.FC<Props> = ({
       <Section
         bodyNoPadding
         bodyScroll
-        className={viewMode === 'tree' ? css.hideElement : pageError ? css.pageError : undefined}
+        className={viewMode === 'tree' ? css.hideElement : pageError ? css.pageError : css.editor}
         // id="editor"
         maxHeight>
         <Spinner spinning={isFetchingFile}>
