@@ -147,6 +147,9 @@ func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 }
 
 func (s *customSearch) Snapshot() (json.RawMessage, error) {
+	print("In custom searcher Snapshot len of queue: ")
+	print(len(s.SearcherEventQueue.GetEvents()))
+	print("\n")
 	return json.Marshal(s.customSearchState)
 }
 
@@ -154,6 +157,10 @@ func (s *customSearch) Restore(state json.RawMessage) error {
 	if state == nil {
 		return nil
 	}
+
+	print("In custom searcher Restore len of queue: ")
+	print(len(s.SearcherEventQueue.GetEvents()))
+	print("\n")
 	return json.Unmarshal(state, &s.customSearchState)
 }
 
