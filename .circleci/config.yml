@@ -1860,7 +1860,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.11"
+        default: "1.21.12"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1945,7 +1945,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.21.11"
+        default: "1.21.12"
       machine-type:
         type: string
         default: "n1-standard-8"
