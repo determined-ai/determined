@@ -692,7 +692,7 @@ def make_amp_workloads(
         assert newer["loss"] <= older["loss"]
         assert newer["loss"].dtype is np.dtype("float32")
         # Check the accuracy of the gradient change.
-        trial_class.check_batch_metrics(newer, idx, epsilon=1e-3)
+        trial_class.check_batch_metrics(newer, idx, atol=1e-5)
         if idx == 0:
-            trial_class.check_batch_metrics(older, idx, epsilon=1e-3)
+            trial_class.check_batch_metrics(older, idx, atol=1e-5)
     assert scale_ever_decreased or scale_ever_increased
