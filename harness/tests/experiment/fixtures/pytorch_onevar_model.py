@@ -249,6 +249,14 @@ class OneVarAutoAMPTrial(OneVarTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         context.experimental.use_amp()
         super().__init__(context)
+        self.scaler = context._scaler
+
+    def train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        metrics = super().train_batch(batch, epoch_idx, batch_idx)
+        metrics["scale"] = self.scaler.get_scale()
+        return metrics
 
 
 class OneVarManualAMPTrial(OneVarTrial):

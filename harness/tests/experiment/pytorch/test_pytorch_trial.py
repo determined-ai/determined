@@ -620,7 +620,7 @@ class TestPyTorchTrial:
         "trial_class,assert_output_float16,assert_scale_changed",
         [
             (pytorch_onevar_model.OneVarApexAMPTrial, False, True),
-            (pytorch_onevar_model.OneVarAutoAMPTrial, False, False),
+            (pytorch_onevar_model.OneVarAutoAMPTrial, False, True),
             (pytorch_onevar_model.OneVarManualAMPTrial, True, True),
         ],
         ids=[
