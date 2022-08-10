@@ -3,7 +3,7 @@ import json
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Type
 
 from determined.common.api import bindings
 from determined.common.experimental import Checkpoint
@@ -15,13 +15,32 @@ class SearcherState:
     trial_progress: Dict[uuid.UUID, float]
     trials_closed: Set[uuid.UUID]
     trials_created: Set[uuid.UUID]
-    checkpoint_id: Optional[str] = None
+    last_event_id: Optional[int] = None
+    experiment_completed: bool = False
 
     def __init__(self) -> None:
         self.failures = set()
         self.trial_progress = {}
         self.trials_closed = set()
         self.trials_created = set()
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "failures": [str(f) for f in self.failures],
+            "trialProgress": {str(k): v for k, v in self.trial_progress.items()},
+            "trialsClosed": [str(t) for t in self.trials_closed],
+            "trialsCreated": [str(t) for t in self.trials_created],
+            "lastEventId": self.last_event_id,
+            "experimentCompleted": self.experiment_completed,
+        }
+
+    def from_dict(self, d: Dict[str, Any]) -> None:
+        self.failures = set(uuid.UUID(f) for f in d.get("failures", []))
+        self.trial_progress = {uuid.UUID(k): v for k, v in d.get("trialProgress", dict()).items()}
+        self.trials_closed =  set(uuid.UUID(t) for t in d.get("trialsClosed", []))
+        self.trials_created = set(uuid.UUID(t) for t in d.get("trialsCreated", []))
+        self.last_event_id = d.get("lastEventId")
+        self.experiment_completed = d.get("experimentCompleted", False)
 
 
 class ExitedReason(Enum):

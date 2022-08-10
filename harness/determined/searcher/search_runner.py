@@ -3,12 +3,16 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Sequence
 
 from determined.common.api import bindings
-from determined.common.api.bindings import v1TrialExitedEarlyExitedReason
+from determined.common.api.bindings import v1TrialExitedEarlyExitedReason, v1SearcherEvent
 from determined.experimental import client
-from determined.searcher.search_method import ExitedReason, Progress, SearchMethod
+from determined.searcher.search_method import ExitedReason, Progress, SearchMethod, SearcherState
+
+EXPERIMENT_ID_FILE = "experiment_id"
+STATE_FILE = "state"
 
 
 class SearchRunner:
@@ -19,27 +23,45 @@ class SearchRunner:
         self,
         exp_config: Dict[str, Any],
         context_dir: Optional[str] = None,
-        resume_exp_id: Optional[int] = None,
+        searcher_dir: Optional[str] = None,
     ) -> int:
         logging.info("SearchRunner.run")
 
         if context_dir is None:
             context_dir = os.getcwd()
-        if resume_exp_id is None:
-            exp = client.create_experiment(exp_config, context_dir)
+        searcher_dir_path = Path(searcher_dir) if searcher_dir is not None else Path.cwd()
+        if not searcher_dir_path.is_dir():
+            raise FileExistsError(f"searcher_dir={searcher_dir} already exists and is not a directory")
+        if not searcher_dir_path.exists():
+            searcher_dir_path.mkdir(parents=True)
+        experiment_id_file = searcher_dir_path.joinpath(EXPERIMENT_ID_FILE)
+        if experiment_id_file.exists():
+            with experiment_id_file.open("r") as f:
+                experiment_id = int(f.read())
+            logging.info(f"Resuming HP searcher for experiment {experiment_id}")
+            # TODO load searcher state and search method state
+            searcher_state_file = searcher_dir_path.joinpath(STATE_FILE)
+            if searcher_state_file.exists():
+                with searcher_state_file.open("r") as f:
+                    state_dict = json.load(f)
+                    self.search_method.searcher_state.from_dict(state_dict)
+                    if self.search_method.searcher_state.experiment_completed:
+                        logging.warning(f"experiment {experiment_id} has completed")
+                        return experiment_id
+            last_event_id = self.search_method.searcher_state.last_event_id
+            if last_event_id is not None:
+                # TODO make sure checkpoint is saved before state!!
+                self.search_method.load_checkpoint(last_event_id)
         else:
-            exp = client.get_experiment(resume_exp_id)
-            # TODO obtain searcher state from master
-            # searcher_state = client.get_searcher_state(resume_exp_id)
-            searcher_state = {"lastEventId": 1}
-            last_event_id = searcher_state["lastEventId"]
-            self.search_method.load_checkpoint(last_event_id)
+            exp = client.create_experiment(exp_config, context_dir)
+            with experiment_id_file.open("w") as f:
+                f.write(str(exp.id))
+            logging.info(f"Starting HP searcher for experiment {exp.id}")
+            experiment_id = exp.id
+            last_event_id = None
 
-        # searcher_state = exp.get
         assert client._determined is not None
         session = client._determined._session
-        experiment_id: int = exp.id
-        logging.debug(f"Running experiment {experiment_id}")
 
         experiment_is_active = True
 
@@ -49,7 +71,7 @@ class SearchRunner:
                 events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
                 if events.searcherEvents is None:
                     continue
-                logging.warning(json.dumps([e.to_json() for e in events.searcherEvents]))
+                logging.info(json.dumps([SearchRunner._searcher_event_as_dict(e) for e in events.searcherEvents]))
                 for e in events.searcherEvents:
                     if e.initialOperations:
                         logging.info("initial operations")
@@ -130,13 +152,41 @@ class SearchRunner:
                     bindings.post_PostSearcherOperations(
                         session,
                         body=bindings.v1PostSearcherOperationsRequest(
-                            experimentId=exp._id,
+                            experimentId=experiment_id,
                             searcherOperations=[op._to_searcher_operation() for op in operations],
                             triggeredByEvent=e,
                         ),
-                        experimentId=exp._id,
+                        experimentId=experiment_id,
                     )
+
+                    # save state
+                    self.search_method.save_checkpoint(e.id)
+                    self.search_method.searcher_state.last_event_id = e.id
+                    d = self.search_method.searcher_state.to_dict()
+                    searcher_state_file = searcher_dir_path.joinpath(STATE_FILE)
+                    with searcher_state_file.open("w") as f:
+                        json.dump(d, f)
         except KeyboardInterrupt:
             print("Runner interrupted")
 
         return experiment_id
+
+    @staticmethod
+    def _searcher_event_as_dict(event: v1SearcherEvent) -> dict:
+        d = dict()
+        if event.trialExitedEarly:
+            d["trialExitedEarly"] = event.trialExitedEarly.to_json()
+        if event.validationCompleted:
+            d["validationCompleted"] = event.validationCompleted.to_json()
+        if event.trialProgress:
+            d["trialProgress"] = event.trialProgress.to_json()
+        if event.trialClosed:
+            d["trialClosed"] = event.trialClosed.to_json()
+        if event.trialCreated:
+            d["trialCreated"] = event.trialCreated.to_json()
+        if event.initialOperations:
+            d["initialOperations"] = event.initialOperations.to_json()
+        if event.experimentInactive:
+            d["experimentInactive"] = event.experimentInactive.to_json()
+        d["id"] = event.id
+        return d

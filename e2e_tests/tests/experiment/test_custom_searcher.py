@@ -1,12 +1,15 @@
 import dataclasses
+import json
 import logging
 import random
 import sys
+import tempfile
 import uuid
-from dataclasses import dataclass
-from typing import Dict, List, Set
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 import pytest
+from urllib3.connectionpool import MaxRetryError, HTTPConnectionPool
 
 from determined.common.api import bindings
 from determined.experimental import client
@@ -105,9 +108,10 @@ def test_run_random_searcher_exp() -> None:
     max_concurrent_trials = 2
     max_length = 3000
 
-    search_method = RandomSearcherMethod(max_trials, max_concurrent_trials, max_length)
-    search_runner = SearchRunner(search_method)
-    experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
+    with tempfile.TemporaryDirectory() as searcher_dir:
+        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, Path(searcher_dir))
+        search_runner = SearchRunner(search_method)
+        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
 
     assert client._determined is not None
     session = client._determined._session
@@ -120,12 +124,60 @@ def test_run_random_searcher_exp() -> None:
     assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
 
 
-class RandomSearcherMethod(SearchMethod):
-    def __init__(self, max_trials: int, max_concurrent_trials: int, max_length: int) -> None:
+@pytest.mark.e2e_cpu_2a
+def test_resume_random_searcher_exp() -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config["searcher"] = {
+        "name": "custom",
+        "metric": "validation_error",
+        "smaller_is_better": True,
+    }
+    config["description"] = "custom searcher"
+
+    max_trials = 5
+    max_concurrent_trials = 2
+    max_length = 3000
+
+    with tempfile.TemporaryDirectory() as searcher_dir:
+        logging.info(f"searcher_dir type = {type(searcher_dir)}")
+        ex = MaxRetryError(
+            HTTPConnectionPool(host='dummyhost', port=8080),
+            "http://dummyurl",
+        )
+        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, Path(searcher_dir), ex)
+        search_runner = SearchRunner(search_method)
+        try:
+            search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
+            pytest.fail("Expected an exception")
+        except MaxRetryError:
+            experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
+
+    assert client._determined is not None
+    session = client._determined._session
+    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    assert response.experiment.numTrials == 5
+    assert search_method.created_trials == 5
+    assert search_method.pending_trials == 0
+    assert search_method.closed_trials == 5
+    assert len(search_method.searcher_state.trials_created) == search_method.created_trials
+    assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
+
+
+class RandomSearchMethod(SearchMethod):
+    def __init__(
+        self,
+        max_trials: int,
+        max_concurrent_trials: int,
+        max_length: int,
+        searcher_dir: Path,
+        exception: Optional[Exception] = None,
+    ) -> None:
         super().__init__()
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
+        self.searcher_dir = searcher_dir
+        self.exception = exception
 
         # TODO remove created_trials and closed_trials before merging the feature branch
         self.created_trials = 0
@@ -161,14 +213,23 @@ class RandomSearcherMethod(SearchMethod):
             logging.error("pending trials is greater than max_concurrent_trial")
         units_completed = sum(
             (
-                self.max_length
-                if r in self.searcher_state.trials_closed
-                else self.searcher_state.trial_progress[r]
+                (
+                    self.max_length
+                    if r in self.searcher_state.trials_closed
+                    else self.searcher_state.trial_progress[r]
+                )
                 for r in self.searcher_state.trial_progress
             )
         )
         units_expected = self.max_length * self.max_trials
         progress = units_completed / units_expected
+        logging.info(f"progress = {progress} = {units_completed} / {units_expected}, {self.searcher_state.trial_progress}")
+
+        if progress >= 0.5 and self.exception is not None:
+            exception = self.exception
+            self.exception = None
+            raise exception
+
 
         logging.info(f"progress = {progress}")
 
@@ -226,6 +287,21 @@ class RandomSearcherMethod(SearchMethod):
         logging.info(f"hparams={hparams}")
         return hparams
 
+    def save_checkpoint(self, event_id: int) -> None:
+        logging.debug(f"saving checkpoint event_id={event_id}, final_run={self.exception is None}")
+        checkpoint_path = self.searcher_dir.joinpath(f"checkpoint-{event_id}")
+        with checkpoint_path.open("w") as f:
+            state = {"final_run": self.exception is None}
+            json.dump(state, f)
+
+    def load_checkpoint(self, event_id: int) -> None:
+        checkpoint_path = self.searcher_dir.joinpath(f"checkpoint-{event_id}")
+        with checkpoint_path.open("r") as f:
+            state = json.load(f)
+            if state["final_run"]:
+                self.exception = None
+            logging.debug(f"loaded state event_id={event_id}, final_run={self.exception is None}")
+
 
 @pytest.mark.e2e_cpu
 def test_run_asha_batches_exp() -> None:
@@ -270,14 +346,14 @@ def test_run_asha_batches_exp() -> None:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
 
-@dataclass
+@dataclasses.dataclass
 class TrialMetric:
     request_id: uuid.UUID
     metric: float
     promoted: bool = False
 
 
-@dataclass
+@dataclasses.dataclass
 class Rung:
     units_needed: int
     idx: int
