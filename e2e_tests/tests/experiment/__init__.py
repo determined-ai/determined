@@ -4,6 +4,7 @@ from .experiment import (
     assert_performed_final_checkpoint,
     assert_performed_initial_validation,
     cancel_single,
+    cancel_trial,
     check_if_string_present_in_trial_logs,
     assert_patterns_in_trial_logs,
     create_experiment,

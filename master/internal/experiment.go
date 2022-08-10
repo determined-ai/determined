@@ -554,12 +554,18 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
 		case searcher.Shutdown:
-			if op.Failure {
+			switch {
+			case op.Failure:
 				e.updateState(ctx, model.StateWithReason{
 					State:               model.StoppingErrorState,
 					InformationalReason: "hp search failed",
 				})
-			} else {
+			case op.Cancel:
+				e.updateState(ctx, model.StateWithReason{
+					State:               model.StoppingCanceledState,
+					InformationalReason: "hp search canceled",
+				})
+			default:
 				e.updateState(ctx, model.StateWithReason{
 					State:               model.StoppingCompletedState,
 					InformationalReason: "hp search completed",
