@@ -92,6 +92,7 @@ type hpcResourceDetailsCache struct {
 	mu         sync.RWMutex
 	lastSample hpcResources
 	sampleTime time.Time
+	isUpdating bool
 }
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
@@ -811,17 +812,19 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetailsCached(ctx *actor.Con
 	// If anyone is viewing the 'Cluster' section of the DAI GUI then there is activity here
 	// about every 10s per user. To mitigate concerns of overloading slurmd with polling
 	// activity, we will return a cached result, updating the cache only every so often.
-	m.resourceDetails.mu.RLock()
-	if time.Since(m.resourceDetails.sampleTime).Seconds() > maxResourceDetailsSampleAgeSeconds {
+	m.resourceDetails.mu.Lock()
+	defer m.resourceDetails.mu.Unlock()
+	if !m.resourceDetails.isUpdating &&
+		(time.Since(m.resourceDetails.sampleTime).Seconds() > maxResourceDetailsSampleAgeSeconds) {
+		m.resourceDetails.isUpdating = true
 		go m.fetchHpcResourceDetails(ctx)
 	}
-	defer m.resourceDetails.mu.RUnlock()
 	return m.resourceDetails.lastSample, nil
 }
 
 // resolveSlotType resolves the correct slot type for a job targeting the given partition. If the
-// slot type is specified in the master config, use that. Otherwise if the partiton is specified and
-// known, and has no GPUs select CPU as the processor type, else default to CUDA.
+// slot type is specified in the master config, use that. Otherwise if the partition is specified
+// and known, and has no GPUs select CPU as the processor type, else default to CUDA.
 func (m *dispatcherResourceManager) resolveSlotType(
 	ctx *actor.Context,
 	partition string,
@@ -854,6 +857,14 @@ func (m *dispatcherResourceManager) resolveSlotType(
 func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) {
 	impersonatedUser := ""
 	newSample := hpcResources{}
+
+	// Below code will ensure isUpdating flag of the cache is always set to false,
+	// while exiting the function.
+	defer func() {
+		m.resourceDetails.mu.Lock()
+		m.resourceDetails.isUpdating = false
+		m.resourceDetails.mu.Unlock()
+	}()
 
 	// Launch the HPC Resources manifest. Launch() method will ensure
 	// the manifest is in the RUNNING state on successful completion.
