@@ -768,9 +768,11 @@ const ProjectDetails: React.FC = () => {
    */
   useEffect(() => {
     let unmounted = false;
-    if (unmounted) {
+    if (!unmounted) {
       fetchExperiments();
       setIsLoading(true);
+    } else {
+      canceler.current.abort();
     }
     return () => {
       unmounted = true;
