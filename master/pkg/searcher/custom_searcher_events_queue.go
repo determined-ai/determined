@@ -10,25 +10,29 @@ import (
 // that was event that was processed last by client and acknowledged by master.
 type SearcherEventQueue struct {
 	events     []*experimentv1.SearcherEvent
-	eventCount int32 // stores the number of events in the queue.
+	EventCount int32 // stores the number of events in the queue.
 	// Will help with uniquely identifying an event.
 }
 
 func newSearcherEventQueue() *SearcherEventQueue {
 	events := make([]*experimentv1.SearcherEvent, 0)
-	return &SearcherEventQueue{events: events, eventCount: 0}
+	return &SearcherEventQueue{events: events, EventCount: 0}
 }
 
 // Enqueue an event.
 func (q *SearcherEventQueue) Enqueue(event *experimentv1.SearcherEvent) {
-	q.eventCount++
-	event.Id = q.eventCount
+	q.EventCount++
+	event.Id = q.EventCount
 	q.events = append(q.events, event)
 }
 
 // GetEvents returns all the events.
 func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 	return q.events
+}
+
+func (q *SearcherEventQueue) SetEvents(events []*experimentv1.SearcherEvent) {
+	q.events = events
 }
 
 // RemoveUpTo the given event Id.

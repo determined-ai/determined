@@ -38,6 +38,8 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 
 	// Save the snapshot to database.
 	snapshot, err := cSearcher1.Snapshot()
+	print("snapshot of searcher1")
+	print(string(snapshot))
 	require.NoError(t, err)
 	db.SaveSnapshot(1, 2, snapshot)
 
