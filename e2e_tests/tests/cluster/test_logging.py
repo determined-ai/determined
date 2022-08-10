@@ -84,6 +84,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         f"api/v1/{command.RemoteTaskNewAPIs[task_type]}",
         task_config,
         "",
+        data={},
         default_body=body,
     )
     task_id = resp[command.RemoteTaskName[task_type]]["id"]
