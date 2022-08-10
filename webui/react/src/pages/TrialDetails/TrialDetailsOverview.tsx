@@ -27,11 +27,15 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
   useMetricNames({
     errorHandler: () => {
-      handleError({
-        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
-        publicSubject: 'Experiment metric name stream failed.',
-        type: ErrorType.Api,
-      });
+      try {
+        handleError({
+          publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+          publicSubject: 'Experiment metric name stream failed.',
+          type: ErrorType.Api,
+        });
+      } catch (e) {
+        // already handleError
+      }
     },
     experimentId: experiment.id,
     metricNames,
