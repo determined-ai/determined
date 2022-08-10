@@ -70,13 +70,6 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
         return
 
-    if (
-        rps.resourcePools[0].type == bindings.v1ResourcePoolType.RESOURCE_POOL_TYPE_K8S
-        and task_type == command.TaskTypeShell
-    ):
-        # TODO(DET-7983): Fix shells on GKE.
-        return
-
     body = {}
     if task_type == command.TaskTypeTensorBoard:
         exp_id = exp.run_basic_test(
