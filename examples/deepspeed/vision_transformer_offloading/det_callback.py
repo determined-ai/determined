@@ -5,12 +5,8 @@ from transformers import (
     TrainerState,
     TrainerControl,
     TrainingArguments,
-
 )
 
-from transformers.integrations import MLflowCallback, WandbCallback
-
-import importlib.util
 import os
 
 import determined as det
@@ -18,14 +14,18 @@ import determined as det
 
 class DetCallback(TrainerCallback):
 
-    def __init__(self, core_context: det.core.Context, args: typing.Dict, filter_metrics: typing.List,
-                 checkpoint_metadata: typing.Dict, tokenizer=None) -> None:
+    def __init__(self, core_context: det.core.Context, args: typing.Dict, filter_metrics: typing.List = None,
+                 tokenizer=None, tokenizer_options=None,
+                 checkpoint_metadata: typing.Dict = None) -> None:
         super().__init__()
 
         self.core_context = core_context
         self.filter_metrics = filter_metrics
-        self.checkpoint_metadata = checkpoint_metadata
+        self.user_checkpoint_metadata = checkpoint_metadata
+        self.tokenizer = tokenizer
+        self.tokenizer_options = tokenizer_options
         self.load_last_checkpoint(args)
+        self.last_eval_metrics = None
 
     def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model=None, logs=None,
                **kwargs):
@@ -35,8 +35,11 @@ class DetCallback(TrainerCallback):
                 self.core_context.train.report_training_metrics(steps_completed=state.global_step, metrics=metrics)
             elif metric_type == 'eval' or metric_type == 'test':
                 self.core_context.train.report_validation_metrics(steps_completed=state.global_step, metrics=metrics)
+                self.last_eval_metrics = metrics
             else:
+                # can that even happen?
                 pass
+
 
     def process_log(self, log):
         metric_type = self._metric_type(log)
@@ -64,11 +67,25 @@ class DetCallback(TrainerCallback):
         assert info is not None
         if state.is_world_process_zero:
             save_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
-            ckpt_metadata = self.checkpoint_metadata
-            ckpt_metadata["steps_completed"] = state.global_step
-            ckpt_metadata["trial_id"] = info.trial.trial_id
+            det_checkpoint__metadata = {"steps_completed": state.global_step, "trial_id": info.trial.trial_id}
 
-            self.core_context.checkpoint.upload(save_path, ckpt_metadata)
+            if self.tokenizer_options is not None:
+                det_checkpoint__metadata['tokenizer_options'] = self.tokenizer_options
+
+            if self.tokenizer is not None:
+                self.tokenizer.save_pretrained(os.path.join(save_path, "tokenizer"))
+
+            if self.user_checkpoint_metadata is not None:
+                self._on_save(save_path)
+
+            self.core_context.checkpoint.upload(save_path, det_checkpoint__metadata)
+
+    def _on_save(self, save_path):
+        '''
+        User-defined saving of objects from self.checkpoint_metadata under save_path.
+        After objects are saved, det handles uploading and downloading objects to/from selected storage.
+        '''
+        pass
 
     def load_last_checkpoint(self, args):
         info = det.get_cluster_info()
@@ -88,9 +105,12 @@ class DetCallback(TrainerCallback):
 
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.core_context.preempt.should_preempt():
-            # Terminate the process by returning from main.
             return
 
 
-def is_determined_available():
-    return importlib.util.find_spec("determined") is not None
+def override_training_args(training_args):
+    hparams = det.get_cluster_info().trial.hparams
+    for k, v in hparams.items():
+        if hasattr(training_args, k):
+            training_args.k = v
+    return training_args

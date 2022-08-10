@@ -33,7 +33,7 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-from det_callback import DetCallback
+from det_callback import DetCallback, override_training_args
 import transformers
 from transformers import (
     MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
@@ -45,11 +45,11 @@ from transformers import (
     TrainingArguments,
 )
 from transformers.trainer_utils import get_last_checkpoint
-from transformers.utils import check_min_version, send_example_telemetry
+# from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
-
 import determined as det
+
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
 logger = logging.getLogger(__name__)
@@ -175,6 +175,8 @@ def main(core_context):
         model_args, data_args, training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    training_args = override_training_args(training_args)
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -352,8 +354,9 @@ def main(core_context):
         data_collator=collate_fn,
     )
 
-    trainer.add_callback(DetCallback(core_context, training_args, filter_metrics=['loss', 'accuracy'],
-                                     checkpoint_metadata={'feature_extractor': feature_extractor}))
+    det_callback = DetCallback(core_context, training_args, filter_metrics=['loss', 'accuracy'],
+                               checkpoint_metadata={'feature_extractor': feature_extractor})
+    trainer.add_callback(det_callback)
 
     # Training
     if training_args.do_train:
@@ -367,7 +370,8 @@ def main(core_context):
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
-    print("Done with training. Starting eval.")
+
+        print("Done with training. Starting eval.")
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate()
@@ -388,6 +392,6 @@ def main(core_context):
 
 
 if __name__ == "__main__":
-    distributed =det.core.DistributedContext.from_torch_distributed()
-    with  det.core.init(distributed=distributed) as core_context:
+    distributed = det.core.DistributedContext.from_torch_distributed()
+    with det.core.init(distributed=distributed) as core_context:
         main(core_context)
