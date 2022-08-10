@@ -1,116 +1,173 @@
+// import { V1OrderBy } from 'services/api-ts-sdk';
+import * as api from 'services/api-ts-sdk';
+
+import { DetError } from './error';
 import * as service from './service';
 
-const setup = () => {
+describe('Service Utilities', () => {
 
-};
+  describe('isAuthFailure', () => {
+    it('marks false for 200s', () => {
 
-// beforeEach(() => {
-//   setup();
-// });
+      const response = new Response('ok', { status: 200 });
 
-// afterEach(() => {
-//   // eslint-disable-next-line no-global-assign
-//   window = originWindow;
-// });
+      expect(service.isAuthFailure(response)).toBe(false);
+    });
 
-// import { DetApi, FetchOptions } from '../types';
+    it('marks false for 404s', () => {
 
-// import { isObject } from './data';
-// import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';
+      const response = new Response('not found', { status: 404 });
 
-// export const getResponseStatus = (e: any): number | undefined => {
-//   return e?.response?.status || e?.status;
-// };
-// export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
-//   const status = getResponseStatus(e) ?? 0;
-//   return (supportExternalAuth && status === 500) || (status >= 400 && status < 500);
-// };
-// const isApiResponse = (o: unknown): o is Response => {
-//   return o instanceof Response;
-// };
-// export const isNotFound = (e: any): boolean => {
-//   return getResponseStatus(e) === 404;
-// };
-// export const isAborted = (e: any): boolean => {
-//   return e?.name === 'AbortError';
-// };
-// /* Fits API errors into a DetError. */
-// export const processApiError = async (name: string, e: unknown): Promise<DetError> => {
-//   const isAuthError = isAuthFailure(e);
-//   const isApiBadResponse = isDetError(e) && e?.type === ErrorType.ApiBadResponse;
-//   const options: DetErrorOptions = {
-//     level: ErrorLevel.Error,
-//     publicSubject: `Request ${name} failed.`,
-//     silent: !process.env.IS_DEV || isAuthError || isAborted(e),
-//     type: ErrorType.Server,
-//   };
+      expect(service.isAuthFailure(response)).toBe(false);
+    });
+    it('marks true for 401s', () => {
 
-//   if (isAuthError) {
-//     options.publicSubject = `Unauthenticated ${name} request.`;
-//     options.level = ErrorLevel.Fatal;
-//     options.type = ErrorType.Auth;
-//   } else if (isApiBadResponse) {
-//     options.publicSubject = `Failed in decoding ${name} API response.`;
-//   }
+      const response = new Response('unauthorized', { status: 401 });
 
-//   if (isApiResponse(e)) {
-//     try {
-//       const response = await e.json();
-//       options.publicMessage = response.error?.error || response.message;
-//     } catch (err) {
-//       options.payload = err;
-//     }
-//   }
+      expect(service.isAuthFailure(response)).toBe(true);
+    });
+    it('marks true for external 500s', () => {
 
-//   return new DetError(e, options);
-// };
+      const response = new Response('external request failure', { status: 500 });
 
-// export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-//   return async function (params: Input, options?: FetchOptions): Promise<Output> {
-//     try {
-//       const response = api.stubbedResponse ?
-//         api.stubbedResponse : await api.request(params, options);
-//       return api.postProcess(response);
-//     } catch (e) {
-//       throw (await processApiError(api.name, e));
-//     }
-//   };
-// }
+      expect(service.isAuthFailure(response, true)).toBe(true);
+    });
+  });
 
-/*
- * This function is primarily used to convert an enum option into a string value
- * that the generated API can take as a request param.
- * More specifically the function takes a value and checks it against a Typescript enum,
- * to make sure the the value is one of the enum option and returns the value as a string.
- */
-// export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any => {
-//   if (isObject(enumObject) && value !== undefined) {
-//     const enumRecord = enumObject as Record<string, string>;
-//     const stringValue = value as string;
-//     const validOptions = Object
-//       .values(enumRecord)
-//       .filter((_, index) => index % 2 === 0);
-//     if (validOptions.includes(stringValue)) return stringValue;
-//     return enumRecord.UNSPECIFIED;
-//   }
-//   return undefined;
-// };
-/*
- * This is the same as validateDetApiEnum but validates a list of values.
- * If the validated list is empty, this will return undefined because our
- * API will skip filtering if it sees an `undefined` value for a filter
- * query parameter.
- */
+  describe('isApiResponse', () => {
+    it('returns true for response', async () => {
+      const response = new Response('response text', { status: 200 });
+      expect(service.isApiResponse(response)).toBe(true);
+    });
 
-// export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]): any => {
-//   if (!Array.isArray(values)) return undefined;
+    it('returns false for error', async () => {
+      const notResponse = new Error('Bad Error, go home');
+      expect(service.isApiResponse(notResponse)).toBe(false);
+    });
+  });
 
-//   const enumValues = values
-//     .map((value) => validateDetApiEnum(enumObject, value))
-//     .filter((enumValue) => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
-//   return enumValues.length !== 0 ? enumValues : undefined;
-// };
+  describe('isNotFound ', () => {
+    it('response true', () => {
+      const response = new Response('unauthorized', { status: 404 });
+      expect(service.isNotFound(response)).toBe(true);
+    });
 
-// export const noOp = (): void => {};
+    it('response false', () => {
+      const response = new Response('unauthorized', { status: 400 });
+      expect(service.isNotFound(response)).toBe(false);
+    });
 
-// export const identity = <T>(a: T): T => a;
+    it('returns true for det errors with not found in message', () => {
+      const e = new DetError(
+        'could not do',
+        { publicMessage: 'could not do because Not Found', silent: true },
+      );
+      expect(service.isNotFound(e)).toBe(true);
+    });
+
+    it('returns false for det errors with not found not in message', () => {
+      const e = new DetError(
+        'could not do',
+        { publicMessage: 'could not do because bad', silent: true },
+      );
+      expect(service.isNotFound(e)).toBe(false);
+
+    });
+    it('returns true for errors with not found in message', () => {
+      const e = new Error('could not do because not found');
+      expect(service.isNotFound(e)).toBe(true);
+    });
+    it('returns false for errors with not found not in message', () => {
+      const e = new Error('could not do because bad');
+      expect(service.isNotFound(e)).toBe(false);
+    });
+  });
+
+  describe('isAborted', () => {
+    it('returns false for non errors', () => {
+      const response = new Response('ok', { status: 200 });
+      expect(service.isAborted(response)).toBe(false);
+    });
+
+    it('returns false for non-abort errors', () => {
+      const error = new Error('could not do');
+      expect(service.isAborted(error)).toBe(false);
+    });
+
+    it('returns true for abort errors', () => {
+      const error = new Error('the operation was aborted');
+      error.name = 'AbortError';
+      expect(service.isAborted(error)).toBe(true);
+    });
+  });
+
+  describe('processApiError', () => {
+    it('is good', () => {
+
+      expect(1).toBe(1);
+    });
+  });
+
+  describe('generateDetApi', () => {
+    it('iis good', () => {
+
+      expect(1).toBe(1);
+    });
+  });
+
+  describe('validateDetApiEnum', () => {
+    it('returns valid enum values', () => {
+      expect(service.validateDetApiEnum(api.V1OrderBy, api.V1OrderBy.ASC)).toBe(api.V1OrderBy.ASC);
+    });
+
+    it('returns valid string values', () => {
+      expect(service.validateDetApiEnum(api.V1OrderBy, 'ORDER_BY_ASC')).toBe(api.V1OrderBy.ASC);
+    });
+
+    it('returns default for invalid values', () => {
+      expect(service.validateDetApiEnum(api.V1OrderBy, 'asdfasdf'))
+        .toBe(api.V1OrderBy.UNSPECIFIED);
+    });
+
+    it('returns undefined when no default value exists', () => {
+      expect(service.validateDetApiEnum(api.ProtobufNullValue, 'asdfasdf'))
+        .toBeUndefined();
+    });
+  });
+
+  describe('validateDetApiEnumList', () => {
+    it('should preserve valid input list', () => {
+      const input = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
+      const expectedOutput = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
+      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toStrictEqual(expectedOutput);
+    });
+
+    it('should return undefined when all inputs are unspecified or invalid', () => {
+      const input = [ api.V1OrderBy.UNSPECIFIED, api.V1OrderBy.UNSPECIFIED, 'bucket' ];
+
+      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toBeUndefined();
+    });
+
+    it('should filter bad entries', () => {
+      const input = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC, 'bucket' ];
+      const expectedOutput = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
+      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toStrictEqual(expectedOutput);
+    });
+  });
+
+  describe('noOp', () => {
+    it('does nothing', () => {
+      expect(service.noOp()).toBeUndefined();
+    });
+  });
+
+  // export const identity = <T>(a: T): T => a;
+  describe('identity', () => {
+    it('passes the same thing back', () => {
+      Object.values(window).forEach((thing) => {
+        expect(service.identity(thing)).toBe(thing);
+      });
+
+    });
+  });
+});
