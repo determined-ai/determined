@@ -31,6 +31,7 @@ func (q *SearcherEventQueue) GetEvents() []*experimentv1.SearcherEvent {
 	return q.events
 }
 
+// SetEvents sets the events.
 func (q *SearcherEventQueue) SetEvents(events []*experimentv1.SearcherEvent) {
 	q.events = events
 }

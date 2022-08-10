@@ -38,8 +38,6 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 
 	// Save the snapshot to database.
 	snapshot, err := cSearcher1.Snapshot()
-	print("snapshot of searcher1")
-	print(string(snapshot))
 	require.NoError(t, err)
 	db.SaveSnapshot(1, 2, snapshot)
 
@@ -55,8 +53,6 @@ func TestCustomSearcherSnapshot(t *testing.T) {
 	require.NoError(t, err2)
 	queue1 := cSearcher1.GetCustomSearcherEventQueue()
 	queue2 := cSearcher2.GetCustomSearcherEventQueue()
-	print("queue 2 events len")
-	print(len(queue2.GetEvents()))
-	print("\n")
 	require.Equal(t, queue1.GetEvents(), queue2.GetEvents())
+	db.DeleteSnapshotsForExperiment(1)
 }
