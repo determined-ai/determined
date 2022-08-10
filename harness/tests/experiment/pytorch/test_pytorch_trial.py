@@ -641,7 +641,7 @@ class TestPyTorchTrial:
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=self.hparams,
-            workloads=make_amp_workloads(assert_output_float16, assert_scale_changed),
+            workloads=make_amp_workloads(trial_class, assert_output_float16, assert_scale_changed),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
@@ -667,6 +667,7 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
 
 
 def make_amp_workloads(
+    trial_class,
     assert_output_float16=False,
     assert_scale_changed=False,
 ) -> workload.Stream:
@@ -674,15 +675,9 @@ def make_amp_workloads(
     yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=1)
     training_metrics, _ = trainer.result()
 
-    # Check the gradient update at every step.
-    for idx, batch_metrics in enumerate(training_metrics):
-        pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
-
     scale_ever_decreased = False
     scale_ever_increased = False
-    for older, newer in zip(training_metrics, training_metrics[1:]):
-        assert newer["loss"] <= older["loss"]
-        assert newer["loss"].dtype is np.dtype("float32")
+    for idx, (older, newer) in enumerate(zip(training_metrics, training_metrics[1:])):
         if assert_output_float16:
             assert newer["output"].dtype is np.dtype("float16")
         else:
@@ -690,9 +685,16 @@ def make_amp_workloads(
             # For the latter case, see the hook end_f16
             #   defined in PyTorchTrialContext.autocast_forward_pass
             assert newer["output"].dtype is np.dtype("float32")
-        if assert_scale_changed:
+        if assert_scale_changed and (newer["scale"] != older["scale"]):
             scale_ever_decreased = scale_ever_decreased or newer["scale"] < older["scale"]
             scale_ever_increased = scale_ever_increased or newer["scale"] > older["scale"]
-    if assert_scale_changed:
-        # TODO: change test so that we can assert both these flags are True
-        assert scale_ever_decreased or scale_ever_increased
+            # If the scale changed, it's because an inf or NaN was encountered, so the
+            #  model couldn't have changed this iteration.
+            continue
+        assert newer["loss"] <= older["loss"]
+        assert newer["loss"].dtype is np.dtype("float32")
+        # Check the accuracy of the gradient change.
+        trial_class.check_batch_metrics(newer, idx, epsilon=1e-3)
+        if idx == 0:
+            trial_class.check_batch_metrics(older, idx, epsilon=1e-3)
+    assert scale_ever_decreased or scale_ever_increased or not assert_scale_changed

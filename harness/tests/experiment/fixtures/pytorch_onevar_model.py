@@ -159,11 +159,10 @@ class OneVarTrial(pytorch.PyTorchTrial):
         }
 
     @staticmethod
-    def check_batch_metrics(metrics: Dict[str, Any], batch_idx: int) -> None:
+    def check_batch_metrics(metrics: Dict[str, Any], batch_idx: int, epsilon: float = 1e-6) -> None:
         """A check to be applied to the output of every train_batch in a test."""
 
         def float_eq(a: np.ndarray, b: np.ndarray) -> bool:
-            epsilon = 0.000001
             return (abs(a - b) < epsilon).all()
 
         assert float_eq(
