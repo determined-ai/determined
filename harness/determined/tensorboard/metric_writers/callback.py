@@ -41,7 +41,7 @@ class BatchMetricWriter:
         # Log all batch metrics.
         if batch_metrics:
             for batch_idx, batch in enumerate(batch_metrics):
-                batches_seen = steps_completed - len(batch) + batch_idx
+                batches_seen = steps_completed - len(batch_metrics) + batch_idx
                 for name, value in batch.items():
                     self._maybe_write_metric(name, value, batches_seen)
                     metrics_seen.add(name)
