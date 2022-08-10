@@ -1,48 +1,59 @@
 package user
 
 import (
+	"github.com/labstack/echo/v4"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestMatching(t *testing.T) {
-	testPath := "/agent/match"
+func TestStandardAuth(t *testing.T) {
+	e := echo.New()
+	c := e.NewContext(nil, nil)
+	c.SetPath("/agents")
 	service := Service{}
-	require.True(t, service.doesMatch(testPath, testPath))
+	require.Equal(t, authStandard, service.getAuthLevel(c))
 
-	testURI := "/agent/no/match"
-	require.False(t, service.doesMatch(testURI, testPath))
+	c.SetPath("/api/v1/master/info")
+	require.Equal(t, authStandard, service.getAuthLevel(c))
 }
 
-func TestMatchingWildcard(t *testing.T) {
-	testPath := "/agent*"
-	testURI := "/agent"
+func TestAdminAuth(t *testing.T) {
+	e := echo.New()
+	c := e.NewContext(nil, nil)
+	c.SetPath("/config")
 	service := Service{}
-	require.True(t, service.doesMatch(testURI, testPath))
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
 
-	testURI = "/agent/longer/path/match/all"
-	require.True(t, service.doesMatch(testURI, testPath))
+	c.SetPath("/agents/id/slots")
+	require.Equal(t, authStandard, service.getAuthLevel(c))
+	c.SetPath("/agents/id/slots/1")
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
 
-	testURI = "/agent-match/with/more"
-	require.True(t, service.doesMatch(testURI, testPath))
-
-	testURI = "no/agent/match"
-	require.False(t, service.doesMatch(testURI, testPath))
+	c.SetPath("/api/v1/agents")
+	require.Equal(t, authStandard, service.getAuthLevel(c))
+	c.SetPath("/api/v1/agents/id")
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
+	c.SetPath("/api/v1/agents/id/enable")
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
 }
 
-func TestMatchingWildMiddle(t *testing.T) {
-	testPath := "/agent/*/test"
-	testURI := "/agent/more/test"
+func TestNoAuth(t *testing.T) {
+	e := echo.New()
+	c := e.NewContext(nil, nil)
+	c.SetPath("/")
 	service := Service{}
-	require.True(t, service.doesMatch(testURI, testPath))
+	require.Equal(t, authNone, service.getAuthLevel(c))
 
-	testURI = "/agent/big/match/yes/test"
-	require.True(t, service.doesMatch(testURI, testPath))
+	c.SetPath("/agents")
+	require.Equal(t, authNone, service.getAuthLevel(c))
+	c.SetPath("/agentss")
+	require.Equal(t, authStandard, service.getAuthLevel(c))
 
-	testURI = "/agent/test/no/match"
-	require.False(t, service.doesMatch(testURI, testPath))
-
-	testURI = "no/agent/match/test"
-	require.False(t, service.doesMatch(testURI, testPath))
+	c.SetPath("/det/something")
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
+	c.SetPath("/agents?id=1")
+	require.Equal(t, authNone, service.getAuthLevel(c))
+	c.SetPath("/proxy/:service/serviceHash")
+	require.Equal(t, authAdmin, service.getAuthLevel(c))
 }

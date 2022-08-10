@@ -45,14 +45,14 @@ var unauthenticatedPointsList = []string{
 	"/det/",
 	"/info",
 	"/task-logs",
-	"/ws/data-layer/\\.*",
+	"/ws/data-layer/.*",
 	"/agents",
-	"/det/\\.*",
+	"/det/.*",
 	"/login",
 	"/api/v1/master",
 	"/api/v1/auth/login",
 	"/api/v1/auth/logout",
-	"/proxy/:service/\\.*",
+	"/proxy/:service/.*",
 	"/api/v1/notebooks/.*",
 	"/api/v1/tasks/.*",
 	"/api/v1/allocations/.*",
@@ -61,7 +61,7 @@ var unauthenticatedPointsList = []string{
 	"/api/v1/experiments/.*",
 	"/api/v1/trials/.*",
 	"/api/v1/checkpoints",
-	"/agents\\?id=.*",
+	"/agents\?id=.*",
 }
 
 // adminAuthPointsList contains the paths that require admin authentication.
