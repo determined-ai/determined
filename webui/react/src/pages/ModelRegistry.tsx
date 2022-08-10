@@ -474,7 +474,7 @@ const ModelRegistry: React.FC = () => {
       id="models"
       loading={isLoading}
       options={(
-        <Space className={css.actionList}>
+        <Space>
           <Toggle
             checked={settings.archived}
             prefixLabel="Show Archived"
