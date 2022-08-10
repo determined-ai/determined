@@ -1,4 +1,4 @@
-import { Input, ModalFuncProps, notification } from 'antd';
+import { Form, Input, ModalFuncProps, notification } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Link from 'components/Link';
@@ -15,6 +15,11 @@ import { Metadata } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
+
+interface FormInputs {
+  description?: string;
+  modelName: string;
+}
 
 interface OpenProps {
   checkpointUuid?: string;
@@ -46,6 +51,7 @@ const DEFAULT_MODAL_STATE = {
 const useModalModelCreate = (): ModalHooks => {
   const [ modalState, setModalState ] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
+  const [ form ] = Form.useForm<FormInputs>();
 
   const handleOnCancel = useCallback(() => {
     setModalState(DEFAULT_MODAL_STATE);
@@ -117,16 +123,16 @@ const useModalModelCreate = (): ModalHooks => {
   }, [ modalOpenCheckpointRegister ]);
 
   const handleOk = useCallback(async (state: ModalState) => {
-    await createModel(state);
-  }, [ createModel ]);
-
-  const updateModelName = useCallback((e) => {
-    setModalState((prev) => ({ ...prev, modelName: e.target.value }));
-  }, [ ]);
-
-  const updateModelDescription = useCallback((e) => {
-    setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
-  }, []);
+    const values = await form.validateFields();
+    if (values) {
+      await createModel({
+        ...state,
+        modelDescription: values.description ?? '',
+        modelName: values.modelName,
+      });
+      form.resetFields();
+    }
+  }, [ createModel, form ]);
 
   const openDetails = useCallback(() => {
     setModalState((prev) => ({ ...prev, expandDetails: true }));
@@ -145,19 +151,19 @@ const useModalModelCreate = (): ModalHooks => {
 
     // We always render the form regardless of mode to provide a reference to it.
     return (
-      <div className={css.base}>
+      <Form autoComplete="off" form={form} layout="vertical">
         <p className={css.directions}>
           Create a registered model to organize important checkpoints.
         </p>
-        <div>
-          <h2>Model name</h2>
-          {/* Input doesnt have value prop due to cusor jump to the end of text */}
-          <Input defaultValue="" onChange={updateModelName} />
-        </div>
-        <div>
-          <h2>Description <span>(optional)</span></h2>
-          <Input.TextArea defaultValue="" onChange={updateModelDescription} />
-        </div>
+        <Form.Item
+          label="Model name"
+          name="modelName"
+          rules={[ { message: 'Model name is required ', required: true } ]}>
+          <Input />
+        </Form.Item>
+        <Form.Item label="Description (optional)" name="description">
+          <Input.TextArea />
+        </Form.Item>
         {expandDetails ? (
           <>
             <div>
@@ -175,21 +181,19 @@ const useModalModelCreate = (): ModalHooks => {
           </>
         ) :
           <p className={css.expandDetails} onClick={openDetails}>Add More Details...</p>}
-      </div>
+      </Form>
     );
-  }, [ updateModelName, updateModelDescription, updateMetadata, updateTags, openDetails ]);
+  }, [ form, updateMetadata, updateTags, openDetails ]);
 
   const handleCancel = useCallback(() => modalClose(), [ modalClose ]);
 
   const getModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
-    const { modelName } = state;
     return {
       className: css.base,
       closable: true,
       content: getModalContent(state),
       icon: null,
       maskClosable: true,
-      okButtonProps: { disabled: modelName === '' },
       okText: 'Create Model',
       onCancel: handleCancel,
       onOk: () => handleOk(state),
