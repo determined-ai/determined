@@ -35,12 +35,12 @@ describe('Service Utilities', () => {
   });
 
   describe('isApiResponse', () => {
-    it('returns true for response', async () => {
+    it('returns true for response', () => {
       const response = new Response('response text', { status: 200 });
       expect(service.isApiResponse(response)).toBe(true);
     });
 
-    it('returns false for error', async () => {
+    it('returns false for error', () => {
       const notResponse = new Error('Bad Error, go home');
       expect(service.isApiResponse(notResponse)).toBe(false);
     });
