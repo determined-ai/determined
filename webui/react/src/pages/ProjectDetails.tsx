@@ -767,8 +767,14 @@ const ProjectDetails: React.FC = () => {
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
-    setIsLoading(true);
+    let unmounted = false;
+    if (unmounted) {
+      fetchExperiments();
+      setIsLoading(true);
+    }
+    return () => {
+      unmounted = true;
+    };
   }, [
     fetchExperiments,
     settings.archived,
