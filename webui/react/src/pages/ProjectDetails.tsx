@@ -74,7 +74,6 @@ import css from './ProjectDetails.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMNS,
   ExperimentColumnName, ProjectDetailsSettings } from './ProjectDetails.settings';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
-import { off } from 'process';
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
