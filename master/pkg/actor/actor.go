@@ -44,3 +44,9 @@ type ActorFunc func(context *Context) error
 func (f ActorFunc) Receive(context *Context) error {
 	return f(context)
 }
+
+// Messenger is an interface for an actor system or context.
+type Messenger interface {
+	Tell(*Ref, Message)
+	Ask(*Ref, Message) Response
+}

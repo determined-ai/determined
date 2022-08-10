@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -20,13 +21,14 @@ import (
 
 type shellManager struct {
 	db         *db.PgDB
+	rm         rm.ResourceManager
 	taskLogger *task.Logger
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		tryRestoreCommandsByType(ctx, s.db, s.taskLogger, model.TaskTypeShell)
+		tryRestoreCommandsByType(ctx, s.db, s.rm, s.taskLogger, model.TaskTypeShell)
 
 	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
@@ -52,7 +54,8 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		if err := createGenericCommandActor(
-			ctx, s.db, s.taskLogger, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
+			ctx, s.db, s.rm, s.taskLogger, taskID, model.TaskTypeShell, jobID, model.JobTypeShell,
+			msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch shell")
 			ctx.Respond(err)

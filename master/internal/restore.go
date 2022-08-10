@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -70,14 +69,14 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
-	poolName, err := sproto.GetResourcePool(
+	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
 		expModel.Config.Resources().ResourcePool(),
 		expModel.Config.Resources().SlotsPerTrial(),
 		false,
 	)
 	if err != nil {
-		return errors.Wrap(err, "invalid resource configuration")
+		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
 
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
@@ -154,7 +153,7 @@ func (e *experiment) restoreTrial(
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-		searcher, e.rm, e.taskLogger, e.db, config, ckpt, e.taskSpec, true,
+		searcher, e.taskLogger, e.rm, e.db, config, ckpt, e.taskSpec, true,
 	)
 	if trialID != nil {
 		t.id = *trialID

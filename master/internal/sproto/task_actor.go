@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -38,7 +37,7 @@ type (
 	// UpdatePodStatus notifies the resource manager of job state changes.
 	UpdatePodStatus struct {
 		ContainerID string
-		State       job.SchedulingState
+		State       SchedulingState
 	}
 
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.

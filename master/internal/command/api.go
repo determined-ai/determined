@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -19,24 +20,25 @@ func RegisterAPIHandler(
 	system *actor.System,
 	echo *echo.Echo,
 	db *db.PgDB,
+	rm rm.ResourceManager,
 	taskLogger *task.Logger,
 	middleware ...echo.MiddlewareFunc,
 ) {
 	commandManagerRef, _ := system.ActorOf(
 		actor.Addr("commands"),
-		&commandManager{db: db, taskLogger: taskLogger},
+		&commandManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	notebookManagerRef, _ := system.ActorOf(
 		actor.Addr("notebooks"),
-		&notebookManager{db: db, taskLogger: taskLogger},
+		&notebookManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	shellManagerRef, _ := system.ActorOf(
 		actor.Addr("shells"),
-		&shellManager{db: db, taskLogger: taskLogger},
+		&shellManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	tensorboardManagerRef, _ := system.ActorOf(
 		actor.Addr("tensorboard"),
-		&tensorboardManager{db: db, taskLogger: taskLogger},
+		&tensorboardManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 
 	// Wait for all managers to initialize.

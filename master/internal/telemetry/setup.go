@@ -12,12 +12,14 @@ import (
 func Setup(
 	system *actor.System,
 	db db.DB,
+	rm telemetryRPFetcher,
 	clusterID string,
 	conf config.TelemetryConfig,
 ) {
 	if conf.Enabled && conf.SegmentMasterKey != "" {
 		if actorDef, tErr := New(
 			db,
+			rm,
 			clusterID,
 			conf.SegmentMasterKey,
 		); tErr != nil {

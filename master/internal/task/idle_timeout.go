@@ -47,7 +47,7 @@ func NewIdleTimeoutWatcher(name string, cfg *sproto.IdleTimeoutConfig) *IdleTime
 		Debug:          cfg.Debug,
 		Action: func(ctx *actor.Context) {
 			ctx.Log().Infof("killing %s due to inactivity", name)
-			ctx.Tell(ctx.Self(), Terminate)
+			ctx.Tell(ctx.Self(), sproto.TerminateAllocation)
 		},
 	}
 }

@@ -808,7 +808,10 @@ func (a *apiServer) AllocationPreemptionSignal(
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.allocationHandlerByID(allocationID)
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -835,13 +838,17 @@ func (a *apiServer) AllocationPreemptionSignal(
 func (a *apiServer) AckAllocationPreemptionSignal(
 	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	allocationID := model.AllocationID(req.AllocationId)
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := a.ask(handler.Address(), task.AckPreemption{
-		AllocationID: model.AllocationID(req.AllocationId),
+		AllocationID: allocationID,
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -852,15 +859,10 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPendingPreemptionSignalRequest,
 ) (*apiv1.AllocationPendingPreemptionSignalResponse, error) {
-	allocationID := model.AllocationID(req.AllocationId)
-	_, err := a.allocationHandlerByID(allocationID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = a.ask(sproto.GetCurrentRM(a.m.system).Address(), sproto.PendingPreemption{
-		AllocationID: allocationID,
-	}, nil); err != nil {
+	if err := a.m.rm.ExternalPreemptionPending(
+		a.m.system,
+		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
+	); err != nil {
 		return nil, err
 	}
 
@@ -870,13 +872,17 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 func (a *apiServer) MarkAllocationResourcesDaemon(
 	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	allocationID := model.AllocationID(req.AllocationId)
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := a.ask(handler.Address(), task.MarkResourcesDaemon{
-		AllocationID: model.AllocationID(req.AllocationId),
+		AllocationID: allocationID,
 		ResourcesID:  sproto.ResourcesID(req.ResourcesId),
 	}, nil); err != nil {
 		return nil, err
@@ -1065,20 +1071,25 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
 
-	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	allocationID := model.AllocationID(req.AllocationId)
+	resourcesID := sproto.ResourcesID(req.ResourcesId)
+	handler, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	var w task.RendezvousWatcher
 	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
-		ResourcesID: sproto.ResourcesID(req.ResourcesId),
+		ResourcesID: resourcesID,
 	}, &w); err != nil {
 		return nil, err
 	}
 	defer a.m.system.TellAt(
 		handler.Address(), task.UnwatchRendezvousInfo{
-			ResourcesID: sproto.ResourcesID(req.ResourcesId),
+			ResourcesID: resourcesID,
 		})
 
 	select {
@@ -1090,14 +1101,6 @@ func (a *apiServer) AllocationRendezvousInfo(
 	case <-ctx.Done():
 		return nil, nil
 	}
-}
-
-func (a *apiServer) allocationHandlerByID(id model.AllocationID) (*actor.Ref, error) {
-	var handler *actor.Ref
-	if err := a.ask(a.m.rm.Address(), sproto.GetTaskHandler{ID: id}, &handler); err != nil {
-		return nil, err
-	}
-	return handler, nil
 }
 
 func (a *apiServer) PostTrialRunnerMetadata(

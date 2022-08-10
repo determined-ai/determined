@@ -70,6 +70,13 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
         return
 
+    if (
+        rps.resourcePools[0].type == bindings.v1ResourcePoolType.RESOURCE_POOL_TYPE_K8S
+        and task_type == command.TaskTypeShell
+    ):
+        # TODO(DET-7983): Fix shells on GKE.
+        return
+
     body = {}
     if task_type == command.TaskTypeTensorBoard:
         exp_id = exp.run_basic_test(
@@ -106,6 +113,7 @@ def check_logs(
         if log_regex.match(log["message"]):
             break
     else:
+        dump_logs_stdout(master_url, entity_id, log_fn)
         pytest.fail("ran out of logs without a match")
 
     # Just make sure these calls 200 and return some logs.
@@ -138,6 +146,15 @@ def check_logs(
 
     # Check nonsense is nonsense.
     assert not any(log_fn(master_url, entity_id, rank_ids=[-1])), "bad filter returned logs"
+
+
+def dump_logs_stdout(
+    master_url: str,
+    entity_id: Any,
+    log_fn: Any,
+) -> None:
+    for log in log_fn(master_url, entity_id, follow=True):
+        print(log)
 
 
 def to_snake_case(camel_case: str) -> str:
