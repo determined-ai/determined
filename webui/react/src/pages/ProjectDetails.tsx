@@ -754,9 +754,9 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     if (settings.tableOffset >= total && total){
-    const newTotal = settings.tableOffset > total ? total : total-1
-    const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-    updateSettings({ tableOffset: offset });
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+      updateSettings({ tableOffset: offset });
     }
   }, [ total, settings.tableOffset, settings.tableLimit, updateSettings ]);
 
