@@ -2661,6 +2661,19 @@ schemas = {
                 "null"
             ],
             "default": true
+        },
+        "unit": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "enum": [
+                "batches",
+                "records",
+                "epochs",
+                null
+            ],
+            "default": null
         }
     }
 }

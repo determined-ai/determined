@@ -78,6 +78,7 @@ func (s SearcherConfigV0) Unit() Unit {
 //go:generate ../gen.sh
 // CustomConfigV0 configures a custom search.
 type CustomConfigV0 struct {
+	RawUnit *Unit `json:"unit"`
 }
 
 //go:generate ../gen.sh
