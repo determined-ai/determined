@@ -267,7 +267,7 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
                 "Expecting:\n{}".format(config_arg, CONFIG_DESC)
             )
 
-        key, value = config_arg.split("=", maxsplit=1)  # type: Tuple[str, Any]
+        key, value = config_arg.split("=", maxsplit=1)
 
         # Separate values if a comma exists. Use yaml.load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
