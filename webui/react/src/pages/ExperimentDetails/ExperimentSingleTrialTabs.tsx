@@ -13,7 +13,7 @@ import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePrevious from 'shared/hooks/usePrevious';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails, TrialItem } from 'types';
 import handleError from 'utils/error';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -47,7 +47,7 @@ const ExperimentConfiguration = React.lazy(() => {
 export interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  onTrialUpdate?: (trial: TrialDetails) => void;
+  onTrialUpdate?: (trial: TrialItem) => void;
   pageRef: React.RefObject<HTMLElement>;
 }
 

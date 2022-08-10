@@ -216,13 +216,23 @@ def experiment_state(experiment_id: int) -> determinedexperimentv1State:
     return r.experiment.state
 
 
-def experiment_trials(experiment_id: int) -> List[bindings.v1GetTrialResponse]:
-    r1 = bindings.get_GetExperimentTrials(determined_test_session(), experimentId=experiment_id)
+class TrialPlusWorkload:
+    def __init__(
+        self, trial: bindings.trialv1Trial, workloads: Sequence[bindings.v1WorkloadContainer]
+    ):
+        self.trial = trial
+        self.workloads = workloads
+
+
+def experiment_trials(experiment_id: int) -> List[TrialPlusWorkload]:
+    sess = determined_test_session()
+    r1 = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id)
     src_trials = r1.trials
     trials = []
     for trial in src_trials:
-        r2 = bindings.get_GetTrial(determined_test_session(), trialId=trial.id)
-        trials.append(r2)  # includes trial and workload
+        r2 = bindings.get_GetTrial(sess, trialId=trial.id)
+        r3 = bindings.get_GetTrialWorkloads(sess, trialId=trial.id, limit=1000)
+        trials.append(TrialPlusWorkload(r2.trial, r3.workloads))
     return trials
 
 

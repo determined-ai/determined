@@ -431,7 +431,7 @@ export interface CoreApiGenericCheckpoint {
 }
 
 export interface TrialPagination extends WithPagination {
-  trials: TrialDetails[];
+  trials: TrialItem[];
 }
 
 type HpValue = Primitive | RawJson
@@ -451,7 +451,8 @@ export interface TrialItem extends StartEndTimes {
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  workloads: WorkloadGroup[];
+  totalCheckpointSize: number;
+  workloadCount: number;
 }
 
 export interface TrialWorkloads extends WithPagination {

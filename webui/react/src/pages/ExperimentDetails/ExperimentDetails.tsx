@@ -15,7 +15,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { isAborted } from 'shared/utils/service';
-import { ExperimentBase, TrialDetails, ValidationHistory } from 'types';
+import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 interface Params {
@@ -30,7 +30,7 @@ const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const { auth: { user } } = useStore();
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
-  const [ trial, setTrial ] = useState<TrialDetails>();
+  const [ trial, setTrial ] = useState<TrialItem>();
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
@@ -60,7 +60,7 @@ const ExperimentDetails: React.FC = () => {
 
   const { stopPolling } = usePolling(fetchExperimentDetails, { rerunOnNewFn: true });
 
-  const handleSingleTrialUpdate = useCallback((trial: TrialDetails) => {
+  const handleSingleTrialUpdate = useCallback((trial: TrialItem) => {
     setTrial(trial);
   }, []);
 
