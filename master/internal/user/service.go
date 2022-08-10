@@ -31,12 +31,12 @@ var forbiddenError = echo.NewHTTPError(
 	"user not authorized")
 
 const (
-	// AuthNone indicates a request needs no authentication.
-	AuthNone int = 0
-	// AuthStandard indicates a request needs authentication.
-	AuthStandard = 1
-	// AuthAdmin indicates a request needs admin authentication.
-	AuthAdmin = 2
+	// authNone indicates a request needs no authentication.
+	authNone int = 0
+	// authStandard indicates a request needs authentication.
+	authStandard = 1
+	// authAdmin indicates a request needs admin authentication.
+	authAdmin = 2
 )
 
 // unauthenticatedPointsList contains URIs that are exempted from authentication.
@@ -45,14 +45,14 @@ var unauthenticatedPointsList = []string{
 	"/det/",
 	"/info",
 	"/task-logs",
-	"/ws/data-layer/\\*",
+	"/ws/data-layer/\\.*",
 	"/agents",
-	"/det/\\*",
+	"/det/\\.*",
 	"/login",
 	"/api/v1/master",
 	"/api/v1/auth/login",
 	"/api/v1/auth/logout",
-	"/proxy/:service/\\*",
+	"/proxy/:service/\\.*",
 	"/api/v1/notebooks/.*",
 	"/api/v1/tasks/.*",
 	"/api/v1/allocations/.*",
@@ -160,23 +160,13 @@ func (s *Service) UserAndSessionFromRequest(
 func (s *Service) getAuthLevel(c echo.Context) int {
 	switch {
 	case adminAuthPointsPattern.MatchString(c.Request().RequestURI):
-		fmt.Println()
-		fmt.Println("ADMIN AUTH")
-		fmt.Println("REQUEST URI:", c.Request().RequestURI)
-		fmt.Println("PATH:", c.Path())
-		fmt.Println()
-		return AuthAdmin
+		return authAdmin
 	case unauthenticatedPointsPattern.MatchString(c.Path()):
-		return AuthNone
+		return authNone
 	case unauthenticatedPointsPattern.MatchString(c.Request().RequestURI):
-		return AuthNone
+		return authNone
 	default:
-		fmt.Println()
-		fmt.Println("STANDARD AUTH")
-		fmt.Println("REQUEST URI:", c.Request().RequestURI)
-		fmt.Println("PATH:", c.Path())
-		fmt.Println()
-		return AuthStandard
+		return authStandard
 	}
 }
 
@@ -184,13 +174,13 @@ func (s *Service) getAuthLevel(c echo.Context) int {
 // to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		adminOnly := false
-		doAuth := s.getAuthLevel(c)
-
-		switch doAuth {
-		case AuthNone:
+		var adminOnly bool
+		switch s.getAuthLevel(c) {
+		case authNone:
 			return next(c)
-		case AuthAdmin:
+		case authStandard:
+			adminOnly = false
+		case authAdmin:
 			adminOnly = true
 		}
 
