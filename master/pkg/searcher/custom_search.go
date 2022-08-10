@@ -153,7 +153,7 @@ func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 
 func (s *customSearch) Snapshot() (json.RawMessage, error) {
 	// protobuf objects need to be marshaled individually.
-	marshaledPBEvents, err := marshallPBEvents(s.SearcherEventQueue.GetEvents())
+	marshaledPBEvents, err := marshalPBEvents(s.SearcherEventQueue.GetEvents())
 	if err != nil {
 		return nil, err
 	}
@@ -173,12 +173,12 @@ func (s *customSearch) Restore(state json.RawMessage) error {
 		return errors.Wrap(err, "failed to unmarshal customSearchState")
 	}
 	mEvents := s.customSearchState.PBEventsJSON
-	unmarshallPBEvents, err := unmarshallPBEvents(mEvents)
-	s.SearcherEventQueue.SetEvents(unmarshallPBEvents)
+	unmarshalPBEvents, err := unmarshalPBEvents(mEvents)
+	s.SearcherEventQueue.SetEvents(unmarshalPBEvents)
 	return err
 }
 
-func marshallPBEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, error) {
+func marshalPBEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, error) {
 	marshaledPBEvents := make([]json.RawMessage, 0)
 	for _, event := range pbEvents {
 		mEvent, err := protojson.Marshal(event)
