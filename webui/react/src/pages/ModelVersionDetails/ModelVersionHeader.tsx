@@ -3,7 +3,7 @@ import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import CopyButton from 'components/CopyButton';
+import CopyButton from 'shared/components/CopyButton';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
