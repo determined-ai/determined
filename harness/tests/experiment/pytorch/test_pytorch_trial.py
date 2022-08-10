@@ -617,11 +617,11 @@ class TestPyTorchTrial:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
     @pytest.mark.gpu
     @pytest.mark.parametrize(
-        "trial_class,assert_output_float16,assert_scale_changed",
+        "trial_class,assert_output_float16",
         [
-            (pytorch_onevar_model.OneVarApexAMPTrial, False, True),
-            (pytorch_onevar_model.OneVarAutoAMPTrial, False, True),
-            (pytorch_onevar_model.OneVarManualAMPTrial, True, True),
+            (pytorch_onevar_model.OneVarApexAMPTrial, False),
+            (pytorch_onevar_model.OneVarAutoAMPTrial, False),
+            (pytorch_onevar_model.OneVarManualAMPTrial, True),
         ],
         ids=[
             "apex",
@@ -633,7 +633,6 @@ class TestPyTorchTrial:
         self,
         trial_class,
         assert_output_float16,
-        assert_scale_changed,
     ) -> None:
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
@@ -641,7 +640,7 @@ class TestPyTorchTrial:
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=trial_class,
             hparams=self.hparams,
-            workloads=make_amp_workloads(trial_class, assert_output_float16, assert_scale_changed),
+            workloads=make_amp_workloads(trial_class, assert_output_float16),
             trial_seed=self.trial_seed,
             expose_gpus=True,
         )
@@ -669,7 +668,6 @@ def test_checkpoint_loading(ckpt: str, istrial: bool):
 def make_amp_workloads(
     trial_class,
     assert_output_float16=False,
-    assert_scale_changed=False,
 ) -> workload.Stream:
     trainer = utils.TrainAndValidate()
     yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=1)
@@ -685,7 +683,7 @@ def make_amp_workloads(
             # For the latter case, see the hook end_f16
             #   defined in PyTorchTrialContext.autocast_forward_pass
             assert newer["output"].dtype is np.dtype("float32")
-        if assert_scale_changed and (newer["scale"] != older["scale"]):
+        if newer["scale"] != older["scale"]:
             scale_ever_decreased = scale_ever_decreased or newer["scale"] < older["scale"]
             scale_ever_increased = scale_ever_increased or newer["scale"] > older["scale"]
             # If the scale changed, it's because an inf or NaN was encountered, so the
@@ -697,4 +695,4 @@ def make_amp_workloads(
         trial_class.check_batch_metrics(newer, idx, epsilon=1e-3)
         if idx == 0:
             trial_class.check_batch_metrics(older, idx, epsilon=1e-3)
-    assert scale_ever_decreased or scale_ever_increased or not assert_scale_changed
+    assert scale_ever_decreased or scale_ever_increased
