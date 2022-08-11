@@ -91,6 +91,7 @@ def test_run_random_searcher_exp() -> None:
         "name": "custom",
         "metric": "validation_error",
         "smaller_is_better": True,
+        "unit": "batches",
     }
     config["description"] = "custom searcher"
 
