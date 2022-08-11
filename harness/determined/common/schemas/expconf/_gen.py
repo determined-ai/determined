@@ -2663,10 +2663,6 @@ schemas = {
             "default": true
         },
         "unit": {
-            "type": [
-                "string",
-                "null"
-            ],
             "enum": [
                 "batches",
                 "records",
@@ -3097,7 +3093,8 @@ schemas = {
         "source_trial_id": true,
         "source_checkpoint_uuid": true,
         "budget": true,
-        "train_stragglers": true
+        "train_stragglers": true,
+        "unit": true
     }
 }
 
