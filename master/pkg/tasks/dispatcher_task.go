@@ -165,9 +165,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 		return nil, "", "", errList[0]
 	}
 
-	var portMappings []string = *getPortMappings(t)
-	if len(portMappings) != 0 {
-		customParams["ports"] = portMappings
+	if containerRunType == podman {
+		var portMappings []string = *getPortMappings(t)
+		if len(portMappings) != 0 {
+			customParams["ports"] = portMappings
+		}
 	}
 
 	launchParameters.SetCustom(customParams)
@@ -233,17 +235,14 @@ func (t *TaskSpec) ToDispatcherManifest(
 	return &manifest, impersonatedUser, payloadName, err
 }
 
-// getPortMappings returns all mappings specified in environment.ports.
+// getPortMappings returns all PodMan mappings specified in environment.ports.
 func getPortMappings(t *TaskSpec) *[]string {
 	var portMappings []string
 	if len(t.Environment.Ports()) > 0 {
 		for k, v := range t.Environment.Ports() {
-			// TODO: remove this when ports["trial"] = 1734 is removed from task_trial.go
-			// trial port 1734 not a config for podman. Ignore it.
-			if k == "trial" {
-				continue
+			if strings.HasPrefix(strings.ToLower(k), "podman") {
+				portMappings = append(portMappings, strconv.Itoa(v))
 			}
-			portMappings = append(portMappings, strconv.Itoa(v))
 		}
 	}
 	return &portMappings
