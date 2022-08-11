@@ -1,6 +1,6 @@
 import enum
 import logging
-from typing import Iterator, Optional, Any
+from typing import Any, Iterator, Optional
 
 import determined as det
 from determined import core
