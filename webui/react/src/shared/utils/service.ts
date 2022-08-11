@@ -114,7 +114,5 @@ export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]):
     .filter((enumValue) => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
   return enumValues.length !== 0 ? enumValues : undefined;
 };
-/* eslint-disable-next-line */
-export const noOp = (): void => {
-};
+export const noOp = (): void => undefined;
 export const identity = <T>(a: T): T => a;

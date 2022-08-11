@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import Spinner from 'shared/components/Spinner/Spinner';
 import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
+import { noOp } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 import InlineEditor from './InlineEditor';
@@ -51,7 +52,7 @@ const NotesCard: React.FC<Props> = (
   useEffect(() => {
     // TODO: This is an alternative of Prompt from react-router-dom
     // As soon as react-router-dom supports Prompt, replace this with Promt
-    const unblock = history.block((tx) => {
+    const unblock = isEditing ? history.block((tx) => {
       const pathnames = [ 'notes', 'models', 'projects' ];
       let isAllowedNavigation = true;
 
@@ -66,10 +67,10 @@ const NotesCard: React.FC<Props> = (
         tx.retry();
       }
       return isAllowedNavigation;
-    });
+    }) : noOp; // noOp is used not to show a dialog when user is not editing and refreshing page
 
     return () => unblock();
-  }, [ editedNotes, location.pathname, notes ]);
+  }, [ editedNotes, isEditing, location.pathname, notes ]);
 
   useEffect(() => {
     setIsEditing(false);
