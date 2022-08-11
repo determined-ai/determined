@@ -35,25 +35,26 @@ func Test_getPortMappings(t *testing.T) {
 		{
 			name: "Verify when ports are specified",
 			args: args{
-				ports: map[string]int{"port1": 8080, "port2": 443, "port3": 3000},
+				ports: map[string]int{"Podman_1": 8080, "podmanPortMapping2": 443, "PodMan3": 3000},
 			},
 			want: []string{
 				"8080", "443", "3000",
 			},
 		},
 		{
-			name: "Verify trial port is ignored",
+			name: "Verify trial, tensorboard, shell, notebook ports are ignored",
 			args: args{
-				ports: map[string]int{"port1": 8080, "trial": 1734, "port2": 443, "port3": 3000},
+				ports: map[string]int{"PODMAN_1": 8080, "trial": 1734, "podmanPortMapping2": 443,
+					"podman3": 3000, "shell": 3299, "notebook": 2988, "tensorboard": 2799},
 			},
 			want: []string{
 				"8080", "443", "3000",
 			},
 		},
 		{
-			name: "Verify ports are not specified except trial port",
+			name: "Verify portman ports are not specified",
 			args: args{
-				ports: map[string]int{"trial": 1734},
+				ports: map[string]int{"trial": 1734, "shell": 3450, "notPodmanPrefix": 5555},
 			},
 			want: []string{},
 		},
