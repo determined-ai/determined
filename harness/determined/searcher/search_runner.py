@@ -4,12 +4,12 @@ import os
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional
 
 from determined.common.api import bindings
-from determined.common.api.bindings import v1TrialExitedEarlyExitedReason, v1SearcherEvent
+from determined.common.api.bindings import v1SearcherEvent, v1TrialExitedEarlyExitedReason
 from determined.experimental import client
-from determined.searcher.search_method import ExitedReason, Progress, SearchMethod, SearcherState
+from determined.searcher.search_method import ExitedReason, Progress, SearchMethod
 
 EXPERIMENT_ID_FILE = "experiment_id"
 STATE_FILE = "state"
@@ -31,7 +31,9 @@ class SearchRunner:
             context_dir = os.getcwd()
         searcher_dir_path = Path(searcher_dir) if searcher_dir is not None else Path.cwd()
         if not searcher_dir_path.is_dir():
-            raise FileExistsError(f"searcher_dir={searcher_dir} already exists and is not a directory")
+            raise FileExistsError(
+                f"searcher_dir={searcher_dir} already exists and is not a directory"
+            )
         if not searcher_dir_path.exists():
             searcher_dir_path.mkdir(parents=True)
         experiment_id_file = searcher_dir_path.joinpath(EXPERIMENT_ID_FILE)
@@ -71,7 +73,11 @@ class SearchRunner:
                 events = bindings.get_GetSearcherEvents(session, experimentId=experiment_id)
                 if events.searcherEvents is None:
                     continue
-                logging.info(json.dumps([SearchRunner._searcher_event_as_dict(e) for e in events.searcherEvents]))
+                logging.info(
+                    json.dumps(
+                        [SearchRunner._searcher_event_as_dict(e) for e in events.searcherEvents]
+                    )
+                )
                 for e in events.searcherEvents:
                     if e.initialOperations:
                         logging.info("initial operations")
@@ -160,6 +166,7 @@ class SearchRunner:
                     )
 
                     # save state
+                    assert e.id is not None  # TODO change proto to make id mandatory
                     self.search_method.save_checkpoint(e.id)
                     self.search_method.searcher_state.last_event_id = e.id
                     d = self.search_method.searcher_state.to_dict()
@@ -173,7 +180,7 @@ class SearchRunner:
 
     @staticmethod
     def _searcher_event_as_dict(event: v1SearcherEvent) -> dict:
-        d = dict()
+        d = {}
         if event.trialExitedEarly:
             d["trialExitedEarly"] = event.trialExitedEarly.to_json()
         if event.validationCompleted:

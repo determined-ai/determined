@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import pytest
-from urllib3.connectionpool import MaxRetryError, HTTPConnectionPool
+from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
 
 from determined.common.api import bindings
 from determined.experimental import client
@@ -38,7 +38,7 @@ def test_run_custom_searcher_experiment() -> None:
     }
     config["name"] = "single"
     config["description"] = "custom searcher"
-    search_method = SingleSearchMethod(config, 3000)
+    search_method = SingleSearchMethod(config, 500)
     search_runner = SearchRunner(search_method)
     experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"))
 
@@ -106,12 +106,16 @@ def test_run_random_searcher_exp() -> None:
 
     max_trials = 5
     max_concurrent_trials = 2
-    max_length = 3000
+    max_length = 500
 
     with tempfile.TemporaryDirectory() as searcher_dir:
-        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, Path(searcher_dir))
+        search_method = RandomSearchMethod(
+            max_trials, max_concurrent_trials, max_length, Path(searcher_dir)
+        )
         search_runner = SearchRunner(search_method)
-        experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
+        experiment_id = search_runner.run(
+            config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
+        )
 
     assert client._determined is not None
     session = client._determined._session
@@ -131,26 +135,33 @@ def test_resume_random_searcher_exp() -> None:
         "name": "custom",
         "metric": "validation_error",
         "smaller_is_better": True,
+        "unit": "batches",
     }
     config["description"] = "custom searcher"
 
     max_trials = 5
     max_concurrent_trials = 2
-    max_length = 3000
+    max_length = 500
 
     with tempfile.TemporaryDirectory() as searcher_dir:
         logging.info(f"searcher_dir type = {type(searcher_dir)}")
         ex = MaxRetryError(
-            HTTPConnectionPool(host='dummyhost', port=8080),
+            HTTPConnectionPool(host="dummyhost", port=8080),
             "http://dummyurl",
         )
-        search_method = RandomSearchMethod(max_trials, max_concurrent_trials, max_length, Path(searcher_dir), ex)
+        search_method = RandomSearchMethod(
+            max_trials, max_concurrent_trials, max_length, Path(searcher_dir), ex
+        )
         search_runner = SearchRunner(search_method)
         try:
-            search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
+            search_runner.run(
+                config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
+            )
             pytest.fail("Expected an exception")
         except MaxRetryError:
-            experiment_id = search_runner.run(config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir)
+            experiment_id = search_runner.run(
+                config, context_dir=conf.fixtures_path("no_op"), searcher_dir=searcher_dir
+            )
 
     assert client._determined is not None
     session = client._determined._session
@@ -161,6 +172,8 @@ def test_resume_random_searcher_exp() -> None:
     assert search_method.closed_trials == 5
     assert len(search_method.searcher_state.trials_created) == search_method.created_trials
     assert len(search_method.searcher_state.trials_closed) == search_method.closed_trials
+
+    assert search_method.progress() == pytest.approx(1.0)
 
 
 class RandomSearchMethod(SearchMethod):
@@ -223,15 +236,14 @@ class RandomSearchMethod(SearchMethod):
         )
         units_expected = self.max_length * self.max_trials
         progress = units_completed / units_expected
-        logging.info(f"progress = {progress} = {units_completed} / {units_expected}, {self.searcher_state.trial_progress}")
+        logging.debug(
+            f"progress = {progress} = {units_completed} / {units_expected}, {self.searcher_state.trial_progress}"
+        )
 
         if progress >= 0.5 and self.exception is not None:
             exception = self.exception
             self.exception = None
             raise exception
-
-
-        logging.info(f"progress = {progress}")
 
         return progress
 

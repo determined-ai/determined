@@ -3,7 +3,7 @@ import json
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional, Set
 
 from determined.common.api import bindings
 from determined.common.experimental import Checkpoint
@@ -35,10 +35,10 @@ class SearcherState:
         }
 
     def from_dict(self, d: Dict[str, Any]) -> None:
-        self.failures = set(uuid.UUID(f) for f in d.get("failures", []))
-        self.trial_progress = {uuid.UUID(k): v for k, v in d.get("trialProgress", dict()).items()}
-        self.trials_closed =  set(uuid.UUID(t) for t in d.get("trialsClosed", []))
-        self.trials_created = set(uuid.UUID(t) for t in d.get("trialsCreated", []))
+        self.failures = {uuid.UUID(f) for f in d.get("failures", [])}
+        self.trial_progress = {uuid.UUID(k): v for k, v in d.get("trialProgress", {}).items()}
+        self.trials_closed = {uuid.UUID(t) for t in d.get("trialsClosed", [])}
+        self.trials_created = {uuid.UUID(t) for t in d.get("trialsCreated", [])}
         self.last_event_id = d.get("lastEventId")
         self.experiment_completed = d.get("experimentCompleted", False)
 
