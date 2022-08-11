@@ -2,4 +2,4 @@
 
 **New Features**
 
--  Example: DeepSpeed ZeRO Stage 3 with CPU offloading.
+-  Example: Train models that do not fit into GPU memory using DeepSpeed ZeRO Stage 3 with CPU offloading.
