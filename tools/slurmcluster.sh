@@ -128,14 +128,14 @@ elif [ $CLUSTER != "casablanca" -a $CLUSTER != "horizon"  -a $CLUSTER != "shuco"
     exit 1
 fi
 
-# Configuration for casablanca
-OPT_name_casablanca=casablanca.us.cray.com
+# Configuration for casablanca (really casablanca-mgmt1)
+OPT_name_casablanca=casablanca-mgmt1.us.cray.com
 OPT_LAUNCHERHOST_casablanca=localhost
 OPT_LAUNCHERPORT_casablanca=8181
 OPT_LAUNCHERPROTOCOL_casablanca=http
-OPT_CHECKPOINTPATH_casablanca=/lus/scratch/foundation_engineering/determined-cp
+OPT_CHECKPOINTPATH_casablanca=/mnt/lustre/foundation_engineering/determined-cp
 OPT_DEBUGLEVEL_casablanca=debug
-OPT_MASTERHOST_casablanca=casablanca
+OPT_MASTERHOST_casablanca=casablanca-mgmt1.us.cray.com
 OPT_MASTERPORT_casablanca=$USERPORT
 OPT_TRESSUPPORTED_casablanca=true
 OPT_PROTOCOL_casablanca=http
@@ -157,7 +157,7 @@ OPT_name_casablanca_login=casablanca-login.us.cray.com
 OPT_LAUNCHERHOST_casablanca_login=localhost
 OPT_LAUNCHERPORT_casablanca_login=8443
 OPT_LAUNCHERPROTOCOL_casablanca_login=https
-OPT_CHECKPOINTPATH_casablanca_login=/lus/scratch/foundation_engineering/determined-cp
+OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determined-cp
 OPT_DEBUGLEVEL_casablanca_login=debug
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
