@@ -47,7 +47,17 @@ plugins: # https://docs.codeclimate.com/docs/list-of-engines
   shellcheck:
     enabled: true
 exclude_patterns:
-- "examples/"
-- "proto/src/google"
-- "proto/src/protoc-gen-swagger"
-- "proto/src/protoc-gen-swagger"
+  - examples/
+  - proto/src/google
+  - proto/src/protoc-gen-swagger
+  - proto/src/protoc-gen-swagger
+  - dist/
+  - features/
+  - **/node_modules/
+  - script/
+  - **/spec/
+  - **/test/
+  - **/tests/
+  - **/vendor/
+  - **/*_test.go
+  - **/*.d.ts
