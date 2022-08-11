@@ -272,12 +272,6 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		// value from the cache. This call will ensure there is an initial value in the cache at
 		// the start of the resource manager.
 		m.fetchHpcResourceDetails(ctx)
-		// If the value are not populated in the m.resourceDetails.lastSample variable then we
-		// failed to retrieve the resource pool details of the underlying system. In that case,
-		// we return an error.
-		if m.resourceDetails.lastSample.Partitions == nil || m.resourceDetails.lastSample.Nodes == nil {
-			return errors.New("unable to fetch resource pool details")
-		}
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case
