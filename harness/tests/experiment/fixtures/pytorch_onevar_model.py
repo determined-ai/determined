@@ -39,7 +39,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import torch
 import yaml
-from torch.cuda.amp import GradScaler, autocast
+
+import torch.cuda.amp
 
 from determined import experimental, pytorch
 from determined.pytorch import samplers
@@ -268,16 +269,13 @@ class OneVarAutoAMPTrial(OneVarTrial):
 
 class OneVarManualAMPTrial(OneVarTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
-        self.scaler = context.wrap_scaler(GradScaler())
+        self.scaler = context.wrap_scaler(torch.cuda.amp.GradScaler())
         super().__init__(context)
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         data, label = batch
-
-        self.cls_reducer.update(sum(label), batch_idx)
-        self.fn_reducer.update((sum(label), batch_idx))
 
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
@@ -286,7 +284,7 @@ class OneVarManualAMPTrial(OneVarTrial):
         loss_exp = (label[0] - data[0] * w_before) ** 2
         w_exp = w_before + 2 * self.lr * data[0] * (label[0] - (data[0] * w_before))
 
-        with autocast():
+        with torch.cuda.amp.autocast():
             output = self.model(data)
             loss = self.loss_fn(output, label)
 
@@ -312,11 +310,7 @@ class OneVarManualAMPTrial(OneVarTrial):
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
-
-        self.cls_reducer.update(sum(label), None)
-        self.fn_reducer.update((sum(label), None))
-
-        with autocast():
+        with torch.cuda.amp.autocast():
             output = self.model(data)
             loss = self.loss_fn(output, label)
         return {"val_loss": loss}
