@@ -75,10 +75,12 @@ class TestPyTorchTrial:
 
             # Check the gradient update at every step.
             for idx, batch_metrics in enumerate(training_metrics):
-                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
 
-            # We expect the validation error and training loss to be
-            # monotonically decreasing.
             for older, newer in zip(training_metrics, training_metrics[1:]):
                 assert newer["loss"] <= older["loss"]
 
@@ -595,7 +597,11 @@ class TestPyTorchTrial:
 
             # Check the gradient update at every step.
             for idx, batch_metrics in enumerate(training_metrics):
-                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    batch_metrics,
+                    idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
 
             # We expect the validation error and training loss to be
             # monotonically decreasing.

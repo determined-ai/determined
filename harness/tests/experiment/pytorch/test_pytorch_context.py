@@ -21,7 +21,11 @@ class TestPyTorchContext:
             for batch_idx, batch in enumerate(train_ds):
                 metrics = trial.train_batch(batch, epoch_idx, batch_idx)
                 # Verify the training is correct.
-                pytorch_onevar_model.OneVarTrial.check_batch_metrics(metrics, batch_idx)
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(
+                    metrics,
+                    batch_idx,
+                    metric_keyname_pairs=(("loss", "loss_exp"), ("w_after", "w_exp")),
+                )
 
         eval_ds = trial.build_validation_data_loader()
         for batch in eval_ds:

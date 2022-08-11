@@ -40,8 +40,6 @@ import numpy as np
 import torch
 import yaml
 
-import torch.cuda.amp
-
 from determined import experimental, pytorch
 from determined.pytorch import samplers
 
@@ -163,22 +161,19 @@ class OneVarTrial(pytorch.PyTorchTrial):
     def check_batch_metrics(
         metrics: Dict[str, Any],
         batch_idx: int,
-        metric_keyname_pairs: Iterable[Tuple[str, str]] = (
-            ("loss", "loss_exp"),
-            ("w_after", "w_exp"),
-        ),
-        **kwargs,
+        metric_keyname_pairs: Iterable[Tuple[str, str]],
+        atol=1e-6,
     ) -> None:
-        """A check to be applied to the output of every train_batch in a test."""
+        """Check that given metrics are equal or close enough to each other."""
         for k_a, k_b in metric_keyname_pairs:
             m_a, m_b = metrics[k_a], metrics[k_b]
             try:
                 assert torch.isclose(
-                    m_a, m_b, **kwargs
+                    m_a, m_b, atol=atol
                 ), f"Metrics {k_a}={m_a} and {k_b}={m_b} do not match at batch {batch_idx}"
             except TypeError:
                 assert np.allclose(
-                    m_a, m_b, **kwargs
+                    m_a, m_b, atol=atol
                 ), f"Metrics {k_a}={m_a} and {k_b}={m_b} do not match at batch {batch_idx}"
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
