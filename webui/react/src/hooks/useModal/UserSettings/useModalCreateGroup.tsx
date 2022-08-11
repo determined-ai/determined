@@ -64,7 +64,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
             required: true,
           },
         ]}
-        validateTrigger={[ 'onSubmit' ]}>
+        validateTrigger={[ 'onSubmit', 'onChange' ]}>
         <Input autoFocus maxLength={128} placeholder="Group Name" />
       </Form.Item>
       {group ? (
@@ -117,7 +117,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
     form.resetFields();
   }, [ form ]);
 
-  const handleOkay = useCallback(async () => {
+  const onOk = useCallback(async () => {
     await form.validateFields();
 
     try {
@@ -132,7 +132,7 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       form.resetFields();
       onClose?.();
     } catch (e) {
-      message.error('error creating new group');
+      message.error('Error creating new group.');
       handleError(e, { silent: true, type: ErrorType.Input });
 
       // Re-throw error to prevent modal from getting dismissed.
@@ -147,10 +147,10 @@ const useModalCreateGroup = ({ onClose, users, group }: ModalProps): ModalHooks 
       icon: null,
       okText: group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE,
       onCancel: handleCancel,
-      onOk: handleOkay,
+      onOk: onOk,
       title: <h5>{group ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
     });
-  }, [ form, handleCancel, handleOkay, openOrUpdate, users, group ]);
+  }, [ form, handleCancel, onOk, openOrUpdate, users, group ]);
 
   return { modalOpen, ...modalHook };
 };

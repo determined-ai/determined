@@ -63,7 +63,7 @@ describe('useModalCreateGroup', () => {
     await setup();
 
     expect(screen.getByText(
-      'Are you sure you want to delete group test_groupname1 (ID: 1).',
+      `Are you sure you want to delete group ${GROUPNAME} (ID: 1).`,
     )).toBeInTheDocument();
   });
 

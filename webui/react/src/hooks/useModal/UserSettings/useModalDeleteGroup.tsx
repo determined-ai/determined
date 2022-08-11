@@ -18,7 +18,7 @@ interface ModalProps {
 const useModalDeleteGroup = ({ onClose, group }: ModalProps): ModalHooks => {
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
-  const handleOkay = useCallback(async () => {
+  const onOk = useCallback(async () => {
     if (!group.group.groupId) return;
     try {
       await deleteGroup({ groupId: group.group.groupId });
@@ -37,14 +37,14 @@ const useModalDeleteGroup = ({ onClose, group }: ModalProps): ModalHooks => {
     openOrUpdate({
       closable: true,
       content:
-      `Are you sure you want to delete group ${group.group.name} (ID: ${group.group.groupId}).`,
+      `Are you sure you want to delete group ${group.group?.name} (ID: ${group.group?.groupId}).`,
       icon: null,
       okButtonProps: { danger: true },
       okText: 'Delete',
-      onOk: handleOkay,
+      onOk: onOk,
       title: <h5>{MODAL_HEADER}</h5>,
     });
-  }, [ handleOkay, openOrUpdate, group ]);
+  }, [ onOk, openOrUpdate, group ]);
 
   return { modalOpen, ...modalHook };
 };
