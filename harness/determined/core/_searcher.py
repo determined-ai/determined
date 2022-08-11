@@ -1,6 +1,6 @@
 import enum
 import logging
-from typing import Iterator, Optional
+from typing import Any, Iterator, Optional
 
 import determined as det
 from determined import core
@@ -17,10 +17,17 @@ class Unit(enum.Enum):
 
 def _parse_searcher_units(experiment_config: dict) -> Optional[Unit]:
     searcher = experiment_config.get("searcher", {})
+
+    def convert_key(key: Any) -> Optional[Unit]:
+        return {"records": Unit.RECORDS, "epochs": Unit.EPOCHS, "batches": Unit.BATCHES}.get(key)
+
+    if "unit" in searcher:
+        return convert_key(searcher["unit"])
+
     length_example = searcher.get("max_length")
     if isinstance(length_example, dict) and len(length_example) == 1:
         key = next(iter(length_example.keys()))
-        return {"records": Unit.RECORDS, "epochs": Unit.EPOCHS, "batches": Unit.BATCHES}.get(key)
+        return convert_key(key)
     # Either a `max_length: 50` situation or a broken config.
     return None
 

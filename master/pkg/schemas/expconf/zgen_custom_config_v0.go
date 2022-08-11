@@ -8,6 +8,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
+func (c CustomConfigV0) Unit() *Unit {
+	return c.RawUnit
+}
+
+func (c *CustomConfigV0) SetUnit(val *Unit) {
+	c.RawUnit = val
+}
+
 func (c CustomConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedCustomConfigV0()
 }
