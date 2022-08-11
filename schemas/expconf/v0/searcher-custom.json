@@ -27,6 +27,15 @@
                 "null"
             ],
             "default": true
+        },
+        "unit": {
+            "enum": [
+                "batches",
+                "records",
+                "epochs",
+                null
+            ],
+            "default": null
         }
     }
 }
