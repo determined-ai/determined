@@ -10,6 +10,29 @@
  Version 0.19
 **************
 
+Version 0.19.1
+==============
+
+**Release Date:** August 11, 2022
+
+**Fixes**
+
+-  Fix the Python SDK with Determined 0.19.0. An important endpoint broke in the 0.19.0 release,
+   causing several Python SDK methods to break. Additional tests have been added to prevent similar
+   breakages in the future.
+
+**Improvements**
+
+-  API: new ``on_training_workload_end`` and ``on_checkpoint_upload_end`` ``PyTorchCallback``
+   methods available for use with ``PyTorchTrial`` and ``DeepSpeedTrial``.
+-  API: ``PyTorchTrial`` and ``DeepSpeedTrial`` callback ```on_checkpoint_end`` deprecated in favor
+   of ``on_checkpoint_write_end``, re-named for clarity.
+
+**New Features**
+
+-  Web: Add a button to start a hyperparameter search experiment based on an experiment or trial.
+   The button brings up a form allowing users to change searcher settings and hyperparameter ranges.
+
 Version 0.19.0
 ==============
 
