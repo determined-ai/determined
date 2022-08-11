@@ -78,10 +78,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       ]);
 
       // Process jobs response.
-      setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
-      const firstJob = jobs.jobs
-        .sort((a, b) => numericSorter(a.summary.jobsAhead, b.summary.jobsAhead))[0];
+      const firstJob = jobs.jobs.find((j) => j.summary.jobsAhead === 0);
       if (!isEqual(firstJob, topJob)) setTopJob(firstJob);
+      setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
