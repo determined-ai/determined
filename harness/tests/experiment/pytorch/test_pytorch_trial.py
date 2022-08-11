@@ -640,6 +640,12 @@ class TestPyTorchTrial:
         trial_class,
         assert_output_float16,
     ) -> None:
+        """Train a linear model using Determined with Automated Mixed Precision in three ways:
+        Using Apex and using PyTorch AMP both "automatically" and "manually". In the "manual" case,
+        we use the context manager ``autoscale`` in the model's training and
+        evaluating methods; a scaler object is wrapped in a Determined context. The same
+        is done under the hood in the first two cases.
+        """
         if trial_class is pytorch_onevar_model.OneVarApexAMPTrial and not HAVE_APEX:
             pytest.skip("Apex not available")
 
