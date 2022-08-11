@@ -237,7 +237,8 @@ class RandomSearchMethod(SearchMethod):
         units_expected = self.max_length * self.max_trials
         progress = units_completed / units_expected
         logging.debug(
-            f"progress = {progress} = {units_completed} / {units_expected}, {self.searcher_state.trial_progress}"
+            f"progress = {progress} = {units_completed} / {units_expected},"
+            f" {self.searcher_state.trial_progress}"
         )
 
         if progress >= 0.5 and self.exception is not None:
