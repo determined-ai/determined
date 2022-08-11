@@ -77,9 +77,18 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         getJobQStats({}, { signal: canceler.signal }),
       ]);
 
+      const firstJobResp = await getJobQ(
+        {
+          limit: 1,
+          offset: 0,
+          resourcePool: selectedRp.name,
+        },
+        { signal: canceler.signal },
+      );
+      const firstJob = firstJobResp.jobs[0];
+
       // Process jobs response.
-      const firstJob = jobs.jobs.find((j) => j.summary.jobsAhead === 0);
-      if (!isEqual(firstJob, topJob)) setTopJob(firstJob);
+      if (firstJob && !isEqual(firstJob, topJob)) setTopJob(firstJob);
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
