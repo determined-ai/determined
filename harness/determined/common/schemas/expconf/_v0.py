@@ -485,6 +485,13 @@ class AdaptiveMode(enum.Enum):
     AGGRESSIVE = "aggressive"
 
 
+@schemas.register_known_type
+class Unit(enum.Enum):
+    BATCHES = "batches"
+    EPOCHS = "epochs"
+    RECORDS = "records"
+
+
 class SearcherConfigV0(schemas.UnionBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher.json"
     _union_key = "name"
@@ -516,12 +523,14 @@ class CustomConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
     metric: str
     smaller_is_better: Optional[bool] = None
+    unit: Optional[Unit] = None
 
     @schemas.auto_init
     def __init__(
         self,
         metric: str,
         smaller_is_better: Optional[bool] = None,
+        unit: Optional[Unit] = None,
     ) -> None:
         pass
 
