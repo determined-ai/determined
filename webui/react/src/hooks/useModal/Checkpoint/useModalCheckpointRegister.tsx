@@ -30,6 +30,7 @@ interface ModalState {
   checkpointUuid?: string;
   expandDetails: boolean;
   metadata: Metadata;
+  models: ModelItem[];
   selectedModelName?: string;
   tags: string[];
   versionDescription: string;
@@ -44,6 +45,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 const INITIAL_MODAL_STATE = {
   expandDetails: false,
   metadata: {},
+  models: [],
   tags: [],
   versionDescription: '',
   versionName: '',
@@ -51,7 +53,6 @@ const INITIAL_MODAL_STATE = {
 };
 
 const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
-  const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ canceler ] = useState(new AbortController());
   const [ modalState, setModalState ] = useState<ModalState>(INITIAL_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
@@ -66,12 +67,13 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   );
 
   const selectedModelNumVersions = useMemo(() => {
-    return models.find((model) => model.name === modalState.selectedModelName)?.numVersions ?? 0;
-  }, [ models, modalState.selectedModelName ]);
+    return modalState.models
+      .find((model) => model.name === modalState.selectedModelName)?.numVersions ?? 0;
+  }, [ modalState.models, modalState.selectedModelName ]);
 
   const modelOptions = useMemo(() => {
-    return models.map((model) => ({ id: model.id, name: model.name }));
-  }, [ models ]);
+    return modalState.models.map((model) => ({ id: model.id, name: model.name }));
+  }, [ modalState.models ]);
 
   const registerModelVersion = useCallback(async (state: ModalState) => {
     const {
@@ -150,6 +152,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   }, [ modalClose, onClose ]);
 
   const fetchModels = useCallback(async () => {
+    if (!modalState.visible) return;
     try {
       const response = await getModels({
         archived: false,
@@ -159,9 +162,9 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           V1GetModelsRequestSortBy.LASTUPDATEDTIME,
         ),
       }, { signal: canceler.signal });
-      setModels((prev) => {
-        if (isEqual(prev, response.models)) return prev;
-        return response.models;
+      setModalState((prev) => {
+        if (isEqual(prev.models, response.models)) return prev;
+        return { ...prev, models: response.models };
       });
     } catch (e) {
       handleError(e, {
@@ -170,7 +173,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
         type: ErrorType.Api,
       });
     }
-  }, [ canceler.signal ]);
+  }, [ canceler.signal, modalState.visible ]);
 
   const modalOpen = useCallback(({ checkpointUuid, selectedModelName }: ModalOpenProps) => {
     fetchModels();
