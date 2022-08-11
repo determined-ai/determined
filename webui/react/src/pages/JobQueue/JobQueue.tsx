@@ -96,12 +96,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } finally {
       setPageState((cur) => ({ ...cur, isLoading: false }));
     }
-  }, [ settings.sortDesc,
-    settings.tableLimit,
-    settings.tableOffset,
-    selectedRp.name,
-    jobState,
-    canceler.signal ]);
+  }, [ canceler.signal, selectedRp.name, settings, jobState, topJob ]);
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 

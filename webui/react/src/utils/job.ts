@@ -95,12 +95,6 @@ export const moveJobToPositionUpdate = (
   }
 };
 
-/**
- *
- * @param jobs The list of all jobs.
- * @param jobId the job id of the job to move.
- * @param position The position of the job in the queue. Starting from 1.
- */
 export const moveJobToTop = async (
   curTopJob: Job,
   targetJob: Job,
