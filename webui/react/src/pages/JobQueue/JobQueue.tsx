@@ -99,6 +99,11 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
+  const rpTotalJobCount = useCallback((rpName: string) => {
+    const stats = rpStats.find((rp) => rp.resourcePool === rpName)?.stats;
+    return stats ? stats.queuedCount + stats.scheduledCount : 0;
+  }, [ rpStats ]);
+
   const dropDownOnTrigger = useCallback((job: Job) => {
     const triggers: Triggers<JobAction> = {};
     const commandType = jobTypeToCommandType(job.type);
@@ -317,7 +322,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         <ManageJob
           initialPool={selectedRp.name}
           job={managingJob}
-          jobs={jobs}
+          jobCount={rpTotalJobCount(selectedRp.name)}
           rpStats={rpStats}
           schedulerType={selectedRp.schedulerType}
           onFinish={onModalClose}
