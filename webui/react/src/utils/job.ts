@@ -101,14 +101,19 @@ export const moveJobToPositionUpdate = (
  * @param jobId the job id of the job to move.
  * @param position The position of the job in the queue. Starting from 1.
  */
-export const moveJobToPosition = async (
-  jobs: Job[],
-  jobId: string,
-  position: number,
+export const moveJobToTop = async (
+  curTopJob: Job,
+  targetJob: Job,
 ): Promise<void> => {
+  if (curTopJob.jobId === targetJob.jobId || targetJob.summary.jobsAhead === 1) {
+    return; // no op
+  }
   try {
-    const update = moveJobToPositionUpdate(jobs, jobId, position);
-    if (update) await updateJobQueue({ updates: [ update ] });
+    const update = {
+      aheadOf: curTopJob.jobId,
+      jobId: targetJob.jobId,
+    };
+    await updateJobQueue({ updates: [ update ] });
   } catch (e) {
     handleError(e);
   }

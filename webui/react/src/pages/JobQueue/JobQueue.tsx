@@ -23,7 +23,7 @@ import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
-import { canManageJob, jobTypeToCommandType, moveJobToPosition,
+import { canManageJob, jobTypeToCommandType, moveJobToTop,
   orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 
 import css from './JobQueue.module.scss';
@@ -46,6 +46,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     } as RPStats)),
   );
   const [ jobs, setJobs ] = useState<Job[]>([]);
+  const [ topJob, setTopJob ] = useState<Job>();
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const [ pageState, setPageState ] = useState<{isLoading: boolean}>({ isLoading: true });
@@ -78,6 +79,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
 
       // Process jobs response.
       setJobs(jobState ? jobs.jobs.filter((j) => j.summary.state === jobState) : jobs.jobs);
+      const firstJob = jobs.jobs
+        .sort((a, b) => numericSorter(a.summary.jobsAhead, b.summary.jobsAhead))[0];
+      if (!isEqual(firstJob, topJob)) setTopJob(firstJob);
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
@@ -114,10 +118,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     }
 
-    if (selectedRp && isJobOrderAvailable &&
+    if (selectedRp && isJobOrderAvailable && !!topJob &&
         job.summary.jobsAhead > 0 && canManageJob(job, selectedRp) &&
         !unsupportedQPosSchedulers.has(selectedRp.schedulerType)) {
-      triggers[JobAction.MoveToTop] = () => moveJobToPosition(jobs, job.jobId, 1);
+      triggers[JobAction.MoveToTop] = () => moveJobToTop(topJob, job);
     }
 
     // if job is an experiment type add action to kill it
@@ -144,7 +148,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       };
     });
     return triggers;
-  }, [ selectedRp, isJobOrderAvailable, jobs, fetchAll ]);
+  }, [ selectedRp, isJobOrderAvailable, topJob, fetchAll ]);
 
   const onModalClose = useCallback(() => {
     setManagingJob(undefined);
