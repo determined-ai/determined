@@ -1,5 +1,3 @@
-import history from 'shared/routes/history';
-
 import * as utils from './SamlAuth';
 
 describe('SamlAuth', () => {
@@ -53,12 +51,6 @@ describe('SamlAuth', () => {
 
     it('should decode and flatten relayState query param', () => {
       expect(utils.handleRelayState(QUERIES_INPUT)).toStrictEqual(QUERIES_OUTPUT);
-    });
-
-    it('should add to history', () => {
-      const historyLength = history.length;
-      utils.handleRelayState(QUERIES_INPUT);
-      expect(history).toHaveLength(historyLength + 1);
     });
   });
 });
