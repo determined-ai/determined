@@ -39,17 +39,12 @@ const Router: React.FC<Props> = (props: Props) => {
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <Route element={element} key={route.id} {...route} />;
+          if (!auth.checked) return <Route {...route} element={element} key={route.id} />;
           return (
             <Route
-              element={(
-                <Navigate
-                  state={filterOutLoginLocation(location)}
-                  to={paths.login()}
-                />
-              )}
-              key={route.id}
               {...route}
+              element={(<Navigate state={filterOutLoginLocation(location)} to={paths.login()} />)}
+              key={route.id}
             />
           );
         } else if (route.redirect) {
@@ -72,7 +67,7 @@ const Router: React.FC<Props> = (props: Props) => {
             );
           }
         }
-        return <Route element={element} key={route.id} {...route} />;
+        return <Route {...route} element={element} key={route.id} path={route.path} />;
       })}
     </Routes>
   );
