@@ -256,8 +256,8 @@ def test_run_asha_batches_exp() -> None:
     assert search_method.completed_trials == 5
     assert len(search_method.searcher_state.trials_closed) == len(search_method.closed_trials)
 
-    response = bindings.get_GetExperimentTrials(session, experimentId=experiment_id)
-    for trial in response.trials:
+    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id)
+    for trial in response_trials.trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
         # number of batch for rung[0] = 750
         assert trial.totalBatchesProcessed >= 750
