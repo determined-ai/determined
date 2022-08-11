@@ -4,7 +4,7 @@ import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
-import { updateJobQueue } from 'services/api';
+import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
@@ -18,6 +18,7 @@ const { Option } = Select;
 interface Props {
   initialPool: string;
   job: Job;
+  /** full list of all the jobs in the resource pool */
   jobs: Job[];
   onFinish?: () => void;
   rpStats: RPStats[];
@@ -38,11 +39,11 @@ interface FormValues {
   weight?: string;
 }
 
-const formValuesToUpdate = (
+const formValuesToUpdate = async (
   values: FormValues,
   job: Job,
   jobs: Job[],
-): api.V1QueueControl | undefined => {
+): Promise<api.V1QueueControl | undefined> => {
   const { position, resourcePool } = {
     position: parseInt(values.position, 10),
     resourcePool: values.resourcePool,
@@ -53,7 +54,8 @@ const formValuesToUpdate = (
     return { ...update, resourcePool };
   }
   if (position !== job.summary.jobsAhead + 1) {
-    return moveJobToPositionUpdate(jobs, job.jobId, position);
+    const allJobs = await getJobQ({ resourcePool }, {});
+    return moveJobToPositionUpdate(allJobs.jobs, job.jobId, position);
   }
   if (values.priority !== undefined) {
     const priority = parseInt(values.priority, 10);
@@ -156,7 +158,7 @@ const ManageJob: React.FC<Props> = (
     async () => {
       try {
         const update = formRef.current &&
-          formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
+          await formValuesToUpdate(formRef.current.getFieldsValue(), job, jobs);
         if (update) await updateJobQueue({ updates: [ update ] });
       } catch (e) {
         handleError(e, {
