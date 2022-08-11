@@ -1,5 +1,5 @@
 ---
-name: publish-helm-chart
+name: "publish helm chart"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
@@ -15,6 +15,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   publish:
+    name: publish
     if: github.repository == "determined-ai/determined"
     runs-on: ubuntu-latest
     permissions:
