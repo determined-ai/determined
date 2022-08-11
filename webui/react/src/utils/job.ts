@@ -41,6 +41,66 @@ export const orderedSchedulers = new Set(
   [ Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES ],
 );
 
+/**
+ * Create the update request based on a given position for a job.
+ * @param jobs The list of all jobs.
+ * @param job The job id of the job to update
+ * @param position The position of the job in the queue. Starting from 1.
+ * @throws {DetError}
+ */
+export const moveJobToPositionUpdate = (
+  jobs: Job[],
+  jobId: string,
+  position: number,
+): Api.V1QueueControl | undefined => {
+  const errOpts: DetErrorOptions = {
+    isUserTriggered: true,
+    publicMessage: `Failed to move job to position ${position}.`,
+    publicSubject: 'Moving job failed.',
+    silent: false,
+  };
+  if (position < 1 || position % 1 !== 0) {
+    throw new DetError(
+      `Invalid queue position: ${position}.`,
+      { ...errOpts, type: ErrorType.Input },
+    );
+  }
+  const anchorJob = jobs.find((job) => job.summary.jobsAhead === position - 1);
+  const job = jobs.find((job) => job.jobId === jobId);
+
+  if (!anchorJob || !job) {
+    // job view is out of sync.
+    throw new DetError('Job view is out of sync.', {
+      ...errOpts,
+      publicMessage: 'Please retry.',
+      type: ErrorType.Ui,
+    });
+  }
+
+  if (anchorJob.jobId === jobId || job.summary.jobsAhead === position - 1) {
+    return; // no op
+  }
+
+  const isMovingAhead = job.summary.jobsAhead >= position;
+  if (isMovingAhead) {
+    return {
+      aheadOf: anchorJob.jobId,
+      jobId,
+    };
+  } else {
+    return {
+      behindOf: anchorJob.jobId,
+      jobId,
+    };
+  }
+};
+
+/**
+ *
+ * @param jobs The list of all jobs.
+ * @param jobId the job id of the job to move.
+ * @param position The position of the job in the queue. Starting from 1.
+ */
 export const moveJobToTop = async (
   curTopJob: Job,
   targetJob: Job,
