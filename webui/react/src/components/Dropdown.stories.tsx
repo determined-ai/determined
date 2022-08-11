@@ -10,11 +10,11 @@ export default {
 };
 
 const content = (
-  <Menu>
-    {new Array(7).fill(null).map((_, index) => (
-      <Menu.Item key={index}>Menu Item {index}</Menu.Item>
+  <Menu items={
+    new Array(7).fill(null).map((_, index) => (
+      { key: index, label: `Menu Item ${index}` }
     ))}
-  </Menu>
+  />
 );
 
 export const Default = (): React.ReactNode => (

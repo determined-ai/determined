@@ -1,5 +1,6 @@
 import { CheckOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Menu, Modal } from 'antd';
+import type { MenuProps } from 'antd';
 import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -119,16 +120,12 @@ const PaginatedNotesCard: React.FC<Props> = (
   }, [ currentPage, notes ]);
 
   const ActionMenu = useCallback((pageNumber: number) => {
-    return (
-      <Menu onClick={({ domEvent }) => domEvent.stopPropagation()}>
-        <Menu.Item
-          danger
-          key="delete"
-          onClick={() => handleDeletePage(pageNumber)}>
-          Delete...
-        </Menu.Item>
-      </Menu>
-    );
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      e.domEvent.stopPropagation();
+      handleDeletePage(pageNumber);
+    };
+    const menuItems: MenuProps['items'] = [ { danger: true, key: 'delete', label: 'Delete...' } ];
+    return <Menu items={menuItems} onClick={onItemClick} />;
   }, [ handleDeletePage ]);
 
   if (notes.length === 0) {

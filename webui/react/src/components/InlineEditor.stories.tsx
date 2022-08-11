@@ -30,7 +30,6 @@ export const Default = (): React.ReactNode => {
   return (
     <InlineEditor
       allowNewline={boolean('allow newline (use <shift> + <enter>)', false)}
-      isOnDark={boolean('is on dark', false)}
       maxLength={number('max length', 100)}
       placeholder={text('placeholder', 'placeholder text')}
       value={value}
@@ -42,15 +41,3 @@ export const Default = (): React.ReactNode => {
 export const LargeText = (): React.ReactNode => (
   <InlineEditor value={loremIpsum} />
 );
-
-export const IsOnDark = (): React.ReactNode => (
-  <InlineEditor isOnDark value="Hello Darkness" />
-);
-IsOnDark.parameters = {
-  backgrounds: {
-    default: 'dark background',
-    values: [
-      { name: 'dark background', value: '#111' },
-    ],
-  },
-};

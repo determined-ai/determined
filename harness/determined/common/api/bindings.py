@@ -108,6 +108,12 @@ class GetHPImportanceResponseMetricHPImportance:
             "inProgress": self.inProgress if self.inProgress is not None else None,
         }
 
+class GetTrialWorkloadsRequestFilterOption(enum.Enum):
+    FILTER_OPTION_UNSPECIFIED = "FILTER_OPTION_UNSPECIFIED"
+    FILTER_OPTION_CHECKPOINT = "FILTER_OPTION_CHECKPOINT"
+    FILTER_OPTION_VALIDATION = "FILTER_OPTION_VALIDATION"
+    FILTER_OPTION_CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
+
 class TrialEarlyExitExitedReason(enum.Enum):
     EXITED_REASON_UNSPECIFIED = "EXITED_REASON_UNSPECIFIED"
     EXITED_REASON_INVALID_HP = "EXITED_REASON_INVALID_HP"
@@ -290,6 +296,7 @@ class trialv1Trial:
         totalCheckpointSize: "typing.Optional[str]" = None,
         wallClockTime: "typing.Optional[float]" = None,
         warmStartCheckpointUuid: "typing.Optional[str]" = None,
+        workloadCount: "typing.Optional[int]" = None,
     ):
         self.id = id
         self.experimentId = experimentId
@@ -308,6 +315,7 @@ class trialv1Trial:
         self.warmStartCheckpointUuid = warmStartCheckpointUuid
         self.taskId = taskId
         self.totalCheckpointSize = totalCheckpointSize
+        self.workloadCount = workloadCount
 
     @classmethod
     def from_json(cls, obj: Json) -> "trialv1Trial":
@@ -329,6 +337,7 @@ class trialv1Trial:
             warmStartCheckpointUuid=obj.get("warmStartCheckpointUuid", None),
             taskId=obj.get("taskId", None),
             totalCheckpointSize=obj.get("totalCheckpointSize", None),
+            workloadCount=obj.get("workloadCount", None),
         )
 
     def to_json(self) -> typing.Any:
@@ -350,6 +359,7 @@ class trialv1Trial:
             "warmStartCheckpointUuid": self.warmStartCheckpointUuid if self.warmStartCheckpointUuid is not None else None,
             "taskId": self.taskId if self.taskId is not None else None,
             "totalCheckpointSize": self.totalCheckpointSize if self.totalCheckpointSize is not None else None,
+            "workloadCount": self.workloadCount if self.workloadCount is not None else None,
         }
 
 class v1AckAllocationPreemptionSignalRequest:
@@ -2502,22 +2512,18 @@ class v1GetTrialResponse:
     def __init__(
         self,
         trial: "trialv1Trial",
-        workloads: "typing.Sequence[v1WorkloadContainer]",
     ):
         self.trial = trial
-        self.workloads = workloads
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialResponse":
         return cls(
             trial=trialv1Trial.from_json(obj["trial"]),
-            workloads=[v1WorkloadContainer.from_json(x) for x in obj["workloads"]],
         )
 
     def to_json(self) -> typing.Any:
         return {
             "trial": self.trial.to_json(),
-            "workloads": [x.to_json() for x in self.workloads],
         }
 
 class v1GetTrialWorkloadsResponse:
@@ -7706,14 +7712,18 @@ def get_GetTrialWorkloads(
     session: "client.Session",
     *,
     trialId: int,
+    filter: "typing.Optional[GetTrialWorkloadsRequestFilterOption]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortKey: "typing.Optional[str]" = None,
 ) -> "v1GetTrialWorkloadsResponse":
     _params = {
+        "filter": filter.value if filter is not None else None,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
+        "sortKey": sortKey,
     }
     _resp = session._do_request(
         method="GET",

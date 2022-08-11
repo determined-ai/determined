@@ -8,9 +8,9 @@ export const samlUrl = (basePath: string, queries?: string): string => {
   return `${basePath}?relayState=${encodeURIComponent(queries)}`;
 };
 
-type WithRelayState<T> = T & {relayState?: string}
+type WithRelayState<T> = T & { relayState?: string }
 
-// decode relayState into expected query params T
+// Decode relayState into expected query params T.
 export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
   if (!queries.relayState) return clone(queries);
 

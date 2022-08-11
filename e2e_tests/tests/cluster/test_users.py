@@ -461,7 +461,7 @@ def test_login_as_non_active_user(clean_auth: None) -> None:
 @pytest.mark.e2e_cpu
 def test_non_admin_user_link_with_agent_user(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
-    unauth_error = r".*Forbidden\(user not authorized\)"
+    unauth_error = r".*Forbidden.*"
 
     with logged_in_user(creds):
         child = det_spawn(

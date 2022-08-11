@@ -391,11 +391,21 @@ export const mapV1GetExperimentDetailsResponse = (
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
 ): types.ExperimentItem => {
+  const ioConfig = ioTypes
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, data.config);
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    ioConfig.hyperparameters,
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: data.config,
     description: data.description,
     endTime: data.endTime as unknown as string,
     forkedFrom: data.forkedFrom,
+    hyperparameters,
     id: data.id,
     jobId: data.jobId,
     labels: data.labels || [],
@@ -543,26 +553,31 @@ export const decodeTrialSummary = (
   };
 };
 
+export const decodeTrialWorkloads = (
+  data: Sdk.V1GetTrialWorkloadsResponse,
+): types.TrialWorkloads => {
+  const workloads = data.workloads.map((ww) => ({
+    checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
+    training: ww.training && decodeMetricsWorkload(ww.training),
+    validation: ww.validation && decodeMetricsWorkload(ww.validation),
+  }));
+  return {
+    pagination: data.pagination,
+    workloads: workloads,
+  };
+};
+
 export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
-  let workloads;
-
-  if (data.workloads) {
-    workloads = data.workloads.map((ww) => ({
-      checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
-      training: ww.training && decodeMetricsWorkload(ww.training),
-      validation: ww.validation && decodeMetricsWorkload(ww.validation),
-    }));
-  }
-
   const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
 
   return {
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
-    workloads: workloads || [],
+    totalCheckpointSize: Number(data.trial.totalCheckpointSize) || 0,
+    workloadCount: data.trial.workloadCount || 0,
   };
 };
 

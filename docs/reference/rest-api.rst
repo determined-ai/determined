@@ -6,31 +6,48 @@
  REST API
 ##########
 
-Determined's REST APIs provide a way for users and external tools to interact with a Determined
-cluster programmatically. Determined includes detailed documentation about all of the REST endpoints
-provided by the API, alongside a playground for interacting with the API.
+The Determined REST API provides a way to programmatically interact with a Determined cluster. The
+API reference documentation includes detailed information about all of the REST API endpoints and a
+playground for interacting with the API.
 
-We use `protobuf <https://developers.google.com/protocol-buffers>`_ to define language-agnostic
-message structures. We use these type definitions with `gRPC-gateway
-<https://grpc-ecosystem.github.io/grpc-gateway/>`_ to provide consistent REST endpoints to serve
+The `protobuf <https://developers.google.com/protocol-buffers>`_ mechanism is used to define
+language-agnostic message structures. These type definitions are used with `gRPC-gateway
+<https://grpc-ecosystem.github.io/grpc-gateway/>`_ to provide consistent REST endpoints that serve
 various needs.
 
-Using these two tools we also auto-generate OpenAPI v2 spec (aka Swagger RESTful API Documentation
-Specification) which lets us inline documentation for each endpoint and response in our codebase.
+These tools are used to autogenerate an OpenAPI v2 specification, which inlines documentation for
+each endpoint and response message. The specification can be served to different tools to generate
+code for different languages and to provide web-based explorers, such as the Swagger UI, for the
+API.
 
-Having this specification prepared we can serve it to different tools to generate code for different
-languages (eg swagger codegen) as well as provide web-based explorers into our APIs (e.g., Swagger
-UI).
+***********
+ Reference
+***********
+
++----------------------------------------------------+
+| REST API Reference                                 |
++====================================================+
+| `Determined REST API <../rest-api/index.html>`__   |
++----------------------------------------------------+
+
+The REST API reference documentation lists available endpoints grouped by workflow. Click an
+endpoint method to see the expected input parameters and response. You can also use **Try it out**
+button to make an HTTP request against the endpoint. For an interactive request, you need to have
+the appropriate cookie set and a running cluster.
+
+If you have access to a running Determined cluster you can try the live-interact version by clicking
+the API icon from the Determined WebUI or by navigating to `/docs/rest-api/` on your Determined
+cluster.
 
 ****************
  Authentication
 ****************
 
-Most of the API calls to Determined cluster need to be authenticated. On each API call, the server
-expects a Bearer token to be present.
+Most of the API calls to a Determined cluster require authentication. On each API call, the server
+expects a Bearer token.
 
-To receive a token POST a valid username and password combination to the login endpoint, currently
-at ``/api/v1/auth/login`` with the following format:
+To receive a token, POST a valid username and password combination to the login endpoint,
+``/api/v1/auth/login`` using the following format:
 
 .. code:: json
 
@@ -39,7 +56,7 @@ at ``/api/v1/auth/login`` with the following format:
      "password": "string"
    }
 
-Sample request:
+Example request:
 
 .. code:: bash
 
@@ -47,7 +64,7 @@ Sample request:
      -H 'Content-Type: application/json' \
      --data-binary '{"username":"determined","password":""}'
 
-Sample response:
+Example response:
 
 .. code:: json
 
@@ -64,29 +81,25 @@ Sample response:
      }
    }
 
-Once we have the token, we should store it and attach it to future API calls under the
-``Authorization`` header using the following format: ``Bearer $TOKEN``.
+When you receive the token, store it and attach it to future API calls under the ``Authorization``
+header in the ``Bearer $TOKEN`` format.
 
 *********
  Example
 *********
 
-In this example, we will show how to use the REST APIs to unarchive an experiment that was
-previously archived.
+This example shows how to use the REST API to unarchive a previously archived experiment.
 
-By looking at the archive endpoint entry from our API docs (Swagger UI), we see that all we need is
-an experiment ID.
-
-To find an experiment that was archived, we lookup the experiments endpoint to figure out which
-filtering options we have. We see that we have ``archived`` and ``limit`` to work with. Using a
-bearer token we authenticate our request. We then use the ``archived`` and ``limit`` query
-parameters to limit the result set to only show a single archived experiment.
+To find an experiment that was archived, look up the ``experiment`` endpoint to find which filtering
+options are provided. They are ``archived`` and ``limit``. Including a bearer token to authenticate
+the request, use the ``archived`` and ``limit`` query parameters to limit the result set to only
+show a single archived experiment:
 
 .. code:: bash
 
    curl -H "Authorization: Bearer ${token}" "${DET_MASTER}/api/v1/experiments?archived=true&limit=1"
 
-Here's what our example response looks like. We see it matches the expected response shape.
+JSON response:
 
 .. code:: json
 
@@ -114,8 +127,10 @@ Here's what our example response looks like. We see it matches the expected resp
      }
    }
 
-Now that we have our desired experiment's ID, we use it to target the experiment through the
-unarchive endpoint using a POST request as specified by the endpoint:
+In the archive endpoint entry, you can see that all that you need is an experiment ID.
+
+With the experiment ID you want, you can now unarchive the experiment using the ``unarchive``
+endpoint in a POST request:
 
 .. code:: bash
 

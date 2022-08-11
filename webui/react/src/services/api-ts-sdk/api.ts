@@ -252,6 +252,18 @@ export interface GetHPImportanceResponseMetricHPImportance {
 }
 
 /**
+ * Filter workloads with training, validation, and checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
+ * @export
+ * @enum {string}
+ */
+export enum GetTrialWorkloadsRequestFilterOption {
+    UNSPECIFIED = <any> 'FILTER_OPTION_UNSPECIFIED',
+    CHECKPOINT = <any> 'FILTER_OPTION_CHECKPOINT',
+    VALIDATION = <any> 'FILTER_OPTION_VALIDATION',
+    CHECKPOINTORVALIDATION = <any> 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'
+}
+
+/**
  * `Any` contains an arbitrary serialized protocol buffer message along with a URL that describes the type of the serialized message.  Protobuf library provides support to pack/unpack Any values in the form of utility functions or additional generated methods of the Any type.  Example 1: Pack and unpack a message in C++.      Foo foo = ...;     Any any;     any.PackFrom(foo);     ...     if (any.UnpackTo(&foo)) {       ...     }  Example 2: Pack and unpack a message in Java.      Foo foo = ...;     Any any = Any.pack(foo);     ...     if (any.is(Foo.class)) {       foo = any.unpack(Foo.class);     }   Example 3: Pack and unpack a message in Python.      foo = Foo(...)     any = Any()     any.Pack(foo)     ...     if any.Is(Foo.DESCRIPTOR):       any.Unpack(foo)       ...   Example 4: Pack and unpack a message in Go       foo := &pb.Foo{...}      any, err := anypb.New(foo)      if err != nil {        ...      }      ...      foo := &pb.Foo{}      if err := any.UnmarshalTo(foo); err != nil {        ...      }  The pack methods provided by protobuf library will by default use 'type.googleapis.com/full.type.name' as the type URL and the unpack methods only use the fully qualified type name after the last '/' in the type URL, for example \"foo.bar.com/x/y.z\" will yield type name \"y.z\".   JSON ==== The JSON representation of an `Any` value uses the regular representation of the deserialized, embedded message, with an additional field `@type` which contains the type URL. Example:      package google.profile;     message Person {       string first_name = 1;       string last_name = 2;     }      {       \"@type\": \"type.googleapis.com/google.profile.Person\",       \"firstName\": <string>,       \"lastName\": <string>     }  If the embedded message type is well-known and has a custom JSON representation, that representation will be embedded adding a field `value` which holds the custom JSON in addition to the `@type` field. Example (for message [google.protobuf.Duration][]):      {       \"@type\": \"type.googleapis.com/google.protobuf.Duration\",       \"value\": \"1.212s\"     }
  * @export
  * @interface ProtobufAny
@@ -762,6 +774,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     totalCheckpointSize?: string;
+    /**
+     * Number of training and validation workloads.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    workloadCount?: number;
 }
 
 /**
@@ -3090,12 +3108,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-    /**
-     * Trial workloads.
-     * @type {Array<V1WorkloadContainer>}
-     * @memberof V1GetTrialResponse
-     */
-    workloads: Array<V1WorkloadContainer>;
 }
 
 /**
@@ -12894,10 +12906,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -12927,6 +12941,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
+            }
+
+            if (sortKey !== undefined) {
+                localVarQueryParameter['sortKey'] = sortKey;
+            }
+
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -14066,11 +14088,13 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14606,11 +14630,13 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any) {
+            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -15039,12 +15065,14 @@ export class InternalApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
      * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+     * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+     * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any) {
+        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20274,10 +20302,12 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -20307,6 +20337,14 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
 
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
+            }
+
+            if (sortKey !== undefined) {
+                localVarQueryParameter['sortKey'] = sortKey;
+            }
+
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -20646,11 +20684,13 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20813,11 +20853,13 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
          * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+         * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+         * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any) {
+            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -20942,12 +20984,14 @@ export class TrialsApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of workloads before returning results. Negative values denote number of workloads to skip from the end before returning results.
      * @param {number} [limit] Limit the number of workloads. A value of 0 denotes no limit.
+     * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
+     * @param {'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', options?: any) {
+        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, options)(this.fetch, this.basePath);
     }
 
     /**

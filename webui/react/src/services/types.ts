@@ -1,7 +1,8 @@
 import { Dayjs } from 'dayjs';
 
 import { FetchOptions, RecordKey, SingleEntityParams } from 'shared/types';
-import { DetailedUser, Job, Metadata, MetricName, MetricType, Note, Scale } from 'types';
+import { DetailedUser, Job, Metadata, MetricName, MetricType, Note,
+  Scale, TrialWorkloadFilter } from 'types';
 
 import * as Api from './api-ts-sdk/api';
 
@@ -33,6 +34,11 @@ export interface TrialSummaryParams extends TrialSummaryBaseParams {
 
 export interface CompareTrialsParams extends TrialSummaryBaseParams {
   trialIds: number[],
+}
+
+export interface TrialWorkloadsParams extends TrialDetailsParams, PaginationParams {
+  filter: TrialWorkloadFilter;
+  sortKey?: string;
 }
 
 export interface CommandIdParams {

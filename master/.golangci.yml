@@ -80,6 +80,7 @@ linters:
     - exhaustive
     - funlen
     - gochecknoglobals
+    - gochecknoinits
     - gocognit
     - gocyclo
     - godox

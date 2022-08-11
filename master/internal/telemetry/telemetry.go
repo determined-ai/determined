@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/version"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
@@ -18,11 +19,20 @@ const (
 	maxTickIntervalMins = 60
 )
 
+// telemetryRPFetcher exists mainly to avoid an annoying import cycle.
+type telemetryRPFetcher interface {
+	GetResourcePools(
+		actor.Messenger,
+		*apiv1.GetResourcePoolsRequest,
+	) (*apiv1.GetResourcePoolsResponse, error)
+}
+
 type telemetryTick struct{}
 
 // TelemetryActor manages gathering and sending telemetry data.
 type TelemetryActor struct {
 	db        db.DB
+	rm        telemetryRPFetcher
 	client    analytics.Client
 	clusterID string
 }
@@ -30,6 +40,7 @@ type TelemetryActor struct {
 // New creates an actor to handle collecting and sending telemetry information.
 func New(
 	db db.DB,
+	rm telemetryRPFetcher,
 	clusterID string,
 	segmentKey string,
 ) (*TelemetryActor, error) {
@@ -50,7 +61,7 @@ func New(
 		logrus.WithError(err).Warnf("failed to enqueue identity %s", clusterID)
 	}
 
-	return &TelemetryActor{db, client, clusterID}, nil
+	return &TelemetryActor{db, rm, client, clusterID}, nil
 }
 
 // Receive implements the actor.Actor interface.
@@ -71,7 +82,7 @@ func (s *TelemetryActor) Receive(ctx *actor.Context) error {
 		randNum := rand.Intn(maxTickIntervalMins-minTickIntervalMins) + minTickIntervalMins
 		actors.NotifyAfter(ctx, time.Duration(randNum)*time.Minute, telemetryTick{})
 
-		ReportMasterTick(ctx.Self().System(), s.db)
+		ReportMasterTick(ctx.Self().System(), s.db, s.rm)
 
 	case actor.PostStop:
 		_ = s.client.Close()

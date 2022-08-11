@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  Web: Add a button to start a hyperparameter search experiment based on an experiment or
+   trial. The button brings up a form allowing users to change searcher settings and hyperparameter
+   ranges.

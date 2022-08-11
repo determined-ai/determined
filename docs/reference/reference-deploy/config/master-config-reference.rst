@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.18.5`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.18.5`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -98,6 +98,9 @@ The master supports the following configuration settings:
       managers of type ``kubernetes``. See :ref:`resources.devices <exp-bind-mounts>` for more
       details.
 
+   -  ``slurm``: Additional Slurm options when launching trials with ``sbatch``. See
+      :ref:`environment.slurm <exp-environment-slurm>` for more details.
+
 -  ``root``: Specifies the root directory of the state files. Defaults to
    ``/usr/share/determined/master``.
 
@@ -112,6 +115,8 @@ The master supports the following configuration settings:
 -  ``tensorboard_timeout``: Specifies the duration in seconds before idle TensorBoard instances are
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
+
+.. _cluster-configuration-slurm:
 
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
@@ -204,6 +209,91 @@ The master supports the following configuration settings:
       -  ``fluent``: Options for configuring how Fluent Bit sidecars are run.
 
          -  ``image``: The Fluent Bit image to use. Defaults to ``fluent/fluent-bit:1.9.3``.
+
+   -  ``type: slurm``: The ``slurm`` resource manager launches tasks on a Slurm cluster. For more
+      information, see :ref:`using_slurm`.
+
+      -  ``master_host``: The hostname for the Determined master by which tasks will communicate
+         with its API server.
+
+      -  ``master_port``: The port for the Determined master.
+
+      -  ``host``: The hostname for the Launcher, which Determined communicates with to launch and
+         monitor Slurm jobs.
+
+      -  ``port``: The port for the Launcher.
+
+      -  ``protocol``: The protocol for communicating with the Launcher.
+
+      -  ``security``: Security-related configiruation settings for communicating with the Launcher.
+
+            -  ``tls``: TLS-related configuration settings.
+
+               -  ``enabled``: Enable TLS.
+
+               -  ``skip_verify``: Skip server certificate verification.
+
+               -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only
+                  needed if the certificate is not signed by a well-known CA; cannot be specified if
+                  ``skip_verify`` is enabled.
+
+      -  ``container_run_type``: The type of the container runtime to be used when launching on
+         Slurm. The value may be ``singularity`` or ``podman``. The default value is
+         ``singularity``.
+
+      -  ``auth_file``: The location of a file which contains an authorization token to communicate
+         with the launcher. It is automatically updated by the launcher as needed when the launcher
+         is started.
+
+      -  ``slot_type``: The default slot type assumed when users request resources from Determined
+         in terms of ``slots``. Available values are ``cuda`` and ``cpu``, where 1 ``cuda`` slot is
+         1 GPU and 1 ``cpu`` slot is 1 node. Defaults per partition to ``cuda`` if GPU resources are
+         found within the partition, else ``cpu``.
+
+      -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
+         distributed jobs. For example, when using horovod the IP address for the host on this
+         interface is passed in the host list to ``horovodrun``. Defaults to any interface beginning
+         with ``eth`` if one exists, otherwise the IPv4 resolution of the hostname.
+
+      -  ``proxy_network_interface``: The interface used to proxy the master for services running on
+         from compute nodes. The interface Defaults to the IPv4 resolution of the hostname.
+
+      -  ``user_name``: The username that the Launcher will run as. It is recommended to set this to
+         something other than ``root``. The user must have a home directory with read permissions
+         for all users to enable access to generated ``sbatch`` scripts and job log files.
+
+      -  ``group_name``: The group that the Launcher will belong to. It should be a group that is not
+            shared with other non-privileged users.
+
+      -  ``singularity_image_root``: The shared directory where Singularity images should be
+         located. This directory must be visible to the launcher and from the compute nodes. See
+         :ref:`slurm-image-config` for more details.
+
+      -  ``job_storage_root``: The shared directory where job-related files will be stored. It is
+         where the needed Determined executables are copied to when the experiment is run, as well
+         as where the Slurm ``sbatch`` script and log files are created. This directory must be
+         visible to the launcher and from the compute nodes.
+
+      -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm,
+         Singularity, Nvidia binaries, etc., in case they are not in a standard location on the
+         compute node. For example, ``PATH=/opt/singularity/3.8.5/bin:${PATH}``.
+
+      -  ``ld_library_path``: The ``LD_LIBRARY_PATH`` for the launcher service so that it is able to
+         find the Slurm, Singularity, Nvidia libraries, etc., in case they are not in a standard
+         location on the compute node. For example,
+         ``LD_LIBRARY_PATH=/cm/shared/apps/slurm/21.08.6/lib:/cm/shared/apps/slurm/21.08.6/lib/slurm:${LD_LIBRARY_PATH}``.
+
+      -  ``tres_supported``: Indicates if ``SelectType=select/cons_tres`` is set in the Slurm
+         configuration. Affects how Determined requests GPUs from Slurm. The default is true.
+
+      -  ``partition_overrides``: A map of Slurm partition names to partition-level overrides. For
+         each configuration, if it is set for a given partition, it overrides the setting at the
+         root level.
+
+         -  ``rendezvous_network_interface``
+         -  ``proxy_network_interface``
+         -  ``slot_type``
+         -  ``task_container_defaults``
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when

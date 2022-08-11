@@ -6,6 +6,7 @@ import Avatar from 'components/UserAvatar';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
+import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -45,7 +46,7 @@ const SettingsAccount: React.FC = () => {
   return (
     <div className={css.base}>
       <div className={css.avatar}>
-        <Avatar hideTooltip large userId={auth.user?.id} />
+        <Avatar hideTooltip size={Size.ExtraLarge} userId={auth.user?.id} />
       </div>
       <Divider />
       <div className={css.row}>
@@ -56,6 +57,8 @@ const SettingsAccount: React.FC = () => {
       <div className={css.row}>
         <label>Display Name</label>
         <InlineEditor
+          maxLength={32}
+          pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
           value={auth.user?.displayName || ''}
           onSave={handleSave}

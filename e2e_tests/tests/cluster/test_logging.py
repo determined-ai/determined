@@ -84,6 +84,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         f"api/v1/{command.RemoteTaskNewAPIs[task_type]}",
         task_config,
         "",
+        data={},
         default_body=body,
     )
     task_id = resp[command.RemoteTaskName[task_type]]["id"]
@@ -105,6 +106,7 @@ def check_logs(
         if log_regex.match(log["message"]):
             break
     else:
+        dump_logs_stdout(master_url, entity_id, log_fn)
         pytest.fail("ran out of logs without a match")
 
     # Just make sure these calls 200 and return some logs.
@@ -137,6 +139,15 @@ def check_logs(
 
     # Check nonsense is nonsense.
     assert not any(log_fn(master_url, entity_id, rank_ids=[-1])), "bad filter returned logs"
+
+
+def dump_logs_stdout(
+    master_url: str,
+    entity_id: Any,
+    log_fn: Any,
+) -> None:
+    for log in log_fn(master_url, entity_id, follow=True):
+        print(log)
 
 
 def to_snake_case(camel_case: str) -> str:

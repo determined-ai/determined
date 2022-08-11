@@ -7,7 +7,6 @@ import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
-import "determined/log/v1/log.proto";
 import "determined/util/v1/util.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 

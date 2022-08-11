@@ -13,6 +13,7 @@
      */
     display: grid;
     position: relative;
+    word-break: break-word;
   }
   .growWrap::after {
     /* Extra space needed to prevent jumpy behavior. */
@@ -48,7 +49,7 @@
     padding: 6px;
   }
   .growWrap:hover > textarea {
-    border-color: var(--theme-colors-monochrome-14);
+    border-color: var(--theme-float-border);
   }
   .growWrap > .spinner {
     display: none;
@@ -68,7 +69,7 @@
 .base.editable {
   .growWrap > textarea,
   .growWrap::after {
-    border-color: var(--theme-colors-monochrome-14);
+    border-color: var(--theme-float-border-strong);
   }
   .growWrap > textarea:focus {
     box-shadow: var(--theme-outline);
@@ -76,7 +77,7 @@
 }
 .base.editable.maxLength {
   .growWrap > textarea {
-    border-color: var(--theme-colors-danger-normal);
+    border-color: var(--theme-status-warning);
   }
 }
 .base.loading {
@@ -84,29 +85,42 @@
   .growWrap > .spinner { display: block; }
   .growWrap > .backdrop { display: block; }
 }
-.base.onDark {
-  .growWrap > textarea,
-  .growWrap::after {
-    color: var(--theme-colors-monochrome-17);
-  }
-  .growWrap:hover > textarea {
-    border-color: var(--theme-colors-monochrome-10);
-  }
-  .growWrap > .spinner :global(.ant-spin) {
-    color: var(--theme-colors-monochrome-17);
-  }
-}
-.base.onDark.editable {
-  .growWrap > textarea,
-  .growWrap::after {
-    border-color: var(--theme-colors-monochrome-17);
-  }
-}
-.base.onDark.editable.maxLength {
-  .growWrap > textarea {
-    border-color: var(--theme-colors-danger-light);
-  }
-}
 .base.disabled .growWrap:hover > textarea {
   border-color: transparent;
+}
+.shakeAnimation {
+  animation: shake 0.8s cubic-bezier(0.36, 0.07, 0.2, 0.95) both;
+
+  .growWrap > textarea {
+    animation: criticalBorder 0.8s;
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+@keyframes criticalBorder {
+  from {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
+  }
+  to {
+    border: var(--theme-stroke-width) solid var(--theme-status-critical);
+  }
 }

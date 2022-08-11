@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +14,8 @@ import { Renderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
+import useModalHyperparameterSearch
+  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -31,7 +34,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
@@ -46,6 +49,7 @@ interface Props {
 enum TrialAction {
   OpenTensorBoard = 'Open Tensorboard',
   ViewLogs = 'View Logs',
+  HyperparameterSearch = 'Hyperparameter Search',
 }
 
 const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
@@ -55,6 +59,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [ canceler ] = useState(new AbortController());
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const {
+    contextHolder: modalHyperparameterSearchContextHolder,
+    modalOpen: openModalHyperparameterSearch,
+  } = useModalHyperparameterSearch({ experiment });
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -89,12 +98,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     routeToReactUrl(paths.trialLogs(trial.id, experiment.id));
   }, [ experiment.id ]);
 
+  const handleHyperparameterSearch = useCallback((trial: TrialItem) => {
+    openModalHyperparameterSearch({ trial });
+  }, [ openModalHyperparameterSearch ]);
+
   const dropDownOnTrigger = useCallback((trial: TrialItem) => {
     return {
       [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
       [TrialAction.ViewLogs]: () => handleViewLogs(trial),
+      [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
     };
-  }, [ handleOpenTensorBoard, handleViewLogs ]);
+  }, [ handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs ]);
 
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
@@ -143,6 +157,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       <ActionDropdown<TrialAction>
         actionOrder={[
           TrialAction.OpenTensorBoard,
+          TrialAction.HyperparameterSearch,
           TrialAction.ViewLogs,
         ]}
         id={experiment.id + ''}
@@ -306,28 +321,37 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [ settings.row, updateSettings ]);
 
   const TrialActionDropdown = useCallback(({ record, onVisibleChange, children }) => {
+    enum MenuKey {
+      OPEN_TENSORBOARD = 'open-tensorboard',
+      HYPERPARAMETER_SEARCH = 'hyperparameter-search',
+      VIEW_LOGS = 'view-logs',
+    }
+
+    const funcs = {
+      [MenuKey.OPEN_TENSORBOARD]: () => { handleOpenTensorBoard(record); },
+      [MenuKey.HYPERPARAMETER_SEARCH]: () => { handleHyperparameterSearch(record); },
+      [MenuKey.VIEW_LOGS]: () => { handleViewLogs(record); },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as MenuKey]();
+    };
+
+    const menuItems = [
+      { key: MenuKey.OPEN_TENSORBOARD, label: TrialAction.OpenTensorBoard },
+      { key: MenuKey.HYPERPARAMETER_SEARCH, label: TrialAction.HyperparameterSearch },
+      { key: MenuKey.VIEW_LOGS, label: TrialAction.ViewLogs },
+    ];
+
     return (
       <Dropdown
-        overlay={(
-          <Menu>
-            <Menu.Item
-              key="open-tensorboard"
-              onClick={() => handleOpenTensorBoard(record)}>
-              {TrialAction.OpenTensorBoard}
-            </Menu.Item>
-            <Menu.Item
-              key="view-logs"
-              onClick={() => handleViewLogs(record)}>
-              {TrialAction.ViewLogs}
-            </Menu.Item>
-          </Menu>
-        )}
+        overlay={<Menu items={menuItems} onClick={onItemClick} />}
         trigger={[ 'contextMenu' ]}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
     );
-  }, [ handleOpenTensorBoard, handleViewLogs ]);
+  }, [ handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs ]);
 
   return (
     <div className={css.base}>
@@ -374,6 +398,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           onUnselect={handleTrialUnselect}
         />
       )}
+      {modalHyperparameterSearchContextHolder}
     </div>
   );
 };

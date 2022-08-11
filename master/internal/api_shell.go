@@ -116,22 +116,22 @@ func (a *apiServer) LaunchShell(
 
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeShell)}
 
-	var keys ssh.PrivateAndPublicKeys
+	var passphrase *string
 	if len(req.Data) > 0 {
 		var data map[string]interface{}
 		if err = json.Unmarshal(req.Data, &data); err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse data %s: %s", req.Data, err)
 		}
-		var passphrase *string
 		if pwd, ok := data["passphrase"]; ok {
 			if typed, typedOK := pwd.(string); typedOK {
 				passphrase = &typed
 			}
 		}
-		keys, err = ssh.GenerateKey(spec.Base.SSHRsaSize, passphrase)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+	}
+
+	keys, err := ssh.GenerateKey(spec.Base.SSHRsaSize, passphrase)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	spec.Metadata.PrivateKey = ptrs.Ptr(string(keys.PrivateKey))
 	spec.Metadata.PublicKey = ptrs.Ptr(string(keys.PublicKey))

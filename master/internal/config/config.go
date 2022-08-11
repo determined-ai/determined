@@ -90,6 +90,7 @@ func DefaultConfig() *Config {
 			SSH: SSHConfig{
 				RsaKeySize: 1024,
 			},
+			AuthZ: *DefaultAuthZConfig(),
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,
@@ -238,6 +239,7 @@ type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
+	AuthZ       AuthZConfig          `json:"authz"`
 }
 
 // SSHConfig is the configuration setting for SSH.
@@ -307,6 +309,7 @@ func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 }
 
 // ReadRMPreemptionStatus resolves the preemption status for a resource manager.
+// TODO(Brad): Move these to a resource pool level API.
 func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
 	return readRMPreemptionStatus(config, rpName)
@@ -392,12 +395,6 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
-}
-
-// IsUsingKubernetesRM returns whether the master is configured with Kubernetes.
-func IsUsingKubernetesRM() bool {
-	config := GetMasterConfig()
-	return config.ResourceManager.KubernetesRM != nil
 }
 
 // IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.

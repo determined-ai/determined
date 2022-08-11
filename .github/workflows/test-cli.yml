@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - '*.md'
       - 'docs/*'
+      - 'webui/*'
   push:
     branches:
       - 'main'
@@ -21,6 +22,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: set VERSION env var
+        shell: bash
+        run: echo "VERSION=$(< ./VERSION )" >> $GITHUB_ENV
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -36,7 +40,7 @@ jobs:
           cd harness; python setup.py bdist_wheel -d ../build
       - name: Install determined
         run: |
-          pip install --find-links build determined==0.19.0-dev0
+          pip install --find-links build determined==${{ env.VERSION }}
           # Ensure Determined cli can run without installing cli test requirements
           det --help
           pip freeze --all

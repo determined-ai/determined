@@ -201,6 +201,14 @@ describe('Color Utilities', () => {
     });
   });
 
+  describe('maxColorDistance', () => {
+    it('should report the max distance', () => {
+      const c1 = utils.str2rgba('rgba(0, 0, 0, 1)');
+      const c2 = utils.str2rgba('rgba(10, 10, 20, 1)');
+      expect(utils.maxColorDistance(c1, c2)).toBe(20);
+    });
+  });
+
   describe('str2rgba', () => {
     it('should convert all hex colors to rgba', () => {
       colors.forEach((color) => {

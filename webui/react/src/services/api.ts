@@ -7,8 +7,6 @@ import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-export { isLoginFailure } from './utils';
-
 /* Authentication */
 
 export const login = generateDetApi<
@@ -140,6 +138,10 @@ export const getTrialDetails = generateDetApi<
 export const compareTrials = generateDetApi<
   Service.CompareTrialsParams, Api.V1CompareTrialsResponse, Type.TrialSummary[]
 >(Config.compareTrials);
+
+export const getTrialWorkloads = generateDetApi<
+  Service.TrialWorkloadsParams, Api.V1GetTrialWorkloadsResponse, Type.TrialWorkloads
+>(Config.getTrialWorkloads);
 
 export const createExperiment = generateDetApi<
   Service.CreateExperimentParams, Api.V1CreateExperimentResponse, Type.ExperimentBase

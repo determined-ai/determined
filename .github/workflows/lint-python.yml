@@ -1,0 +1,66 @@
+---
+name: "Lint python"
+
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'docs/*'
+      - 'webui/*'
+  push:
+    branches:
+      - 'main'
+      - 'releases/**'
+
+jobs:
+  lint-python:
+    strategy:
+      fail-fast: true
+      matrix:
+        component:
+          - cli
+          - common
+          - deploy
+          - e2e_tests
+          - examples
+          - harness
+          - model_hub
+          - schemas
+          - tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set VERSION env var
+        shell: bash
+        run: echo "VERSION=$(< ./VERSION )" >> $GITHUB_ENV
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7.11
+          cache: pip
+          cache-dependency-path: |
+            harness/setup.py
+            model_hub/setup.py
+            requirements.txt
+      - name: Install pip dependencies
+        run: |
+          python --version
+          python -m pip install --upgrade pip wheel setuptools
+          pip --version
+          pip install "torch==1.9.0"
+          pip install -r requirements.txt
+      - name: Install harness
+        working-directory: harness
+        run: |
+          make build
+          pip install --find-links dist determined==${{ env.VERSION }}
+          pip install --no-deps --force-reinstall --find-links dist determined==${{ env.VERSION }}
+      - name: Install model_hub
+        working-directory: model_hub
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg libsm6 libxext6
+          make build
+          pip install --find-links dist model-hub==${{ env.VERSION }}
+          pip install --no-deps --force-reinstall --find-links dist model-hub==${{ env.VERSION }}
+      - name: Run checks
+        run: make -C ${{ matrix.component }} check

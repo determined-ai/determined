@@ -12,7 +12,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
-import { openCommand } from 'wait';
+import { openCommand } from 'utils/wait';
 
 import css from './JobQueue.module.scss';
 import { DEFAULT_COLUMN_WIDTHS } from './JobQueue.settings';

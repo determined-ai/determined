@@ -1,4 +1,5 @@
 import { Button, Dropdown, Menu, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InteractiveTable, { InteractiveTableSettings,
@@ -82,21 +83,15 @@ const UserManagement: React.FC = () => {
 
   const columns = useMemo(() => {
     const actionRenderer = (_:string, record: DetailedUser) => {
-      const menuItems = (
-        <Menu>
-          <Menu.Item key="edit">
-            Edit
-          </Menu.Item>
-          <Menu.Item key="state">
-            {`${record.isActive ? 'Deactive' : 'Active'}`}
-          </Menu.Item>
-        </Menu>
-      );
+      const menuItems: MenuProps['items'] = [
+        { key: 'edit', label: 'Edit' },
+        { key: 'state', label: `${record.isActive ? 'Deactive' : 'Active'}` },
+      ];
 
       return (
         <div className={dropdownCss.base}>
           <Dropdown
-            overlay={menuItems}
+            overlay={<Menu items={menuItems} />}
             placement="bottomRight"
             trigger={[ 'click' ]}>
             <Button className={css.overflow} type="text">

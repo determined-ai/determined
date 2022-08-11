@@ -14,7 +14,7 @@ import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
 import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
-import { WaitStatus } from 'wait';
+import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';
 

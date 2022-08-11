@@ -15,13 +15,13 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { flattenObject } from 'shared/utils/data';
+import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentVisualizationType,
   Hyperparameter,
   HyperparameterType, MetricName, MetricType, metricTypeParamMap,
 } from 'types';
 import { Scale } from 'types';
-import { alphaNumericSorter } from 'utils/sort';
 
 import css from './CompareVisualization.module.scss';
 import CompareCurve from './CompareVisualization/CompareCurve';

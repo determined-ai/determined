@@ -8,13 +8,19 @@ import md5 from 'shared/utils/md5';
 
 import css from './Avatar.module.scss';
 
+export enum Size {
+  Medium = 'medium',
+  Large = 'large',
+  ExtraLarge = 'extra-large',
+}
+
 export interface Props extends ClassNameProp {
   darkLight: DarkLight;
   displayName: string;
   hideTooltip?: boolean;
-  large?: boolean;
   /** do not color the bg based on displayName */
   noColor?: boolean;
+  size?: Size;
   square?: boolean;
 }
 
@@ -38,17 +44,23 @@ const getColor = (name = '', darkLight: DarkLight): string => {
   });
 };
 
-const Avatar: React.FC<Props> = (
-  { noColor, square, className, hideTooltip, large, displayName, darkLight },
-) => {
+const Avatar: React.FC<Props> = ({
+  className,
+  darkLight,
+  displayName,
+  hideTooltip,
+  noColor,
+  size = Size.Medium,
+  square,
+}) => {
   const style = {
     backgroundColor: noColor ? 'var(--theme-stage-strong)' : getColor(displayName, darkLight),
     borderRadius: square ? '10%' : '100%',
   };
-  const classes = [ css.base ];
+  const classes = [ css.base, css[size] ];
 
-  if (large) classes.push(css.large);
   if (className) classes.push(className);
+
   const avatar = (
     <div className={classes.join(' ')} id="avatar" style={style}>
       {getInitials(displayName)}

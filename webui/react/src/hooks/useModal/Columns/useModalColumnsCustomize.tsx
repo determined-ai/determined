@@ -205,7 +205,6 @@ const useModalColumnsCustomize = ({
 
   const modalProps: Partial<ModalFuncProps> = useMemo(() => {
     return {
-      bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
       content: modalContent,

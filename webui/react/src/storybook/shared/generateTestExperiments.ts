@@ -4,7 +4,7 @@ import { CheckpointState,
   HyperparameterType,
   RunState,
   TrialDetails } from 'types';
-import { generateExperiments } from 'utils/task';
+import { generateExperiment } from 'utils/task';
 
 export const generateTestExperimentData = ():
 {
@@ -12,7 +12,7 @@ export const generateTestExperimentData = ():
   experiment: ExperimentBase,
   trial: TrialDetails
 } => {
-  const exp = generateExperiments(1)[0];
+  const exp = generateExperiment();
   const experiment: ExperimentBase = {
     ...exp,
     archived: false,
@@ -235,7 +235,8 @@ export const generateTestExperimentData = ():
     startTime: '1',
     state: RunState.Active,
     totalBatchesProcessed: 1,
-    workloads: [],
+    totalCheckpointSize: 0,
+    workloadCount: 0,
   };
 
   return { checkpoint, experiment, trial };

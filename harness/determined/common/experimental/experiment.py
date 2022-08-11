@@ -12,6 +12,7 @@ class ExperimentState(enum.Enum):
     PAUSED = "STATE_PAUSED"
     STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
     STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
     STOPPING_ERROR = "STATE_STOPPING_ERROR"
     COMPLETED = "STATE_COMPLETED"
     CANCELED = "STATE_CANCELED"
@@ -23,16 +24,8 @@ class _GetExperimentResponse:
     def __init__(self, raw: Any):
         if not isinstance(raw, dict):
             raise ValueError(f"GetExperimentResponse must be a dict; got {raw}")
-        if "config" not in raw:
-            raise ValueError(f"GetExperimentResponse must have a config field; got {raw}")
 
         # We only parse the config and experiment.state because that is all the python sdk needs.
-
-        config = raw["config"]
-        if not isinstance(config, dict):
-            raise ValueError(f'GetExperimentResponse["config"] must be a dict; got {config}')
-        self.config = cast(Dict[str, Any], config)
-
         if "experiment" not in raw:
             raise ValueError(f"GetExperimentResponse must have an experiment field; got {raw}")
         exp = raw["experiment"]
@@ -45,6 +38,16 @@ class _GetExperimentResponse:
             raise ValueError(
                 f'GetExperimentResponse["experiment"]["state"] must be a str; got {state}'
             )
+        if "config" not in exp:
+            raise ValueError(
+                f'GetExperimentResponse["experiment"] must have a config field; got {exp}'
+            )
+        config = exp["config"]
+        if not isinstance(config, dict):
+            raise ValueError(
+                f'GetExperimentResponse["experiment"]["config"] must be a dict; got {config}'
+            )
+        self.config = cast(Dict[str, Any], config)
 
         self.state = ExperimentState(state)
 
@@ -131,7 +134,7 @@ class ExperimentReference:
     def unarchive(self) -> None:
         self._session.post(f"/api/v1/experiments/{self.id}/unarchive")
 
-    def wait(self, interval: int = 5) -> ExperimentState:
+    def wait(self, interval: float = 5.0) -> ExperimentState:
         """
         Wait for the experiment to reach a complete or terminal state.
 
@@ -139,7 +142,7 @@ class ExperimentReference:
             interval (int, optional): An interval time in seconds before checking
                 next experiement state.
         """
-        elapsed_time = 0
+        elapsed_time = 0.0
         while True:
             exp = self._get()
             if exp.state in (

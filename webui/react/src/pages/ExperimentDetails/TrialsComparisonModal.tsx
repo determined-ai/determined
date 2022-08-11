@@ -8,18 +8,19 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
+import useMetricNames from 'hooks/useMetricNames';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
-import { getTrialDetails } from 'services/api';
+import { getTrialDetails, getTrialWorkloads } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
+import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
+  ExperimentBase, MetricName, MetricsWorkload,
+  TrialDetails, TrialWorkloadFilter,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricNames } from 'utils/metric';
-import { checkpointSize } from 'utils/workload';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -93,11 +94,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
-    const totalBytes = trial.workloads
-      .filter((step) => step.checkpoint
-      && step.checkpoint.state === CheckpointState.Completed)
-      .map((step) => checkpointSize(step.checkpoint as CheckpointWorkload))
-      .reduce((acc, cur) => acc + cur, 0);
+    const totalBytes = trial.totalCheckpointSize;
     return humanReadableBytes(totalBytes);
   }, []);
 
@@ -107,14 +104,19 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     , [ getCheckpointSize, trialsDetails ],
   );
 
-  const metricNames = useMemo(() => {
-    const nameSet: Record<string, MetricName> = {};
-    trials.forEach((trial) => {
-      extractMetricNames(trialsDetails[trial]?.workloads || [])
-        .forEach((item) => nameSet[item.name] = (item));
-    });
-    return Object.values(nameSet);
-  }, [ trialsDetails, trials ]);
+  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  useMetricNames({
+    errorHandler: () => {
+      handleError({
+        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+        publicSubject: 'Experiment metric name stream failed.',
+        type: ErrorType.Api,
+      });
+    },
+    experimentId: experiment.id,
+    metricNames,
+    setMetricNames,
+  });
 
   useEffect(() => {
     setSelectedMetrics(metricNames);
@@ -143,11 +145,22 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return metricsObj;
   }, []);
 
-  const metrics = useMemo(() => {
+  const [ latestMetrics, setLatestMetrics ] = useState<Record<string, {[key: string]: number}>>(
+    {},
+  );
+
+  useMemo(async () => {
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
-      trial.workloads.forEach((workload) => {
+      const data = await getTrialWorkloads({
+        filter: TrialWorkloadFilter.All,
+        id: trial.id,
+        limit: 50,
+        orderBy: 'ORDER_BY_DESC',
+      });
+      const latestWorkloads = data.workloads;
+      latestWorkloads.forEach((workload) => {
         if (workload.training) {
           extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
@@ -164,7 +177,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         }
       }
     }
-    return metricValues;
+    setLatestMetrics(metricValues);
   }, [ extractLatestMetrics, trialsDetails ]);
 
   const hyperparameterNames = useMemo(
@@ -251,7 +264,9 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 </div>
                 {trials.map((trialId) => (
                   <div className={css.cell} key={trialId}>
-                    <HumanReadableNumber num={metrics[trialId][metric.name]} />
+                    {latestMetrics[trialId]
+                      ? <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0} />
+                      : ''}
                   </div>
                 ))}
               </div>

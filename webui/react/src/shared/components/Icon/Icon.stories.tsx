@@ -35,3 +35,4 @@ export const TensorBoard = (): React.ReactNode => <Icon name="tensor-board" />;
 export const TensorFlow = (): React.ReactNode => <Icon name="tensorflow" />;
 export const User = (): React.ReactNode => <Icon name="user" />;
 export const UserSmall = (): React.ReactNode => <Icon name="user-small" />;
+export const IconWithTitle = (): React.ReactNode => <Icon title="This is a title tooltip" />;
