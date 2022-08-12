@@ -1,5 +1,4 @@
-import * as api from 'services/api-ts-sdk';
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 enum V1OrderBy {
   UNSPECIFIED = <any> 'ORDER_BY_UNSPECIFIED',
   ASC = <any> 'ORDER_BY_ASC',
