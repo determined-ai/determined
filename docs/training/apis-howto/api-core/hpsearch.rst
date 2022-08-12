@@ -54,7 +54,7 @@ runs a train-validate-report loop:
       :start-at: if last_checkpoint_batch != steps_completed
       :end-at: save_state
 
-#. Create a new ``3_hpsearch.yaml`` file and add an ``entrypoint`` that invokes ``3_hpsearch.py``:
+#. Create a ``3_hpsearch.yaml`` file by copying the 0_start.yaml file and changing the first couple of lines to add an ``entrypoint`` that invokes ``3_hpsearch.py``:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.yaml
       :language: yaml
@@ -67,6 +67,14 @@ runs a train-validate-report loop:
       :language: yaml
       :start-at: hyperparameters:
       :end-at: maxval
+
+   In the ``searcher`` section, change the ``name`` of the searcher from ``single`` to ``adaptive_asha`` to run a non-trivial hyperparameter search. 
+   Additionally, change ``max_length`` to 100 (to run a maximum of 100 simulated batches per trial) and ``max_trials`` to 10 (to run up to ten trials, each with a different version of the hyperparameters).
+
+   .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.yaml
+      :language: yaml
+      :start-at: searcher:
+      :end-at: max_trials
 
 #. Run the code using the command:
 
