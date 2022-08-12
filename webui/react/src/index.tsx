@@ -18,6 +18,11 @@ import * as serviceWorker from './serviceWorker';
 import 'shared/prototypes';
 import 'dev';
 
+// redirect to basename if needed
+if (history.location.pathname === '/') {
+  history.replace(process.env.PUBLIC_URL);
+}
+
 ReactDOM.render(
   <React.StrictMode>
     <HistoryRouter basename={process.env.PUBLIC_URL} history={history}>
