@@ -1,21 +1,15 @@
 import React from 'react';
 
-import { DarkLight } from 'shared/themes';
-
-import Avatar from '../Avatar';
+import Avatar, { Props as AvatarProps } from '../Avatar';
 
 import css from './AvatarCard.module.scss';
 
-export interface Props {
-  className?: string;
-  darkLight: DarkLight;
-  displayName: string;
-}
+export type Props = Omit<AvatarProps, 'hideTooltip'>
 
-const AvatarCard: React.FC<Props> = ({ className, darkLight, displayName }: Props) => {
+const AvatarCard: React.FC<Props> = ({ className, displayName, ...avatarProps }: Props) => {
   return (
     <div className={`${css.base} ${className || ''}`}>
-      <Avatar darkLight={darkLight} displayName={displayName} hideTooltip />
+      <Avatar {...avatarProps} displayName={displayName} hideTooltip />
       <span>{displayName}</span>
     </div>
   );

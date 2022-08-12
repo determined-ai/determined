@@ -2,7 +2,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'shared/utils/data';
 import { DetError } from 'shared/utils/error';
-import { getResponseStatus, processApiError } from 'shared/utils/service';
+import { isApiResponse, processApiError } from 'shared/utils/service';
 import handleError from 'utils/error';
 
 /* Response Helpers */
@@ -13,9 +13,9 @@ import handleError from 'utils/error';
  * 401 is returned by the new API. We can rely on isAuthFailure
  * when we completely migrate over to the new API.
  */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isLoginFailure = (e: any): boolean => {
-  const status = getResponseStatus(e);
+export const isLoginFailure = (e: unknown): boolean => {
+  if (!isApiResponse(e)) return false;
+  const status = e.status;
   return status === 401 || status === 403;
 };
 
