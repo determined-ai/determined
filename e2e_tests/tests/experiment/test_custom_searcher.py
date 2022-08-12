@@ -1,9 +1,10 @@
 import dataclasses
 import logging
 import random
+import sys
 import uuid
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Set
 
 import numpy as np
 import pytest
@@ -283,17 +284,17 @@ class Rung:
         logging.info(f"Rung {self.idx}")
         logging.info(f"outstanding_trials {self.outstanding_trials}")
 
-        old_num_promote = int(len(self.metrics) / divisor)
-        num_promote = int((len(self.metrics) + 1) / divisor)
+        old_num_promote = len(self.metrics) // divisor
+        num_promote = (len(self.metrics) + 1) // divisor
 
         index = self._search_metric_index(metric)
-        promoteNow = index < num_promote
-        trial_metric = TrialMetric(request_id=request_id, metric=metric, promoted=promoteNow)
+        promote_now = index < num_promote
+        trial_metric = TrialMetric(request_id=request_id, metric=metric, promoted=promote_now)
         self.metrics.insert(index, trial_metric)
 
-        if promoteNow:
+        if promote_now:
             return [request_id]
-        elif num_promote != old_num_promote and not self.metrics[old_num_promote].promoted:
+        if num_promote != old_num_promote and not self.metrics[old_num_promote].promoted:
             self.metrics[old_num_promote].promoted = True
             return [self.metrics[old_num_promote].request_id]
 
@@ -319,7 +320,7 @@ class ASHASearchMethod(SearchMethod):
         max_trials: int,
         num_rungs: int,
         divisor: int = 2,
-        max_concurrent_trial: int = 0,
+        max_concurrent_trials: int = 0,
     ) -> None:
         super().__init__()
 
@@ -328,7 +329,7 @@ class ASHASearchMethod(SearchMethod):
         self.max_trials = max_trials
         self.num_rungs = num_rungs
         self.divisor = divisor
-        self.max_concurrent_trials = max_concurrent_trial
+        self.max_concurrent_trials = max_concurrent_trials
 
         self.is_smaller_better = True
 
@@ -340,8 +341,8 @@ class ASHASearchMethod(SearchMethod):
         self.pending_trials: int = 0
         self.completed_trials: int = 0
         self.invalid_trials: int = 0
-        self.early_exit_trials: Dict[uuid.UUID, bool] = {}
-        self.closed_trials: Dict[uuid.UUID, bool] = {}
+        self.early_exit_trials: Set[uuid.UUID] = set()
+        self.closed_trials: Set[uuid.UUID] = set()
 
         self._init_rungs()
 
@@ -354,7 +355,7 @@ class ASHASearchMethod(SearchMethod):
 
     def on_trial_closed(self, request_id: uuid.UUID) -> List[Operation]:
         self.completed_trials += 1
-        self.closed_trials[request_id] = True
+        self.closed_trials.add(request_id)
 
         if self.pending_trials == 0 and self.completed_trials == self.max_trials:
             return [Shutdown()]
@@ -382,9 +383,9 @@ class ASHASearchMethod(SearchMethod):
         ):
             ops: List[Operation] = []
 
-            self.early_exit_trials[request_id] = True
+            self.early_exit_trials.add(request_id)
             ops.append(Close(request_id))
-            self.closed_trials[request_id] = True
+            self.closed_trials.add(request_id)
             self.invalid_trials += 1
 
             highest_rung_index = self.trial_rungs[request_id]
@@ -410,8 +411,8 @@ class ASHASearchMethod(SearchMethod):
 
             return ops
 
-        self.early_exit_trials[request_id] = True
-        self.closed_trials[request_id] = True
+        self.early_exit_trials.add(request_id)
+        self.closed_trials.add(request_id)
         return self.promote_async(request_id, 100.0)
 
     def initial_operations(self) -> List[Operation]:
@@ -451,27 +452,24 @@ class ASHASearchMethod(SearchMethod):
         if rung_idx == self.num_rungs - 1:
             rung.metrics.append(TrialMetric(request_id=request_id, metric=metric))
 
-            if request_id in self.early_exit_trials and self.early_exit_trials[request_id] is True:
+            if request_id not in self.early_exit_trials:
                 ops.append(Close(request_id=request_id))
                 logging.info(f"Closing trial {request_id}")
-                self.closed_trials[request_id] = True
+                self.closed_trials.add(request_id)
         else:
             next_rung = self.rungs[rung_idx + 1]
             logging.info(f"Promoting in rung {rung_idx}")
             for promoted_request_id in rung.promotions_async(request_id, metric, self.divisor):
                 self.trial_rungs[promoted_request_id] = rung_idx + 1
                 next_rung.outstanding_trials += 1
-                if (
-                    request_id not in self.early_exit_trials
-                    or not self.early_exit_trials[promoted_request_id]
-                ):
+                if promoted_request_id not in self.early_exit_trials:
                     logging.info(f"Promoted {promoted_request_id}")
                     units_needed = max(next_rung.units_needed - rung.units_needed, 1)
                     ops.append(ValidateAfter(promoted_request_id, units_needed))
                     added_train_workload = True
                     self.pending_trials += 1
                 else:
-                    return self.promote_async(promoted_request_id, 100.0)
+                    return self.promote_async(promoted_request_id, sys.float_info.max)
 
         all_trials = len(self.trial_rungs) - self.invalid_trials
         if not added_train_workload and all_trials < self.max_trials:
@@ -502,17 +500,11 @@ class ASHASearchMethod(SearchMethod):
             if rung.outstanding_trials > 0:
                 break
             for trial_metric in rung.metrics:
-                if not trial_metric.promoted and (
-                    trial_metric.request_id not in self.closed_trials
-                    or not self.closed_trials[trial_metric.request_id]
-                ):
-                    if (
-                        trial_metric.request_id not in self.early_exit_trials
-                        or not self.early_exit_trials[trial_metric.request_id]
-                    ):
+                if not trial_metric.promoted and trial_metric.request_id not in self.closed_trials:
+                    if trial_metric.request_id not in self.early_exit_trials:
                         logging.info(f"Closing trial {trial_metric.request_id}")
                         ops.append(Close(trial_metric.request_id))
-                        self.closed_trials[trial_metric.request_id] = True
+                        self.closed_trials.add(trial_metric.request_id)
         return ops
 
     def sample_params(self) -> Dict[str, object]:
