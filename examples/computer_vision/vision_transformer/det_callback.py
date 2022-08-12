@@ -40,7 +40,6 @@ class DetCallback(TrainerCallback):
                 # can that even happen?
                 pass
 
-
     def process_log(self, log):
         metric_type = self._metric_type(log)
         metrics = log

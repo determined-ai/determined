@@ -1,7 +1,6 @@
-name: grid search
-description: max length = 1000
-workspace: Deepspeed
-project: VisionTransformer
+name: single search
+#workspace: Deepspeed
+#project: VisionTransformer
 debug: false
 environment:
   environment_variables:
@@ -11,22 +10,9 @@ environment:
 resources:
   slots_per_trial: 2
 searcher:
-  name: grid
+  name: single
   max_length: 1
   metric: eval_loss
-hyperparameters:
-  learning_rate:
-    type: log
-    base: 10
-    minval: -2
-    maxval: -1
-    count: 2
-  adam_epsilon:
-    type: log
-    base: 10
-    minval: -2
-    maxval: -1
-    count: 2
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 
