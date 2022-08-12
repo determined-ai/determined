@@ -282,6 +282,14 @@ const CodeViewer: React.FC<Props> = ({
     switchTreeViewToEditor,
   ]);
 
+  const getSyntaxHighlight = useCallback(() => {
+    if (String(activeFile?.key).includes('py')) return 'python';
+
+    if (String(activeFile?.key).includes('md')) return 'markdown';
+
+    return 'yaml';
+  }, [ activeFile ]);
+
   return (
     <section className={css.base}>
       <Section className={viewMode === 'editor' ? css.hideElement : undefined} id="fileTree">
@@ -365,7 +373,7 @@ const CodeViewer: React.FC<Props> = ({
                 : (
                   <MonacoEditor
                     height="100%"
-                    language="yaml"
+                    language={getSyntaxHighlight()}
                     options={{
                       minimap: {
                         enabled: viewMode === 'split' && !!activeFile?.text?.length,
