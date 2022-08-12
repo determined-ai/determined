@@ -134,7 +134,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
+    model_context = context.read_legacy_context(args.model_def)
 
     additional_body_fields = {}
     if args.git:

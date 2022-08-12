@@ -8,7 +8,7 @@ from termcolor import colored
 
 from determined.cli import command, task
 from determined.cli.util import format_args
-from determined.common import api, constants, context
+from determined.common import api, context
 from determined.common.api import authentication, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -30,7 +30,7 @@ def start_tensorboard(args: Namespace) -> None:
     }
 
     if args.context is not None:
-        req_body["files"], _ = context.read_context(args.context, constants.MAX_CONTEXT_SIZE)
+        req_body["files"] = context.read_legacy_context(args.context)
 
     resp = api.post(args.master, "api/v1/tensorboards", json=req_body).json()["tensorboard"]
 
