@@ -19,7 +19,7 @@ import 'shared/prototypes';
 import 'dev';
 
 // redirect to basename if needed
-if (history.location.pathname === '/') {
+if (process.env.PUBLIC_URL && history.location.pathname === '/') {
   history.replace(process.env.PUBLIC_URL);
 }
 
