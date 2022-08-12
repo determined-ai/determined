@@ -11,10 +11,12 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase, ExperimentVisualizationType } from 'types';
 import handleError from 'utils/error';
 
+const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+
 const { TabPane } = Tabs;
 
 enum TabType {
-  Configuration = 'configuration',
+  Code = 'code',
   Trials = 'trials',
   Visualization = 'visualization',
   Notes = 'notes',
@@ -28,9 +30,6 @@ type Params = {
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Visualization;
 
-const ExperimentConfiguration = React.lazy(() => {
-  return import('./ExperimentConfiguration');
-});
 const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentVisualization');
 });
@@ -96,9 +95,13 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
       <TabPane key={TabType.Trials} tab="Trials">
         <ExperimentTrials experiment={experiment} pageRef={pageRef} />
       </TabPane>
-      <TabPane key={TabType.Configuration} tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-          <ExperimentConfiguration experiment={experiment} />
+      <TabPane key={TabType.Code} tab="Code">
+        <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+          <CodeViewer
+            experimentId={experiment.id}
+            runtimeConfig={experiment.configRaw}
+            submittedConfig={experiment.originalConfig}
+          />
         </React.Suspense>
       </TabPane>
       <TabPane key={TabType.Notes} tab="Notes">

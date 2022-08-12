@@ -21,10 +21,12 @@ import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
+const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+
 const { TabPane } = Tabs;
 
 enum TabType {
-  Configuration = 'configuration',
+  Code = 'code',
   Hyperparameters = 'hyperparameters',
   Logs = 'logs',
   Overview = 'overview',
@@ -34,10 +36,6 @@ enum TabType {
 
 const TAB_KEYS: string[] = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
-
-const ExperimentConfiguration = React.lazy(() => {
-  return import('./ExperimentConfiguration');
-});
 
 type Params = {
   tab: TabType
@@ -196,7 +194,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           undefined}
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
+        <TabPane key={TabType.Overview} tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trialDetails as TrialDetails} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
@@ -205,9 +203,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             trial={trialDetails as TrialDetails}
           />
         </TabPane>
-        <TabPane key={TabType.Configuration} tab="Configuration">
-          <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <ExperimentConfiguration experiment={experiment} />
+        <TabPane key={TabType.Code} tab="Code">
+          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+            <CodeViewer
+              experimentId={experiment.id}
+              runtimeConfig={experiment.configRaw}
+              submittedConfig={experiment.originalConfig}
+            />
           </React.Suspense>
         </TabPane>
         <TabPane key={TabType.Notes} tab="Notes">

@@ -84,7 +84,7 @@ def update(args: Namespace) -> None:
         aheadOf=args.ahead_of,
     )
     bindings.post_UpdateJobQueue(
-        setup_session(args), body=bindings.v1UpdateJobQueueRequest([update])
+        setup_session(args), body=bindings.v1UpdateJobQueueRequest(updates=[update])
     )
 
 
@@ -113,7 +113,7 @@ def _single_update(
         behindOf=behind_of if behind_of != "" else None,
         aheadOf=ahead_of if ahead_of != "" else None,
     )
-    bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest([update]))
+    bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
 
 def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool: str) -> bool:

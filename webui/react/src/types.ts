@@ -511,8 +511,12 @@ export interface ProjectExperiment extends ExperimentItem {
   workspaceName: string;
 }
 
-// TODO remove ExperimentBase, the extra info that was in it got migrated to ExperimentItem
-export type ExperimentBase = ProjectExperiment;
+export interface ExperimentBase extends ProjectExperiment {
+  config: ExperimentConfig;
+  configRaw: RawJson; // Readonly unparsed config object.
+  hyperparameters: HyperparametersFlattened; // nested hp keys are flattened, eg) foo.bar
+  originalConfig: string;
+}
 
 // TODO we should be able to remove ExperimentOld but leaving this off.
 export interface ExperimentOld extends ExperimentItem {

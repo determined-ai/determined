@@ -1,5 +1,13 @@
-// import { V1OrderBy } from 'services/api-ts-sdk';
-import * as api from 'services/api-ts-sdk';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+enum V1OrderBy {
+  UNSPECIFIED = <any> 'ORDER_BY_UNSPECIFIED',
+  ASC = <any> 'ORDER_BY_ASC',
+  DESC = <any> 'ORDER_BY_DESC'
+}
+
+enum ProtobufNullValue {
+  NULLVALUE = <any> 'NULL_VALUE'
+}
 
 import { DetError } from './error';
 import * as service from './service';
@@ -117,41 +125,41 @@ describe('Service Utilities', () => {
 
   describe('validateDetApiEnum', () => {
     it('returns valid enum values', () => {
-      expect(service.validateDetApiEnum(api.V1OrderBy, api.V1OrderBy.ASC)).toBe(api.V1OrderBy.ASC);
+      expect(service.validateDetApiEnum(V1OrderBy, V1OrderBy.ASC)).toBe(V1OrderBy.ASC);
     });
 
     it('returns valid string values', () => {
-      expect(service.validateDetApiEnum(api.V1OrderBy, 'ORDER_BY_ASC')).toBe(api.V1OrderBy.ASC);
+      expect(service.validateDetApiEnum(V1OrderBy, 'ORDER_BY_ASC')).toBe(V1OrderBy.ASC);
     });
 
     it('returns default for invalid values', () => {
-      expect(service.validateDetApiEnum(api.V1OrderBy, 'asdfasdf'))
-        .toBe(api.V1OrderBy.UNSPECIFIED);
+      expect(service.validateDetApiEnum(V1OrderBy, 'asdfasdf'))
+        .toBe(V1OrderBy.UNSPECIFIED);
     });
 
     it('returns undefined when no default value exists', () => {
-      expect(service.validateDetApiEnum(api.ProtobufNullValue, 'asdfasdf'))
+      expect(service.validateDetApiEnum(ProtobufNullValue, 'asdfasdf'))
         .toBeUndefined();
     });
   });
 
   describe('validateDetApiEnumList', () => {
     it('should preserve valid input list', () => {
-      const input = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
-      const expectedOutput = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
-      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toStrictEqual(expectedOutput);
+      const input = [ V1OrderBy.ASC, V1OrderBy.DESC ];
+      const expectedOutput = [ V1OrderBy.ASC, V1OrderBy.DESC ];
+      expect(service.validateDetApiEnumList(V1OrderBy, input)).toStrictEqual(expectedOutput);
     });
 
     it('should return undefined when all inputs are unspecified or invalid', () => {
-      const input = [ api.V1OrderBy.UNSPECIFIED, api.V1OrderBy.UNSPECIFIED, 'bucket' ];
+      const input = [ V1OrderBy.UNSPECIFIED, V1OrderBy.UNSPECIFIED, 'bucket' ];
 
-      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toBeUndefined();
+      expect(service.validateDetApiEnumList(V1OrderBy, input)).toBeUndefined();
     });
 
     it('should filter bad entries', () => {
-      const input = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC, 'bucket' ];
-      const expectedOutput = [ api.V1OrderBy.ASC, api.V1OrderBy.DESC ];
-      expect(service.validateDetApiEnumList(api.V1OrderBy, input)).toStrictEqual(expectedOutput);
+      const input = [ V1OrderBy.ASC, V1OrderBy.DESC, 'bucket' ];
+      const expectedOutput = [ V1OrderBy.ASC, V1OrderBy.DESC ];
+      expect(service.validateDetApiEnumList(V1OrderBy, input)).toStrictEqual(expectedOutput);
     });
   });
 
