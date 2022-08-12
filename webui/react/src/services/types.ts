@@ -97,6 +97,11 @@ export interface GetTaskParams {
   taskId: string;
 }
 
+export interface GetExperimentFileFromTreeParams {
+  experimentId: number;
+  filePath: string;
+}
+
 export interface GetModelsParams extends PaginationParams {
   archived?: boolean;
   description?: string;

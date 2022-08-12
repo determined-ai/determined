@@ -21,6 +21,8 @@ import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
+const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
+
 const { TabPane } = Tabs;
 
 enum TabType {
@@ -39,10 +41,6 @@ interface Params {
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
-
-const ExperimentConfiguration = React.lazy(() => {
-  return import('./ExperimentConfiguration');
-});
 
 export interface Props {
   experiment: ExperimentBase;
@@ -202,9 +200,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             trial={trialDetails as TrialDetails}
           />
         </TabPane>
-        <TabPane key="configuration" tab="Configuration">
-          <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
-            <ExperimentConfiguration experiment={experiment} />
+        <TabPane key="code" tab="Code">
+          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+            <CodeViewer
+              experimentId={experiment.id}
+              runtimeConfig={experiment.configRaw}
+              submittedConfig={experiment.originalConfig}
+            />
           </React.Suspense>
         </TabPane>
         <TabPane key="notes" tab="Notes">

@@ -207,6 +207,23 @@ const TrialRangeHyperparametersContainer = () => {
     },
     id: 1,
     name: 'Sample Experiment',
+    originalConfig: `
+      entrypoint: model_def:MNistTrial
+      hyperparameters:
+        dropout1: {maxval: 0.8, minval: 0.2, type: double}
+        dropout2: {maxval: 0.8, minval: 0.2, type: double}
+        global_batch_size: 64
+        learning_rate: {maxval: 1.0, minval: 0.0001, type: double}
+        n_filters1: {maxval: 64, minval: 8, type: int}
+        n_filters2: {maxval: 72, minval: 8, type: int}
+      name: mnist_pytorch_adaptive_search
+      records_per_epoch: 10
+      searcher:
+        max_length: {batches: 937}
+        max_trials: 16
+        metric: validation_loss
+        name: adaptive_asha
+        smaller_is_better: true`,
     parentArchived: false,
     projectId: 1,
     projectName: 'Uncategorized',
