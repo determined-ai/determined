@@ -8,6 +8,9 @@ export const isApiResponse = (u: unknown): u is Response => {
   return u instanceof Response;
 };
 
+export const getResponseStatus = (e: unknown): number | undefined =>
+  isApiResponse(e) ? e.status : undefined;
+
 /**
  * Determines whether an exception is the result of a nework error
  * due to the server not being able to authenticate the request/user.
