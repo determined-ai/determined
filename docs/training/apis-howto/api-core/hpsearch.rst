@@ -61,7 +61,7 @@ runs a train-validate-report loop:
       :lines: 1-2
 
    Add a ``hyperparameters`` section with the integer-type ``increment_by`` hyperparameter value
-   that referenced in the training script:
+   that is referenced in the training script:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.yaml
       :language: yaml
