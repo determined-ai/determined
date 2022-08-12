@@ -9,7 +9,7 @@ from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Uni
 
 from determined.common import yaml
 
-yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
+_yaml = yaml.YAML(typ="safe", pure=True)
 
 T = TypeVar("T")
 
@@ -80,7 +80,7 @@ def preserve_random_state(fn: Callable) -> Callable:
     return wrapped
 
 
-def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
+def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any], str]) -> Any:
     """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
     the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
     of our internal APIs.
@@ -111,14 +111,14 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
     ---------------------------------------------------------------------------------------------
     """
     try:
-        config = yaml.load(yaml_file)
+        config = _yaml.load(yaml_file)
     except (
         yaml.error.MarkedYAMLWarning,
         yaml.error.MarkedYAMLError,
         yaml.error.MarkedYAMLFutureWarning,
     ) as e:
         err_msg = (
-            f"Error: invalid experiment config file {yaml_file.name!r}.\n"
+            f"Error: invalid experiment config file.\n"
             f"{e.__class__.__name__}: {e.problem}\n{e.problem_mark}"
         )
         print(err_msg)

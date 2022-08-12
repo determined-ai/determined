@@ -120,7 +120,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
 def create_experiment(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     validate_only: bool = False,
     archived: bool = False,
@@ -130,7 +130,7 @@ def create_experiment(
     body = {
         "activate": False,
         "experiment_config": yaml.safe_dump(config),
-        "model_definition": [e.dict() for e in model_context.entries],
+        "model_definition": model_context,
         "validate_only": validate_only,
     }
     if template:
@@ -233,7 +233,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
 def create_experiment_and_follow_logs(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     additional_body_fields: Optional[Dict[str, Any]] = None,
     activate: bool = True,
@@ -256,7 +256,7 @@ def create_experiment_and_follow_logs(
 def create_test_experiment_and_follow_logs(
     master_url: str,
     config: Dict[str, Any],
-    model_context: context.Context,
+    model_context: context.LegacyContext,
     template: Optional[str] = None,
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:

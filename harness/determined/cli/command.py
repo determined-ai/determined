@@ -330,7 +330,7 @@ def launch_command(
 ) -> Any:
     user_files = []  # type: List[Dict[str, Any]]
     if context_path:
-        user_files, _ = context.read_context(context_path)
+        user_files = context.read_legacy_context(context_path)
 
     body = {}  # type: Dict[str, Any]
     if default_body:

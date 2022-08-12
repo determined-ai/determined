@@ -2,8 +2,8 @@ import pathlib
 import warnings
 from typing import Any, Dict, List, Optional, Union, cast
 
-from determined.common import check, context, util, yaml
-from determined.common.api import authentication, certs
+from determined.common import context, util, yaml
+from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
@@ -78,34 +78,40 @@ class Determined:
                 or a dict.
             model_dir(string): directory containing model definition.
         """
-        check.is_instance(
-            config, (str, pathlib.Path, dict), "config parameter must be dictionary or path"
-        )
         if isinstance(config, str):
             with open(config) as f:
-                experiment_config = util.safe_load_yaml_with_exceptions(f)
+                config_text = f.read()
+            _ = util.safe_load_yaml_with_exceptions(config_text)
         elif isinstance(config, pathlib.Path):
             with config.open() as f:
-                experiment_config = util.safe_load_yaml_with_exceptions(f)
+                config_text = f.read()
+            _ = util.safe_load_yaml_with_exceptions(config_text)
         elif isinstance(config, Dict):
-            experiment_config = config
+            yaml_dump = yaml.dump(config)
+            assert yaml_dump is not None
+            config_text = yaml_dump
+        else:
+            raise ValueError("config parameter must be dictionary or path")
 
         if isinstance(model_dir, str):
             model_dir = pathlib.Path(model_dir)
 
-        model_context, _ = context.read_context(model_dir)
+        model_context = context.read_v1_context(model_dir)
 
-        resp = self._session.post(
-            "/api/v1/experiments",
-            json={
-                "config": yaml.safe_dump(experiment_config),
-                "model_definition": model_context,
-            },
+        req = bindings.v1CreateExperimentRequest(
+            # TODO: add this as a param to create_experiment()
+            activate=True,
+            config=config_text,
+            modelDefinition=model_context,
+            # TODO: add these as params to create_experiment()
+            parentId=None,
+            projectId=None,
         )
 
-        exp_id = _CreateExperimentResponse(resp.json()).id
+        resp = bindings.post_CreateExperiment(self._session, body=req)
+
+        exp_id = resp.experiment.id
         exp = experiment.ExperimentReference(exp_id, self._session)
-        exp.activate()
 
         return exp
 
