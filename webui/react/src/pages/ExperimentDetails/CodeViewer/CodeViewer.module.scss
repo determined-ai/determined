@@ -1,6 +1,6 @@
 .base {
   display: grid;
-  grid-template-columns: minmax(300px, 15%) auto;
+  grid-template-columns: minmax(auto, 30%) auto;
   grid-template-rows: auto;
   height: 100%;
 
