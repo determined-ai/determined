@@ -309,6 +309,7 @@ func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 }
 
 // ReadRMPreemptionStatus resolves the preemption status for a resource manager.
+// TODO(Brad): Move these to a resource pool level API.
 func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
 	return readRMPreemptionStatus(config, rpName)
@@ -394,12 +395,6 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
-}
-
-// IsUsingKubernetesRM returns whether the master is configured with Kubernetes.
-func IsUsingKubernetesRM() bool {
-	config := GetMasterConfig()
-	return config.ResourceManager.KubernetesRM != nil
 }
 
 // IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.

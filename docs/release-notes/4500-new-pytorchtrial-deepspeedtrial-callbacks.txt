@@ -1,8 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  API: new ``on_training_workload_end`` and ``on_checkpoint_upload_end`` ``PyTorchCallback``
-   methods available for use with ``PyTorchTrial`` and ``DeepSpeedTrial``.
--  API: ``PyTorchTrial`` and ``DeepSpeedTrial`` callback ```on_checkpoint_end`` deprecated in favor
-   of ``on_checkpoint_write_end``, re-named for clarity.

@@ -101,7 +101,7 @@ def list_workspace_projects(args: Namespace) -> None:
 
 @authentication.required
 def create_workspace(args: Namespace) -> None:
-    content = bindings.v1PostWorkspaceRequest(args.name)
+    content = bindings.v1PostWorkspaceRequest(name=args.name)
     w = bindings.post_PostWorkspace(setup_session(args), body=content).workspace
 
     if args.json:

@@ -295,6 +295,7 @@ class Class(TypeDef):
         out = [f"class {self.name}:"]
         out += ["    def __init__("]
         out += ["        self,"]
+        out += ["        *,"]
         required = sorted(p for p in self.params if self.params[p].required)
         optional = sorted(p for p in self.params if not self.params[p].required)
         for name in required + optional:

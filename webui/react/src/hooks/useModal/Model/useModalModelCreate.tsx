@@ -184,7 +184,6 @@ const useModalModelCreate = (): ModalHooks => {
   const getModalProps = useCallback((state: ModalState): Partial<ModalFuncProps> => {
     const { modelName } = state;
     return {
-      bodyStyle: { padding: 0 },
       className: css.base,
       closable: true,
       content: getModalContent(state),

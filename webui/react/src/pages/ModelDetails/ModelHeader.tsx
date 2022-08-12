@@ -1,5 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Alert, Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -75,6 +76,29 @@ const ModelHeader: React.FC<Props> = ({
 
   const handleDelete = useCallback(() => modalOpen(model), [ modalOpen, model ]);
 
+  const menu = useMemo(() => {
+    enum MenuKey {
+      SWITCH_ARCHIVED = 'switch-archive',
+      DELETE_MODEL = 'delete-model',
+    }
+
+    const funcs = {
+      [MenuKey.SWITCH_ARCHIVED]: () => { onSwitchArchive(); },
+      [MenuKey.DELETE_MODEL]: () => { handleDelete(); },
+    };
+
+    const onItemClick:MenuProps['onClick'] = (e) => {
+      funcs[e.key as MenuKey]();
+    };
+
+    const menuItems: MenuProps['items'] = [
+      { key: MenuKey.SWITCH_ARCHIVED, label: model.archived ? 'Unarchive' : 'Archive' },
+      { danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' },
+    ];
+
+    return <Menu items={menuItems} onClick={onItemClick} />;
+  }, [ handleDelete, model.archived, onSwitchArchive ]);
+
   return (
     <header className={css.base}>
       <div className={css.breadcrumbs}>
@@ -117,19 +141,7 @@ const ModelHeader: React.FC<Props> = ({
           </Space>
           <Space size="small">
             <Dropdown
-              overlay={(
-                <Menu>
-                  <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
-                    {model.archived ? 'Unarchive' : 'Archive'}
-                  </Menu.Item>
-                  <Menu.Item
-                    danger
-                    key="delete-model"
-                    onClick={handleDelete}>
-                    Delete
-                  </Menu.Item>
-                </Menu>
-              )}
+              overlay={menu}
               trigger={[ 'click' ]}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />

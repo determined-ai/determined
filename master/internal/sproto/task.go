@@ -6,7 +6,6 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -29,11 +28,11 @@ type (
 		// IsUserVisible determines whether the AllocateRequest should
 		// be considered in user-visible reports.
 		IsUserVisible bool
-		State         job.SchedulingState
+		State         SchedulingState
 		Name          string
 		// Allocation actor
-		TaskActor *actor.Ref
-		Group     *actor.Ref
+		AllocationRef *actor.Ref
+		Group         *actor.Ref
 
 		// Resource configuration.
 		SlotsNeeded         int
@@ -73,19 +72,31 @@ type (
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
 	ResourcesReleased struct {
-		TaskActor   *actor.Ref
-		ResourcesID *ResourcesID
+		AllocationRef *actor.Ref
+		ResourcesID   *ResourcesID
 	}
-	// GetTaskHandler returns a ref to the handler for the specified task.
-	GetTaskHandler struct{ ID model.AllocationID }
-	// GetTaskSummary returns the summary of the specified task.
-	GetTaskSummary struct{ ID *model.AllocationID }
-	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
-	GetTaskSummaries struct{}
-	// SetTaskName sets the name of the task.
-	SetTaskName struct {
-		Name        string
-		TaskHandler *actor.Ref
+	// GetAllocationHandler returns a ref to the handler for the specified task.
+	GetAllocationHandler struct{ ID model.AllocationID }
+	// GetAllocationSummary returns the summary of the specified task.
+	GetAllocationSummary struct{ ID model.AllocationID }
+	// GetAllocationSummaries returns the summaries of all the tasks in the cluster.
+	GetAllocationSummaries struct{}
+	// AllocationSummary contains information about a task for external display.
+	AllocationSummary struct {
+		TaskID         model.TaskID       `json:"task_id"`
+		AllocationID   model.AllocationID `json:"allocation_id"`
+		Name           string             `json:"name"`
+		RegisteredTime time.Time          `json:"registered_time"`
+		ResourcePool   string             `json:"resource_pool"`
+		SlotsNeeded    int                `json:"slots_needed"`
+		Resources      []ResourcesSummary `json:"resources"`
+		SchedulerType  string             `json:"scheduler_type"`
+		Priority       *int               `json:"priority"`
+	}
+	// SetAllocationName sets the name of the task.
+	SetAllocationName struct {
+		Name          string
+		AllocationRef *actor.Ref
 	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
@@ -103,21 +114,22 @@ type (
 		// - true: ok or unknown
 		Fulfillable bool
 	}
+	// AllocationSignal is an interface for signals that can be sent to an allocation.
+	AllocationSignal string
+	// AllocationSignalWithReason is an message for signals that can be sent to an allocation
+	// along with an informational reason about why the signal was sent.
+	AllocationSignalWithReason struct {
+		AllocationSignal    AllocationSignal
+		InformationalReason string
+	}
 )
 
-// ValidateRPResources checks if the resource pool can fulfill resource request for single-node
-// notebook/command/shell etc. Returns &true if yes, &false if not, and nil if unknown.
-func ValidateRPResources(system *actor.System, resourcePoolName string, slots int) (bool, error) {
-	resp := system.Ask(
-		GetCurrentRM(system), ValidateCommandResourcesRequest{
-			ResourcePool: resourcePoolName,
-			Slots:        slots,
-		})
-	if resp.Error() != nil {
-		return false, resp.Error()
-	}
-	return resp.Get().(ValidateCommandResourcesResponse).Fulfillable, nil
-}
+const (
+	// KillAllocation is the signal to kill an allocation; analogous to in SIGKILL.
+	KillAllocation AllocationSignal = "kill"
+	// TerminateAllocation is the signal to kill an allocation; analogous to in SIGTERM.
+	TerminateAllocation AllocationSignal = "terminate"
+)
 
 // Incoming task actor messages; task actors must accept these messages.
 type (

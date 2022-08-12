@@ -1,9 +1,11 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import useMetricNames from 'hooks/useMetricNames';
 import useSettings from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
-import { extractMetricNames } from 'utils/metric';
+import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
@@ -22,9 +24,26 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     updateSettings,
   } = useSettings<Settings>(settingsConfig, { storagePath });
 
-  const { defaultMetrics, metricNames, metrics } = useMemo(() => {
+  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
+  useMetricNames({
+    errorHandler: () => {
+      try {
+        handleError({
+          publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
+          publicSubject: 'Experiment metric name stream failed.',
+          type: ErrorType.Api,
+        });
+      } catch (e) {
+        // already handleError
+      }
+    },
+    experimentId: experiment.id,
+    metricNames,
+    setMetricNames,
+  });
+
+  const { defaultMetrics, metrics } = useMemo(() => {
     const validationMetric = experiment?.config?.searcher.metric;
-    const metricNames = extractMetricNames(trial?.workloads || []);
     const defaultValidationMetric = metricNames.find((metricName) => (
       metricName.name === validationMetric && metricName.type === MetricType.Validation
     ));
@@ -36,8 +55,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
     });
     const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
-    return { defaultMetrics, metricNames, metrics };
-  }, [ experiment?.config?.searcher, settings.metric, trial?.workloads ]);
+    return { defaultMetrics, metrics };
+  }, [ experiment?.config?.searcher, metricNames, settings.metric ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
@@ -52,7 +71,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         metricNames={metricNames}
         metrics={metrics}
         trialId={trial?.id}
-        workloads={trial?.workloads}
         onMetricChange={handleMetricChange}
       />
       <TrialDetailsWorkloads

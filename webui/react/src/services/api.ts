@@ -7,8 +7,6 @@ import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
-export { isLoginFailure } from './utils';
-
 /* Authentication */
 
 export const login = generateDetApi<
@@ -192,6 +190,14 @@ export const getExperimentLabels = generateDetApi<
 export const moveExperiment = generateDetApi<
   Api.V1MoveExperimentRequest, Api.V1MoveExperimentResponse, void
 >(Config.moveExperiment);
+
+export const getExperimentFileTree = generateDetApi<
+  Service.ExperimentIdParams, Api.V1GetModelDefTreeResponse, Api.V1FileNode[]
+>(Config.getExperimentFileTree);
+
+export const getExperimentFileFromTree = generateDetApi<
+  Api.V1GetModelDefFileRequest, Api.V1GetModelDefFileResponse, string
+>(Config.getExperimentFileFromTree);
 
 /* Tasks */
 

@@ -1,5 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CopyButton from 'components/CopyButton';
@@ -20,6 +21,14 @@ import { ModelVersion } from 'types';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
+
+type Action = {
+  danger: boolean;
+  disabled: boolean;
+  key: string;
+  onClick: () => void;
+  text: string;
+}
 
 interface Props {
   modelVersion: ModelVersion;
@@ -96,7 +105,7 @@ const ModelVersionHeader: React.FC<Props> = ({
     openModalVersionDelete(modelVersion);
   }, [ openModalVersionDelete, modelVersion ]);
 
-  const actions = useMemo(() => ([
+  const actions: Action[] = useMemo(() => ([
     {
       danger: false,
       disabled: false,
@@ -145,6 +154,24 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
   const handleCopy = useCallback(async () => {
     await copyToClipboard(referenceText);
   }, [ referenceText ]);
+
+  const menu = useMemo(() => {
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      const action = actions.find((ac) => ac.key === e.key) as Action;
+      action.onClick();
+    };
+
+    const menuItems: MenuProps['items'] = actions.map((action) => ({
+      className: css.overflowAction,
+      danger: action.danger,
+      disabled: action.disabled,
+      key: action.key,
+      label: action.text,
+    }
+    ));
+
+    return <Menu className={css.overflow} items={menuItems} onClick={onItemClick} />;
+  }, [ actions ]);
 
   return (
     <header className={css.base}>
@@ -198,20 +225,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
               </Button>
             ))}
             <Dropdown
-              overlay={(
-                <Menu className={css.overflow}>
-                  {actions.map((action) => (
-                    <Menu.Item
-                      className={css.overflowAction}
-                      danger={action.danger}
-                      disabled={action.disabled}
-                      key={action.key}
-                      onClick={action.onClick}>
-                      {action.text}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              )}
+              overlay={menu}
               trigger={[ 'click' ]}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />

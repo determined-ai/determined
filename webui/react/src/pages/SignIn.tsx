@@ -20,6 +20,7 @@ import { RecordKey } from 'shared/types';
 import { getPath } from 'shared/utils/data';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
+import { BrandingType } from 'types';
 
 import css from './SignIn.module.scss';
 
@@ -115,7 +116,10 @@ const SignIn: React.FC = () => {
     <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
-          <Logo branding={info.branding} orientation={Orientation.Vertical} />
+          <Logo
+            branding={info.branding || BrandingType.Determined}
+            orientation={Orientation.Vertical}
+          />
           <DeterminedAuth canceler={canceler} />
           {info.ssoProviders?.map((ssoProvider) => {
             const key = ssoProvider.name.toLowerCase();

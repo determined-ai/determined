@@ -11,6 +11,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
+import { BrandingType } from 'types';
 
 import css from './NavigationTabbar.module.scss';
 
@@ -158,7 +159,7 @@ const NavigationTabbar: React.FC = () => {
             external: true,
             icon: 'pencil',
             label: 'Share Feedback',
-            path: paths.submitProductFeedback(info.branding),
+            path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
             popout: true,
           },
         ]}

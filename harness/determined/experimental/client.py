@@ -241,9 +241,9 @@ def get_model_by_id(model_id: int) -> Model:
        an integer-type model ID.
     """
     warnings.warn(
-        "client.get_model_by_id() has been deprecated and will be removed"
+        "client.get_model_by_id() has been deprecated and will be removed "
         "in a future version.\n"
-        "Please call client.get_model() with either a string-type name or"
+        "Please call client.get_model() with either a string-type name or "
         "an integer-type model ID.",
         FutureWarning,
     )

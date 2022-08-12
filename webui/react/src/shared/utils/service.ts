@@ -4,25 +4,41 @@ import { DetApi, FetchOptions } from '../types';
 import { isObject } from './data';
 import { DetError, DetErrorOptions, ErrorLevel, ErrorType, isDetError } from './error';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const getResponseStatus = (e: any): number | undefined => {
-  return e?.response?.status || e?.status;
+export const isApiResponse = (u: unknown): u is Response => {
+  return u instanceof Response;
 };
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
-  const status = getResponseStatus(e) ?? 0;
-  return (supportExternalAuth && status === 500) || (status >= 400 && status < 500);
+
+/**
+ * Determines whether an exception is the result of a nework error
+ * due to the server not being able to authenticate the request/user.
+ * If this is the case, this can lead to the client being logged out and
+ * redirected to the login page.
+ * @param e
+ * @param supportExternalAuth
+ * @returns
+ */
+export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean => {
+  if (!isApiResponse(u)) return false;
+  const status = u.status;
+  const authFailureStatuses = [
+    401, // Unauthorized
+  ];
+  if (supportExternalAuth) authFailureStatuses.push(500);
+  return authFailureStatuses.includes(status);
 };
-const isApiResponse = (o: unknown): o is Response => {
-  return o instanceof Response;
+
+export const isNotFound = (u: Response | Error | DetError): boolean => {
+  if (u instanceof Response) return u.status === 404;
+  let errorStrings: string[] = [];
+  if (u instanceof Error) errorStrings = [ u.message ];
+  if (u instanceof DetError) {
+    errorStrings = [ u.message, u.publicMessage ?? '', u.publicSubject ?? '' ];
+  }
+  return errorStrings.join(' ').toLocaleLowerCase().includes('not found');
 };
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isNotFound = (e: any): boolean => {
-  return getResponseStatus(e) === 404;
-};
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAborted = (e: any): boolean => {
-  return e?.name === 'AbortError';
+
+export const isAborted = (e: unknown): boolean => {
+  return e instanceof Error && e.name === 'AbortError';
 };
 /* Fits API errors into a DetError. */
 export const processApiError = async (name: string, e: unknown): Promise<DetError> => {

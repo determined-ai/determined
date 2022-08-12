@@ -774,6 +774,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     totalCheckpointSize?: string;
+    /**
+     * Number of training and validation workloads.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    workloadCount?: number;
 }
 
 /**
@@ -1990,6 +1996,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     config?: any;
+    /**
+     * The original configuration that the user submitted.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    originalConfig: string;
 }
 
 /**
@@ -3210,12 +3222,6 @@ export interface V1GetTrialResponse {
      * @memberof V1GetTrialResponse
      */
     trial: Trialv1Trial;
-    /**
-     * Trial workloads.
-     * @type {Array<V1WorkloadContainer>}
-     * @memberof V1GetTrialResponse
-     */
-    workloads: Array<V1WorkloadContainer>;
 }
 
 /**

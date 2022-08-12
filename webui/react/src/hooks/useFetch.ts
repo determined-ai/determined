@@ -12,7 +12,7 @@ import {
   getWorkspaces,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
-import { ResourceType } from 'types';
+import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
 
@@ -48,7 +48,10 @@ export const useFetchAgents = (canceler: AbortController): () => Promise<void> =
       const response = await getAgents({ signal: canceler.signal });
       const cluster = agentsToOverview(response);
       storeDispatch({ type: StoreAction.SetAgents, value: response });
-      updateFaviconType(cluster[ResourceType.ALL].allocation !== 0, info.branding);
+      updateFaviconType(
+        cluster[ResourceType.ALL].allocation !== 0,
+        info.branding || BrandingType.Determined,
+      );
     } catch (e) { handleError(e); }
   }, [ canceler, info.branding, storeDispatch ]);
 };

@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
@@ -93,29 +94,43 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   }, [ openWorkspaceDelete ]);
 
   const WorkspaceActionMenu = useMemo(() => {
-    return (
-      <Menu>
-        <Menu.Item key="switchPin" onClick={handlePinClick}>
-          {workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar'}
-        </Menu.Item>
-        {(userHasPermissions && !workspace.archived) && (
-          <Menu.Item key="edit" onClick={handleEditClick}>
-            Edit...
-          </Menu.Item>
-        )}
-        {userHasPermissions && (
-          <Menu.Item key="switchArchive" onClick={handleArchiveClick}>
-            {workspace.archived ? 'Unarchive' : 'Archive'}
-          </Menu.Item>
-        )}
-        {(userHasPermissions && workspace.numExperiments === 0) && (
-          <>
-            <Menu.Divider />
-            <Menu.Item danger key="delete" onClick={handleDeleteClick}>Delete...</Menu.Item>
-          </>
-        )}
-      </Menu>
-    );
+    enum MenuKey {
+      SWITCH_PIN = 'switchPin',
+      EDIT = 'edit',
+      SWITCH_ARCHIVED = 'switchArchive',
+      DELETE = 'delete',
+    }
+
+    const funcs = {
+      [MenuKey.SWITCH_PIN]: () => { handlePinClick(); },
+      [MenuKey.EDIT]: () => { handleEditClick(); },
+      [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
+      [MenuKey.DELETE]: () => { handleDeleteClick(); },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as MenuKey]();
+    };
+
+    const menuItems: MenuProps['items'] = [ {
+      key: MenuKey.SWITCH_PIN,
+      label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
+    } ];
+
+    if (userHasPermissions && !workspace.archived) {
+      menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
+    }
+    if (userHasPermissions) {
+      menuItems.push({
+        key: MenuKey.SWITCH_ARCHIVED,
+        label: workspace.archived ? 'Unarchive' : 'Archive',
+      });
+    }
+    if (userHasPermissions && workspace.numExperiments === 0) {
+      menuItems.push({ type: 'divider' });
+      menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
+    }
+    return <Menu items={menuItems} onClick={onItemClick} />;
   }, [
     handlePinClick,
     workspace.pinned,

@@ -1,4 +1,5 @@
 import { Button, Dropdown, Menu, message, Space } from 'antd';
+import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import InteractiveTable, { InteractiveTableSettings,
@@ -39,21 +40,30 @@ const UserActionDropdown = ({ fetchUsers, user }: DropdownProps) => {
     message.success(`User has been ${user.isActive ? 'deactivated' : 'activated'}`);
     fetchUsers();
   };
-  const menuItems = (
-    <Menu>
-      <Menu.Item key="edit" onClick={onClickEditUser}>
-        Edit
-      </Menu.Item>
-      <Menu.Item key="state" onClick={onToggleActive}>
-        {`${user.isActive ? 'Deactivate' : 'Activate'}`}
-      </Menu.Item>
-    </Menu>
-  );
+
+  enum MenuKey {
+    EDIT = 'edit',
+    STATE = 'state'
+  }
+
+  const funcs = {
+    [MenuKey.EDIT]: () => { onClickEditUser(); },
+    [MenuKey.STATE]: () => { onToggleActive(); },
+  };
+
+  const onItemClick: MenuProps['onClick'] = (e) => {
+    funcs[e.key as MenuKey]();
+  };
+
+  const menuItems: MenuProps['items'] = [
+    { key: 'edit', label: 'Edit' },
+    { key: 'state', label: `${user.isActive ? 'Deactive' : 'Active'}` },
+  ];
 
   return (
     <div className={dropdownCss.base}>
       <Dropdown
-        overlay={menuItems}
+        overlay={<Menu items={menuItems} onClick={onItemClick} />}
         placement="bottomRight"
         trigger={[ 'click' ]}>
         <Button className={css.overflow} type="text">
@@ -134,7 +144,7 @@ const UserManagement: React.FC = () => {
         key: V1GetUsersRequestSortBy.DISPLAYNAME,
         onCell: onRightClickableCell,
         sorter: true,
-        title: 'Display Name',
+        title: 'Display Name-',
       },
       {
         dataIndex: 'username',
