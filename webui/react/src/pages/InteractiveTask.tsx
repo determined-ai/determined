@@ -6,7 +6,6 @@ import TaskBar from 'components/TaskBar';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { getTask } from 'services/api';
 import { CommandState, CommandType } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
@@ -50,12 +49,18 @@ const getTitleState = (commandState?: CommandState): string => {
 
 export const InteractiveTask: React.FC = () => {
   const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
-  const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
-  assertIsDefined(taskId);
-  assertIsDefined(taskName);
-  assertIsDefined(taskResourcePool);
-  assertIsDefined(taskUrl);
-  assertIsDefined(taskType);
+  const {
+    taskId: tId,
+    taskName: tName,
+    taskResourcePool: tResourcePool,
+    taskUrl: tUrl,
+    taskType: tType,
+  } = useParams<Params>();
+  const taskId = tId as string;
+  const taskName = tName as string;
+  const taskResourcePool = tResourcePool as string;
+  const taskUrl = tUrl as string;
+  const taskType = tType as CommandType;
   const [ taskState, setTaskState ] = useState<CommandState>();
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();

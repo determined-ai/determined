@@ -17,7 +17,6 @@ import { ErrorType } from 'shared/utils/error';
 import { isAborted } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ModelVersion } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
@@ -43,9 +42,9 @@ const DEFAULT_TAB_KEY = TabType.Model;
 const ModelVersionDetails: React.FC = () => {
   const location = useLocation();
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
-  const { modelId, versionId, tab } = useParams<Params>();
-  assertIsDefined(modelId);
-  assertIsDefined(versionId);
+  const { modelId: modelID, versionId: versionID, tab } = useParams<Params>();
+  const modelId = modelID as string;
+  const versionId = versionID as string;
   const [ pageError, setPageError ] = useState<Error>();
   const navigate = useNavigate();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);

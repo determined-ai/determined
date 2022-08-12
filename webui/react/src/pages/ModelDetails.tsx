@@ -26,7 +26,6 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, validateDetApiEnum } from 'shared/utils/service';
 import { ModelVersion, ModelVersions } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 
 import css from './ModelDetails.module.scss';
@@ -44,8 +43,7 @@ type Params = {
 const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
   const { modelId: modelID } = useParams<Params>();
-  assertIsDefined(modelID);
-  const modelId = decodeURIComponent(modelID);
+  const modelId = decodeURIComponent(modelID as string);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ total, setTotal ] = useState(0);

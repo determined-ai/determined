@@ -28,7 +28,6 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 
 import css from './WorkspaceDetails.module.scss';
@@ -54,9 +53,8 @@ const WorkspaceDetails: React.FC = () => {
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  assertIsDefined(workspaceId);
 
-  const id = parseInt(workspaceId);
+  const id = parseInt(workspaceId as string);
 
   const {
     settings,

@@ -21,7 +21,6 @@ import { ApiState } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
@@ -49,9 +48,8 @@ const TrialDetailsComp: React.FC = () => {
   const [ isFetching, setIsFetching ] = useState(false);
   const navigate = useNavigate();
   const { experimentId, tab, trialId: trialID } = useParams<Params>();
-  assertIsDefined(trialID);
   const [ tabKey, setTabKey ] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const [ trialId, setTrialId ] = useState<number>(parseInt(trialID));
+  const [ trialId, setTrialId ] = useState<number>(parseInt(trialID as string));
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,

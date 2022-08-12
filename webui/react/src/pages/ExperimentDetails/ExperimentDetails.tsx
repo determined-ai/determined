@@ -16,7 +16,6 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
 type Params = {
@@ -39,8 +38,7 @@ const ExperimentDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
 
-  assertIsDefined(experimentId);
-  const id = parseInt(experimentId);
+  const id = parseInt(experimentId as string);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {

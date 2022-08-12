@@ -12,7 +12,6 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
-import { assertIsDefined } from 'utils/assertion';
 import handleError from 'utils/error';
 import { WaitStatus } from 'utils/wait';
 
@@ -33,9 +32,7 @@ const Wait: React.FC = () => {
   const { taskType } = useParams<Params>();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
-  assertIsDefined(taskType);
-
-  const capitalizedTaskType = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType as string);
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;
