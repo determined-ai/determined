@@ -1,5 +1,15 @@
 .ant-tree.ant-tree-directory .ant-tree-treenode:hover::before {
   background: var(--theme-surface-strong);
+  width: 100%;
+}
+.ant-tree.ant-tree-directory .ant-tree-treenode .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: var(--antd-wave-shadow-color);
+}
+.ant-tree.ant-tree-directory .ant-tree-treenode .ant-tree-node-content-wrapper:hover {
+  background: var(--theme-surface-strong);
+}
+.ant-tree-list {
+  width: 100%;
 }
 #fileTree {
   border-right: solid var(--theme-stroke-width) var(--theme-stage-border);
@@ -14,17 +24,3 @@
 .ant-tree-node-content-wrapper.ant-tree-node-content-wrapper-normal {
   display: flex;
 }
-.treeNode .ant-tree-title {
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-// #editor {
-//   grid-column: 2 / auto;
-//   grid-row: 2 / 3;
-
-//   @media screen and (max-width: 1024px) {
-//     grid-column: 1 / 2;
-//   }
-// }
