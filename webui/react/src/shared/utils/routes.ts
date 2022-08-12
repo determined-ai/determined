@@ -57,11 +57,17 @@ export const parseUrl = (url: string): URL => {
 const stripUrl = (aUrl: string): string => {
   const url = parseUrl(aUrl);
   const rest = url.href.replace(url.origin, '');
+  if (rest.startsWith(process.env.PUBLIC_URL)) {
+    return rest.replace(process.env.PUBLIC_URL, '');
+  }
   return rest;
 };
 export const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {
-  history.push(stripUrl(path), { loginRedirect: filterOutLoginLocation(window.location) });
+  history.push(
+    `${process.env.PUBLIC_URL}${stripUrl(path)}`,
+    { loginRedirect: filterOutLoginLocation(window.location) },
+  );
 };
