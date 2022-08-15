@@ -106,7 +106,6 @@ const UserManagement: React.FC = () => {
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     } finally {
-
       setIsLoading(false);
     }
   }, [ canceler.signal,

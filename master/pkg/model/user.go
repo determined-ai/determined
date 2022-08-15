@@ -106,11 +106,12 @@ func (user *User) UpdatePasswordHash(password string) error {
 // Proto converts a user to its protobuf representation.
 func (user *User) Proto() *userv1.User {
 	return &userv1.User{
-		Id:         int32(user.ID),
-		Username:   user.Username,
-		Admin:      user.Admin,
-		Active:     user.Active,
-		ModifiedAt: timestamppb.New(user.ModifiedAt),
+		Id:          int32(user.ID),
+		Username:    user.Username,
+		DisplayName: user.DisplayName.ValueOrZero(),
+		Admin:       user.Admin,
+		Active:      user.Active,
+		ModifiedAt:  timestamppb.New(user.ModifiedAt),
 	}
 }
 
