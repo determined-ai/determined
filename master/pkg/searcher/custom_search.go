@@ -3,13 +3,9 @@ package searcher
 import (
 	"encoding/json"
 
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -152,15 +148,6 @@ func (s *customSearch) trialClosed(ctx context, requestID model.RequestID) ([]Op
 }
 
 func (s *customSearch) Snapshot() (json.RawMessage, error) {
-	// protobuf objects need to be marshaled individually.
-	marshaledPBEvents, err := marshalPBEvents(s.SearcherEventQueue.GetEvents())
-	if err != nil {
-		return nil, err
-	}
-
-	s.PBEventsJSON = marshaledPBEvents
-	// Since, s.SearcherEventQueue.events is not exported json.Marshal won't try to marshal it here.
-	// And therefore, won't throw an error.
 	return json.Marshal(s.customSearchState)
 }
 
@@ -168,41 +155,7 @@ func (s *customSearch) Restore(state json.RawMessage) error {
 	if state == nil {
 		return nil
 	}
-	err := json.Unmarshal(state, &s.customSearchState)
-	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal customSearchState")
-	}
-	mEvents := s.customSearchState.PBEventsJSON
-	unmarshalPBEvents, err := unmarshalPBEvents(mEvents)
-	s.SearcherEventQueue.SetEvents(unmarshalPBEvents)
-	return err
-}
-
-func marshalPBEvents(pbEvents []*experimentv1.SearcherEvent) ([]json.RawMessage, error) {
-	marshaledPBEvents := make([]json.RawMessage, 0)
-	for _, event := range pbEvents {
-		mEvent, err := protojson.Marshal(event)
-		if err != nil {
-			return nil,
-				errors.Wrap(err, "failed to marshal protobuf events list in (custom) SearcherEventQueue")
-		}
-		marshaledPBEvents = append(marshaledPBEvents, mEvent)
-	}
-	return marshaledPBEvents, nil
-}
-
-func unmarshalPBEvents(mEvents []json.RawMessage) ([]*experimentv1.SearcherEvent, error) {
-	unmarshaledPBEvents := make([]*experimentv1.SearcherEvent, 0)
-	for _, mEvent := range mEvents {
-		var pbEvent experimentv1.SearcherEvent
-		err := protojson.Unmarshal(mEvent, &pbEvent)
-		if err != nil {
-			return nil,
-				errors.Wrap(err, "failed to save unmarshal events list in (custom) SearcherEventQueue")
-		}
-		unmarshaledPBEvents = append(unmarshaledPBEvents, &pbEvent)
-	}
-	return unmarshaledPBEvents, nil
+	return json.Unmarshal(state, &s.customSearchState)
 }
 
 func (s *customSearch) Unit() expconf.Unit {
