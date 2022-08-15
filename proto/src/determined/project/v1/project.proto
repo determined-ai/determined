@@ -27,6 +27,7 @@ message Project {
     json_schema: {
       required: [
         "archived",
+        "error_message",
         "id",
         "immutable",
         "name",
@@ -70,6 +71,8 @@ message Project {
   string workspace_name = 13;
   // State of project during deletion.
   determined.workspace.v1.WorkspaceState state = 14;
+  // Message stored from errors on async-deleting a project.
+  string error_message = 15;
 }
 
 // ProjectModel is a checkpoint associated with a project.

@@ -4508,6 +4508,7 @@ class v1Project:
         self,
         *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
@@ -4536,6 +4537,7 @@ class v1Project:
         self.userId = userId
         self.workspaceName = workspaceName
         self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Project":
@@ -4554,6 +4556,7 @@ class v1Project:
             userId=obj["userId"],
             workspaceName=obj.get("workspaceName", None),
             state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -4572,6 +4575,7 @@ class v1Project:
             "userId": self.userId,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
 
 class v1PutProjectNotesRequest:
@@ -6382,6 +6386,7 @@ class v1Workspace:
         self,
         *,
         archived: bool,
+        errorMessage: str,
         id: int,
         immutable: bool,
         name: str,
@@ -6402,6 +6407,7 @@ class v1Workspace:
         self.userId = userId
         self.numExperiments = numExperiments
         self.state = state
+        self.errorMessage = errorMessage
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Workspace":
@@ -6416,6 +6422,7 @@ class v1Workspace:
             userId=obj["userId"],
             numExperiments=obj["numExperiments"],
             state=v1WorkspaceState(obj["state"]),
+            errorMessage=obj["errorMessage"],
         )
 
     def to_json(self) -> typing.Any:
@@ -6430,6 +6437,7 @@ class v1Workspace:
             "userId": self.userId,
             "numExperiments": self.numExperiments,
             "state": self.state.value,
+            "errorMessage": self.errorMessage,
         }
 
 class v1WorkspaceState(enum.Enum):

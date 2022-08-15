@@ -5108,6 +5108,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     state: V1WorkspaceState;
+    /**
+     * Message stored from errors on async-deleting a project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    errorMessage: string;
 }
 
 /**
@@ -7194,6 +7200,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     state: V1WorkspaceState;
+    /**
+     * Message stored from errors on async-deleting a workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    errorMessage: string;
 }
 
 /**

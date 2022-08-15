@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from time import sleep
 from typing import Any, Dict, List, Sequence, Tuple
 
 from determined.cli.session import setup_session
@@ -145,6 +146,18 @@ def delete_project(args: Namespace) -> None:
             print(f"Successfully deleted project {args.project_name}.")
         else:
             print(f"Started deletion of project {args.project_name}...")
+            while True:
+                sleep(2)
+                try:
+                    p = bindings.get_GetProject(sess, id=p.id).project
+                    if p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                        print(f"Project deletion failed: {p.errorMessage}")
+                        break
+                    elif p.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                        print(f"Remaining experiment count: {p.numExperiments}")
+                except errors.NotFoundException:
+                    print("Project deleted successfully.")
+                    break
     else:
         print("Aborting project deletion.")
 

@@ -151,7 +151,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		log.WithError(err).Errorf("failed to access user and delete project %d", projectID)
-		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID)
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err
 	}
 
@@ -159,7 +159,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	for _, exp := range expList {
 		if err = a.deleteExperiment(exp, user); err != nil {
 			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
-			_ = a.m.db.QueryProto("delete_fail_project", holder, projectID)
+			_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 			return err
 		}
 	}
@@ -167,7 +167,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 	err = a.m.db.QueryProto("delete_project", holder, projectID, user.ID, user.Admin)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete project %d", projectID)
-		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID)
+		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err
 	}
 	log.Errorf("project %d deleted successfully", projectID)

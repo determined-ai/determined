@@ -235,7 +235,7 @@ def delete_experiment(args: Namespace) -> None:
         "wish to proceed?"
     ):
         bindings.delete_DeleteExperiment(setup_session(args), experimentId=args.experiment_id)
-        print("Delete of experiment {} is in progress".format(args.experiment_id))
+        print("Deletion of experiment {} is in progress".format(args.experiment_id))
     else:
         print("Aborting experiment deletion.")
 

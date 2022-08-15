@@ -9,7 +9,7 @@ w AS (
   WHERE id = $1
 )
 SELECT p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes,
-  'WORKSPACE_STATE_' || p.state AS state,
+  'WORKSPACE_STATE_' || p.state AS state, p.error_message,
   (w.archived OR p.archived) AS archived,
   SUM(case when pe.project_id = p.id then 1 else 0 end) AS num_experiments,
   SUM(case when pe.project_id = p.id AND pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,

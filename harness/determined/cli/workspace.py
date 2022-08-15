@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from time import sleep
 from typing import Any, List, Sequence
 
 from determined.cli.session import setup_session
@@ -139,6 +140,18 @@ def delete_workspace(args: Namespace) -> None:
             print(f"Successfully deleted workspace {args.workspace_name}.")
         else:
             print(f"Started deletion of workspace {args.workspace_name}...")
+            while True:
+                sleep(2)
+                try:
+                    w = bindings.get_GetWorkspace(sess, id=w.id).workspace
+                    if w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETE_FAILED:
+                        print(f"Workspace deletion failed: {w.errorMessage}")
+                        break
+                    elif w.state == bindings.v1WorkspaceState.WORKSPACE_STATE_DELETING:
+                        print(f"Remaining project count: {w.numProjects}")
+                except errors.NotFoundException:
+                    print("Workspace deleted successfully.")
+                    break
     else:
         print("Aborting workspace deletion.")
 

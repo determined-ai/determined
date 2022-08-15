@@ -24,6 +24,7 @@ message Workspace {
     json_schema: {
       required: [
         "archived",
+        "error_message",
         "id",
         "immutable",
         "name",
@@ -58,6 +59,8 @@ message Workspace {
   int32 num_experiments = 9;
   // State of workspace during deletion.
   WorkspaceState state = 10;
+  // Message stored from errors on async-deleting a workspace.
+  string error_message = 11;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
