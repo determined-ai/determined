@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import history from 'shared/routes/history';
 
@@ -16,7 +17,9 @@ import 'dev';
 ReactDOM.render(
   <React.StrictMode>
     <Router history={history}>
-      <App />
+      <CompatRouter>
+        <App />
+      </CompatRouter>
     </Router>
   </React.StrictMode>,
   document.getElementById('root'),
