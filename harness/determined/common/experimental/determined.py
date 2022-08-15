@@ -1,6 +1,6 @@
 import pathlib
 import warnings
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
@@ -137,8 +137,8 @@ class Determined:
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        r = self._session.get(f"/api/v1/checkpoints/{uuid}").json()
-        return checkpoint.Checkpoint._from_json(r["checkpoint"], self._session)
+        resp = bindings.get_GetCheckpoint(self._session, checkpointUuid=uuid)
+        return checkpoint.Checkpoint._from_bindings(resp.checkpoint, self._session)
 
     def create_model(
         self,
@@ -155,12 +155,15 @@ class Determined:
             description (string, optional): A description of the model.
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
-        r = self._session.post(
-            "/api/v1/models",
-            json={"description": description, "metadata": metadata, "name": name, "labels": labels},
+
+        # TODO: add notes param to create_model()
+        req = bindings.v1PostModelRequest(
+            name=name, description=description, labels=labels, metadata=metadata, notes=None
         )
 
-        return model.Model._from_json(r.json().get("model"), self._session)
+        resp = bindings.post_PostModel(self._session, body=req)
+
+        return model.Model._from_bindings(resp.model, self._session)
 
     def get_model(self, identifier: Union[str, int]) -> model.Model:
         """
@@ -172,9 +175,9 @@ class Determined:
         Arguments:
             identifier (string, int): The unique name or ID of the model.
         """
-        r = self._session.get(f"/api/v1/models/{identifier}").json()
-        assert r.get("model", False)
-        return model.Model._from_json(r.get("model"), self._session)
+
+        resp = bindings.get_GetModel(self._session, modelName=str(identifier))
+        return model.Model._from_bindings(resp.model, self._session)
 
     def get_model_by_id(self, model_id: int) -> model.Model:
         """
@@ -201,9 +204,9 @@ class Determined:
         self,
         sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
         order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
-        name: str = "",
-        description: str = "",
-        model_id: int = 0,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        model_id: Optional[int] = None,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -219,25 +222,32 @@ class Determined:
             model_id: If this paramter is set, models will be filtered to
                 only include the model with this unique numeric id.
         """
-        r = self._session.get(
-            "/api/v1/models/",
-            params={
-                "sort_by": sort_by.value,
-                "order_by": order_by.value,
-                "name": name,
-                "description": description,
-                "id": model_id,
-            },
-        )
+        # TODO: more parameters?
+        #   - archived
+        #   - labels
+        #   - userIds
+        #   - users
+        def get_with_offset(offset: int) -> bindings.v1GetModelsResponse:
+            return bindings.get_GetModels(
+                self._session,
+                archived=None,
+                description=description,
+                id=model_id,
+                labels=None,
+                name=name,
+                offset=offset,
+                orderBy=order_by._to_bindings(),
+                sortBy=sort_by._to_bindings(),
+                userIds=None,
+                users=None,
+            )
 
-        models = r.json().get("models")
-        return [model.Model._from_json(m, self._session) for m in models]
+        resps = api.read_paginated(get_with_offset)
+
+        return [model.Model._from_bindings(m, self._session) for r in resps for m in r.models]
 
     def get_model_labels(self) -> List[str]:
         """
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
-        r = self._session.get("/api/v1/model/labels")
-
-        labels = r.json().get("labels")
-        return cast(List[str], labels)
+        return list(bindings.get_GetModelLabels(self._session).labels)

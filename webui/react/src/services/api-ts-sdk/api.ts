@@ -1196,7 +1196,7 @@ export interface V1Checkpoint {
      * @type {Determinedcheckpointv1State}
      * @memberof V1Checkpoint
      */
-    state?: Determinedcheckpointv1State;
+    state: Determinedcheckpointv1State;
     /**
      * Training-related data for this checkpoint.
      * @type {V1CheckpointTrainingMetadata}
@@ -1964,7 +1964,7 @@ export interface V1Experiment {
      * @type {any}
      * @memberof V1Experiment
      */
-    config?: any;
+    config: any;
     /**
      * The original configuration that the user submitted.
      * @type {string}
@@ -2220,7 +2220,7 @@ export interface V1GetCheckpointResponse {
      * @type {V1Checkpoint}
      * @memberof V1GetCheckpointResponse
      */
-    checkpoint?: V1Checkpoint;
+    checkpoint: V1Checkpoint;
 }
 
 /**
@@ -3082,13 +3082,13 @@ export interface V1GetTrialCheckpointsResponse {
      * @type {Array<V1Checkpoint>}
      * @memberof V1GetTrialCheckpointsResponse
      */
-    checkpoints?: Array<V1Checkpoint>;
+    checkpoints: Array<V1Checkpoint>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTrialCheckpointsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -4063,13 +4063,13 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    userId?: number;
+    userId: number;
     /**
      * Whether this model is archived or not.
      * @type {boolean}
      * @memberof V1Model
      */
-    archived?: boolean;
+    archived: boolean;
     /**
      * Notes associated with this model.
      * @type {string}
@@ -4131,7 +4131,7 @@ export interface V1ModelVersion {
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    lastUpdatedTime?: Date;
+    lastUpdatedTime: Date;
     /**
      * Comment associated with this model version.
      * @type {string}
@@ -4143,7 +4143,7 @@ export interface V1ModelVersion {
      * @type {string}
      * @memberof V1ModelVersion
      */
-    username: string;
+    username?: string;
     /**
      * Id of the user who created this model version.
      * @type {number}

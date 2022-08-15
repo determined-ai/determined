@@ -696,11 +696,11 @@ class v1Checkpoint:
         *,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
+        state: "determinedcheckpointv1State",
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
         allocationId: "typing.Optional[str]" = None,
         reportTime: "typing.Optional[str]" = None,
-        state: "typing.Optional[determinedcheckpointv1State]" = None,
         taskId: "typing.Optional[str]" = None,
     ):
         self.taskId = taskId
@@ -721,7 +721,7 @@ class v1Checkpoint:
             reportTime=obj.get("reportTime", None),
             resources=obj["resources"],
             metadata=obj["metadata"],
-            state=determinedcheckpointv1State(obj["state"]) if obj.get("state", None) is not None else None,
+            state=determinedcheckpointv1State(obj["state"]),
             training=v1CheckpointTrainingMetadata.from_json(obj["training"]),
         )
 
@@ -733,7 +733,7 @@ class v1Checkpoint:
             "reportTime": self.reportTime if self.reportTime is not None else None,
             "resources": self.resources,
             "metadata": self.metadata,
-            "state": self.state.value if self.state is not None else None,
+            "state": self.state.value,
             "training": self.training.to_json(),
         }
 
@@ -1320,6 +1320,7 @@ class v1Experiment:
         self,
         *,
         archived: bool,
+        config: "typing.Dict[str, typing.Any]",
         id: int,
         jobId: str,
         name: str,
@@ -1331,7 +1332,6 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
-        config: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         description: "typing.Optional[str]" = None,
         displayName: "typing.Optional[str]" = None,
         endTime: "typing.Optional[str]" = None,
@@ -1402,7 +1402,7 @@ class v1Experiment:
             workspaceId=obj.get("workspaceId", None),
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
-            config=obj.get("config", None),
+            config=obj["config"],
             originalConfig=obj["originalConfig"],
             projectOwnerId=obj["projectOwnerId"],
         )
@@ -1433,7 +1433,7 @@ class v1Experiment:
             "workspaceId": self.workspaceId if self.workspaceId is not None else None,
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
-            "config": self.config if self.config is not None else None,
+            "config": self.config,
             "originalConfig": self.originalConfig,
             "projectOwnerId": self.projectOwnerId,
         }
@@ -1659,19 +1659,19 @@ class v1GetCheckpointResponse:
     def __init__(
         self,
         *,
-        checkpoint: "typing.Optional[v1Checkpoint]" = None,
+        checkpoint: "v1Checkpoint",
     ):
         self.checkpoint = checkpoint
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCheckpointResponse":
         return cls(
-            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]) if obj.get("checkpoint", None) is not None else None,
+            checkpoint=v1Checkpoint.from_json(obj["checkpoint"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoint": self.checkpoint.to_json() if self.checkpoint is not None else None,
+            "checkpoint": self.checkpoint.to_json(),
         }
 
 class v1GetCommandResponse:
@@ -2585,8 +2585,8 @@ class v1GetTrialCheckpointsResponse:
     def __init__(
         self,
         *,
-        checkpoints: "typing.Optional[typing.Sequence[v1Checkpoint]]" = None,
-        pagination: "typing.Optional[v1Pagination]" = None,
+        checkpoints: "typing.Sequence[v1Checkpoint]",
+        pagination: "v1Pagination",
     ):
         self.checkpoints = checkpoints
         self.pagination = pagination
@@ -2594,14 +2594,14 @@ class v1GetTrialCheckpointsResponse:
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTrialCheckpointsResponse":
         return cls(
-            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]] if obj.get("checkpoints", None) is not None else None,
-            pagination=v1Pagination.from_json(obj["pagination"]) if obj.get("pagination", None) is not None else None,
+            checkpoints=[v1Checkpoint.from_json(x) for x in obj["checkpoints"]],
+            pagination=v1Pagination.from_json(obj["pagination"]),
         )
 
     def to_json(self) -> typing.Any:
         return {
-            "checkpoints": [x.to_json() for x in self.checkpoints] if self.checkpoints is not None else None,
-            "pagination": self.pagination.to_json() if self.pagination is not None else None,
+            "checkpoints": [x.to_json() for x in self.checkpoints],
+            "pagination": self.pagination.to_json(),
         }
 
 class v1GetTrialProfilerAvailableSeriesResponse:
@@ -3516,18 +3516,18 @@ class v1Model:
     def __init__(
         self,
         *,
+        archived: bool,
         creationTime: str,
         id: int,
         lastUpdatedTime: str,
         metadata: "typing.Dict[str, typing.Any]",
         name: str,
         numVersions: int,
+        userId: int,
         username: str,
-        archived: "typing.Optional[bool]" = None,
         description: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
         notes: "typing.Optional[str]" = None,
-        userId: "typing.Optional[int]" = None,
     ):
         self.name = name
         self.description = description
@@ -3554,8 +3554,8 @@ class v1Model:
             numVersions=obj["numVersions"],
             labels=obj.get("labels", None),
             username=obj["username"],
-            userId=obj.get("userId", None),
-            archived=obj.get("archived", None),
+            userId=obj["userId"],
+            archived=obj["archived"],
             notes=obj.get("notes", None),
         )
 
@@ -3570,8 +3570,8 @@ class v1Model:
             "numVersions": self.numVersions,
             "labels": self.labels if self.labels is not None else None,
             "username": self.username,
-            "userId": self.userId if self.userId is not None else None,
-            "archived": self.archived if self.archived is not None else None,
+            "userId": self.userId,
+            "archived": self.archived,
             "notes": self.notes if self.notes is not None else None,
         }
 
@@ -3582,16 +3582,16 @@ class v1ModelVersion:
         checkpoint: "v1Checkpoint",
         creationTime: str,
         id: int,
+        lastUpdatedTime: str,
         model: "v1Model",
-        username: str,
         version: int,
         comment: "typing.Optional[str]" = None,
         labels: "typing.Optional[typing.Sequence[str]]" = None,
-        lastUpdatedTime: "typing.Optional[str]" = None,
         metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None,
         name: "typing.Optional[str]" = None,
         notes: "typing.Optional[str]" = None,
         userId: "typing.Optional[int]" = None,
+        username: "typing.Optional[str]" = None,
     ):
         self.model = model
         self.checkpoint = checkpoint
@@ -3617,9 +3617,9 @@ class v1ModelVersion:
             id=obj["id"],
             name=obj.get("name", None),
             metadata=obj.get("metadata", None),
-            lastUpdatedTime=obj.get("lastUpdatedTime", None),
+            lastUpdatedTime=obj["lastUpdatedTime"],
             comment=obj.get("comment", None),
-            username=obj["username"],
+            username=obj.get("username", None),
             userId=obj.get("userId", None),
             labels=obj.get("labels", None),
             notes=obj.get("notes", None),
@@ -3634,9 +3634,9 @@ class v1ModelVersion:
             "id": self.id,
             "name": self.name if self.name is not None else None,
             "metadata": self.metadata if self.metadata is not None else None,
-            "lastUpdatedTime": self.lastUpdatedTime if self.lastUpdatedTime is not None else None,
+            "lastUpdatedTime": self.lastUpdatedTime,
             "comment": self.comment if self.comment is not None else None,
-            "username": self.username,
+            "username": self.username if self.username is not None else None,
             "userId": self.userId if self.userId is not None else None,
             "labels": self.labels if self.labels is not None else None,
             "notes": self.notes if self.notes is not None else None,
