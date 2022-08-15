@@ -3,8 +3,35 @@ package db
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
+
+// CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
+func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
+	var checkpoint model.Checkpoint
+	if err := db.query(`
+SELECT *
+FROM checkpoints_view c
+WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
+		return nil, nil
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
+	}
+	return &checkpoint, nil
+}
+
+// CheckpointByUUIDs looks up a checkpoint by list of UUIDS, returning nil if error.
+func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
+	var checkpoints []model.Checkpoint
+	if err := db.query(`
+	SELECT * FROM checkpoints_view c WHERE c.uuid 
+	IN (SELECT UNNEST($1::uuid[]));`, checkpoints, ckptUUIDs); err != nil {
+		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids.")
+	}
+	return checkpoints, nil
+}
 
 // GetRegisteredCheckpoints gets the checkpoints in
 // the model registrys from the list of checkpoints provided.
