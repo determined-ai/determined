@@ -123,8 +123,8 @@ fi
 
 if [ $CLUSTER == "casablanca-login" ]; then
    CLUSTER=casablanca_login
-elif [ $CLUSTER != "casablanca" -a $CLUSTER != "horizon"  -a $CLUSTER != "shuco"  ]; then
-    echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: casablanca, casablanca-login, horizon, shuco"
+elif [ $CLUSTER != "casablanca" -a $CLUSTER != "horizon"  -a $CLUSTER != "shuco" -a $CLUSTER != "mosaic"  ]; then
+    echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: casablanca, casablanca-login, horizon, shuco, mosaic"
     exit 1
 fi
 
@@ -176,6 +176,21 @@ OPT_TRESSUPPORTED_shuco=false
 OPT_PROTOCOL_shuco=http
 OPT_RENDEVOUSIFACE_shuco=bond0
 
+# Configuration for mosaic
+OPT_name_mosaic=10.30.91.220
+OPT_LAUNCHERHOST_mosaic=localhost
+OPT_LAUNCHERPORT_mosaic=8181
+OPT_LAUNCHERPROTOCOL_mosaic=http
+OPT_CHECKPOINTPATH_mosaic=/home/launcher/determinedai/checkpoints
+OPT_DEBUGLEVEL_mosaic=debug
+OPT_MASTERHOST_mosaic=10.30.91.220
+OPT_MASTERPORT_mosaic=$USERPORT
+OPT_TRESSUPPORTED_mosaic=false
+OPT_PROTOCOL_mosaic=http
+OPT_RENDEVOUSIFACE_mosaic=bond0
+OPT_REMOTEUSER_mosaic=root@
+
+
 export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
 export OPT_LAUNCHERPROTOCOL=$(lookup "OPT_LAUNCHERPROTOCOL_$CLUSTER")
@@ -185,6 +200,8 @@ export OPT_MASTERHOST=$(lookup "OPT_MASTERHOST_$CLUSTER")
 export OPT_MASTERPORT=$(lookup "OPT_MASTERPORT_$CLUSTER")
 export OPT_TRESSUPPORTED=$(lookup "OPT_TRESSUPPORTED_$CLUSTER")
 export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
+export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
+
 
 SLURMCLUSTER=$(lookup "OPT_name_$CLUSTER")
 if [[ -z $SLURMCLUSTER ]]; then
@@ -197,7 +214,7 @@ if [[ -z $INTUNNEL ]]; then
 fi
 
 if [[ -n $PULL_AUTH ]]; then
-    pull_auth_token $SLURMCLUSTER $CLUSTER
+    pull_auth_token ${OPT_REMOTEUSER}$SLURMCLUSTER $CLUSTER
 fi
 
 
@@ -221,10 +238,10 @@ echo
 # Terminate our tunnels on exit
 trap "kill 0" EXIT
 if [[ -n $INTUNNEL ]]; then
-   mkintunnel  $OPT_MASTERHOST $OPT_LAUNCHERPORT $SLURMCLUSTER &
+   mkintunnel  $OPT_MASTERHOST $OPT_LAUNCHERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
 if [[ -n $TUNNEL ]]; then
-   mktunnel $OPT_MASTERHOST $OPT_MASTERPORT $SLURMCLUSTER &
+   mktunnel $OPT_MASTERHOST $OPT_MASTERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
 
 
