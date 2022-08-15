@@ -8,6 +8,7 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
+import { getDisplayName } from 'utils/user';
 
 export const MODAL_HEADER_LABEL_CREATE = 'Create Group';
 export const MODAL_HEADER_LABEL_EDIT = 'Edit Group';
@@ -80,7 +81,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
               users.filter(
                 (u) => !groupDetail?.users?.map((gu) => gu.id).includes(u.id),
               ).map((u) => (
-                <Select.Option key={u.id} value={u.id}>{u.displayName || u.username}</Select.Option>
+                <Select.Option key={u.id} value={u.id}>{getDisplayName(u)}</Select.Option>
               ))
             }
           </Select>
@@ -91,7 +92,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group }) => {
           name={USER_ADD_NAME}>
           <Select mode="multiple" optionFilterProp="children" placeholder="Add Users" showSearch>{
             users.map((u) => (
-              <Select.Option key={u.id} value={u.id}>{u.displayName || u.username}</Select.Option>
+              <Select.Option key={u.id} value={u.id}>{getDisplayName(u)}</Select.Option>
             ))
           }
           </Select>
