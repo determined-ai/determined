@@ -10,12 +10,9 @@ import (
 
 type (
 	customSearchState struct {
-		SearchMethodType   SearchMethodType `json:"search_method_type"`
-		SearcherEventQueue *SearcherEventQueue
-		// a list of marshaled protobuf experimentv1.Events object.
-		// Each protobuf obj needs to be marshaled individually.
-		PBEventsJSON         []json.RawMessage
-		customSearchProgress float64
+		SearchMethodType     SearchMethodType `json:"search_method_type"`
+		SearcherEventQueue   *SearcherEventQueue
+		CustomSearchProgress float64
 	}
 
 	customSearch struct {
@@ -57,7 +54,7 @@ func (s *customSearch) getSearcherEventQueue() *SearcherEventQueue {
 }
 
 func (s *customSearch) setCustomSearcherProgress(progress float64) {
-	s.customSearchState.customSearchProgress = progress
+	s.customSearchState.CustomSearchProgress = progress
 }
 
 func (s *customSearch) trialProgress(ctx context, requestID model.RequestID,
@@ -95,7 +92,7 @@ func (s *customSearch) progress(
 	trialProgress map[model.RequestID]PartialUnits,
 	trialsClosed map[model.RequestID]bool,
 ) float64 {
-	return s.customSearchState.customSearchProgress
+	return s.customSearchState.CustomSearchProgress
 }
 
 func (s *customSearch) validationCompleted(
