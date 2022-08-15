@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/trialv1";
 
 import "google/protobuf/struct.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -41,7 +42,7 @@ message MetricsWorkload {
   // The current validation state.
   determined.experiment.v1.State state = 3;
   // Metrics.
-  determined.checkpoint.v1.Metrics metrics = 40;
+  determined.common.v1.Metrics metrics = 40;
   // Number of inputs processed.
   int32 num_inputs = 5 [deprecated = true];
   // Total number of batches as of this workload's completion.
@@ -189,7 +190,7 @@ message TrialMetrics {
   // The metrics for this bit of training, including:
   // - avg_metrics: metrics reduced over the reporting period).
   // - batch_metrics: (optional) per-batch metrics.
-  determined.checkpoint.v1.Metrics metrics = 9;
+  determined.common.v1.Metrics metrics = 9;
 }
 
 // The rendezvous info for the trial to rendezvous with sibling containers.

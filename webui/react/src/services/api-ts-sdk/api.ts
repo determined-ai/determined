@@ -1960,6 +1960,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     config?: any;
+    /**
+     * The original configuration that the user submitted.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    originalConfig: string;
 }
 
 /**

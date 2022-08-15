@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/test/testutils"
@@ -84,7 +85,7 @@ func testGetCheckpoint(
 					TrialId:        int32(trial.ID),
 					TrialRunId:     int32(0),
 					StepsCompleted: stepsCompleted,
-					Metrics: &checkpointv1.Metrics{
+					Metrics: &commonv1.Metrics{
 						AvgMetrics: &structpb.Struct{
 							Fields: map[string]*structpb.Value{
 								"okness": {
@@ -185,7 +186,7 @@ func testGetExperimentCheckpoints(
 			TrialId:        int32(trial.ID),
 			TrialRunId:     int32(0),
 			StepsCompleted: int32(stepsCompleted),
-			Metrics: &checkpointv1.Metrics{
+			Metrics: &commonv1.Metrics{
 				AvgMetrics: &structpb.Struct{
 					Fields: map[string]*structpb.Value{
 						"loss": {

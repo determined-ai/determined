@@ -1291,6 +1291,7 @@ class v1Experiment:
         jobId: str,
         name: str,
         numTrials: int,
+        originalConfig: str,
         projectId: int,
         searcherType: str,
         startTime: str,
@@ -1337,6 +1338,7 @@ class v1Experiment:
         self.workspaceName = workspaceName
         self.parentArchived = parentArchived
         self.config = config
+        self.originalConfig = originalConfig
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Experiment":
@@ -1366,6 +1368,7 @@ class v1Experiment:
             workspaceName=obj.get("workspaceName", None),
             parentArchived=obj.get("parentArchived", None),
             config=obj.get("config", None),
+            originalConfig=obj["originalConfig"],
         )
 
     def to_json(self) -> typing.Any:
@@ -1395,6 +1398,7 @@ class v1Experiment:
             "workspaceName": self.workspaceName if self.workspaceName is not None else None,
             "parentArchived": self.parentArchived if self.parentArchived is not None else None,
             "config": self.config if self.config is not None else None,
+            "originalConfig": self.originalConfig,
         }
 
 class v1ExperimentSimulation:

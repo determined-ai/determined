@@ -22,7 +22,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/determined-ai/determined/master/internal"
@@ -114,7 +114,7 @@ func trialDetailAPITests(
 			assert.NilError(t, err, "failed to marshal metrics")
 			err = protojson.Unmarshal(b, &m)
 			assert.NilError(t, err, "failed to unmarshal metrics")
-			metrics.Metrics = &checkpointv1.Metrics{
+			metrics.Metrics = &commonv1.Metrics{
 				AvgMetrics: &m,
 			}
 
@@ -175,7 +175,7 @@ func trialWorkloadsAPIHugeMetrics(
 	metrics := trialv1.TrialMetrics{
 		TrialId:        int32(trial.ID),
 		StepsCompleted: stepSize,
-		Metrics: &checkpointv1.Metrics{
+		Metrics: &commonv1.Metrics{
 			AvgMetrics:   makeMetrics(),
 			BatchMetrics: batchMetrics,
 		},

@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -94,7 +95,7 @@ func TestModels(t *testing.T) {
 				m = &trialv1.TrialMetrics{
 					TrialId:        int32(tr.ID),
 					StepsCompleted: stepsCompleted,
-					Metrics: &checkpointv1.Metrics{
+					Metrics: &commonv1.Metrics{
 						AvgMetrics: &structpb.Struct{
 							Fields: map[string]*structpb.Value{
 								defaultSearcherMetric: {
