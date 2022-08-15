@@ -207,6 +207,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   const storage = useStorage(options?.storagePath || config.storagePath);
   const { auth: { user } } = useStore();
   const prevSearch = usePrevious(location.search, undefined);
+  const prevUser = usePrevious(user, user);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
   const [ pathChange, setPathChange ] = useState<PathChange<T>>(defaultPathChange);
 
@@ -315,7 +316,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
   }, [ config.settings, updateSettings ]);
 
   const fetchUserSetting = useCallback(async () => {
-    if (!user) return;
+    if (!user || user === prevUser) return;
     try {
       const userSettingResponse = await getUserSetting({ userId: user.id });
       userSettingResponse.settings.forEach((setting) => {
@@ -349,7 +350,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
       });
     }
 
-  }, [ configMap, storage, user ]);
+  }, [ configMap, prevUser, storage, user ]);
 
   useEffect(() => {
     fetchUserSetting();
