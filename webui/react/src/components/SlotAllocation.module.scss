@@ -59,6 +59,7 @@ ul.detailedLegends {
   margin-bottom: 8px;
 
   .queued {
+    cursor: pointer;
     color: var(--theme-status-active)
   }
 }
