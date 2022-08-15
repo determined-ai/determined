@@ -83,6 +83,13 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
+	// We need to write a db method to get all checkpoints objects for the given list of checkpoints uuids.
+	// Use checkpoints_view for this. This needs to be a json object. Look at CheckpointByUUID in postgres_trial.go.
+	// You can then marshal the model.Checkpoint struct.
+
+	// So that experiment.py can access it properly.
+	// Get metric name for experiments from experiment table (see how they extract it from GCRaw method.)
+	// Ssh in into latest master and use the GET checkpoints query (from checkpoints_view) and see how it performs.
 	return m.db.ExperimentCheckpointsToGCRaw(
 		args.ExperimentID, args.ExperimentBest, args.TrialBest, args.TrialLatest)
 }
