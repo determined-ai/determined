@@ -4,7 +4,8 @@ import json
 import warnings
 from typing import Any, Dict, Iterable, List, Optional
 
-from determined.common.experimental import checkpoint, session
+from determined.common import api
+from determined.common.experimental import checkpoint
 
 
 class ModelVersion:
@@ -15,7 +16,7 @@ class ModelVersion:
 
     def __init__(
         self,
-        session: session.Session,
+        session: api.Session,
         model_version_id: int,  # unique DB id
         checkpoint: checkpoint.Checkpoint,
         metadata: Dict[str, Any],
@@ -74,7 +75,7 @@ class ModelVersion:
         )
 
     @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "ModelVersion":
+    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
         ckpt_data = data.get("checkpoint", {})
         ckpt = checkpoint.Checkpoint._from_json(ckpt_data, session)
 
@@ -92,7 +93,7 @@ class ModelVersion:
         )
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "ModelVersion":
+    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "ModelVersion":
         warnings.warn(
             "ModelVersion.from_json() is deprecated and will be removed from the public API "
             "in a future version",
@@ -161,7 +162,7 @@ class Model:
 
     def __init__(
         self,
-        session: session.Session,
+        session: api.Session,
         model_id: int,
         name: str,
         description: str = "",
@@ -366,7 +367,7 @@ class Model:
         )
 
     @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Model":
+    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
         return cls(
             session,
             data["id"],
@@ -381,7 +382,7 @@ class Model:
         )
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "Model":
+    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "Model":
         warnings.warn(
             "Model.from_json() is deprecated and will be removed from the public API "
             "in a future version",

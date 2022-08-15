@@ -6,8 +6,7 @@ import shutil
 import warnings
 from typing import Any, Dict, List, Optional, cast
 
-from determined.common import constants, storage
-from determined.common.experimental import session
+from determined.common import api, constants, storage
 from determined.common.storage import shared
 
 
@@ -49,7 +48,7 @@ class Checkpoint(object):
 
     def __init__(
         self,
-        session: session.Session,
+        session: api.Session,
         task_id: str,
         allocation_id: str,
         uuid: str,
@@ -384,7 +383,7 @@ class Checkpoint(object):
             return f"Checkpoint(uuid={self.uuid}, task_id={self.task_id})"
 
     @classmethod
-    def _from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+    def _from_json(cls, data: Dict[str, Any], session: api.Session) -> "Checkpoint":
         metadata = data.get("metadata", {})
         training_data = data.get("training")
         training = (
@@ -412,7 +411,7 @@ class Checkpoint(object):
         )
 
     @classmethod
-    def from_json(cls, data: Dict[str, Any], session: session.Session) -> "Checkpoint":
+    def from_json(cls, data: Dict[str, Any], session: api.Session) -> "Checkpoint":
         warnings.warn(
             "Checkpoint.from_json() is deprecated and will be removed from the public API "
             "in a future version",

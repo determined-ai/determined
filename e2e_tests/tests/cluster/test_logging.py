@@ -6,7 +6,6 @@ import pytest
 from determined.cli import command
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import session
 from tests import config as conf
 from tests import experiment as exp
 
@@ -59,7 +58,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
 
     rps = bindings.get_GetResourcePools(
-        session.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+        api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
     )
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 

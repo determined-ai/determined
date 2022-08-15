@@ -9,9 +9,9 @@ import yaml
 from determined.cli import render
 from determined.cli.session import setup_session
 from determined.cli.util import format_args, pagination_args_fetchone
+from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Session
 
 
 @authentication.required
@@ -98,7 +98,7 @@ def process_updates(args: Namespace) -> None:
 
 def _single_update(
     job_id: str,
-    session: Session,
+    session: api.Session,
     priority: str = "",
     weight: str = "",
     resource_pool: str = "",

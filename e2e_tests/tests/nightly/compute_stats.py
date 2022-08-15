@@ -6,8 +6,8 @@ from typing import Any, Dict, Tuple
 
 from dateutil import parser
 
+from determined.common import api
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import session
 from tests import config as conf
 
 ADD_KEY = "adding"
@@ -91,11 +91,11 @@ def fetch_master_log() -> bool:
     return True
 
 
-def create_test_session() -> session.Session:
+def create_test_session() -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
     authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return session.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
 
 
 def compare_stats() -> None:

@@ -1,8 +1,8 @@
 import enum
 from typing import Any, Callable, Dict, Optional
 
-from determined.common import check
-from determined.common.experimental import checkpoint, session
+from determined.common import api
+from determined.common.experimental import checkpoint
 
 
 class TrialReference:
@@ -14,7 +14,7 @@ class TrialReference:
     :class:`~determined.experimental.Checkpoint` instances.
     """
 
-    def __init__(self, trial_id: int, session: session.Session):
+    def __init__(self, trial_id: int, session: api.Session):
         self.id = trial_id
         self._session = session
 
@@ -82,17 +82,11 @@ class TrialReference:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        check.eq(
-            sum([int(latest), int(best), int(uuid is not None)]),
-            1,
-            "Exactly one of latest, best, or uuid must be set",
-        )
+        if sum([int(latest), int(best), int(uuid is not None)]) != 1:
+            raise AssertionError("Exactly one of latest, best, or uuid must be set")
 
-        check.eq(
-            sort_by is None,
-            smaller_is_better is None,
-            "sort_by and smaller_is_better must be set together",
-        )
+        if (sort_by is None) != (smaller_is_better is None):
+            raise AssertionError("sort_by and smaller_is_better must be set together")
 
         if sort_by is not None and not best:
             raise AssertionError(

@@ -2,8 +2,8 @@ from typing import List
 
 import pytest
 
+from determined.common import api
 from determined.common.api import authentication, bindings, errors
-from determined.common.experimental import session
 from tests import config as conf
 from tests.cluster.test_users import ADMIN_CREDENTIALS
 from tests.experiment import run_basic_test, wait_for_experiment_state
@@ -13,11 +13,11 @@ from tests.experiment import run_basic_test, wait_for_experiment_state
 def test_workspace_org() -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
-    sess = session.Session(master_url, None, None, None)
+    sess = api.Session(master_url, None, None, None)
     admin_auth = authentication.Authentication(
         master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
     )
-    admin_sess = session.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
+    admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []

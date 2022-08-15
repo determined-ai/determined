@@ -7,7 +7,7 @@ from typing import Any, Optional
 import requests
 
 from determined import core
-from determined.common.experimental.session import Session
+from determined.common import api
 
 logger = logging.getLogger("determined.core")
 
@@ -35,7 +35,7 @@ class _PreemptionWatcher(threading.Thread):
                print('finished without preemption signal')
     """
 
-    def __init__(self, session: Session, allocation_id: str) -> None:
+    def __init__(self, session: api.Session, allocation_id: str) -> None:
         self._session = session
         self._allocation_id = allocation_id
 
@@ -153,7 +153,7 @@ class PreemptContext:
 
     def __init__(
         self,
-        session: Session,
+        session: api.Session,
         allocation_id: str,
         dist: core.DistributedContext,
         preempt_mode: PreemptMode = PreemptMode.WorkersAskChief,
