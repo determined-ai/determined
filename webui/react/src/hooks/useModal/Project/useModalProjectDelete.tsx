@@ -39,10 +39,8 @@ const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await deleteProject({ id: project.id });
-      if (response.completed) {
-        routeToReactUrl(paths.workspaceDetails(project.workspaceId));
-      }
+      await deleteProject({ id: project.id });
+      routeToReactUrl(paths.workspaceDetails(project.workspaceId));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,

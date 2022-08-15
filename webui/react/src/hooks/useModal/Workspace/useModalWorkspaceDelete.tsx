@@ -43,10 +43,8 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      const response = await deleteWorkspace({ id: workspace.id });
-      if (response.completed) {
-        routeToReactUrl(paths.workspaceList());
-      }
+      await deleteWorkspace({ id: workspace.id });
+      routeToReactUrl(paths.workspaceList());
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
