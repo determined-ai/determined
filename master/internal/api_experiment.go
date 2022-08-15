@@ -1139,11 +1139,11 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByMetricOfInterest
 	case expconf.GridConfig:
 		ranking = ByMetricOfInterest
+	case expconf.CustomConfig:
+		ranking = ByMetricOfInterest
 	case expconf.AsyncHalvingConfig:
 		ranking = ByTrainingLength
 	case expconf.AdaptiveASHAConfig:
-		ranking = ByTrainingLength
-	case expconf.CustomConfig:
 		ranking = ByTrainingLength
 	case expconf.SingleConfig:
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
