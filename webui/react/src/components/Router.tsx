@@ -39,11 +39,11 @@ const Router: React.FC<Props> = (props: Props) => {
 
         if (route.needAuth && !auth.isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <CompatRoute key={route.id} {...route} />;
+          if (!auth.checked) return <CompatRoute {...route} key={route.id} />;
           return (
             <CompatRoute
-              key={route.id}
               {...route}
+              key={route.id}
               render={({ location }: {location: Location}): ReactNode => (
                 <Redirect
                   to={{
@@ -71,7 +71,7 @@ const Router: React.FC<Props> = (props: Props) => {
           }
         }
 
-        return <CompatRoute component={component} key={route.id} {...route} />;
+        return <CompatRoute {...route} component={component} key={route.id} />;
       })}
     </Switch>
   );
