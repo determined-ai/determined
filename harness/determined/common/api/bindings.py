@@ -1101,6 +1101,7 @@ class v1DeleteCheckpointsRequest:
 class v1DeleteProjectResponse:
     def __init__(
         self,
+        *,
         completed: bool,
     ):
         self.completed = completed
@@ -1119,6 +1120,7 @@ class v1DeleteProjectResponse:
 class v1DeleteWorkspaceResponse:
     def __init__(
         self,
+        *,
         completed: bool,
     ):
         self.completed = completed
