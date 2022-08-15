@@ -198,6 +198,73 @@ export const resetUserSetting: DetApi<
   request: () => detApi.Users.resetUserSetting(),
 };
 
+/* Group */
+
+export const createGroup: DetApi<
+Service.CreateGroupsParams,
+Api.V1CreateGroupResponse, Api.V1CreateGroupResponse
+> = {
+  name: 'createGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.createGroup(
+    {
+      addUsers: params.addUsers,
+      name: params.name,
+    },
+  ),
+};
+
+export const getGroup: DetApi<
+  Service.GetGroupParams, Api.V1GetGroupResponse, Api.V1GetGroupResponse
+> = {
+  name: 'getGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.getGroup(
+    params.groupId,
+  ),
+};
+
+export const getGroups: DetApi<
+  Service.GetGroupsParams, Api.V1GetGroupsResponse, Api.V1GetGroupsResponse
+> = {
+  name: 'getGroups',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.getGroups(
+    {
+      limit: params.limit || 10,
+      offset: params.offset,
+    },
+  ),
+};
+
+export const updateGroup: DetApi<
+Service.UpdateGroupParams,
+ Api.V1UpdateGroupResponse, Api.V1UpdateGroupResponse
+> = {
+  name: 'updateGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.updateGroup(
+    params.groupId,
+    {
+      addUsers: params.addUsers,
+      groupId: params.groupId,
+      name: params.name,
+      removeUsers: params.removeUsers,
+    },
+  ),
+};
+
+export const deleteGroup: DetApi<
+Service.DeleteGroupParams,
+ Api.V1DeleteGroupResponse, Api.V1DeleteGroupResponse
+> = {
+  name: 'deleteGroup',
+  postProcess: (response) => response,
+  request: (params) => detApi.Internal.deleteGroup(
+    params.groupId,
+  ),
+};
+
 /* Info */
 
 export const getInfo: DetApi<

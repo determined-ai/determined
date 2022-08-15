@@ -4,6 +4,7 @@ import { useHistory, useParams } from 'react-router';
 import { useLocation } from 'react-router-dom';
 
 import Page from 'components/Page';
+import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
@@ -52,6 +53,9 @@ const SettingsContent: React.FC = () => {
       </TabPane>
       <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
         <UserManagement />
+      </TabPane>
+      <TabPane key="group-management" tab="Group Management">
+        <GroupManagement />
       </TabPane>
     </Tabs>
   ) : (
