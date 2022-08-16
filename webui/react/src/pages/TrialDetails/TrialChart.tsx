@@ -1,5 +1,5 @@
 import { Empty } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -9,6 +9,7 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
+import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
@@ -22,6 +23,7 @@ interface Props {
   metrics: MetricName[];
   onMetricChange: (value: MetricName[]) => void;
   trialId?: number;
+  trialTerminated: boolean;
 }
 
 const getChartMetricLabel = (metric: MetricName): string => {
@@ -36,11 +38,12 @@ const TrialChart: React.FC<Props> = ({
   metrics,
   onMetricChange,
   trialId,
+  trialTerminated,
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
 
-  useMemo(async () => {
+  const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
       const summ = await compareTrials({
         maxDatapoints: screen.width > 1600 ? 1500 : 1000,
@@ -52,6 +55,16 @@ const TrialChart: React.FC<Props> = ({
       setTrialSummary(summ[0].metrics);
     }
   }, [ metricNames, scale, trialId ]);
+
+  const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
+  useEffect(() => {
+    if (trialTerminated) {
+      stopPolling();
+    }
+  }, [ trialTerminated, stopPolling ]);
+  if (trialTerminated) {
+    stopPolling();
+  }
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
