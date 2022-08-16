@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import { terminalRunStates } from 'constants/states';
@@ -18,7 +18,7 @@ import { isAborted } from 'shared/utils/service';
 import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 
-interface Params {
+type Params = {
   experimentId: string;
 }
 
@@ -38,7 +38,7 @@ const ExperimentDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
 
-  const id = parseInt(experimentId);
+  const id = parseInt(experimentId as string);
 
   const fetchExperimentDetails = useCallback(async () => {
     try {

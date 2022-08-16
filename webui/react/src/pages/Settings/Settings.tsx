@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Page from 'components/Page';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
@@ -15,7 +14,7 @@ export enum TabType {
   UserManagement = 'User Management',
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
 }
 

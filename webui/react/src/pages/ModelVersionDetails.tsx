@@ -1,7 +1,6 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import InfoBox from 'components/InfoBox';
 import Link from 'components/Link';
@@ -26,7 +25,7 @@ import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 
 const { TabPane } = Tabs;
 
-interface Params {
+type Params = {
   modelId: string;
   tab?: TabType;
   versionId: string;
@@ -42,11 +41,13 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 
 const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
-  const { modelId, versionId, tab } = useParams<Params>();
+  const { modelId: modelID, versionId: versionID, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
   const navigate = useNavigate();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
+  const modelId = modelID as string;
+  const versionId = versionID as string;
   const basePath = paths.modelVersionDetails(modelId, versionId);
 
   const fetchModelVersion = useCallback(async () => {

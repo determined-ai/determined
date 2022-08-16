@@ -1,7 +1,6 @@
 import { Button, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -36,7 +35,7 @@ enum TabType {
   Notes = 'notes'
 }
 
-interface Params {
+type Params = {
   tab?: TabType;
 }
 

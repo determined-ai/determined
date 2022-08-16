@@ -3,7 +3,7 @@ import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
@@ -78,7 +78,7 @@ import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs
 
 const filterKeys: Array<keyof ProjectDetailsSettings> = [ 'label', 'search', 'state', 'user' ];
 
-interface Params {
+type Params = {
   projectId: string;
 }
 
@@ -115,7 +115,7 @@ const ProjectDetails: React.FC = () => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
   }, [ updateDestinationSettings, project?.workspaceId ]);
 
-  const id = parseInt(projectId);
+  const id = parseInt(projectId ?? '1');
 
   const {
     settings,

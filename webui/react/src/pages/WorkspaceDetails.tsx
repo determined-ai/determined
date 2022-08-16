@@ -1,6 +1,6 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -39,13 +39,13 @@ import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
 
 const { Option } = Select;
 
-interface Params {
+type Params = {
   workspaceId: string;
 }
 
 const WorkspaceDetails: React.FC = () => {
   const { users, auth: { user } } = useStore();
-  const { workspaceId } = useParams<Params>();
+  const { workspaceId: workspaceID } = useParams<Params>();
   const [ workspace, setWorkspace ] = useState<Workspace>();
   const [ projects, setProjects ] = useState<Project[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
@@ -54,6 +54,7 @@ const WorkspaceDetails: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
 
+  const workspaceId = workspaceID as string;
   const id = parseInt(workspaceId);
 
   const {

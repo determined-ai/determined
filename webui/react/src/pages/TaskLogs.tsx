@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
@@ -16,7 +16,7 @@ import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
 }
@@ -31,7 +31,7 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 export const TaskLogsWrapper: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
-  return <TaskLogs taskId={taskId} taskType={taskType} />;
+  return <TaskLogs taskId={taskId as string} taskType={taskType as string} />;
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
   const [ filterOptions, setFilterOptions ] = useState<Filters>({});

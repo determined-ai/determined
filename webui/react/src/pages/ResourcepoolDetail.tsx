@@ -1,7 +1,6 @@
 import { Divider, Tabs } from 'antd';
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
@@ -30,7 +29,7 @@ import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
 import JobQueue from './JobQueue/JobQueue';
 import css from './ResourcepoolDetail.module.scss';
 
-interface Params {
+type Params = {
   poolname?: string;
   tab?: TabType;
 }

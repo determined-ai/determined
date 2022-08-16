@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import TaskBar from 'components/TaskBar';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
@@ -11,7 +11,7 @@ import handleError from 'utils/error';
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
 
-interface Params {
+type Params = {
   taskId: string;
   taskName: string;
   taskResourcePool: string;
@@ -50,10 +50,22 @@ const getTitleState = (commandState?: CommandState): string => {
 export const InteractiveTask: React.FC = () => {
 
   const [ pageView, setPageView ] = useState<PageView>(PageView.IFRAME);
-  const { taskId, taskName, taskResourcePool, taskUrl, taskType } = useParams<Params>();
+  const {
+    taskId: tId,
+    taskName: tName,
+    taskResourcePool: tResourcePool,
+    taskType: tType,
+    taskUrl: tUrl,
+  } = useParams<Params>();
   const [ taskState, setTaskState ] = useState<CommandState>();
   const storeDispatch = useStoreDispatch();
   const { ui } = useStore();
+
+  const taskId = tId as string;
+  const taskName = tName as string;
+  const taskResourcePool = tResourcePool as string;
+  const taskType = tType as CommandType;
+  const taskUrl = tUrl as string;
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
