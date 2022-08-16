@@ -57,7 +57,7 @@ const WorkspaceList: React.FC = () => {
     try {
       const response = await getWorkspaces({
         archived: settings.archived ? undefined : false,
-        limit: settings.tableLimit,
+        limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
         name: settings.name,
         offset: settings.tableOffset,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -83,7 +83,8 @@ const WorkspaceList: React.FC = () => {
     settings.sortKey,
     settings.tableLimit,
     settings.tableOffset,
-    settings.user ]);
+    settings.user,
+    settings.view ]);
 
   usePolling(fetchWorkspaces);
 
