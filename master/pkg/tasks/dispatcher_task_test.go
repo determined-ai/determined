@@ -22,6 +22,15 @@ import (
 
 const workDir = "/workdir"
 
+var aug = &model.AgentUserGroup{
+	ID:     1,
+	UserID: 1,
+	User:   "determined",
+	UID:    0,
+	Group:  "test-group",
+	GID:    0,
+}
+
 func Test_getPortMappings(t *testing.T) {
 	type args struct {
 		ports map[string]int
@@ -264,14 +273,6 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 func Test_dispatcherArchive(t *testing.T) {
 	err := etc.SetRootPath("../../static/srv/")
 	assert.NilError(t, err)
-	aug := &model.AgentUserGroup{
-		ID:     1,
-		UserID: 1,
-		User:   "determined",
-		UID:    0,
-		Group:  "test-group",
-		GID:    0,
-	}
 
 	want := cproto.RunArchive{
 		Path: "/",
@@ -325,6 +326,329 @@ func Test_dispatcherArchive(t *testing.T) {
 		assert.Equal(t, a.Type, want.Archive[i].Type)
 		assert.Equal(t, a.FileMode, want.Archive[i].FileMode)
 	}
+}
+
+func Test_makeLocalVolumn(t *testing.T) {
+	tests := []struct {
+		name string
+		arg  cproto.RunArchive
+		want bool
+	}{
+		{
+			name: "Test sshDir",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "/run/determined/ssh",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Test TaskLoggingSetupScriptResource",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "task-logging-setup.sh",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Test CommandEntryPointResource",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "/run/determined/command-entrypoint.sh",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Test ShellEntryPointResource",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "/run/determined/shell-entrypoint.sh",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Test item path runDir",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "/run/determined/",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Test path runDir",
+			arg: cproto.RunArchive{
+				Path: "/run/determined",
+			},
+			want: true,
+		},
+		{
+			name: "Test path DefaultWorkDir",
+			arg: cproto.RunArchive{
+				Path: "/run/determined/workdir",
+			},
+			want: true,
+		},
+		{
+			name: "Test no path specified",
+			arg:  cproto.RunArchive{},
+			want: false,
+		},
+		{
+			name: "Test path random",
+			arg: cproto.RunArchive{
+				Path: "/x/y/z",
+			},
+			want: false,
+		},
+		{
+			name: "Test item path random",
+			arg: cproto.RunArchive{
+				Archive: archive.Archive{
+					archive.Item{
+						Path: "/x/y/z",
+					},
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := makeLocalVolume(tt.arg)
+			assert.Equal(t, got, tt.want)
+		})
+	}
+}
+
+func Test_getAllArchives(t *testing.T) {
+	ts := &TaskSpec{
+		AgentUserGroup: aug,
+		WorkDir:        "/run/determined/workdir",
+	}
+
+	got := getAllArchives(ts)
+	assert.Assert(t, len(*got) > 0)
+}
+
+func Test_encodeArchiveParameters(t *testing.T) {
+	dispatcherArchive := cproto.RunArchive{}
+	allArchives := []cproto.RunArchive{
+		{
+			Path: "/run/determined/workdir",
+		},
+	}
+	customArgs, err := encodeArchiveParameters(dispatcherArchive, allArchives)
+	assert.NilError(t, err)
+	assert.Assert(t, len(customArgs["Archives"]) > 0)
+}
+
+func Test_ToDispatcherManifest(t *testing.T) {
+	tests := []struct {
+		name             string
+		containerRunType string
+		slotType         device.Type
+		tresSupported    bool
+		Slurm            []string
+		wantCarrier      string
+		wantErr          bool
+		errorContains    string
+	}{
+		{
+			name:             "Test singularity",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			tresSupported:    true,
+			Slurm:            []string{},
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm",
+		},
+		{
+			name:             "Test podman",
+			containerRunType: "podman",
+			slotType:         device.CPU,
+			tresSupported:    false,
+			Slurm:            []string{},
+			wantCarrier:      "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm",
+		},
+		{
+			name:             "Test error case",
+			containerRunType: "singularity",
+			slotType:         device.CUDA,
+			Slurm:            []string{"--gpus=2"},
+			wantErr:          true,
+			errorContains:    "is not configurable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			disableImageCache := true
+			image := "RawImage"
+
+			environment := expconf.EnvironmentConfigV0{
+				RawImage: &expconf.EnvironmentImageMapV0{
+					RawCPU:  &image,
+					RawCUDA: &image,
+					RawROCM: &image,
+				},
+				RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{},
+				RawRegistryAuth:         &types.AuthConfig{},
+				RawForcePullImage:       &disableImageCache,
+				RawSlurm:                tt.Slurm,
+				RawPodSpec:              &expconf.PodSpec{},
+				RawAddCapabilities:      []string{},
+				RawDropCapabilities:     []string{},
+				RawPorts: map[string]int{"Podman_1": 8080,
+					"podmanPortMapping2": 443, "PodMan3": 3000},
+			}
+
+			ts := &TaskSpec{
+				AgentUserGroup: aug,
+				WorkDir:        "/run/determined/workdir",
+				Environment:    environment,
+			}
+
+			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
+				"masterHost", 8888, "certName", 16, tt.slotType,
+				"slurm_partition1", tt.tresSupported, tt.containerRunType)
+
+			if tt.wantErr {
+				assert.ErrorContains(t, err, tt.errorContains)
+			} else {
+				assert.NilError(t, err)
+				assert.Equal(t, userName, "determined")
+				assert.Equal(t, payloadName, "ai")
+				assert.Assert(t, manifest != nil)
+				assert.Equal(t, len(*manifest.Payloads), 1)
+
+				payload := (*manifest.Payloads)[0]
+				assert.Equal(t, *payload.Name, "ai")
+				assert.Equal(t, *payload.Id, "com.cray.analytics.capsules.generic.container")
+				assert.Equal(t, *payload.Version, "latest")
+
+				assert.Equal(t, len(*payload.Carriers), 1)
+				assert.Equal(t, (*payload.Carriers)[0], tt.wantCarrier)
+
+				launchParameters := payload.LaunchParameters
+				assert.Assert(t, launchParameters != nil)
+
+				customs := launchParameters.GetCustom()
+				assert.Assert(t, customs != nil)
+				assert.Assert(t, customs["Archives"] != nil)
+				assert.Assert(t, customs["slurmArgs"] == nil)
+
+				if tt.containerRunType == "podman" {
+					assert.Assert(t, customs["ports"] != nil)
+				} else {
+					assert.Assert(t, customs["ports"] == nil)
+				}
+			}
+		})
+	}
+}
+
+func Test_getEnvVarsForLauncherManifest(t *testing.T) {
+	disableImageCache := true
+
+	environment := expconf.EnvironmentConfigV0{
+		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+			RawCPU:  []string{"cpu=default", "myenv=xyz"},
+			RawCUDA: []string{"cuda=default", "extra=expconf"},
+			RawROCM: []string{"rocm=default"},
+		},
+		RawRegistryAuth: &types.AuthConfig{
+			Username:      "user",
+			Password:      "pwd",
+			ServerAddress: "addr",
+			Email:         "email",
+		},
+		RawForcePullImage:   &disableImageCache,
+		RawAddCapabilities:  []string{"add1", "add2"},
+		RawDropCapabilities: []string{"drop1", "drop2"},
+		RawImage:            &expconf.EnvironmentImageMapV0{},
+		RawPodSpec:          &expconf.PodSpec{},
+		RawSlurm:            []string{},
+		RawPorts:            map[string]int{},
+	}
+
+	ts := &TaskSpec{
+		ContainerID: "Container_ID",
+		ClusterID:   "Cluster_ID",
+		Environment: environment,
+		Devices: []device.Device{
+			{
+				ID:    123,
+				Brand: "brand",
+				UUID:  "uuid",
+				Type:  device.CPU,
+			},
+		},
+	}
+
+	envVars, err := getEnvVarsForLauncherManifest(ts,
+		"masterHost", 8888, "certName", false, device.CUDA)
+
+	assert.NilError(t, err)
+	assert.Assert(t, len(envVars) > 0)
+
+	assert.Equal(t, envVars["DET_MASTER"], "masterHost:8888")
+	assert.Equal(t, envVars["DET_MASTER_HOST"], "masterHost")
+	assert.Equal(t, envVars["DET_MASTER_IP"], "masterHost")
+	assert.Equal(t, envVars["DET_MASTER_PORT"], "8888")
+	assert.Equal(t, envVars["DET_CONTAINER_ID"], "Container_ID")
+	assert.Equal(t, envVars["DET_CLUSTER_ID"], "Cluster_ID")
+	assert.Equal(t, envVars["SLURM_KILL_BAD_EXIT"], "1")
+	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
+	assert.Equal(t, envVars["DET_AGENT_ID"], "launcher")
+	assert.Equal(t, envVars["DET_MASTER_CERT_NAME"], "certName")
+	assert.Equal(t, envVars["DET_CONTAINER_LOCAL_TMP"], "1")
+	assert.Equal(t, envVars["SINGULARITY_DOCKER_USERNAME"], "user")
+	assert.Equal(t, envVars["SINGULARITY_DOCKER_PASSWORD"], "pwd")
+	assert.Equal(t, envVars["SINGULARITY_DISABLE_CACHE"], "true")
+	assert.Equal(t, envVars["SINGULARITY_ADD_CAPS"], "add1,add2")
+	assert.Equal(t, envVars["SINGULARITY_DROP_CAPS"], "drop1,drop2")
+	assert.Equal(t, envVars["SINGULARITY_NO_MOUNT"], "tmp")
+	assert.Equal(t, envVars["cpu"], "default")
+	assert.Equal(t, envVars["myenv"], "xyz")
+}
+
+func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
+	disableImageCache := true
+	environment := expconf.EnvironmentConfigV0{
+		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+			RawCPU: []string{"cpudefault", "cpuexpconf"},
+		},
+		RawImage:            &expconf.EnvironmentImageMapV0{},
+		RawRegistryAuth:     &types.AuthConfig{},
+		RawForcePullImage:   &disableImageCache,
+		RawPodSpec:          &expconf.PodSpec{},
+		RawSlurm:            []string{},
+		RawAddCapabilities:  []string{},
+		RawDropCapabilities: []string{},
+		RawPorts:            map[string]int{},
+	}
+
+	ts := &TaskSpec{
+		Environment: environment,
+	}
+
+	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false, device.CUDA)
+	assert.ErrorContains(t, err, "invalid user-defined environment variable 'cpudefault'")
 }
 
 func Test_generateRunDeterminedLinkNames(t *testing.T) {
