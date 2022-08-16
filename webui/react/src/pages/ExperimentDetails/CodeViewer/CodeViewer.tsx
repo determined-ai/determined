@@ -50,7 +50,7 @@ const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
 
 enum PageError {
   decode = 'Could not decode file.',
-  empty = 'Empty file.',
+  empty = 'Empty file! Please choose a diferent file.',
   fetch = 'Unable to fetch file.',
   none = ''
 }
