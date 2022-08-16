@@ -689,3 +689,11 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
     workspaceName: data.workspaceName ?? '',
   };
 };
+
+export const decodeJobStates = (states?: Sdk.Determinedjobv1State[]): Array<
+'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
+> => {
+  return states as unknown as Array<
+  'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
+  >;
+};

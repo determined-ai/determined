@@ -1154,6 +1154,7 @@ export const getJobQueue: DetApi<
     params.limit,
     params.resourcePool,
     params.orderBy,
+    decoder.decodeJobStates(params.states),
   ),
 };
 
