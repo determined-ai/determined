@@ -340,20 +340,33 @@ const CodeViewer: React.FC<Props> = ({
                   * TODO: Add notebook integration
                   * <Button className={css.noBorderButton}>Open in Notebook</Button>
                   */
-                  !isConfig(activeFile.key) && (
-                    <Tooltip title="Download File">
-                      <DownloadOutlined
-                        className={css.noBorderButton}
-                        onClick={(e) => handlePath(e, {
-                          external: true,
-                          path: paths.experimentFileFromTree(
-                            experimentId,
-                            String(activeFile.key),
-                          ),
-                        })}
-                      />
-                    </Tooltip>
-                  )
+                  <Tooltip title="Download File">
+                    <DownloadOutlined
+                      className={css.noBorderButton}
+                      onClick={(e) => {
+                        console.log(e);
+                        const filePath = String(activeFile.key);
+                        if (filePath.includes('config')) {
+                          const url = filePath.includes('runtime')
+                            ? URL.createObjectURL(new Blob([ runtimeConfig ]))
+                            : URL.createObjectURL(new Blob([ submittedConfig as string ]));
+
+                          handlePath(e, {
+                            external: true,
+                            path: url,
+                          });
+                        } else {
+                          handlePath(e, {
+                            external: true,
+                            path: paths.experimentFileFromTree(
+                              experimentId,
+                              String(activeFile.key),
+                            ),
+                          });
+                        }
+                      }}
+                    />
+                  </Tooltip>
                 }
               </div>
             </div>
