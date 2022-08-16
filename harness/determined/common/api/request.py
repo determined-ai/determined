@@ -140,7 +140,7 @@ def do_request(
     except requests.exceptions.RequestException as e:
         raise errors.BadRequestException(str(e))
 
-    def _get_message(r: requests.models.Response) -> str:
+    def _get_error_str(r: requests.models.Response) -> str:
         try:
             json_resp = _json.loads(r.text)
             mes = json_resp.get("message")
@@ -155,7 +155,7 @@ def do_request(
         username = ""
         if auth is not None:
             username = auth.get_session_user()
-        raise errors.ForbiddenException(username=username, message=_get_message(r))
+        raise errors.ForbiddenException(username=username, message=_get_error_str(r))
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
     elif r.status_code >= 300:
