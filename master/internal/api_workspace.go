@@ -298,7 +298,7 @@ func (a *apiServer) deleteWorkspace(
 		_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
 		return
 	}
-	err = a.m.db.QueryProto("delete_workspace", holder, workspaceID, user.ID, user.Admin)
+	err = a.m.db.QueryProto("delete_workspace", holder, workspaceID)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete workspace %d", workspaceID)
 		_ = a.m.db.QueryProto("delete_fail_workspace", holder, workspaceID, err.Error())
