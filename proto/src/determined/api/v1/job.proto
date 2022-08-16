@@ -19,6 +19,8 @@ message GetJobsRequest {
   // Order results in either ascending or descending order by the number of
   // jobs ahead.
   OrderBy order_by = 3;
+  // Filter to jobs with states among those given.
+  repeated determined.job.v1.State states = 4;
 }
 
 // Response to GetJobsRequest.

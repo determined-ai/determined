@@ -7387,12 +7387,14 @@ def get_GetJobs(
     pagination_limit: "typing.Optional[int]" = None,
     pagination_offset: "typing.Optional[int]" = None,
     resourcePool: "typing.Optional[str]" = None,
+    states: "typing.Optional[typing.Sequence[determinedjobv1State]]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
         "orderBy": orderBy.value if orderBy is not None else None,
         "pagination.limit": pagination_limit,
         "pagination.offset": pagination_offset,
         "resourcePool": resourcePool,
+        "states": [x.value for x in states] if states is not None else None,
     }
     _resp = session._do_request(
         method="GET",

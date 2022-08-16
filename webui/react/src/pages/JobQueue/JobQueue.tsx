@@ -54,7 +54,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const {
     settings,
     updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  } = useSettings<Settings>(settingsConfig(jobState));
 
   const fetchResourcePools = useFetchResourcePools(canceler);
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
@@ -69,6 +69,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             offset: settings.tableOffset,
             orderBy,
             resourcePool: selectedRp.name,
+            states: jobState ? [ jobState ] : undefined,
           },
           { signal: canceler.signal },
         ),

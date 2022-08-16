@@ -1,6 +1,7 @@
 import { InteractiveTableSettings } from 'components/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { Determinedjobv1State } from 'services/api-ts-sdk';
 
 export type JobColumnName =
   | 'action'
@@ -40,7 +41,13 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: 'jobsAhead';
 }
 
-const config: SettingsConfig = {
+const routeSpaceForState = (s?: Determinedjobv1State): string =>
+  s === Determinedjobv1State.QUEUED ? '/queued'
+    : s === Determinedjobv1State.SCHEDULED ? '/active'
+      : '';
+
+const config = (jobState?: Determinedjobv1State): SettingsConfig => ({
+  applicableRoutespace: routeSpaceForState(jobState),
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,
@@ -86,7 +93,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Integer },
     },
   ],
-  storagePath: 'job-queue',
-};
+  storagePath: `job-queue-${jobState}`,
+});
 
 export default config;

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -57,7 +59,11 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (sproto.AQu
 	return resp, nil
 }
 
-func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*jobv1.Job, error) {
+func (j *Jobs) getJobs(
+	ctx *actor.Context,
+	resourcePool string,
+	desc bool,
+	states []jobv1.State) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
 	if err != nil {
 		return nil, err
@@ -82,8 +88,14 @@ func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool) ([]*j
 	for jID, jRMInfo := range jobQ {
 		v1Job, ok := jobs[jID]
 		if ok {
+			// interesting that the update is a side effect
+			// of the getJobs function. I am guessing that
+			// I should leave it, regardless of filters?
 			UpdateJobQInfo(v1Job, jRMInfo)
-			jobsInRM = append(jobsInRM, v1Job)
+
+			if states == nil || slices.Contains(states, v1Job.Summary.State) {
+				jobsInRM = append(jobsInRM, v1Job)
+			}
 		}
 	}
 
@@ -130,7 +142,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC)
+		jobs, err := j.getJobs(
+			ctx,
+			msg.ResourcePool,
+			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			msg.States)
 		if err != nil {
 			ctx.Respond(err)
 			return nil

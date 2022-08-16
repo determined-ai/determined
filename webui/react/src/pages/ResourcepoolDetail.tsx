@@ -105,7 +105,7 @@ const ResourcepoolDetail: React.FC = () => {
     if (!pool) return;
     setTabKey(key);
     const basePath = paths.resourcePool(pool.name);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    history.replace(`${basePath}/${key}`);
   }, [ history, pool ]);
 
   const renderPoolConfig = useCallback(() => {
