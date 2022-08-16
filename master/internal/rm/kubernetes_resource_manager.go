@@ -219,6 +219,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupPriority,
 		sproto.MoveJob,
 		sproto.DeleteJob,
+		sproto.RecoverJobPosition,
 		*apiv1.GetJobQueueStatsRequest:
 		return k.receiveJobQueueMsg(ctx)
 
