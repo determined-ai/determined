@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
@@ -13,7 +14,9 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <Router history={history}>
-          <Settings />
+          <CompatRouter>
+            <Settings />
+          </CompatRouter>
         </Router>
       </HelmetProvider>
     </StoreProvider>,

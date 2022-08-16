@@ -11,8 +11,8 @@ const TASK_NAME = 'JupyterLab (test-task-name)';
 const TASK_RESOURCE_POOL = 'aux-pool';
 const DEFAULT_TASK_PAGE_TITLE = 'Tasks - Determined';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // use actual for all non-hook parts
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'), // use actual for all non-hook parts
   useParams: () => ({
     taskId: 'task-id',
     taskName: TASK_NAME,
@@ -50,20 +50,20 @@ const setup = () => render(<InteractiveTaskContainer />);
 
 describe('InteractiveTask', () => {
   it('should render page with task name and resource pool', async () => {
-    await setup();
+    setup();
     expect(await screen.findByText(TASK_NAME)).toBeInTheDocument();
     expect(await screen.findByText(TASK_RESOURCE_POOL)).toBeInTheDocument();
   });
 
   it('should render page with context menu', async () => {
-    await setup();
+    setup();
     userEvent.click(screen.getByTestId('task-action-dropdown-trigger'));
     expect(await screen.findByText('Kill')).toBeInTheDocument();
     expect(await screen.findByText('View Logs')).toBeInTheDocument();
   });
 
-  it('should render page with default title', async () => {
-    await setup();
+  it('should render page with default title', () => {
+    setup();
     expect(document.title).toEqual(DEFAULT_TASK_PAGE_TITLE);
   });
 
