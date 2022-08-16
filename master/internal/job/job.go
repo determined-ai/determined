@@ -59,7 +59,11 @@ func (j *Jobs) jobQSnapshot(ctx *actor.Context, resourcePool string) (sproto.AQu
 	return resp, nil
 }
 
-func (j *Jobs) getJobs(ctx *actor.Context, resourcePool string, desc bool, states []jobv1.State) ([]*jobv1.Job, error) {
+func (j *Jobs) getJobs(
+	ctx *actor.Context,
+	resourcePool string,
+	desc bool,
+	states []jobv1.State) ([]*jobv1.Job, error) {
 	jobQ, err := j.jobQSnapshot(ctx, resourcePool)
 	if err != nil {
 		return nil, err
@@ -138,7 +142,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		delete(j.actorByID, msg.JobID)
 
 	case *apiv1.GetJobsRequest:
-		jobs, err := j.getJobs(ctx, msg.ResourcePool, msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC, msg.States)
+		jobs, err := j.getJobs(
+			ctx,
+			msg.ResourcePool,
+			msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			msg.States)
 		if err != nil {
 			ctx.Respond(err)
 			return nil
