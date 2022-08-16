@@ -91,6 +91,8 @@ const CodeViewer: React.FC<Props> = ({
   const resize = useResize();
 
   const submittedConfig = useMemo(() => {
+    if (!_submittedConfig) return;
+
     const { hyperparameters, ...restConfig } = yaml.load(_submittedConfig) as RawJson;
 
     // don't ask me why this works.. it gets rid of the JSON though
@@ -156,8 +158,12 @@ const CodeViewer: React.FC<Props> = ({
   }, [ submittedConfig, runtimeConfig, switchTreeViewToEditor ]);
 
   useEffect(() => {
-    handleSelectConfig(Config.submitted);
-  }, [ handleSelectConfig ]);
+    if (submittedConfig) {
+      handleSelectConfig(Config.submitted);
+    } else {
+      handleSelectConfig(Config.runtime);
+    }
+  }, [ handleSelectConfig, submittedConfig ]);
 
   useEffect(() => {
     if (resize.width <= 1024) {
